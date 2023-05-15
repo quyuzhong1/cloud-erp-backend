@@ -25,6 +25,6 @@ public class SoOutstockFeignController {
      **/
     @PostMapping("/listDetailBySourceDetailId")
     public List<SoOutstockDetailEntity> listDetailBySourceDetailId(@RequestBody List<String> sourceDetailId) {
-        return soOutstockDetailService.listSoOutstockBySourceDetailId(sourceDetailId);
+        return soOutstockDetailService.listDetailBySourceDetailId(sourceDetailId);
     }
 }

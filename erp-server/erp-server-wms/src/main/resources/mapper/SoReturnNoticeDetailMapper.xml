@@ -2,25 +2,27 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.SoReturnNoticeDetailMapper">
 
-    <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.SoReturnNoticeDetailEntity">
-        <result column="id" property="id" />
-        <result column="create_user_id" property="createUserId" />
-        <result column="create_user_name" property="createUserName" />
-        <result column="create_time" property="createTime" />
-        <result column="update_user_id" property="updateUserId" />
-        <result column="update_user_name" property="updateUserName" />
-        <result column="update_time" property="updateTime" />
-        <result column="version" property="version" />
-        <result column="is_deleted" property="isDeleted" />
-        <result column="main_id" property="mainId" />
-        <result column="sku_id" property="skuId" />
-        <result column="sku_no" property="skuNo" />
-        <result column="return_qty" property="returnQty" />
-        <result column="return_type_dict" property="returnTypeDict" />
-        <result column="return_reason_dict" property="returnReasonDict" />
-        <result column="remark" property="remark" />
-        <result column="source_detail_id" property="sourceDetailId" />
-    </resultMap>
+    <select id="listDetailBySourceIds" resultType="com.erp.model.wms.entity.SoReturnNoticeDetailEntity">
+        SELECT
+            srnd.id,
+            srnd.main_id,
+            srnd.sku_id,
+            srnd.sku_no,
+            srnd.return_qty,
+            srnd.return_type_dict,
+            srnd.return_reason_dict,
+            srnd.remark,
+            srnd.source_detail_id,
+            srn.approve_status
+        FROM so_return_notice_detail srnd
+        INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
+        WHERE srn.is_deleted = FALSE
+        <if test="ids != null and ids.size != ''">
+            and srn.source_id in
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
 
 </mapper>

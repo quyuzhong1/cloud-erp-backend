@@ -219,6 +219,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         SoInfoEntity soInfoEntity = soInfoService.getById(dto.getSourceId());
         SoReturnEntity soReturnEntity = new SoReturnEntity();
         BeanMapperUtils.copy(soInfoEntity, soReturnEntity);
+        soReturnEntity.setId(dto.getId());
         soReturnEntity.setSourceId(dto.getSourceId());
         soReturnEntity.setSourceCode(soInfoEntity.getCode());
         soReturnEntity.setBillDate(dto.getBillDate());
@@ -230,8 +231,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnEntity.setCurrencySymbol(dto.getCurrencySymbol());
         soReturnEntity.setIsTax(dto.getIsTax());
         soReturnEntity.setAddressTypeDict(dto.getAddressTypeDict());
+        boolean flag = this.updateById(soReturnEntity);
         soReturnDetailService.update(dto);
-        return this.updateById(soReturnEntity);
+        return flag;
     }
 
     @Override

@@ -1,6 +1,8 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.erp.model.wms.enums.ReturnTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -21,41 +23,42 @@ public class SoReturnNoticeDTO {
          */
         private List<String> ids;
         /**
-         * 创建时间
+         * sku编号
          */
-        private List<LocalDateTime> createTimeList;
+        private List<String> skuNoList;
         /**
          * 单据编号
          */
         private String code;
         /**
-         * sku编号
-         */
-        private List<String> skuNoList;
-        /**
          * 销售单号
          */
         private String sourceCode;
-        /**
-         * 单据类型
-         */
-        private String type;
-        /**
-         * 审核状态
-         */
-        private List<String> approveStatusLis;
-        /**
-         * 作废状态
-         */
-        private Boolean invalidStatus;
         /**
          * 客户id
          */
         private List<String> customerIdList;
         /**
+         * 库存组织id
+         */
+        private List<String> inventoryOrgIdList;
+        /**
          * 销售员id
          */
         private List<String> sellerIdList;
+        /**
+         * 审核状态
+         */
+        private List<String> approveStatusList;
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+        /**
+         * 退货类型 wms/common/enumDropDown?type=ReturnType
+         * 描述：refund 退货扣款 replenishment 退货补货
+         */
+        private String returnTypeDict;
         /**
          * 退货日期
          */
@@ -64,6 +67,10 @@ public class SoReturnNoticeDTO {
          * 创建人id
          */
         private List<String> createUserIdList;
+        /**
+         * 创建时间
+         */
+        private List<LocalDateTime> createTimeList;
     }
 
     /**
@@ -73,21 +80,29 @@ public class SoReturnNoticeDTO {
     @NoArgsConstructor
     public static class PagingView {
         /**
-         * 退货订单号
+         * 主键id
+         */
+        private String id;
+        /**
+         * 退货订单id
+         */
+        private String sourceId;
+        /**
+         * 退货订单详情id
+         */
+        private String sourceDetailId;
+        /**
+         * 退货通知单号
          */
         private String code;
         /**
-         * 销售单号
+         * 退货订单号
          */
         private String sourceCode;
         /**
-         * 单据状态编号
+         * 单据状态
          */
-        private String approveStatus;
-        /**
-         * 单据状态名称
-         */
-        private String approveStatusName;
+        private ApproveStatusEnum approveStatus;
         /**
          * 作废状态
          */
@@ -109,6 +124,10 @@ public class SoReturnNoticeDTO {
          */
         private String sellerName;
         /**
+         * skuId
+         */
+        private String skuId;
+        /**
          * SKU
          */
         private String skuNo;
@@ -116,6 +135,11 @@ public class SoReturnNoticeDTO {
          * 产品名称
          */
         private String productName;
+        /**
+         * 退货类型 wms/common/enumDropDown?type=ReturnType
+         * 描述：refund 退货扣款 replenishment 退货补货
+         */
+        private ReturnTypeEnum returnTypeDict;
         /**
          * 销售数量
          */
@@ -172,10 +196,6 @@ public class SoReturnNoticeDTO {
          * 销售单id
          */
         private String sourceId;
-        /**
-         * 退货日期
-         */
-        private LocalDate billDate;
         /**
          * 库存组织id
          */
@@ -375,9 +395,10 @@ public class SoReturnNoticeDTO {
          */
         private Integer returnQty;
         /**
-         * 退货类型
+         * 退货类型 wms/common/enumDropDown?type=ReturnType
+         * 描述：refund 退货扣款 replenishment 退货补货
          */
-        private String  returnType;
+        private String returnTypeDict;
         /**
          * 退货原因
          */

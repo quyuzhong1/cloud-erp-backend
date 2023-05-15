@@ -49,4 +49,6 @@ public interface BusinessNoConstant {
     String QCKC = "QCKC";
 
     String THDD = "THDD";
+
+    String THTZ = "THTZ";
 }

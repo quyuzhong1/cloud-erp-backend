@@ -51,7 +51,6 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             if (soDetailEntity.getQty() < detailDto.getDeliveryQty() + deliveryQty) {
                 throw new ServiceException(ApiError.ERROR_92009);
             }
-
             soDeliveryNoticeDetailEntity.setMainId(id);
             soDeliveryNoticeDetailEntity.setSkuId(soDetailEntity.getSkuId());
             soDeliveryNoticeDetailEntity.setSkuNo(soDetailEntity.getSkuNo());

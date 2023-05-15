@@ -56,7 +56,6 @@ public interface SoDeliveryNoticeDetailService extends SuperService<SoDeliveryNo
      **/
     List<SoDeliveryNoticeDetailEntity> listDetailByMainId(String mainId);
 
-
     /**
      * 根据主表id查询详情表信息
      * @Author Luo_WG

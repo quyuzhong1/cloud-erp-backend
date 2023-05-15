@@ -4,7 +4,6 @@
     <select id="paging" resultType="com.erp.model.wms.dto.SoDeliveryNoticeDTO$PagingView">
         SELECT
             sdn.id,
-            sdnd.id AS detailid,
             sdn.source_id,
             sdnd.source_detail_id,
             sdn.code,
@@ -70,7 +69,7 @@
             and sdn.invalid_status = #{params.invalidStatus}
         </if>
         <if test="params.requireDateList != null and params.requireDateList.size > 0">
-            and sdn.require_date >= #{params.requireDateList[0]} and  (#{params.requireDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.bill_date
+            and sdn.require_date >= #{params.requireDateList[0]} and  (#{params.requireDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sdn.require_date
         </if>
         <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
             and sdn.warehouse_id in
@@ -85,7 +84,7 @@
             </foreach>
         </if>
         <if test="params.createTimeList != null and params.createTimeList.size > 0">
-            and sdn.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.bill_date
+            and sdn.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sdn.create_time
         </if>
         <if test="params.param != null and params.param != ''">
             ${params.param}
@@ -188,7 +187,7 @@
             and sdn.invalid_status = #{params.invalidStatus}
         </if>
         <if test="params.requireDateList != null and params.requireDateList.size > 0">
-            and sdn.require_data >= #{params.requireDateList[0]} and  (#{params.requireDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.bill_date
+            and sdn.require_data >= #{params.requireDateList[0]} and  (#{params.requireDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sdn.require_data
         </if>
         <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
             and sdn.warehouse_id in
@@ -203,7 +202,7 @@
             </foreach>
         </if>
         <if test="params.createTimeList != null and params.createTimeList.size > 0">
-            and sdn.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.bill_date
+            and sdn.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sdn.create_time
         </if>
         <if test="params.param != null and params.param != ''">
             ${params.param}

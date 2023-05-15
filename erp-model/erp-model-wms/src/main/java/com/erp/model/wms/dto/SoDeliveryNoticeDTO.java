@@ -85,9 +85,13 @@ public class SoDeliveryNoticeDTO {
          */
         private String id;
         /**
-         * 明细id
+         * 销售单id
          */
-        private String detailId;
+        private String sourceId;
+        /**
+         * 销售单明细id
+         */
+        private String sourceDetailId;
         /**
          * 发货通知单号
          */
@@ -96,14 +100,6 @@ public class SoDeliveryNoticeDTO {
          * 销售单号
          */
         private String sourceCode;
-        /**
-         * 销售单id
-         */
-        private String sourceId;
-        /**
-         * 销售单明细id
-         */
-        private String sourceDetailId;
         /**
          * 客户
          */

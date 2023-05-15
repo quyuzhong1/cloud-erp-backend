@@ -3,25 +3,25 @@
 <mapper namespace="com.erp.server.oms.mapper.SoReturnMapper">
     <select id="paging" resultType="com.erp.model.oms.dto.SoReturnDTO$PagingView">
         SELECT
-           sr.id,
-           sr.create_time,
-           sr.code,
-           sr.source_id,
-           srd.source_detail_id,
-           sr.source_code,
-           sr.type,
-           sr.approve_status,
-           sr.invalid_status,
-           sr.customer_id,
-           sr.sales_org_id,
-           sr.seller_id,
-           srd.sku_id,
-           srd.sku_no,
-           srd.sales_qty,
-           srd.return_qty,
-           sr.bill_date,
-           sr.approve_user_name,
-           sr.create_user_name
+            sr.id,
+            sr.source_id,
+            srd.source_detail_id,
+            sr.create_time,
+            sr.code,
+            sr.source_code,
+            sr.type,
+            sr.approve_status,
+            sr.invalid_status,
+            sr.customer_id,
+            sr.sales_org_id,
+            sr.seller_id,
+            srd.sku_id,
+            srd.sku_no,
+            srd.sales_qty,
+            srd.return_qty,
+            sr.bill_date,
+            sr.approve_user_name,
+            sr.create_user_name
         FROM so_return_detail srd
         INNER JOIN so_return sr ON srd.main_id = sr.id AND srd.is_deleted = FALSE
         WHERE sr.is_deleted = FALSE
@@ -68,7 +68,7 @@
             </foreach>
         </if>
         <if test="params.billDateList != null and params.billDateList.size > 0">
-            and sr.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.bill_date
+            and sr.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sr.bill_date
         </if>
         <if test="params.createUserIdList != null and params.createUserIdList.size != ''">
             and sr.create_user_d in
@@ -77,7 +77,7 @@
             </foreach>
         </if>
         <if test="params.createTimeList != null and params.createTimeList.size > 0">
-            and sr.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.bill_date
+            and sr.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sr.create_time
         </if>
         <if test="params.param != null and params.param != ''">
             ${params.param}
@@ -175,7 +175,7 @@
             </foreach>
         </if>
         <if test="params.billDateList != null and params.billDateList.size > 0">
-            and sr.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.bill_date
+            and sr.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sr.bill_date
         </if>
         <if test="params.createUserIdList != null and params.createUserIdList.size != ''">
             and sr.create_user_d in
@@ -184,7 +184,7 @@
             </foreach>
         </if>
         <if test="params.createTimeList != null and params.createTimeList.size > 0">
-            and sr.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.bill_date
+            and sr.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sr.create_time
         </if>
         <if test="params.param != null and params.param != ''">
             ${params.param}

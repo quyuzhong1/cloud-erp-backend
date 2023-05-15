@@ -22,10 +22,10 @@ public class SoReturnNoticeDetailDTO {
         @Max(value = 999999999, message = "退货数量最大值为999999999")
         private Integer returnQty;
         /**
-         * 退货类型 wms/common/enumDropDown?type=returnType
-         * 描述：退货扣款 退货补货
+         * 退货类型 wms/common/enumDropDown?type=ReturnType
+         * 描述：refund 退货扣款 replenishment 退货补货
          */
-        private String returnType;
+        private String returnTypeDict;
         /**
          * 退货原因 调用字典接口 类型=returnReason
          */
@@ -58,10 +58,10 @@ public class SoReturnNoticeDetailDTO {
         @Max(value = 999999999, message = "退货数量最大值为999999999")
         private Integer returnQty;
         /**
-         * 退货类型 wms/common/enumDropDown?type=returnType
-         * 描述：退货扣款 退货补货
+         * 退货类型 wms/common/enumDropDown?type=ReturnType
+         * 描述：refund 退货扣款 replenishment 退货补货
          */
-        private String returnType;
+        private String returnTypeDict;
         /**
          * 退货原因 调用字典接口 类型=returnReason
          */

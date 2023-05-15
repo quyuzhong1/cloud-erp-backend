@@ -22,5 +22,5 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @param sourceDetailId sourceDetailId
      * @return java.util.List<com.erp.model.oms.entity.SoOutstockDetailEntity>
      **/
-    List<SoOutstockDetailEntity> listSoOutstockBySourceDetailId(List<String> sourceDetailId);
+    List<SoOutstockDetailEntity> listDetailBySourceDetailId(List<String> sourceDetailId);
 }

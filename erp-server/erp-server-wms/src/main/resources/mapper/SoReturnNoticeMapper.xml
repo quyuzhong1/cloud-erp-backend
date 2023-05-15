@@ -1,42 +1,115 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.SoReturnNoticeMapper">
+    <select id="paging" resultType="com.erp.model.wms.dto.SoReturnNoticeDTO$PagingView">
+        SELECT
+            srn.id,
+            srn.source_id,
+            srnd.source_detail_id,
+            srn.code,
+            srn.source_code,
+            srn.approve_status,
+            srn.invalid_status,
+            srn.customer_name,
+            srn.inventory_org_name,
+            srn.seller_name,
+            srnd.sku_id,
+            srnd.sku_no,
+            srnd.return_qty,
+            srn.bill_date,
+            srn.approve_user_name,
+            srn.create_user_name,
+            srn.create_time
+        FROM so_return_notice_detail srnd
+        INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
+        WHERE srn.is_deleted = FALSE
+        <if test="params.ids != null and params.ids.size != ''">
+            and srn.id in
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.skuNoList != null and params.skuNoList.size != ''">
+            and srnd.sku_no in
+            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
 
-    <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.SoReturnNoticeEntity">
-        <result column="id" property="id" />
-        <result column="create_user_id" property="createUserId" />
-        <result column="create_user_name" property="createUserName" />
-        <result column="create_time" property="createTime" />
-        <result column="update_user_id" property="updateUserId" />
-        <result column="update_user_name" property="updateUserName" />
-        <result column="update_time" property="updateTime" />
-        <result column="version" property="version" />
-        <result column="is_deleted" property="isDeleted" />
-        <result column="approve_status" property="approveStatus" />
-        <result column="code" property="code" />
-        <result column="type" property="type" />
-        <result column="sales_org_id" property="salesOrgId" />
-        <result column="sales_org_name" property="salesOrgName" />
-        <result column="dept_id" property="deptId" />
-        <result column="dept_name" property="deptName" />
-        <result column="seller_id" property="sellerId" />
-        <result column="seller_name" property="sellerName" />
-        <result column="customer_id" property="customerId" />
-        <result column="customer_name" property="customerName" />
-        <result column="bill_date" property="billDate" />
-        <result column="inventory_org_id" property="inventoryOrgId" />
-        <result column="inventory_org_name" property="inventoryOrgName" />
-        <result column="warehouse_keeper_id" property="warehouseKeeperId" />
-        <result column="warehouse_keeper_name" property="warehouseKeeperName" />
-        <result column="invalid_status" property="invalidStatus" />
-        <result column="invalid_remark" property="invalidRemark" />
-        <result column="approve_user_id" property="approveUserId" />
-        <result column="approve_user_name" property="approveUserName" />
-        <result column="approve_time" property="approveTime" />
-        <result column="source_id" property="sourceId" />
-        <result column="source_code" property="sourceCode" />
-        <result column="source_type" property="sourceType" />
-    </resultMap>
+        <if test="params.code != null and params.code != ''">
+            and srn.code = #{params.code}
+        </if>
+        <if test="params.sourceCode != null and params.sourceCode != ''">
+            and srn.source_code = #{params.sourceCode}
+        </if>
+        <if test="params.customerIdList != null and params.customerIdList.size != ''">
+            and srn.customer_id in
+            <foreach collection="params.customerIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.inventoryOrgIdList != null and params.inventoryOrgIdList.size != ''">
+            and srn.inventory_org_id in
+            <foreach collection="params.inventoryOrgIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.sellerIdList != null and params.sellerIdList.size != ''">
+            and srn.seller_id in
+            <foreach collection="params.sellerIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.approveStatusList != null and params.approveStatusList.size != ''">
+            and srn.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.invalidStatus != null">
+            and srn.invalid_status = #{params.invalidStatus}
+        </if>
+        <if test="params.returnTypeDict != null and params.returnTypeDict != ''">
+            and srnd.return_type_dict = #{params.returnTypeDict}
+        </if>
+        <if test="params.billDateList != null and params.billDateList.size > 0">
+            and srn.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > srn.bill_date
+        </if>
+        <if test="params.createUserIdList != null and params.createUserIdList.size != ''">
+            and srn.create_user_d in
+            <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.createTimeList != null and params.createTimeList.size > 0">
+            and srn.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > srn.create_time
+        </if>
+        <if test="params.param != null and params.param != ''">
+            ${params.param}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        srn.create_time desc
+    </select>
 
+    <select id="listCount" resultType="java.lang.Integer">
+        select
+        count(distinct srn.id)
+        FROM so_return_notice_detail srnd
+        INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
+        WHERE srn.is_deleted = FALSE
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and srn.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.param != null and params.param != ''">
+            ${params.param}
+        </if>
+    </select>
 </mapper>
