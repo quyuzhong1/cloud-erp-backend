@@ -4,19 +4,15 @@
 
     <select id="listAddDetailView" resultType="com.erp.model.oms.dto.SoDetailDTO$AddDetailView">
         SELECT
-        sd.id
-        sd.mainId
-        sd.skuId
-        sd.skuNo
-        inventoryOrgId
-        inventoryOrgName
-        salesQty
-        availableQty
-        deliveryQty
-        unDeliveryQty
-        isGift
-        isClose
-        remark
+            sd.id,
+            sd.main_id,
+            sd.sku_id,
+            sd.sku_no,
+            si.warehouse_org_id AS inventoryOrgId,
+            sd.qty,
+            sd.is_gift,
+            sd.is_close,
+            sd.remark
         FROM so_detail sd
         INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
         WHERE si.is_deleted = FALSE

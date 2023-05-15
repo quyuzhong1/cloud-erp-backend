@@ -446,7 +446,7 @@ public class SoDetailDTO implements Serializable {
          */
         private Integer unDeliveryQty;
         /**
-         * 是否赠品
+         * 是否赠品 true 是
          */
         private Boolean isGift;
         /**

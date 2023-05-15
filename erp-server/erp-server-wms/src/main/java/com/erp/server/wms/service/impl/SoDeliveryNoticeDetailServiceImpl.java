@@ -39,13 +39,16 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         if (CollectionUtils.isEmpty(soDetailEntitieList)) {
             throw new ServiceException(ApiError.ERROR_92003);
         }
+        List<SoDeliveryNoticeDetailEntity> detailEntityList = this.listDetailBySourceIds(detailIds);
         List<SoDeliveryNoticeDetailEntity> list = new ArrayList<>();
         for (SoDeliveryNoticeDetailDTO.Add detailDto : dto.getDetailList()) {
             SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = new SoDeliveryNoticeDetailEntity();
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
-            if (soDetailEntity.getQty() < detailDto.getDeliveryQty()) {
+            SoDeliveryNoticeDetailEntity soDeliveryNotice = detailEntityList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoDeliveryNoticeDetailEntity());
+            if (soDetailEntity.getQty() < detailDto.getDeliveryQty() + soDeliveryNotice.getDeliveryQty()) {
                 throw new ServiceException(ApiError.ERROR_92009);
             }
+
             soDeliveryNoticeDetailEntity.setMainId(id);
             soDeliveryNoticeDetailEntity.setSkuId(soDetailEntity.getSkuId());
             soDeliveryNoticeDetailEntity.setSkuNo(soDetailEntity.getSkuNo());
@@ -66,13 +69,15 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             throw new ServiceException(ApiError.ERROR_92003);
         }
         List<SoDeliveryNoticeDetailEntity> list = new ArrayList<>();
+        List<SoDeliveryNoticeDetailEntity> detailEntityList = this.listDetailBySourceIds(detailIds);
         for (SoDeliveryNoticeDetailDTO.Update detailDto : dto.getDetailList()) {
             SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = new SoDeliveryNoticeDetailEntity();
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             if (StringUtils.isNotBlank(detailDto.getId())) {
                 soDeliveryNoticeDetailEntity.setId(detailDto.getId());
             }
-            if (soDetailEntity.getQty() < detailDto.getDeliveryQty()) {
+            SoDeliveryNoticeDetailEntity soDeliveryNotice = detailEntityList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoDeliveryNoticeDetailEntity());
+            if (soDetailEntity.getQty() < detailDto.getDeliveryQty() + soDeliveryNotice.getDeliveryQty()) {
                 throw new ServiceException(ApiError.ERROR_92009);
             }
             soDeliveryNoticeDetailEntity.setMainId(detailDto.getMainId());
@@ -102,5 +107,10 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
     @Override
     public List<SoDeliveryNoticeDetailEntity> listDetailByMainIds(List<String> mainIdList) {
         return lambdaQuery().in(SoDeliveryNoticeDetailEntity::getMainId, mainIdList).list();
+    }
+
+    @Override
+    public List<SoDeliveryNoticeDetailEntity> listDetailBySourceIds(List<String> sourceIds) {
+        return baseMapper.listDetailBySourceIds(sourceIds);
     }
 }

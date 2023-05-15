@@ -86,9 +86,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     private SysUserFeign sysUserFeign;
 
     @Resource
-    private CustomerInfoService customerInfoService;
-
-    @Resource
     private OperateLogService operateLogService;
 
     @Resource
@@ -117,7 +114,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<String> skuIdList = records.stream().map(SoReturnDTO.PagingView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        //获取界面传过来的采购单详情表id集合
         List<String> detailIds = records.stream().map(SoReturnDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
 
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySourceDetailId(detailIds);
@@ -152,7 +148,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 }
                 obj.setProductName(productDetailEntity.getName());
                 obj.setSalesQty(soDetailEntity.getQty());
-                soOutstockDetailEntities.stream().filter(detail -> detail.getId().equals(obj.getSourceDetailId())).findFirst().orElse(new SoOutstockDetailEntity());
                 Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSourceDetailId().equals(obj.getSourceDetailId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                 obj.setDeliveryQty(actualQty);
                 obj.setUnDeliveryQty(soDetailEntity.getQty() - actualQty);

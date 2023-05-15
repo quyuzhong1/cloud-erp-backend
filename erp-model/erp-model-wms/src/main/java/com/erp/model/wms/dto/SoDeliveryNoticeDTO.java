@@ -255,7 +255,7 @@ public class SoDeliveryNoticeDTO {
          */
         private String telNumber;
         /**
-         * 交货方式 wms/common/enumDropDown?type=DeliveryMode
+         * 交货方式 oms/common/enumDropDown?type=DeliveryMode
          * 描述：deliverGoods（发货）selfExtraction（自提）
          */
         private String deliveryModeDict;
@@ -312,7 +312,7 @@ public class SoDeliveryNoticeDTO {
          */
         private String telNumber;
         /**
-         * 交货方式 wms/common/enumDropDown?type=DeliveryMode
+         * 交货方式 oms/common/enumDropDown?type=DeliveryMode
          * 描述：deliverGoods（发货）selfExtraction（自提）
          */
         private String deliveryModeDict;
@@ -438,7 +438,7 @@ public class SoDeliveryNoticeDTO {
          */
         private String receiveAddress;
         /**
-         * 交货方式 wms/common/enumDropDown?type=DeliveryMode
+         * 交货方式 oms/common/enumDropDown?type=DeliveryMode
          * 描述：deliverGoods（发货）selfExtraction（自提）
          */
         private String deliveryModeDict;

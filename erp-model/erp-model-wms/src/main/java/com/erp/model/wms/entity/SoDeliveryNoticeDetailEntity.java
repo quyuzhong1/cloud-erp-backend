@@ -65,6 +65,11 @@ public class SoDeliveryNoticeDetailEntity extends BaseEntity<SoDeliveryNoticeDet
     @TableField("source_detail_id")
     private String sourceDetailId;
 
+    /**
+     * 单据状态
+     */
+    private String approveStatus;
+
 
     public static final String MAIN_ID = "main_id";
 

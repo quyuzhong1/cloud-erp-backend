@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.SoDeliveryNoticeDetailMapper">
-
+    <select id="listDetailBySourceIds" resultType="com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity">
+        SELECT
+            sdnd.id,
+            sdnd.main_id,
+            sdnd.sku_id,
+            sdnd.sku_no,
+            sdnd.delivery_qty,
+            sdnd.is_close,
+            sdnd.remark,
+            sdnd.source_detail_id,
+            sdn.approve_status
+        FROM so_delivery_notice sdn
+        INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
+    </select>
 </mapper>
