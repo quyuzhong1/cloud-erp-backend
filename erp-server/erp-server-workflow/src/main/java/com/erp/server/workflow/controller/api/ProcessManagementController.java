@@ -6,13 +6,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.workflow.service.ProcessManagementService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
@@ -101,7 +99,7 @@ public class ProcessManagementController extends BaseController {
     /**
      * 流程管理分页列表
      */
-    @PostMapping("paging")
+    @PostMapping("/paging")
     public ApiResult<PagingVO<ProcessManagementDTO.PagingResultDTO>> paging(@RequestBody @Valid PagingDTO<ProcessManagementDTO.SearchDTO> dto) {
         PagingVO<ProcessManagementDTO.PagingResultDTO> resultList = processManagementService.paging(dto);
         return success(resultList);
@@ -110,7 +108,7 @@ public class ProcessManagementController extends BaseController {
     /**
      * 流程管理导出
      */
-    @PostMapping("export")
+    @PostMapping("/export")
     public ApiResult<String> export(@RequestBody @Valid ProcessManagementDTO.SearchDTO dto, HttpServletResponse response) {
         try {
             processManagementService.export(dto, response);

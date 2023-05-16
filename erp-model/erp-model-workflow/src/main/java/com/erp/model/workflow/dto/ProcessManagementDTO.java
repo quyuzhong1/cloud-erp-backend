@@ -502,6 +502,11 @@ public class ProcessManagementDTO {
          */
         private String detailUrl;
 
+        /**
+         * 项目名称
+         */
+        private String sysClassify;
+
     }
 
     @Data

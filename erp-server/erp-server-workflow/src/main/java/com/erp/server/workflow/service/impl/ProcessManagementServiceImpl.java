@@ -61,6 +61,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -491,8 +493,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
             // 获取流程图
             InputStream inputStream = repositoryService.getProcessDiagram(processDefinitionId);
-
-            // 将输入流保存到文件或进行其他操作
+            InputStream processDiagram = repositoryService.getProcessDiagram(processDefinition.getId());
+            // 将输入流保存为图片png格式
+            File file = new File(StrUtil.format("{}.png", dto.getProcessInstanceId()));
             // ...
 
             // 关闭输入流

@@ -80,12 +80,12 @@
             max(pm.end_time) as end_time,
             max(pm.act_process_definition_id) as act_process_definition_id,
             string_agg(ptm.cur_approve_name, ', ') AS cur_approve_name,
-            max(wm.detail_url) as detail_url
+            concat(max(wm.detail_url), max(pm.business_id)) as detail_url
         FROM process_management AS pm
                  LEFT JOIN process_task_management AS ptm  on pm.process_instance_id = ptm.process_instance_id
                  LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code
         where ptm.task_status = 'approveIng'
-        GROUP BY pm.process_instance_id
+        GROUP BY pm.process_instance_id,pm.create_time
         order by pm.create_time desc
     </sql>
     <select id="paging" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$PagingResultDTO">
