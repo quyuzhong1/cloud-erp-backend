@@ -47,13 +47,19 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -432,6 +438,29 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         log.info("撤销 开始记录操作日志，id集合：【{}】", JSONObject.toJSONString(ids));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("期初库存【%s】取消流程", ModuleTypeEnum.INIT_STOCK.getCode(), pairList, "取消流程操作");
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/initStock.xlsx";
+        String excelName = "initStock_template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error("initStock downloadTemplate异常", e);
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
     }
 
     public void send2Inventory(Map<String, InitStockEntity> initStockEntityMap) {

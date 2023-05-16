@@ -114,6 +114,12 @@ public interface InitStockService extends SuperService<InitStockEntity> {
      */
     void cancel(List<String> ids);
 
+    /**
+     * 下载模板
+     * @param response
+     */
+    void downloadTemplate(HttpServletResponse response);
+
 
 
 }

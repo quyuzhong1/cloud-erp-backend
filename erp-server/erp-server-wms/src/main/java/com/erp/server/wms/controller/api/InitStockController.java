@@ -6,23 +6,15 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.inventory.InitStockDTO;
 import com.erp.model.wms.dto.inventory.InitStockDetailDTO;
 import com.erp.server.wms.service.InitStockService;
 import lombok.AllArgsConstructor;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 /**
  * 期初库存管理
@@ -181,30 +173,12 @@ public class InitStockController extends BaseController {
 
     /**
      * 下载模板
-     * @param request
      * @param response
      * @return
      */
     @GetMapping("/exportExcelTemplate")
-    public ApiResult<Void> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/initStock.xlsx";
-        String excelName = "期初库存导入模板.xlsx";
-        ResourceLoader resourceLoader = new DefaultResourceLoader();
-        try {
-            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
-            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
-            // 输出Excel文件
-            OutputStream output = response.getOutputStream();
-            response.reset();
-            // 设置文件头
-            response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("GBK"), "ISO8859-1"));
-            response.setContentType("application/msexcel");
-            wb.write(output);
-            wb.close();
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95131);
-        }
+    public ApiResult exportTemplate(HttpServletResponse response) {
+        initStockService.downloadTemplate(response);
         return success();
     }
 
