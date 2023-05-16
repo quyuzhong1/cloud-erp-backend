@@ -123,11 +123,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         queryWrapper.eq(InventoryEntity::getWarehouseId,warehouseId).eq(InventoryEntity::getOrgId, orgId)
                 .eq(InventoryEntity::getSkuId, skuId)
                 .eq(InventoryEntity::getDictInventoryStatus, status);
-        if(StrUtils.isNotEmpty(warehouseLocationId)) {
-            queryWrapper.eq(InventoryEntity::getWarehouseLocation, StrUtils.null2EmptyWithTrim(warehouseLocationId));
-        } else {
-            log.info("组织id：【{}】，仓库id：【{}】,SKU：【{}】，状态：【{}】，库位为空，不作为查询条件", orgId, warehouseId, skuId, status, warehouseLocationId);
-        }
+
+        warehouseLocationId = StrUtils.null2EmptyWithTrim(warehouseLocationId);
+        queryWrapper.eq(InventoryEntity::getWarehouseLocation, StrUtils.null2EmptyWithTrim(warehouseLocationId));
         return baseMapper.selectList(queryWrapper);
     }
 

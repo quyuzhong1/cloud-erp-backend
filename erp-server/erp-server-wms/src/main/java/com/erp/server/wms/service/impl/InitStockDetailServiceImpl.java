@@ -8,6 +8,8 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.plm.enums.ProductDetailStateEnum;
+import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.inventory.InitStockDetailDTO;
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -126,8 +129,14 @@ public class InitStockDetailServiceImpl extends SuperServiceImpl<InitStockDetail
         Map<String,SkuVO> skuMap =  skuInfos.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
         for(int i = 0, length = list.size();i < length;i++) {
             InitStockDetailEntity data = list.get(i);
-            if(!skuMap.containsKey(data.getSkuId())) {
-                throw new ServiceException(StrUtil.format("第{}行SKU错误", (i + 1)));
+            SkuVO skuVO = skuMap.get(data.getSkuId());
+            if(Objects.isNull(skuVO)) {
+                throw new ServiceException(StrUtil.format("第{}行SKU【{}】错误", (i + 1), data.getSkuNo()));
+            }
+            // 验证产品是否审核通过
+            Integer skuStatus = skuVO.getStatus();
+            if(!Objects.equals(skuStatus, ProductDetailStatusEnum.APPROVAL_PASS.getCode())) {
+                throw new ServiceException(StrUtil.format("第{}行SKU【{}】未审核通过", (i + 1), data.getSkuNo()));
             }
             data.setMainId(mainId);
             data.setSkuNo(skuMap.get(data.getSkuId()).getSkuNo());// 填充真实的sku no

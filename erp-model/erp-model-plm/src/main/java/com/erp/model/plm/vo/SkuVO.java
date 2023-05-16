@@ -98,4 +98,9 @@ public class SkuVO implements Serializable {
      * 单位
      */
     private String unitName;
+
+    /**
+     * 产品状态
+     */
+    private Integer status;
 }
