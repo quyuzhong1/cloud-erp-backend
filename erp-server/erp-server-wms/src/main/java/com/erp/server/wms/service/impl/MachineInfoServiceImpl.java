@@ -1,41 +1,50 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.wms.dto.MachineDetailDTO;
 import com.erp.model.wms.dto.MachineInfoDTO;
+import com.erp.model.wms.entity.MachineDetailEntity;
 import com.erp.model.wms.entity.MachineInfoEntity;
 import com.erp.model.wms.enums.WorkTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.MachineInfoMapper;
-import com.erp.server.wms.service.MachineInfoService;
-import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -59,6 +68,15 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private MachineDetailService machineDetailService;
+
+    @Resource
+    private CommonService commonService;
+
+    @Resource
+    private InventoryService inventoryService;
 
 
     @Override
@@ -127,7 +145,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         MachineInfoEntity entity = new MachineInfoEntity();
         BeanMapperUtils.copy(dto, entity);
         //处理数据id
-        //doOpHandleDataId(dto.getInventoryOrgId(), dto.getReceiveOrgId(), dto.getWarehouseKeeperId(),dto.getReceiverId(), entity);
+        doOpHandleDataId(dto.getInventoryOrgId(), dto.getReceiveOrgId(), dto.getWarehouseKeeperId(),dto.getReceiverId(), entity);
         log.info("直接调拨单新增");
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.DBSQ, BusinessNoTypeEnum.CODE_DBSQ.getCode()));
@@ -138,49 +156,184 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             //操作日志
             operateLogService.addModuleOperateLog(String.format("新增了一个直接调拨单【%s】", code), ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), entity.getId(), "新增操作");
             //新增明细
-            //transferInfoDetailService.add(dto.getDetailList(), entity.getId());
+            machineDetailService.add(dto.getDetailList(), entity.getId());
         }
         return entity.getId();
     }
 
     @Override
     public String addAndSubmit(MachineInfoDTO.AddDTO dto) {
-        return null;
+        //新增
+        String id = this.add(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        //提交
+        this.submit(Arrays.asList(id));
+        return id;
     }
 
     @Override
     public Boolean update(MachineInfoDTO.UpdateDTO dto) {
-        return null;
+        MachineInfoEntity entity = new MachineInfoEntity();
+        BeanMapperUtils.copy(dto, entity);
+        List<MachineDetailDTO.UpdateDTO> detailList = dto.getDetailList();
+        //处理数据id
+        doOpHandleDataId(dto.getInventoryOrgId(), dto.getReceiveOrgId(), dto.getWarehouseKeeperId(),dto.getReceiverId(), entity);
+
+        log.info("调拨申请单修改，id=【{}】", dto.getId());
+
+        //添加日志
+        MachineInfoEntity old = this.getById(dto.getId());
+        operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), entity.getId(), "", "");
+        //更新主表数据
+        this.updateById(entity);
+        //更新明细数据
+        machineDetailService.update(detailList, entity.getId());
+        return Boolean.TRUE;
     }
 
     @Override
     public Boolean updateAndSubmit(MachineInfoDTO.UpdateDTO dto) {
-        return null;
+        //修改
+        this.update(dto);
+        //提交
+        return this.submit(Arrays.asList(dto.getId()));
     }
 
     @Override
     public Boolean submit(List<String> ids) {
-        return null;
+        //根据ids查询
+        List<MachineInfoEntity> list = getList(ids);
+        //待提交或审核不通过并且未作废允许提交
+        long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
+        log.info("调拨申请单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
+
+        //启动流程 TODO
+
+        //更新审核状态
+        updateApproveStatus(ids, ApproveStatusEnum.APPROVE_ING.getStatus());
+        //操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("提交了一个调拨申请单【%s】", ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), pairList, "提交操作");
+        return Boolean.TRUE;
     }
 
     @Override
     public MachineInfoDTO.ViewDTO view(String id) {
-        return null;
+        MachineInfoDTO.ViewDTO viewDTO = new MachineInfoDTO.ViewDTO();
+        //主表信息
+        MachineInfoEntity entity = this.getById(id);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_99043);
+        }
+        BeanMapperUtils.copy(entity, viewDTO);
+        List<MachineDetailEntity> detailList = machineDetailService.listByMainId(id);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_99044);
+        }
+        List<MachineDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(MachineDetailDTO.ViewDTO.class, detailList);
+
+        //产品信息
+        List<String> skuIds = detailList.stream().map(MachineDetailEntity::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        for (MachineDetailDTO.ViewDTO viewDetailDTO : viewDetailList) {
+            //产品名称
+            if (CollectionUtils.isNotEmpty(skuList)) {
+                String productName = skuList.stream().filter(e -> e.getSkuId().equals(viewDetailDTO.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
+                viewDetailDTO.setProductName(productName);
+            }
+            //根据组织、仓库、sku查询可用库存
+            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDTO.getInventoryOrgId(), viewDTO.getWarehouseId(), viewDetailDTO.getSkuId(), null);
+            viewDetailDTO.setCurInventoryQty(curInventoryQty);
+        }
+        viewDTO.setDetailList(viewDetailList);
+        viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
+        return viewDTO;
     }
 
     @Override
     public Boolean delete(List<String> ids) {
-        return null;
+        //根据ids查询
+        List<MachineInfoEntity> list = getList(ids);
+        //待提交允许删除
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        log.info("直接调拨单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
+        //删除明细数据
+        machineDetailService.removeByMainIds(ids);
+        //删除操作日志
+        operateLogService.removeByBusinessIds(ids);
+        //删除主表数据
+        return this.removeByIds(ids);
     }
 
     @Override
-    public Boolean invalid(List<String> ids, String remark) {
-        return null;
+    public Boolean invalid(List<String> ids, String reason) {
+        //根据ids查询
+        List<MachineInfoEntity> list = getList(ids);
+        //非待提交和审核不通过不能作废
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98005);
+        }
+        long invalidCount = list.stream().filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
+        if (invalidCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98012);
+        }
+        log.info("直接调拨单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
+
+        //更新
+        lambdaUpdate().in(MachineInfoEntity::getId, ids)
+                .set(MachineInfoEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+                .set(MachineInfoEntity::getInvalidRemark, reason)
+                .update();
+        //操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("作废了一个直接调拨单【%s】，作废原因：".concat(reason), ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "作废操作");
+        return Boolean.TRUE;
     }
 
     @Override
     public void approve(BaseApproveParamDTO baseApproveParamDTO) {
+        List<String> ids = baseApproveParamDTO.getIds();
+        //根据ids查询
+        List<MachineInfoEntity
+                > list = getList(ids);
+        //审核中允许审核
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
 
+        String type = baseApproveParamDTO.getType();
+
+        log.info("直接调拨单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
+
+        //审核通过
+        if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
+            log.info("直接调拨单【{}】审核通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
+            //审核通过 TODO(判断是否存在流程)
+
+            //更新单据(后面有流程了调用监听可删)
+            updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
+            //更新库存
+            //updateInventoryTransCore(list);
+        } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
+            log.info("直接调拨单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
+            //中止当前审核流程
+
+            //更新单据状态
+            updateApproveStatusForApprove(ids, ApproveStatusEnum.REJECT.getStatus());
+        }
+        //操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个直接调拨单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "审核操作");
     }
 
     @Override
@@ -230,4 +383,86 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
         }
     }
+
+    /**
+     * 处理数据id
+     */
+    private void doOpHandleDataId(String inventoryOrgId, String receiveOrgId, String warehouseKeeperId,String receiverId, MachineInfoEntity entity) {
+
+        //用户信息
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(warehouseKeeperId,receiverId));
+        if (CollectionUtils.isNotEmpty(userList)) {
+            //仓管员
+            String warehouseKeeperName = userList.stream().filter(obj -> obj.getUserId().equals(warehouseKeeperId)).map(FindUserDTO::getUserName).findFirst().orElse("");
+            entity.setWarehouseKeeperName(warehouseKeeperName);
+            //领料员
+            String receiveOrgName = userList.stream().filter(obj -> obj.getUserId().equals(receiveOrgId)).map(FindUserDTO::getUserName).findFirst().orElse("");
+            entity.setReceiverName(receiveOrgName);
+        }
+
+        //组织信息
+        List<BaseIdDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(inventoryOrgId, receiveOrgId));
+        if (CollectionUtils.isEmpty(accountingCompanyList)) {
+            throw new ServiceException(ApiError.ERROR_9014);
+        }
+        //库存组织名称
+        String inventoryOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(inventoryOrgId)).map(BaseIdDTO::getName).findFirst().orElse("");
+        entity.setInventoryOrgId(inventoryOrgName);
+        //收料组织名称
+        String receiveOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(receiveOrgId)).map(BaseIdDTO::getName).findFirst().orElse("");
+        entity.setReceiveOrgName(receiveOrgName);
+    }
+
+    /**
+     * 根据ids查询数据
+     */
+    private List<MachineInfoEntity> getList(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        List<MachineInfoEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_99043);
+        }
+        return list;
+    }
+
+    /**
+     * 更新审核状态
+     */
+    private void updateApproveStatus(List<String> ids, String approveStatus) {
+        //更新审核状态
+        lambdaUpdate().in(MachineInfoEntity::getId, ids)
+                .set(MachineInfoEntity::getApproveStatus, approveStatus)
+                .update();
+    }
+
+    /**
+     * 审核后更新审核状态、审核人、审核时间
+     */
+    private void updateApproveStatusForApprove(List<String> ids, String approveStatus) {
+        //当前登录人
+        LoginUser userInfo = commonService.getUserInfo();
+
+        this.lambdaUpdate().in(MachineInfoEntity::getId, ids)
+                .set(MachineInfoEntity::getApproveUserId, userInfo.getUid())
+                .set(MachineInfoEntity::getApproveUserName, userInfo.getUserName())
+                .set(MachineInfoEntity::getApproveStatus, approveStatus)
+                .set(MachineInfoEntity::getApproveTime, LocalDateTime.now())
+                .update();
+    }
+
+    /**
+     * 反审核后更新审核状态、审核人、审核时间
+     */
+    private void updateApproveStatusForDisApprove(List<String> ids, String approveStatus) {
+
+        this.lambdaUpdate().in(MachineInfoEntity::getId, ids)
+                .set(MachineInfoEntity::getApproveStatus, approveStatus)
+                .set(MachineInfoEntity::getApproveUserId, "")
+                .set(MachineInfoEntity::getApproveUserName, "")
+                .set(MachineInfoEntity::getApproveTime, null)
+                .update();
+    }
+
 }

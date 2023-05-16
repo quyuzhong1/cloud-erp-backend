@@ -15,7 +15,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class MachineInfoDetailDTO implements Serializable {
+public class MachineDetailDTO implements Serializable {
 
 
     @Data
@@ -34,10 +34,7 @@ public class MachineInfoDetailDTO implements Serializable {
          * 数量
          */
         private Integer qty;
-        /**
-         * 仓库id
-         */
-        private String warehouseId;
+
         /**
          * 库位id
          */
@@ -89,9 +86,9 @@ public class MachineInfoDetailDTO implements Serializable {
         private String productName;
 
         /**
-         * 收货仓库名称
+         * 即时库存
          */
-        private String warehouseName;
+        private Integer curInventoryQty;
 
     }
 }

@@ -187,6 +187,10 @@ public class MachineInfoDTO implements Serializable {
          */
         private String  warehouseKeeperId;
         /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
          * 领料人id
          */
         private String  receiverId;
@@ -214,7 +218,7 @@ public class MachineInfoDTO implements Serializable {
          */
         @NotEmpty(message = "明细不能为空")
         @Valid
-        private List<MachineInfoDetailDTO.AddDTO> detailList;
+        private List<MachineDetailDTO.AddDTO> detailList;
     }
 
 
@@ -233,7 +237,7 @@ public class MachineInfoDTO implements Serializable {
          */
         @NotEmpty(message = "明细不能为空")
         @Valid
-        private List<MachineInfoDetailDTO.UpdateDTO> details;
+        private List<MachineDetailDTO.UpdateDTO> detailList;
 
     }
 
@@ -257,9 +261,19 @@ public class MachineInfoDTO implements Serializable {
         private String  approveStatus;
 
         /**
+         * 审核状态名称
+         */
+        private String  approveStatusName;
+
+        /**
+         * 收货仓库名称
+         */
+        private String warehouseName;
+
+        /**
          * 明细
          */
-        private List<MachineInfoDetailDTO.ViewDTO> details;
+        private List<MachineDetailDTO.ViewDTO> detailList;
     }
 
 }

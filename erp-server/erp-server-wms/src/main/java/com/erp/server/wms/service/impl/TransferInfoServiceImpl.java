@@ -538,10 +538,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //申请人
         if (StringUtils.isNotBlank(warehouseKeeperId)) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(warehouseKeeperId);
-            if (ObjectUtils.isEmpty(userDTO)) {
-                throw new ServiceException(ApiError.ERROR_9011);
+            if (ObjectUtils.isNotEmpty(userDTO)) {
+                entity.setWarehouseKeeperName(userDTO.getUserName());
             }
-            entity.setWarehouseKeeperName(userDTO.getUserName());
         }
         //仓库信息
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(inWarehouseId,outWarehouseId));

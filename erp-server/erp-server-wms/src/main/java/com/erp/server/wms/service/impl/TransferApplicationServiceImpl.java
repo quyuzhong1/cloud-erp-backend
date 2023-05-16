@@ -710,10 +710,9 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         //申请人
         if (StringUtils.isNotBlank(applyUserId)) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(applyUserId);
-            if (ObjectUtils.isEmpty(userDTO)) {
-                throw new ServiceException(ApiError.ERROR_9011);
+            if (ObjectUtils.isNotEmpty(userDTO)) {
+                entity.setApplyUserName(userDTO.getUserName());
             }
-            entity.setApplyUserName(userDTO.getUserName());
         }
         //仓库信息
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(inWarehouseId,outWarehouseId));

@@ -232,7 +232,7 @@ public class TransferInfoDTO implements Serializable {
         private String sourceCode;
 
         /**
-         * 来源类型
+         * 来源类型,selfAdd手动新增，transferApplication调拨申请单
          */
         private String sourceType;
     }
