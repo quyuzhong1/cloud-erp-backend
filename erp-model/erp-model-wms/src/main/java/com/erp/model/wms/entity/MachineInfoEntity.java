@@ -3,12 +3,12 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-
-import java.io.Serializable;
-import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.util.Date;
 
 /**
  * <p>
@@ -47,6 +47,18 @@ public class MachineInfoEntity extends BaseEntity<MachineInfoEntity> {
      */
     @TableField("work_type")
     private String workType;
+
+    /**
+     * 收货仓库id
+     */
+    @TableField("warehouse_id")
+    private String warehouseId;
+
+    /**
+     * 收货仓库名称
+     */
+    @TableField("warehouse_name")
+    private String warehouseName;
 
     /**
      * 库存组织id
@@ -140,6 +152,10 @@ public class MachineInfoEntity extends BaseEntity<MachineInfoEntity> {
     public static final String BILL_DATE = "bill_date";
 
     public static final String WORK_TYPE = "work_type";
+
+    public static final String WAREHOUSE_ID = "warehouse_id";
+
+    public static final String WAREHOUSE_NAME = "warehouse_name";
 
     public static final String INVENTORY_ORG_ID = "inventory_org_id";
 

@@ -36,10 +36,6 @@ public class OtherInstockDetailDTO implements Serializable {
          */
         private String  actualQty;
         /**
-         * 收货仓库id
-         */
-        private String  warehouseId;
-        /**
          * 库位id
          */
         private String  warehouseLocation;

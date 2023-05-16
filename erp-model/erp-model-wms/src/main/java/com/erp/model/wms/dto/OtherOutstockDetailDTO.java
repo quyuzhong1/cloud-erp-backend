@@ -39,10 +39,7 @@ public class OtherOutstockDetailDTO implements Serializable {
          * 单位
          */
         private String   unit;
-        /**
-         * 发货仓库id
-         */
-        private String   warehouseId;
+
         /**
          * 库位id
          */

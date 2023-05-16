@@ -67,6 +67,18 @@ public class OtherOutstockEntity extends BaseEntity<OtherOutstockEntity> {
     private String receiverName;
 
     /**
+     * 收货仓库id
+     */
+    @TableField("warehouse_id")
+    private String warehouseId;
+
+    /**
+     * 收货仓库名称
+     */
+    @TableField("warehouse_name")
+    private String warehouseName;
+
+    /**
      * 库存组织id
      */
     @TableField("inventory_org_id")
@@ -140,6 +152,10 @@ public class OtherOutstockEntity extends BaseEntity<OtherOutstockEntity> {
     public static final String RECEIVER_ID = "receiver_id";
 
     public static final String RECEIVER_NAME = "receiver_name";
+
+    public static final String WAREHOUSE_ID = "warehouse_id";
+
+    public static final String WAREHOUSE_NAME = "warehouse_name";
 
     public static final String INVENTORY_ORG_ID = "inventory_org_id";
 

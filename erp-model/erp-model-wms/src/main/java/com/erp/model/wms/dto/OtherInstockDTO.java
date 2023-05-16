@@ -192,6 +192,11 @@ public class OtherInstockDTO implements Serializable {
         private String   receiverId;
 
         /**
+         * 收货仓库id
+         */
+        private String  warehouseId;
+
+        /**
          * 库存组织id
          */
         private String  orgId;

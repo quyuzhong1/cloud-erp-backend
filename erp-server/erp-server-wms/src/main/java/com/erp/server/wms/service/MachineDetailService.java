@@ -11,7 +11,7 @@ import java.util.List;
  * 加工单明细 服务类
  * </p>
  *
- * @author lambda
+ * @author will
  * @since 2023-05-10
  */
 public interface MachineDetailService extends SuperService<MachineDetailEntity> {

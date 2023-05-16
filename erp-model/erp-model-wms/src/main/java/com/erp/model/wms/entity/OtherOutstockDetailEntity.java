@@ -60,18 +60,6 @@ public class OtherOutstockDetailEntity extends BaseEntity<OtherOutstockDetailEnt
     private String unit;
 
     /**
-     * 收货仓库id
-     */
-    @TableField("warehouse_id")
-    private String warehouseId;
-
-    /**
-     * 收货仓库名称
-     */
-    @TableField("warehouse_name")
-    private String warehouseName;
-
-    /**
      * 库位
      */
     @TableField("warehouse_location")
@@ -95,10 +83,6 @@ public class OtherOutstockDetailEntity extends BaseEntity<OtherOutstockDetailEnt
     public static final String ACTUAL_QTY = "actual_qty";
 
     public static final String UNIT = "unit";
-
-    public static final String WAREHOUSE_ID = "warehouse_id";
-
-    public static final String WAREHOUSE_NAME = "warehouse_name";
 
     public static final String WAREHOUSE_LOCATION = "warehouse_location";
 
