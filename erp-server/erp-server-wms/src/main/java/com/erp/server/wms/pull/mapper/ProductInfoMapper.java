@@ -24,4 +24,10 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
      * @return java.util.List<com.erp.model.plm.entity.ProductInfoEntity>
      **/
     List<ProductInfoEntity> getProductInfoAll();
+
+    /**
+     * 获取所有非空的spu no
+     * @return
+     */
+    List<String> getNotEmptySpuNos();
 }

@@ -261,7 +261,7 @@ public class InitStockDTO implements Serializable {
 
 
         /**
-         * spu编码
+         * spu编码 接口地址：/wms/drop/down/product/spuNo/list
          */
         private List<String> spuNoList;
 
@@ -271,7 +271,7 @@ public class InitStockDTO implements Serializable {
         private List<String> warehouseIdList;
 
         /**
-         * 销售状态集合
+         * 销售状态集合 接口地址：plm/common/enumDropDown?type=SaleState
          */
         private List<Integer> saleStatusList;
 

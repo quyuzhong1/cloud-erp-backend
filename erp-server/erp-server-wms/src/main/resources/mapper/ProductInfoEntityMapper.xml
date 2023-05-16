@@ -53,4 +53,9 @@
         FROM product_info
     </select>
 
+    <select id="getNotEmptySpuNos" resultType="java.lang.String">
+        select spu_no from product_info where is_deleted = false and spu_no is not null and spu_no != ''
+    </select>
+
+
 </mapper>

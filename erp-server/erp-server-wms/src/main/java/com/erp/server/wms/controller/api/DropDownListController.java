@@ -9,7 +9,9 @@ import com.erp.model.wms.entity.QcRuleEntity;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
+import com.erp.server.wms.pull.service.ProductInfoService;
 import com.erp.server.wms.service.QcRuleService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,6 +34,9 @@ public class DropDownListController extends BaseController {
 
     @Resource
     private QcRuleService qcRuleService;
+
+    @Autowired
+    private ProductInfoService productInfoService;
 
 
     /**
@@ -102,6 +107,16 @@ public class DropDownListController extends BaseController {
                 .map(x -> new BaseDropDownDTO.QcTypeDTO(x.getCode(), x.getName(),x.getIsInside()))
                 .collect(Collectors.toList());
         return success(result);
+    }
+
+    /**
+     * spu no下拉
+     *
+     * @return
+     */
+    @GetMapping("/product/spuNo/list")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listSpuNoDropDown() {
+        return success(productInfoService.getNotEmptySpuNos());
     }
 
 
