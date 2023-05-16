@@ -484,7 +484,6 @@ public enum ApiError implements Serializable {
     ERROR_99047(99047,"未找到直接调拨单"),
     ERROR_99048(99048,"未找到直接调拨明细"),
     ERROR_99049(99049,"未找到调拨方向"),
-    ERROR_99050(99050,"调拨数量不能超过【%s】"),
     ERROR_99051(99051,"SKU【%s】已完成调拨"),
 
 
@@ -507,8 +506,8 @@ public enum ApiError implements Serializable {
     EXPORT_DATA_EMPTY(92009,"导出数据不能为空"),
     ERROR_92012(92012,"已下推销售退货通知单，不能反审核"),
     ERROR_92013(92013,"已下推销售退货签收单，不能反审核"),
-
-
+    ERROR_92014(92014,"只有已审核的销售退货订单可以下推销售退货通知单"),
+    ERROR_92015(92015,"销售订单详情不存在"),
 
 
 

@@ -496,6 +496,10 @@ public class SoDeliveryNoticeDTO {
          */
         private String id;
         /**
+         * 主键id
+         */
+        private String mainId;
+        /**
          * 销售单id
          */
         private String sourceId;
@@ -507,6 +511,10 @@ public class SoDeliveryNoticeDTO {
          * 销售单号
          */
         private String sourceCode;
+        /**
+         * 单据编号
+         */
+        private String code;
         /**
          * 客户
          */

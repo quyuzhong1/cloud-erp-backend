@@ -1,13 +1,18 @@
 package com.erp.server.wms.pull.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.wms.pull.mapper.ProductInfoMapper;
 import com.erp.server.wms.pull.service.ProductInfoService;
+import com.google.common.collect.Lists;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @CreateTime: 2023-05-11  19:19
@@ -30,6 +35,19 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         } else {
             return this.save(entity);
         }
+    }
+
+    @Override
+    public List<BaseDropDownDTO.CommonDTO> getNotEmptySpuNos() {
+        List<String> spuNos = this.baseMapper.getNotEmptySpuNos();
+        if(CollUtil.isNotEmpty(spuNos)) {
+            spuNos = spuNos.stream().distinct().collect(Collectors.toList());
+        }
+        if(CollUtil.isNotEmpty(spuNos)) {
+            return spuNos.stream().map(x -> new BaseDropDownDTO.CommonDTO(x, x))
+                    .collect(Collectors.toList());
+        }
+        return null;
     }
 
 }

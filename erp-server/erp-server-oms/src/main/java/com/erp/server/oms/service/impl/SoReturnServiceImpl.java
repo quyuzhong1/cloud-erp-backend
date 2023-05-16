@@ -458,15 +458,12 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
                 && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
         ).count();
-
         if (count != entityList.size()) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
         //删除详情表
         soReturnDetailService.delete(ids);
-
         boolean flag = this.removeByIds(ids);
-
         //删除主表
         return flag;
     }

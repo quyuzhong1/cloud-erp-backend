@@ -102,7 +102,11 @@ public class SoReturnNoticeDTO {
         /**
          * 单据状态
          */
-        private ApproveStatusEnum approveStatus;
+        private String approveStatus;
+        /**
+         * 单据状态
+         */
+        private String approveStatusName;
         /**
          * 作废状态
          */
@@ -193,7 +197,7 @@ public class SoReturnNoticeDTO {
     @NoArgsConstructor
     public static class Add {
         /**
-         * 销售单id
+         * 退货单id
          */
         private String sourceId;
         /**
@@ -374,18 +378,37 @@ public class SoReturnNoticeDTO {
     @NoArgsConstructor
     public static class GenerateSoReturnReceiveView {
         /**
+         * id
+         */
+        private String id;
+        /**
+         * 主表id
+         */
+        private String mainId;
+        /**
          * 退货单id
          */
         private String sourceId;
         /**
+         * 退货单明细id
+         */
+        private String sourceDetailId;
+        /**
          * 退货单号
          */
         private String sourceCode;
-
+        /**
+         * 单据编号
+         */
+        private String code;
         /**
          * 客户id
          */
         private String customerId;
+        /**
+         * 客户名称
+         */
+        private String customerName;
         /**
          * skuId
          */
