@@ -623,7 +623,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         DocsDTO.DeliveryDocsPowerDTO result = new DocsDTO.DeliveryDocsPowerDTO();
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         String userAccount = "";
-        String userId = "1633756775134134274";
+        String userId = "";
         if (loginUser != null) {
             userAccount = loginUser.getUserAccount();
             userId = loginUser.getUid();
