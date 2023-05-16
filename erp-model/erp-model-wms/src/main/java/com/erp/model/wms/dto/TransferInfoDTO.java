@@ -334,6 +334,21 @@ public class TransferInfoDTO implements Serializable {
         private String  inOrgName;
 
         /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源编号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型 selfAdd手动新增，transferApplication调拨申请单
+         */
+        private String sourceType;
+
+        /**
          * 明细
          */
         private List<TransferInfoDetailDTO.ViewDTO> detailList;

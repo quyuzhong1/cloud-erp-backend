@@ -489,4 +489,17 @@ public class TransferApplicationDTO implements Serializable {
          */
         private String remark;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class DropDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 调拨申请单号
+         */
+        private String code;
+    }
 }

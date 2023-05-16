@@ -252,4 +252,20 @@
         </where>
     </select>
 
+    <select id="listTransferApplicationDrop" resultType="com.erp.model.wms.dto.TransferApplicationDTO$DropDTO">
+        select
+           ta.id,
+           ta.code
+        from transfer_application ta
+        left join  transfer_application_detail tad on  ta.id = tad.main_id and tad.is_deleted = false
+        left join transfer_info_detail tid on tad.id = tid.source_detail_id and  tid.is_deleted = false
+        <where>
+            ta.is_deleted = false and tid.id is null
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
+        </where>
+        group by ta.id ,ta.code
+    </select>
+
 </mapper>

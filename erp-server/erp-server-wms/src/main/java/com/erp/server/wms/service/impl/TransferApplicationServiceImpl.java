@@ -549,6 +549,16 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<TransferApplicationDTO.DropDTO> listTransferApplicationDrop(PermissionsDTO dto) {
+        return baseMapper.listTransferApplicationDrop(dto);
+    }
+
+    @Override
+    public List<PickingDetailDTO.CommonDTO> listPickingDetail(String id) {
+        return pickingDetailService.listPickingDetailBySourceId(id);
+    }
+
 
     /**
      * @description: 下推数据查询
