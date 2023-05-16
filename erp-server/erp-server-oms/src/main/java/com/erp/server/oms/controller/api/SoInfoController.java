@@ -11,7 +11,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoInfoDTO;
-import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.SoInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -87,7 +86,7 @@ public class SoInfoController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "oms:so:submit",
-            serviceClass = CustomerInfoService.class,
+            serviceClass = SoInfoService.class,
             keyIdName = "ids"
     )
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -102,8 +101,15 @@ public class SoInfoController extends BaseController {
      * @return
      */
     @PostMapping("/addAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:addAndSubmit",
+            serviceClass = SoInfoService.class,
+            keyIdName = "id"
+    )
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated SoInfoDTO.AddDTO dto) {
-        return success();
+        Boolean result = soInfoService.addAndSubmit(dto);
+        return result ? success() : failure();
     }
 
 
@@ -114,6 +120,12 @@ public class SoInfoController extends BaseController {
      * @return
      */
     @PostMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:view",
+            serviceClass = SoInfoService.class,
+            keyIdName = "id"
+    )
     public ApiResult<SoInfoDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         return success(null);
     }

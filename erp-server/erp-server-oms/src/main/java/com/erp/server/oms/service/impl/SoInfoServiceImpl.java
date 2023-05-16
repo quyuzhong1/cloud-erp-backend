@@ -22,6 +22,7 @@ import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
@@ -161,6 +162,24 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         return result;
 
+    }
+
+
+    /**
+     * 新增并提交
+     * @author yl
+     * @date 2023-05-16 14:49
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    @Override
+    public Boolean addAndSubmit(SoInfoDTO.AddDTO dto) {
+        String id = this.add(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        Boolean result = this.submit(Arrays.asList(id));
+        return result;
     }
 
 

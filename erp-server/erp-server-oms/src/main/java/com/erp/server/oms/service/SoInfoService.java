@@ -34,4 +34,14 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return java.lang.Boolean
      */
     Boolean submit(List<String> ids);
+
+    
+    /**
+     * 新增并提交
+     * @author yl
+     * @date 2023-05-16 14:49
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean addAndSubmit(SoInfoDTO.AddDTO dto);
 }
