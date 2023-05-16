@@ -91,6 +91,10 @@ public class SoReturnNoticeDetailDTO {
          */
         private String mainId;
         /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+        /**
          * skuId
          */
         private String skuId;
@@ -98,6 +102,10 @@ public class SoReturnNoticeDetailDTO {
          * sku编号
          */
         private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
         /**
          * 销售数量
          */
@@ -122,9 +130,5 @@ public class SoReturnNoticeDetailDTO {
          * 备注
          */
         private String remark;
-        /**
-         * 销售单明细表id
-         */
-        private String sourceDetailId;
     }
 }

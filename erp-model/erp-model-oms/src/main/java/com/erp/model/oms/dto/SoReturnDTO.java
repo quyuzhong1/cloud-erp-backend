@@ -345,6 +345,14 @@ public class SoReturnDTO {
          */
         private String id;
         /**
+         * 销售单id
+         */
+        private String sourceId;
+        /**
+         * 销售单编号
+         */
+        private String sourceCode;
+        /**
          * 单据编号
          */
         private String code;
@@ -360,14 +368,6 @@ public class SoReturnDTO {
          * 单据类型
          */
         private String type;
-        /**
-         * 销售单id
-         */
-        private String sourceId;
-        /**
-         * 销售单编号
-         */
-        private String sourceCode;
         /**
          * 销售组织id
          */

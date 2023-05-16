@@ -102,6 +102,10 @@ public class SoReturnDetailDTO {
          */
         private String mainId;
         /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+        /**
          * sku表id
          */
         private String skuId;
@@ -141,9 +145,5 @@ public class SoReturnDetailDTO {
          * 备注
          */
         private String remark;
-        /**
-         * 备注
-         */
-        private String sourceDetailId;
     }
 }
