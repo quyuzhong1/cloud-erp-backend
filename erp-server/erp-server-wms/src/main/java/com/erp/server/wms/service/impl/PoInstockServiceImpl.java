@@ -287,21 +287,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
-        List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listByMainIds(ids);
-        if (CollectionUtils.isEmpty(poInstockDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98051);
-        }
-        List<String> poIds = list.stream().map(PoInstockEntity::getPurchaseOrderId).distinct().collect(Collectors.toList());
-
-        //质检单未质检完成则不允许提交
-        List<QcInfoEntity> qcList =  qcInfoService.listByPoIds(poIds);
-        if (CollectionUtils.isNotEmpty(qcList)) {
-            List<QcInfoEntity> resultList = qcList.stream().filter(obj -> QcBillStatusEnum.DRAFT.equals(obj.getQcStatus()) || QcBillStatusEnum.WAIT_QC.equals(obj.getQcStatus())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(resultList)) {
-                String qcCodes = resultList.stream().map(QcInfoEntity::getPurchaseOrderCode).distinct().collect(Collectors.joining());
-                throw new ServiceException(new ApiResult(1,String.format("采购订单【%s】未质检完成不支持提交",qcCodes)));
-            }
-        }
 
         log.info("采购入库单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
 
@@ -446,6 +431,22 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98006);
+        }
+
+        List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listByMainIds(ids);
+        if (CollectionUtils.isEmpty(poInstockDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98051);
+        }
+        List<String> poIds = list.stream().map(PoInstockEntity::getPurchaseOrderId).distinct().collect(Collectors.toList());
+
+        //质检单未质检完成则不允许提交
+        List<QcInfoEntity> qcList =  qcInfoService.listByPoIds(poIds);
+        if (CollectionUtils.isNotEmpty(qcList)) {
+            List<QcInfoEntity> resultList = qcList.stream().filter(obj -> QcBillStatusEnum.DRAFT.equals(obj.getQcStatus()) || QcBillStatusEnum.WAIT_QC.equals(obj.getQcStatus())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(resultList)) {
+                String qcCodes = resultList.stream().map(QcInfoEntity::getPurchaseOrderCode).distinct().collect(Collectors.joining());
+                throw new ServiceException(new ApiResult(1,String.format("采购订单【%s】未质检完成不支持审核",qcCodes)));
+            }
         }
 
         String type = baseApproveParamDTO.getType();
