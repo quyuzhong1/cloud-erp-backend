@@ -371,6 +371,11 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
         private String status;
 
         /**
+         * 数据审核状态（代办、已办、已发送）
+         */
+        private String statusName;
+
+        /**
          * 数量
          */
         private Integer quantity;

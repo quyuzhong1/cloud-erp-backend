@@ -353,6 +353,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 List<WorkOptionDTO.Module> waitHandleCount = baseMapper.getWaitHandleCount(userId, ApproveStatusEnum.APPROVE_ING.getStatus(), optionEnum.getCode());
                 Integer quantity = waitHandleCount.stream().map(WorkOptionDTO.Module::getQuantity).reduce(MathUtil.ZERO, Integer::sum);
                 approveSearchOptionDTO.setStatus(optionEnum.getCode());
+                approveSearchOptionDTO.setStatusName(ApproveSearchOptionEnum.getName(optionEnum.getCode()));
                 approveSearchOptionDTO.setQuantity(quantity);
                 approveSearchOptionDTO.setModuleList(waitHandleCount);
                 list.add(approveSearchOptionDTO);
@@ -362,6 +363,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 List<WorkOptionDTO.Module> approveCount = baseMapper.getApproveCount(userId, ApproveStatusEnum.APPROVE.getStatus(), optionEnum.getCode());
                 Integer quantity = approveCount.stream().map(WorkOptionDTO.Module::getQuantity).reduce(MathUtil.ZERO, Integer::sum);
                 approveSearchOptionDTO.setStatus(optionEnum.getCode());
+                approveSearchOptionDTO.setStatusName(ApproveSearchOptionEnum.getName(optionEnum.getCode()));
                 approveSearchOptionDTO.setQuantity(quantity);
                 approveSearchOptionDTO.setModuleList(approveCount);
                 list.add(approveSearchOptionDTO);
@@ -369,6 +371,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 //获取我的抄送我的数量
                 WorkOptionDTO.ApproveSearchOptionDTO approveSearchOptionDTO = new WorkOptionDTO.ApproveSearchOptionDTO();
                 approveSearchOptionDTO.setStatus(optionEnum.getCode());
+                approveSearchOptionDTO.setStatusName(ApproveSearchOptionEnum.getName(optionEnum.getCode()));
                 approveSearchOptionDTO.setQuantity(0);
                 approveSearchOptionDTO.setModuleList(new ArrayList<>());
                 list.add(approveSearchOptionDTO);
@@ -378,6 +381,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 List<WorkOptionDTO.Module> createCount = baseMapper.getCreateCount(userId, ApproveStatusEnum.APPROVE.getStatus(), optionEnum.getCode());
                 Integer quantity = createCount.stream().map(WorkOptionDTO.Module::getQuantity).reduce(MathUtil.ZERO, Integer::sum);
                 approveSearchOptionDTO.setStatus(optionEnum.getCode());
+                approveSearchOptionDTO.setStatusName(ApproveSearchOptionEnum.getName(optionEnum.getCode()));
                 approveSearchOptionDTO.setQuantity(quantity);
                 approveSearchOptionDTO.setModuleList(createCount);
                 list.add(approveSearchOptionDTO);
