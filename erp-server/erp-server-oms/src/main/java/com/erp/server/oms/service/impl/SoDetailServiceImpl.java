@@ -1,23 +1,29 @@
 package com.erp.server.oms.service.impl;
 
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoOutstockDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.enums.ReturnTypeEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.mapper.SoDetailMapper;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoReturnDetailService;
 import com.erp.server.oms.service.SoReturnService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -41,6 +47,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     /**
      * 根据退货单详情表id查询退货单
@@ -67,24 +76,52 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             addDetailView.setInventoryOrgName(warehouse.getName());
             Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(addDetailView.getId()) && ReturnTypeEnum.REPLENISHMENT.getCode().equals(req.getReturnTypeDict())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             Integer actualQty = soOutstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(addDetailView.getId())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
-            addDetailView.setAvailableQty(addDetailView.getSalesQty()+returnQty);
+            addDetailView.setAvailableQty(addDetailView.getSalesQty() + returnQty);
             addDetailView.setDeliveryQty(actualQty);
-            addDetailView.setUnDeliveryQty(addDetailView.getSalesQty()+returnQty - actualQty);
+            addDetailView.setUnDeliveryQty(addDetailView.getSalesQty() + returnQty - actualQty);
         }
         return list;
     }
 
 
-
     /**
      * 添加销售订单明细
-     * @author yl
-     * @date 2023-05-16 9:32
+     *
      * @param mainId detailList
      * @return
+     * @author yl
+     * @date 2023-05-16 9:32
      */
     @Override
     public void addSoDetail(String mainId, List<SoDetailDTO.AddDTO> detailList) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        List<SoDetailEntity> addList = BeanMapper.copyList(detailList, SoDetailEntity.class);
+        List<String> skuIdList = detailList.stream().map(SoDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        for (SoDetailEntity item : addList) {
+            item.setMainId(mainId);
+            String skuId = item.getSkuId();
+            //是否赠品
+            Boolean isGift = item.getIsGift();
+            BigDecimal price = item.getPrice();
+            Integer qty = item.getQty();
+            //当是赠品的时候  单价为0
+            if (isGift) {
+                price = BigDecimal.ZERO;
+            }
+            //金额
+            BigDecimal amount = MathUtil.multiply(price, qty);
+            item.setAmount(amount);
+            String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
+            item.setSkuNo(skuNo);
+
+        }
 
     }
+
+
+
 }
