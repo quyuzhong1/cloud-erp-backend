@@ -506,16 +506,10 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             List<TransferInfoDetailDTO.AddDTO> addDetailList = new ArrayList<>();
             for (TransferApplicationDTO.GenerateTransferInfoDTO dto : value) {
                 if (CollectionUtils.isNotEmpty(transferInfoDetailList)) {
-                    //申请数量
-                    Integer applyQty = detailList.stream().filter(obj -> obj.getId().equals(dto.getSourceDetailId())).map(TransferApplicationDetailEntity::getQty).findFirst().orElse(MathUtil.ZERO);
-
-                    //已调拨数量
-                    Integer totalQty = transferInfoDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(dto.getSourceDetailId())).map(TransferInfoDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
-                    if (applyQty.intValue() == totalQty.intValue()) {
+                    //已调拨
+                    long count = transferInfoDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(dto.getSourceDetailId())).count();
+                    if (count > 0) {
                         throw new ServiceException(ApiError.ERROR_99051.code, String.format(ApiError.ERROR_99051.msg, dto.getSkuNo()));
-                    }
-                    if (dto.getQty().intValue() > applyQty.intValue() - totalQty.intValue()) {
-                        throw new ServiceException(ApiError.ERROR_99050.code, String.format(ApiError.ERROR_99050.msg, applyQty - totalQty));
                     }
                 }
                 TransferInfoDetailDTO.AddDTO addDetailDTO = new TransferInfoDetailDTO.AddDTO();
