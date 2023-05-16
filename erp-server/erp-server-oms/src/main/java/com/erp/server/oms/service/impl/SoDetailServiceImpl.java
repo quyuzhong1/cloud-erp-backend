@@ -9,6 +9,7 @@ import com.erp.model.oms.entity.SoOutstockDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.wms.dto.InventoryDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -56,6 +57,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Resource
     private SysUserFeign sysUserFeign;
 
+
     /**
      * 根据退货单详情表id查询退货单
      *
@@ -88,6 +90,41 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         return list;
     }
 
+
+    /**
+     * 获取订单详情数据
+     *
+     * @param mainId
+     * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.ViewDTO>
+     * @author yl
+     * @date 2023-05-16 16:30
+     */
+    @Override
+    public List<SoDetailDTO.ViewDTO> listByMainId(String mainId) {
+        List<SoDetailEntity> dbList = this.listBaseByMainId(mainId);
+        List<SoDetailDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, SoDetailDTO.ViewDTO.class);
+        List<String> skuIdList = resultList.stream().map(SoDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        InventoryDTO.findSkuInventoryParamDTO paramDTO = new InventoryDTO.findSkuInventoryParamDTO();
+        List<InventoryDTO.SkuInventoryTotalDTO> skuInventoryTotalList = wmsTaskFeign.listSkuInventory(paramDTO);
+
+        for (SoDetailDTO.ViewDTO item : resultList) {
+            String skuId = item.getSkuId();
+            String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
+            item.setProductName(skuName);
+
+
+        }
+
+        return null;
+    }
+
+
+    private List<SoDetailEntity> listBaseByMainId(String mainId) {
+        return this.lambdaQuery().eq(SoDetailEntity::getMainId, mainId).list();
+
+    }
 
     /**
      * 添加销售订单明细

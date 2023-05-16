@@ -42,4 +42,14 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.AddDetailView>
      **/
     List<SoDetailDTO.AddDetailView> listAddDetailView(String id);
+
+    
+    /**
+     * 获取订单详情数据
+     * @author yl
+     * @date 2023-05-16 16:30
+     * @param mainId
+     * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.ViewDTO>
+     */
+    List<SoDetailDTO.ViewDTO> listByMainId(String mainId);
 }

@@ -127,7 +127,8 @@ public class SoInfoController extends BaseController {
             keyIdName = "id"
     )
     public ApiResult<SoInfoDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
-        return success(null);
+        SoInfoDTO.ViewDTO view=soInfoService.view(dto.getId());
+        return success(view);
     }
 
     /**

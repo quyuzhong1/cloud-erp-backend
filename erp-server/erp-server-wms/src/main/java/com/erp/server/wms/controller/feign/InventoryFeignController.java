@@ -1,12 +1,15 @@
 package com.erp.server.wms.controller.feign;
 
 import com.common.core.controller.BaseController;
+import com.erp.model.wms.dto.InventoryDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.InventoryTransCoreService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @Classname: InventoryFeignController
@@ -26,6 +29,7 @@ public class InventoryFeignController extends BaseController {
 
     /**
      * 出入库业务，按业务类型
+     *
      * @param dto
      */
     @PostMapping("/approveInOutStockByType")
@@ -35,6 +39,7 @@ public class InventoryFeignController extends BaseController {
 
     /**
      * 调拨业务，按业务类型
+     *
      * @param dto
      */
     @PostMapping("/approveTransferByType")
@@ -44,6 +49,7 @@ public class InventoryFeignController extends BaseController {
 
     /**
      * 调拨业务，自定义规则
+     *
      * @param dto
      */
     @PostMapping("/approveByRule")
@@ -53,6 +59,7 @@ public class InventoryFeignController extends BaseController {
 
     /**
      * 反审核
+     *
      * @param dto
      */
     @PostMapping("/unApprove")
@@ -63,6 +70,7 @@ public class InventoryFeignController extends BaseController {
 
     /**
      * 根据组织、仓库、库位、状态获取可用库存数量；如果库位为空，则不判断库位
+     *
      * @param orgId
      * @param warehouseId
      * @param skuId
@@ -71,12 +79,13 @@ public class InventoryFeignController extends BaseController {
      */
     @PostMapping("/getUsableInventoryTotal")
     public Integer getUsableInventoryTotal(@RequestParam(value = "orgId") String orgId, @RequestParam(value = "warehouseId") String warehouseId,
-                                           @RequestParam(value = "skuId") String skuId,@RequestParam(value = "warehouseLocationId", required = false)  String warehouseLocationId) {
+                                           @RequestParam(value = "skuId") String skuId, @RequestParam(value = "warehouseLocationId", required = false) String warehouseLocationId) {
         return inventoryService.getUsableInventoryTotal(orgId, warehouseId, skuId, warehouseLocationId);
     }
 
     /**
      * 根据组织、仓库、库位、状态获取库存数量；如果库位为空，则不判断库位
+     *
      * @param orgId
      * @param warehouseId
      * @param skuId
@@ -85,7 +94,7 @@ public class InventoryFeignController extends BaseController {
      */
     @PostMapping("/getInventoryTotal")
     public Integer getInventoryTotal(@RequestParam(value = "orgId") String orgId, @RequestParam(value = "warehouseId") String warehouseId,
-                                     @RequestParam(value = "skuId") String skuId,@RequestParam(value = "warehouseLocationId", required = false)  String warehouseLocationId,
+                                     @RequestParam(value = "skuId") String skuId, @RequestParam(value = "warehouseLocationId", required = false) String warehouseLocationId,
                                      @RequestParam(value = "status") String status) {
         return inventoryService.getInventoryTotal(orgId, warehouseId, skuId, warehouseLocationId, status);
     }
@@ -93,11 +102,28 @@ public class InventoryFeignController extends BaseController {
 
     /**
      * 批量反审核
+     *
      * @param dto
      */
     @PostMapping("/batchUnApprove")
     public void batchUnApprove(@RequestBody @Validated InventoryBatchUnApproveDTO dto) {
         inventoryTransCoreService.batchUnApprove(dto);
     }
+
+
+    /**
+     * 获取sku 的即时库存
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2023-05-16 17:20
+     */
+    @PostMapping("/listSkuInventory")
+    public List<InventoryDTO.SkuInventoryTotalDTO> listSkuInventory(@RequestBody InventoryDTO.findSkuInventoryParamDTO dto) {
+        List<InventoryDTO.SkuInventoryTotalDTO> resultList = inventoryService.listSkuInventory(dto.getSkuIds(), dto.getWarehouseId(), dto.getOrgId(), "");
+        return resultList;
+    }
+
 
 }

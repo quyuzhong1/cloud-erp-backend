@@ -12,6 +12,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
+import com.erp.model.wms.dto.InventoryDTO;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -132,6 +133,23 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Override
     public Integer getUsableInventoryTotal(String orgId, String warehouseId, String skuId, String warehouseLocationId) {
         return this.getInventoryTotal(orgId, warehouseId, skuId, warehouseLocationId, InventoryStatusEnum.USABLE.getCode());
+    }
+
+    /**
+     * 根据skuIds 仓库 ，组织 仓位 获取到 sku即时库存
+     * @author yl
+     * @date 2023-05-16 17:06
+     * @param skuIds
+     * @param warehouseId
+     * @param orgId
+     * @param warehouseLocationId
+     * @return java.util.List<com.erp.model.wms.dto.InventoryDTO.SkuInventoryTotalDTO>
+     */
+    @Override
+    public List<InventoryDTO.SkuInventoryTotalDTO> listSkuInventory(List<String> skuIds, String warehouseId, String orgId, String warehouseLocationId) {
+
+
+        return null;
     }
 
     @Override

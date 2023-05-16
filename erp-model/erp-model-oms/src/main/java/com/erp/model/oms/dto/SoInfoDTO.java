@@ -426,6 +426,12 @@ public class SoInfoDTO implements Serializable {
          * 审核状态code
          */
         private ApproveStatusEnum approveStatus;
+
+        /**
+         * 审核状态名
+         */
+        private String approveStatusName;
+
         /**
          * 类型
          */
@@ -456,6 +462,16 @@ public class SoInfoDTO implements Serializable {
          * 仓库id
          */
         private String warehouseId;
+
+        /**
+         * 仓库组织id
+         */
+        private String warehouseOrgId;
+
+        /**
+         * 仓库组织名
+         */
+        private String warehouseOrgName;
 
         /**
          * 仓库id

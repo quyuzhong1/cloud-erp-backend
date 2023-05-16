@@ -44,4 +44,14 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return java.lang.Boolean
      */
     Boolean addAndSubmit(SoInfoDTO.AddDTO dto);
+
+    
+    /**
+     * 销售订单详情
+     * @author yl
+     * @date 2023-05-16 15:01
+     * @param id
+     * @return com.erp.model.oms.dto.SoInfoDTO.ViewDTO
+     */
+    SoInfoDTO.ViewDTO view(String id);
 }

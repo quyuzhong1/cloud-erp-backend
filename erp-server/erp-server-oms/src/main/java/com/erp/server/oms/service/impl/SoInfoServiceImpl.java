@@ -10,6 +10,7 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -27,10 +28,7 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -121,17 +119,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     /**
      * 提交
-     * @author yl
-     * @date 2023-05-16 14:41
+     *
      * @param ids
      * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-16 14:41
      */
     @Override
     public Boolean submit(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return false;
         }
-        List<SoInfoEntity> list=this.listByIds(ids);
+        List<SoInfoEntity> list = this.listByIds(ids);
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         //审核不通过
@@ -167,10 +166,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     /**
      * 新增并提交
-     * @author yl
-     * @date 2023-05-16 14:49
+     *
      * @param dto
      * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-16 14:49
      */
     @Override
     public Boolean addAndSubmit(SoInfoDTO.AddDTO dto) {
@@ -180,6 +180,28 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         Boolean result = this.submit(Arrays.asList(id));
         return result;
+    }
+
+
+    /**
+     * 销售订单详情
+     *
+     * @param id
+     * @return com.erp.model.oms.dto.SoInfoDTO.ViewDTO
+     * @author yl
+     * @date 2023-05-16 15:01
+     */
+    @Override
+    public SoInfoDTO.ViewDTO view(String id) {
+        SoInfoDTO.ViewDTO view = new SoInfoDTO.ViewDTO();
+        SoInfoEntity soInfo = this.getById(id);
+        if (Objects.isNull(soInfo)) {
+            throw new ServiceException(ApiError.ERROR_92015);
+        }
+        BeanMapper.copy(soInfo, view);
+        List<SoDetailDTO.ViewDTO> detailList = soDetailService.listByMainId(id);
+        view.setDetailList(detailList);
+        return view;
     }
 
 
