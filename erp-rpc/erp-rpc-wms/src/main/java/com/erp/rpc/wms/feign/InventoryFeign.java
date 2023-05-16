@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * @Classname: InventoryFeign
@@ -82,5 +83,15 @@ public interface InventoryFeign {
      */
     @PostMapping("/feign/inventory/batchUnApprove")
     void batchUnApprove(@RequestBody @Validated InventoryBatchUnApproveDTO dto);
+
+    /**
+     * 获取sku 库存状态数量（调用方传输状态）
+     * @author yl
+     * @date 2023-05-16 17:17
+     * @param paramDTO
+     * @return java.util.List<com.erp.model.wms.dto.InventoryDTO.SkuInventoryTotalDTO>
+     */
+    @PostMapping("feign/inventory/listSkuInventory")
+    List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventory(@RequestBody InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO);
 
 }

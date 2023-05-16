@@ -3,22 +3,35 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DistributedLockEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
-import com.erp.model.wms.dto.InventoryDTO;
+import com.common.core.utils.ValidatorUtil;
+import com.erp.model.plm.enums.SaleStateEnum;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.InventoryMapper;
 import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.InventoryService;
+import com.erp.server.wms.service.WarehouseService;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.redisson.api.RLock;
@@ -29,11 +42,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -54,6 +65,12 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Autowired
     private RedissonClient redisson;
+
+    @Autowired
+    private WarehouseService warehouseService;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
 
     @Override
     public InventoryEntity findInventory(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
@@ -141,15 +158,40 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
      * @date 2023-05-16 17:06
      * @param skuIds
      * @param warehouseId
-     * @param orgId
      * @param warehouseLocationId
      * @return java.util.List<com.erp.model.wms.dto.InventoryDTO.SkuInventoryTotalDTO>
      */
     @Override
-    public List<InventoryDTO.SkuInventoryTotalDTO> listSkuInventory(List<String> skuIds, String warehouseId, String orgId, String warehouseLocationId) {
+    public List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventory(List<String> skuIds, String warehouseId, String warehouseLocationId, String status) {
+        InventoryStatusEnum inventoryStatusEnum = InventoryStatusEnum.of(status);
+        ValidatorUtil.isTrue(Objects.nonNull(inventoryStatusEnum),()->new ServiceException("库存状态错误"));
+        WarehouseDTO.UpdateDTO warehouse = warehouseService.detailWithCache(warehouseId);
+        ValidatorUtil.isTrue(Objects.nonNull(warehouse) && StrUtils.isNotEmpty(warehouse.getId()),()->new ServiceException(ApiError.ERROR_99002));
+        // sku id去重
+        skuIds = skuIds.stream().distinct().collect(Collectors.toList());
+        LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(InventoryEntity::getWarehouseId,warehouseId)
+                .eq(InventoryEntity::getDictInventoryStatus, status)
+                .eq(InventoryEntity::getOrgId, warehouse.getOrgId())
+                .eq(InventoryEntity::getWarehouseLocation, StrUtils.null2EmptyWithTrim(warehouseLocationId))
+                .in(InventoryEntity::getSkuId, skuIds);
 
-
-        return null;
+        warehouseLocationId = StrUtils.null2EmptyWithTrim(warehouseLocationId);
+        queryWrapper.eq(InventoryEntity::getWarehouseLocation, StrUtils.null2EmptyWithTrim(warehouseLocationId));
+        List<InventoryEntity> inventoryEntities =  baseMapper.selectList(queryWrapper);
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = Lists.newArrayList();
+        Map<String, InventoryEntity> queryInventoryMap = inventoryEntities.stream().collect(Collectors.toMap(InventoryEntity::getSkuId, Function.identity()));
+        for(String skuId: skuIds) {
+            InventoryQtyDTO.SkuInventoryTotalDTO skuInventoryTotalDTO = new InventoryQtyDTO.SkuInventoryTotalDTO();
+            skuInventoryTotalDTO.setSkuId(skuId);
+            if(queryInventoryMap.containsKey(skuId)) {
+                skuInventoryTotalDTO.setInventoryTotal(queryInventoryMap.get(skuId).getQty());
+            } else {
+                skuInventoryTotalDTO.setInventoryTotal(0);
+            }
+            skuInventoryList.add(skuInventoryTotalDTO);
+        }
+        return skuInventoryList;
     }
 
     @Override
@@ -221,6 +263,40 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
         }
         return resultList;
+    }
+
+    @Override
+    public PagingVO<InventoryDTO.PagingViewDTO> paging(PagingDTO<InventoryDTO.SearchParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setParam(pagingParamDTO.getParam());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<InventoryDTO.PagingViewDTO> pageData = this.baseMapper.page(query, pagingParamDTO.getParams());
+        // 填充名称
+        fillInventoryPageData(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+
+    private void fillInventoryPageData(List<InventoryDTO.PagingViewDTO> list) {
+        if(CollUtil.isEmpty(list)) {
+            return;
+        }
+        Map<String, WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
+        Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
+        list.stream().forEach(data->{
+
+            // 仓库名称赋值
+            WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(data.getWarehouseId(),(v)->warehouseService.detailWithCache(v));
+            if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+                data.setWarehouseName(warehouseDetail.getName());
+            }
+            // 仓库组织
+            SysAccountingCompanyEntity sysAccountingCompanyEntity = accountingCompanyMap.computeIfAbsent(data.getOrgId(),(v)->sysUserFeign.getCompanyById(v));
+            if(Objects.nonNull(sysAccountingCompanyEntity)) {
+                data.setOrgName(sysAccountingCompanyEntity.getCompanyName());
+            }
+            // 销售状态名称
+            data.setSaleStateName(SaleStateEnum.getNameByCode(data.getSaleState()));
+        });
     }
 
 }

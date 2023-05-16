@@ -10,4 +10,71 @@
         update_time = #{updateTime}, update_user_id = #{updateUserId}, update_user_name = #{updateUserName}
         where id = #{id} and version = #{version} and is_deleted = false and qty <![CDATA[>=]]> 0
     </update>
+
+    <select id="page" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PagingViewDTO">
+        select m.warehouse_id,m.org_id,m.sku_id,m.sku_no,m.product_name,m.product_img_url,m.spu_no,m.sale_state,
+        m.dict_inventory_status,m.usable_qty,m.frozen_qty,m.frozen_qty,m.intransit_qty,m.waitqc_qty from (
+            select
+            max(it.warehouse_id) as warehouse_id,
+            max(it.org_id) as org_id,
+            max(it.sku_id) as sku_id,
+            max(it.sku_no) as sku_no,
+            max(pd.name) as product_name,
+            max(pd.images_url) as product_img_url,
+            max(pi.spu_no) as spu_no,
+            max(ps.sale_state) as sale_state,
+            max(it.dict_inventory_status) as dict_inventory_status,
+            sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usable_qty,
+            sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozen_qty,
+            sum(case when it.dict_inventory_status = 'inTransit' then it.qty else 0 end) as intransit_qty,
+            sum(case when it.dict_inventory_status = 'waitQc' then it.qty else 0 end) as waitqc_qty
+            from inventory it
+            left join product_detail pd on pd.id = it.sku_id
+            left join product_info pi on pd.product_id = pi.id
+            left join product_sale ps on ps.sku_id = pd.id
+            <where>
+                it.is_deleted = false
+                <if test="params.skuNoList != null and params.skuNoList.size != ''">
+                    and it.sku_no in
+                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.spuNoList != null and params.spuNoList.size != ''">
+                    and pi.spu_no in
+                    <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.saleStatusList != null and params.saleStatusList.size != ''">
+                    and ps.sale_state in
+                    <foreach collection="params.saleStatusList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+                    and it.warehouse_id in
+                    <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.orgIdLList != null and params.orgIdLList.size != ''">
+                    and it.org_id in
+                    <foreach collection="params.orgIdLList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.param != null and params.param != ''">
+                    ${params.param}
+                </if>
+            </where>
+            group by it.warehouse_id,it.org_id,it.sku_id,it.dict_inventory_status
+        ) m
+        <where>
+            <if test="params.hideZeroInventory">
+               and  m.usable_qty > 0
+            </if>
+        </where>
+        order by m.sku_no,m.warehouse_id,m.dict_inventory_status
+    </select>
 </mapper>

@@ -213,12 +213,12 @@ public class InitStockDTO implements Serializable {
         /**
          * 销售状态编码
          */
-        private Integer saleStatus;
+        private Integer saleState;
 
         /**
          * 销售状态名称
          */
-        private String saleStatusName;
+        private String saleStateName;
 
         /**
          * 仓库id
@@ -261,7 +261,7 @@ public class InitStockDTO implements Serializable {
 
 
         /**
-         * spu编码 接口地址：/wms/drop/down/product/spuNo/list
+         * spu编码 接口地址：/wms/drop/down/product/spuNo/list（一次性返回所有）
          */
         private List<String> spuNoList;
 

@@ -1,7 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
 import com.common.core.controller.BaseController;
-import com.erp.model.wms.dto.InventoryDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.InventoryTransCoreService;
@@ -112,7 +112,7 @@ public class InventoryFeignController extends BaseController {
 
 
     /**
-     * 获取sku 的即时库存
+     * 获取sku 的即时库存（调用方传入状态）
      *
      * @param dto
      * @return void
@@ -120,8 +120,8 @@ public class InventoryFeignController extends BaseController {
      * @date 2023-05-16 17:20
      */
     @PostMapping("/listSkuInventory")
-    public List<InventoryDTO.SkuInventoryTotalDTO> listSkuInventory(@RequestBody InventoryDTO.findSkuInventoryParamDTO dto) {
-        List<InventoryDTO.SkuInventoryTotalDTO> resultList = inventoryService.listSkuInventory(dto.getSkuIds(), dto.getWarehouseId(), dto.getOrgId(), "");
+    public List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventory(@RequestBody InventoryQtyDTO.FindSkuInventoryParamDTO dto) {
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> resultList = inventoryService.listSkuInventory(dto.getSkuIds(), dto.getWarehouseId(), dto.getWarehouseLocationId(), dto.getInventoryStatus());
         return resultList;
     }
 

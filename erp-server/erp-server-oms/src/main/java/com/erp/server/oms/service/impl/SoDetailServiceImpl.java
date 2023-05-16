@@ -9,7 +9,7 @@ import com.erp.model.oms.entity.SoOutstockDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.wms.dto.InventoryDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -105,8 +105,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<SoDetailDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, SoDetailDTO.ViewDTO.class);
         List<String> skuIdList = resultList.stream().map(SoDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-        InventoryDTO.findSkuInventoryParamDTO paramDTO = new InventoryDTO.findSkuInventoryParamDTO();
-        List<InventoryDTO.SkuInventoryTotalDTO> skuInventoryTotalList = wmsTaskFeign.listSkuInventory(paramDTO);
+        InventoryQtyDTO.findSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.findSkuInventoryParamDTO();
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = wmsTaskFeign.listSkuInventory(paramDTO);
 
         for (SoDetailDTO.ViewDTO item : resultList) {
             String skuId = item.getSkuId();

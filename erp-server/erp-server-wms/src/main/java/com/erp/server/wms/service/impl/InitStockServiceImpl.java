@@ -59,7 +59,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -604,7 +603,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
                 data.setWarehouseName(warehouseDetail.getName());
             }
             // 仓库组织
-            SysAccountingCompanyEntity sysAccountingCompanyEntity = accountingCompanyMap.computeIfAbsent(data.getWarehouseId(),(v)->sysUserFeign.getCompanyById(v));
+            SysAccountingCompanyEntity sysAccountingCompanyEntity = accountingCompanyMap.computeIfAbsent(data.getOrgId(),(v)->sysUserFeign.getCompanyById(v));
             if(Objects.nonNull(sysAccountingCompanyEntity)) {
                 data.setOrgName(sysAccountingCompanyEntity.getCompanyName());
             }
@@ -617,8 +616,8 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
                 // 品牌
                 data.setBrandName(skuVO.getBrandName());
                 // 销售状态
-                data.setSaleStatus(skuVO.getSaleState());
-                data.setSaleStatusName(SaleStateEnum.getNameByCode(skuVO.getSaleState()));
+                data.setSaleState(skuVO.getSaleState());
+                data.setSaleStateName(SaleStateEnum.getNameByCode(skuVO.getSaleState()));
             }
         });
     }

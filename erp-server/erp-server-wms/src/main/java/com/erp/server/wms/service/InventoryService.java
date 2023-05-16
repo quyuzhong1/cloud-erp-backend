@@ -1,7 +1,10 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
-import com.erp.model.wms.dto.InventoryDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 
@@ -68,11 +71,10 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @date 2023-05-16 17:06
      * @param skuIds
      * @param warehouseId
-     * @param orgId
      * @param warehouseLocationId
      * @return java.util.List<com.erp.model.wms.dto.InventoryDTO.SkuInventoryTotalDTO>
      */
-    List<InventoryDTO.SkuInventoryTotalDTO> listSkuInventory(List<String> skuIds,String warehouseId,String orgId, String warehouseLocationId);
+    List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventory(List<String> skuIds, String warehouseId, String warehouseLocationId, String status);
 
     /**
      * 根据组织、仓库、库位、状态、SKU获取库存数量；如果库位为空，则不判断库位
@@ -102,5 +104,16 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @return List<InventoryEntity>
      */
     List<InventoryEntity> listPickingDetailInventory(PickingDetailDTO.InventoryParamDTO dto);
+
+
+    /**
+     * 即时库存分页列表
+     * @param pagingParamDTO
+     * @return
+     */
+    PagingVO<InventoryDTO.PagingViewDTO> paging(PagingDTO<InventoryDTO.SearchParamDTO> pagingParamDTO);
+
+
+
 
 }

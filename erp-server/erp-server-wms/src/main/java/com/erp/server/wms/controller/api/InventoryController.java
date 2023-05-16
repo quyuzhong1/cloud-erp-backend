@@ -36,7 +36,7 @@ public class InventoryController extends BaseController {
      */
     @PostMapping("/paging")
     public ApiResult<PagingVO<InventoryDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<InventoryDTO.SearchParamDTO> dto) {
-        return success(null);
+        return success(inventoryService.paging(dto));
     }
 
     /**

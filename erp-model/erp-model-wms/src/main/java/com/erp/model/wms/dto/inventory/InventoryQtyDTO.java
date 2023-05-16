@@ -1,8 +1,11 @@
-package com.erp.model.wms.dto;
+package com.erp.model.wms.dto.inventory;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.List;
 
@@ -15,7 +18,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class InventoryDTO implements Serializable {
+public class InventoryQtyDTO implements Serializable {
 
 
     /**
@@ -45,28 +48,33 @@ public class InventoryDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class findSkuInventoryParamDTO {
+    public static class FindSkuInventoryParamDTO {
 
         /**
          * sku id
          */
+        @NotNull
+        @Size(min = 1,message = "最少传输一条sku信息")
         private List<String> skuIds;
 
 
         /**
          * 仓库id
          */
+        @NotEmpty(message = "仓库不能为空")
         private String warehouseId;
 
-        /**
-         * 组织id
-         */
-        private String orgId;
 
         /**
          * 仓位id
          */
-        String warehouseLocationId;
+        private String warehouseLocationId;
+
+        /**
+         * 库存状态, 请查看枚举类InventoryTransTypeEnum
+         */
+        @NotEmpty(message = "库存状态不能为空")
+        private String inventoryStatus;
 
 
     }

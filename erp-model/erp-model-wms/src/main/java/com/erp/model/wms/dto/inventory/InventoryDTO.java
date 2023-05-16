@@ -8,6 +8,7 @@ import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @Classname: InventoryDTO
@@ -33,7 +34,7 @@ public class InventoryDTO {
 
 
         /**
-         * spu编码
+         * spu编码 接口地址：/wms/drop/down/product/spuNo/list（一次性返回所有）
          */
         private List<String> spuNoList;
 
@@ -43,7 +44,7 @@ public class InventoryDTO {
         private List<String> warehouseIdList;
 
         /**
-         * 销售状态集合
+         * 销售状态集合 接口地址：plm/common/enumDropDown?type=SaleState
          */
         private List<Integer> saleStatusList;
 
@@ -53,9 +54,9 @@ public class InventoryDTO {
         private List<String> orgIdLList;
 
         /**
-         * 是否显示0库存，默认不显示
+         * 是否显示0库存，默认勾上不显示
          */
-        private Boolean showZeroInventory;
+        private Boolean hideZeroInventory;
 
     }
 
@@ -102,15 +103,15 @@ public class InventoryDTO {
 
     }
 
-
     /**
      * 即时库存分页列表
      */
     @Data
     @NoArgsConstructor
     public static class PagingViewDTO {
+
         /**
-         * 库存id集合
+         * 返回库存ids，方便前台勾选导出
          */
         private List<String> ids;
 
@@ -149,12 +150,12 @@ public class InventoryDTO {
         /**
          * 销售状态编码
          */
-        private String saleStatus;
+        private Integer saleState;
 
         /**
          * 销售状态名称
          */
-        private String saleStatusName;
+        private String saleStateName;
 
         /**
          * 仓库id
@@ -190,6 +191,14 @@ public class InventoryDTO {
          * 待检库存数量
          */
         private Integer waitqcQty;
+
+        /**
+         * 实际库存=可用库存+冻结库存
+         * @return
+         */
+        public Integer getRealQty() {
+            return (Objects.nonNull(usableQty) ? usableQty : 0) + (Objects.nonNull(frozenQty) ? frozenQty : 0);
+        }
 
     }
 

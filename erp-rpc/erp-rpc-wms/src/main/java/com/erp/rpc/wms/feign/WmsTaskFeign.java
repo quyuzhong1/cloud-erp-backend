@@ -2,6 +2,7 @@ package com.erp.rpc.wms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
@@ -103,13 +104,4 @@ public interface WmsTaskFeign {
     @PostMapping("feign/syncKingdee/updateBusinessSyncKingdeeStatus")
     void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params);
 
-  /**
-   * 获取sku 即时库存
-   * @author yl
-   * @date 2023-05-16 17:17
-   * @param paramDTO
-   * @return java.util.List<com.erp.model.wms.dto.InventoryDTO.SkuInventoryTotalDTO>
-   */
-    @PostMapping("feign/inventory/listSkuInventory")
-    List<InventoryDTO.SkuInventoryTotalDTO> listSkuInventory(@RequestBody InventoryDTO.findSkuInventoryParamDTO paramDTO);
 }
