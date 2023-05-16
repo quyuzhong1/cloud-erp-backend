@@ -123,7 +123,8 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
      * @date: 2023/5/11 16:20
      * @param entity
      */
-    private void checkProductPurchase (ProductPurchaseEntity entity) {
+    @Override
+    public void checkProductPurchase (ProductPurchaseEntity entity) {
         //ean不能重复
         String ean = entity.getEan();
         if (StringUtils.isBlank(ean)) {

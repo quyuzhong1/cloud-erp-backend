@@ -19,8 +19,8 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * 根据来源id查询出库表
      * @Author Luo_WG
      * @Date 2023/5/12 12:18
-     * @param id
+     * @param ids
      * @return java.util.List<com.erp.model.oms.entity.SoOutstockEntity>
      **/
-    List<SoOutstockEntity> listSoOutstockBySourceId(String id);
+    List<SoOutstockEntity> listBySourceId(List<String> ids);
 }

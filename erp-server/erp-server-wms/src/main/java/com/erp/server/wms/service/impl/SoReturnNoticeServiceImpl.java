@@ -10,7 +10,9 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -22,13 +24,17 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
+import com.erp.model.wms.dto.SoReturnNoticeDetailDTO;
+import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
+import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.OsDeliveryChangeListTypeEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
@@ -37,16 +43,16 @@ import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.SoReturnNoticeMapper;
-import com.erp.server.wms.service.SoOutstockDetailService;
-import com.erp.server.wms.service.SoOutstockService;
-import com.erp.server.wms.service.SoReturnNoticeDetailService;
-import com.erp.server.wms.service.SoReturnNoticeService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -76,6 +82,15 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
 
     @Resource
     private SoReturnFeign soReturnFeign;
+
+    @Resource
+    private OperateLogService operateLogService;
+
+    @Resource
+    private CommonService commonService;
+
+    @Resource
+    private SoReturnReceiveService soReturnReceiveService;
 
     @Override
     public PagingVO<SoReturnNoticeDTO.PagingView> paging(PagingDTO<SoReturnNoticeDTO.PagingParam> pagingParamDTO) {
@@ -210,23 +225,23 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         SoReturnNoticeDTO.View viewDTO = new SoReturnNoticeDTO.View();
         SoReturnNoticeEntity entity = this.getById(id);
         BeanMapperUtils.copy(entity, viewDTO);
-       /* //创库保存详情表的集合
-        List<SoReturnDetailDTO.View> detailViewDTOS = new ArrayList<>();
-        List<SoReturnNoticeDetailEntity> soReturnNoticeDetailEntities = soReturnNoticeDetailService.listDetailByMainId(id);
-        SoInfoEntity soInfoEntity = soInfoService.getById(soReturnEntity.getSourceId());
+        //创库保存详情表的集合
+        List<SoReturnNoticeDetailDTO.View> detailViewDTOS = new ArrayList<>();
+        List<SoReturnNoticeDetailEntity> detailEntityList = soReturnNoticeDetailService.listDetailByMainId(id);
+        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(entity.getSourceId());
         BeanMapperUtils.copy(soInfoEntity, viewDTO);
         //获取sku的id集合
-        List<String> skuIdList = detailEntityList.stream().map(SoReturnDetailEntity::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = detailEntityList.stream().map(SoReturnNoticeDetailEntity::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIdList);
         //获取界面传过来的销售单详情表id集合
-        List<String> orderDetailIds = detailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<String> orderDetailIds = detailEntityList.stream().map(SoReturnNoticeDetailEntity::getSourceDetailId).collect(Collectors.toList());
         //获取销售单详情信息
-        List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(orderDetailIds);
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         viewDTO.setInvalidStatusName(InvalidStatusEnum.getName(viewDTO.getInvalidStatus()));
-        for (SoReturnDetailEntity detailEntity : detailEntityList) {
-            SoReturnDetailDTO.View detailView = new SoReturnDetailDTO.View();
+        for (SoReturnNoticeDetailEntity detailEntity : detailEntityList) {
+            SoReturnNoticeDetailDTO.View detailView = new SoReturnNoticeDetailDTO.View();
             BeanMapperUtils.copy(detailEntity, detailView);
             //产品sku信息
             ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
@@ -239,33 +254,123 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             detailView.setSalesQty(soDetailEntity.getQty());
             detailViewDTOS.add(detailView);
         }
-        viewDTO.setDetailList(detailViewDTOS);*/
+        viewDTO.setDetailList(detailViewDTOS);
         return viewDTO;
     }
 
     @Override
     public Boolean submit(List<String> ids) {
-        return null;
+        List<SoReturnNoticeEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(entityList)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+
+        //未作废、待提交、审核不通过才可以提交
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && (entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
+        ).count();
+
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
+
+        //TODO 待加审核流程
+        //操作日志
+        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("提交了一个销售退货通知单【%s】", ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), pairList, "提交操作");
+
+        //更新审核状态
+        lambdaUpdate().set(SoReturnNoticeEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
+                .in(SoReturnNoticeEntity::getId, ids)
+                .update();
+        return Boolean.TRUE;
     }
 
     @Override
     public Boolean addAndSubmit(SoReturnNoticeDTO.Add dto) {
-        return null;
+        String id = this.add(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        return this.submit(Arrays.asList(id));
     }
 
     @Override
     public Boolean updateAndSubmit(SoReturnNoticeDTO.Update dto) {
-        return null;
+        Boolean update = this.update(dto);
+        if (update) {
+            throw new ServiceException(ApiError.ERROR_1020);
+        }
+        return this.submit(Arrays.asList(dto.getId()));
     }
 
     @Override
     public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
-        return null;
+        List<String> ids = baseApproveParamDTO.getIds();
+        List<SoReturnNoticeEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //判断是否是审核中的状态
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
+        ).count();
+
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
+        //TODO 待加审核流程
+        if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
+            LoginUser userInfo = commonService.getUserInfo();
+            //审核通过
+            lambdaUpdate().set(SoReturnNoticeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+                    .set(SoReturnNoticeEntity::getApproveUserId, userInfo.getUid())
+                    .set(SoReturnNoticeEntity::getApproveUserName, userInfo.getUserName())
+                    .set(SoReturnNoticeEntity::getApproveTime, LocalDateTime.now())
+                    .in(SoReturnNoticeEntity::getId, ids)
+                    .update();
+        } else {
+            //审核不通过
+            lambdaUpdate().set(SoReturnNoticeEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
+                    .in(SoReturnNoticeEntity::getId, ids)
+                    .update();
+        }
+        //操作日志
+        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个销售退货订单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "审核操作");
+        return Boolean.TRUE;
     }
 
     @Override
     public Boolean disApprove(List<String> ids) {
-        return null;
+        List<SoReturnNoticeEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //已审核支持反审核
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+        ).count();
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_99003);
+        }
+        //TODO 待加审核流程
+
+        //下推签收单不能反审核
+        List<SoReturnReceiveEntity> soReturnNoticeEntities = soReturnReceiveService.listBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(soReturnNoticeEntities)) {
+            throw new ServiceException(ApiError.ERROR_92011);
+        }
+        //修改状态为待提交
+        lambdaUpdate().set(SoReturnNoticeEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .in(SoReturnNoticeEntity::getId, ids)
+                .update();
+
+        //操作日志
+        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("反审核了一个销售退货订单【%s】", ModuleTypeEnum.SO_RETURN.getCode(), pairList, "反审核操作");
+        return Boolean.TRUE;
     }
 
     @Override
@@ -299,7 +404,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     }
 
     @Override
-    public List<SoReturnNoticeEntity> listSoReturnNoticeBySourceId(String sourceId) {
-        return lambdaQuery().eq(SoReturnNoticeEntity::getSourceId, sourceId).list();
+    public List<SoReturnNoticeEntity> listBySourceId(List<String> sourceIds) {
+        return lambdaQuery().in(SoReturnNoticeEntity::getSourceId, sourceIds).list();
     }
 }

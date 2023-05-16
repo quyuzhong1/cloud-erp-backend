@@ -56,4 +56,11 @@ public interface ProductPurchaseService extends IService<ProductPurchaseEntity> 
      * @return ProductPurchaseEntity
      */
     ProductPurchaseEntity getBySkuId(String skuId);
+    /**
+     * @description: 采购信息数据验证
+     * @author Will
+     * @date: 2023/5/16 10:03
+     * @param entity
+     */
+    void checkProductPurchase (ProductPurchaseEntity entity);
 }

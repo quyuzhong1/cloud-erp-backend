@@ -12,9 +12,9 @@ public interface SoReturnNoticeFeign {
      * 根据来源id查询销售退货通知单主表
      * @Author Luo_WG
      * @Date 2023/5/15 12:29
-     * @param sourceId sourceId
+     * @param sourceIds sourceIds
      * @return java.util.List<com.erp.model.wms.entity.SoReturnNoticeEntity>
      **/
-    @PostMapping("/feign/soReturnNotice/listDetailBySourceDetailId")
-    List<SoReturnNoticeEntity> listDetailBySourceDetailId(@RequestBody String sourceId);
+    @PostMapping("/feign/soReturnNotice/listBySourceId")
+    List<SoReturnNoticeEntity> listBySourceId(@RequestBody List<String> sourceIds);
 }
