@@ -1,14 +1,17 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.SoInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -62,6 +65,12 @@ public class SoInfoController extends BaseController {
      * @return
      */
     @PostMapping("/add")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:add",
+            serviceClass = SoInfoService.class,
+            keyIdName = "id"
+    )
     public ApiResult add(@RequestBody @Validated SoInfoDTO.AddDTO dto) {
         String id = soInfoService.add(dto);
         return StringUtils.isNotBlank(id)?success():failure();
@@ -75,8 +84,15 @@ public class SoInfoController extends BaseController {
      * @return
      */
     @PostMapping("/submit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:submit",
+            serviceClass = CustomerInfoService.class,
+            keyIdName = "ids"
+    )
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success();
+        Boolean result = soInfoService.submit(dto.getIds());
+        return result?success():failure();
     }
 
     /**

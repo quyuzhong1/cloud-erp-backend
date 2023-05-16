@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
 
+import java.util.List;
+
 /**
  * <p>
  * 销售订单信息 服务类
@@ -22,4 +24,14 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return java.lang.String
      */
     String add(SoInfoDTO.AddDTO dto);
+
+    
+    /**
+     * 提交
+     * @author yl
+     * @date 2023-05-16 14:41
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean submit(List<String> ids);
 }

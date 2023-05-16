@@ -210,7 +210,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (CollectionUtils.isEmpty(ids)) {
             return false;
         }
-        List<CustomerInfoEntity> list = this.list();
+        List<CustomerInfoEntity> list = this.listByIds(ids);
 
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();

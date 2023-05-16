@@ -290,7 +290,7 @@ public class SoInfoDTO implements Serializable {
          */
         @NotNull(message = "单据类型不能为空")
         @StateEnumValue(clazz = BillTypeEnum.class, message = "单据类型有误")
-        private String type;
+        private BillTypeEnum type;
 
         /**
          * 要货日期
