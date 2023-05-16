@@ -10,8 +10,10 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.PoInstockDetailDTO;
-import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.QcBillStatusEnum;
+import com.erp.model.wms.entity.PoInstockDetailEntity;
+import com.erp.model.wms.entity.PoInstockEntity;
+import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.PoInstockDetailMapper;
@@ -24,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -209,16 +210,6 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
             List<PoInstockDetailEntity> value = entry.getValue();
             if (value.size() > MathUtil.ONE) {
                 throw new ServiceException(new ApiResult(1,"sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复")));
-            }
-        }
-
-        //判断是否存在质检单、存在且未质检完成则不支持入库
-        List<QcInfoEntity> qcList =  qcInfoService.listByPoIds(Arrays.asList(entity.getPurchaseOrderId()));
-        if (CollectionUtils.isNotEmpty(qcList)) {
-            List<QcInfoEntity> resultList = qcList.stream().filter(obj -> QcBillStatusEnum.DRAFT.equals(obj.getQcStatus()) || QcBillStatusEnum.WAIT_QC.equals(obj.getQcStatus())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(resultList)) {
-                String qcCodes = resultList.stream().map(QcInfoEntity::getPurchaseOrderCode).distinct().collect(Collectors.joining());
-                throw new ServiceException(new ApiResult(1,String.format("采购订单【%s】未质检完成不支持下推入库单",qcCodes)));
             }
         }
 
