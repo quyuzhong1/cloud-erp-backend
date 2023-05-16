@@ -71,7 +71,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @date: 2023/3/16 11:26
      * @param baseApproveParamDTO
      */
-    void approve(BaseApproveParamDTO baseApproveParamDTO);
+    Boolean approve(BaseApproveParamDTO baseApproveParamDTO);
     /**
      * @description: 批量反审核
      * @author Will

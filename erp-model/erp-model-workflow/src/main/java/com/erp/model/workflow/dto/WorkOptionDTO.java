@@ -357,6 +357,11 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          * 界面可不传默认登录人
          */
         private String userId;
+
+        /**
+         * 单据名称
+         */
+        private String sourceCode;
     }
 
     /**
@@ -395,6 +400,11 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          * 系统分类 plm wms scm
          */
         private String sysClassify;
+
+        /**
+         * 系统分类 plm wms scm
+         */
+        private String sysClassifyName;
 
         /**
          * 数量

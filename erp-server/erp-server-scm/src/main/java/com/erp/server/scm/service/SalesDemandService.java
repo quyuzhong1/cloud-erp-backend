@@ -69,7 +69,7 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @date: 2023/3/15 17:54
     * @param baseApproveParamDTO
      */
-    void approve(BaseApproveParamDTO baseApproveParamDTO);
+    Boolean approve(BaseApproveParamDTO baseApproveParamDTO);
     /**
      * @description: 取消流程
      * @author Will

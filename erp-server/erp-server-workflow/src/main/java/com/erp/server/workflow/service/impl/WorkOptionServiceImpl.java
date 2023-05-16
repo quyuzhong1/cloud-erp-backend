@@ -355,6 +355,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 approveSearchOptionDTO.setStatus(optionEnum.getCode());
                 approveSearchOptionDTO.setStatusName(ApproveSearchOptionEnum.getName(optionEnum.getCode()));
                 approveSearchOptionDTO.setQuantity(quantity);
+                for (WorkOptionDTO.Module module : waitHandleCount) {
+                    module.setSysClassifyName(SysClassifyEnum.getName(module.getSysClassify()));
+                }
                 approveSearchOptionDTO.setModuleList(waitHandleCount);
                 list.add(approveSearchOptionDTO);
             } else if (optionEnum.getCode().equals(ApproveSearchOptionEnum.ALREADYHANDLE.getCode())) {
@@ -365,6 +368,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 approveSearchOptionDTO.setStatus(optionEnum.getCode());
                 approveSearchOptionDTO.setStatusName(ApproveSearchOptionEnum.getName(optionEnum.getCode()));
                 approveSearchOptionDTO.setQuantity(quantity);
+                for (WorkOptionDTO.Module module : approveCount) {
+                    module.setSysClassifyName(SysClassifyEnum.getName(module.getSysClassify()));
+                }
                 approveSearchOptionDTO.setModuleList(approveCount);
                 list.add(approveSearchOptionDTO);
             } else if (optionEnum.getCode().equals(ApproveSearchOptionEnum.CARBONCOPY.getCode())) {
@@ -383,6 +389,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 approveSearchOptionDTO.setStatus(optionEnum.getCode());
                 approveSearchOptionDTO.setStatusName(ApproveSearchOptionEnum.getName(optionEnum.getCode()));
                 approveSearchOptionDTO.setQuantity(quantity);
+                for (WorkOptionDTO.Module module : createCount) {
+                    module.setSysClassifyName(SysClassifyEnum.getName(module.getSysClassify()));
+                }
                 approveSearchOptionDTO.setModuleList(createCount);
                 list.add(approveSearchOptionDTO);
             }

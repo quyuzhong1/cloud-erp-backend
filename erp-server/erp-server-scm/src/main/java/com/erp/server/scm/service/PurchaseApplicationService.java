@@ -62,7 +62,7 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @param baseApproveParamDTO
 
      */
-    void approve(BaseApproveParamDTO baseApproveParamDTO);
+    Boolean approve(BaseApproveParamDTO baseApproveParamDTO);
     /**
      * @description: 批量反审核
      * @author Will

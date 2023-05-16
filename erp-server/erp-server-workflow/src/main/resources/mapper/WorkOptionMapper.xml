@@ -153,6 +153,9 @@
         <if test="params.sysClassify != '' and  params.sysClassify != null">
             AND wm.sys_classify = #{params.sysClassify}
         </if>
+        <if test="params.sourceCode != '' and  params.sourceCode != null">
+            AND pm.business_code = concat('%',#{params.sysClassify},'%')
+        </if>
     </select>
 
 </mapper>
