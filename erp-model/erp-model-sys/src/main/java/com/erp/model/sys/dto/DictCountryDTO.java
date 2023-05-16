@@ -52,6 +52,11 @@ public class DictCountryDTO implements Serializable {
         private String regionCode;
 
         /**
+         * 大区名称
+         */
+        private String areaName;
+
+        /**
          * 是否禁用
          * false 没有
          */

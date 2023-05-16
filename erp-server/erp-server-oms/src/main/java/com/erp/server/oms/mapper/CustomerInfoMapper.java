@@ -30,7 +30,7 @@ public interface CustomerInfoMapper extends BaseMapper<CustomerInfoEntity> {
      * @param params
      * @return com.baomidou.mybatisplus.core.metadata.IPage
      */
-    IPage<CustomerDTO.PagingViewDTO> paging(Page query, @Param("params")CustomerDTO.PagingParamDTO params);
+    IPage<CustomerDTO.PagingViewDTO> paging(Page query, @Param("params")CustomerDTO.PagingParamDTO params,@Param("approveList") List<String> approveList);
 
     
     /**

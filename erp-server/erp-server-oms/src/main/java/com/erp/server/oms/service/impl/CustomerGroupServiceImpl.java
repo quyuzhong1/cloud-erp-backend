@@ -76,7 +76,7 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
      * @date 2023-05-11 18:21
      */
     @Override
-    public List<CustomerGroupDTO.ListDTO> listCustomer() {
+    public List<CustomerGroupDTO.ListDTO> listGroup() {
         List<CustomerGroupEntity> dbList = this.list();
         //获取到所有 客户 用过的分组
         List<String> groupIdList = customerInfoService.listGroup();
@@ -88,9 +88,7 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
                 item.setDisabled(false);
             }
         }
-
-
-        return null;
+        return resultList;
     }
 
 

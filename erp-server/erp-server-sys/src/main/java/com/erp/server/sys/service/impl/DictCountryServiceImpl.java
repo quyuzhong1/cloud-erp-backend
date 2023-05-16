@@ -1,7 +1,6 @@
 package com.erp.server.sys.service.impl;
 
 import com.common.business.service.SuperServiceImpl;
-import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.server.sys.mapper.DictCountryMapper;
@@ -23,7 +22,7 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
 
     @Override
     public List<DictCountryDTO.ListDTO> listCountry() {
-        List<DictCountryEntity> list = this.lambdaQuery().orderByDesc(DictCountryEntity::getIndex).list();
-        return BeanMapper.copyList(list, DictCountryDTO.ListDTO.class);
+        List<DictCountryDTO.ListDTO> list = baseMapper.listCountry();
+        return list;
     }
 }

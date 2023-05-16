@@ -13,6 +13,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -37,12 +38,11 @@ public class CustomerDTO implements Serializable {
 
         /**
          * all 全部
-         * waitSubmit 待提交
-         * approveIng 审核中
+         * waitApprove 待审核
          * approve 已审核
          * reject 审核不通过
          */
-        @StateEnumValue(strValues = {"all", "waitSubmit", "approveIng", "approve", "reject"}, message = "搜索类型有误")
+        @StateEnumValue(strValues = {"all", "waitApprove", "approve", "reject"}, message = "搜索类型有误")
         @NotBlank(message = "搜索类型不能为空")
         private String searchType;
 
@@ -83,7 +83,7 @@ public class CustomerDTO implements Serializable {
         /**
          * 创建时间
          */
-        private List<LocalDateTime> createTimeList;
+        private List<LocalDate> createTimeList;
 
     }
 
@@ -695,6 +695,11 @@ public class CustomerDTO implements Serializable {
          * code
          */
         private String code;
+
+        /**
+         * name
+         */
+        private String name;
 
         /**
          * 是否禁用

@@ -226,6 +226,8 @@ public class SoInfoDTO implements Serializable {
          */
         private String code;
 
+
+
         /**
          * 类型
          */

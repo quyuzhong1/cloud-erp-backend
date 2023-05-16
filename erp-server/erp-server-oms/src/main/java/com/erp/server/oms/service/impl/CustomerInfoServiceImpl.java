@@ -28,6 +28,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.oms.constant.OmsConstant;
 import com.erp.server.oms.mapper.CustomerInfoMapper;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -299,12 +300,34 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         CustomerDTO.PagingParamDTO params = dto.getParams();
         params.setParam(dto.getParam());
         String searchType = params.getSearchType();
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params);
+        List<String> approveList = new ArrayList<>();
+        //待审核
+        if (OmsConstant.WAIT_APPROVE.equals(searchType)) {
+            approveList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+        }
 
+        //已审核
+        if (OmsConstant.APPROVE.equals(searchType)) {
+            approveList.add(ApproveStatusEnum.APPROVE.getStatus());
+        }
+
+        //审核不通过
+        if (OmsConstant.REJECT.equals(searchType)) {
+            approveList.add(ApproveStatusEnum.REJECT.getStatus());
+        }
+
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query, params, approveList);
         List<CustomerDTO.PagingViewDTO> list = pageData.getRecords();
-        if (CollectionUtils.isEmpty(list)) {
-            return new PagingVO<>(pageData);
+        List<String> groupIdList = list.stream().map(CustomerDTO.PagingViewDTO::getGroupId).collect(Collectors.toList());
+        List<CustomerGroupEntity> groupList = customerGroupService.listByIds(groupIdList);
+        for (CustomerDTO.PagingViewDTO item : list) {
+            ApproveStatusEnum approveStatus = item.getApproveStatus();
+            item.setApproveStatusName(approveStatus.getName());
+            String groupId = item.getGroupId();
+            String groupName = groupList.stream().filter(g -> g.getId().equals(groupId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setGroupName(groupName);
         }
 
         return new PagingVO<>(pageData);
@@ -649,9 +672,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             item.setDisabledName(disabledName);
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
-
         }
-
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/CustomerExport.xlsx";
         String name = "客户列表";
@@ -674,6 +695,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         LambdaQueryWrapper<CustomerInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(CustomerInfoEntity::getId,
                 CustomerInfoEntity::getCode,
+                CustomerInfoEntity::getName,
                 CustomerInfoEntity::getDisabled);
         String approve = ApproveStatusEnum.APPROVE.getStatus();
         ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(approve);
@@ -692,18 +714,28 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
      * @date 2023-05-15 15:30
      */
     @Override
-    public Boolean updateStatus(UpdateStateDTO dto) {
-        String id = dto.getId();
-        CustomerInfoEntity customer = this.getById(id);
-        if (Objects.isNull(customer)) {
+    public Boolean updateStatus(UpdateStateDTO.BatchUpdateDTO dto) {
+        List<String> ids = dto.getIds();
+        List<CustomerInfoEntity> customerList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(customerList)) {
             throw new ServiceException(ApiError.ERROR_92011);
         }
-        Boolean oldDisabled = customer.getDisabled();
-        customer.setDisabled(dto.getState());
+        Boolean disabled = dto.getDisabled();
+        long count = customerList.stream().filter(d -> !d.getDisabled() == disabled).count();
+        if (count != customerList.size()) {
+            throw new ServiceException(ApiError.ERROR_98027);
+        }
+        customerList.forEach(d -> d.setDisabled(disabled));
         //添加日志
-        String content = String.format("编辑了客户[%s] 启用状态 有[%s] 变更为[%s]", customer.getName(), oldDisabled != true ? "启用" : "停用", dto.getState() == true ? "停用" : "启用");
-        addModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), id, "修改操作");
-        return this.updateById(customer);
+        List<Pair<String, String>> pairList = customerList.stream().
+                map(obj -> new Pair<>(obj.getId(), obj.getName())).collect(Collectors.toList());
+        String content = String.format("启用状态[%s]变更为[%s]", disabled ? "启用" : "停用", disabled ? "停用" : "启用");
+        String finalContent = "[%s]," + content;
+        operateLogService.batchAddModuleOperateLog(finalContent, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
+
+        return this.updateBatchById(customerList);
+
+
     }
 
 
@@ -744,6 +776,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         LambdaQueryWrapper<CustomerInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(CustomerInfoEntity::getId,
                 CustomerInfoEntity::getCode,
+                CustomerInfoEntity::getName,
                 CustomerInfoEntity::getDisabled);
         String approve = ApproveStatusEnum.APPROVE.getStatus();
         ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(approve);
@@ -773,15 +806,15 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         base.setCode(customer.getCode());
         List<CustomerContactDTO.ViewDTO> contactList = customerContactService.listByMainId(customerId);
         CustomerContactDTO.ViewDTO contact = contactList.stream().filter(c -> c.getIsDefault()).findFirst().orElse(null);
-        if(contact!=null){
+        if (contact != null) {
             base.setPerson(contact.getPerson());
             base.setTelNumber(contact.getTelNumber());
         }
 
         List<CustomerAddressDTO.ViewDTO> addressList = customerAddressService.listByMainId(customerId);
         CustomerAddressDTO.ViewDTO address = addressList.stream().filter(c -> c.getIsDefault()).findFirst().orElse(null);
-        if(address!=null){
-           base.setAddress(address.getAddress());
+        if (address != null) {
+            base.setAddress(address.getAddress());
         }
         return base;
     }

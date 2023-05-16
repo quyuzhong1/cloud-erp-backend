@@ -3,5 +3,19 @@
 <mapper namespace="com.erp.server.sys.mapper.DictCountryMapper">
 
 
-
+    <select id="listCountry" resultType="com.erp.model.sys.dto.DictCountryDTO$ListDTO">
+        SELECT
+           dc.id,
+           dc.name_cn,
+           dc.name_en,
+           dc.short_name_cn,
+           dc.short_name_en,
+           dc.region_code,
+           dga.region_name AS areaName,
+           dc.disabled
+        FROM dict_country dc LEFT JOIN dict_global_area dga
+        ON dc.region_code=dga.id
+        WHERE dc.is_deleted=FALSE
+        ORDER BY dc.index DESC
+    </select>
 </mapper>

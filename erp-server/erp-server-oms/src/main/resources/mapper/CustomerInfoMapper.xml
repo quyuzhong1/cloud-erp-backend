@@ -42,6 +42,12 @@
             AND ci.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > ci.create_time
         </if>
+        <if test="approveList !=null and approveList.size>0">
+            AND ci.approve_status IN
+            <foreach collection="approveList" item="approve" open="(" separator="," close=")">
+                #{approve}
+            </foreach>
+        </if>
         <!--权限-->
         <if test="params.param!=null and params.param!=''">
             ${params.param}
@@ -104,6 +110,13 @@
         <!--权限-->
         <if test="params.param!=null and params.param!=''">
             ${params.param}
+        </if>
+
+        <if test="approveList !=null and approveList.size>0">
+            AND ci.approve_status IN
+            <foreach collection="approveList" item="approve" open="(" separator="," close=")">
+                #{approve}
+            </foreach>
         </if>
         ORDER BY ci.create_time DESC
     </select>

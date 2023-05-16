@@ -162,7 +162,7 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean updateStatus(UpdateStateDTO dto);
+    Boolean updateStatus(UpdateStateDTO.BatchUpdateDTO dto);
 
     
     /**

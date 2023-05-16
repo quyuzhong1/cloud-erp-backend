@@ -46,7 +46,7 @@ public class CustomerGroupController extends BaseController {
      */
     @GetMapping("/list")
     public ApiResult<List<CustomerGroupDTO.ListDTO>> list() {
-        List<CustomerGroupDTO.ListDTO> list = customerGroupService.listCustomer();
+        List<CustomerGroupDTO.ListDTO> list = customerGroupService.listGroup();
         return success(list);
 
     }

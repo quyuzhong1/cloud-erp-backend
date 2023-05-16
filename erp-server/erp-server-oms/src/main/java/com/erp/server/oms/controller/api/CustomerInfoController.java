@@ -274,7 +274,7 @@ public class CustomerInfoController extends BaseController {
      * @return
      */
     @PostMapping("/updateStatus")
-    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
+    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
         Boolean result = customerInfoService.updateStatus(dto);
         return result ? success() : failure();
     }
