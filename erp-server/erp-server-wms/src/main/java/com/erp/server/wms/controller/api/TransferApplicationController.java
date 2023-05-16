@@ -354,19 +354,6 @@ public class TransferApplicationController extends BaseController {
     }
 
     /**
-     * 调拨申请单号
-     * @author Will
-     * @date: 2023/5/16 11:29
-     * @param dto
-     * @return ApiResult<List<DropDTO>>
-     */
-    @PostMapping("/listTransferApplicationDrop")
-    public ApiResult<List<TransferApplicationDTO.DropDTO>> listTransferApplicationDrop(@RequestBody PermissionsDTO dto) {
-        List<TransferApplicationDTO.DropDTO> list = transferApplicationService.listTransferApplicationDrop(dto);
-        return success(list);
-    }
-
-    /**
      * 查询拣货明细
      * @author Will
      * @date: 2023/5/16 12:09

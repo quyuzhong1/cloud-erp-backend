@@ -168,14 +168,6 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      */
     Boolean generateTransferOut(ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList);
     /**
-     * @description: 调拨申请单号查询
-     * @author Will
-     * @date: 2023/5/16 11:30
-     * @param dto
-     * @return List<DropDTO>
-     */
-    List<TransferApplicationDTO.DropDTO> listTransferApplicationDrop(PermissionsDTO dto);
-    /**
      * @description: 查询拣货名称
      * @author Will
      * @date: 2023/5/16 12:09

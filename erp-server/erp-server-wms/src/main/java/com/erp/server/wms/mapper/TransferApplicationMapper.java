@@ -3,7 +3,6 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.PermissionsDTO;
 import com.erp.model.wms.dto.TransferApplicationDTO;
 import com.erp.model.wms.entity.TransferApplicationEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -54,12 +53,4 @@ public interface TransferApplicationMapper extends BaseMapper<TransferApplicatio
      * @return List<ViewGenerateTransferInfoDTO>
      */
     List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferInfo(@Param("ids") List<String> ids);
-    /**
-     * @description: 调拨申请单号查询
-     * @author Will
-     * @date: 2023/5/16 11:34
-     * @param params
-     * @return List<DropDTO>
-     */
-    List<TransferApplicationDTO.DropDTO> listTransferApplicationDrop(@Param("params") PermissionsDTO params);
 }

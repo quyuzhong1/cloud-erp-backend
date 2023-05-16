@@ -99,7 +99,17 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
         }
-        return BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
+        List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
+
+        List<String> orgIds = list.stream().map(WarehouseEntity::getOrgId).collect(Collectors.toList());
+        List<BaseIdDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            for (WarehouseDTO.ListDTO listDTO : resultList) {
+                String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(listDTO.getOrgId())).map(BaseIdDTO::getName).findFirst().orElse(null);
+                listDTO.setOrgName(orgName);
+            }
+        }
+        return resultList;
     }
 
 
