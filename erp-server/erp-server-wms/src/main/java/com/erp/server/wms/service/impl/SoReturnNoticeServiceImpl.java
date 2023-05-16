@@ -22,12 +22,14 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDetailDTO;
+import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
@@ -38,12 +40,10 @@ import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.SoReturnNoticeMapper;
-import com.erp.server.wms.service.SoOutstockDetailService;
-import com.erp.server.wms.service.SoOutstockService;
-import com.erp.server.wms.service.SoReturnNoticeDetailService;
-import com.erp.server.wms.service.SoReturnNoticeService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -77,6 +77,9 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
 
     @Resource
     private SoReturnFeign soReturnFeign;
+
+    @Resource
+    private OperateLogService operateLogService;
 
     @Override
     public PagingVO<SoReturnNoticeDTO.PagingView> paging(PagingDTO<SoReturnNoticeDTO.PagingParam> pagingParamDTO) {
@@ -246,7 +249,31 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
 
     @Override
     public Boolean submit(List<String> ids) {
-        return null;
+        List<SoReturnNoticeEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(entityList)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+
+        //未作废、待提交、审核不通过才可以提交
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && (entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
+        ).count();
+
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
+
+        //TODO 待加审核流程
+        //操作日志
+        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("提交了一个销售退货订单【%s】", ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), pairList, "提交操作");
+
+        //更新审核状态
+        lambdaUpdate().set(SoReturnNoticeEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
+                .in(SoReturnNoticeEntity::getId, ids)
+                .update();
+        return Boolean.TRUE;
     }
 
     @Override
