@@ -21,6 +21,16 @@ public interface SoReturnFeign {
     SoReturnEntity getSoReturnById(@RequestBody String id);
 
     /**
+     * 根据主键ids查询销售退货单主表信息
+     * @Author Luo_WG
+     * @Date 2023/5/15 18:17
+     * @param ids ids
+     * @return com.erp.model.oms.entity.SoReturnEntity
+     **/
+    @PostMapping("feign/soReturn/listByIds")
+    List<SoReturnEntity> listByIds(@RequestBody List<String> ids);
+
+    /**
      * 根据来源id查询销售退货单详情表信息
      * @param ids ids
      * @return java.util.List<com.erp.model.oms.entity.SoReturnDetailEntity>

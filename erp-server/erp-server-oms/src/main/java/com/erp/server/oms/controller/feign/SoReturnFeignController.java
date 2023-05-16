@@ -36,6 +36,18 @@ public class SoReturnFeignController {
     }
 
     /**
+     * 根据主键ids查询销售退货单主表信息
+     * @Author Luo_WG
+     * @Date 2023/5/15 18:17
+     * @param ids ids
+     * @return com.erp.model.oms.entity.SoReturnEntity
+     **/
+    @PostMapping("/listByIds")
+    public List<SoReturnEntity> listByIds(@RequestBody List<String> ids) {
+        return soReturnService.listByIds(ids);
+    }
+
+    /**
      * 根据来源id查询销售退货单详情表信息
      * @Author Luo_WG
      * @Date 2023/5/15 18:17

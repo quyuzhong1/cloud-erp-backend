@@ -15,9 +15,11 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.dto.SoReturnDetailDTO;
 import com.erp.model.oms.entity.*;
@@ -27,10 +29,9 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
-import com.erp.model.wms.dto.SoReturnNoticeDTO;
-import com.erp.model.wms.dto.SoReturnNoticeDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
@@ -42,6 +43,7 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.SoReturnNoticeMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
@@ -52,10 +54,13 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 /**
@@ -91,6 +96,9 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
 
     @Resource
     private SoReturnReceiveService soReturnReceiveService;
+
+    @Resource
+    private WorkflowFeign workflowFeign;
 
     @Override
     public PagingVO<SoReturnNoticeDTO.PagingView> paging(PagingDTO<SoReturnNoticeDTO.PagingParam> pagingParamDTO) {
@@ -188,7 +196,9 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         entity.setSourceType(soReturnEntity.getSourceType());
         entity.setInventoryOrgId(dto.getInventoryOrgId());
         entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());
-        entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
+        if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
+            entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
+        }
         entity.setWarehouseKeeperName(userDTO.getUserName());
         this.save(entity);
         soReturnNoticeDetailService.add(dto, entity.getId());
@@ -213,7 +223,9 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         entity.setSourceType(soReturnEntity.getSourceType());
         entity.setInventoryOrgId(dto.getInventoryOrgId());
         entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());
-        entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
+        if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
+            entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
+        }
         entity.setWarehouseKeeperName(userDTO.getUserName());
         boolean flag = this.save(entity);
         soReturnNoticeDetailService.update(dto);
@@ -375,32 +387,173 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
 
     @Override
     public Boolean cancelProcess(List<String> ids) {
-        return null;
+        List<SoReturnNoticeEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //审核中可以撤销
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
+        ).count();
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        //撤销现有流程
+        workflowFeign.cancelProcess(ids);
+        //修改状态为待提交
+        lambdaUpdate().set(SoReturnNoticeEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .in(SoReturnNoticeEntity::getId, ids)
+                .update();
+        //操作日志
+        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("发货通知单【%s】取消流程", ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "取消流程操作");
+
+        return Boolean.TRUE;
     }
 
     @Override
     public Boolean invalid(List<String> ids, String remark) {
-        return null;
+        List<SoReturnNoticeEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //审核不通过 待提交可以作废
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && (entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
+        ).count();
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_98005);
+        }
+        //修改状态为待提交
+        lambdaUpdate().set(SoReturnNoticeEntity::getInvalidStatus, Boolean.TRUE)
+                .set(SoReturnNoticeEntity::getInvalidRemark, remark)
+                .in(SoReturnNoticeEntity::getId, ids)
+                .update();
+        //操作日志
+        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("作废了一个发货通知单【%s】，作废原因：".concat(remark), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "作废操作");
+        return Boolean.TRUE;
     }
 
     @Override
     public Boolean delete(List<String> ids) {
-        return null;
+        List<SoReturnNoticeEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //待提交支持删除
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+        ).count();
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        //删除详情表
+        soReturnNoticeDetailService.delete(ids);
+        boolean flag = this.removeByIds(ids);
+        //删除主表
+        return flag;
     }
 
     @Override
     public Boolean exportExcel(SoReturnNoticeDTO.PagingParam dto, HttpServletResponse response) {
-        return null;
+        List<SoReturnNoticeDTO.PagingView> pagingViews = baseMapper.soReturnNoticeExportExcel(dto);
+        //获取sku的id集合
+        List<String> skuIdList = pagingViews.stream().map(SoReturnNoticeDTO.PagingView::getSkuId).collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        //获取界面传过来的采购单详情表id集合
+        List<String> orderDetailIds = pagingViews.stream().map(SoReturnNoticeDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
+        //获取销售单详情信息
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySourceDetailId(orderDetailIds);
+        for (SoReturnNoticeDTO.PagingView pagingView : pagingViews) {
+            pagingView.setApproveStatus(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
+            pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(pagingView.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95107);
+            }
+            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(pagingView.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            pagingView.setProductName(productDetailEntity.getName());
+            pagingView.setSalesQty(soDetailEntity.getQty());
+            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSourceDetailId().equals(pagingView.getSourceDetailId()) && pagingView.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            pagingView.setDeliveryQty(actualQty);
+        }
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/SoReturnNoticeExport.xlsx";
+        String name = "销售退货通知单";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(pagingViews, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return Boolean.TRUE;
     }
 
     @Override
     public Boolean generateSoReturnNoticeSave(List<SoReturnDTO.GenerateSoReturnNoticeView> list) {
-        return null;
+        Boolean flag = Boolean.TRUE;
+        List<String> soReturnIdList = list.stream().map(SoReturnDTO.GenerateSoReturnNoticeView::getMainId).distinct().collect(Collectors.toList());
+        List<String> soDetailIdList = list.stream().map(SoReturnDTO.GenerateSoReturnNoticeView::getSourceDetailId).distinct().collect(Collectors.toList());
+        long count = soReturnFeign.listByIds(soReturnIdList).stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_92014);
+        }
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(soDetailIdList);
+        if (CollectionUtils.isEmpty(soDetailEntities)) {
+            throw new ServiceException(ApiError.ERROR_92015);
+        }
+        for (String id : soReturnIdList) {
+            List<SoReturnDTO.GenerateSoReturnNoticeView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
+            String sourceId = viewList.stream().filter(req -> req.getMainId().equals(id)).map(SoReturnDTO.GenerateSoReturnNoticeView::getSourceId).distinct().findFirst().orElse("");
+            SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(sourceId);
+            SoReturnNoticeDTO.Add dto = new SoReturnNoticeDTO.Add();
+            dto.setSourceId(id);
+            dto.setInventoryOrgId(soInfoEntity.getWarehouseOrgId());
+            dto.setInventoryOrgId(soInfoEntity.getWarehouseOrgId());
+            List<SoReturnNoticeDetailDTO.Add> detailList = dto.getDetailList();
+            for (SoReturnDTO.GenerateSoReturnNoticeView view : viewList) {
+                SoReturnNoticeDetailDTO.Add detailAddDTO = new SoReturnNoticeDetailDTO.Add();
+                detailAddDTO.setReturnQty(view.getReturnQty());
+                detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
+                detailAddDTO.setReturnTypeDict(view.getReturnType());
+                detailAddDTO.setRemark(view.getRemark());
+                detailAddDTO.setSourceDetailId(view.getId());
+                detailList.add(detailAddDTO);
+            }
+            String noticeId = this.add(dto);
+            if (StringUtils.isBlank(noticeId)) {
+                flag = Boolean.FALSE;
+            }
+        }
+        return flag;
     }
 
     @Override
     public List<SoReturnNoticeDTO.GenerateSoReturnReceiveView> generateSoDeliveryView(List<String> ids) {
-        return null;
+        List<SoReturnNoticeDTO.GenerateSoReturnReceiveView> list = baseMapper.generateSoDeliveryView(ids);
+        //获取界面传过来的采购单详情表id集合
+        List<String> orderDetailIds = list.stream().map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getSourceDetailId).collect(Collectors.toList());
+        //获取销售单详情信息
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
+        //获取sku的id集合
+        List<String> skuIdList = list.stream().map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getSkuId).collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        for (SoReturnNoticeDTO.GenerateSoReturnReceiveView view : list) {
+            //销售单信息
+            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(view.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            view.setSalesQty(soDetailEntity.getQty());
+            //产品sku信息
+            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            view.setProductName(productDetailEntity.getName());
+        }
+        return list;
     }
 
     @Override
