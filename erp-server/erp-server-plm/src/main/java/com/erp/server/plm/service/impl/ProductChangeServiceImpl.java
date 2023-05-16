@@ -128,11 +128,11 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         change.setId(id);
         //如果是bom 检查审核人为空不
         if (isBom) {
+            checkBomChangeAuditor(sourceId);
+        } else {
             //sku数据验证
             checkSkuChange(dto.getDetailsJson());
 
-            checkBomChangeAuditor(sourceId);
-        } else {
             checkSkuChangeAuditor(sourceId);
         }
 
