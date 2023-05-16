@@ -222,13 +222,11 @@ public class TransferInfoDTO implements Serializable {
         /**
          * 来源id
          */
-        @NotBlank(message = "来源id不能为空")
         private String sourceId;
 
         /**
          * 来源编码
          */
-        @NotBlank(message = "来源编码不能为空")
         private String sourceCode;
 
         /**

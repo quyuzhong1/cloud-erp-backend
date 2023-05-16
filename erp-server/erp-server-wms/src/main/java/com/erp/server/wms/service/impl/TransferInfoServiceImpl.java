@@ -171,13 +171,13 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         doOpHandleDataId(dto.getInWarehouseId(), dto.getOutWarehouseId(), dto.getWarehouseKeeperId(), entity);
         log.info("直接调拨单新增");
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.DBSQ, BusinessNoTypeEnum.CODE_DBSQ.getCode()));
+        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QTCK, BusinessNoTypeEnum.CODE_QTCK.getCode()));
         entity.setCode(code);
         //新增主表数据
         boolean save = this.save(entity);
         if (save) {
             //操作日志
-            operateLogService.addModuleOperateLog(String.format("新增了一个直接调拨单【%s】", code), ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), entity.getId(), "新增操作");
+            operateLogService.addModuleOperateLog(String.format("新增了一个直接调拨单【%s】", code), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "新增操作");
             //新增明细
             transferInfoDetailService.add(dto.getDetailList(), entity.getId());
         }

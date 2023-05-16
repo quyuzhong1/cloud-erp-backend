@@ -59,7 +59,6 @@ public class TransferInfoDetailDTO implements Serializable {
         /**
          * 来源明细id
          */
-        @NotBlank(message = "来源明细id不能为空")
         private String sourceDetailId;
     }
 

@@ -27,6 +27,7 @@ public enum ModuleTypeEnum {
     TRANSFER_INFO("16", "直接调拨单"),
     SO_RETURN_NOTICE("17", "销售退货通知单"),
     SO("18", "销售订单"),
+    MACHINE_INFO("19", "加工单"),
 
     ;
 

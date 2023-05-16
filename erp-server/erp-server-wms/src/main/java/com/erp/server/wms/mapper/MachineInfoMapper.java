@@ -8,6 +8,8 @@ import com.erp.model.wms.entity.MachineInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * <p>
  * 加工单 Mapper 接口
@@ -35,4 +37,12 @@ public interface MachineInfoMapper extends BaseMapper<MachineInfoEntity> {
      * @return Integer
      */
     Integer listCount(@Param("params") MachineInfoDTO.SearchParamDTO params);
+    /**
+     * @description: 导出查询
+     * @author Will
+     * @date: 2023/5/16 18:19
+     * @param params
+     * @return List<ListDTO>
+     */
+    List<MachineInfoDTO.ListDTO> listExportExcel(@Param("params") MachineInfoDTO.SearchParamDTO params);
 }

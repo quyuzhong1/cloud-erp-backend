@@ -41,6 +41,10 @@ public interface BusinessNoConstant {
 
     String DBSQ = "DBSQ";
 
+    String QTCK = "QTCK";
+
+    String ZZCX = "ZZCX";
+
     String FHTZ = "FHTZ";
     //客户
     String CUST = "CUST";

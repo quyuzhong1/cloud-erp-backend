@@ -18,9 +18,11 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -29,11 +31,14 @@ import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.MachineDetailDTO;
 import com.erp.model.wms.dto.MachineInfoDTO;
+import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.entity.MachineDetailEntity;
 import com.erp.model.wms.entity.MachineInfoEntity;
 import com.erp.model.wms.enums.WorkTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.MachineInfoMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -44,9 +49,11 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -78,6 +85,11 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     @Resource
     private InventoryService inventoryService;
 
+    @Resource
+    private InventoryTransCoreService inventoryTransCoreService;
+
+    @Resource
+    private WorkflowFeign workflowFeign;
 
     @Override
     public PagingVO<MachineInfoDTO.ListDTO> paging(PagingDTO<MachineInfoDTO.SearchParamDTO> pagingDTO) {
@@ -146,15 +158,15 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         BeanMapperUtils.copy(dto, entity);
         //处理数据id
         doOpHandleDataId(dto.getInventoryOrgId(), dto.getReceiveOrgId(), dto.getWarehouseKeeperId(),dto.getReceiverId(), entity);
-        log.info("直接调拨单新增");
+        log.info("加工单新增");
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.DBSQ, BusinessNoTypeEnum.CODE_DBSQ.getCode()));
+        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.ZZCX, BusinessNoTypeEnum.CODE_ZZCX.getCode()));
         entity.setCode(code);
         //新增主表数据
         boolean save = this.save(entity);
         if (save) {
             //操作日志
-            operateLogService.addModuleOperateLog(String.format("新增了一个直接调拨单【%s】", code), ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), entity.getId(), "新增操作");
+            operateLogService.addModuleOperateLog(String.format("新增了一个加工单【%s】", code), ModuleTypeEnum.MACHINE_INFO.getCode(), entity.getId(), "新增操作");
             //新增明细
             machineDetailService.add(dto.getDetailList(), entity.getId());
         }
@@ -181,11 +193,11 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //处理数据id
         doOpHandleDataId(dto.getInventoryOrgId(), dto.getReceiveOrgId(), dto.getWarehouseKeeperId(),dto.getReceiverId(), entity);
 
-        log.info("调拨申请单修改，id=【{}】", dto.getId());
+        log.info("加工单修改，id=【{}】", dto.getId());
 
         //添加日志
         MachineInfoEntity old = this.getById(dto.getId());
-        operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), entity.getId(), "", "");
+        operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.MACHINE_INFO.getCode(), entity.getId(), "", "");
         //更新主表数据
         this.updateById(entity);
         //更新明细数据
@@ -210,7 +222,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
-        log.info("调拨申请单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
+        log.info("加工单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
 
         //启动流程 TODO
 
@@ -218,7 +230,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         updateApproveStatus(ids, ApproveStatusEnum.APPROVE_ING.getStatus());
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("提交了一个调拨申请单【%s】", ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), pairList, "提交操作");
+        operateLogService.batchAddModuleOperateLog("提交了一个加工单【%s】", ModuleTypeEnum.MACHINE_INFO.getCode(), pairList, "提交操作");
         return Boolean.TRUE;
     }
 
@@ -264,7 +276,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
-        log.info("直接调拨单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
+        log.info("加工单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
         //删除明细数据
         machineDetailService.removeByMainIds(ids);
         //删除操作日志
@@ -286,7 +298,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         if (invalidCount > 0) {
             throw new ServiceException(ApiError.ERROR_98012);
         }
-        log.info("直接调拨单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
+        log.info("加工单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
 
         //更新
         lambdaUpdate().in(MachineInfoEntity::getId, ids)
@@ -295,7 +307,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                 .update();
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("作废了一个直接调拨单【%s】，作废原因：".concat(reason), ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "作废操作");
+        operateLogService.batchAddModuleOperateLog("作废了一个加工单【%s】，作废原因：".concat(reason), ModuleTypeEnum.MACHINE_INFO.getCode(), pairList, "作废操作");
         return Boolean.TRUE;
     }
 
@@ -303,8 +315,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     public void approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
         //根据ids查询
-        List<MachineInfoEntity
-                > list = getList(ids);
+        List<MachineInfoEntity> list = getList(ids);
         //审核中允许审核
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
@@ -313,11 +324,11 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
         String type = baseApproveParamDTO.getType();
 
-        log.info("直接调拨单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
+        log.info("加工单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
 
         //审核通过
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
-            log.info("直接调拨单【{}】审核通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
+            log.info("加工单【{}】审核通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
             //审核通过 TODO(判断是否存在流程)
 
             //更新单据(后面有流程了调用监听可删)
@@ -325,7 +336,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             //更新库存
             //updateInventoryTransCore(list);
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
-            log.info("直接调拨单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
+            log.info("加工单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
             //中止当前审核流程
 
             //更新单据状态
@@ -333,22 +344,75 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         }
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个直接调拨单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "审核操作");
+        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个加工单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.MACHINE_INFO.getCode(), pairList, "审核操作");
     }
 
     @Override
     public Boolean disApprove(List<String> ids) {
-        return null;
+        //根据ids查询
+        List<MachineInfoEntity> list = getList(ids);
+        //已审核允许反审核
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98014);
+        }
+
+        log.info("加工单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
+
+        //取回流程 TODO
+
+        //更新单据为待提交
+        updateApproveStatusForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        //回扣库存
+        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.MACHINE_INFO,ids);
+        inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+        //操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("反审核了一个加工单【%s】", ModuleTypeEnum.MACHINE_INFO.getCode(), pairList, "反审核操作");
+        return Boolean.TRUE;
     }
 
     @Override
     public Boolean cancelProcess(List<String> ids) {
-        return null;
+        //根据ids查询
+        List<MachineInfoEntity> list = getList(ids);
+        //审核中允许审核
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        log.info("加工单撤销流程，id=【{}】", ids);
+
+        //撤销现有流程
+        workflowFeign.cancelProcess(ids);
+
+        //更新单据为待提交
+        updateApproveStatusForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        //操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("加工单【%s】取消流程", ModuleTypeEnum.MACHINE_INFO.getCode(), pairList, "取消流程操作");
+        return Boolean.TRUE;
     }
 
     @Override
     public Boolean exportExcel(MachineInfoDTO.SearchParamDTO dto, HttpServletResponse response) {
-        return null;
+        List<MachineInfoDTO.ListDTO> list = baseMapper.listExportExcel(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.TRUE;
+        }
+        doOpHandleData(list);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/machineInfo.xlsx";
+        String name = "加工单导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+        return Boolean.TRUE;
     }
 
     /**
