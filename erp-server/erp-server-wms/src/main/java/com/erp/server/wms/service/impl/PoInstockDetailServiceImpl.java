@@ -10,8 +10,10 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.PoInstockDetailDTO;
-import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.QcBillStatusEnum;
+import com.erp.model.wms.entity.PoInstockDetailEntity;
+import com.erp.model.wms.entity.PoInstockEntity;
+import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.PoInstockDetailMapper;
@@ -24,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -219,14 +220,6 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
             }
         }
 
-        //判断是否存在质检单、存在且未质检完成则不支持入库
-        List<QcInfoEntity> qcList =  qcInfoService.listByPoIds(Arrays.asList(entity.getId()));
-        if (CollectionUtils.isNotEmpty(qcList)) {
-           Long count = qcList.stream().filter(obj -> QcBillStatusEnum.DRAFT.getCode().equals(obj.getQcStatus()) || QcBillStatusEnum.WAIT_QC.getCode().equals(obj.getQcStatus())).count();
-            if (count > 0) {
-                throw new ServiceException(ApiError.ERROR_99010);
-            }
-        }
 
         //采购订单
         List<PurchaseOrderDetailEntity> details = scmTaskFeign.listPurchaseOrderDetailById(podIds);
