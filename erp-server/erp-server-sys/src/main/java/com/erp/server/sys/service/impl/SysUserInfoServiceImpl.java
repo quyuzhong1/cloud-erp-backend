@@ -1094,6 +1094,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 .set(SysUserInfoEntity::getSalt, passEntity.getSalt())
                 .set(SysUserInfoEntity::getPassword, passEntity.getPassword())
                 .eq(SysUserInfoEntity::getUid, sysUserInfoEntity.getUid()).update();
+
+        redisService.deleteObject(RedisCacheConstants.LOGIN_TOKEN_KEY + sysUserInfoEntity.getUid());
         return flag;
     }
 
