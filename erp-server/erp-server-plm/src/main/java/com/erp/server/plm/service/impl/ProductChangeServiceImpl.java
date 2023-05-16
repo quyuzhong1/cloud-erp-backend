@@ -20,6 +20,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
+import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.plm.enums.BomOperationTypeEnum;
 import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.model.plm.enums.ProductChangeStateEnum;
@@ -92,6 +93,10 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     @Resource
     private BomOperateLogService bomOperateLogService;
 
+    @Resource
+    private ProductPurchaseService productPurchaseService;
+
+
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
     private String financial;
@@ -126,6 +131,9 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (isBom) {
             checkBomChangeAuditor(sourceId);
         } else {
+            //sku数据验证
+            checkSkuChange(dto.getDetailsJson());
+
             checkSkuChangeAuditor(sourceId);
         }
 
@@ -216,6 +224,26 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         }
 
 
+    }
+    /**
+     * @description: 验证sku变更
+     * @author Will
+     * @date: 2023/5/16 10:11
+     * @param detailsJson
+     */
+    public void checkSkuChange(String  detailsJson) {
+        if (StringUtils.isBlank(detailsJson)) {
+            return;
+        }
+        ProductSmallestUnitDTO skuDTO = JSONObject.parseObject(detailsJson, ProductSmallestUnitDTO.class);
+
+        //采购信息验证
+        ProductPurchaseShowDTO purchaseShowDTO = skuDTO.getProductPurchaseShowDTO();
+        if (purchaseShowDTO != null) {
+            ProductPurchaseEntity purchaseEntity = new ProductPurchaseEntity();
+            BeanMapper.copy(purchaseShowDTO, purchaseEntity);
+            productPurchaseService.checkProductPurchase(purchaseEntity);
+        }
     }
 
 
