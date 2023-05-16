@@ -9,9 +9,12 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.server.oms.service.SoInfoService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.List;
@@ -26,7 +29,8 @@ import java.util.List;
 @RequestMapping("/so")
 public class SoInfoController extends BaseController {
 
-
+    @Resource
+    private SoInfoService soInfoService;
 
 
     /**
@@ -41,6 +45,7 @@ public class SoInfoController extends BaseController {
 
     /**
      * 分页列表
+     *
      * @param dto
      * @return
      */
@@ -52,38 +57,43 @@ public class SoInfoController extends BaseController {
 
     /**
      * 新增
+     *
      * @param dto
      * @return
      */
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SoInfoDTO.AddDTO dto) {
-        return  success();
+        String id = soInfoService.add(dto);
+        return StringUtils.isNotBlank(id)?success():failure();
     }
 
 
     /**
      * 提交
+     *
      * @param dto
      * @return
      */
     @PostMapping("/submit")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return  success();
+        return success();
     }
 
     /**
      * 新增并提交
+     *
      * @param dto
      * @return
      */
     @PostMapping("/addAndSubmit")
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated SoInfoDTO.AddDTO dto) {
-        return  success();
+        return success();
     }
 
 
     /**
      * 详情
+     *
      * @param dto
      * @return
      */
@@ -94,6 +104,7 @@ public class SoInfoController extends BaseController {
 
     /**
      * 修改
+     *
      * @param dto
      * @return
      */
@@ -104,6 +115,7 @@ public class SoInfoController extends BaseController {
 
     /**
      * 修改并提交
+     *
      * @param dto
      * @return
      */
@@ -126,12 +138,12 @@ public class SoInfoController extends BaseController {
 
     /**
      * 反审核
-     *
      */
     @PostMapping("/disApprove")
     public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        return  success();
+        return success();
     }
+
     /**
      * 删除仓库
      *
@@ -145,14 +157,15 @@ public class SoInfoController extends BaseController {
 
     /**
      * 作废
-     * @author Will
-     * @date: 2023/5/10 20:11
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2023/5/10 20:11
      */
     @PostMapping("/invalid")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        return  success();
+        return success();
     }
 
     /**
@@ -164,8 +177,6 @@ public class SoInfoController extends BaseController {
 
         return success();
     }
-
-
 
 
 }

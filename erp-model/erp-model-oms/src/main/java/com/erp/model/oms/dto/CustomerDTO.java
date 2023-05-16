@@ -686,10 +686,55 @@ public class CustomerDTO implements Serializable {
     @NoArgsConstructor
     public static class InfoDTO {
 
+        /**
+         * id
+         */
         private String id;
 
+        /**
+         * code
+         */
         private String code;
 
+        /**
+         * 是否禁用
+         * false 没有
+         */
         private Boolean disabled;
+    }
+
+    /**
+     * 获取到基础的信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BaseDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+
+        /**
+         * code
+         */
+        private String code;
+
+        /**
+         * 联系人
+         */
+        private String person;
+
+        /**
+         * 联系电话
+         */
+        private String telNumber;
+
+        /**
+         * 地址
+         */
+        private String address;
+
     }
 }

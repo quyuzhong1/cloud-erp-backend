@@ -67,11 +67,7 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     @TableField("sales_dept_id")
     private String salesDeptId;
 
-    /**
-     * 销售部门名
-     */
-    @TableField("sales_dept_name")
-    private String salesDeptName;
+
 
     /**
      * 销售员id
@@ -102,6 +98,14 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
      */
     @TableField("warehouse_org_id")
     private String warehouseOrgId;
+
+
+
+    /**
+     * 仓库组织名
+     */
+    @TableField("warehouse_org_name")
+    private String warehouseOrgName;
 
     /**
      * 银行手续费

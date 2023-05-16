@@ -730,6 +730,62 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         return result;
     }
 
+
+    /**
+     * 获取启用的列表
+     *
+     * @param
+     * @return java.util.List<com.erp.model.oms.dto.CustomerDTO.InfoDTO>
+     * @author yl
+     * @date 2023-05-15 16:05
+     */
+    @Override
+    public List<CustomerDTO.InfoDTO> listEnable() {
+        LambdaQueryWrapper<CustomerInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(CustomerInfoEntity::getId,
+                CustomerInfoEntity::getCode,
+                CustomerInfoEntity::getDisabled);
+        String approve = ApproveStatusEnum.APPROVE.getStatus();
+        ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(approve);
+        queryWrapper.eq(CustomerInfoEntity::getApproveStatus, approveStatusEnum);
+        queryWrapper.eq(CustomerInfoEntity::getDisabled, Boolean.FALSE);
+        List<CustomerInfoEntity> list = this.list(queryWrapper);
+        return BeanMapper.copyList(list, CustomerDTO.InfoDTO.class);
+    }
+
+
+    /**
+     * 获取客户的默认联系人
+     *
+     * @param customerId
+     * @return com.erp.model.oms.dto.CustomerDTO.BaseDTO
+     * @author yl
+     * @date 2023-05-15 16:15
+     */
+    @Override
+    public CustomerDTO.BaseDTO getBase(String customerId) {
+        CustomerDTO.BaseDTO base = new CustomerDTO.BaseDTO();
+        CustomerInfoEntity customer = this.getById(customerId);
+        if (Objects.isNull(customer)) {
+            throw new ServiceException(ApiError.ERROR_92011);
+        }
+        base.setId(customer.getId());
+        base.setCode(customer.getCode());
+        List<CustomerContactDTO.ViewDTO> contactList = customerContactService.listByMainId(customerId);
+        CustomerContactDTO.ViewDTO contact = contactList.stream().filter(c -> c.getIsDefault()).findFirst().orElse(null);
+        if(contact!=null){
+            base.setPerson(contact.getPerson());
+            base.setTelNumber(contact.getTelNumber());
+        }
+
+        List<CustomerAddressDTO.ViewDTO> addressList = customerAddressService.listByMainId(customerId);
+        CustomerAddressDTO.ViewDTO address = addressList.stream().filter(c -> c.getIsDefault()).findFirst().orElse(null);
+        if(address!=null){
+           base.setAddress(address.getAddress());
+        }
+        return base;
+    }
+
     private Boolean updateApproveStatus(List<CustomerInfoEntity> list, ApproveStatusEnum statusEnum) {
         if (CollectionUtils.isNotEmpty(list)) {
             list.forEach(s -> s.setApproveStatus(statusEnum));

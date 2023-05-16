@@ -218,7 +218,7 @@ public class CustomerInfoController extends BaseController {
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = customerInfoService.cancelProcess(dto.getIds());
-        return result  ? success() : failure();
+        return result ? success() : failure();
     }
 
 
@@ -259,6 +259,15 @@ public class CustomerInfoController extends BaseController {
     }
 
     /**
+     * 启用的客户列表
+     */
+    @GetMapping("/listEnable")
+    public ApiResult<List<CustomerDTO.InfoDTO>> listEnable() {
+        List<CustomerDTO.InfoDTO> list = customerInfoService.listEnable();
+        return success(list);
+    }
+
+    /**
      * 启用或者停用 客户
      *
      * @param dto
@@ -268,6 +277,18 @@ public class CustomerInfoController extends BaseController {
     public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
         Boolean result = customerInfoService.updateStatus(dto);
         return result ? success() : failure();
+    }
+
+    /**
+     * 获取客户的基础信息
+     *
+     * @param
+     * @return
+     */
+    @GetMapping("/getBase")
+    public ApiResult<CustomerDTO.BaseDTO> getBase(@RequestParam("customerId") String customerId) {
+        CustomerDTO.BaseDTO result = customerInfoService.getBase(customerId);
+        return success(result);
     }
 
 

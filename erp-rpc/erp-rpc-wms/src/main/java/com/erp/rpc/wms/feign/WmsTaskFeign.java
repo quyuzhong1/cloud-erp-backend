@@ -27,7 +27,7 @@ import java.util.Map;
 public interface WmsTaskFeign {
 
     /**
-     * 根据userIds查询用户集合
+     * 根据仓库id
      */
     @PostMapping("feign/warehouse/listWarehouseByIds")
     List<WarehouseDTO.UpdateDTO> listWarehouseByIds(@RequestBody List<String> warehouseIds);

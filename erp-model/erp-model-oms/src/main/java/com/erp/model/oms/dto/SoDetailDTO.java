@@ -3,6 +3,9 @@ package com.erp.model.oms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -30,16 +33,19 @@ public class SoDetailDTO implements Serializable {
         /**
          * sku id
          */
+        @NotBlank(message = "sku不能为空")
         private String skuId;
 
         /**
          * 销售数量
          */
+        @NotNull(message = "销售数量不能为空")
         private Integer qty;
 
         /**
          * 单价
          */
+        @NotNull(message = "销售单间不能为空")
         private BigDecimal price;
 
 
@@ -51,11 +57,13 @@ public class SoDetailDTO implements Serializable {
         /**
          * 是否赠品
          */
+        @NotNull(message = "是否赠品不能为空")
         private Boolean isGift;
 
         /**
          * 是否补发
          */
+        @NotNull(message = "是否补发不能为空")
         private Boolean isReissue;
 
         /**
@@ -67,6 +75,7 @@ public class SoDetailDTO implements Serializable {
         /**
          * 备注
          */
+        @Size(max = 200, message = "备注最大200字符")
         private String remark;
 
 

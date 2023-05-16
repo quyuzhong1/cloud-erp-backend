@@ -173,4 +173,24 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @return java.lang.Boolean
      */
     Boolean cancelProcess(List<String> ids);
+
+    
+    /**
+     * 获取启用的列表
+     * @author yl
+     * @date 2023-05-15 16:05
+     * @param
+     * @return java.util.List<com.erp.model.oms.dto.CustomerDTO.InfoDTO>
+     */
+    List<CustomerDTO.InfoDTO> listEnable();
+
+    
+    /**
+     * 获取客户的默认联系人
+     * @author yl
+     * @date 2023-05-15 16:15
+     * @param customerId
+     * @return com.erp.model.oms.dto.CustomerDTO.BaseDTO
+     */
+    CustomerDTO.BaseDTO getBase(String customerId);
 }

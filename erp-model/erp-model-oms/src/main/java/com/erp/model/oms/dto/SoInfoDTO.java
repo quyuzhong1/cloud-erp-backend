@@ -3,11 +3,15 @@ package com.erp.model.oms.dto;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.anno.StateEnumValue;
+import com.erp.model.oms.enums.BillTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -284,16 +288,20 @@ public class SoInfoDTO implements Serializable {
         /**
          * 类型
          */
+        @NotNull(message = "单据类型不能为空")
+        @StateEnumValue(clazz = BillTypeEnum.class, message = "单据类型有误")
         private String type;
 
         /**
          * 要货日期
          */
+        @NotNull(message = "要货日期不能为空")
         private LocalDate requireDate;
 
         /**
          * 组织id
          */
+        @NotBlank(message = "销售组织不能为空")
         private String salesOrgId;
 
         /**
@@ -304,12 +312,20 @@ public class SoInfoDTO implements Serializable {
         /**
          * 销售员id
          */
+        @NotBlank(message = "销售员不能为空")
         private String sellerId;
+
+        /**
+         * 是否收取手续费
+         * true 收
+         */
+        private Boolean isCollectShippingFee;
 
 
         /**
          * 仓库id
          */
+        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
 
 
@@ -326,11 +342,13 @@ public class SoInfoDTO implements Serializable {
         /**
          * 客户id
          */
+        @NotBlank(message = "客户不能为空")
         private String customerId;
 
 
         /**
          * 收货人
+         * 来源 http://172.16.100.11:3002/project/110/interface/api/13561
          */
         private String receiverName;
 
@@ -366,6 +384,8 @@ public class SoInfoDTO implements Serializable {
          */
         private String addressType;
 
+
+        @Valid
         private List<SoDetailDTO.AddDTO> detailList;
 
     }

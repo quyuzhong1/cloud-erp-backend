@@ -1,15 +1,11 @@
 package com.erp.server.oms.service.impl;
 
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoDetailDTO;
-import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
-import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoOutstockDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
-import com.erp.model.sys.dto.SysFeignDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
@@ -78,4 +74,17 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         return list;
     }
 
+
+
+    /**
+     * 添加销售订单明细
+     * @author yl
+     * @date 2023-05-16 9:32
+     * @param mainId detailList
+     * @return
+     */
+    @Override
+    public void addSoDetail(String mainId, List<SoDetailDTO.AddDTO> detailList) {
+
+    }
 }
