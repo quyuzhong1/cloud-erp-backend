@@ -404,13 +404,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         //TODO 待加审核流程
 
-        //下推入库单不能反审核
-        deliveryNoticeEntityList.forEach(req -> {
-            List<SoOutstockEntity> soOutstockEntityList = soOutstockService.listSoOutstockBySourceId(req.getId());
-            if (CollectionUtils.isNotEmpty(soOutstockEntityList)) {
-                throw new ServiceException(ApiError.ERROR_92004);
-            }
-        });
+        //下推出库单不能反审核
+        List<SoOutstockEntity> soOutstockEntityList = soOutstockService.listBySourceId(ids);
+        if (CollectionUtils.isNotEmpty(soOutstockEntityList)) {
+            throw new ServiceException(ApiError.ERROR_92004);
+        }
         //修改状态为待提交
         lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 .in(SoDeliveryNoticeEntity::getId, ids)

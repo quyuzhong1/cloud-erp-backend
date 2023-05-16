@@ -169,10 +169,10 @@ public interface SoReturnNoticeService extends SuperService<SoReturnNoticeEntity
      * 根据来源id查询销售退货通知单主表
      * @Author Luo_WG
      * @Date 2023/5/15 12:18
-     * @param sourceId sourceId
+     * @param sourceIds sourceIds
      * @return
      **/
-    List<SoReturnNoticeEntity> listSoReturnNoticeBySourceId(String sourceId);
+    List<SoReturnNoticeEntity> listBySourceId(List<String> sourceIds);
 
 
 }

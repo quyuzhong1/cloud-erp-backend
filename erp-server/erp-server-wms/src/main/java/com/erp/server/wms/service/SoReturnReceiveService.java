@@ -6,6 +6,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
+import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.common.business.service.SuperService;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -164,4 +165,13 @@ public interface SoReturnReceiveService extends SuperService<SoReturnReceiveEnti
      * @return java.util.List<com.erp.model.wms.dto.SoReturnReceiveDTO.GenerateSoReturnInstockView>
      **/
     List<SoReturnReceiveDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(List<String> ids);
+
+    /**
+     * 根据来源id查询签收单
+     * @Author Luo_WG
+     * @Date 2023/5/16 10:11
+     * @param id
+     * @return java.util.List<com.erp.model.wms.entity.SoReturnNoticeEntity>
+     **/
+    List<SoReturnReceiveEntity> listBySourceIds(List<String> id);
 }

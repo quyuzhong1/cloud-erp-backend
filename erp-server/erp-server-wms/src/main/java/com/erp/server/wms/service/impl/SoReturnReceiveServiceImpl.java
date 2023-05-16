@@ -102,4 +102,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     public List<SoReturnReceiveDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(List<String> ids) {
         return null;
     }
+
+    @Override
+    public List<SoReturnReceiveEntity> listBySourceIds(List<String> ids) {
+        return lambdaQuery().in(SoReturnReceiveEntity::getSourceId, ids).list();
+    }
 }
