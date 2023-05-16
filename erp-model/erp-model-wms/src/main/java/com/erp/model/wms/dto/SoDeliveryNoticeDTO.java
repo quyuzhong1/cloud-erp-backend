@@ -329,6 +329,18 @@ public class SoDeliveryNoticeDTO {
     @NoArgsConstructor
     public static class View {
         /**
+         * id
+         */
+        private String id;
+        /**
+         * 退货单id
+         */
+        private String sourceId;
+        /**
+         * 退货单编号
+         */
+        private String sourceCode;
+        /**
          * 单据编号
          */
         private String code;
