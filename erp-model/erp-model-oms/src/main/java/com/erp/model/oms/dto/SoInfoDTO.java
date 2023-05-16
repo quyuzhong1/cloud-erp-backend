@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -349,21 +350,29 @@ public class SoInfoDTO implements Serializable {
          * 收货人
          * 来源 http://172.16.100.11:3002/project/110/interface/api/13561
          */
+        @Size(max = 50, message = "收货人最大50字符")
         private String receiverName;
 
         /**
          * 电话
          */
+        @Size(max = 20, message = "联系电话最大20字符")
         private String telNumber;
 
         /**
          * 收货人地址
          */
+        @Size(max = 50, message = "收货人地址最大50字符")
         private String receiverAddress;
 
         /**
-         * 交货方式
+         *
+         *
+         *  交货方式 oms/common/enumDropDown?type=DeliveryMode
+         *    描述：deliverGoods（发货）selfExtraction（自提）
+         *
          */
+        @StateEnumValue(strValues = {"deliverGoods","selfExtraction"},message = "交货方式有误")
         private String deliveryMode;
 
 
@@ -381,7 +390,10 @@ public class SoInfoDTO implements Serializable {
 
         /**
          * 地址类型
+         * http://172.16.100.11:3002/project/110/interface/api/13480
+         * type=AddressType
          */
+        @StateEnumValue(strValues = {"forwarder","deliver","company"},message = "地址类型有误")
         private String addressType;
 
 

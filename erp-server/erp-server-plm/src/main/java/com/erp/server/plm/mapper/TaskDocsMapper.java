@@ -35,4 +35,7 @@ public interface TaskDocsMapper  extends BaseMapper<TaskDeliveryDocsEntity> {
     List<DocsDTO> getDocsByTaskId(@Param("taskId") String taskId);
 
 
+    IPage<DeliveryDocsDTO> containPaging(Page query, BaseSearchDTO params, @Param("ids")List<String> containDocsPowerList);
+
+    IPage<DeliveryDocsDTO> noContainPaging(Page query, BaseSearchDTO params, @Param("ids")List<String> noContainDocsPowerList);
 }

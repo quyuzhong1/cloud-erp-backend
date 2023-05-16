@@ -148,7 +148,25 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         params.setParam(dto.getParam());
         DocsDTO.DeliveryDocsPowerDTO docsPower = listDeliveryDocs(params.getFlagId());
         IPage pageData = new Page();
-        pageData = baseMapper.paging(query, params, docsPower);
+        //包含
+        List<String> containDocsPowerList = docsPower.getContainDocsPowerList();
+        //不包含
+        List<String> noContainDocsPowerList = docsPower.getNoContainDocsPowerList();
+
+        //两个都有
+        if (CollectionUtils.isNotEmpty(containDocsPowerList)&&CollectionUtils.isNotEmpty(noContainDocsPowerList)) {
+            pageData = baseMapper.paging(query, params, docsPower);
+        }
+        //有文档权限  没有数据权限
+        if(CollectionUtils.isNotEmpty(containDocsPowerList)&&CollectionUtils.isEmpty(noContainDocsPowerList)){
+            pageData = baseMapper.containPaging(query, params, containDocsPowerList);
+        }
+        //没有有文档权限  有数据权限
+        if(CollectionUtils.isEmpty(containDocsPowerList)&&CollectionUtils.isNotEmpty(noContainDocsPowerList)){
+            pageData = baseMapper.noContainPaging(query, params, noContainDocsPowerList);
+        }
+
+
         List<DeliveryDocsDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
@@ -605,7 +623,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         DocsDTO.DeliveryDocsPowerDTO result = new DocsDTO.DeliveryDocsPowerDTO();
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         String userAccount = "";
-        String userId = "";
+        String userId = "1633756775134134274";
         if (loginUser != null) {
             userAccount = loginUser.getUserAccount();
             userId = loginUser.getUid();
