@@ -20,11 +20,10 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.model.plm.entity.SysLogEntity;
+import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.model.plm.enums.BomOperationTypeEnum;
 import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.model.plm.enums.ProductChangeStateEnum;
-import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -37,11 +36,9 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.BomOperateContent;
 import com.erp.server.plm.constant.SearchType;
-import com.erp.model.plm.dto.AuditParamDTO;
 import com.erp.server.plm.mapper.ProductChangeMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
-import net.sf.cglib.core.Local;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,6 +93,9 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     @Resource
     private BomOperateLogService bomOperateLogService;
 
+    @Resource
+    private ProductPurchaseService productPurchaseService;
+
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
     private String financial;
@@ -128,6 +128,9 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         change.setId(id);
         //如果是bom 检查审核人为空不
         if (isBom) {
+            //sku数据验证
+            checkSkuChange(dto.getDetailsJson());
+
             checkBomChangeAuditor(sourceId);
         } else {
             checkSkuChangeAuditor(sourceId);
@@ -221,7 +224,26 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
 
     }
+    /**
+     * @description: 验证sku变更
+     * @author Will
+     * @date: 2023/5/16 10:11
+     * @param detailsJson
+     */
+    public void checkSkuChange(String  detailsJson) {
+        if (StringUtils.isBlank(detailsJson)) {
+            return;
+        }
+        ProductSmallestUnitDTO skuDTO = JSONObject.parseObject(detailsJson, ProductSmallestUnitDTO.class);
 
+        //采购信息验证
+        ProductPurchaseShowDTO purchaseShowDTO = skuDTO.getProductPurchaseShowDTO();
+        if (purchaseShowDTO != null) {
+            ProductPurchaseEntity purchaseEntity = new ProductPurchaseEntity();
+            BeanMapper.copy(purchaseShowDTO, purchaseEntity);
+            productPurchaseService.checkProductPurchase(purchaseEntity);
+        }
+    }
 
     /**
      * 启动一个变更流程
