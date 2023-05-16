@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
@@ -371,6 +370,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 币种
          */
+        @NotBlank(message = "币种不能为空")
         private String currency;
 
         /**

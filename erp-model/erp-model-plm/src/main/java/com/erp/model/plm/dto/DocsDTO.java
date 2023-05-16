@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import java.util.List;
 
 /**
  * @Classname DocsDTO
@@ -17,6 +18,7 @@ public class DocsDTO {
 
     /**
      * 表id
+     *
      * @author yl
      * @date 2022-10-09 10:51
      */
@@ -24,6 +26,7 @@ public class DocsDTO {
 
     /**
      * 文档名
+     *
      * @author
      * @date 2022-10-09 10:51
      */
@@ -31,9 +34,21 @@ public class DocsDTO {
     private String name;
 
 
-
     /**
      * 1 启用 0 禁用
      */
     private boolean state;
+
+
+    @Data
+    @NoArgsConstructor
+    public static class DeliveryDocsPowerDTO {
+
+
+        private List<String> containDocsPowerList;
+
+        private List<String> noContainDocsPowerList;
+    }
+
+
 }

@@ -24,7 +24,7 @@ public interface TaskDocsMapper  extends BaseMapper<TaskDeliveryDocsEntity> {
 
     List<CountDTO> getTaskDocsCount(@Param("taskIds") List<String> taskIds);
 
-    IPage paging(Page query, @Param("params") BaseSearchDTO params,@Param("ids") List<String> ids);
+    IPage<DeliveryDocsDTO> paging(Page query, @Param("params") BaseSearchDTO params,@Param("power")DocsDTO.DeliveryDocsPowerDTO  power);
 
     List<DeliveryDocsDTO> list(@Param("params") BaseSearchDTO params,@Param("ids") List<String> ids);
 

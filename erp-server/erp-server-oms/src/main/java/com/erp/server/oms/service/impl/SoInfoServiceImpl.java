@@ -4,16 +4,19 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.mapper.SoInfoMapper;
+import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -45,6 +48,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Resource
     private SoDetailService soDetailService;
 
+    @Resource
+    private OperateLogService operateLogService;
+
     /**
      * 添加销售订单
      *
@@ -57,7 +63,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public String add(SoInfoDTO.AddDTO dto) {
         //id
         String id = IdWorker.getIdStr();
-
         SoInfoEntity addEntity = new SoInfoEntity();
         BeanMapper.copy(dto, addEntity);
         addEntity.setId(id);
@@ -95,11 +100,23 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         Boolean addResult = this.save(addEntity);
         if (addResult) {
             //添加明细
-            soDetailService.addSoDetail(id,dto.getDetailList());
+            soDetailService.addSoDetail(id, dto.getDetailList());
+            //添加日志
+            String content = String.format("新增了一个{%s}-销售单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
+            addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), id, "新增操作");
+            return id;
 
         }
 
 
-        return null;
+        return "";
+    }
+
+
+    /**
+     * 添加日志
+     */
+    private void addModuleOperateLog(String content, String code, String businessId, String operation) {
+        operateLogService.addModuleOperateLog(content, code, businessId, operation);
     }
 }

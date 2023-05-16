@@ -50,9 +50,6 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     @Autowired
     private ProjectTaskService projectTaskService;
 
-    @Autowired
-    private ProjectMembersService projectMembersService;
-
 
     /**
      * 获取任务的需要交付的文档数
@@ -149,11 +146,9 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
         params.setParam(dto.getParam());
-        List<String> findDeliveryDocsIds = setTaskDeliveryAuth(params);
+        DocsDTO.DeliveryDocsPowerDTO docsPower = listDeliveryDocs(params.getFlagId());
         IPage pageData = new Page();
-        if (CollectionUtils.isNotEmpty(findDeliveryDocsIds)) {
-            pageData = baseMapper.paging(query, params, findDeliveryDocsIds);
-        }
+        pageData = baseMapper.paging(query, params, docsPower);
         List<DeliveryDocsDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
@@ -595,6 +590,78 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         findDeliveryDocsIds = findDeliveryDocsIds.stream().distinct().collect(Collectors.toList());
 
         return findDeliveryDocsIds;
+    }
+
+
+    /**
+     * 分页查看的权限
+     *
+     * @param productId 产品id
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-05-16 11:20
+     */
+    private DocsDTO.DeliveryDocsPowerDTO listDeliveryDocs(String productId) {
+        DocsDTO.DeliveryDocsPowerDTO result = new DocsDTO.DeliveryDocsPowerDTO();
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        String userAccount = "";
+        String userId = "";
+        if (loginUser != null) {
+            userAccount = loginUser.getUserAccount();
+            userId = loginUser.getUid();
+        }
+        //含有的权限
+        List<String> containDocsPowerList = new ArrayList<>();
+
+        //不含有的
+        List<String> noContainDocsPowerList = new ArrayList<>();
+        //这个是所有的
+        List<TaskDeliveryDocsEntity> deliveryDocsList = this.getByProductId(productId);
+        List<String> allDeliveryDocsIds = deliveryDocsList.stream().map(TaskDeliveryDocsEntity::getId).collect(Collectors.toList());
+
+        //如果是管理员
+        if (userAccount.equals(AdminUserConstant.ACCOUNT)) {
+            noContainDocsPowerList.addAll(allDeliveryDocsIds);
+        } else {
+            /**
+             * 根据产品id 获取当前登录人 是否是 任务负责人
+             * 如果是就要添加对应的 文档id
+             */
+            List<String> taskChargeDeliveryDocsIds = getTaskChargeDeliveryDocsIds(productId, userId);
+            if (CollectionUtils.isNotEmpty(taskChargeDeliveryDocsIds)) {
+                noContainDocsPowerList.addAll(taskChargeDeliveryDocsIds);
+            }
+
+            //查询当前用户的角色
+            List<String> userRoleIds = roleRefMemberService.getUserRole(userId, productId);
+            //获取所有的设置文档的权限的文档id
+            List<DocsPermissionEntity> allPermissionDeliveryDocsList = docsPermissionService.getAllDeliveryDocsIds(productId);
+            for (TaskDeliveryDocsEntity item : deliveryDocsList) {
+                String deliveryDocsId = item.getId();
+                //未设置文档权限可以看所有
+                DocsPermissionEntity permission = allPermissionDeliveryDocsList.stream().filter(p -> p.getDeliveryDocsId().equals(deliveryDocsId)).
+                        findFirst().orElse(null);
+                //表示有权限
+                if (permission != null) {
+                    if (userRoleIds.contains(permission.getQueryRoleId())) {
+                        containDocsPowerList.add(deliveryDocsId);
+                    }
+                    if (StringUtils.isBlank(permission.getQueryRoleId())) {
+                        noContainDocsPowerList.add(deliveryDocsId);
+                    }
+                } else {
+                    //没有设置权限 也应该看到
+                    noContainDocsPowerList.add(deliveryDocsId);
+                }
+
+
+            }
+
+        }
+        result.setContainDocsPowerList(containDocsPowerList);
+        noContainDocsPowerList = noContainDocsPowerList.stream().filter(n -> !containDocsPowerList.contains(n)).collect(Collectors.toList());
+        result.setNoContainDocsPowerList(noContainDocsPowerList);
+        return result;
     }
 
 }
