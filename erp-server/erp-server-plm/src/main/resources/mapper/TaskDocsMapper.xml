@@ -30,15 +30,36 @@
        <if test="params.searchKeyword!=null and params.searchKeyword !=''  ">
             AND d.docs_name LIKE concat('%',#{params.searchKeyword},'%')
        </if>
-       <if test="ids !=null and ids.size()>0">
+       <if test="power.noContainDocsPowerList !=null and power.noContainDocsPowerList.size>0">
            AND d.id in
-           <foreach collection="ids" item="id" open="(" separator="," close=")">
+           <foreach collection="power.noContainDocsPowerList" item="id" open="(" separator="," close=")">
                #{id}
            </foreach>
        </if>
         <!--权限-->
         <if test="params.param!=null and params.param!=''">
             ${params.param}
+        </if>
+        UNION
+
+        SELECT d.id,d.docs_name deliveryDocsName ,d.task_id,
+        COALESCE((SELECT  name FROM   project_task WHERE id=d.task_id),'') taskName,
+        COALESCE(f.file_name,'-') fileName,COALESCE(f.file_type,'-') fileType,
+        COALESCE(f.file_size,0) fileSize, f.upload_type,f.file_url,
+        f.upload_type,f.old_file_url,f.old_upload_type,f.old_file_name,
+        f.create_time submitTime,f.file_url,f.create_user_name AS submitUserName
+        FROM  task_delivery_docs d
+        LEFT JOIN  task_finish_docs f on f.task_docs_id=d.id AND f.is_deleted = FALSE
+        INNER JOIN project_task pt ON pt.id=f.task_id AND pt.is_deleted=FALSE
+        where d.product_id = #{params.flagId} AND d.is_deleted = FALSE
+        <if test="params.searchKeyword!=null and params.searchKeyword !=''  ">
+            AND d.docs_name LIKE concat('%',#{params.searchKeyword},'%')
+        </if>
+        <if test="power.containDocsPowerList !=null and power.containDocsPowerList.size>0">
+            AND d.id in
+            <foreach collection="power.containDocsPowerList" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
         </if>
 
     </select>
@@ -88,6 +109,55 @@
        SELECT id ,docs_name AS name,is_sys FROM task_delivery_docs
        WHERE task_id=#{taskId} AND is_deleted = FALSE
 
+    </select>
+
+
+    <select id="containPaging" resultType="com.erp.model.plm.dto.DeliveryDocsDTO">
+        SELECT d.id,d.docs_name deliveryDocsName ,d.task_id,
+        COALESCE((SELECT  name FROM   project_task WHERE id=d.task_id),'') taskName,
+        COALESCE(f.file_name,'-') fileName,COALESCE(f.file_type,'-') fileType,
+        COALESCE(f.file_size,0) fileSize, f.upload_type,f.file_url,
+        f.upload_type,f.old_file_url,f.old_upload_type,f.old_file_name,
+        f.create_time submitTime,f.file_url,f.create_user_name AS submitUserName
+        FROM  task_delivery_docs d
+        LEFT JOIN  task_finish_docs f on f.task_docs_id=d.id AND f.is_deleted = FALSE
+        INNER JOIN project_task pt ON pt.id=f.task_id AND pt.is_deleted=FALSE
+        where d.product_id = #{params.flagId} AND d.is_deleted = FALSE
+        <if test="params.searchKeyword!=null and params.searchKeyword !=''  ">
+            AND d.docs_name LIKE concat('%',#{params.searchKeyword},'%')
+        </if>
+        <if test="ids!=null and ids.size>0">
+            AND d.id in
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="noContainPaging" resultType="com.erp.model.plm.dto.DeliveryDocsDTO">
+        SELECT d.id,d.docs_name deliveryDocsName ,d.task_id,
+        COALESCE((SELECT  name FROM   project_task WHERE id=d.task_id),'') taskName,
+        COALESCE(f.file_name,'-') fileName,COALESCE(f.file_type,'-') fileType,
+        COALESCE(f.file_size,0) fileSize, f.upload_type,f.file_url,
+        f.upload_type,f.old_file_url,f.old_upload_type,f.old_file_name,
+        f.create_time submitTime,f.file_url,f.create_user_name AS submitUserName
+        FROM  task_delivery_docs d
+        LEFT JOIN  task_finish_docs f on f.task_docs_id=d.id AND f.is_deleted = FALSE
+        INNER JOIN project_task pt ON pt.id=f.task_id AND pt.is_deleted=FALSE
+        where d.product_id = #{params.flagId} AND d.is_deleted = FALSE
+        <if test="params.searchKeyword!=null and params.searchKeyword !=''  ">
+            AND d.docs_name LIKE concat('%',#{params.searchKeyword},'%')
+        </if>
+        <if test="ids !=null and ids.size>0">
+            AND d.id in
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.param!=null and params.param!=''">
+            ${params.param}
+        </if>
     </select>
 
 

@@ -45,8 +45,14 @@ public class SoDetailDTO implements Serializable {
         /**
          * 单价
          */
-        @NotNull(message = "销售单间不能为空")
+        @NotNull(message = "销售单价不能为空")
         private BigDecimal price;
+
+        /**
+         * 币种
+         */
+        @NotBlank(message = "币种不能为空")
+        private String currency;
 
 
         /**

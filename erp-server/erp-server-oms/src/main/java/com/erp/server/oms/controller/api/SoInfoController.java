@@ -1,10 +1,12 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -62,6 +64,12 @@ public class SoInfoController extends BaseController {
      * @return
      */
     @PostMapping("/add")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:add",
+            serviceClass = SoInfoService.class,
+            keyIdName = "id"
+    )
     public ApiResult add(@RequestBody @Validated SoInfoDTO.AddDTO dto) {
         String id = soInfoService.add(dto);
         return StringUtils.isNotBlank(id)?success():failure();
@@ -75,8 +83,15 @@ public class SoInfoController extends BaseController {
      * @return
      */
     @PostMapping("/submit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:submit",
+            serviceClass = SoInfoService.class,
+            keyIdName = "ids"
+    )
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success();
+        Boolean result = soInfoService.submit(dto.getIds());
+        return result?success():failure();
     }
 
     /**
@@ -86,8 +101,15 @@ public class SoInfoController extends BaseController {
      * @return
      */
     @PostMapping("/addAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:addAndSubmit",
+            serviceClass = SoInfoService.class,
+            keyIdName = "id"
+    )
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated SoInfoDTO.AddDTO dto) {
-        return success();
+        Boolean result = soInfoService.addAndSubmit(dto);
+        return result ? success() : failure();
     }
 
 
@@ -98,6 +120,12 @@ public class SoInfoController extends BaseController {
      * @return
      */
     @PostMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:view",
+            serviceClass = SoInfoService.class,
+            keyIdName = "id"
+    )
     public ApiResult<SoInfoDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         return success(null);
     }

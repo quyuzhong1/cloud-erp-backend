@@ -11,6 +11,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.TransferApplicationDTO;
 import com.erp.server.wms.service.TransferApplicationService;
 import org.apache.commons.lang3.StringUtils;
@@ -352,4 +353,29 @@ public class TransferApplicationController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 调拨申请单号
+     * @author Will
+     * @date: 2023/5/16 11:29
+     * @param dto
+     * @return ApiResult<List<DropDTO>>
+     */
+    @PostMapping("/listTransferApplicationDrop")
+    public ApiResult<List<TransferApplicationDTO.DropDTO>> listTransferApplicationDrop(@RequestBody PermissionsDTO dto) {
+        List<TransferApplicationDTO.DropDTO> list = transferApplicationService.listTransferApplicationDrop(dto);
+        return success(list);
+    }
+
+    /**
+     * 查询拣货明细
+     * @author Will
+     * @date: 2023/5/16 12:09
+     * @param id
+     * @return ApiResult<List<CommonDTO>>
+     */
+    @PostMapping("/listPickingDetail")
+    public ApiResult<List<PickingDetailDTO.CommonDTO>> listPickingDetail(@RequestParam("id") String id) {
+        List<PickingDetailDTO.CommonDTO> list = transferApplicationService.listPickingDetail(id);
+        return success(list);
+    }
 }

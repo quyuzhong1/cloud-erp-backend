@@ -2,14 +2,16 @@ package com.erp.model.oms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.oms.enums.BillTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -35,19 +37,19 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
      * 审核状态
      */
     @TableField("approve_status")
-    private String approveStatus;
+    private ApproveStatusEnum approveStatus;
 
     /**
      * 订单类型
      */
     @TableField("type")
-    private String type;
+    private BillTypeEnum type;
 
     /**
      * 要货日期
      */
     @TableField("require_date")
-    private Date requireDate;
+    private LocalDate requireDate;
 
     /**
      * 销售组织id

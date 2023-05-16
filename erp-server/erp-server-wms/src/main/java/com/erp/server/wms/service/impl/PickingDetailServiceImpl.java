@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.PickingDetailDTO;
@@ -7,9 +8,9 @@ import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.server.wms.mapper.PickingDetailMapper;
 import com.erp.server.wms.service.PickingDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -37,5 +38,14 @@ public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapp
     @Override
     public Boolean deleteBySourceId(List<String> ids) {
         return this.lambdaUpdate().set(PickingDetailEntity::getIsDeleted, Boolean.TRUE).in(PickingDetailEntity::getSourceId, ids).update();
+    }
+
+    @Override
+    public List<PickingDetailDTO.CommonDTO> listPickingDetailBySourceId(String sourceId) {
+        List<PickingDetailEntity> list = lambdaQuery().eq(PickingDetailEntity::getSourceId, sourceId).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        return BeanMapperUtils.copyList(PickingDetailDTO.CommonDTO.class, list);
     }
 }

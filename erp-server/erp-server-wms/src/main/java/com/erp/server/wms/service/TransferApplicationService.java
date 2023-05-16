@@ -6,6 +6,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.TransferApplicationDTO;
 import com.erp.model.wms.entity.TransferApplicationEntity;
 
@@ -166,4 +167,20 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      * @return Boolean
      */
     Boolean generateTransferOut(ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList);
+    /**
+     * @description: 调拨申请单号查询
+     * @author Will
+     * @date: 2023/5/16 11:30
+     * @param dto
+     * @return List<DropDTO>
+     */
+    List<TransferApplicationDTO.DropDTO> listTransferApplicationDrop(PermissionsDTO dto);
+    /**
+     * @description: 查询拣货名称
+     * @author Will
+     * @date: 2023/5/16 12:09
+     * @param id
+     * @return List<CommonDTO>
+     */
+    List<PickingDetailDTO.CommonDTO> listPickingDetail(String id);
 }

@@ -31,4 +31,12 @@ public interface PickingDetailService extends SuperService<PickingDetailEntity> 
       * @return void
       **/
      Boolean deleteBySourceId(List<String> ids);
+     /**
+      * @description: 根据来源id查询拣货信息
+      * @author Will
+      * @date: 2023/5/16 12:20
+      * @param sourceId
+      * @return List<CommonDTO>
+      */
+     List<PickingDetailDTO.CommonDTO> listPickingDetailBySourceId(String sourceId);
 }
