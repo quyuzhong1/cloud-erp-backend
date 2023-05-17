@@ -367,15 +367,6 @@ public class SoReturnNoticeDTO {
     }
 
     /**
-     * 下推退货签收单列表集合
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ListGenerateSoReturnReceiveView {
-        private List<GenerateSoReturnReceiveView> list;
-    }
-
-    /**
      * 下推退货签收单-列表查询
      */
     @Data

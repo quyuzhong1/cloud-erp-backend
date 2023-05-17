@@ -4,32 +4,45 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.BusinessNoConstant;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.SoReturnReceiveMapper;
+import com.erp.server.wms.service.SoReturnReceiveDetailService;
 import com.erp.server.wms.service.SoReturnReceiveService;
 import com.common.business.service.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -54,6 +67,15 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Resource
     private CustomerFeign customerFeign;
+
+    @Resource
+    private SoReturnFeign soReturnFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Resource
+    private SoReturnReceiveDetailService soReturnReceiveDetailService;
 
     @Override
     public PagingVO<SoReturnReceiveDTO.PagingView> paging(PagingDTO<SoReturnReceiveDTO.PagingParam> pagingParamDTO) {
@@ -136,7 +158,34 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Override
     public String add(SoReturnReceiveDTO.Add dto) {
-        return null;
+        //获取退货单信息
+        SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
+        //获取销售单信息
+        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
+        //获取核算公司
+        SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
+        //获取用户信息
+        FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
+        SoReturnReceiveEntity entity = new SoReturnReceiveEntity();
+        BeanMapperUtils.copy(soInfoEntity, entity);
+        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+        entity.setCustomerName(customerInfoEntity.getName());
+        //生成单号
+        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.THTZ, BusinessNoTypeEnum.CODE_THTZ.getCode()));
+        entity.setCode(code);
+        entity.setSourceId(dto.getSourceId());
+        entity.setSourceCode(soReturnEntity.getCode());
+        entity.setSourceType(soReturnEntity.getSourceType());
+        entity.setInventoryOrgId(dto.getInventoryOrgId());
+        entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());
+        if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
+            entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
+        }
+        entity.setWarehouseKeeperName(userDTO.getUserName());
+        this.save(entity);
+        soReturnReceiveDetailService.add(dto, entity.getId());
+        return soReturnEntity.getId();
     }
 
     @Override

@@ -13,6 +13,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -53,6 +54,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -509,7 +511,8 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     }
 
     @Override
-    public Boolean generateSoReturnNoticeSave(List<SoReturnDTO.GenerateSoReturnNoticeView> list) {
+    public Boolean generateSoReturnNoticeSave(ValidList<SoReturnDTO.GenerateSoReturnNoticeView> validList) {
+        List<SoReturnDTO.GenerateSoReturnNoticeView> list = validList.getList();
         Boolean flag = Boolean.TRUE;
         List<String> soReturnIdList = list.stream().map(SoReturnDTO.GenerateSoReturnNoticeView::getMainId).distinct().collect(Collectors.toList());
         List<String> soDetailIdList = list.stream().map(SoReturnDTO.GenerateSoReturnNoticeView::getSourceDetailId).distinct().collect(Collectors.toList());
@@ -540,6 +543,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 detailAddDTO.setSourceDetailId(view.getId());
                 detailList.add(detailAddDTO);
             }
+            dto.setDetailList(detailList);
             String noticeId = this.add(dto);
             if (StringUtils.isBlank(noticeId)) {
                 flag = Boolean.FALSE;

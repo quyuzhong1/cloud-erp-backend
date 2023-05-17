@@ -320,7 +320,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
         Boolean flag = warehouseReceiveDetailService.update(dto);
 
-        purchaseReturnOrderService.updateArrivalState(entity.getPurchaseOrderId());
+        if (StringUtils.isNotBlank(entity.getPurchaseOrderId())) {
+            purchaseReturnOrderService.updateArrivalState(entity.getPurchaseOrderId());
+        }
+
 
         //更新收货单详情表信息
         return flag;

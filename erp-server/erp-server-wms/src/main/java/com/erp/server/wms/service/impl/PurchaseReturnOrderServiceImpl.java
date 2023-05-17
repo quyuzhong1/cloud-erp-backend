@@ -483,7 +483,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     scmTaskFeign.updatePurchaseOrderDetailByIdBatch(list);
                 }
 
-                updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId());
+                if (StringUtils.isNotBlank(purchaseReturnOrderEntity.getPurchaseOrderId())) {
+                    updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId());
+                }
             }
         } else {
             //审核不通过
@@ -542,7 +544,10 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 });
                 scmTaskFeign.updatePurchaseOrderDetailByIdBatch(list);
             }
-            updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId());
+            if (StringUtils.isNotBlank(purchaseReturnOrderEntity.getPurchaseOrderId())) {
+                updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId());
+            }
+
         }
 
         //操作日志

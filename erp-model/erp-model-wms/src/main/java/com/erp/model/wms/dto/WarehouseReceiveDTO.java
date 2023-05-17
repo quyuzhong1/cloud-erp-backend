@@ -83,6 +83,8 @@ public class WarehouseReceiveDTO {
         @NotBlank(message = "签收单主表id不能为空")
         private String id;
 
+        private String purchaseOrderId;
+
         /**
          * 收货人id
          */
