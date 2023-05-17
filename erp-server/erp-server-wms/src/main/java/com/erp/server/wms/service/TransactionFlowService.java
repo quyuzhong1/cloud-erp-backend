@@ -1,6 +1,9 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
 import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -37,5 +40,13 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
      */
     void add(TransactionFlowDTO param, InventoryBusinessTypeEnum businessType,
                                       String transactionRuleId, Integer afterInventoryQty, InventoryModeEnum inventoryModeEnum);
+
+
+    /**
+     * 分页查询即时库存对应的流水
+     * @param pagingParamDTO
+     * @return
+     */
+    PagingVO<InventoryDTO.TransFlowPagingViewDTO> pagingForInv(PagingDTO<InventoryDTO.TransFlowSearchParamDTO> pagingParamDTO);
 
 }

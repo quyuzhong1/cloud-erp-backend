@@ -4,7 +4,10 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -111,9 +114,9 @@ public class InventoryDTO {
     public static class PagingViewDTO {
 
         /**
-         * 返回库存ids，方便前台勾选导出
+         * sku id
          */
-        private List<String> ids;
+        private String skuId;
 
         /**
          * sku编号
@@ -210,9 +213,22 @@ public class InventoryDTO {
     public static class TransFlowSearchParamDTO extends SortDTO {
 
         /**
-         * 即时库存id集合
+         * 仓库id（点击查看流水必传参数）
          */
-        private List<String> inventoryIdList;
+        @NotEmpty(message = "仓库不能为空")
+        private String warehouseId;
+
+        /**
+         * 库存组织id（点击查看流水必传参数）
+         */
+        @NotEmpty(message = "库存组织不能为空")
+        private String orgId;
+
+        /**
+         * sku id（点击查看流水必传参数）
+         */
+        @NotEmpty(message = "sku不能为空")
+        private String skuId;
 
         /**
          * 单据编号
@@ -220,25 +236,19 @@ public class InventoryDTO {
         private String sourceCode;
 
         /**
-         * 仓库id
+         * 业务日期范围（单据日期）
          */
-        private String warehouseId;
-
-
-        /**
-         * 单据日期范围
-         */
-        private List<String> dateList;
+        private List<LocalDate> dateList;
 
         /**
-         * 操作类型
+         * 操作类型（对应原型单据状态）  接口地址：/wms/common/enumDropDown?type=InventoryOperationMode
          */
-        private String operationMode;
+        private List<String> operationModeList;
 
         /**
-         * 库存状态
+         * 库存状态  接口地址：/wms/common/enumDropDown?type=InventoryTransType
          */
-        private String inventoryStatus;
+        private List<String> inventoryStatusList;
     }
 
 
@@ -248,6 +258,11 @@ public class InventoryDTO {
     @Data
     @NoArgsConstructor
     public static class TransFlowPagingViewDTO {
+
+        /**
+         * 流水id
+         */
+        private String id;
 
         /**
          * 出入库时间
@@ -268,6 +283,11 @@ public class InventoryDTO {
          * 单据类型名称
          */
         private String sourceTypeName;
+
+        /**
+         * sku id
+         */
+        private String skuId;
 
         /**
          * sku编号

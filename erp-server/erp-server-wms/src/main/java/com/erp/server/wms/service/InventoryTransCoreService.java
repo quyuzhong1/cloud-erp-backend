@@ -11,19 +11,19 @@ import com.erp.model.wms.dto.inventory.*;
 public interface InventoryTransCoreService {
 
     /**
-     * 出入库业务，按业务类型（走配置的交易规则）
+     * 出入库业务，按业务类型（走配置的交易规则），操作引起当前仓仓库的库存变化
      * @param dto
      */
     void approveByType(InventoryInOutStockDTO dto);
 
     /**
-     * 调拨业务，按业务类型（走配置的交易规则）
+     * 调拨业务，按业务类型（走配置的交易规则），操作引起当前仓和目的仓两个仓库的库存变化
      * @param dto
      */
     void approveByType(InventoryTransferDTO dto);
 
     /**
-     * 调拨业务，自定义规则
+     * 调拨业务，自定义规则，，操作引起当前仓和目的仓两个仓库的库存变化，数据库配置的规则满足不了，手工传输交易规则
      * @param dto
      */
     void approveByRule(InventoryTransferRuleDTO dto);

@@ -1,6 +1,9 @@
 package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.TransactionFlowEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -26,6 +29,16 @@ public interface TransactionFlowMapper extends BaseMapper<TransactionFlowEntity>
      */
     int updateUnapprovedById(@Param(value = "id") String id, @Param(value = "version") Integer version,
                       @Param(value = "updateTime") LocalDateTime updateTime, @Param(value = "updateUserId") String updateUserId, @Param(value = "updateUserName") String updateUserName);
+
+
+    /**
+     * 分页查询即时库存对应的流水
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<InventoryDTO.TransFlowPagingViewDTO> pagingForInv(Page query, @Param("params") InventoryDTO.TransFlowSearchParamDTO params);
+
 
 
 }
