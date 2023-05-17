@@ -36,4 +36,32 @@ public interface SoDetailMapper extends BaseMapper<SoDetailEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.SkuHistoryPriceDTO>
      */
     List<SoDetailDTO.SkuHistoryPriceDTO> listSkuPriceHistory(List<String> skuIdList);
+
+    /**
+     * 获取到所有
+     * @author yl
+     * @date 2023-05-17 14:12
+     * @param
+     * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.InfoDTO>
+     */
+    List<SoDetailDTO.InfoDTO> listAllSoDetail();
+
+
+    /**
+     * 根据审核状态获取
+     * @author yl
+     * @date 2023-05-17 14:12
+     * @param approveList 审核状态
+     * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.InfoDTO>
+     */
+    List<SoDetailDTO.InfoDTO> listSoDetailByApprove(@Param("approveList") List<String> approveList);
+
+    /**
+     * 根据发货状态获取
+     * @author yl
+     * @date 2023-05-17 14:12
+     * @param deliveryStatus 发货状态
+     * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.InfoDTO>
+     */
+    List<SoDetailDTO.InfoDTO> listSoDetailByDeliveryStatus(@Param("deliveryStatus") Boolean deliveryStatus);
 }

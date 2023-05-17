@@ -49,6 +49,14 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     private Integer qty;
 
     /**
+     * 发货状态
+     * true 已发货
+     * false 未发货
+     */
+    @TableField("delivery_status")
+    private Boolean deliveryStatus;
+
+    /**
      * 单价
      */
     @TableField("price")
@@ -101,6 +109,8 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
      */
     @TableField("remark")
     private String remark;
+
+
 
 
     public static final String MAIN_ID = "main_id";

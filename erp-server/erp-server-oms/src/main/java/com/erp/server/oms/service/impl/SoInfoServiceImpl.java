@@ -1,6 +1,8 @@
 package com.erp.server.oms.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -12,15 +14,26 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.mapper.SoInfoMapper;
+import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
@@ -56,6 +69,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private InventoryFeign inventoryFeign;
+
+    @Resource
+    private CustomerInfoService customerInfoService;
+
+    @Resource
+    private SoOutstockFeign soOutstockFeign;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     /**
      * 添加销售订单
@@ -220,7 +245,128 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     public PagingVO<SoInfoDTO.PagingViewDTO> paging(PagingDTO<SoInfoDTO.PagingParamDTO> dto) {
-        return null;
+        SoInfoDTO.PagingParamDTO params = dto.getParams();
+        params.setParam(dto.getParam());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        List<String> paramDetailIds = soDetailService.listParamDetailIdsBySearchType(params.getSearchType());
+        if (Objects.isNull(paramDetailIds)) {
+            paramDetailIds = Collections.emptyList();
+        } else {
+            if (paramDetailIds.size() == 0) {
+                return new PagingVO<>(new Page<>());
+            }
+        }
+        IPage pageData = baseMapper.paging(query, params, paramDetailIds);
+        List<SoInfoDTO.PagingViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>(pageData);
+        }
+        //详情id
+        List<String> detailIds = list.stream().map(SoInfoDTO.PagingViewDTO::getDetailId).collect(Collectors.toList());
+        List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockFeign.listDetailBySourceDetailId(detailIds);
+        List<String> skuIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+        String warehouseId = list.get(0).getWarehouseId();
+        InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
+        paramDTO.setSkuIds(skuIdList);
+        paramDTO.setWarehouseId(warehouseId);
+        paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        //从wms 获取到sku 的即时库存信息
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
+        //客户id
+        List<String> customerIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getCustomerId).collect(Collectors.toList());
+        List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIdList) ? customerInfoService.listByIds(customerIdList) : Collections.emptyList();
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<String> flagList = new ArrayList<>();
+
+        for (SoInfoDTO.PagingViewDTO item : list) {
+            boolean contains = flagList.contains(item.getId());
+            ApproveStatusEnum approveStatus = item.getApproveStatus();
+            item.setApproveStatusName(approveStatus.getName());
+            String type = item.getType();
+            item.setTypeName(BillTypeEnum.getName(type));
+            //发货状态
+            Boolean deliveryStatus = item.getDeliveryStatus();
+            String deliveryStatusName = deliveryStatus != null && deliveryStatus ? "已发货" : "未发货";
+            item.setDeliveryStatusName(deliveryStatusName);
+            //作废状态
+            Boolean invalidStatus = item.getInvalidStatus();
+            String invalidStatusName = invalidStatus != null && deliveryStatus ? "已作废" : "未作废";
+            item.setInvalidStatusName(invalidStatusName);
+            String customerName = customerList.stream().filter(c -> c.getId().equals(item.getCustomerId())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setCustomerName(customerName);
+            String skuId = item.getSkuId();
+            //销售数量
+            Integer qty = item.getQty();
+
+            //即时库存
+            Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+            /**
+             * 缺货数量
+             * 当可用即时库存数量小于销售数量时，
+             * 缺货数量=销售数量-可用即时库存数量；
+             * 当可用即时库存数量大于销售数量时，缺货数量为0
+             */
+            Integer scarceQty = 0;
+            Boolean isGre = curInventoryQty > qty;
+
+            Boolean isScarce = !isGre;
+
+            item.setIsScarce(isScarce);
+            /**
+             * 可出数量
+             * 根据可用即时库存计算可出数量，
+             * 当可用即时库存数量大于销售数量时 可出数量=销售数量；
+             * 若可用即时库存数量小于销售数量，可出数量=即时可用库存数量
+             */
+            Integer availableQty = 0;
+            if (!isGre) {
+                scarceQty = qty;
+                availableQty = curInventoryQty;
+
+            } else {
+                availableQty = qty;
+            }
+            item.setScarceQty(scarceQty);
+            item.setAvailableQty(availableQty);
+            /**
+             * 已出库数量
+             * 新增时默认为0
+             * 编辑时根据关联出库单
+             * 总共已发货数量同步
+             *
+             */
+            Integer deliveryQty = soOutstockDetailList.stream().filter(req -> req.getSourceDetailId().equals(item.getDetailId())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            item.setDeliveryQty(deliveryQty);
+            /**
+             * 剩余数量
+             * 销售数量-已出库数量
+             */
+            Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
+            item.setWaitQty(waitQty);
+            SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if (sku != null) {
+                item.setProductName(sku.getSkuName());
+                item.setUnit(sku.getUnitName());
+            }
+
+            if (contains) {
+                item.setCode("");
+                item.setTypeName("");
+                item.setApproveStatusName("");
+                item.setInvalidStatusName("");
+                item.setCustomerName("");
+                item.setSalesOrgName("");
+                item.setSellerName("");
+                item.setCreateTime(null);
+                item.setCreateUserName("");
+                item.setApproveUserName("");
+                item.setRequireDate(null);
+            }
+            flagList.add(item.getId());
+        }
+        return new PagingVO<>(pageData);
     }
 
 

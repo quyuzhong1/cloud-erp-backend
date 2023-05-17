@@ -3,5 +3,88 @@
 <mapper namespace="com.erp.server.oms.mapper.SoInfoMapper">
 
 
+    <select id="paging" resultType="com.erp.model.oms.dto.SoInfoDTO$PagingViewDTO">
+         SELECT
+           si.code,si.type,
+           si.approve_status, si.customer_id,
+           si.invalid_status, si.sales_org_name,
+           si.seller_name,sod.delivery_status,
+           si.require_date,si.create_user_name,
+           si.create_time,si.warehouse_id,
+           si.id,sod.id AS detailId,
+           sod.sku_id,sod.sku_no,
+           sod.qty,sod.amount,
+           sod.currency,sod.currency_symbol
+         FROM  so_detail sod
+         LEFT JOIN so_info si
+         ON sod.main_id =si.id AND si.is_deleted=false
+         WHERE sod.is_deleted=false
+         <if test="params.skuNoList !=null and params.skuNoList.size>0">
+             AND sod.sku_no IN
+             <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
+                 #{skuNo}
+             </foreach>
+         </if>
+        <if test="params.code !=null and params.code!=''">
+            AND si.code ILIKE concat('%', #{params.code} ,'%')
+        </if>
+        <if test="params.type !=null and params.type!=''">
+            AND si.type=#{params.type}
+        </if>
+        <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
+            AND si.approve_status IN
+            <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
+                #{approveStatus}
+            </foreach>
+        </if>
+        <if test="params.customerIdList !=null and params.customerIdList.size>0">
+            AND si.customer_id IN
+            <foreach collection="params.customerIdList" item="customerId" open="(" separator="," close=")">
+                #{customerId}
+            </foreach>
+        </if>
+        <if test="params.sellerIdList !=null and params.sellerIdList.size>0">
+            AND si.seller_id IN
+            <foreach collection="params.sellerIdList" item="sellerId" open="(" separator="," close=")">
+                #{sellerId}
+            </foreach>
+        </if>
+        <if test="params.invalidStatus !=null ">
+            AND si.invalid_status=#{params.invalidStatus}
+        </if>
+        <if test="params.deliveryStatus !=null ">
+            AND sod.delivery_status=#{params.deliveryStatus}
+        </if>
 
+        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+            AND si.create_user_id IN
+            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                #{createUserId}
+            </foreach>
+        </if>
+
+        <if test="params.createTimeList !=null and params.createTimeList.size>0">
+            AND si.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > si.create_time
+        </if>
+        <if test="params.requireDateList !=null and params.requireDateList.size>0">
+            AND si.require_date >= #{params.requireDateList[0]} and (#{params.requireDateList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > si.require_date
+        </if>
+        <if test="detailIdList!=null and detailIdList.size>0">
+            AND sod.id IN
+            <foreach collection="detailIdList" item="detailId" open="(" separator="," close=")">
+                #{detailId}
+            </foreach>
+        </if>
+
+        <!--权限-->
+        <if test="params.param!=null and params.param!=''">
+            ${params.param}
+        </if>
+
+        ORDER BY si.create_time DESC
+
+
+    </select>
 </mapper>

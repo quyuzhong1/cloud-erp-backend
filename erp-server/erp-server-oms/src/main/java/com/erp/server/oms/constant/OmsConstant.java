@@ -10,7 +10,10 @@ package com.erp.server.oms.constant;
 public interface OmsConstant {
 
 
-
+    /**
+     * 所有
+     */
+    String ALL = "all";
 
     /**
      * 待审核
@@ -26,6 +29,17 @@ public interface OmsConstant {
      * 审核不通过
      */
     String REJECT = "reject";
+
+    /**
+     * 待发货
+     */
+    String WAIT_DELIVERY = "waitDelivery";
+
+
+    /**
+     * 已发货
+     */
+    String DELIVERY = "delivery";
 
 
 }

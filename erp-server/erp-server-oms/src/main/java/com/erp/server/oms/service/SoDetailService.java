@@ -2,6 +2,7 @@ package com.erp.server.oms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SoDetailDTO;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 
 import java.util.List;
@@ -23,6 +24,16 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @return java.util.List<com.erp.model.oms.entity.SoInfoEntity>
      **/
     List<SoDetailEntity> listSoDetailByIds(List<String> detailIds);
+
+
+    /**
+     * 获取tab列表数据
+     * @author yl
+     * @date 2023-05-17 14:03
+     * @param
+     * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.TabListDTO>
+     */
+    List<SoInfoDTO.TabListDTO> tabList();
 
 
     /**
@@ -52,4 +63,13 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.ViewDTO>
      */
     List<SoDetailDTO.ViewDTO> listByMainId(String mainId,String warehouseId);
+
+   /**
+    * 根据搜索类型 获取到对应的明细id
+    * @author yl
+    * @date 2023-05-17 14:37
+    * @param searchType
+    * @return java.util.List<java.lang.String>
+    */
+    List<String> listParamDetailIdsBySearchType(String searchType);
 }

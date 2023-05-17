@@ -1,9 +1,11 @@
 package com.erp.server.oms.service.impl;
 
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoDetailDTO;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
@@ -19,6 +21,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.server.oms.constant.OmsConstant;
 import com.erp.server.oms.mapper.SoDetailMapper;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
@@ -29,9 +32,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -80,6 +81,58 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Override
     public List<SoDetailEntity> listSoDetailByIds(List<String> detailIds) {
         return lambdaQuery().in(SoDetailEntity::getId, detailIds).list();
+    }
+
+    /**
+     * 获取tab列表数据
+     *
+     * @param
+     * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.TabListDTO>
+     * @author yl
+     * @date 2023-05-17 14:03
+     */
+    @Override
+    public List<SoInfoDTO.TabListDTO> tabList() {
+        List<SoInfoDTO.TabListDTO> result = new ArrayList<>(5);
+        //所有的
+        List<SoDetailDTO.InfoDTO> list = baseMapper.listAllSoDetail();
+        SoInfoDTO.TabListDTO all = new SoInfoDTO.TabListDTO();
+        all.setCount(list.size());
+        all.setSearchType(OmsConstant.ALL);
+        result.add(all);
+
+        //待审核
+        String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+        SoInfoDTO.TabListDTO waitApprove = new SoInfoDTO.TabListDTO();
+        waitApprove.setSearchType(OmsConstant.WAIT_APPROVE);
+        int waitApproveCount = (int) list.stream().filter(s -> approveIngStatus.equals(s.getApproveStatus())).count();
+        waitApprove.setCount(waitApproveCount);
+        result.add(waitApprove);
+
+
+        //待发货
+        SoInfoDTO.TabListDTO waitDelivery = new SoInfoDTO.TabListDTO();
+        waitDelivery.setSearchType(OmsConstant.WAIT_DELIVERY);
+        int waitDeliveryCount = (int) list.stream().filter(s -> !s.getDeliveryStatus()).count();
+        waitDelivery.setCount(waitDeliveryCount);
+        result.add(waitDelivery);
+
+        //不通过
+        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+        SoInfoDTO.TabListDTO reject = new SoInfoDTO.TabListDTO();
+        reject.setSearchType(OmsConstant.REJECT);
+        int rejectCount = (int) list.stream().filter(s -> rejectStatus.equals(s.getApproveStatus())).count();
+        reject.setCount(rejectCount);
+        result.add(reject);
+
+        //已发货
+        SoInfoDTO.TabListDTO delivery = new SoInfoDTO.TabListDTO();
+        delivery.setSearchType(OmsConstant.DELIVERY);
+        int deliveryCount = (int) list.stream().filter(s -> s.getDeliveryStatus()).count();
+        delivery.setCount(deliveryCount);
+        result.add(delivery);
+
+        return result;
     }
 
     @Override
@@ -195,9 +248,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             item.setTaxPrice(taxPrice);
             //历史价格
-            SoDetailDTO.SkuHistoryPriceDTO  skuHistoryPrice= skuPriceHistoryList.stream().
+            SoDetailDTO.SkuHistoryPriceDTO skuHistoryPrice = skuPriceHistoryList.stream().
                     filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
-            if(skuHistoryPrice!=null){
+            if (skuHistoryPrice != null) {
                 item.setMaxPrice(skuHistoryPrice.getMaxPrice());
                 item.setMinPrice(skuHistoryPrice.getMinPrice());
                 item.setAvgPrice(skuHistoryPrice.getAvgPrice());
@@ -206,6 +259,51 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
 
         return resultList;
+    }
+
+
+    /**
+     * 根据搜索类型 获取到对应的明细id
+     *
+     * @param searchType
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-05-17 14:37
+     */
+    @Override
+    public List<String> listParamDetailIdsBySearchType(String searchType) {
+        switch (searchType) {
+            case OmsConstant
+                    .WAIT_APPROVE:
+                //待审核
+                String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+                List<SoDetailDTO.InfoDTO> waitApproveList = baseMapper.listSoDetailByApprove(Arrays.asList(approveIngStatus));
+                return waitApproveList.stream().map(SoDetailDTO.InfoDTO::getId).collect(Collectors.toList());
+
+            case OmsConstant
+                    .REJECT:
+                //审核不通过
+                String reject = ApproveStatusEnum.REJECT.getStatus();
+                List<SoDetailDTO.InfoDTO> rejectList = baseMapper.listSoDetailByApprove(Arrays.asList(reject));
+                return rejectList.stream().map(SoDetailDTO.InfoDTO::getId).collect(Collectors.toList());
+
+             //未发货
+            case OmsConstant
+                    .WAIT_DELIVERY:
+                List<SoDetailDTO.InfoDTO> waitDeliveryList = baseMapper.listSoDetailByDeliveryStatus(Boolean.FALSE);
+                return waitDeliveryList.stream().map(SoDetailDTO.InfoDTO::getId).collect(Collectors.toList());
+
+            //已发货
+            case OmsConstant
+                    .DELIVERY:
+                List<SoDetailDTO.InfoDTO> deliveryList = baseMapper.listSoDetailByDeliveryStatus(Boolean.TRUE);
+                return deliveryList.stream().map(SoDetailDTO.InfoDTO::getId).collect(Collectors.toList());
+
+        }
+
+        //特殊 标识 不要删除
+        return null;
+
     }
 
 
@@ -280,11 +378,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
     /**
      * 获取可用数量
+     *
+     * @param curInventoryQty 即时库存数量
+     * @param salesQty        销售数量
+     * @return java.lang.Integer
      * @Author Luo_WG
      * @Date 2023/5/17 11:06
-     * @param curInventoryQty 即时库存数量
-     * @param salesQty 销售数量
-     * @return java.lang.Integer
      **/
     private Integer getAvailableQty(Integer curInventoryQty, Integer salesQty) {
         /**

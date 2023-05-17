@@ -484,15 +484,15 @@ public class SoDetailDTO implements Serializable {
         /**
          * 仓库id
          */
-        private String  warehouseId;
+        private String warehouseId;
         /**
          * 库存组织id
          */
-        private String  inventoryOrgId;
+        private String inventoryOrgId;
         /**
          * 库存组织名称
          */
-        private String  inventoryOrgName;
+        private String inventoryOrgName;
         /**
          * 销售数量
          */
@@ -521,5 +521,90 @@ public class SoDetailDTO implements Serializable {
          * 备注
          */
         private String remark;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class InfoDTO {
+
+
+        private String id;
+
+
+        /**
+         * 主表id
+         */
+        private String mainId;
+
+        /**
+         * skuid
+         */
+        private String skuId;
+
+        /**
+         * sku no
+         */
+        private String skuNo;
+
+        /**
+         * 销售数量
+         */
+        private Integer qty;
+
+        /**
+         * 发货状态
+         * true 已发货
+         * false 未发货
+         */
+        private Boolean deliveryStatus;
+
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 销售金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 是否赠品 true 是
+         */
+        private Boolean isGift;
+
+        /**
+         * 是否补发 true 是
+         */
+        private Boolean isReissue;
+
+        /**
+         * 是否关闭 true 是
+         */
+        private Boolean isClose;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        private String approveStatus;
+
     }
 }

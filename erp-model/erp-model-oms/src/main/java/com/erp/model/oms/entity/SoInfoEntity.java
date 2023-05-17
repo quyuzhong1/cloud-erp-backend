@@ -101,6 +101,17 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     @TableField("warehouse_org_id")
     private String warehouseOrgId;
 
+    /**
+     * 作废状态
+     * true 作废
+     * false 未作废
+     */
+    @TableField("invalid_status")
+    private Boolean invalidStatus;
+
+
+
+
 
 
     /**

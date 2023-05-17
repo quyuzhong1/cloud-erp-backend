@@ -58,4 +58,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     SoInfoDTO.ViewDTO view(String id);
 
     PagingVO<SoInfoDTO.PagingViewDTO> paging(PagingDTO<SoInfoDTO.PagingParamDTO> dto);
+
+    
+
 }

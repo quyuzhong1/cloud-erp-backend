@@ -11,7 +11,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoDetailDTO;
-import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
@@ -48,7 +47,8 @@ public class SoInfoController extends BaseController {
      */
     @GetMapping("/tabList")
     public ApiResult<List<SoInfoDTO.TabListDTO>> tabList() {
-        return success(null);
+        List<SoInfoDTO.TabListDTO>  tabList= soDetailService.tabList();
+        return success(tabList);
     }
 
     /**
@@ -84,7 +84,7 @@ public class SoInfoController extends BaseController {
     )
     public ApiResult add(@RequestBody @Validated SoInfoDTO.AddDTO dto) {
         String id = soInfoService.add(dto);
-        return StringUtils.isNotBlank(id)?success():failure();
+        return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
 
@@ -103,7 +103,7 @@ public class SoInfoController extends BaseController {
     )
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = soInfoService.submit(dto.getIds());
-        return result?success():failure();
+        return result ? success() : failure();
     }
 
     /**
@@ -139,7 +139,7 @@ public class SoInfoController extends BaseController {
             keyIdName = "id"
     )
     public ApiResult<SoInfoDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
-        SoInfoDTO.ViewDTO view=soInfoService.view(dto.getId());
+        SoInfoDTO.ViewDTO view = soInfoService.view(dto.getId());
         return success(view);
     }
 
@@ -221,10 +221,11 @@ public class SoInfoController extends BaseController {
 
     /**
      * 添加详情按钮-列表查询
+     *
+     * @param id id
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoDetailDTO.AddDetailView>>
      * @Author Luo_WG
      * @Date 2023/5/16 18:43
-     * @param id id
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.oms.dto.SoDetailDTO.AddDetailView>>
      **/
     @PostMapping("/listAddDetailView")
     public ApiResult<List<SoDetailDTO.AddDetailView>> listAddDetailView(@RequestParam("id") String id) {

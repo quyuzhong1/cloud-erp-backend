@@ -2,13 +2,14 @@ package com.erp.model.oms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * 单据类型
  */
 public enum BillTypeEnum {
-    B2B("B2B","B2B订单"),
-    B2C("B2C","B2C订单"),
+    B2B("B2B", "B2B订单"),
+    B2C("B2C", "B2C订单"),
     ;
     /**
      * 类型
@@ -36,6 +37,9 @@ public enum BillTypeEnum {
     }
 
     public static String getName(String code) {
+        if (StringUtils.isBlank(code)) {
+            return "";
+        }
         for (BillTypeEnum billTypeEnum : BillTypeEnum.values()) {
             if (code.equals(billTypeEnum.getCode())) {
                 return billTypeEnum.getName();

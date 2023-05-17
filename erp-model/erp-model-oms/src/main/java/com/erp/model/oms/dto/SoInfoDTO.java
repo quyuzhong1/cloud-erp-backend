@@ -36,6 +36,13 @@ public class SoInfoDTO implements Serializable {
     @NoArgsConstructor
     public static class TabListDTO {
 
+        /**
+         * waitApprove 待审核
+         * all 全部
+         * waitDelivery 待发货
+         * delivery 已发货
+         * reject 不通过
+         */
         private String searchType;
 
         private Integer count;
@@ -70,6 +77,11 @@ public class SoInfoDTO implements Serializable {
          */
         private String approveStatusName;
 
+        /**
+         * id
+         */
+        private String detailId;
+
 
         /**
          * 类型
@@ -89,8 +101,13 @@ public class SoInfoDTO implements Serializable {
         /**
          * 作废状态名
          */
-        private Boolean invalidStatusName;
+        private String invalidStatusName;
 
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
 
         /**
          * 客户id
@@ -102,35 +119,31 @@ public class SoInfoDTO implements Serializable {
          */
         private String customerName;
 
-        /**
-         * 销售组织
-         */
-        private String orgId;
+
 
         /**
          * 销售组织名
          */
-        private String orgName;
+        private String salesOrgName;
 
-        /**
-         * 销售员id
-         */
-        private String sellerId;
+
 
         /**
          * 销售员
          */
         private String sellerName;
 
-        /**
-         * 发货状态
-         */
-        private String deliveryStatus;
 
         /**
          * 发货状态
          */
-        private String deliveryName;
+        private Boolean deliveryStatus;
+        /**
+         * 发货状态名
+         */
+        private String deliveryStatusName;
+
+
 
         /**
          * sku id
@@ -142,6 +155,17 @@ public class SoInfoDTO implements Serializable {
          * sku no
          */
         private String skuNo;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
 
         /**
          * 产品名称
@@ -156,7 +180,13 @@ public class SoInfoDTO implements Serializable {
         /**
          * 缺货数量
          */
-        private Integer lackQty;
+        private Integer scarceQty;
+
+        /**
+         * 是否缺货
+         *  如果可出数量小于销售数量，即显示缺货标识
+         */
+        private Boolean isScarce;
 
         /**
          * 可出数量
@@ -216,6 +246,19 @@ public class SoInfoDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
+
+        /**
+         * all 全部
+         * waitApprove 待审核
+         * waitDelivery 待发货
+         * delivery 已发货
+         * reject 审核不通过
+         */
+        @StateEnumValue(strValues = {"all", "waitApprove", "waitDelivery", "reject","delivery"}, message = "搜索类型有误")
+        @NotBlank(message = "搜索类型不能为空")
+        private String searchType;
+
+
         /**
          * sku no 集合
          */
@@ -248,7 +291,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 发货状态状态
          */
-        private String deliveryStatus;
+        private Boolean deliveryStatus;
 
         /**
          * 要货日期集合
@@ -273,7 +316,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 创建时间
          */
-        private List<LocalDateTime> createTimeList;
+        private List<LocalDate> createTimeList;
 
 
     }

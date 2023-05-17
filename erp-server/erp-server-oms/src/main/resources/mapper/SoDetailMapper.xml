@@ -32,6 +32,65 @@
         FROM so_detail
         WHERE is_deleted=FALSE
         GROUP BY sku_id
+    </select>
 
+    <select id="listAllSoDetail" resultType="com.erp.model.oms.dto.SoDetailDTO$InfoDTO">
+         SELECT
+            sd.id,
+            sd.main_id,
+            sd.sku_id,
+            sd.sku_no,
+            sd.qty,
+            sd.is_gift,
+            sd.is_close,
+            sd.remark,
+            sd.delivery_status,
+            si.approve_status
+        FROM so_detail sd
+        INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
+        WHERE si.is_deleted=FALSE
+    </select>
+
+    <select id="listSoDetailByApprove" resultType="com.erp.model.oms.dto.SoDetailDTO$InfoDTO">
+        SELECT
+            sd.id,
+            sd.main_id,
+            sd.sku_id,
+            sd.sku_no,
+            sd.qty,
+            sd.is_gift,
+            sd.is_close,
+            sd.remark,
+            sd.delivery_status,
+            si.approve_status
+        FROM so_detail sd
+        INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
+        WHERE si.is_deleted=FALSE
+        <if test="approveList !=null and approveList.size>0">
+            AND si.approve_status IN
+            <foreach collection="approveList" item="approve" open="(" separator="," close=")">
+                #{approve}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="listSoDetailByDeliveryStatus" resultType="com.erp.model.oms.dto.SoDetailDTO$InfoDTO">
+        SELECT
+        sd.id,
+        sd.main_id,
+        sd.sku_id,
+        sd.sku_no,
+        sd.qty,
+        sd.is_gift,
+        sd.is_close,
+        sd.remark,
+        sd.delivery_status,
+        si.approve_status
+        FROM so_detail sd
+        INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
+        WHERE si.is_deleted=FALSE
+        <if test="deliveryStatus !=null ">
+          AND  sd.delivery_status=#{deliveryStatus}
+        </if>
     </select>
 </mapper>
