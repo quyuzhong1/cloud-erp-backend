@@ -13,7 +13,7 @@ import java.util.Arrays;
  * @date 2023/3/15 17:28
  */
 public enum ApproveStatusEnum {
-
+    DRAFT("draft", "暂存"),
     WAIT_SUBMIT("waitSubmit", "待提交"),
     APPROVE_ING("approveIng", "审核中"),
     REJECT("reject", "审核不通过"),

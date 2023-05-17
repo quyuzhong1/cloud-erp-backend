@@ -2,6 +2,7 @@ package com.erp.model.oms.dto;
 
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.validator.AddGroup;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -120,12 +121,10 @@ public class SoInfoDTO implements Serializable {
         private String customerName;
 
 
-
         /**
          * 销售组织名
          */
         private String salesOrgName;
-
 
 
         /**
@@ -142,7 +141,6 @@ public class SoInfoDTO implements Serializable {
          * 发货状态名
          */
         private String deliveryStatusName;
-
 
 
         /**
@@ -184,7 +182,7 @@ public class SoInfoDTO implements Serializable {
 
         /**
          * 是否缺货
-         *  如果可出数量小于销售数量，即显示缺货标识
+         * 如果可出数量小于销售数量，即显示缺货标识
          */
         private Boolean isScarce;
 
@@ -254,7 +252,7 @@ public class SoInfoDTO implements Serializable {
          * delivery 已发货
          * reject 审核不通过
          */
-        @StateEnumValue(strValues = {"all", "waitApprove", "waitDelivery", "reject","delivery"}, message = "搜索类型有误")
+        @StateEnumValue(strValues = {"all", "waitApprove", "waitDelivery", "reject", "delivery"}, message = "搜索类型有误")
         @NotBlank(message = "搜索类型不能为空")
         private String searchType;
 
@@ -268,7 +266,6 @@ public class SoInfoDTO implements Serializable {
          * code
          */
         private String code;
-
 
 
         /**
@@ -331,22 +328,29 @@ public class SoInfoDTO implements Serializable {
 
 
         /**
+         * id
+         * 当暂存的时候会存在
+         */
+        private String id;
+
+
+        /**
          * 类型
          */
-        @NotNull(message = "单据类型不能为空")
-        @StateEnumValue(clazz = BillTypeEnum.class, message = "单据类型有误")
-        private BillTypeEnum type;
+        @NotBlank(message = "单据类型不能为空",groups = {AddGroup.class})
+        @StateEnumValue(clazz = BillTypeEnum.class, message = "单据类型有误",groups = {AddGroup.class})
+        private String type;
 
         /**
          * 要货日期
          */
-        @NotNull(message = "要货日期不能为空")
+        @NotNull(message = "要货日期不能为空",groups = {AddGroup.class})
         private LocalDate requireDate;
 
         /**
          * 组织id
          */
-        @NotBlank(message = "销售组织不能为空")
+        @NotBlank(message = "销售组织不能为空",groups = {AddGroup.class})
         private String salesOrgId;
 
         /**
@@ -357,7 +361,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 销售员id
          */
-        @NotBlank(message = "销售员不能为空")
+        @NotBlank(message = "销售员不能为空",groups = {AddGroup.class})
         private String sellerId;
 
         /**
@@ -370,7 +374,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 仓库id
          */
-        @NotBlank(message = "仓库不能为空")
+        @NotBlank(message = "仓库不能为空",groups = {AddGroup.class})
         private String warehouseId;
 
 
@@ -387,7 +391,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 客户id
          */
-        @NotBlank(message = "客户不能为空")
+        @NotBlank(message = "客户不能为空",groups = {AddGroup.class})
         private String customerId;
 
 
@@ -411,20 +415,17 @@ public class SoInfoDTO implements Serializable {
         private String receiverAddress;
 
         /**
-         *
-         *
-         *  交货方式 oms/common/enumDropDown?type=DeliveryMode
-         *    描述：deliverGoods（发货）selfExtraction（自提）
-         *
+         * 交货方式 oms/common/enumDropDown?type=DeliveryMode
+         * 描述：deliverGoods（发货）selfExtraction（自提）
          */
-        @StateEnumValue(strValues = {"deliverGoods","selfExtraction"},message = "交货方式有误")
+        @StateEnumValue(strValues = {"deliverGoods", "selfExtraction"}, message = "交货方式有误",groups = {AddGroup.class})
         private String deliveryMode;
 
 
         /**
          * 币种
          */
-        @NotBlank(message = "币种不能为空")
+        @NotBlank(message = "币种不能为空",groups = {AddGroup.class})
         private String currency;
 
         /**
@@ -438,7 +439,7 @@ public class SoInfoDTO implements Serializable {
          * http://172.16.100.11:3002/project/110/interface/api/13480
          * type=AddressType
          */
-        @StateEnumValue(strValues = {"forwarder","deliver","company"},message = "地址类型有误")
+        @StateEnumValue(strValues = {"forwarder", "deliver", "company"}, message = "地址类型有误",groups = {AddGroup.class})
         private String addressType;
 
 
@@ -603,16 +604,20 @@ public class SoInfoDTO implements Serializable {
         /**
          * 类型
          */
+        @NotBlank(message = "单据类型不能为空")
+        @StateEnumValue(clazz = BillTypeEnum.class, message = "单据类型有误")
         private String type;
 
         /**
          * 要货日期
          */
+        @NotNull(message = "要货日期不能为空")
         private LocalDate requireDate;
 
         /**
          * 组织id
          */
+        @NotBlank(message = "销售组织不能为空")
         private String salesOrgId;
 
         /**
@@ -623,12 +628,20 @@ public class SoInfoDTO implements Serializable {
         /**
          * 销售员id
          */
+        @NotBlank(message = "销售员不能为空")
         private String sellerId;
+
+        /**
+         * 是否收取手续费
+         * true 收
+         */
+        private Boolean isCollectShippingFee;
 
 
         /**
          * 仓库id
          */
+        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
 
 
@@ -645,33 +658,40 @@ public class SoInfoDTO implements Serializable {
         /**
          * 客户id
          */
+        @NotBlank(message = "客户不能为空")
         private String customerId;
 
 
         /**
          * 收货人
          */
+        @Size(max = 50, message = "收货人最大50字符")
         private String receiverName;
 
         /**
          * 电话
          */
+        @Size(max = 20, message = "联系电话最大20字符")
         private String telNumber;
 
         /**
          * 收货人地址
          */
+        @Size(max = 50, message = "收货人地址最大50字符")
         private String receiverAddress;
 
         /**
-         * 交货方式
+         * 交货方式 oms/common/enumDropDown?type=DeliveryMode
+         * 描述：deliverGoods（发货）selfExtraction（自提）
          */
+        @StateEnumValue(strValues = {"deliverGoods", "selfExtraction"}, message = "交货方式有误",groups = {AddGroup.class})
         private String deliveryMode;
 
 
         /**
          * 币种
          */
+        @NotBlank(message = "币种不能为空",groups = {AddGroup.class})
         private String currency;
 
         /**
@@ -682,9 +702,13 @@ public class SoInfoDTO implements Serializable {
 
         /**
          * 地址类型
+         * http://172.16.100.11:3002/project/110/interface/api/13480
+         * type=AddressType
          */
+        @StateEnumValue(strValues = {"forwarder", "deliver", "company"}, message = "地址类型有误",groups = {AddGroup.class})
         private String addressType;
 
+        @Valid
         private List<SoDetailDTO.UpdateDTO> detailList;
     }
 

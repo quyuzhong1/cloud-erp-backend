@@ -7,6 +7,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.AddGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -70,7 +71,25 @@ public class SoInfoController extends BaseController {
 
 
     /**
-     * 新增
+     * 暂存
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/draft")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:draft",
+            serviceClass = SoInfoService.class,
+            keyIdName = "id"
+    )
+    public ApiResult draft(@RequestBody @Validated SoInfoDTO.AddDTO dto) {
+        String id = soInfoService.draft(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
+    }
+
+    /**
+     * 创建
      *
      * @param dto
      * @return
@@ -82,14 +101,14 @@ public class SoInfoController extends BaseController {
             serviceClass = SoInfoService.class,
             keyIdName = "id"
     )
-    public ApiResult add(@RequestBody @Validated SoInfoDTO.AddDTO dto) {
+    public ApiResult add(@RequestBody @Validated({AddGroup.class}) SoInfoDTO.AddDTO dto) {
         String id = soInfoService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
 
     /**
-     * 提交
+     * 批量提交
      *
      * @param dto
      * @return
@@ -107,7 +126,7 @@ public class SoInfoController extends BaseController {
     }
 
     /**
-     * 新增并提交
+     * 提交审核
      *
      * @param dto
      * @return
@@ -119,7 +138,7 @@ public class SoInfoController extends BaseController {
             serviceClass = SoInfoService.class,
             keyIdName = "id"
     )
-    public ApiResult<Void> addAndSubmit(@RequestBody @Validated SoInfoDTO.AddDTO dto) {
+    public ApiResult<Void> addAndSubmit(@RequestBody @Validated({AddGroup.class}) SoInfoDTO.AddDTO dto) {
         Boolean result = soInfoService.addAndSubmit(dto);
         return result ? success() : failure();
     }
@@ -150,8 +169,15 @@ public class SoInfoController extends BaseController {
      * @return
      */
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:update",
+            serviceClass = SoInfoService.class,
+            keyIdName = "id"
+    )
     public ApiResult update(@RequestBody @Validated SoInfoDTO.UpdateDTO dto) {
-        return success(null);
+        String id=soInfoService.updateSo(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
     /**

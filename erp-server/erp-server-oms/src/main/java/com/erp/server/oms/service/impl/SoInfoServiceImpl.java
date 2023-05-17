@@ -41,6 +41,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -93,12 +94,25 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     public String add(SoInfoDTO.AddDTO dto) {
         //id
-        String id = IdWorker.getIdStr();
+        String id = dto.getId();
+        String code = "";
+        if (StringUtils.isBlank(id)) {
+            id = IdWorker.getIdStr();
+        } else {
+            SoInfoEntity so = this.getById(id);
+            if (Objects.isNull(so)) {
+                throw new ServiceException(ApiError.ERROR_92016);
+            }
+            code = so.getCode();
+        }
+
         SoInfoEntity addEntity = new SoInfoEntity();
         BeanMapper.copy(dto, addEntity);
         addEntity.setId(id);
-        //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSD, BusinessNoTypeEnum.CODE_XSD.getCode()));
+        if (StringUtils.isBlank(code)) {
+            //生成单号
+            code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSD, BusinessNoTypeEnum.CODE_XSD.getCode()));
+        }
         addEntity.setCode(code);
         //销售组织
         String salesOrgId = dto.getSalesOrgId();
@@ -128,7 +142,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         addEntity.setWarehouseOrgId(warehouseOrgId);
         addEntity.setWarehouseOrgName(warehouseOrgName);
         //保存成功
-        Boolean addResult = this.save(addEntity);
+        Boolean addResult = this.saveOrUpdate(addEntity);
         if (addResult) {
             //添加明细
             soDetailService.addSoDetail(id, dto.getDetailList());
@@ -136,10 +150,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String content = String.format("新增了一个{%s}-销售单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), id, "新增操作");
             return id;
-
         }
-
-
         return "";
     }
 
@@ -223,7 +234,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         SoInfoDTO.ViewDTO view = new SoInfoDTO.ViewDTO();
         SoInfoEntity soInfo = this.getById(id);
         if (Objects.isNull(soInfo)) {
-            throw new ServiceException(ApiError.ERROR_92015);
+            throw new ServiceException(ApiError.ERROR_92016);
         }
         BeanMapper.copy(soInfo, view);
         String warehouseId = view.getWarehouseId();
@@ -367,6 +378,145 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             flagList.add(item.getId());
         }
         return new PagingVO<>(pageData);
+    }
+
+    /**
+     * 暂存数据
+     *
+     * @param dto
+     * @return java.lang.String
+     * @author yl
+     * @date 2023-05-17 15:00
+     */
+    @Override
+    public String draft(SoInfoDTO.AddDTO dto) {
+        //id
+        String id = dto.getId();
+        Boolean isFirst = false;
+        if (StringUtils.isNotBlank(id)) {
+            SoInfoEntity soInfo = this.getById(id);
+            if (Objects.isNull(soInfo)) {
+                throw new ServiceException(ApiError.ERROR_92016);
+            }
+        } else {
+            isFirst = true;
+            id = IdWorker.getIdStr();
+        }
+
+        SoInfoEntity draftEntity = new SoInfoEntity();
+        BeanMapper.copy(dto, draftEntity);
+        draftEntity.setId(id);
+        //销售组织
+        String salesOrgId = dto.getSalesOrgId() == null ? "" : dto.getSalesOrgId();
+        //销售员
+        String sellerId = dto.getSellerId();
+        if (StringUtils.isNotBlank(sellerId)) {
+            //用户信息
+            FindUserDTO userInfo = sysUserFeign.getUserByUserId(sellerId);
+            if (userInfo != null) {
+                draftEntity.setSellerName(userInfo.getUserName());
+            }
+        }
+        String warehouseOrgId = "";
+        //仓库id
+        String warehouseId = dto.getWarehouseId();
+        if (StringUtils.isNotBlank(warehouseId)) {
+            List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
+            if (CollectionUtils.isNotEmpty(warehouseList)) {
+                warehouseOrgId = warehouseList.get(0).getOrgId();
+            }
+        }
+        //组织列表
+        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId, warehouseOrgId));
+        String salesOrgName = orgList.stream().filter(d -> d.getId().equals(salesOrgId)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        draftEntity.setSalesOrgName(salesOrgName);
+        String finalWarehouseOrgId = warehouseOrgId;
+        String warehouseOrgName = orgList.stream().filter(d -> d.getId().equals(finalWarehouseOrgId)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        draftEntity.setWarehouseOrgId(warehouseOrgId);
+        draftEntity.setWarehouseOrgName(warehouseOrgName);
+        String draftStatus = ApproveStatusEnum.DRAFT.getStatus();
+        draftEntity.setApproveStatus(ApproveStatusEnum.getByStatus(draftStatus));
+        //保存成功
+        Boolean draftResult = this.saveOrUpdate(draftEntity);
+        if (draftResult) {
+            //添加明细
+            soDetailService.addSoDetail(id, dto.getDetailList());
+            if (isFirst) {
+                //添加日志
+                String content = String.format("新增了一个{%s}-销售单", ApproveStatusEnum.DRAFT.getName());
+                addModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), id, "新增操作");
+            }
+            return id;
+        }
+        return "";
+
+    }
+
+
+    /**
+     * 修改 销售订单
+     *
+     * @param dto
+     * @return java.lang.String
+     * @author yl
+     * @date 2023-05-17 15:42
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String updateSo(SoInfoDTO.UpdateDTO dto) {
+        String id = dto.getId();
+        SoInfoEntity soInfo = this.getById(id);
+        if (Objects.isNull(soInfo)) {
+            throw new ServiceException(ApiError.ERROR_92016);
+        }
+        String code = soInfo.getCode();
+        //旧的
+        SoInfoEntity old = new SoInfoEntity();
+        BeanMapper.copy(soInfo, old);
+
+        BeanMapper.copy(dto, soInfo);
+        soInfo.setCode(code);
+
+        //销售组织
+        String salesOrgId = dto.getSalesOrgId();
+        //销售员
+        String sellerId = dto.getSellerId();
+        //用户信息
+        FindUserDTO userInfo = sysUserFeign.getUserByUserId(sellerId);
+        if (userInfo != null) {
+            soInfo.setSellerName(userInfo.getUserName());
+        }
+        //仓库id
+        String warehouseId = dto.getWarehouseId();
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
+        String warehouseOrgId = "";
+        if (CollectionUtils.isNotEmpty(warehouseList)) {
+            warehouseOrgId = warehouseList.get(0).getOrgId();
+        }
+        //组织列表
+        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId, warehouseOrgId));
+        String salesOrgName = orgList.stream().filter(d -> d.getId().equals(salesOrgId)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        soInfo.setSalesOrgName(salesOrgName);
+        String finalWarehouseOrgId = warehouseOrgId;
+        String warehouseOrgName = orgList.stream().filter(d -> d.getId().equals(finalWarehouseOrgId)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        soInfo.setWarehouseOrgId(warehouseOrgId);
+        soInfo.setWarehouseOrgName(warehouseOrgName);
+
+        Boolean updateResult = this.updateById(soInfo);
+        if (updateResult) {
+            /**
+             * 添加修改日志
+             */
+            operateLogService.addModuleOperateLogByObj(old, soInfo, ModuleTypeEnum.SO.getCode(), id, "", "");
+            //修改 订单详情
+            soDetailService.updateSoDetail(id, dto.getDetailList());
+            return id;
+        }
+        return "";
     }
 
 

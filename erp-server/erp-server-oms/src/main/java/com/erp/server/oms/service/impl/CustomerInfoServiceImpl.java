@@ -320,7 +320,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         IPage pageData = baseMapper.paging(query, params, approveList);
         List<CustomerDTO.PagingViewDTO> list = pageData.getRecords();
         List<String> groupIdList = list.stream().map(CustomerDTO.PagingViewDTO::getGroupId).collect(Collectors.toList());
-        List<CustomerGroupEntity> groupList =CollectionUtils.isNotEmpty(groupIdList)?customerGroupService.listByIds(groupIdList):Collections.emptyList();
+        List<CustomerGroupEntity> groupList = CollectionUtils.isNotEmpty(groupIdList) ? customerGroupService.listByIds(groupIdList) : Collections.emptyList();
         for (CustomerDTO.PagingViewDTO item : list) {
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
@@ -371,6 +371,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         BeanMapper.copy(customer, view);
         String areaId = customer.getAreaId();
+        String payCode = customer.getPayCode();
+        view.setPayCodeList(StringUtils.isNotBlank(payCode)?Arrays.asList(payCode.split(",")):Collections.emptyList());
         List<DictGlobalAreaDTO.InfoDTO> globalAreaList = sysUserFeign.listGlobalAreaByCountryIds(Arrays.asList(areaId));
         String regionName = globalAreaList.stream().filter(d -> d.getId().equals(areaId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getRegionName())).orElse("");

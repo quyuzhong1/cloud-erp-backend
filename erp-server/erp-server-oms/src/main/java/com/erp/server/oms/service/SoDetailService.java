@@ -72,4 +72,14 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
     * @return java.util.List<java.lang.String>
     */
     List<String> listParamDetailIdsBySearchType(String searchType);
+
+    /**
+     * 修改订单详情
+     * @author yl
+     * @date 2023-05-17 16:00
+     * @param mainId
+     * @param detailList
+     * @return void
+     */
+    void updateSoDetail(String mainId, List<SoDetailDTO.UpdateDTO> detailList);
 }

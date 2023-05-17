@@ -28,6 +28,8 @@ import com.erp.server.oms.service.SoInfoService;
 import com.erp.server.oms.service.SoReturnDetailService;
 import com.erp.server.oms.service.SoReturnService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -287,7 +289,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 List<SoDetailDTO.InfoDTO> rejectList = baseMapper.listSoDetailByApprove(Arrays.asList(reject));
                 return rejectList.stream().map(SoDetailDTO.InfoDTO::getId).collect(Collectors.toList());
 
-             //未发货
+            //未发货
             case OmsConstant
                     .WAIT_DELIVERY:
                 List<SoDetailDTO.InfoDTO> waitDeliveryList = baseMapper.listSoDetailByDeliveryStatus(Boolean.FALSE);
@@ -304,6 +306,70 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //特殊 标识 不要删除
         return null;
 
+    }
+
+
+
+    /**
+     * 修改订单详情
+     * @author yl
+     * @date 2023-05-17 16:00
+     * @param mainId
+     * @param detailList
+     * @return void
+     */
+    @Override
+    public void updateSoDetail(String mainId, List<SoDetailDTO.UpdateDTO> detailList) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        List<SoDetailEntity> saveOrUpdateList = new ArrayList<>(detailList.size());
+        //这是修改的
+        List<SoDetailDTO.UpdateDTO> updateList = detailList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
+        //这是要添加的
+        List<SoDetailDTO.UpdateDTO> addList = detailList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        //这个是要修改的实体
+        List<SoDetailEntity> updateEntityList = BeanMapper.copyList(updateList, SoDetailEntity.class);
+        //这个是要添加的
+        List<SoDetailEntity> addEntityList = BeanMapper.copyList(addList, SoDetailEntity.class);
+        saveOrUpdateList.addAll(updateEntityList);
+        saveOrUpdateList.addAll(addEntityList);
+        List<SoDetailEntity> dbList = this.listBaseByMainId(mainId);
+
+        List<Pair<String, String>> pairList = updateList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+        List<String> deleteIdList = getDeleteIds(pairList, dbList);
+        if (CollectionUtils.isNotEmpty(deleteIdList)) {
+            this.removeByIds(deleteIdList);
+        }
+        List<String> skuIdList = detailList.stream().map(SoDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        //币种列表
+        List<String> currencyList = detailList.stream().map(SoDetailDTO.UpdateDTO::getCurrency).collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
+        for (SoDetailEntity item : saveOrUpdateList) {
+            item.setMainId(mainId);
+            String skuId = item.getSkuId();
+            String currency = item.getCurrency();
+            //是否赠品
+            Boolean isGift = item.getIsGift();
+            BigDecimal price = item.getPrice();
+            Integer qty = item.getQty();
+            //当是赠品的时候  单价为0
+            if (isGift) {
+                price = BigDecimal.ZERO;
+            }
+            //金额
+            BigDecimal amount = MathUtil.multiply(price, qty);
+            item.setAmount(amount);
+            String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
+            item.setSkuNo(skuNo);
+
+            String symbol = currencyViewList.stream().filter(c -> c.getId().equals(currency)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
+            item.setCurrencySymbol(symbol);
+        }
+        this.saveOrUpdateBatch(saveOrUpdateList);
     }
 
 
@@ -341,13 +407,34 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
-        List<SoDetailEntity> addList = BeanMapper.copyList(detailList, SoDetailEntity.class);
+        List<SoDetailEntity> saveOrUpdateList = new ArrayList<>(detailList.size());
+        //这是修改的
+        List<SoDetailDTO.AddDTO> updateList = detailList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
+        //这是要添加的
+        List<SoDetailDTO.AddDTO> addList = detailList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+
+        //这个是要修改的实体
+        List<SoDetailEntity> updateEntityList = BeanMapper.copyList(updateList, SoDetailEntity.class);
+
+        //这个是要添加的
+        List<SoDetailEntity> addEntityList = BeanMapper.copyList(addList, SoDetailEntity.class);
+
+        saveOrUpdateList.addAll(updateEntityList);
+        saveOrUpdateList.addAll(addEntityList);
+
+        List<SoDetailEntity> dbList = this.listBaseByMainId(mainId);
+
+        List<Pair<String, String>> pairList = updateList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+        List<String> deleteIdList = getDeleteIds(pairList, dbList);
+        if (CollectionUtils.isNotEmpty(deleteIdList)) {
+            this.removeByIds(deleteIdList);
+        }
         List<String> skuIdList = detailList.stream().map(SoDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         //币种列表
         List<String> currencyList = detailList.stream().map(SoDetailDTO.AddDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
-        for (SoDetailEntity item : addList) {
+        for (SoDetailEntity item : saveOrUpdateList) {
             item.setMainId(mainId);
             String skuId = item.getSkuId();
             String currency = item.getCurrency();
@@ -369,10 +456,25 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             String symbol = currencyViewList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
             item.setCurrencySymbol(symbol);
-
         }
+        this.saveOrUpdateBatch(saveOrUpdateList);
+    }
 
-        this.saveBatch(addList);
+
+    /**
+     * 获取到删除的数据
+     *
+     * @param pairList
+     * @param dbList
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-05-17 15:28
+     */
+    private List<String> getDeleteIds(List<Pair<String, String>> pairList, List<SoDetailEntity> dbList) {
+        List<String> ids = pairList.stream().filter(g -> StringUtils.isNotBlank(g.getKey())).
+                map(obj -> obj.getKey()).collect(Collectors.toList());
+        List<String> dbIds = dbList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
+        return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());
 
     }
 

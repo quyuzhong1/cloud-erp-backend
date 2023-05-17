@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.common.business.validator.AddGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -30,28 +31,29 @@ public class SoDetailDTO implements Serializable {
     public static class AddDTO {
 
 
+        private String id;
         /**
          * sku id
          */
-        @NotBlank(message = "sku不能为空")
+        @NotBlank(message = "sku不能为空",groups = {AddGroup.class})
         private String skuId;
 
         /**
          * 销售数量
          */
-        @NotNull(message = "销售数量不能为空")
+        @NotNull(message = "销售数量不能为空",groups = {AddGroup.class})
         private Integer qty;
 
         /**
          * 单价
          */
-        @NotNull(message = "销售单价不能为空")
+        @NotNull(message = "销售单价不能为空",groups = {AddGroup.class})
         private BigDecimal price;
 
         /**
          * 币种
          */
-        @NotBlank(message = "币种不能为空")
+        @NotBlank(message = "币种不能为空",groups = {AddGroup.class})
         private String currency;
 
 
@@ -63,13 +65,13 @@ public class SoDetailDTO implements Serializable {
         /**
          * 是否赠品
          */
-        @NotNull(message = "是否赠品不能为空")
+        @NotNull(message = "是否赠品不能为空",groups = {AddGroup.class})
         private Boolean isGift;
 
         /**
          * 是否补发
          */
-        @NotNull(message = "是否补发不能为空")
+        @NotNull(message = "是否补发不能为空",groups = {AddGroup.class})
         private Boolean isReissue;
 
         /**
@@ -269,23 +271,33 @@ public class SoDetailDTO implements Serializable {
     public class UpdateDTO {
 
 
+        @NotBlank(message = "详情不能为空")
         private String id;
 
 
         /**
          * sku id
          */
+        @NotBlank(message = "sku不能为空")
         private String skuId;
 
         /**
          * 销售数量
          */
+        @NotNull(message = "销售数量不能为空")
         private Integer qty;
 
         /**
          * 单价
          */
+        @NotNull(message = "销售单价不能为空")
         private BigDecimal price;
+
+        /**
+         * 币种
+         */
+        @NotBlank(message = "币种不能为空")
+        private String currency;
 
 
         /**
@@ -296,11 +308,13 @@ public class SoDetailDTO implements Serializable {
         /**
          * 是否赠品
          */
+        @NotNull(message = "是否赠品不能为空")
         private Boolean isGift;
 
         /**
          * 是否补发
          */
+        @NotNull(message = "是否补发不能为空")
         private Boolean isReissue;
 
         /**
@@ -312,6 +326,7 @@ public class SoDetailDTO implements Serializable {
         /**
          * 备注
          */
+        @Size(max = 200, message = "备注最大200字符")
         private String remark;
     }
 

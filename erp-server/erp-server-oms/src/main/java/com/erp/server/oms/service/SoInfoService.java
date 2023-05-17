@@ -59,6 +59,23 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
 
     PagingVO<SoInfoDTO.PagingViewDTO> paging(PagingDTO<SoInfoDTO.PagingParamDTO> dto);
 
-    
 
+    /**
+     * 暂存数据
+     * @author yl
+     * @date 2023-05-17 15:00
+     * @param dto
+     * @return java.lang.String
+     */
+    String draft(SoInfoDTO.AddDTO dto);
+
+    
+    /**
+     * 修改 销售订单
+     * @author yl
+     * @date 2023-05-17 15:42
+     * @param dto
+     * @return java.lang.String
+     */
+    String updateSo(SoInfoDTO.UpdateDTO dto);
 }
