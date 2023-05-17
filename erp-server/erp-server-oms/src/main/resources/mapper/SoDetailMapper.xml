@@ -20,4 +20,17 @@
             AND si.id = #{id}
         </if>
     </select>
+
+    <select id="listSkuPriceHistory" resultType="com.erp.model.oms.dto.SoDetailDTO$SkuHistoryPriceDTO">
+         SELECT
+          MAX(price) AS maxPrice,
+          MIN(price) AS minPrice,
+          sku_id,
+          COUNT(sku_id) AS count,
+	      round( SUM ( price ) / COUNT ( sku_id ), 2 ) avgPrice
+        FROM so_detail
+        WHERE is_deleted=FALSE
+        GROUP BY sku_id
+
+    </select>
 </mapper>

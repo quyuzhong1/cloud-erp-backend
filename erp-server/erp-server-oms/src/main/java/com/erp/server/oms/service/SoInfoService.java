@@ -1,6 +1,8 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
 
@@ -54,4 +56,6 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return com.erp.model.oms.dto.SoInfoDTO.ViewDTO
      */
     SoInfoDTO.ViewDTO view(String id);
+
+    PagingVO<SoInfoDTO.PagingViewDTO> paging(PagingDTO<SoInfoDTO.PagingParamDTO> dto);
 }

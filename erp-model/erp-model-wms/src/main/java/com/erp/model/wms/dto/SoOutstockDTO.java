@@ -1,4 +1,4 @@
-package com.erp.model.oms.dto;
+package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;

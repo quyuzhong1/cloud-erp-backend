@@ -51,5 +51,5 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @param mainId
      * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.ViewDTO>
      */
-    List<SoDetailDTO.ViewDTO> listByMainId(String mainId);
+    List<SoDetailDTO.ViewDTO> listByMainId(String mainId,String warehouseId);
 }

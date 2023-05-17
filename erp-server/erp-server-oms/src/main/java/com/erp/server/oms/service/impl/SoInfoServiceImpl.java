@@ -4,9 +4,11 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -199,9 +201,23 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             throw new ServiceException(ApiError.ERROR_92015);
         }
         BeanMapper.copy(soInfo, view);
-        List<SoDetailDTO.ViewDTO> detailList = soDetailService.listByMainId(id);
+        String warehouseId = view.getWarehouseId();
+        List<SoDetailDTO.ViewDTO> detailList = soDetailService.listByMainId(id,warehouseId);
         view.setDetailList(detailList);
         return view;
+    }
+
+    
+    /**
+     * 分页
+     * @author yl
+     * @date 2023-05-17 10:03
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.SoInfoDTO.PagingViewDTO>
+     */
+    @Override
+    public PagingVO<SoInfoDTO.PagingViewDTO> paging(PagingDTO<SoInfoDTO.PagingParamDTO> dto) {
+        return null;
     }
 
 

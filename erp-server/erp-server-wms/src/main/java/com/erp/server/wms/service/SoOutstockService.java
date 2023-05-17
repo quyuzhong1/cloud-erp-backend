@@ -1,7 +1,6 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
-import com.erp.model.oms.entity.SoOutstockEntity;
 
 import java.util.List;
 

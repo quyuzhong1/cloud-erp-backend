@@ -5,13 +5,13 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
-import com.erp.model.oms.entity.SoOutstockDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.enums.ReturnTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -104,24 +105,116 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * @date 2023-05-16 16:30
      */
     @Override
-    public List<SoDetailDTO.ViewDTO> listByMainId(String mainId) {
+    public List<SoDetailDTO.ViewDTO> listByMainId(String mainId, String warehouseId) {
         List<SoDetailEntity> dbList = this.listBaseByMainId(mainId);
         List<SoDetailDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, SoDetailDTO.ViewDTO.class);
         List<String> skuIdList = resultList.stream().map(SoDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
+        paramDTO.setSkuIds(skuIdList);
+        paramDTO.setWarehouseId(warehouseId);
+        paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        //从wms 获取到sku 的即时库存信息
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
-
+        List<String> detailIds = dbList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
+        List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockFeign.listDetailBySourceDetailId(detailIds);
+        //sku的历史价格
+        List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = this.listSkuPriceHistory(skuIdList);
         for (SoDetailDTO.ViewDTO item : resultList) {
             String skuId = item.getSkuId();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
             item.setProductName(skuName);
 
+            String unit = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getUnitName())).orElse("");
+            item.setProductName(skuName);
+            item.setUnit(unit);
+            //即时库存
+            Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+            item.setCurInventoryQty(curInventoryQty);
+            //销售数量
+            Integer qty = item.getQty();
+            /**
+             * 缺货数量
+             * 当可用即时库存数量小于销售数量时，
+             * 缺货数量=销售数量-可用即时库存数量；
+             * 当可用即时库存数量大于销售数量时，缺货数量为0
+             */
+            Integer scarceQty = 0;
+            //即时库存是否大于 销售数量
+            Boolean isGre = curInventoryQty > qty;
+
+            /**
+             * 可出数量
+             * 根据可用即时库存计算可出数量，
+             * 当可用即时库存数量大于销售数量时 可出数量=销售数量；
+             * 若可用即时库存数量小于销售数量，可出数量=即时可用库存数量
+             */
+            Integer availableQty = 0;
+
+            /**
+             * 已出库数量
+             * 新增时默认为0
+             * 编辑时根据关联出库单
+             * 总共已发货数量同步
+             *
+             */
+            Integer deliveryQty = soOutstockDetailList.stream().filter(req -> req.getSourceDetailId().equals(item.getId())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            /**
+             * 剩余数量
+             * 销售数量-已出库数量
+             */
+            Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
+            if (isGre) {
+                availableQty = qty;
+            } else {
+                availableQty = curInventoryQty;
+                scarceQty = qty - curInventoryQty;
+            }
+
+            item.setScarceQty(scarceQty);
+            item.setAvailableQty(availableQty);
+            item.setDeliveryQty(deliveryQty);
+            item.setWaitQty(waitQty);
+            //税率
+            BigDecimal taxRate = item.getTaxRate();
+            //单价
+            BigDecimal price = item.getPrice();
+            //含税单价=销售单价*（税率+1）
+            BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
+            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            item.setTaxPrice(taxPrice);
+            //历史价格
+            SoDetailDTO.SkuHistoryPriceDTO  skuHistoryPrice= skuPriceHistoryList.stream().
+                    filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if(skuHistoryPrice!=null){
+                item.setMaxPrice(skuHistoryPrice.getMaxPrice());
+                item.setMinPrice(skuHistoryPrice.getMinPrice());
+                item.setAvgPrice(skuHistoryPrice.getAvgPrice());
+            }
 
         }
 
-        return null;
+        return resultList;
+    }
+
+
+    /**
+     * 根据sku id list 获取sku 的历史价格
+     *
+     * @param skuIdList
+     * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.SkuHistoryPriceDTO>
+     * @author yl
+     * @date 2023-05-17 9:21
+     */
+    private List<SoDetailDTO.SkuHistoryPriceDTO> listSkuPriceHistory(List<String> skuIdList) {
+        if (CollectionUtils.isEmpty(skuIdList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listSkuPriceHistory(skuIdList);
     }
 
 

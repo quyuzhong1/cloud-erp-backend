@@ -217,6 +217,40 @@ public class SoDetailDTO implements Serializable {
 
 
     /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SkuHistoryPriceDTO {
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * 次数
+         */
+        private String count;
+
+        /**
+         * 历史最高
+         */
+        private BigDecimal maxPrice;
+
+        /**
+         * 历史最低
+         */
+        private BigDecimal minPrice;
+
+        /**
+         * 平均价格
+         */
+        private BigDecimal avgPrice;
+
+    }
+
+
+    /**
      * 修改
      */
     @Data

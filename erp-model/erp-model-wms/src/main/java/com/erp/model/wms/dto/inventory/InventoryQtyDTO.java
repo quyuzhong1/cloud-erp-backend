@@ -71,7 +71,7 @@ public class InventoryQtyDTO implements Serializable {
         private String warehouseLocationId;
 
         /**
-         * 库存状态, 请查看枚举类InventoryTransTypeEnum
+         * 库存状态, 请查看枚举类 InventoryStatusEnum
          */
         @NotEmpty(message = "库存状态不能为空")
         private String inventoryStatus;

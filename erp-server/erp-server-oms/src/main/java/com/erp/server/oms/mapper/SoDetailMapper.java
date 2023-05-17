@@ -27,4 +27,13 @@ public interface SoDetailMapper extends BaseMapper<SoDetailEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.AddDetailView>
      **/
     List<SoDetailDTO.AddDetailView> listAddDetailView(@Param("id") String id);
+
+    /**
+     * 根据sku id list 获取sku 的历史价格
+     * @author yl
+     * @date 2023-05-17 9:23
+     * @param skuIdList
+     * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.SkuHistoryPriceDTO>
+     */
+    List<SoDetailDTO.SkuHistoryPriceDTO> listSkuPriceHistory(List<String> skuIdList);
 }

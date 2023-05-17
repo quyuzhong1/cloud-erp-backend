@@ -11,6 +11,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoDetailDTO;
+import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
@@ -63,7 +64,8 @@ public class SoInfoController extends BaseController {
             tableAlias = "ci"
     )
     public ApiResult<PagingVO<SoInfoDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SoInfoDTO.PagingParamDTO> dto) {
-        return success(null);
+        PagingVO<SoInfoDTO.PagingViewDTO> pagingVO = soInfoService.paging(dto);
+        return success(pagingVO);
     }
 
 

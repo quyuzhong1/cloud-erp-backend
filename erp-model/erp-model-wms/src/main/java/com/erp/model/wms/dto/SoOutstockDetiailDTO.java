@@ -1,4 +1,4 @@
-package com.erp.model.oms.dto;
+package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -378,5 +378,61 @@ public class SoOutstockDetiailDTO implements Serializable {
     public class UpdateDTO extends AddDTO {
 
         private String id;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class InfoDTO {
+
+        /**
+         * 主表id
+         */
+        private String mainId;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku no
+         */
+        private String skuNo;
+
+        /**
+         * 应发数量
+         */
+        private Integer planQty;
+
+        /**
+         * 实发数量
+         */
+        private Integer actualQty;
+
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+
+        /**
+         * 是否关闭
+         */
+        private Boolean isClose;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
     }
 }

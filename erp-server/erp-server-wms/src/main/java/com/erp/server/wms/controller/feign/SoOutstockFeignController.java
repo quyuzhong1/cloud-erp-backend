@@ -1,9 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
-import com.erp.model.oms.entity.SoOutstockDetailEntity;
-import com.erp.model.wms.entity.SoReturnNoticeEntity;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.server.wms.service.SoOutstockDetailService;
-import com.erp.server.wms.service.SoReturnNoticeDetailService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;

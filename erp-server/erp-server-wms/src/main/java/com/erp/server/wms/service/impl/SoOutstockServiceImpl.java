@@ -1,7 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 import com.common.business.service.SuperServiceImpl;
-import com.erp.model.oms.entity.SoOutstockEntity;
 import com.erp.server.wms.mapper.SoOutstockMapper;
 import com.erp.server.wms.service.SoOutstockService;
 import org.springframework.stereotype.Service;
