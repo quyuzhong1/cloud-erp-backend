@@ -218,7 +218,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
             entity.setWarehouseKeeperName(userDTO.getUserName());
         }
-        boolean save = this.save(entity);
+        boolean save = this.updateById(entity);
         soReturnReceiveDetailService.update(dto);
         return save;
     }

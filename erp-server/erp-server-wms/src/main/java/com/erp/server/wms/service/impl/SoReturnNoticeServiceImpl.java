@@ -239,7 +239,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
         }
         entity.setWarehouseKeeperName(userDTO.getUserName());
-        boolean flag = this.save(entity);
+        boolean flag = this.updateById(entity);
         soReturnNoticeDetailService.update(dto);
         return flag;
     }

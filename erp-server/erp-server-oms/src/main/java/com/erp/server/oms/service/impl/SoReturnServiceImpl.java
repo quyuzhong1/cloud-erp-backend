@@ -275,6 +275,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSourceDetailId().equals(detailEntity.getSourceDetailId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             detailView.setDeliveryQty(actualQty);
             detailView.setUnDeliveryQty(soDetailEntity.getQty() - actualQty);
+            detailView.setSalesAmount(soDetailEntity.getAmount());
             detailViewDTOS.add(detailView);
         }
         viewDTO.setDetailList(detailViewDTOS);

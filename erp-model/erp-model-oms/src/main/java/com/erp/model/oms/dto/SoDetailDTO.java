@@ -512,6 +512,10 @@ public class SoDetailDTO implements Serializable {
          */
         private Integer salesQty;
         /**
+         * 销售金额
+         */
+        private BigDecimal salesAmount;
+        /**
          * 可出数量
          */
         private Integer availableQty;

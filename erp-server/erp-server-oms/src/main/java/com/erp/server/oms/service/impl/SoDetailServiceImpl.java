@@ -166,7 +166,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             addDetailView.setAvailableQty(getAvailableQty(curInventoryQty, addDetailView.getSalesQty()));
             addDetailView.setDeliveryQty(actualQty);
             addDetailView.setUnDeliveryQty(addDetailView.getSalesQty() + returnQty - actualQty);
-
         }
         return list;
     }

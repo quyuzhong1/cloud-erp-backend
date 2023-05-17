@@ -10,6 +10,7 @@
             sd.sku_no,
             si.warehouse_org_id AS inventoryOrgId,
             sd.qty,
+            sd.amount AS salesAmount,
             sd.is_gift,
             sd.is_close,
             sd.remark,
