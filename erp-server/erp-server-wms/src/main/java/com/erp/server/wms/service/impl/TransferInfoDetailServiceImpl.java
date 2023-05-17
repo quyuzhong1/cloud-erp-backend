@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -14,7 +15,6 @@ import com.erp.server.wms.mapper.TransferInfoDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.TransferInfoDetailService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
@@ -123,7 +123,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
         }
         for (TransferInfoDetailEntity detail:newList) {
             //单位
-            String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId())).map(SkuVO::getUnitName).findFirst().orElse("");
+            String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && StringUtils.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
             detail.setUnit(unit);
             detail.setMainId(mainId);
             //修改操作日志

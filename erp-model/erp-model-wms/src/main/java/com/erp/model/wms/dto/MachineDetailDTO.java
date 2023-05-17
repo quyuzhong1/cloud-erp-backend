@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.util.List;
 
@@ -25,6 +26,7 @@ public class MachineDetailDTO implements Serializable {
         /**
          * skuId
          */
+        @NotBlank(message = "SKU不能为空")
         private String skuId;
         /**
          * SKU
@@ -33,19 +35,25 @@ public class MachineDetailDTO implements Serializable {
         /**
          * 数量
          */
+        @NotNull(message = "数量不能为空")
+        @Min(value = 1,message = "数量最小值为1")
+        @Max(value = 99999999,message = "数量最大值为99999999")
         private Integer qty;
 
         /**
          * 库位id
          */
         private String warehouseLocation;
+
         /**
          * 参照版本
          */
         private String referenceVersion;
+
         /**
          * 备注
          */
+        @Size(max = 255,message = "备注不能大于255字符")
         private String remark;
     }
 
@@ -56,6 +64,7 @@ public class MachineDetailDTO implements Serializable {
         /**
          * 子件信息
          */
+        @NotEmpty(message = "子件明细不能为空")
         @Valid
         private List<MachineSubComponentsDTO.AddDTO> subComponentsDetailList;
 
@@ -67,11 +76,13 @@ public class MachineDetailDTO implements Serializable {
         /**
          * 主键id
          */
+        @NotBlank(message = "加工明细id不能为空")
         private String id;
 
         /**
          * 子件信息
          */
+        @NotEmpty(message = "子件明细不能为空")
         @Valid
         private List<MachineSubComponentsDTO.UpdateDTO> subComponentsDetailList;
     }

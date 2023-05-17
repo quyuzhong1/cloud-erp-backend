@@ -484,12 +484,6 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
         List<String> sourceDetailIds = list.stream().map(TransferApplicationDTO.GenerateTransferInfoDTO::getSourceDetailId).distinct().collect(Collectors.toList());
 
-        //调拨申请单明细信息
-        List<TransferApplicationDetailEntity> detailList = transferApplicationDetailService.listByIds(sourceDetailIds);
-        if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99044);
-        }
-
         //直接调拨信息
         List<TransferInfoDetailEntity> transferInfoDetailList = transferInfoDetailService.listSourceDetailIds(sourceDetailIds);
 
@@ -501,7 +495,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             TransferApplicationDTO.GenerateTransferInfoDTO transferInfoDTO = value.get(0);
             //直接调拨单
             TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
-            BeanMapperUtils.copy(addDTO,transferInfoDTO);
+            BeanMapperUtils.copy(transferInfoDTO,addDTO);
 
             List<TransferInfoDetailDTO.AddDTO> addDetailList = new ArrayList<>();
             for (TransferApplicationDTO.GenerateTransferInfoDTO dto : value) {
