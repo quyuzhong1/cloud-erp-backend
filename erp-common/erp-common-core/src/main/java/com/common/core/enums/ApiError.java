@@ -512,6 +512,7 @@ public enum ApiError implements Serializable {
     ERROR_92014(92014,"只有已审核的销售退货订单可以下推销售退货通知单"),
     ERROR_92015(92015,"销售订单详情不存在"),
     ERROR_92016(92016,"销售订单不存在"),
+    ERROR_92017(92017,"签收数量不能大于退货数量"),
 
 
 
