@@ -317,7 +317,7 @@ public class TransferApplicationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/generateTransferInfo")
-    public ApiResult generateTransferInfo(@RequestBody @Validated ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList) {
+    public ApiResult generateTransferInfo(@RequestBody @Valid ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList) {
         Boolean flag = transferApplicationService.generateTransferInfo(validList);
         return flag == true ? success() : failure();
     }
@@ -348,7 +348,7 @@ public class TransferApplicationController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/generateTransferOut")
-    public ApiResult generateTransferOut(@RequestBody @Validated ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList) {
+    public ApiResult generateTransferOut(@RequestBody @Valid ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList) {
         Boolean flag = transferApplicationService.generateTransferOut(validList);
         return flag == true ? success() : failure();
     }
