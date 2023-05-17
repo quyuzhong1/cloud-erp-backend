@@ -22,6 +22,7 @@ import com.erp.model.wms.dto.excel.ExportInventoryExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.PickingDetailDTO;
+import com.erp.model.wms.dto.inventory.InventorySaveDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -151,6 +152,39 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Override
     public Integer getUsableInventoryTotal(String orgId, String warehouseId, String skuId, String warehouseLocationId) {
         return this.getInventoryTotal(orgId, warehouseId, skuId, warehouseLocationId, InventoryStatusEnum.USABLE.getCode());
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public InventorySaveDTO addOrUpdate(String warehouseId, String orgId, String warehouseLocation, String skuId, String skuNo, String inventoryStatus, Integer qty) {
+        warehouseLocation = StrUtils.null2EmptyWithTrim(warehouseLocation);
+        // 此处注意，入库传不传仓位都带仓位条件查询
+        InventoryEntity inventory =  this.findInventory(orgId, warehouseId, skuId, warehouseLocation, inventoryStatus);
+        Integer originInventoryQty = 0; // 库存原数量
+        if(Objects.isNull(inventory)) {
+            log.info("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】在库存实时表中不存在数据，新增数据", inventoryStatus, warehouseId, orgId, warehouseLocation,skuId, skuNo);
+            inventory = new InventoryEntity();
+            inventory.setWarehouseId(warehouseId);
+            inventory.setOrgId(orgId);
+            inventory.setWarehouseLocation(warehouseLocation);
+            inventory.setSkuId(skuId);
+            inventory.setSkuNo(skuNo);
+            inventory.setDictInventoryStatus(inventoryStatus);
+            inventory.setQty(qty);
+            inventory.setVersion(1);
+            boolean save = super.save(inventory);
+            ValidatorUtil.isTrue(save, ()->new ServiceException("库存数据保存失败"));
+        } else {
+            log.info("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】在库存实时表中存在数据，修改数据", inventoryStatus, warehouseId, orgId, warehouseLocation,skuId, skuNo);
+            originInventoryQty = inventory.getQty();
+            // 更新实时库存表数量
+            int updateCnt =  this.updateQtyById(inventory.getId(), qty, inventory.getVersion());
+            if(updateCnt != 1) {
+                throw new ServiceException(ApiError.ERROR_1027);
+            }
+        }
+        InventorySaveDTO inventorySaveDTO = new InventorySaveDTO(inventory.getId(), originInventoryQty);
+        return inventorySaveDTO;
     }
 
     /**

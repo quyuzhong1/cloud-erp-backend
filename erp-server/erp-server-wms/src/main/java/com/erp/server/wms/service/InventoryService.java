@@ -6,6 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.PickingDetailDTO;
+import com.erp.model.wms.dto.inventory.InventorySaveDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -63,6 +64,19 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @return
      */
     Integer getUsableInventoryTotal(String orgId,String warehouseId,String skuId, String warehouseLocationId);
+
+    /**
+     * 新增或修改库存
+     * @param warehouseId
+     * @param orgId
+     * @param warehouseLocation
+     * @param skuId
+     * @param skuNo
+     * @param inventoryStatus
+     * @param qty
+     * @return
+     */
+    InventorySaveDTO addOrUpdate(String warehouseId, String orgId, String warehouseLocation, String skuId, String skuNo, String inventoryStatus, Integer qty);
 
 
 

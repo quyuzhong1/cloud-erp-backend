@@ -38,4 +38,13 @@ public interface InventoryDetailService  extends SuperService<InventoryDetailEnt
      */
     int updateQtyById(String id, Integer qty, Integer version);
 
+    /**
+     * 新增或修改库存明细
+     * @param inventoryInfoId
+     * @param billDate
+     * @param qty
+     * @return
+     */
+    String addOrUpdate(String inventoryInfoId, LocalDate billDate, Integer qty);
+
 }

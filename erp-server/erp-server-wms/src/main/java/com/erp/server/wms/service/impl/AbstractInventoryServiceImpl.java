@@ -7,7 +7,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.DistributedLockEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
@@ -35,7 +34,7 @@ import java.util.stream.Collectors;
 
 /**
  * @Classname: AbstractInventoryServiceImpl
- * @Description: TODO
+ * @Description: 库存交易核心处理逻辑抽象类
  * @CreateTime: 2023-05-04  15:29
  * @Author: zhangchunlin
  */
@@ -268,77 +267,25 @@ public abstract class AbstractInventoryServiceImpl {
                 throw new ServiceException(ApiError.ERROR_1026);
             }
             log.info("库存状态：【{}】，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】", inventoryStatusEnum.getName(), businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
+            log.info("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】新增或修改库存", inventoryStatusEnum.getName(), warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName());
+
             // 此处注意，入库传不传仓位都带仓位条件查询
-            InventoryEntity inventory =  inventoryService.findInventory(orgId, warehouseId, skuId, warehouseLocationId, inventoryStatusEnum.getCode());
-            Integer originInventoryQty = 0; // 库存原数量
-            if(Objects.isNull(inventory)) {
-                log.info("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】在库存实时表中不存在数据，新增数据", inventoryStatusEnum.getName(), warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName());
-                inventory = new InventoryEntity();
-                inventory.setWarehouseId(warehouseId);
-                inventory.setOrgId(orgId);
-                inventory.setWarehouseLocation(StrUtils.null2EmptyWithTrim(param.getWarehouseLocation()));
-                inventory.setSkuId(param.getSkuId());
-                inventory.setSkuNo(param.getSkuNo());
-                inventory.setDictInventoryStatus(inventoryStatusEnum.getCode());
-                inventory.setQty(qty);
-                inventory.setVersion(1);
-                boolean save = inventoryService.save(inventory);
-                ValidatorUtil.isTrue(save, ()->new ServiceException("库存数据保存失败"));
-            } else {
-                originInventoryQty = inventory.getQty();
-                // 更新实时库存表数量
-                int updateCnt =  inventoryService.updateQtyById(inventory.getId(), qty, inventory.getVersion());
-                if(updateCnt != 1) {
-                    throw new ServiceException(ApiError.ERROR_1027);
-                }
-            }
-            String inventoryInfoId = inventory.getId();
+            InventorySaveDTO inventorySaveDTO = inventoryService.addOrUpdate(warehouseId, orgId, warehouseLocationId, skuId, skuNo, inventoryStatusEnum.getCode(), qty);
+            String inventoryInfoId = inventorySaveDTO.getInventoryId();
+            Integer originInventoryQty = inventorySaveDTO.getQty();// 库存原数量
             Integer afterInventoryQty = originInventoryQty + qty;
             log.info("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】，实时库存原数量：【{}】，操作数量【{}】，操作后数量【{}】", inventoryStatusEnum.getName(), warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName(), originInventoryQty, qty, afterInventoryQty);
+            log.info("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：{}, 来源单据：{}, 业务类型：【{}】，状态【{}】，单据日期：【{}】,库存表id：【{}】，新增或修改库存明细数据", inventoryStatusEnum.getName(), warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName(), billDate, inventoryInfoId);
             // 入库批次日期取单据日期
-            InventoryDetailEntity inventoryDetail =  inventoryDetailService.findOneDetail(inventoryInfoId, billDate);
-            if (Objects.isNull(inventoryDetail)) {
-                log.info("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：{}, 来源单据：{}, 业务类型：【{}】，状态【{}】，单据日期：【{}】,库存表id：【{}】，不存在库存明细数据，新增数据", inventoryStatusEnum.getName(), warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName(), billDate, inventoryInfoId);
-                inventoryDetail = new InventoryDetailEntity();
-                inventoryDetail.setInfoId(inventoryInfoId);
-                inventoryDetail.setInstockBatchDate(billDate);
-                inventoryDetail.setQty(qty);
-                inventoryDetail.setVersion(1);
-                boolean save = inventoryDetailService.save(inventoryDetail);
-                ValidatorUtil.isTrue(save, ()->new ServiceException("库存数据保存失败"));
-            } else {
-                Integer originInventoryDetailQty = inventoryDetail.getQty(); // 库存明细原数量
-                Integer afterInventoryDetailQty = originInventoryDetailQty + qty;
-                log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：{}, 来源单据：{}, 业务类型：【{}】，批次日期：【{}】，状态【{}】，库存明细原数量：【{}】，操作数量【{}】，操作后数量【{}】", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryDetail.getInstockBatchDate(), inventoryStatusEnum.getName(), originInventoryDetailQty, qty, afterInventoryDetailQty);
-                // 更新库存明细数量
-                int updateCnt = inventoryDetailService.updateQtyById(inventoryDetail.getId(), qty, inventoryDetail.getVersion());
-                if(updateCnt != 1) {
-                    throw new ServiceException(ApiError.ERROR_1027);
-                }
-            }
-            String inventoryDetailId = inventoryDetail.getId();
+            String inventoryDetailId = inventoryDetailService.addOrUpdate(inventoryInfoId, billDate, qty);
             // 登记交易流水
-            TransactionFlowDTO transactionFlowDTO = InventoryUtils.wrapTransactionFlowInOutStock(param, inventoryInfoId, businessType, inventoryDetailId, inventoryStatusEnum, inventoryDetail.getInstockBatchDate(), qty, orgId);
+            TransactionFlowDTO transactionFlowDTO = InventoryUtils.wrapTransactionFlowInOutStock(param, inventoryInfoId, businessType, inventoryDetailId, inventoryStatusEnum, billDate, qty, orgId);
             transactionFlowDTO.setTransactionNo(transactionNo);
             transactionFlowService.add(transactionFlowDTO, businessType, tansactionRuleId, afterInventoryQty, InventoryModeEnum.IN_STOCK);
 
+            log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：{}, 来源单据：{}, 业务类型：【{}】，状态【{}】，单据日期：【{}】,库存表id：【{}】，新增或修改库存历史数据", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName(), billDate, inventoryInfoId);
             // 创建/修改库存历史
-            InventoryHisEntity inventoryHis = inventoryHisService.findInventory(inventoryInfoId, param.getBillDate());
-            if (Objects.isNull(inventoryHis)) {
-                log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：{}, 来源单据：{}, 业务类型：【{}】，状态【{}】，单据日期：【{}】,库存表id：【{}】，不存在库存历史数据，新增数据", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName(), billDate, inventoryInfoId);
-                inventoryHis = new InventoryHisEntity();
-                inventoryHis.setInfoId(inventoryInfoId);
-                inventoryHis.setBillDate(billDate);
-                inventoryHis.setQty(afterInventoryQty);
-                inventoryHis.setVersion(1);
-                boolean save = inventoryHisService.save(inventoryHis);
-                ValidatorUtil.isTrue(save, ()->new ServiceException("库存数据保存失败"));
-            } else {
-                int updateCnt = inventoryHisService.updateQtyById(inventoryHis.getId(), afterInventoryQty, inventoryHis.getVersion());
-                if(updateCnt != 1) {
-                    throw new ServiceException(ApiError.ERROR_1027);
-                }
-            }
+            inventoryHisService.addOrUpdate(inventoryInfoId, param.getBillDate(), afterInventoryQty);
         } catch (Exception e) {
             log.error("交易业务：{}，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存操作异常", businessType.getName(), sourceTypeEnum.getName(), param.getSourceId(), param.getSkuNo(),e );
             if(e instanceof ServiceException) {
@@ -461,23 +408,9 @@ public abstract class AbstractInventoryServiceImpl {
                 throw new ServiceException(ApiError.ERROR_1027);
             }
             log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，单据日期：【{}】，状态【{}】，库存原数量：【{}】，操作数量【{}】，操作后数量【{}】", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), param.getBillDate(), inventoryStatusEnum.getName(), originQty, qty, afterInventoryQty);
+            log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】，单据日期：【{}】,库存表id：【{}】，新增或修改库存历史数据", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName(), billDate, inventory.getId());
             // 创建/修改库存历史
-            InventoryHisEntity inventoryHis = inventoryHisService.findInventory(inventory.getId(), param.getBillDate());
-            if (Objects.isNull(inventoryHis)) {
-                log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】，单据日期：【{}】,库存表id：【{}】，不存在库存历史数据，新增数据", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName(), billDate, inventory.getId());
-                inventoryHis = new InventoryHisEntity();
-                inventoryHis.setInfoId(inventory.getId());
-                inventoryHis.setBillDate(billDate);
-                inventoryHis.setQty(afterInventoryQty);
-                inventoryHis.setVersion(1);
-                boolean save = inventoryHisService.save(inventoryHis);
-                ValidatorUtil.isTrue(save, ()->new ServiceException("库存数据保存失败"));
-            } else {
-                updateCnt = inventoryHisService.updateQtyById(inventoryHis.getId(), afterInventoryQty, inventoryHis.getVersion());
-                if(updateCnt != 1) {
-                    throw new ServiceException(ApiError.ERROR_1027);
-                }
-            }
+            inventoryHisService.addOrUpdate(inventory.getId(), param.getBillDate(), afterInventoryQty);
         }  catch (Exception e) {
             log.error("交易业务：【{}】，来源单据：【{}】，单据id：【{}】，SKU编号：【{}】，库存操作异常", businessType.getName(), sourceTypeEnum.getName(), param.getSourceId(), param.getSkuNo(),e );
             if(e instanceof ServiceException) {
