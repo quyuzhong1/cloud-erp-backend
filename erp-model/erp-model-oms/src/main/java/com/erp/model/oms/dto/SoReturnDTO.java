@@ -525,15 +525,16 @@ public class SoReturnDTO {
          */
         private Integer returnQty;
         /**
-         * 退货类型
+         * 退货类型 wms/common/enumDropDown?type=ReturnType
+         * 描述：refund 退货扣款 replenishment 退货补货
          */
-        private String returnType;
+        private String returnTypeDict;
         /**
          * 销售类型名称
          */
         private String returnTypeName;
         /**
-         * 退货原因 调用字典接口 类型=returnReason
+         * 退货原因 调用字典接口 类型=ReturnReason
          */
         private String returnReasonDict;
         /**

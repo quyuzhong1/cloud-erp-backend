@@ -50,4 +50,16 @@ public class SoInfoFeignController extends BaseController {
     public List<SoDetailEntity> listSoDetailByIds(@RequestBody List<String> ids) {
         return soDetailService.listSoDetailByIds(ids);
     }
+
+    /**
+     * 根据销售单主表id查询详情表信息
+     * @Author Luo_WG
+     * @Date 2023/5/15 18:18
+     * @param ids ids
+     * @return java.util.List<com.erp.model.oms.entity.SoDetailEntity>
+     **/
+    @PostMapping("/listSoDetailByMainIds")
+    public List<SoDetailEntity> listSoDetailByMainIds(@RequestBody List<String> ids) {
+        return soDetailService.listSoDetailByMainIds(ids);
+    }
 }

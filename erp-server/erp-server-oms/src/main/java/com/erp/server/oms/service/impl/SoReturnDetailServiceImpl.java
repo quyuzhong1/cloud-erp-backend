@@ -60,7 +60,6 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             soReturnDetailEntity.setMainId(id);
             soReturnDetailEntity.setSkuId(soDetailEntity.getSkuId());
             soReturnDetailEntity.setSkuNo(soDetailEntity.getSkuNo());
-            soReturnDetailEntity.setSalesQty(soDetailEntity.getQty());
             soReturnDetailEntity.setReturnQty(detailDto.getReturnQty());
             soReturnDetailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
             soReturnDetailEntity.setRemark(detailDto.getRemark());
@@ -91,7 +90,6 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             }
             soReturnDetailEntity.setSkuId(soDetailEntity.getSkuId());
             soReturnDetailEntity.setSkuNo(soDetailEntity.getSkuNo());
-            soReturnDetailEntity.setSalesQty(soDetailEntity.getQty());
             soReturnDetailEntity.setReturnQty(detailDto.getReturnQty());
             soReturnDetailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
             soReturnDetailEntity.setRemark(detailDto.getRemark());
@@ -116,5 +114,10 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     @Override
     public List<SoReturnDetailEntity> listDetailBySourceId(List<String> sourceIds) {
         return baseMapper.listDetailBySourceId(sourceIds);
+    }
+
+    @Override
+    public List<SoReturnDetailEntity> listDetailByIds(List<String> ids) {
+        return baseMapper.listDetailByIds(ids);
     }
 }

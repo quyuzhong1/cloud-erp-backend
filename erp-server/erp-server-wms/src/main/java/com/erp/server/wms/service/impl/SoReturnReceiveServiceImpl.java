@@ -164,8 +164,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
-        //获取用户信息
-        FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
+
         SoReturnReceiveEntity entity = new SoReturnReceiveEntity();
         BeanMapperUtils.copy(soInfoEntity, entity);
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
@@ -179,10 +178,13 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         entity.setSourceType(soReturnEntity.getSourceType());
         entity.setInventoryOrgId(dto.getInventoryOrgId());
         entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());
+        entity.setBillDate(dto.getBillDate());
         if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
+            //获取用户信息
+            FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
             entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
+            entity.setWarehouseKeeperName(userDTO.getUserName());
         }
-        entity.setWarehouseKeeperName(userDTO.getUserName());
         this.save(entity);
         soReturnReceiveDetailService.add(dto, entity.getId());
         return soReturnEntity.getId();

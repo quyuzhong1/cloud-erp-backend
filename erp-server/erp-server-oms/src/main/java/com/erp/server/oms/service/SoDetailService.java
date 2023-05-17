@@ -64,6 +64,16 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      */
     List<SoDetailDTO.ViewDTO> listByMainId(String mainId,String warehouseId);
 
+
+    /**
+     * 根据销售单主表id查询详情表信息
+     * @Author Luo_WG
+     * @Date 2023/5/17 15:29
+     * @param ids ids
+     * @return java.util.List<com.erp.model.oms.entity.SoDetailEntity>
+     **/
+    List<SoDetailEntity> listSoDetailByMainIds(List<String> ids);
+
    /**
     * 根据搜索类型 获取到对应的明细id
     * @author yl

@@ -19,4 +19,6 @@ import java.util.List;
 public interface SoReturnDetailMapper extends BaseMapper<SoReturnDetailEntity> {
 
     List<SoReturnDetailEntity> listDetailBySourceId(@Param("ids") List<String> sourceIds);
+
+    List<SoReturnDetailEntity> listDetailByIds(@Param("ids") List<String> ids);
 }

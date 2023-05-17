@@ -21,4 +21,25 @@
             </foreach>
         </if>
     </select>
+
+    <select id="listDetailBySourceDetailIds" resultType="com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity">
+        SELECT
+        sdnd.id,
+        sdnd.main_id,
+        sdnd.sku_id,
+        sdnd.sku_no,
+        sdnd.delivery_qty,
+        sdnd.is_close,
+        sdnd.remark,
+        sdnd.source_detail_id,
+        sdn.approve_status
+        FROM so_delivery_notice sdn
+        INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
+        <if test="ids != null and ids.size != ''">
+            and sdnd.source_detail_id in
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
 </mapper>

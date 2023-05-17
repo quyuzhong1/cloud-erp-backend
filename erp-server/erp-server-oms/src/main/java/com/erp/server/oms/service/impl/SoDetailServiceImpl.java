@@ -263,6 +263,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         return resultList;
     }
 
+    @Override
+    public List<SoDetailEntity> listSoDetailByMainIds(List<String> ids) {
+        return baseMapper.listSoDetailByMainIds(ids);
+    }
+
 
     /**
      * 根据搜索类型 获取到对应的明细id

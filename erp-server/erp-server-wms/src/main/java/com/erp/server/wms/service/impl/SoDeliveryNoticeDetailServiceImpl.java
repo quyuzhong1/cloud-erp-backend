@@ -115,4 +115,9 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
     public List<SoDeliveryNoticeDetailEntity> listDetailBySourceIds(List<String> sourceIds) {
         return baseMapper.listDetailBySourceIds(sourceIds);
     }
+
+    @Override
+    public List<SoDeliveryNoticeDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds) {
+        return baseMapper.listDetailBySourceDetailIds(sourceDetailIds);
+    }
 }

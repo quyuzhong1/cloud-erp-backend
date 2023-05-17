@@ -110,6 +110,9 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField("remark")
     private String remark;
 
+    @TableField(exist = false)
+    private String ApproveStatus;
+
 
 
 

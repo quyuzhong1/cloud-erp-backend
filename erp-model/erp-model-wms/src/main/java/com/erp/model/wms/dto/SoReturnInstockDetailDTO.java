@@ -95,7 +95,7 @@ public class SoReturnInstockDetailDTO {
          */
         private String returnTypeDict;
         /**
-         * 退货原因 调用字典接口 类型=returnReason
+         * 退货原因 调用字典接口 类型=ReturnReason
          */
         private String returnReasonDict;
         /**
@@ -159,7 +159,7 @@ public class SoReturnInstockDetailDTO {
          */
         private String returnType;
         /**
-         * 退货原因 调用字典接口 类型=returnReason
+         * 退货原因 调用字典接口 类型=ReturnReason
          */
         private String returnReasonDict;
         /**

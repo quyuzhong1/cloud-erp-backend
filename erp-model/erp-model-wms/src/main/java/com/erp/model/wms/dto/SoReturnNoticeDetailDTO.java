@@ -27,7 +27,7 @@ public class SoReturnNoticeDetailDTO {
          */
         private String returnTypeDict;
         /**
-         * 退货原因 调用字典接口 类型=returnReason
+         * 退货原因 调用字典接口 类型=ReturnReason
          */
         private String returnReasonDict;
         /**
@@ -47,9 +47,13 @@ public class SoReturnNoticeDetailDTO {
     @NoArgsConstructor
     public static class Update {
         /**
-         * 主键id
+         * 明细id
          */
         private String id;
+        /**
+         * 主键id
+         */
+        private String mainId;
         /**
          * 退货数量
          */
@@ -63,7 +67,7 @@ public class SoReturnNoticeDetailDTO {
          */
         private String returnTypeDict;
         /**
-         * 退货原因 调用字典接口 类型=returnReason
+         * 退货原因 调用字典接口 类型=ReturnReason
          */
         private String returnReasonDict;
         /**
@@ -123,7 +127,7 @@ public class SoReturnNoticeDetailDTO {
          */
         private String returnType;
         /**
-         * 退货原因 调用字典接口 类型=returnReason
+         * 退货原因 调用字典接口 类型=ReturnReason
          */
         private String returnReasonDict;
         /**

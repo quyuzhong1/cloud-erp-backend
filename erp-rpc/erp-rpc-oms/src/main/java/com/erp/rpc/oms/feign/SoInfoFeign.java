@@ -18,4 +18,7 @@ public interface SoInfoFeign {
 
     @PostMapping("feign/soInfo/listSoDetailByIds")
     List<SoDetailEntity> listSoDetailByIds(@RequestBody List<String> ids);
+
+    @PostMapping("feign/soInfo/listSoDetailByMainIds")
+    List<SoDetailEntity> listSoDetailByMainIds(@RequestBody List<String> ids);
 }

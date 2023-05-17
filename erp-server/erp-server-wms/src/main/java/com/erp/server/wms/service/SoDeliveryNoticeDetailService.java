@@ -73,4 +73,13 @@ public interface SoDeliveryNoticeDetailService extends SuperService<SoDeliveryNo
      * @return java.util.List<com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity>
      **/
     List<SoDeliveryNoticeDetailEntity> listDetailBySourceIds(List<String> sourceIds);
+
+    /**
+     * 根据来源明细id查询详情信息
+     * @Author Luo_WG
+     * @Date 2023/5/15 16:55
+     * @param sourceIds sourceIds
+     * @return java.util.List<com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity>
+     **/
+    List<SoDeliveryNoticeDetailEntity> listDetailBySourceDetailIds(List<String> sourceIds);
 }

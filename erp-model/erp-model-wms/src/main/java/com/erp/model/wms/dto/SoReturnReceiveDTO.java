@@ -40,7 +40,8 @@ public class SoReturnReceiveDTO {
          */
         private String type;
         /**
-         *退货类型
+         * 退货类型 wms/common/enumDropDown?type=ReturnType
+         * 描述：refund 退货扣款 replenishment 退货补货
          */
         private String returnTypeDict;
         /**
@@ -144,7 +145,8 @@ public class SoReturnReceiveDTO {
          */
         private String productName;
         /**
-         * 退货类型
+         * 退货类型 wms/common/enumDropDown?type=ReturnType
+         * 描述：refund 退货扣款 replenishment 退货补货
          */
         private String returnTypeDict;
         /**

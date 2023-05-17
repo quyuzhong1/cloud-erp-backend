@@ -11,7 +11,7 @@ import java.io.Serializable;
 
 /**
  * <p>
- * 发货通知单主表明细表
+ * 退货订单明细表
  * </p>
  *
  * @author LUO_WG
@@ -42,19 +42,14 @@ public class SoReturnDetailEntity extends BaseEntity<SoReturnDetailEntity> {
     private String skuNo;
 
     /**
-     * 销售数量
-     */
-    @TableField("sales_qty")
-    private Integer salesQty;
-
-    /**
      * 退货数量
      */
     @TableField("return_qty")
     private Integer returnQty;
 
     /**
-     * 退货类型：退货退款  退货补货
+     * 退货类型 wms/common/enumDropDown?type=ReturnType
+     * 描述：refund 退货扣款 replenishment 退货补货
      */
     @TableField("return_type_dict")
     private String returnTypeDict;
@@ -74,8 +69,8 @@ public class SoReturnDetailEntity extends BaseEntity<SoReturnDetailEntity> {
     /**
      * 单据状态
      */
+    @TableField(exist = false)
     private String approveStatus;
-
 
     public static final String MAIN_ID = "main_id";
 

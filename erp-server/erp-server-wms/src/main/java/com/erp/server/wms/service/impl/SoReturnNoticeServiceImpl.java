@@ -190,8 +190,6 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
-        //获取用户信息
-        FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
         SoReturnNoticeEntity entity = new SoReturnNoticeEntity();
         BeanMapperUtils.copy(soInfoEntity, entity);
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
@@ -206,9 +204,11 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         entity.setInventoryOrgId(dto.getInventoryOrgId());
         entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());
         if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
+            //获取用户信息
+            FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
             entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
+            entity.setWarehouseKeeperName(userDTO.getUserName());
         }
-        entity.setWarehouseKeeperName(userDTO.getUserName());
         this.save(entity);
         soReturnNoticeDetailService.add(dto, entity.getId());
         return soReturnEntity.getId();
@@ -538,7 +538,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 SoReturnNoticeDetailDTO.Add detailAddDTO = new SoReturnNoticeDetailDTO.Add();
                 detailAddDTO.setReturnQty(view.getReturnQty());
                 detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
-                detailAddDTO.setReturnTypeDict(view.getReturnType());
+                detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
                 detailAddDTO.setRemark(view.getRemark());
                 detailAddDTO.setSourceDetailId(view.getId());
                 detailList.add(detailAddDTO);

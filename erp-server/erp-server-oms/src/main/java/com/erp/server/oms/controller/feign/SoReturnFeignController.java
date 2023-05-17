@@ -58,4 +58,29 @@ public class SoReturnFeignController {
     public List<SoReturnDetailEntity> listDetailBySourceId(@RequestBody List<String> ids) {
         return soReturnDetailService.listDetailBySourceId(ids);
     }
+
+    /**
+     * 根据id查询详情表信息
+     * @Author Luo_WG
+     * @Date 2023/5/15 18:17
+     * @param ids ids
+     * @return java.util.List<com.erp.model.oms.entity.SoReturnDetailEntity>
+     **/
+    @PostMapping("/listDetailByIds")
+    public List<SoReturnDetailEntity> listDetailByIds(@RequestBody List<String> ids) {
+        return soReturnDetailService.listDetailByIds(ids);
+    }
+
+    /**
+     * 根据主表id查询详情表信息
+     * @Author Luo_WG
+     * @Date 2023/4/13 17:44
+     * @param mainId mainId
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/listDetailByMainId")
+    public List<SoReturnDetailEntity> listDetailByMainId(@RequestBody String mainId) {
+        return soReturnDetailService.listDetailByMainId(mainId);
+    }
+
 }
