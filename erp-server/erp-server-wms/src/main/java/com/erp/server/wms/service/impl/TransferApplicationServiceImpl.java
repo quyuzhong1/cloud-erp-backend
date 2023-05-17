@@ -130,6 +130,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             if (contains) {
                 obj.setCode(null);
                 obj.setTransferDirection(null);
+                obj.setTransferDirectionName(null);
                 obj.setApproveStatus(null);
                 obj.setApproveStatusName(null);
                 obj.setInvalidStatus(null);
@@ -482,9 +483,15 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     public Boolean generateTransferInfo(ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList) {
         List<TransferApplicationDTO.GenerateTransferInfoDTO> list = validList.getList();
 
-        List<String> sourceDetailIds = list.stream().map(TransferApplicationDTO.GenerateTransferInfoDTO::getSourceDetailId).distinct().collect(Collectors.toList());
+        //调拨申请单主表信息
+        List<String> sourceIds = list.stream().map(TransferApplicationDTO.GenerateTransferInfoDTO::getSourceId).distinct().collect(Collectors.toList());
+        List<TransferApplicationEntity> transferApplicationList = this.listByIds(sourceIds);
+        if (CollectionUtils.isEmpty(transferApplicationList)) {
+            throw new ServiceException(ApiError.ERROR_99043);
+        }
 
-        //直接调拨信息
+        //直接调拨明细信息
+        List<String> sourceDetailIds = list.stream().map(TransferApplicationDTO.GenerateTransferInfoDTO::getSourceDetailId).distinct().collect(Collectors.toList());
         List<TransferInfoDetailEntity> transferInfoDetailList = transferInfoDetailService.listSourceDetailIds(sourceDetailIds);
 
         //根据来源id分组生成下推直接调拨单
@@ -496,6 +503,10 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             //直接调拨单
             TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
             BeanMapperUtils.copy(transferInfoDTO,addDTO);
+
+            //调拨方向
+            String transferDirection = transferApplicationList.stream().filter(obj -> obj.getId().equals(transferInfoDTO.getSourceId())).map(TransferApplicationEntity::getTransferDirection).findFirst().orElse("");
+            addDTO.setTransferDirection(transferDirection);
 
             List<TransferInfoDetailDTO.AddDTO> addDetailList = new ArrayList<>();
             for (TransferApplicationDTO.GenerateTransferInfoDTO dto : value) {
