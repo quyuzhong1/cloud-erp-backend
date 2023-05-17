@@ -620,7 +620,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
                 List<PickingDetailDTO.CommonDTO> pickingDetailList = BeanMapperUtils.copyList(PickingDetailDTO.CommonDTO.class, inventoryList);
 
-                List<InOutStockDTO>  transferList = new ArrayList<>();
+                List<InOutStockDTO>  inOutStockList = new ArrayList<>();
                 for ( PickingDetailDTO.CommonDTO addDTO : pickingDetailList) {
                     addDTO.setSourceId(entity.getId());
                     addDTO.setSourceCode(entity.getCode());
@@ -642,13 +642,13 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                     inOutStockDTO.setQty(addDTO.getQty());
                     inOutStockDTO.setWarehouseId(entity.getOutWarehouseId());
                     inOutStockDTO.setWarehouseLocation(addDTO.getWarehouseLocation());
-                    transferList.add(inOutStockDTO);
+                    inOutStockList.add(inOutStockDTO);
                 }
                 addList.addAll(pickingDetailList);
 
                 //减少可用库存，添加冻结库存
                 InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-                inventoryInOutStockDTO.setMembers(transferList);
+                inventoryInOutStockDTO.setMembers(inOutStockList);
                 inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.INVENTOR_ALLOCATE.getCode());
                 //更新库存
                 inventoryTransCoreService.approveByType(inventoryInOutStockDTO);

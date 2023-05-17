@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
@@ -33,6 +35,8 @@ public class PickingDetailDTO implements Serializable {
         /**
          * 数量
          */
+        @NotNull(message = "拣货数量不能为空")
+        @Min(value = 1,message = "拣货数量不能小于1")
         private Integer qty;
 
         /**
