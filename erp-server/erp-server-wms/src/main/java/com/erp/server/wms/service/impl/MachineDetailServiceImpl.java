@@ -53,7 +53,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         boolean save = this.saveBatch(list);
         //新增成功
         if (save) {
-
+            //新增子件明细
         }
     }
 
