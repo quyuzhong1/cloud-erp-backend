@@ -68,6 +68,7 @@ public class SoDeliveryNoticeDetailEntity extends BaseEntity<SoDeliveryNoticeDet
     /**
      * 单据状态
      */
+    @TableField(exist = false)
     private String approveStatus;
 
 

@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.workflow.dto.ApproveParamDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.workflow.service.WorkOptionService;
 import org.apache.ibatis.annotations.Param;
@@ -142,5 +143,18 @@ public class WorkOptionController extends BaseController {
     public ApiResult<PagingVO<List<WorkOptionDTO.ApproveViewDTO>>> approveView(@RequestBody @Validated PagingDTO<WorkOptionDTO.ApproveViewParamDTO> dto) {
         PagingVO<List<WorkOptionDTO.ApproveViewDTO>> approveViewDTO = workOptionService.approveView(dto);
         return success(approveViewDTO);
+    }
+
+    /**
+     * 审批中心-审核按钮
+     * @Author Luo_WG
+     * @Date 2023/5/17 10:57
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/approve")
+    public ApiResult approve(@RequestBody @Validated ApproveParamDTO dto) {
+        Boolean approve = workOptionService.approve(dto);
+        return approve == Boolean.TRUE ? success() : failure();
     }
 }

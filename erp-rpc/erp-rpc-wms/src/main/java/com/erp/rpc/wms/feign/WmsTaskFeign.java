@@ -1,6 +1,7 @@
 package com.erp.rpc.wms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
@@ -8,6 +9,7 @@ import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -104,4 +106,33 @@ public interface WmsTaskFeign {
     @PostMapping("feign/syncKingdee/updateBusinessSyncKingdeeStatus")
     void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params);
 
+    /**
+     * 采购收货审核
+     * @Author Luo_WG
+     * @Date 2023/5/17 10:51
+     * @param baseApproveParamDTO
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("feign/wmsWorkOption/warehouseReceiveApprove")
+    Boolean warehouseReceiveApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 采购入库审核
+     * @author Will
+     * @date: 2023/4/11 20:11
+     * @param baseApproveParamDTO
+     * @return ApiResult
+     */
+    @PostMapping("feign/wmsWorkOption/poInstockApprove")
+    void poInstockApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 采购退货审核
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:06
+     * @param baseApproveParamDTO baseApproveParamDTO
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("feign/wmsWorkOption/purchaseReturnOrderApprove")
+    Boolean purchaseReturnOrderApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
 }

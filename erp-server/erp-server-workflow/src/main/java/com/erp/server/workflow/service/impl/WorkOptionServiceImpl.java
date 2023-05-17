@@ -7,13 +7,18 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.StateEnumValue;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.plm.dto.AuditParamDTO;
+import com.erp.model.plm.dto.ProductDetailOperateDTO;
+import com.erp.model.plm.dto.TaskOperateDTO;
 import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
@@ -51,7 +56,7 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- *  工作台选项表服务实现类
+ * 工作台选项表服务实现类
  * </p>
  *
  * @author LUO_WG
@@ -87,10 +92,11 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     /**
      * 待办模块-模块分类下拉
-     * @Author Luo_WG
-     * @Date 2023/4/21 10:49
+     *
      * @param sysClassify sysClassify
      * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.WaitDoMenu>
+     * @Author Luo_WG
+     * @Date 2023/4/21 10:49
      **/
     @Override
     public List<WorkOptionDTO.WaitDoMenu> listWaitDoMenu(String sysClassify) {
@@ -121,10 +127,11 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     /**
      * 常用模块-模块分类下拉
-     * @Author Luo_WG
-     * @Date 2023/4/21 10:50
+     *
      * @param sysClassify sysClassify
      * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.WaitDoMenu>
+     * @Author Luo_WG
+     * @Date 2023/4/21 10:50
      **/
     @Override
     public List<WorkOptionDTO.WaitDoMenu> listOftenMenu(String sysClassify) {
@@ -153,10 +160,11 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     /**
      * 新增模块
-     * @Author Luo_WG
-     * @Date 2023/4/20 19:45
+     *
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/20 19:45
      **/
     @Override
     public Boolean addWaitDo(WorkOptionDTO.AddDTO dto) {
@@ -186,10 +194,11 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     /**
      * 编辑修改模块
-     * @Author Luo_WG
-     * @Date 2023/4/20 19:45
+     *
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/20 19:45
      **/
     @Override
     public Boolean updateWaitDo(WorkOptionDTO.UpdateDTO dto) {
@@ -220,9 +229,10 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     /**
      * 代办列表
+     *
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO < com.erp.model.wms.dto.PurchaseReturnOrderDTO.PagingViewDTO>>
      * @Author Luo_WG
      * @Date 2023/4/11 18:48
-     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.wms.dto.PurchaseReturnOrderDTO.PagingViewDTO>>
      **/
     @Override
     public List<WorkOptionDTO.PendingViewDTO> listPendingView() {
@@ -265,9 +275,10 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     /**
      * 常用列表
+     *
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.workflow.dto.WorkOptionDTO.frequentlyViewDTO>>
      * @Author Luo_WG
      * @Date 2023/4/11 18:50
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.frequentlyViewDTO>>
      **/
     @Override
     public List<WorkOptionDTO.FrequentlyViewDTO> listFrequentlyView() {
@@ -294,9 +305,10 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     /**
      * 立项阶段列表
+     *
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.workflow.dto.WorkOptionDTO.stageViewDTO>>
      * @Author Luo_WG
      * @Date 2023/4/12 9:33
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.stageViewDTO>>
      **/
     @Override
     public List<WorkOptionDTO.StageViewDTO> stageView() {
@@ -307,10 +319,11 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     /**
      * 删除
-     * @Author Luo_WG
-     * @Date 2023/4/24 13:03
+     *
      * @param id id
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/24 13:03
      **/
     @Override
     public Boolean delete(String id) {
@@ -343,9 +356,10 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     /**
      * 审批中心-下拉搜索选项
+     *
+     * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.ApproveSearchOptionDTO>
      * @Author Luo_WG
      * @Date 2023/4/12 11:58
-     * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.ApproveSearchOptionDTO>
      **/
     @Override
     public List<WorkOptionDTO.ApproveSearchOptionDTO> approveSearchOption() {
@@ -407,10 +421,11 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     /**
      * 审批中心-列表
-     * @Author Luo_WG
-     * @Date 2023/5/11 15:32
+     *
      * @param dto dto
      * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.ApproveViewDTO>
+     * @Author Luo_WG
+     * @Date 2023/5/11 15:32
      **/
     @Override
     public PagingVO<List<WorkOptionDTO.ApproveViewDTO>> approveView(PagingDTO<WorkOptionDTO.ApproveViewParamDTO> dto) {
@@ -429,9 +444,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             if (StringUtils.isNotBlank(req.getApproveDuration())) {
                 BigDecimal bigDecimal = BigDecimal.valueOf(Double.valueOf(req.getApproveDuration()));
                 String value = String.valueOf(bigDecimal.divide(BigDecimal.valueOf(60), 2, BigDecimal.ROUND_DOWN));
-                req.setApproveDuration(value+" H");
+                req.setApproveDuration(value + " H");
             } else {
-                req.setApproveDuration(0+" H");
+                req.setApproveDuration(0 + " H");
             }
 
             req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus()));
@@ -447,31 +462,114 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         BeanMapperUtils.copy(dto, paramDTO);
         paramDTO.setIds(Arrays.asList(dto.getId()));
         ProcessManagementEntity entity = processManagementService.getById(dto.getId());
-        switch (TableNameEnum.getByCode(entity.getBusinessKey())) {
-            case PURCHASE_PRICE_CHANGE :
-                scmTaskFeign.purchaseChangeApprove(paramDTO);
+        String sysClassifyByCode = workMenuService.getSysClassifyByCode(entity.getBusinessKey());
+        switch (SysClassifyEnum.getEnumByCode(sysClassifyByCode)) {
+            case PLM :
+                plmApprove(dto, entity);
                 break;
-            case SALES_DEMAND :
-                scmTaskFeign.salesDemandApprove(paramDTO);
+            case SCM :
+                scmApprove(dto, entity);
                 break;
-            case PURCHASE_APPLICATION :
-                scmTaskFeign.purchaseApplicationApprove(paramDTO);
+            case WMS:
+                wmsApprove(dto, entity);
                 break;
-            case PURCHASE_ORDER :
-                scmTaskFeign.purchaseOrderApprove(paramDTO);
-                break;
-            case PURCHASE_CHANGE :
-                scmTaskFeign.purchaseChangeApprove(paramDTO);
-                break;
-            case PURCHASE_PRICE :
-                scmTaskFeign.purchasePriceApprove(paramDTO);
-                break;
-
-        }
-        if (entity.getBusinessKey().equals(TableNameEnum.PURCHASE_PRICE_CHANGE.getCode())) {
-
+            default:
+                throw new ServiceException(ApiError.ERROR_94006);
         }
         return Boolean.TRUE;
     }
 
+    private Boolean plmApprove(ApproveParamDTO dto, ProcessManagementEntity entity) {
+        switch (TableNameEnum.getByCode(entity.getBusinessKey())) {
+            case PRODUCT_BOM_INFO:
+                AuditParamDTO auditParamDTO = new AuditParamDTO();
+                auditParamDTO.setId(dto.getId());
+                auditParamDTO.setComment(dto.getComment());
+                if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
+                    plmTaskFeign.bomInfoApprovalPass(auditParamDTO);
+                } else {
+                    plmTaskFeign.bomInfoApprovalNoPass(auditParamDTO);
+                }
+                break;
+            case PRODUCT_DETAIL:
+                ProductDetailOperateDTO paramDTO = new ProductDetailOperateDTO();
+                paramDTO.setId(dto.getId());
+                paramDTO.setComment(dto.getComment());
+                if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
+                    plmTaskFeign.productDetailApprovalPass(paramDTO);
+                } else {
+                    plmTaskFeign.productDetailApprovalNoPass(paramDTO);
+                }
+                break;
+            case PROJECT_TASK:
+
+                break;
+            case PRODUCT_CHANGE:
+                AuditParamDTO approveDTO = new AuditParamDTO();
+                approveDTO.setId(dto.getId());
+                approveDTO.setComment(dto.getComment());
+                if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
+                    plmTaskFeign.productChangeApprovalPass(approveDTO);
+                } else {
+                    plmTaskFeign.productChangeApprovalNoPass(approveDTO);
+                }
+                break;
+            default:
+                throw new ServiceException(ApiError.ERROR_94006);
+        }
+        return Boolean.TRUE;
+    }
+
+    private Boolean scmApprove(ApproveParamDTO dto, ProcessManagementEntity entity) {
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setIds(Arrays.asList(dto.getId()));
+        baseApproveParamDTO.setType(dto.getType());
+        baseApproveParamDTO.setComment(dto.getComment());
+        switch (TableNameEnum.getByCode(entity.getBusinessKey())) {
+            case PURCHASE_PRICE_CHANGE:
+                scmTaskFeign.purchaseChangeApprove(baseApproveParamDTO);
+                break;
+            case SALES_DEMAND:
+                scmTaskFeign.salesDemandApprove(baseApproveParamDTO);
+                break;
+            case PURCHASE_APPLICATION:
+                scmTaskFeign.purchaseApplicationApprove(baseApproveParamDTO);
+                break;
+            case PURCHASE_ORDER:
+                scmTaskFeign.purchaseOrderApprove(baseApproveParamDTO);
+                break;
+            case PURCHASE_CHANGE:
+                scmTaskFeign.purchaseChangeApprove(baseApproveParamDTO);
+                break;
+            case PURCHASE_PRICE:
+                scmTaskFeign.purchasePriceApprove(baseApproveParamDTO);
+                break;
+            default:
+                throw new ServiceException(ApiError.ERROR_94006);
+        }
+        return Boolean.TRUE;
+    }
+
+    private Boolean wmsApprove(ApproveParamDTO dto, ProcessManagementEntity entity) {
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setIds(Arrays.asList(dto.getId()));
+        baseApproveParamDTO.setType(dto.getType());
+        baseApproveParamDTO.setComment(dto.getComment());
+        switch (TableNameEnum.getByCode(entity.getBusinessKey())) {
+            case QC_INFO:
+                break;
+            case PO_RECEIVE:
+                wmsTaskFeign.warehouseReceiveApprove(baseApproveParamDTO);
+                break;
+            case PO_INSTOCK:
+                wmsTaskFeign.poInstockApprove(baseApproveParamDTO);
+                break;
+            case PO_RETURN:
+                wmsTaskFeign.purchaseReturnOrderApprove(baseApproveParamDTO);
+                break;
+            default:
+                throw new ServiceException(ApiError.ERROR_94006);
+        }
+        return Boolean.TRUE;
+    }
 }

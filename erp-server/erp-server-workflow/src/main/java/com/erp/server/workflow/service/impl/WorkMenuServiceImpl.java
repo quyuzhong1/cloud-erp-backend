@@ -29,4 +29,11 @@ public class WorkMenuServiceImpl extends SuperServiceImpl<WorkMenuMapper, WorkMe
         List<DictBasicDTO.DropDownDTO> result = list.stream().map(DictBasicDTO.DropDownDTO::new).collect(java.util.stream.Collectors.toList());
         return result;
     }
+
+    @Override
+    public String getSysClassifyByCode(String code) {
+        List<WorkMenuEntity> list = lambdaQuery().eq(WorkMenuEntity::getModuleCode, code).list();
+        String result = list.stream().map(WorkMenuEntity::getSysClassify).distinct().findFirst().orElse("");
+        return result;
+    }
 }

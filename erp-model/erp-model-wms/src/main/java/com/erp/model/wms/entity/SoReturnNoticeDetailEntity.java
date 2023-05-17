@@ -74,6 +74,7 @@ public class SoReturnNoticeDetailEntity extends BaseEntity<SoReturnNoticeDetailE
     /**
      * 审核状态
      */
+    @TableField(exist = false)
     private String approveStatus;
 
     public static final String MAIN_ID = "main_id";
