@@ -291,7 +291,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                 viewDetailDTO.setProductName(productName);
             }
             //根据组织、仓库、sku查询可用库存
-            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDTO.getInOrgId(), viewDTO.getOutWarehouseId(), viewDetailDTO.getSkuId(), null);
+            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDTO.getOutOrgId(), viewDTO.getOutWarehouseId(), viewDetailDTO.getSkuId(), null);
             viewDetailDTO.setCurInventoryQty(curInventoryQty);
         }
         viewDTO.setDetailList(viewDetailList);
@@ -632,7 +632,14 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
                     //调拨操作请求实体
                     TransferDTO transferDTO = new TransferDTO();
-                    BeanMapperUtils.copy(addDTO,transferDTO);
+                    transferDTO.setSourceType(InventorySourceTypeEnum.TRANSFER_APPLY);
+                    transferDTO.setSourceId(entity.getId());
+                    transferDTO.setSourceCode(entity.getCode());
+                    transferDTO.setSourceDetailId(detailEntity.getId());
+                    transferDTO.setBillDate(entity.getBillDate());
+                    transferDTO.setSkuId(addDTO.getSkuId());
+                    transferDTO.setSkuNo(addDTO.getSkuNo());
+                    transferDTO.setQty(addDTO.getQty());
                     transferDTO.setCurWarehouseId(addDTO.getWarehouseId());
                     transferDTO.setCurWarehouseLocation(addDTO.getWarehouseLocation());
                     transferDTO.setTargetWarehouseId(entity.getInWarehouseId());
