@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
@@ -16,20 +17,21 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.workflow.dto.ApproveParamDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
+import com.erp.model.workflow.entity.ProcessManagementEntity;
+import com.erp.model.workflow.entity.WorkMenuEntity;
 import com.erp.model.workflow.entity.WorkOptionEntity;
 import com.erp.model.workflow.enums.ApproveSearchOptionEnum;
 import com.erp.model.workflow.enums.SysClassifyEnum;
+import com.erp.model.workflow.enums.TableNameEnum;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.workflow.mapper.WorkOptionMapper;
-import com.erp.server.workflow.service.CommonService;
-import com.erp.server.workflow.service.ProcessTaskService;
-import com.erp.server.workflow.service.WorkMenuService;
-import com.erp.server.workflow.service.WorkOptionService;
+import com.erp.server.workflow.service.*;
 import com.erp.server.workflow.utils.GetHttpGatewayIpPortUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -43,6 +45,7 @@ import javax.sql.rowset.serial.SerialException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -78,6 +81,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private ProcessManagementService processManagementService;
 
     /**
      * 待办模块-模块分类下拉
@@ -314,7 +320,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     private void getPlmModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
         Integer tableNum = plmTaskFeign.getTableNum(tableNumDTO);
         BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
-        pendingViewDetailDTO.setCount(0);
+        pendingViewDetailDTO.setCount(tableNum);
         pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
         pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT + myWorkOptionDTO.getModuleUrl());
     }
@@ -427,11 +433,45 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             } else {
                 req.setApproveDuration(0+" H");
             }
+
             req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus()));
             FindUserDTO findUserDTO = userList.stream().filter(obj -> obj.getUserId().equals(req.getCreateUserName())).findFirst().orElse(new FindUserDTO());
             req.setCreateUserName(findUserDTO.getUserName());
         });
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public Boolean approve(ApproveParamDTO dto) {
+        BaseApproveParamDTO paramDTO = new BaseApproveParamDTO();
+        BeanMapperUtils.copy(dto, paramDTO);
+        paramDTO.setIds(Arrays.asList(dto.getId()));
+        ProcessManagementEntity entity = processManagementService.getById(dto.getId());
+        switch (TableNameEnum.getByCode(entity.getBusinessKey())) {
+            case PURCHASE_PRICE_CHANGE :
+                scmTaskFeign.purchaseChangeApprove(paramDTO);
+                break;
+            case SALES_DEMAND :
+                scmTaskFeign.salesDemandApprove(paramDTO);
+                break;
+            case PURCHASE_APPLICATION :
+                scmTaskFeign.purchaseApplicationApprove(paramDTO);
+                break;
+            case PURCHASE_ORDER :
+                scmTaskFeign.purchaseOrderApprove(paramDTO);
+                break;
+            case PURCHASE_CHANGE :
+                scmTaskFeign.purchaseChangeApprove(paramDTO);
+                break;
+            case PURCHASE_PRICE :
+                scmTaskFeign.purchasePriceApprove(paramDTO);
+                break;
+
+        }
+        if (entity.getBusinessKey().equals(TableNameEnum.PURCHASE_PRICE_CHANGE.getCode())) {
+
+        }
+        return Boolean.TRUE;
     }
 
 }

@@ -123,8 +123,11 @@
 
     <select id="approveView" resultType="com.erp.model.workflow.dto.WorkOptionDTO$ApproveViewDTO">
         SELECT
-            wm.module_classify AS source,
-            pm.business_code AS sourceCode,
+            pm.id,
+            wm.module_classify,
+            pm.business_code,
+            pm.business_name,
+            pm.business_id,
             pm.business_key,
             pm.create_user_id,
             EXTRACT(EPOCH FROM (pm.end_time - pm.start_time)) AS approveDuration,

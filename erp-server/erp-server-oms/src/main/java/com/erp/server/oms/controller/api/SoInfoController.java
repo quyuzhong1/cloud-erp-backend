@@ -10,7 +10,9 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -33,6 +35,9 @@ public class SoInfoController extends BaseController {
 
     @Resource
     private SoInfoService soInfoService;
+
+    @Resource
+    private SoDetailService soDetailService;
 
 
     /**
@@ -210,6 +215,19 @@ public class SoInfoController extends BaseController {
     public ApiResult exportWarehouse(@RequestBody @Valid SoInfoDTO.ExportDTO dto, HttpServletResponse response) {
 
         return success();
+    }
+
+    /**
+     * 添加详情按钮-列表查询
+     * @Author Luo_WG
+     * @Date 2023/5/16 18:43
+     * @param id id
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.oms.dto.SoDetailDTO.AddDetailView>>
+     **/
+    @PostMapping("/listAddDetailView")
+    public ApiResult<List<SoDetailDTO.AddDetailView>> listAddDetailView(@RequestParam("id") String id) {
+        List<SoDetailDTO.AddDetailView> addDetailViews = soDetailService.listAddDetailView(id);
+        return success(addDetailViews);
     }
 
 

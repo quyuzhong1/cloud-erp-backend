@@ -1,14 +1,12 @@
 package com.erp.rpc.plm.feign;
 
-import com.erp.model.plm.dto.BasicCategoryDTO;
-import com.erp.model.plm.dto.CleanSkuDto;
-import com.erp.model.plm.dto.ProductDetailDTO;
-import com.erp.model.plm.dto.ProductInfoDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -131,4 +129,68 @@ public interface PlmTaskFeign {
      **/
     @PostMapping("feign/plmWorkOption/getTableNum")
     Integer getTableNum(@RequestBody WorkOptionDTO.TableNumDTO tableNumDTO);
+
+    /**
+     * bom  审核 通过
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("feign/plmWorkOption/bomInfoApprovalPass")
+    void bomInfoApprovalPass(@RequestBody @Validated AuditParamDTO dto);
+
+    /**
+     * bom  审核 不通过
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("feign/plmWorkOption/bomInfoApprovalNoPass")
+    void bomInfoApprovalNoPass(@RequestBody @Validated AuditParamDTO dto);
+
+    /**
+     * 产品信息-状态操作-审核通过
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("feign/plmWorkOption/productDetailApprovalPass")
+    Boolean productDetailApprovalPass(@RequestBody @Validated ProductDetailOperateDTO dto);
+
+    /**
+     * 产品信息-状态操作-审核不通过
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("feign/plmWorkOption/productDetailApprovalNoPass")
+    Boolean productDetailApprovalNoPass(@RequestBody @Validated ProductDetailOperateDTO dto);
+
+    /**
+     * 项目任务-任务分页列表 -状态操作-审核通过
+     * @return
+     */
+    @PostMapping("feign/plmWorkOption/projectTaskApprovalPass")
+    Boolean projectTaskApprovalPass(@RequestBody @Validated TaskOperateDTO dto);
+
+    /**
+     * 项目任务-任务分页列表 -状态操作-审核不通过
+     * @return
+     */
+    @PostMapping("feign/plmWorkOption/projectTaskApprovalNoPass")
+    Boolean projectTaskApprovalNoPass(@RequestBody @Validated TaskOperateDTO dto);
+
+    /**
+     * change 审核 通过
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("feign/plmWorkOption/productChangeApprovalPass")
+    void productChangeApprovalPass(@RequestBody @Validated AuditParamDTO dto);
+
+    /**
+     * change  审核 不通过
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("feign/plmWorkOption/productChangeApprovalNoPass")
+    void productChangeApprovalNoPass(@RequestBody @Validated AuditParamDTO dto);
 }

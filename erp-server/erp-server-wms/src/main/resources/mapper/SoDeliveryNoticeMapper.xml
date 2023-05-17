@@ -8,6 +8,7 @@
             sdnd.source_detail_id,
             sdn.code,
             sdn.source_code,
+            sdn.customer_id,
             sdn.customer_name,
             sdn.delivery_org_name,
             sdn.approve_status,

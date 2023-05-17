@@ -30,5 +30,4 @@ public class WmsWorkOptionFeignController {
     public Integer getTableNum(@RequestBody WorkOptionDTO.TableNumDTO tableNumDTO) {
         return workOptionService.getTableNum(tableNumDTO);
     }
-
 }

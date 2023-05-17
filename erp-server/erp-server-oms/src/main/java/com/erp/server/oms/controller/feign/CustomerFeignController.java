@@ -1,0 +1,29 @@
+package com.erp.server.oms.controller.feign;
+
+import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.server.oms.service.CustomerInfoService;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
+import java.util.List;
+
+@RestController
+@RequestMapping("feign/customer")
+public class CustomerFeignController {
+    @Resource
+    private CustomerInfoService customerInfoService;
+    /**
+     * 根据主键id查询销售单主表信息
+     * @Author Luo_WG
+     * @Date 2023/5/15 18:18
+     * @return com.erp.model.oms.entity.SoInfoEntity
+     **/
+    @PostMapping("/listCustomer")
+    public List<CustomerInfoEntity> listCustomer() {
+        return customerInfoService.list();
+    }
+}

@@ -20,7 +20,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.entity.SoOutstockDetailEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
@@ -29,10 +29,8 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
-import com.erp.model.oms.entity.SoDetailEntity;
-import com.erp.model.oms.entity.SoInfoEntity;
-import com.erp.model.oms.entity.SoOutstockEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -113,6 +111,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Resource
     private PickingDetailService pickingDetailService;
 
+    @Resource
+    private CustomerFeign customerFeign;
+
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
         pagingParamDTO.getParams().setParam(pagingParamDTO.getParam());
@@ -131,6 +132,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<String> orderDetailIds = records.stream().map(SoDeliveryNoticeDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
         //获取销售单详情信息
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
+        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         if (CollectionUtils.isNotEmpty(records)) {
             List<String> list = new ArrayList<>();
             records.forEach(obj -> {
@@ -158,6 +160,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 obj.setProductName(productDetailEntity.getName());
                 obj.setSalesQty(soDetailEntity.getQty());
                 obj.setUnit(productDetailEntity.getUnitName());
+                CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+                obj.setCustomerName(customerInfoEntity.getName());
                 list.add(obj.getId());
             });
         }
@@ -220,10 +224,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeEntity.setCarrierName(supplierEntity.getSupplierName());
         soDeliveryNoticeEntity.setWarehouseId(dto.getWarehouseId());
         soDeliveryNoticeEntity.setWarehouseName(warehouseEntity.getName());
-        soDeliveryNoticeEntity.setReceiverName(dto.getReceiverName());
-        soDeliveryNoticeEntity.setTelNumber(dto.getTelNumber());
         soDeliveryNoticeEntity.setDeliveryModeDict(dto.getDeliveryModeDict());
-        soDeliveryNoticeEntity.setReceiveAddress(dto.getReceiveAddress());
+        //soDeliveryNoticeEntity.setReceiverName(dto.getReceiverName());
+        //soDeliveryNoticeEntity.setTelNumber(dto.getTelNumber());
+        //soDeliveryNoticeEntity.setReceiveAddress(dto.getReceiveAddress());
         this.save(soDeliveryNoticeEntity);
         soDeliveryNoticeDetailService.add(dto, soDeliveryNoticeEntity.getId());
         //操作日志
@@ -243,6 +247,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(dto.getSourceId());
         SoDeliveryNoticeEntity soDeliveryNoticeEntity = new SoDeliveryNoticeEntity();
         BeanMapperUtils.copy(soInfoEntity, soDeliveryNoticeEntity);
+        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soDeliveryNoticeEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+        soDeliveryNoticeEntity.setCustomerName(customerInfoEntity.getName());
         soDeliveryNoticeEntity.setId(dto.getId());
         soDeliveryNoticeEntity.setSourceId(dto.getSourceId());
         soDeliveryNoticeEntity.setSourceCode(soInfoEntity.getCode());
@@ -252,10 +259,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeEntity.setCarrierName(supplierEntity.getSupplierName());
         soDeliveryNoticeEntity.setWarehouseId(dto.getWarehouseId());
         soDeliveryNoticeEntity.setWarehouseName(warehouseEntity.getName());
-        soDeliveryNoticeEntity.setReceiverName(dto.getReceiverName());
-        soDeliveryNoticeEntity.setTelNumber(dto.getTelNumber());
         soDeliveryNoticeEntity.setDeliveryModeDict(dto.getDeliveryModeDict());
-        soDeliveryNoticeEntity.setReceiveAddress(dto.getReceiveAddress());
+        //soDeliveryNoticeEntity.setReceiverName(dto.getReceiverName());
+        //soDeliveryNoticeEntity.setTelNumber(dto.getTelNumber());
+        //soDeliveryNoticeEntity.setReceiveAddress(dto.getReceiveAddress());
         boolean flag = this.updateById(soDeliveryNoticeEntity);
         soDeliveryNoticeDetailService.update(dto);
         //操作日志
@@ -282,6 +289,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<String> orderDetailIds = detailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getSourceDetailId).collect(Collectors.toList());
         //获取销售单详情信息
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
+
+        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soDeliveryNoticeEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+        viewDTO.setCustomerName(customerInfoEntity.getName());
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         viewDTO.setInvalidStatusName(InvalidStatusEnum.getName(viewDTO.getInvalidStatus()));
         viewDTO.setDeliveryStatusDictName(DeliveryStatusEnum.getName(viewDTO.getDeliveryStatusDict()));
@@ -525,6 +536,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<String> orderDetailIds = pagingViews.stream().map(SoDeliveryNoticeDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
         //获取销售单详情信息
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
+        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         for (SoDeliveryNoticeDTO.PagingView pagingView : pagingViews) {
             pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
             pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
@@ -534,6 +546,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             pagingView.setProductName(productDetailEntity.getName());
             pagingView.setSalesQty(soDetailEntity.getQty());
             pagingView.setUnit(productDetailEntity.getUnitName());
+            CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+            pagingView.setCustomerName(customerInfoEntity.getName());
         }
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/SoDeliveryNoticeExport.xlsx";

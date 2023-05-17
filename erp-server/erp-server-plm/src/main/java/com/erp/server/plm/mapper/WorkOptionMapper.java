@@ -8,7 +8,13 @@ import java.util.List;
 
 @Mapper
 public interface WorkOptionMapper {
-    Integer getTableNum(@Param("tableName") String string);
+    Integer getTableNum(WorkOptionDTO.TableNumDTO tableNumDTO);
+
+    Integer getProductDetailNum(WorkOptionDTO.TableNumDTO tableNumDTO);
+
+    Integer getProductChangeNum(WorkOptionDTO.TableNumDTO tableNumDTO);
+
+    Integer getProductBomInfoNum(WorkOptionDTO.TableNumDTO tableNumDTO);
 
     List<WorkOptionDTO.StageViewDTO> stageView(@Param("optionUserId") String optionUserId);
 }

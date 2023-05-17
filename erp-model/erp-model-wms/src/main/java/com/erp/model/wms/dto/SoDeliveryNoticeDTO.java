@@ -103,6 +103,10 @@ public class SoDeliveryNoticeDTO {
         /**
          * 客户
          */
+        private String customerId;
+        /**
+         * 客户名称
+         */
         private String customerName;
         /**
          * 发货组织

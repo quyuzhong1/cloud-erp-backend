@@ -297,40 +297,49 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
     @NoArgsConstructor
     public static class ApproveViewDTO {
         /**
+         * 单据id
+         */
+        private String id;
+        /**
          * 单据来源
          */
-        private String source;
-
+        private String moduleClassify;
         /**
          * 单据编号
          */
-        private String sourceCode;
-
+        private String businessCode;
+        /**
+         * 单据名称
+         */
+        private String businessName;
+        /**
+         * 单据来源id
+         */
+        private String businessId;
+        /**
+         * 电锯来源编号
+         */
+        private String businessKey;
         /**
          * 已审核时长
          */
         private String approveDuration;
-
         /**
          * 申请人id
          */
         private String createUserId;
-
         /**
          * 申请人名称
          */
         private String createUserName;
-
         /**
          * 申请时间
          */
         private LocalDateTime createTime;
-
         /**
          * 审核状态
          */
         private String approveStatus;
-
         /**
          * 审核状态名称
          */

@@ -116,6 +116,10 @@ public class SoReturnNoticeDTO {
          */
         private String invalidStatusName;
         /**
+         * 客户id
+         */
+        private String customerId;
+        /**
          * 客户名称
          */
         private String customerName;

@@ -10,6 +10,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoReturnDTO;
+import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.server.oms.service.SoReturnService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -286,5 +287,29 @@ public class SoReturnController extends BaseController {
     public ApiResult<List<SoReturnDTO.GenerateSoReturnNoticeView>> generateSoReturnNoticeView(@RequestBody BaseIdsDTO.IdsDTO dto) {
         List<SoReturnDTO.GenerateSoReturnNoticeView> generateSoReturnNoticeViews = soReturnService.generateSoReturnNoticeView(dto.getIds());
         return success(generateSoReturnNoticeViews);
+    }
+
+    /**
+     * 获取所有已审核订单
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping(value = "/listSoReturnByApproveStatus")
+    public ApiResult<List<SoReturnEntity>> listSoReturnByApproveStatus() {
+        List<SoReturnEntity> entityList = soReturnService.listSoReturnByApproveStatus();
+        return success(entityList);
+    }
+
+    /**
+     * 根据退货单id查询退货单信息
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @GetMapping(value = "/getSoReturnById")
+    public ApiResult<SoReturnEntity> getSoReturnById(@RequestParam("id") String id) {
+        SoReturnEntity entity = soReturnService.getById(id);
+        return success(entity);
     }
 }

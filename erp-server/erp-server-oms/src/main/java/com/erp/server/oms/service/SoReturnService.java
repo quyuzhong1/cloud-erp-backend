@@ -158,4 +158,12 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoReturnDTO.GenerateSoReturnNoticeView>
      **/
     List<SoReturnDTO.GenerateSoReturnNoticeView> generateSoReturnNoticeView(List<String> ids);
+
+    /**
+     * 获取所有已审核订单
+     * @Author Luo_WG
+     * @Date 2023/5/11 11:20
+     * @return java.util.List<com.erp.model.oms.dto.SoReturnDTO.GenerateSoReturnNoticeView>
+     **/
+    List<SoReturnEntity> listSoReturnByApproveStatus();
 }
