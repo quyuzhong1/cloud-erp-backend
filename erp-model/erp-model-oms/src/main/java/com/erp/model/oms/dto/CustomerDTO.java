@@ -268,13 +268,13 @@ public class CustomerDTO implements Serializable {
         /**
          * 付款方
          */
-        private List<String> payNameList;
+        private List<String> payCodeList;
 
 
         /**
          * 结算方
          */
-        private String settleName;
+        private String settleCode;
 
 
         /**
@@ -441,13 +441,13 @@ public class CustomerDTO implements Serializable {
         /**
          * 付款方
          */
-        private String payName;
+        private List<String> payCodeList;
 
 
         /**
          * 结算方
          */
-        private String settleName;
+        private String settleCode;
 
 
         /**
@@ -599,13 +599,13 @@ public class CustomerDTO implements Serializable {
         /**
          * 付款方
          */
-        private List<String> payNameList;
+        private List<String> payCodeList;
 
 
         /**
          * 结算方
          */
-        private String settleName;
+        private String settleCode;
 
 
         /**

@@ -202,18 +202,21 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         BeanMapper.copy(soInfo, view);
         String warehouseId = view.getWarehouseId();
-        List<SoDetailDTO.ViewDTO> detailList = soDetailService.listByMainId(id,warehouseId);
+        ApproveStatusEnum approveStatus = view.getApproveStatus();
+        view.setApproveStatusName(approveStatus.getName());
+        List<SoDetailDTO.ViewDTO> detailList = soDetailService.listByMainId(id, warehouseId);
         view.setDetailList(detailList);
         return view;
     }
 
-    
+
     /**
      * 分页
-     * @author yl
-     * @date 2023-05-17 10:03
+     *
      * @param dto
      * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.SoInfoDTO.PagingViewDTO>
+     * @author yl
+     * @date 2023-05-17 10:03
      */
     @Override
     public PagingVO<SoInfoDTO.PagingViewDTO> paging(PagingDTO<SoInfoDTO.PagingParamDTO> dto) {

@@ -25,7 +25,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if (CollectionUtils.isEmpty(sourceDetailIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(SoOutstockDetailEntity::getSourceDetailId, sourceDetailIds).list();
+        return baseMapper.listSoOutstockBySourceDetailId(sourceDetailIds);
 
     }
 }

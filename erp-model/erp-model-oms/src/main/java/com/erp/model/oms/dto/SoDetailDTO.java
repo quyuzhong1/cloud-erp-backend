@@ -143,6 +143,17 @@ public class SoDetailDTO implements Serializable {
 
 
         /**
+         * 币种
+         */
+        private BigDecimal currency;
+
+        /**
+         * 币种符号
+         */
+        private BigDecimal currencySymbol;
+
+
+        /**
          * 单价
          */
         private BigDecimal price;

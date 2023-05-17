@@ -128,14 +128,14 @@ public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
     /**
      * 付款方
      */
-    @TableField("pay_name")
-    private String payName;
+    @TableField("pay_code")
+    private String payCode;
 
     /**
      * 结算方
      */
-    @TableField("settle_name")
-    private String settleName;
+    @TableField("settle_code")
+    private String settleCode;
 
     /**
      * 结算方式   oms_dict 获取

@@ -139,9 +139,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         //分组id
         String groupId = dto.getGroupId();
         //付款方
-        List<String> payNameList = dto.getPayNameList();
-        String payName = CollectionUtils.isNotEmpty(payNameList) ? payNameList.stream().collect(Collectors.joining(",")) : "";
-        addEntity.setPayName(payName);
+        List<String> payCodeList = dto.getPayCodeList();
+        String payCode = CollectionUtils.isNotEmpty(payCodeList) ? payCodeList.stream().collect(Collectors.joining(",")) : "";
+        addEntity.setCode(payCode);
         //获取客户分组信息
         List<CustomerGroupEntity> customerGroupList = customerGroupService.listById(groupId);
         String groupName = customerGroupList.stream().filter(d -> d.getId().equals(groupId)).findFirst().
@@ -456,9 +456,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         //分组id
         String groupId = dto.getGroupId();
         //付款方
-        List<String> payNameList = dto.getPayNameList();
-        String payName = CollectionUtils.isNotEmpty(payNameList) ? payNameList.stream().collect(Collectors.joining(",")) : "";
-        customer.setPayName(payName);
+        List<String> payCodeList = dto.getPayCodeList();
+        String payCode = CollectionUtils.isNotEmpty(payCodeList) ? payCodeList.stream().collect(Collectors.joining(",")) : "";
+        customer.setPayCode(payCode);
         customer.setAreaId(dto.getCountryId());
         customer.setCode(code);
         //获取客户分组信息

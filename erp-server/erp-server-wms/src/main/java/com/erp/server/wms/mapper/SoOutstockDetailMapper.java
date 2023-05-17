@@ -25,4 +25,5 @@ public interface SoOutstockDetailMapper extends BaseMapper<SoOutstockDetailEntit
      * @return java.util.List<com.erp.model.oms.entity.SoOutstockDetailEntity>
      **/
     List<SoOutstockDetailEntity> listSoOutstockBySourceDetailId(@Param("sourceDetailIds") List<String> sourceDetailIds);
+
 }
