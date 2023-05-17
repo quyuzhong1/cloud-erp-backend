@@ -667,7 +667,24 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
      */
     @Override
     public Boolean exportExcel(CustomerDTO.ExportDTO dto, HttpServletResponse response) {
-        List<CustomerDTO.PagingViewDTO> list = baseMapper.listExport(dto);
+        String searchType = dto.getSearchType();
+        List<String> approveList = new ArrayList<>();
+        //待审核
+        if (OmsConstant.WAIT_APPROVE.equals(searchType)) {
+            approveList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+        }
+
+        //已审核
+        if (OmsConstant.APPROVE.equals(searchType)) {
+            approveList.add(ApproveStatusEnum.APPROVE.getStatus());
+        }
+
+        //审核不通过
+        if (OmsConstant.REJECT.equals(searchType)) {
+            approveList.add(ApproveStatusEnum.REJECT.getStatus());
+        }
+
+        List<CustomerDTO.PagingViewDTO> list = baseMapper.listExport(dto,approveList);
         for (CustomerDTO.PagingViewDTO item : list) {
             Boolean disabled = item.getDisabled();
             String disabledName = disabled ? "停用" : "启用";

@@ -268,7 +268,7 @@ public class CustomerInfoController extends BaseController {
     }
 
     /**
-     * 启用或者停用 客户
+     * 启用或者停用客户
      *
      * @param dto
      * @return

@@ -40,5 +40,5 @@ public interface CustomerInfoMapper extends BaseMapper<CustomerInfoEntity> {
      * @param dto
      * @return java.util.List<com.erp.model.oms.dto.CustomerDTO.PagingViewDTO>
      */
-    List<CustomerDTO.PagingViewDTO> listExport(@Param("params") CustomerDTO.ExportDTO dto);
+    List<CustomerDTO.PagingViewDTO> listExport(@Param("params") CustomerDTO.ExportDTO dto,@Param("approveList") List<String> approveList);
 }
