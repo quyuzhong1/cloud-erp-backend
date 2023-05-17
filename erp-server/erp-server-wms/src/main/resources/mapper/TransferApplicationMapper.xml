@@ -60,6 +60,9 @@
         inner join transfer_application_detail tad on ta.id = tad.main_id and tad.is_deleted = false
         <where>
             ta.is_deleted = false
+            <if test="params.searchType != null and params.searchType != ''">
+                AND ta.approve_status = #{params.searchType}
+            </if>
             <if test="params.code != null and params.code != ''">
                 and ta.code like concat('%',#{params.code},'%')
             </if>
@@ -167,6 +170,9 @@
                 </foreach>
             </if>
             <if test="params.ids == null or params.ids.size == 0">
+                <if test="params.searchType != null and params.searchType != ''">
+                    AND ta.approve_status = #{params.searchType}
+                </if>
                 <if test="params.code != null and params.code != ''">
                     and ta.code like concat('%',#{params.code},'%')
                 </if>

@@ -193,4 +193,13 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/plmWorkOption/productChangeApprovalNoPass")
     void productChangeApprovalNoPass(@RequestBody @Validated AuditParamDTO dto);
+    /**
+     * @description: 查询bom子件信息
+     * @author Will
+     * @date: 2023/5/17 9:32
+     * @param skuId
+     * @return List<BomChildrenSkuDTO>
+     */
+    @PostMapping("feign/bom/listBomChildBySkuId")
+    List<BomChildrenSkuDTO> listBomChildBySkuId(@RequestBody String skuId);
 }

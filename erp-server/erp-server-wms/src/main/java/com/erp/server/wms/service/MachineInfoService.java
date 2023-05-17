@@ -6,6 +6,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.MachineInfoDTO;
+import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.entity.MachineInfoEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -131,4 +132,12 @@ public interface MachineInfoService extends SuperService<MachineInfoEntity> {
      * @return Boolean
      */
     Boolean exportExcel(MachineInfoDTO.SearchParamDTO dto, HttpServletResponse response);
+    /**
+     * 子件明细数据查询
+     * @author Will
+     * @date: 2023/5/16 19:41
+     * @param skuId
+     * @return List<ViewDTO>
+     */
+    List<MachineSubComponentsDTO.ViewDTO> viewSubComponents(String skuId);
 }

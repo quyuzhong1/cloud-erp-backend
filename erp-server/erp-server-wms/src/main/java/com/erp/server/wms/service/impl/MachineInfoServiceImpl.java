@@ -23,6 +23,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -31,6 +32,7 @@ import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.MachineDetailDTO;
 import com.erp.model.wms.dto.MachineInfoDTO;
+import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.entity.MachineDetailEntity;
 import com.erp.model.wms.entity.MachineInfoEntity;
@@ -413,6 +415,26 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             throw new ServiceException(ApiError.ERROR_1015);
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<MachineSubComponentsDTO.ViewDTO> viewSubComponents(String skuId) {
+        List<MachineSubComponentsDTO.ViewDTO> resultList = new ArrayList<>();
+        //查询BOM中SKU子集
+        List<BomChildrenSkuDTO> childrenList = plmTaskFeign.listBomChildBySkuId(skuId);
+        if (CollectionUtils.isEmpty(childrenList)) {
+            return resultList;
+        }
+        for (BomChildrenSkuDTO bomChildrenSkuDTO : childrenList) {
+            MachineSubComponentsDTO.ViewDTO viewDTO = new MachineSubComponentsDTO.ViewDTO();
+            viewDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
+            viewDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+            viewDTO.setProductName(bomChildrenSkuDTO.getSkuName());
+            viewDTO.setUnit(bomChildrenSkuDTO.getUnitName());
+            viewDTO.setQty(bomChildrenSkuDTO.getQuantity());
+            resultList.add(viewDTO);
+        }
+        return resultList;
     }
 
     /**

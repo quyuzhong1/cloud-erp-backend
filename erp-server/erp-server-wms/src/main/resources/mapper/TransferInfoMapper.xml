@@ -58,6 +58,9 @@
         inner join transfer_info_detail tid on ti.id = tid.main_id and tid.is_deleted = false
         <where>
             ti.is_deleted = false
+            <if test="params.searchType != null and params.searchType != ''">
+                AND ti.approve_status = #{params.searchType}
+            </if>
             <if test="params.code != null and params.code != ''">
                 and ti.code like concat('%',#{params.code},'%')
             </if>
@@ -164,6 +167,9 @@
                 </foreach>
             </if>
             <if test="params.ids == null or params.ids.size == 0">
+                <if test="params.searchType != null and params.searchType != ''">
+                    AND ti.approve_status = #{params.searchType}
+                </if>
                 <if test="params.code != null and params.code != ''">
                     and ti.code like concat('%',#{params.code},'%')
                 </if>

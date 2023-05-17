@@ -485,6 +485,8 @@ public enum ApiError implements Serializable {
     ERROR_99048(99048,"未找到直接调拨明细"),
     ERROR_99049(99049,"未找到调拨方向"),
     ERROR_99051(99051,"SKU【%s】已完成调拨"),
+    ERROR_99052(99052,"未找到加工单"),
+    ERROR_99053(99053,"未找到加工单明细"),
 
 
     /**
