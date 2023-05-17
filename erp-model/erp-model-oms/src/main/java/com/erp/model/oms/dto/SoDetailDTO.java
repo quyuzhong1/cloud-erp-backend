@@ -482,6 +482,10 @@ public class SoDetailDTO implements Serializable {
          */
         private String productName;
         /**
+         * 仓库id
+         */
+        private String  warehouseId;
+        /**
          * 库存组织id
          */
         private String  inventoryOrgId;

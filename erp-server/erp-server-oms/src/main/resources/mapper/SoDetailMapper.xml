@@ -12,7 +12,8 @@
             sd.qty,
             sd.is_gift,
             sd.is_close,
-            sd.remark
+            sd.remark,
+            si.warehouse_id
         FROM so_detail sd
         INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
         WHERE si.is_deleted = FALSE
