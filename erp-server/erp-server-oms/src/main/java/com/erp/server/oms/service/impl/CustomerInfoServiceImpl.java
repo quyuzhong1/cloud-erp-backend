@@ -320,7 +320,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         IPage pageData = baseMapper.paging(query, params, approveList);
         List<CustomerDTO.PagingViewDTO> list = pageData.getRecords();
         List<String> groupIdList = list.stream().map(CustomerDTO.PagingViewDTO::getGroupId).collect(Collectors.toList());
-        List<CustomerGroupEntity> groupList = customerGroupService.listByIds(groupIdList);
+        List<CustomerGroupEntity> groupList =CollectionUtils.isNotEmpty(groupIdList)?customerGroupService.listByIds(groupIdList):Collections.emptyList();
         for (CustomerDTO.PagingViewDTO item : list) {
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
