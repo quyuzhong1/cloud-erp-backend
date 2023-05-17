@@ -19,4 +19,17 @@ public class BaseIdDTO   extends  PermissionsDTO  {
     private String id;
 
     private String name;
+
+
+    @Data
+    @NoArgsConstructor
+    public static class CodeDTO {
+
+        private String id;
+
+        private String code;
+
+        private String name;
+
+    }
 }

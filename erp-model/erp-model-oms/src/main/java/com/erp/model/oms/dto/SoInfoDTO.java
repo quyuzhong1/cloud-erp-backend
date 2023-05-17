@@ -720,4 +720,73 @@ public class SoInfoDTO implements Serializable {
 
         private List<String> ids;
     }
+
+    /**
+     * 销售订单的客户信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CustomerDTO {
+        /**
+         * 客户id
+         */
+        private String customerId;
+
+        /**
+         * 客户id
+         */
+        private String customerName;
+
+
+        /**
+         * 收货人
+         */
+        private String receiverName;
+
+        /**
+         * 电话
+         */
+        private String telNumber;
+
+        /**
+         * 收货人地址
+         */
+        private String receiverAddress;
+
+        /**
+         * 交货方式
+         */
+        private String deliveryMode;
+
+        /**
+         * 交货方式
+         */
+        private String deliveryModeName;
+
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 是否含税
+         * true 是
+         */
+        private Boolean isTax;
+
+        /**
+         * 地址类型
+         */
+        private String addressType;
+
+        /**
+         * 地址类型名
+         */
+        private String addressTypeName;
+
+
+
+
+    }
 }

@@ -82,6 +82,33 @@ public class SoInfoController extends BaseController {
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
+
+    /**
+     * 获取到
+     * 所有审核通过的销售订单
+     *
+     * @param
+     * @return
+     */
+    @GetMapping("/list")
+    public ApiResult<List<BaseIdDTO.CodeDTO>> list() {
+        List<BaseIdDTO.CodeDTO> resultList = soInfoService.listSo();
+        return  success(resultList);
+    }
+
+    /**
+     * 获取到
+     * 所有审核通过的销售订单
+     *
+     * @param
+     * @return
+     */
+    @GetMapping("/soCustomer")
+    public ApiResult<SoInfoDTO.CustomerDTO> getSoCustomer(@RequestParam("id")String id) {
+        SoInfoDTO.CustomerDTO result = soInfoService.getSoCustomer(id);
+        return  success(result);
+    }
+
     /**
      * 创建
      *

@@ -3,6 +3,8 @@ package com.erp.server.oms.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoDetailDTO;
@@ -27,13 +29,20 @@ import com.erp.server.oms.mapper.SoDetailMapper;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import com.erp.server.oms.service.SoReturnDetailService;
-import com.erp.server.oms.service.SoReturnService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -47,9 +56,9 @@ import java.util.stream.Collectors;
  * @since 2023-05-10
  */
 @Service
+@Slf4j
 public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDetailEntity> implements SoDetailService {
-    @Resource
-    private SoReturnService soReturnService;
+
 
     @Resource
     private SoInfoService soInfoService;
@@ -396,6 +405,52 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         queryWrapper.eq(SoDetailEntity::getMainId, mainIdList);
         this.remove(queryWrapper);
 
+    }
+
+
+    /**
+     * 下载模板
+     * @author yl
+     * @date 2023-05-17 19:25
+     * @param response
+     * @return void
+     */
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/soSku.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error("下载模板出错了==={}",e);
+            throw new ServiceException(ApiError.Default);
+        }
+
+    }
+
+
+    /**
+     * 导入sku
+     * @author yl
+     * @date 2023-05-17 19:43
+     * @param excelFile
+     * @param response
+     * @return com.erp.model.oms.dto.SoDetailDTO.ImportDTO
+     */
+    @Override
+    public SoDetailDTO.ImportDTO importSku(MultipartFile excelFile, HttpServletResponse response) {
+        return null;
     }
 
 

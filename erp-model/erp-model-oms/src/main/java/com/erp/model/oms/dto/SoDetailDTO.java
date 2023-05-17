@@ -625,4 +625,74 @@ public class SoDetailDTO implements Serializable {
         private String approveStatus;
 
     }
+
+    /**
+     * 销售订单明细
+     * 导出成功数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExcelDTO {
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku no
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 销售数量
+         */
+        private Integer qty;
+
+
+
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+
+        /**
+         * 单位
+         */
+        private String unit;
+
+
+        /**
+         * 是否赠品
+         */
+        private Boolean isGift;
+
+        /**
+         * 是否补发
+         */
+        private Boolean isReissue;
+
+        /**
+         * 是否关闭
+         */
+        private Boolean isClose;
+
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
 }

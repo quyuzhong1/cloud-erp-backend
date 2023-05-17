@@ -1,6 +1,7 @@
 package com.erp.server.oms.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
@@ -147,4 +148,23 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return java.lang.Boolean
      */
     Boolean exportExcel(SoInfoDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 获取到已审核的销售订单列表
+     * @author yl
+     * @date 2023-05-17 18:59
+     * @param
+     * @return java.util.List<com.common.business.dto.base.BaseIdDTO.CodeDTO>
+     */
+    List<BaseIdDTO.CodeDTO> listSo();
+
+    /**
+     * 根据销售单id
+     * 获取到销售订单客户信息
+     * @author yl
+     * @date 2023-05-17 19:10
+     * @param id
+     * @return com.erp.model.oms.dto.SoInfoDTO.CustomerDTO
+     */
+    SoInfoDTO.CustomerDTO getSoCustomer(String id);
 }

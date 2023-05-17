@@ -4,7 +4,9 @@ import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -101,4 +103,25 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @return void
      */
     void removeByMainIdList(List<String> mainIdList);
+
+    
+    /**
+     * 下载模板
+     * @author yl
+     * @date 2023-05-17 19:25
+     * @param response
+     * @return void
+     */
+    void downloadTemplate(HttpServletResponse response);
+
+    
+    /**
+     * 导入sku
+     * @author yl
+     * @date 2023-05-17 19:43
+     * @param excelFile
+     * @param response
+     * @return com.erp.model.oms.dto.SoDetailDTO.ImportDTO
+     */
+    SoDetailDTO.ImportDTO importSku(MultipartFile excelFile, HttpServletResponse response);
 }

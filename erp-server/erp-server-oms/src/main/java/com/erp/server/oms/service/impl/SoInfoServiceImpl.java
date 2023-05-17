@@ -24,7 +24,9 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.enums.AddressTypeEnum;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -90,6 +92,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+
     /**
      * 添加销售订单
      *
@@ -102,6 +105,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public String add(SoInfoDTO.AddDTO dto) {
         //id
         String id = dto.getId();
+        String customerId = dto.getCustomerId();
+        if (StringUtils.isNotBlank(customerId)) {
+            customerInfoService.quoteCustomer(Arrays.asList(customerId));
+        }
         String code = "";
         if (StringUtils.isBlank(id)) {
             id = IdWorker.getIdStr();
@@ -411,7 +418,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             isFirst = true;
             id = IdWorker.getIdStr();
         }
-
+        String customerId = dto.getCustomerId();
+        if (StringUtils.isNotBlank(customerId)) {
+            customerInfoService.quoteCustomer(Arrays.asList(customerId));
+        }
         SoInfoEntity draftEntity = new SoInfoEntity();
         BeanMapper.copy(dto, draftEntity);
         draftEntity.setId(id);
@@ -479,6 +489,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         SoInfoEntity soInfo = this.getById(id);
         if (Objects.isNull(soInfo)) {
             throw new ServiceException(ApiError.ERROR_92016);
+        }
+        String customerId = dto.getCustomerId();
+        if (StringUtils.isNotBlank(customerId)) {
+            customerInfoService.quoteCustomer(Arrays.asList(customerId));
         }
         String code = soInfo.getCode();
         //旧的
@@ -845,7 +859,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (sku != null) {
                 item.setProductName(sku.getSkuName());
                 String unit = sku.getUnitName();
-                item.setUnit(StringUtils.isNotBlank(unit)?unit:"");
+                item.setUnit(StringUtils.isNotBlank(unit) ? unit : "");
             }
         }
         StringBuffer sb = new StringBuffer();
@@ -861,8 +875,58 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
+    }
 
 
+    /**
+     * 获取到已审核的销售订单列表
+     *
+     * @param
+     * @return java.util.List<com.common.business.dto.base.BaseIdDTO.CodeDTO>
+     * @author yl
+     * @date 2023-05-17 18:59
+     */
+    @Override
+    public List<BaseIdDTO.CodeDTO> listSo() {
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        List<SoInfoEntity> list = this.lambdaQuery().
+                eq(SoInfoEntity::getApproveStatus, ApproveStatusEnum.getByStatus(approveStatus)).list();
+        return BeanMapper.copyList(list, BaseIdDTO.CodeDTO.class);
+    }
+
+
+    /**
+     * 根据销售单id
+     * 获取到销售订单客户信息
+     *
+     * @param id
+     * @return com.erp.model.oms.dto.SoInfoDTO.CustomerDTO
+     * @author yl
+     * @date 2023-05-17 19:10
+     */
+    @Override
+    public SoInfoDTO.CustomerDTO getSoCustomer(String id) {
+        SoInfoDTO.CustomerDTO customer = new SoInfoDTO.CustomerDTO();
+        SoInfoEntity soInfo = this.getById(id);
+        if (Objects.isNull(soInfo)) {
+            throw new ServiceException(ApiError.ERROR_92016);
+        }
+        BeanMapper.copy(soInfo, customer);
+
+        String customerId = customer.getCustomerId();
+        CustomerInfoEntity customerInfo = StringUtils.isNotEmpty(customerId) ? customerInfoService.getById(customerId) : null;
+        String customerName = "";
+        if (customerInfo != null) {
+            customerName = customerInfo.getName();
+        }
+        customer.setCustomerName(customerName);
+        String deliveryMode = customer.getDeliveryMode();
+        String deliveryModeName = DeliveryModeEnum.getName(deliveryMode);
+        customer.setDeliveryModeName(deliveryModeName);
+        String addressType = customer.getAddressType();
+        String addressTypeName = AddressTypeEnum.getName(addressType);
+        customer.setAddressTypeName(addressTypeName);
+        return customer;
     }
 
 
