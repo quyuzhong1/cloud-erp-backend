@@ -54,4 +54,25 @@ public class MachineSubComponentsDTO implements Serializable {
          */
         private String id;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO extends UpdateDTO {
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 单位
+         */
+        private String unit;
+
+        /**
+         * 即时库存
+         */
+        private Integer curInventoryQty;
+
+    }
 }

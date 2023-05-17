@@ -11,6 +11,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.MachineInfoDTO;
+import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.server.wms.service.MachineInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -176,6 +177,19 @@ public class MachineInfoController extends BaseController {
             keyIdName = "id")
     public ApiResult<MachineInfoDTO.ViewDTO> view(@RequestParam("id") String id) {
         MachineInfoDTO.ViewDTO dto = machineInfoService.view(id);
+        return success(dto);
+    }
+    
+    /**
+     * 子件明细数据查询
+     * @author Will
+     * @date: 2023/5/16 19:40
+     * @param skuId
+     * @return ApiResult<List<ViewDTO>> 
+     */
+    @GetMapping("/viewSubComponents")
+    public ApiResult<List<MachineSubComponentsDTO.ViewDTO>> viewSubComponents(@RequestParam("skuId") String skuId) {
+        List<MachineSubComponentsDTO.ViewDTO> dto = machineInfoService.viewSubComponents(skuId);
         return success(dto);
     }
 

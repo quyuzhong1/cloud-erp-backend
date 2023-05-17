@@ -1,6 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
 import com.erp.model.plm.entity.BomSkuEntity;
 
@@ -30,4 +31,12 @@ public interface BomSkuService extends IService<BomSkuEntity> {
      * @return List<BomSkuEntity>
      */
     List<BomSkuEntity> getByParentSkuId(String parentSkuId);
+    /**
+     * @description: 查询子集SKU
+     * @author Will
+     * @date: 2023/5/17 9:40
+     * @param skuId
+     * @return List<BomChildrenSkuDTO>
+     */
+    List<BomChildrenSkuDTO> listBomChildBySkuId(String skuId);
 }

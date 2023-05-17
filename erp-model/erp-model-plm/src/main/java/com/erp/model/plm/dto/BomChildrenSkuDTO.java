@@ -33,6 +33,16 @@ public class BomChildrenSkuDTO  implements Serializable {
     private String productId;
 
     /**
+     * sku名称
+     */
+    private String skuName;
+
+    /**
+     * 单位
+     */
+    private String unitName;
+
+    /**
      * 层级
      */
     private Integer level;
