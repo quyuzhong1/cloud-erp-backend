@@ -3,11 +3,13 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -77,6 +79,11 @@ public class MachineDetailEntity extends BaseEntity<MachineDetailEntity> {
     @TableField("remark")
     private String remark;
 
+    @TableField(exist = false)
+    private List<MachineSubComponentsDTO.AddDTO> addList;
+
+    @TableField(exist = false)
+    private List<MachineSubComponentsDTO.UpdateDTO> updateList;
 
     public static final String MAIN_ID = "main_id";
 

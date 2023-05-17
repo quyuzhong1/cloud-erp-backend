@@ -42,12 +42,6 @@ public class OtherOutstockDetailEntity extends BaseEntity<OtherOutstockDetailEnt
     private String skuNo;
 
     /**
-     * 应发数量
-     */
-    @TableField("plan_qty")
-    private Integer planQty;
-
-    /**
      * 实发数量
      */
     @TableField("actual_qty")
@@ -77,8 +71,6 @@ public class OtherOutstockDetailEntity extends BaseEntity<OtherOutstockDetailEnt
     public static final String SKU_ID = "sku_id";
 
     public static final String SKU_NO = "sku_no";
-
-    public static final String PLAN_QTY = "plan_qty";
 
     public static final String ACTUAL_QTY = "actual_qty";
 

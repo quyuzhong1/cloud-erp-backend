@@ -13,6 +13,7 @@ import com.erp.model.wms.entity.MachineDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.MachineDetailMapper;
 import com.erp.server.wms.service.MachineDetailService;
+import com.erp.server.wms.service.MachineSubComponentsService;
 import com.erp.server.wms.service.OperateLogService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
@@ -39,6 +40,9 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    private MachineSubComponentsService machineSubComponentsService;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void add(List<MachineDetailDTO.AddDTO> detailList, String mainId) {
@@ -54,7 +58,9 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         //新增成功
         if (save) {
             //新增子件明细
-
+            for (MachineDetailEntity detailEntity : list) {
+                machineSubComponentsService.add(detailEntity.getAddList(),detailEntity.getId());
+            }
         }
     }
 
@@ -80,6 +86,11 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
 
         //新增或修改明细
         this.saveOrUpdateBatch(newList);
+
+        //修改子件明细
+        for (MachineDetailEntity detailEntity : newList) {
+            machineSubComponentsService.update(detailEntity.getUpdateList(),detailEntity.getId());
+        }
     }
 
     @Override

@@ -71,10 +71,6 @@ public class OtherOutstockDTO implements Serializable {
          */
         private LocalDate billDate;
         /**
-         * 应收数量
-         */
-        private Integer planQty;
-        /**
          * 实收数量
          */
         private Integer actualQty;

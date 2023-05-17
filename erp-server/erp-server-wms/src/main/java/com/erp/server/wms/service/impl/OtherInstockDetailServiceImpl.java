@@ -1,10 +1,13 @@
 package com.erp.server.wms.service.impl;
 
+import com.common.business.service.SuperServiceImpl;
+import com.erp.model.wms.dto.OtherInstockDetailDTO;
 import com.erp.model.wms.entity.OtherInstockDetailEntity;
 import com.erp.server.wms.mapper.OtherInstockDetailMapper;
 import com.erp.server.wms.service.OtherInstockDetailService;
-import com.common.business.service.SuperServiceImpl;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * <p>
@@ -17,4 +20,24 @@ import org.springframework.stereotype.Service;
 @Service
 public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstockDetailMapper, OtherInstockDetailEntity> implements OtherInstockDetailService {
 
+
+    @Override
+    public void add(List<OtherInstockDetailDTO.AddDTO> detailList, String mainId) {
+
+    }
+
+    @Override
+    public void update(List<OtherInstockDetailDTO.UpdateDTO> detailList, String mainId) {
+
+    }
+
+    @Override
+    public List<OtherInstockDetailEntity> listByMainId(String mainId) {
+        return null;
+    }
+
+    @Override
+    public void removeByMainIds(List<String> mainIds) {
+
+    }
 }

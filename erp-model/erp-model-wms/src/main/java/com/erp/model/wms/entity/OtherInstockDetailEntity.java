@@ -42,12 +42,6 @@ public class OtherInstockDetailEntity extends BaseEntity<OtherInstockDetailEntit
     private String skuNo;
 
     /**
-     * 应收数量
-     */
-    @TableField("plan_qty")
-    private Integer planQty;
-
-    /**
      * 实收数量
      */
     @TableField("actual_qty")
@@ -77,8 +71,6 @@ public class OtherInstockDetailEntity extends BaseEntity<OtherInstockDetailEntit
     public static final String SKU_ID = "sku_id";
 
     public static final String SKU_NO = "sku_no";
-
-    public static final String PLAN_QTY = "plan_qty";
 
     public static final String ACTUAL_QTY = "actual_qty";
 

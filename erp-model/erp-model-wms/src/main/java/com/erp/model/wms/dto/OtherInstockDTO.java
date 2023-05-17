@@ -58,6 +58,10 @@ public class OtherInstockDTO implements Serializable {
          */
         private String invalidStatusName;
         /**
+         * skuId
+         */
+        private String  skuId;
+        /**
          * sku编码
          */
         private String  skuNo;
@@ -69,10 +73,6 @@ public class OtherInstockDTO implements Serializable {
          * 入库日期
          */
         private LocalDate billDate;
-        /**
-         * 应收数量
-         */
-        private Integer planQty;
         /**
          * 实收数量
          */
@@ -197,11 +197,6 @@ public class OtherInstockDTO implements Serializable {
         private String  warehouseId;
 
         /**
-         * 库存组织id
-         */
-        private String  orgId;
-
-        /**
          * 入库类型
          */
         private String   type;
@@ -261,9 +256,20 @@ public class OtherInstockDTO implements Serializable {
         private String  approveStatus;
 
         /**
+         * 审核状态名称
+         */
+        private String  approveStatusName;
+
+        /**
+         * 库存状态名称
+         */
+        private String  inventoryDirectionName;
+
+
+        /**
          * 明细
          */
-        private List<OtherInstockDetailDTO.ViewDTO> details;
+        private List<OtherInstockDetailDTO.ViewDTO> detailList;
     }
 
 }
