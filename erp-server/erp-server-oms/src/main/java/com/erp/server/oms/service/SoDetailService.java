@@ -92,4 +92,13 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @return void
      */
     void updateSoDetail(String mainId, List<SoDetailDTO.UpdateDTO> detailList);
+
+    /**
+     * 根据主表ids 删除数据
+     * @author yl
+     * @date 2023-05-17 17:09
+     * @param mainIdList
+     * @return void
+     */
+    void removeByMainIdList(List<String> mainIdList);
 }

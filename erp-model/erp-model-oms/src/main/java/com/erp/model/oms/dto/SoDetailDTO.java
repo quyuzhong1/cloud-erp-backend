@@ -147,12 +147,12 @@ public class SoDetailDTO implements Serializable {
         /**
          * 币种
          */
-        private BigDecimal currency;
+        private String currency;
 
         /**
          * 币种符号
          */
-        private BigDecimal currencySymbol;
+        private String currencySymbol;
 
 
         /**
@@ -268,10 +268,9 @@ public class SoDetailDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public class UpdateDTO {
+    public static class UpdateDTO {
 
 
-        @NotBlank(message = "详情不能为空")
         private String id;
 
 

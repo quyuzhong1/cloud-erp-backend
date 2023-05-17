@@ -3,9 +3,12 @@ package com.erp.server.oms.service.impl;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -141,6 +144,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         addEntity.setWarehouseOrgId(warehouseOrgId);
         addEntity.setWarehouseOrgName(warehouseOrgName);
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        addEntity.setApproveStatus(ApproveStatusEnum.getByStatus(waitSubmitStatus));
         //保存成功
         Boolean addResult = this.saveOrUpdate(addEntity);
         if (addResult) {
@@ -517,6 +522,212 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             return id;
         }
         return "";
+    }
+
+
+    /**
+     * 修改并提交
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-17 16:43
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateAndSubmit(SoInfoDTO.UpdateDTO dto) {
+        String id = this.updateSo(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1020);
+        }
+        return this.submit(Arrays.asList(id));
+    }
+
+    /**
+     * 审核
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-17 16:46
+     */
+    @Override
+    public Boolean approve(BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<SoInfoEntity> list = this.listByIds(ids);
+        String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+        long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
+        String ingStatusName = ApproveStatusEnum.APPROVE_ING.getName();
+        //意见
+        String comment = dto.getComment();
+        Boolean result = true;
+        String content = "";
+        if (dto.getType().equals(ApproveType.PASS)) {
+            //审核通过
+            String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus));
+            content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
+        } else {
+            //审核不通过
+            String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(rejectStatus));
+            content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
+        }
+        if (result) {
+            //添加日志
+            List<Pair<String, String>> pairList = list.stream().
+                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "状态变更");
+        }
+
+        return result;
+    }
+
+    /**
+     * 反审核
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-17 16:48
+     */
+    @Override
+    public Boolean disApprove(BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<SoInfoEntity> list = this.listByIds(ids);
+        //审核中
+        String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+        //审核通过
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        //待提交
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(approveIngStatus);
+        statusList.add(approveStatus);
+        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98014);
+        }
+        List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveIngStatus))).
+                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+
+        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
+                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
+        //反审核
+        if (result) {
+            //添加日志
+            String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
+            operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.SO.getCode(), pairList, "状态变更");
+            //审核通过
+            String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
+            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), rejectPairList, "状态变更");
+
+        }
+        return result;
+    }
+
+
+    /**
+     * 撤销流程
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-17 16:51
+     */
+    @Override
+    public Boolean cancelProcess(List<String> ids) {
+        List<SoInfoEntity> list = this.listByIds(ids);
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        //TODO 撤销流程
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("销售订单【%s】取消流程", ModuleTypeEnum.SO.getCode(), pairList, "取消流程操作");
+        return result;
+    }
+
+
+    /**
+     * 批量删除
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-17 16:53
+     */
+    @Override
+    public Boolean deleteByIds(List<String> ids) {
+        List<SoInfoEntity> list = this.listByIds(ids);
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        String draftStatus = ApproveStatusEnum.DRAFT.getStatus();
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(waitSubmitStatus);
+        statusList.add(draftStatus);
+        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_92017);
+        }
+        //占用状态
+        long occupyCount = list.stream().filter(s -> s.getOccupyStatus()).count();
+        if (occupyCount > 0) {
+            throw new ServiceException(ApiError.ERROR_92018);
+        }
+
+        Boolean result = this.removeByIds(ids);
+        if (result) {
+            //添加日志
+            String content = "删除销售订单[%s]";
+            List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "删除");
+            //删除明细
+            soDetailService.removeByMainIdList(ids);
+
+        }
+
+        return result;
+    }
+
+    /**
+     * 作废
+     *
+     * @param ids
+     * @param remark
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-17 17:14
+     */
+    @Override
+    public Boolean invalid(List<String> ids, String remark) {
+        List<SoInfoEntity> list = this.listByIds(ids);
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        String draftStatus = ApproveStatusEnum.DRAFT.getStatus();
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(waitSubmitStatus);
+        statusList.add(draftStatus);
+        long invalidCount = list.stream().filter(d -> !d.getInvalidStatus()).count();
+        if (invalidCount != list.size()) {
+            throw new ServiceException(ApiError.ERROR_98061);
+        }
+        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_92019);
+        }
+        lambdaUpdate().in(SoInfoEntity::getId, ids).
+                set(SoInfoEntity::getInvalidStatus, Boolean.TRUE).update();
+        List<Pair<String,String>> pairList=list.stream().map(obj->new Pair<>(obj.getId(),obj.getCode())).collect(Collectors.toList());
+        String content="作废了一个销售订单【%s】,作废原因: ".concat(remark);
+        operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "作废");
+
+        return Boolean.TRUE;
     }
 
 

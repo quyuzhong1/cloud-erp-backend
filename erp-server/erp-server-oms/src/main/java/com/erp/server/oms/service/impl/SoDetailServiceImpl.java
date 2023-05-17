@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -314,14 +315,14 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     }
 
 
-
     /**
      * 修改订单详情
-     * @author yl
-     * @date 2023-05-17 16:00
+     *
      * @param mainId
      * @param detailList
      * @return void
+     * @author yl
+     * @date 2023-05-17 16:00
      */
     @Override
     public void updateSoDetail(String mainId, List<SoDetailDTO.UpdateDTO> detailList) {
@@ -363,6 +364,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             if (isGift) {
                 price = BigDecimal.ZERO;
             }
+            item.setPrice(price);
             //金额
             BigDecimal amount = MathUtil.multiply(price, qty);
             item.setAmount(amount);
@@ -375,6 +377,26 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             item.setCurrencySymbol(symbol);
         }
         this.saveOrUpdateBatch(saveOrUpdateList);
+    }
+
+
+    /**
+     * 根据主表ids 删除数据
+     *
+     * @param mainIdList
+     * @return void
+     * @author yl
+     * @date 2023-05-17 17:09
+     */
+    @Override
+    public void removeByMainIdList(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return;
+        }
+        LambdaQueryWrapper<SoDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SoDetailEntity::getMainId, mainIdList);
+        this.remove(queryWrapper);
+
     }
 
 
@@ -451,6 +473,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             if (isGift) {
                 price = BigDecimal.ZERO;
             }
+            item.setPrice(price);
             //金额
             BigDecimal amount = MathUtil.multiply(price, qty);
             item.setAmount(amount);
