@@ -26,12 +26,10 @@ import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.model.workflow.enums.ProcessStatusEnum;
+import com.erp.model.workflow.enums.TimeoutStatusEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.mapper.ProcessManagementMapper;
-import com.erp.server.workflow.service.ProcessBusinessService;
-import com.erp.server.workflow.service.ProcessDefinitionService;
-import com.erp.server.workflow.service.ProcessManagementService;
-import com.erp.server.workflow.service.ProcessTaskManagementService;
+import com.erp.server.workflow.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.*;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
@@ -42,13 +40,12 @@ import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.ProcessInstanceWithVariablesImpl;
 import org.camunda.bpm.engine.impl.persistence.entity.TaskEntity;
 import org.camunda.bpm.engine.impl.pvm.process.ActivityImpl;
-import org.camunda.bpm.engine.impl.util.IoUtil;
-import org.camunda.bpm.engine.repository.ProcessDefinition;
 import org.camunda.bpm.engine.runtime.ActivityInstance;
 import org.camunda.bpm.engine.runtime.Execution;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.IdentityLink;
 import org.camunda.bpm.engine.task.Task;
+import org.camunda.bpm.model.bpmn.Bpmn;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.camunda.bpm.model.bpmn.instance.ExtensionElements;
 import org.camunda.bpm.model.bpmn.instance.FlowElement;
@@ -61,9 +58,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -100,6 +94,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     private HistoryService historyService;
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private ProcessTaskCcService processTaskCcService;
 
 
     @Override
@@ -470,37 +466,27 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     }
 
     @Override
-    public void progress(ProcessManagementDTO.ProgressDTO dto) {
-        // 获取流程引擎实例
-        ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
-        RepositoryService repositoryService = processEngine.getRepositoryService();
-        RuntimeService runtimeService = processEngine.getRuntimeService();
-
-        // 根据流程实例ID获取流程实例
-        String processInstanceId = dto.getProcessInstanceId();
-        ProcessInstance processInstance = runtimeService.createProcessInstanceQuery()
-                .processInstanceId(processInstanceId)
-                .singleResult();
-
-        if (processInstance != null) {
-            // 获取流程定义ID
-            String processDefinitionId = processInstance.getProcessDefinitionId();
-
-            // 获取流程定义
-            ProcessDefinition processDefinition = repositoryService.createProcessDefinitionQuery()
-                    .processDefinitionId(processDefinitionId)
-                    .singleResult();
-
-            // 获取流程图
-            InputStream inputStream = repositoryService.getProcessDiagram(processDefinitionId);
-            InputStream processDiagram = repositoryService.getProcessDiagram(processDefinition.getId());
-            // 将输入流保存为图片png格式
-            File file = new File(StrUtil.format("{}.png", dto.getProcessInstanceId()));
-            // ...
-
-            // 关闭输入流
-            IoUtil.closeSilently(inputStream);
+    public ProcessManagementDTO.ProcessResultDTO progress(ProcessManagementDTO.ProgressDTO dto) {
+        // Get the process definition ID from the process instance ID
+        String processDefinitionId = runtimeService.createProcessInstanceQuery()
+                .processInstanceId(dto.getProcessInstanceId())
+                .singleResult()
+                .getProcessDefinitionId();
+        // Get the BPMN model instance
+        BpmnModelInstance bpmnModelInstance = repositoryService.getBpmnModelInstance(processDefinitionId);
+        // Convert the BpmnModelInstance to a XML string
+        String bpmnXml = Bpmn.convertToString(bpmnModelInstance);
+        // 返回当前任务
+        List<Task> taskList = taskService.createTaskQuery()
+                .processInstanceId(dto.getProcessInstanceId())
+                .active()
+                .list();
+        ActivityInstance activityInstance = runtimeService.getActivityInstance(dto.getProcessInstanceId());
+        List<ProcessManagementDTO.TaskResultDTO> tasks = new ArrayList<>(taskList.size());
+        if(CollectionUtil.isNotEmpty(taskList)){
+            tasks = taskList.stream().map(task -> new ProcessManagementDTO.TaskResultDTO(task.getId(), task.getName(), task.getTaskDefinitionKey())).collect(Collectors.toList());
         }
+        return new ProcessManagementDTO.ProcessResultDTO(tasks, bpmnXml, activityInstance.getProcessInstanceId(), activityInstance.getProcessDefinitionId());
     }
 
     @Override
@@ -530,6 +516,12 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.ERROR_9011);
         }
         Map<String, FindUserDTO> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, e -> e ));
+        String copyUser = propertiesDTO.getCopyUser();
+        if (StrUtil.isNotBlank(copyUser)){
+            List<String> ccUserIds = Arrays.asList(copyUser.split(","));
+            List<FindUserDTO> ccUserList = sysUserFeign.getUserListByUserIds(ccUserIds);
+            processTaskCcService.saveCcUser(task.getId(), ccUserList);
+        }
         candidateUsers.forEach(userId -> {
             // 对去重类型做处理，自动审核通过
             FindUserDTO findUserDTO = userMap.get(userId);
@@ -565,6 +557,27 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 updateApprove(processTaskManagement.get().getId(), ApproveTypeEnum.PASS, insertTask.getId(), processInstanceId, "审核人重复,审核自动通过");
             }
         });
+    }
+
+    @Override
+    public List<ProcessManagementDTO.ManagementTaskDTO> listUnsendTask(String timeoutStatus) {
+        return baseMapper.listProcessTask(timeoutStatus);
+    }
+
+    @Override
+    public void sendTimeoutWarn(ProcessManagementDTO.ManagementTaskDTO task) {
+        // 发送超时提醒消息
+
+        // 更新发送状态
+        processTaskManagementService.updateTimeoutStatus(task.getTaskManagementId(), TimeoutStatusEnum.SEND_WARN);
+    }
+
+    @Override
+    public void sendTimeoutHandle(ProcessManagementDTO.ManagementTaskDTO task) {
+        // 发送超时处理消息
+
+        // 更新发送状态
+        processTaskManagementService.updateTimeoutStatus(task.getTaskManagementId(), TimeoutStatusEnum.SEND_HANDLE);
     }
 
     @Override

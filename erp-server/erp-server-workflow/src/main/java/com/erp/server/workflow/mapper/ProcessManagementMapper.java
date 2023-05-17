@@ -52,4 +52,10 @@ public interface ProcessManagementMapper extends BaseMapper<ProcessManagementEnt
      * @return
      */
     List<ProcessManagementDTO.PagingResultDTO> export(ProcessManagementDTO.SearchDTO dto);
+
+    /**
+     * 根据业务id和业务类型获取流程管理信息
+     */
+    List<ProcessManagementDTO.ManagementTaskDTO> listProcessTask(@Param("timeoutStatus")String timeoutStatus);
+
 }

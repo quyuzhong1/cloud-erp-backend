@@ -21,6 +21,7 @@
         <result column="start_time" property="startTime" />
         <result column="end_time" property="endTime" />
     </resultMap>
+
     <sql id="Get_Task_Management">
         SELECT
         pm.id as managementId,
@@ -40,32 +41,19 @@
         ptm.task_id,
         ptm.cur_approve_id,
         ptm.task_status,
-        ptm.timeout_warn_status,
-        ptm.timeout_warn_interval,
+        ptm.timeout_status,
+        ptm.timeout_warn_time,
         ptm.timeout_handle_type,
+        ptm.timeout_handle_time,
         ptm.approve_time,
         ptm.remark,
         ptm.pre_activity_id,
         ptm.execution_id,
         ptm.cur_activity_name
         FROM process_management pm , process_task_management ptm
-        where pm.process_instance_id = ptm.process_instance_id AND approve_status = 'approveIng'
-        AND pm.business_id = #{businessId} AND pm.business_key = #{businessKey} AND ptm.task_status = 'approveIng'
-        <if test="null != userId and userId != ''">
-            AND ptm.cur_approve_id = #{userId}
-        </if>
-        ORDER BY ptm.create_time ASC
-        LIMIT 1
+        where pm.process_instance_id = ptm.process_instance_id
     </sql>
 
-    <select id="getTaskByBusiness"
-            resultType="com.erp.model.workflow.dto.ProcessManagementDTO$ManagementTaskDTO">
-        <include refid="Get_Task_Management"/>
-    </select>
-    <select id="listTaskByBusiness"
-            resultType="com.erp.model.workflow.dto.ProcessManagementDTO$ManagementTaskDTO">
-        <include refid="Get_Task_Management"/>
-    </select>
     <sql id="List_Process_Management">
         SELECT
             pm.process_instance_id,
@@ -88,9 +76,49 @@
         GROUP BY pm.process_instance_id,pm.create_time
         order by pm.create_time desc
     </sql>
+
+    <select id="getTaskByBusiness"
+            resultType="com.erp.model.workflow.dto.ProcessManagementDTO$ManagementTaskDTO">
+        <include refid="Get_Task_Management"/>
+        AND approve_status = 'approveIng'
+        AND pm.business_id = #{businessId} AND pm.business_key = #{businessKey} AND ptm.task_status = 'approveIng'
+        <if test="null != userId and userId != ''">
+            AND ptm.cur_approve_id = #{userId}
+        </if>
+        ORDER BY ptm.create_time ASC
+        LIMIT 1
+    </select>
+
+    <select id="listTaskByBusiness"
+            resultType="com.erp.model.workflow.dto.ProcessManagementDTO$ManagementTaskDTO">
+        <include refid="Get_Task_Management"/>
+        AND approve_status = 'approveIng'
+        AND pm.business_id = #{businessId} AND pm.business_key = #{businessKey} AND ptm.task_status = 'approveIng'
+        <if test="null != userId and userId != ''">
+            AND ptm.cur_approve_id = #{userId}
+        </if>
+        ORDER BY ptm.create_time ASC
+        LIMIT 1
+    </select>
+
+    <select id="listProcessTask"
+            resultType="com.erp.model.workflow.dto.ProcessManagementDTO$ManagementTaskDTO">
+        <include refid="Get_Task_Management"/>
+        <if test="null != timeoutStatus and timeoutStatus == 1">
+            AND ptm.timeout_warn_time &lt;= now()
+        </if>
+        <if test="null != timeoutStatus and timeoutStatus == 2">
+            AND ptm.timeout_handle_time &lt;= now()
+        </if>
+        AND ptm.timeout_status = #{timeoutStatus}
+        ORDER BY ptm.create_time ASC
+        LIMIT 200
+    </select>
+
     <select id="paging" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$PagingResultDTO">
        <include refid="List_Process_Management"/>
     </select>
+
     <select id="export" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$PagingResultDTO">
         <include refid="List_Process_Management"/>
     </select>

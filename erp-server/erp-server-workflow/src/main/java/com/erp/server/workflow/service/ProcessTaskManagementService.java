@@ -3,6 +3,7 @@ package com.erp.server.workflow.service;
 import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.workflow.enums.TimeoutStatusEnum;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -58,4 +59,11 @@ public interface ProcessTaskManagementService extends SuperService<ProcessTaskMa
      * @param processInstanceId
      */
     void removeByProcessInstanceId(String processInstanceId);
+
+    /**
+     * 更新超时状态
+     * @param taskManagementId
+     * @param timeoutStatusEnum
+     */
+    void updateTimeoutStatus(String taskManagementId, TimeoutStatusEnum timeoutStatusEnum);
 }

@@ -6,7 +6,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.workflow.service.ProcessManagementService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -48,7 +47,7 @@ public class ProcessManagementController extends BaseController {
     }
 
     /**
-     * 流程审核通过
+     * 流程审核
      * @param dto
      * @return
      */
@@ -122,9 +121,8 @@ public class ProcessManagementController extends BaseController {
      * 查看流程进度
      */
     @PostMapping("/progress")
-    public ApiResult<String> progress(@RequestBody @Valid ProcessManagementDTO.ProgressDTO dto) {
-        processManagementService.progress(dto);
-        return success();
+    public ApiResult<ProcessManagementDTO.ProcessResultDTO> progress(@RequestBody @Valid ProcessManagementDTO.ProgressDTO dto) {
+        return success(processManagementService.progress(dto));
     }
 
 

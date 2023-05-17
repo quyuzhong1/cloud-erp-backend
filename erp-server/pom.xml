@@ -14,6 +14,7 @@
     <properties>
         <alibaba.druid.verison>1.2.15</alibaba.druid.verison>
         <seata.version>1.5.2</seata.version>
+        <xxl-job.version>2.3.0</xxl-job.version>
     </properties>
     <modules>
         <module>erp-server-auth</module>

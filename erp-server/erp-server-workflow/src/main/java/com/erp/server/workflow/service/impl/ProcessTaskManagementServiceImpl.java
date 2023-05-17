@@ -7,6 +7,7 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
+import com.erp.model.workflow.enums.TimeoutStatusEnum;
 import com.erp.server.workflow.mapper.ProcessTaskManagementMapper;
 import com.erp.server.workflow.service.ProcessTaskManagementService;
 import com.common.business.service.SuperServiceImpl;
@@ -133,6 +134,18 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
                 .remove();
         if (!remove) {
             throw new RuntimeException("删除流程任务失败");
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateTimeoutStatus(String taskManagementId, TimeoutStatusEnum timeoutStatusEnum) {
+        boolean update = lambdaUpdate()
+                .set(ProcessTaskManagementEntity::getTimeoutStatus, timeoutStatusEnum)
+                .eq(ProcessTaskManagementEntity::getId, taskManagementId)
+                .update();
+        if (!update) {
+            throw new RuntimeException("更新任务超时状态失败");
         }
     }
 }

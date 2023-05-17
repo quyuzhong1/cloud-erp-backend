@@ -1,13 +1,10 @@
 package com.erp.model.workflow.dto;
 
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.excel.annotation.ExcelProperty;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.model.workflow.enums.ProcessStatusEnum;
-import com.erp.model.workflow.enums.RejectTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -250,12 +247,12 @@ public class ProcessManagementDTO {
         /**
          * 超时预警状态
          */
-        private Integer timeoutWarnStatus;
+        private Integer timeoutStatus;
 
         /**
          * 超时预警时间
          */
-        private Integer timeoutWarnInterval;
+        private Integer timeout_warn_time;
 
         /**
          * 超时时间
@@ -515,5 +512,59 @@ public class ProcessManagementDTO {
 
         @NotBlank(message = "流程实例id不能为空")
         private String processInstanceId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ProcessResultDTO {
+
+        /**
+         * 流程实例ID
+         */
+        private String processInstanceId;
+        /**
+         * 流程定义ID
+         */
+        private String processDefinitionId;
+        /**
+         * 当前任务列表
+         */
+        private List<TaskResultDTO> curTaskList;
+
+        /**
+         * 流程定义xml
+         */
+        private String bpmnXml;
+
+        public ProcessResultDTO(List<TaskResultDTO> tasks, String bpmnXml, String processInstanceId, String processDefinitionId) {
+            this.curTaskList = tasks;
+            this.bpmnXml = bpmnXml;
+            this.processInstanceId = processInstanceId;
+            this.processDefinitionId = processDefinitionId;
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class TaskResultDTO {
+
+        /**
+         * 任务名称
+         */
+        private String taskName;
+        /**
+         * 任务定义key
+         */
+        private String taskDefinitionKey;
+        /**
+         * 任务ID
+         */
+        private String taskId;
+
+        public TaskResultDTO(String taskId, String taskName, String taskDefinitionKey) {
+            this.taskId = taskId;
+            this.taskName = taskName;
+            this.taskDefinitionKey = taskDefinitionKey;
+        }
     }
 }

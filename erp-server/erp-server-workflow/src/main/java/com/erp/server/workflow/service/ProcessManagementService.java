@@ -10,7 +10,6 @@ import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.DelegateTask;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -134,5 +133,22 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * 流程进度
      * @param dto
      */
-    void progress(ProcessManagementDTO.ProgressDTO dto);
+    ProcessManagementDTO.ProcessResultDTO progress(ProcessManagementDTO.ProgressDTO dto);
+
+    /**
+     * 获取未发送任务
+     */
+    List<ProcessManagementDTO.ManagementTaskDTO> listUnsendTask(String timeoutStatus);
+
+    /**
+     * 发送超时提醒
+     * @param task
+     */
+    void sendTimeoutWarn(ProcessManagementDTO.ManagementTaskDTO task);
+
+    /**
+     * 发送超时处理
+     * @param task
+     */
+    void sendTimeoutHandle(ProcessManagementDTO.ManagementTaskDTO task);
 }

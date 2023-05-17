@@ -12,6 +12,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 import com.erp.model.workflow.dto.CamundaDTO;
+import com.erp.model.workflow.enums.TimeoutStatusEnum;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -71,20 +72,20 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     /**
      * 超时预警状态
      */
-    @TableField("timeout_warn_status")
-    private Integer timeoutWarnStatus;
+    @TableField("timeout_status")
+    private TimeoutStatusEnum timeoutStatus;
 
     /**
      * 超时预警时间
      */
-    @TableField("timeout_warn_interval")
-    private Integer timeoutWarnInterval;
+    @TableField("timeout_warn_time")
+    private LocalDateTime timeoutWarnTime;
 
     /**
      * 超时时间
      */
-    @TableField("timeout_interval")
-    private Integer timeoutInterval;
+    @TableField("timeout_handle_time")
+    private LocalDateTime timeoutHandleTime;
 
     /**
      * 超时处理方式
@@ -130,7 +131,7 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     public static final String TASK_ID = "task_id";
     public static final String TASK_STATUS = "task_status";
 
-    public static final String TIMEOUT_WARN_STATUS = "timeout_warn_status";
+    public static final String TIMEOUT_STATUS = "timeout_status";
 
     public static final String TIMEOUT_WARN_INTERVAL = "timeout_warn_interval";
 
@@ -156,9 +157,9 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
         this.taskId = taskId;
         this.startTime = startTime;
         this.taskStatus = approveStatus;
-        this.timeoutInterval = StrUtil.isNotBlank(propertiesDTO.getTimeoutInterval()) ? Integer.parseInt(propertiesDTO.getTimeoutInterval()) : 0;
+        this.timeoutHandleTime = StrUtil.isNotBlank(propertiesDTO.getTimeoutInterval()) ? startTime.plusHours(Integer.parseInt(propertiesDTO.getTimeoutInterval())) : startTime;
         this.timeoutHandleType = propertiesDTO.getTimeoutHandling();
-        this.timeoutWarnInterval = StrUtil.isNotBlank(propertiesDTO.getTimeoutWarnInterval()) ? Integer.parseInt(propertiesDTO.getTimeoutWarnInterval()) : 0;
+        this.timeoutWarnTime = StrUtil.isNotBlank(propertiesDTO.getTimeoutInterval()) ? startTime.plusHours(Integer.parseInt(propertiesDTO.getTimeoutWarnInterval())) : startTime;
         this.curApproveId = findUserDTO.getUserId();
         this.curApproveName = findUserDTO.getUserName();
         this.executionId = executionId;
