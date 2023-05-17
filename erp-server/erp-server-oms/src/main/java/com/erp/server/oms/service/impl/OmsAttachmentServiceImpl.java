@@ -5,7 +5,6 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.OmsAttachmentDTO;
 import com.erp.model.oms.entity.OmsAttachmentEntity;
-import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.server.oms.mapper.OmsAttachmentMapper;
 import com.erp.server.oms.service.OmsAttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -29,8 +28,6 @@ public class OmsAttachmentServiceImpl extends SuperServiceImpl<OmsAttachmentMapp
 
     @Override
     public void batchSave(List<String> attachmentUrlList, List<String> attachmentNameList, String type, String businessId) {
-        //先删除
-        this.delete(type, businessId);
         int nameSize = CollectionUtils.isNotEmpty(attachmentNameList) ? attachmentNameList.size() : 0;
         if (CollectionUtils.isNotEmpty(attachmentUrlList)) {
             List<OmsAttachmentEntity> addList = new ArrayList<>(attachmentUrlList.size());
@@ -86,12 +83,11 @@ public class OmsAttachmentServiceImpl extends SuperServiceImpl<OmsAttachmentMapp
      * @date 2023-04-19 11:11
      */
     @Override
-    public void removeAttachment(AttachmentDTO.DeleteDTO dto) {
+    public void removeAttachment(OmsAttachmentDTO.DeleteDTO dto) {
         LambdaQueryWrapper<OmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(OmsAttachmentEntity::getAttachUrl, dto.getAttachUrl());
         if (StringUtils.isNotBlank(dto.getBusinessId())) {
             queryWrapper.eq(OmsAttachmentEntity::getBusinessId, dto.getBusinessId());
-
         }
         this.remove(queryWrapper);
     }

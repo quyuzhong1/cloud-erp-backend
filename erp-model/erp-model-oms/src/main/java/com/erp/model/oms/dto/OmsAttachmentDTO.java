@@ -29,12 +29,6 @@ public class OmsAttachmentDTO  implements Serializable {
         private String businessId;
 
 
-
-        /**
-         * 业务类型
-         */
-        private String businessType;
-
         /**
          * 资质附件url
          */

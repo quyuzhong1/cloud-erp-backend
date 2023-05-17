@@ -868,74 +868,22 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
         for (String userId : userIds) {
             List<UserSuperiorDTO> superList = sysDepartmentUserService.listSuperiorByUserId(userId);
+            if (CollectionUtils.isEmpty(superList)) {
+                continue;
+            }
             List<UserSuperiorDTO> collect = superList.stream().map(entity -> entity.setSuperiorType(ChargeSuperiorEnum.getName(entity.getLevel()))).collect(Collectors.toList());
+
+            //添加直属上级
+            UserSuperiorDTO newSuperiorDTO = new UserSuperiorDTO();
+            UserSuperiorDTO userSuperiorDTO = superList.stream()
+                    .sorted(Comparator.comparing(UserSuperiorDTO::getLevel))
+                    .filter(superior -> superior.getLevel() >= ChargeSuperiorEnum.DIRECT_SUPERIOR.getCode())
+                    .findFirst()
+                    .orElse(null);
+            BeanMapperUtils.copy(userSuperiorDTO,newSuperiorDTO);
+            newSuperiorDTO.setSuperiorType(ChargeSuperiorEnum.DIRECT_SUPERIOR.getName());
+            parentList.add(newSuperiorDTO);
             parentList.addAll(collect);
-
-
-            // 部门负责人
-//            SysDepartmentUserNumberDTO dto = sysDepartmentUserService.getByUserId(userId);
-//            if (ObjectUtils.isEmpty(dto) || StringUtils.isBlank(dto.getDepartmentId())) {
-//                continue;
-//            }
-//            SysDepartmentEntity entity = sysDepartmentService.getById(dto.getDepartmentId());
-//            //部门不存在
-//            if (ObjectUtils.isEmpty(entity)) {
-//                continue;
-//            }
-//            //查询直接直属上级
-//            List<SysDepartmentUserEntity> sysDepartmentUserNumberList = sysDepartmentUserService.listSuperiorById(dto.getDepartmentId());
-//            if (CollectionUtils.isNotEmpty(sysDepartmentUserNumberList)) {
-//                List<String> parentIds = sysDepartmentUserNumberList.stream().map(SysDepartmentUserEntity::getUserId).collect(Collectors.toList());
-//                parentList.add(new UserSuperiorDTO().setUserId(StringUtils.join(parentIds, ",")).setSuperiorType("direct_superior"));
-//                parentList.add(new UserSuperiorDTO().setUserId(StringUtils.join(parentIds, ",")).setSuperiorType("direct_department_charge"));
-//            }
-//
-//            //查询二级部门负责人
-//            if (!"0".equals(entity.getParentId())) {
-//                SysDepartmentEntity secondDepart = sysDepartmentService.getParentDepartmentById(entity.getParentId());
-//                if (ObjectUtils.isNotEmpty(secondDepart)) {
-//                    List<SysDepartmentUserEntity> sysDepartmentUserNumberDTOS = sysDepartmentUserService.listSuperiorById(secondDepart.getId());
-//                    if (CollectionUtils.isNotEmpty(sysDepartmentUserNumberDTOS)) {
-//                        List<String> parentIds = sysDepartmentUserNumberDTOS.stream().map(SysDepartmentUserEntity::getUserId).collect(Collectors.toList());
-//                        parentList.add(new UserSuperiorDTO().setUserId(StringUtils.join(parentIds, ",")).setSuperiorType("second_department_charge"));
-//                    }
-//                }
-//                //查询三级部门负责人
-//                if (ObjectUtils.isNotEmpty(secondDepart) && "0".equals(secondDepart.getParentId())) {
-//                    SysDepartmentEntity threeDepart = sysDepartmentService.getParentDepartmentById(secondDepart.getParentId());
-//                    if (ObjectUtils.isNotEmpty(threeDepart)) {
-//                        List<SysDepartmentUserEntity> sysDepartmentUserNumberDTOS = sysDepartmentUserService.listSuperiorById(threeDepart.getParentId());
-//                        if (CollectionUtils.isNotEmpty(sysDepartmentUserNumberDTOS)) {
-//                            List<String> parentIds = sysDepartmentUserNumberDTOS.stream().map(SysDepartmentUserEntity::getUserId).collect(Collectors.toList());
-//                            parentList.add(new UserSuperiorDTO().setUserId(StringUtils.join(parentIds, ",")).setSuperiorType("three_department_charge"));
-//                        }
-//                    }
-//                    //查询四级部门负责人
-//                    if (ObjectUtils.isNotEmpty(threeDepart) && "0".equals(threeDepart.getParentId())) {
-//                        SysDepartmentEntity fourDepart = sysDepartmentService.getParentDepartmentById(threeDepart.getParentId());
-//                        if (ObjectUtils.isNotEmpty(fourDepart)) {
-//                            List<SysDepartmentUserEntity> sysDepartmentUserNumberDTOS = sysDepartmentUserService.listSuperiorById(fourDepart.getParentId());
-//                            if (CollectionUtils.isNotEmpty(sysDepartmentUserNumberDTOS)) {
-//                                List<String> parentIds = sysDepartmentUserNumberDTOS.stream().map(SysDepartmentUserEntity::getUserId).collect(Collectors.toList());
-//                                parentList.add(new UserSuperiorDTO().setUserId(StringUtils.join(parentIds, ",")).setSuperiorType("four_department_charge"));
-//                            }
-//                        }
-//                        //查询五级部门负责人
-//                        if (ObjectUtils.isNotEmpty(fourDepart) && "0".equals(fourDepart.getParentId())) {
-//                            SysDepartmentEntity fiveDepart = sysDepartmentService.getParentDepartmentById(fourDepart.getParentId());
-//                            if (ObjectUtils.isNotEmpty(fiveDepart)) {
-//                                List<SysDepartmentUserEntity> sysDepartmentUserNumberDTOS = sysDepartmentUserService.listSuperiorById(fiveDepart.getParentId());
-//                                if (CollectionUtils.isNotEmpty(sysDepartmentUserNumberDTOS)) {
-//                                    List<String> parentIds = sysDepartmentUserNumberDTOS.stream().map(SysDepartmentUserEntity::getUserId).collect(Collectors.toList());
-//                                    parentList.add(new UserSuperiorDTO().setUserId(StringUtils.join(parentIds, ",")).setSuperiorType("four_department_charge"));
-//                                }
-//                            }
-//                        }
-//
-//                    }
-//
-//                }
-//            }
         }
         return parentList;
     }

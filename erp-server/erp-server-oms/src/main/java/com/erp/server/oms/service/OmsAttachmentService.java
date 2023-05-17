@@ -3,7 +3,6 @@ package com.erp.server.oms.service;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.OmsAttachmentDTO;
 import com.erp.model.oms.entity.OmsAttachmentEntity;
-import com.erp.model.scm.dto.AttachmentDTO;
 
 import java.util.List;
 
@@ -49,7 +48,7 @@ public interface OmsAttachmentService extends SuperService<OmsAttachmentEntity> 
      * @param dto
      * @return void
      */
-    void removeAttachment(AttachmentDTO.DeleteDTO dto);
+    void removeAttachment(OmsAttachmentDTO.DeleteDTO dto);
 
     
 
