@@ -58,6 +58,10 @@ public class SoReturnReceiveDetailDTO {
          */
         private String id;
         /**
+         * 主键id
+         */
+        private String mainId;
+        /**
          * 退货数量
          */
         @NotNull(message = "退货数量不能为空")
@@ -125,9 +129,10 @@ public class SoReturnReceiveDetailDTO {
          */
         private Integer receiveQty;
         /**
-         * 退货类型
+         * 退货类型 wms/common/enumDropDown?type=ReturnType
+         * 描述：refund 退货扣款 replenishment 退货补货
          */
-        private String returnType;
+        private String returnTypeDict;
         /**
          * 退货原因 调用字典接口 类型=ReturnReason
          */

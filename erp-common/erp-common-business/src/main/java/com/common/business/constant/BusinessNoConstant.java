@@ -57,4 +57,6 @@ public interface BusinessNoConstant {
     String THTZ = "THTZ";
     //销售订单
     String XSD = "XSD";
+
+    String THQS = "THQS";
 }

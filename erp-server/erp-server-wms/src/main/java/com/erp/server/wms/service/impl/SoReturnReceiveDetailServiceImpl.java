@@ -79,9 +79,8 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                 throw new ServiceException(ApiError.ERROR_92009);
             }
             if (detailDto.getReceiveQty() < returnQty) {
-                throw new ServiceException(ApiError.ERROR_92017);
+                throw new ServiceException(ApiError.ERROR_92020);
             }
-
             detailEntity.setMainId(id);
             detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
             detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
@@ -97,21 +96,63 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
 
     @Override
     public Boolean update(SoReturnReceiveDTO.Update dto) {
-        return null;
+        //获取退货详情
+        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainId(dto.getSourceId());
+        //获取销售订单明细表id
+        List<String> soDetailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        //根据销售单详情id获取发货通知单详情信息
+        List<SoDeliveryNoticeDetailEntity> detailEntityList = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(soDetailIds);
+        //获取发货通知单明细表id
+        List<String> deliveryNoticeDetailIdList = detailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
+        soDetailIds.addAll(deliveryNoticeDetailIdList);
+        //根据销售单获取出库单
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySourceDetailId(soDetailIds);
+        //获取退货单详情表id
+        List<String> returnDetailIds = dto.getDetailList().stream().map(SoReturnReceiveDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
+        List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(returnDetailIds);
+        List<SoReturnReceiveDetailEntity> list = new ArrayList<>();
+        for (SoReturnReceiveDetailDTO.Update detailDto : dto.getDetailList()) {
+            SoReturnReceiveDetailEntity detailEntity = new SoReturnReceiveDetailEntity();
+            SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(soReturnDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_92016);
+            }
+            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSkuId().equals(soReturnDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (actualQty < detailDto.getReturnQty()) {
+                throw new ServiceException(ApiError.ERROR_92009);
+            }
+            if (detailDto.getReceiveQty() < returnQty) {
+                throw new ServiceException(ApiError.ERROR_92020);
+            }
+            detailEntity.setId(dto.getId());
+            detailEntity.setMainId(detailDto.getMainId());
+            detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
+            detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
+            detailEntity.setReturnQty(detailDto.getReturnQty());
+            detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
+            detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
+            detailEntity.setRemark(detailDto.getRemark());
+            detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+            list.add(detailEntity);
+        }
+        return this.saveBatch(list);
     }
 
     @Override
     public Boolean delete(List<String> mainIds) {
-        return null;
+        return lambdaUpdate().set(SoReturnReceiveDetailEntity::getIsDeleted, Boolean.TRUE)
+                .in(SoReturnReceiveDetailEntity::getMainId, mainIds)
+                .remove();
     }
 
     @Override
     public List<SoReturnReceiveDetailEntity> listDetailBySourceIds(List<String> sourceIds) {
-        return null;
+        return baseMapper.listDetailBySourceIds(sourceIds);
     }
 
     @Override
     public List<SoReturnReceiveDetailEntity> listDetailByMainId(String id) {
-        return null;
+        return lambdaQuery().eq(SoReturnReceiveDetailEntity::getMainId, id).list();
     }
 }

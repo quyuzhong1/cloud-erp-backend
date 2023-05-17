@@ -54,7 +54,7 @@ public class SoReturnNoticeDetailEntity extends BaseEntity<SoReturnNoticeDetailE
     private String returnTypeDict;
 
     /**
-     * 退货原因：dict_basic表type = returnReason 
+     * 退货原因：dict_basic表type = ReturnReason
      */
     @TableField("return_reason_dict")
     private String returnReasonDict;

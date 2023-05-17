@@ -241,12 +241,8 @@ public class SoReturnDTO {
         private String telNumber;
         /**
          * 收货地址
-         *
-         * AddressTypeEnum
-         *
          */
-
-        private String receiveAddressDict;
+        private String receiveAddress;
         /**
          * 交货方式 oms/common/enumDropDown?type=DeliveryMode
          * 描述：deliverGoods（发货）selfExtraction（自提）
@@ -302,10 +298,9 @@ public class SoReturnDTO {
          */
         private String telNumber;
         /**
-         * 交货方式 oms/common/enumDropDown?type=DeliveryMode
-         * 描述：deliverGoods（发货）selfExtraction（自提）
+         * 收货地址
          */
-        private String receiveAddressDict;
+        private String receiveAddress;
         /**
          * 交货方式 oms/common/enumDropDown?type=DeliveryMode
          * 描述：deliverGoods（发货）selfExtraction（自提）
@@ -395,7 +390,7 @@ public class SoReturnDTO {
         /**
          * 退货日期
          */
-        private LocalDate returnDate;
+        private LocalDate billDate;
         /**
          * 客户id
          */

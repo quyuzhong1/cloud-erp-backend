@@ -3,6 +3,9 @@ package com.erp.server.wms.mapper;
 import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,4 +18,12 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface SoReturnReceiveDetailMapper extends BaseMapper<SoReturnReceiveDetailEntity> {
 
+    /**
+     * 根据来源id查询详情信息
+     * @Author Luo_WG
+     * @Date 2023/5/15 16:55
+     * @param sourceIds sourceIds
+     * @return java.util.List<com.erp.model.wms.entity.SoReturnNoticeDetailEntity>
+     **/
+    List<SoReturnReceiveDetailEntity> listDetailBySourceIds(@Param("ids") List<String> sourceIds);
 }

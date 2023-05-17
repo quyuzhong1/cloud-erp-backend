@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.SoReturnReceiveDetailMapper">
-
-    <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.SoReturnReceiveDetailEntity">
-        <result column="id" property="id" />
-        <result column="create_user_id" property="createUserId" />
-        <result column="create_user_name" property="createUserName" />
-        <result column="create_time" property="createTime" />
-        <result column="update_user_id" property="updateUserId" />
-        <result column="update_user_name" property="updateUserName" />
-        <result column="update_time" property="updateTime" />
-        <result column="version" property="version" />
-        <result column="is_deleted" property="isDeleted" />
-        <result column="main_id" property="mainId" />
-        <result column="sku_id" property="skuId" />
-        <result column="sku_no" property="skuNo" />
-        <result column="return_qty" property="returnQty" />
-        <result column="receive_qty" property="receiveQty" />
-        <result column="return_type_dict" property="returnTypeDict" />
-        <result column="return_reason_dict" property="returnReasonDict" />
-        <result column="remark" property="remark" />
-        <result column="source_detail_id" property="sourceDetailId" />
-    </resultMap>
-
+    <select id="listDetailBySourceIds" resultType="com.erp.model.wms.entity.SoReturnReceiveDetailEntity">
+        SELECT
+        srr.id,
+        srrd.main_id,
+        srrd.sku_id,
+        srrd.sku_no,
+        srrd.return_qty,
+        srrd.receive_qty,
+        srrd.return_type_dict,
+        srrd.return_reason_dict,
+        srrd.remark,
+        srrd.source_detail_id,
+        srr.approce_status
+        FROM so_return_receive_detail srrd
+        INNER JOIN so_return_receive srr ON srrd.main_id = srr.id AND srrd.is_deleted = FALSE
+        WHERE srr.is_deleted = FALSE
+        <if test="ids != null and ids.size != ''">
+            and srr.source_id in
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
 </mapper>
