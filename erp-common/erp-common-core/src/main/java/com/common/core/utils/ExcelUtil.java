@@ -9,9 +9,7 @@ import com.alibaba.excel.write.metadata.style.WriteCellStyle;
 import com.alibaba.excel.write.metadata.style.WriteFont;
 import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.EasyExcelLocalDateConverter;
-import com.common.core.excel.EasyExcelLocalTimeConverter;
-import com.common.core.excel.LocalDateTimeConverter;
+import com.common.core.excel.*;
 import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -228,5 +226,66 @@ public class ExcelUtil {
         EasyExcel.write(filePath.getAbsolutePath(), clazz).sheet(sheetName).doWrite(dataResult);
         return filePath;
 
+    }
+
+    /**
+     * 导出数据为excel文件（按内容自适应列宽）
+     *
+     * @param filename   文件名称
+     * @param sheetName sheet name
+     * @param dataResult 集合内的bean对象类型要与clazz参数一致
+     * @param clazz      集合内的bean对象类型要与clazz参数一致
+     * @param response   HttpServlet响应对象
+     * @param contentHorizontalAlignment（内容水平样式，传null则默认居中）
+     */
+    public static void exportAdapt(String filename,String sheetName, List<?> dataResult, Class<?> clazz, HttpServletResponse response, HorizontalAlignment contentHorizontalAlignment) {
+        response.setStatus(200);
+        OutputStream outputStream = null;
+        ExcelWriter excelWriter = null;
+        try {
+            if (StringUtils.isBlank(filename)) {
+                throw new RuntimeException("'filename' 不能为空");
+            }
+            String fileName = filename.concat(".xlsx");
+            response.setCharacterEncoding("utf-8");
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+            outputStream = response.getOutputStream();
+            // 注册自定义样式
+            excelWriter = EasyExcel.write(outputStream).registerWriteHandler(new CustomCellWriteHandler()).registerWriteHandler(new CustomCellStyleHandler(contentHorizontalAlignment)).build();
+            WriteTable writeTable = EasyExcel.writerTable(0).head(clazz).needHead(true).build();
+            WriteSheet writeSheet = EasyExcel.writerSheet(sheetName).build();
+
+            // LocalDateTime转化器，导入导出都可以使用
+            EasyExcelLocalTimeConverter localTimeDateConverter = new EasyExcelLocalTimeConverter();
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localTimeDateConverter.supportJavaTypeKey()), localTimeDateConverter);
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localTimeDateConverter.supportJavaTypeKey(), localTimeDateConverter.supportExcelTypeKey()), localTimeDateConverter);
+            // LocalDate转化器，导入导出都可以使用
+            EasyExcelLocalDateConverter localDateConverter = new EasyExcelLocalDateConverter();
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey()), localDateConverter);
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey(), localDateConverter.supportExcelTypeKey()), localDateConverter);
+            // LocalDateTime转化器，导入导出都可以使用
+            LocalDateTimeConverter localDateTimeConverter = new LocalDateTimeConverter();
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeConverter.supportJavaTypeKey()), localDateTimeConverter);
+            excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeConverter.supportJavaTypeKey(), localDateTimeConverter.supportExcelTypeKey()), localDateTimeConverter);
+            // 写出数据
+            excelWriter.write(dataResult, writeSheet, writeTable);
+
+        } catch (Exception e) {
+            log.error("导出excel数据异常：", e);
+            throw new RuntimeException(e);
+        } finally {
+            if (excelWriter != null) {
+                excelWriter.finish();
+            }
+            if (outputStream != null) {
+                try {
+                    outputStream.flush();
+                    outputStream.close();
+                } catch (IOException e) {
+                    log.error("导出数据关闭流异常", e);
+                }
+            }
+        }
     }
 }

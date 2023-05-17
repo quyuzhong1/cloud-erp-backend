@@ -73,16 +73,16 @@
     ) t
     <where>
         <if test="params.hideZeroInventory">
-            and  m.real_qty > 0
+            and  t.real_qty > 0
         </if>
     </where>
-    order by t.sku_id, t.warehouse_id
+    order by t.sku_no, t.warehouse_id
     </select>
 
     <select id="exportInv" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PagingViewDTO">
-        select t.warehouse_id,t.org_id,t.sku_id,t.sku_no,t.product_name,t.product_img_url,t.sale_state,t.usable_qty,t.frozen_qty,t.intransit_qty,t.waitqc_qty from (
+        select t.warehouse_id,t.org_id,t.sku_id,t.sku_no,t.product_name,t.product_img_url,t.sale_state,t.usable_qty,t.frozen_qty,t.intransit_qty,t.waitqc_qty,t.real_qty from (
         select max(m.warehouse_id) as warehouse_id,max(m.org_id) as org_id,max(m.sku_id) as sku_id,max(m.sku_no) as sku_no,max(m.product_name) as product_name,max(m.product_img_url) as product_img_url,max(m.spu_no) as spu_no,max(m.sale_state) as sale_state,
-        sum(m.usable_qty) as usable_qty,sum(m.frozen_qty) as frozen_qty,sum(m.intransit_qty) as intransit_qty,sum(m.waitqc_qty) as waitqc_qty from  (
+        sum(m.usable_qty) as usable_qty,sum(m.frozen_qty) as frozen_qty,sum(m.intransit_qty) as intransit_qty,sum(m.waitqc_qty) as waitqc_qty,sum(m.usable_qty) + sum(m.frozen_qty) as real_qty from  (
         select max(it.warehouse_id) as warehouse_id,
         max(it.org_id) as org_id,
         max(it.sku_id) as sku_id,
@@ -147,9 +147,9 @@
         ) t
         <where>
             <if test="params.hideZeroInventory">
-                and  t.usable_qty > 0
+                and  t.real_qty > 0
             </if>
         </where>
-        order by t.sku_id, t.warehouse_id
+        order by t.sku_no, t.warehouse_id
     </select>
 </mapper>

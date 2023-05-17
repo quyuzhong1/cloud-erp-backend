@@ -129,7 +129,8 @@ public abstract class AbstractInventoryServiceImpl {
         // 根据单据类型和单据id查询出未反审核过的对应的交易流水，一个单据对应多个SKU， 按创建时间正序排序
         List<TransactionFlowEntity> txnFlows = transactionFlowService.getUnApprovedTxnFlows(dto.getSourceType().getCode(), dto.getBillId());
         ValidatorUtil.isTrue(CollUtil.isNotEmpty(txnFlows),()->new ServiceException(ApiError.ERROR_99040));
-        txnFlows = txnFlows.stream().sorted(Comparator.comparing(TransactionFlowEntity::getCreateTime)).collect(Collectors.toList());
+        // 先按交易时间升序排
+        txnFlows = txnFlows.stream().sorted(Comparator.comparing(TransactionFlowEntity::getTradeTime).thenComparing(TransactionFlowEntity::getId)).collect(Collectors.toList());
         String transactionNo = IdUtil.getSnowflake(1, 1).nextIdStr(); // 关联交易号
         txnFlows.stream().forEach(txnFlow->{
             // 此处需注意：1.已经反审核过的单据不允许再次反审核，以免库存数据错乱（前面查询条件已过滤）；2.可能会出现负数，如入库后被出库了反审核后仓库数量不够反审核，增加验证不允许反审核
