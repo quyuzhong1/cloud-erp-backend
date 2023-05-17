@@ -116,7 +116,7 @@ public class CfgTransactionRulesServiceImpl extends SuperServiceImpl<CfgTransact
         cfgTransactionRulesEntity.setRemark(StrUtil.format("{}，{}{}{}",businessType.getName(),  InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getName(), inventoryStatus.getName(), inventoryMode.getName()));
         rules.add(cfgTransactionRulesEntity);
 
-        // 04-采购退货（退货补货）
+        // 04-采购退货（退货来源：库存退货，退货方式：退货补货）
         // 1.在途增加
         cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
         businessType = InventoryBusinessTypeEnum.PO_RETURN_REP;
@@ -141,7 +141,7 @@ public class CfgTransactionRulesServiceImpl extends SuperServiceImpl<CfgTransact
         cfgTransactionRulesEntity.setRemark(StrUtil.format("{}，{}{}{}",businessType.getName(),  InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getName(), inventoryStatus.getName(), inventoryMode.getName()));
         rules.add(cfgTransactionRulesEntity);
 
-        // 05-采购退货（退货退款）
+        // 05-采购退货（退货来源：库存退货，退货方式：退货退款）
         // 可用减少
         cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
         businessType = InventoryBusinessTypeEnum.PO_RETURN_REF;
@@ -430,6 +430,20 @@ public class CfgTransactionRulesServiceImpl extends SuperServiceImpl<CfgTransact
         cfgTransactionRulesEntity.setTransactionMode(inventoryMode.getCode());
         cfgTransactionRulesEntity.setRemark(StrUtil.format("{}，{}{}{}",businessType.getName(),  InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getName(), inventoryStatus.getName(), inventoryMode.getName()));
         rules.add(cfgTransactionRulesEntity);
+
+        // 27-采购退货（退货来源：质检退货，退货方式：退货补货）
+        // 1.在途增加
+        cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
+        businessType = InventoryBusinessTypeEnum.PO_RETURN_QC;
+        cfgTransactionRulesEntity.setDictBizType(businessType.getCode());
+        cfgTransactionRulesEntity.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getCode());
+        inventoryStatus = InventoryStatusEnum.IN_TRANSIT;
+        cfgTransactionRulesEntity.setInventoryStatus(inventoryStatus.getCode());
+        inventoryMode = InventoryModeEnum.IN_STOCK;
+        cfgTransactionRulesEntity.setTransactionMode(inventoryMode.getCode());
+        cfgTransactionRulesEntity.setRemark(StrUtil.format("{}，{}{}{}",businessType.getName(),  InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getName(),  inventoryStatus.getName(), inventoryMode.getName()));
+        rules.add(cfgTransactionRulesEntity);
+
         super.saveBatch(rules);
     }
 

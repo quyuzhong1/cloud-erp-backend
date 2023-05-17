@@ -31,9 +31,9 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
-import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
-import com.erp.model.wms.dto.inventory.TransferDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.SourceTypeEnum;
@@ -291,7 +291,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                 viewDetailDTO.setProductName(productName);
             }
             //根据组织、仓库、sku查询可用库存
-            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDTO.getInOrgId(), viewDTO.getOutWarehouseId(), viewDetailDTO.getSkuId(), null);
+            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDTO.getOutOrgId(), viewDTO.getOutWarehouseId(), viewDetailDTO.getSkuId(), null);
             viewDetailDTO.setCurInventoryQty(curInventoryQty);
         }
         viewDTO.setDetailList(viewDetailList);
@@ -567,8 +567,9 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         if (CollectionUtils.isEmpty(list)) {
             return list;
         }
+        List<String> skuIds = list.stream().map(TransferApplicationDTO.ViewGenerateTransferInfoDTO::getSkuId).collect(Collectors.toList());
         //产品信息
-        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(ids);
+        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
 
         //调拨方向
         List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
@@ -620,7 +621,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
                 List<PickingDetailDTO.CommonDTO> pickingDetailList = BeanMapperUtils.copyList(PickingDetailDTO.CommonDTO.class, inventoryList);
 
-                List<TransferDTO>  transferList = new ArrayList<>();
+                List<InOutStockDTO>  inOutStockList = new ArrayList<>();
                 for ( PickingDetailDTO.CommonDTO addDTO : pickingDetailList) {
                     addDTO.setSourceId(entity.getId());
                     addDTO.setSourceCode(entity.getCode());
@@ -631,21 +632,27 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                     addDTO.setOrgName(entity.getOutOrgName());
 
                     //调拨操作请求实体
-                    TransferDTO transferDTO = new TransferDTO();
-                    BeanMapperUtils.copy(addDTO,transferDTO);
-                    transferDTO.setCurWarehouseId(addDTO.getWarehouseId());
-                    transferDTO.setCurWarehouseLocation(addDTO.getWarehouseLocation());
-                    transferDTO.setTargetWarehouseId(entity.getInWarehouseId());
-                    transferList.add(transferDTO);
+                    InOutStockDTO inOutStockDTO = new InOutStockDTO();
+                    inOutStockDTO.setSourceType(InventorySourceTypeEnum.TRANSFER_APPLY);
+                    inOutStockDTO.setSourceId(entity.getId());
+                    inOutStockDTO.setSourceCode(entity.getCode());
+                    inOutStockDTO.setSourceDetailId(detailEntity.getId());
+                    inOutStockDTO.setBillDate(entity.getBillDate());
+                    inOutStockDTO.setSkuId(addDTO.getSkuId());
+                    inOutStockDTO.setSkuNo(addDTO.getSkuNo());
+                    inOutStockDTO.setQty(addDTO.getQty());
+                    inOutStockDTO.setWarehouseId(entity.getOutWarehouseId());
+                    inOutStockDTO.setWarehouseLocation(addDTO.getWarehouseLocation());
+                    inOutStockList.add(inOutStockDTO);
                 }
                 addList.addAll(pickingDetailList);
 
                 //减少可用库存，添加冻结库存
-                InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
-                inventoryTransferDTO.setMembers(transferList);
-                inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.INVENTOR_ALLOCATE.getCode());
+                InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+                inventoryInOutStockDTO.setMembers(inOutStockList);
+                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.INVENTOR_ALLOCATE.getCode());
                 //更新库存
-                inventoryTransCoreService.approveByType(inventoryTransferDTO);
+                inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
             }
         }
         //添加拣货明细数据

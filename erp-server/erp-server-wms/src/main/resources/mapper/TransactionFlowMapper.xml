@@ -7,4 +7,47 @@
         update_time = #{updateTime}, update_user_id = #{updateUserId}, update_user_name = #{updateUserName}
         where id = #{id} and version = #{version} and is_deleted = false
     </update>
+    <select id="pagingForInv" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$TransFlowPagingViewDTO">
+       SELECT t.id,t.trade_time,
+            t.bill_date,
+            t.source_type,
+            t.source_code,
+            t.operation_mode,
+            t.sku_id,
+            t.sku_no,
+            t.warehouse_location,
+            t.warehouse_id,
+            t.warehouse_name,
+            t.org_id,
+            t.dict_inventory_status as inventory_status,
+            t.qty,
+            t.cur_inventory_qty as after_qty,
+            t.instock_batch_date
+        FROM
+            transaction_flow t
+        WHERE
+            t.is_deleted = false
+            AND t.warehouse_id = #{params.warehouseId}
+            AND t.org_id = #{params.orgId}
+            AND t.sku_id = #{params.skuId}
+            <if test="params.sourceCode != null and params.sourceCode != ''">
+                and t.source_code = #{params.sourceCode}
+            </if>
+            <if test="params.operationModeList != null and params.operationModeList.size != ''">
+                and t.operation_mode in
+                <foreach collection="params.operationModeList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.inventoryStatusList != null and params.inventoryStatusList.size != ''">
+                and t.dict_inventory_status in
+                <foreach collection="params.inventoryStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.dateList != null and params.dateList.size > 0">
+                and t.bill_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > t.bill_date
+            </if>
+            order by t.trade_time desc,t.id desc
+    </select>
 </mapper>

@@ -17,6 +17,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
     private PlmTaskFeign plmTaskFeign;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void add(List<MachineDetailDTO.AddDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
@@ -48,7 +50,11 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         //处理明细数据
         doOpHandleDetails(list,mainId,Boolean.FALSE);
 
-        this.saveBatch(list);
+        boolean save = this.saveBatch(list);
+        //新增成功
+        if (save) {
+
+        }
     }
 
     @Override

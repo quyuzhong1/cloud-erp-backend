@@ -1,18 +1,23 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
 import com.erp.model.wms.entity.TransactionFlowEntity;
-import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
-import com.erp.model.wms.enums.inventory.InventoryModeEnum;
-import com.erp.model.wms.enums.inventory.InventoryOperationModeEnum;
+import com.erp.model.wms.enums.inventory.*;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.TransactionFlowMapper;
 import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.TransactionFlowService;
@@ -22,9 +27,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -44,6 +48,9 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Autowired
     private WarehouseService warehouseService;
+
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
 
     @Override
     public List<TransactionFlowEntity> getUnApprovedTxnFlows(String sourceType, String sourceId) {
@@ -104,11 +111,47 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         transactionFlowEntity.setVersion(1);
         transactionFlowEntity.setTransactionNo(param.getTransactionNo());
         // 如果是反审核操作，字段是否反审核设置为true，否则后面对同一单据查询会把这条记录查询出来
+        // TODO 后补单待定
         if(Objects.equals(transactionFlowEntity.getOperationMode(),InventoryOperationModeEnum.UN_APPROVE.getCode())) {
             transactionFlowEntity.setIsUnapproved(Boolean.TRUE);
         }
         boolean save = super.save(transactionFlowEntity);
         ValidatorUtil.isTrue(save, ()->new ServiceException("库存数据保存失败"));
+    }
+
+    @Override
+    public PagingVO<InventoryDTO.TransFlowPagingViewDTO> pagingForInv(PagingDTO<InventoryDTO.TransFlowSearchParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setParam(pagingParamDTO.getParam());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<InventoryDTO.TransFlowPagingViewDTO> pageData = this.baseMapper.pagingForInv(query, pagingParamDTO.getParams());
+        fillTransactionFlowPageData(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    /**
+     * 填充交易流水其他字段值
+     * @param dataList
+     */
+    private void fillTransactionFlowPageData(List<InventoryDTO.TransFlowPagingViewDTO> dataList) {
+        if(CollUtil.isEmpty(dataList)) {
+            return;
+        }
+        List<String> skuIds = dataList.stream().map(InventoryDTO.TransFlowPagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        dataList.stream().forEach(data->{
+            if(skuMap.containsKey(data.getSkuId())) {
+                SkuVO skuVO = skuMap.get(data.getSkuId());
+                data.setProductName(skuVO.getSkuName());
+                data.setSpuNo(skuVO.getSpuNo());
+            }
+            InventorySourceTypeEnum inventorySourceType = InventorySourceTypeEnum.of(data.getSourceType());
+            data.setSourceTypeName(Optional.ofNullable(inventorySourceType).map(InventorySourceTypeEnum::getName).orElse(""));
+            InventoryOperationModeEnum inventoryOperationMode = InventoryOperationModeEnum.of(data.getOperationMode());
+            data.setOperationModeName(Optional.ofNullable(inventoryOperationMode).map(InventoryOperationModeEnum::getName).orElse(""));
+            InventoryStatusEnum inventoryStatus = InventoryStatusEnum.of(data.getInventoryStatus());
+            data.setInventoryStatusName(Optional.ofNullable(inventoryStatus).map(InventoryStatusEnum::getName).orElse(""));
+        });
     }
 
 }

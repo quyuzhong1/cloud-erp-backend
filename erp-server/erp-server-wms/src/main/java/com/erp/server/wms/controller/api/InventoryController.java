@@ -6,6 +6,8 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.server.wms.service.InventoryService;
+import com.erp.server.wms.service.TransactionFlowService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,8 +28,11 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping(value = "/inventory")
 public class InventoryController extends BaseController {
 
-    @Resource
+    @Autowired
     private InventoryService inventoryService;
+
+    @Autowired
+    private TransactionFlowService transactionFlowService;
 
     /**
      * 即时库存分页列表
@@ -57,7 +62,7 @@ public class InventoryController extends BaseController {
      */
     @PostMapping("/pageTransFlow")
     public ApiResult<PagingVO<InventoryDTO.TransFlowPagingViewDTO>> pageTransFlow(@RequestBody @Validated PagingDTO<InventoryDTO.TransFlowSearchParamDTO> dto) {
-        return success(null);
+        return success(transactionFlowService.pagingForInv(dto));
     }
 
 

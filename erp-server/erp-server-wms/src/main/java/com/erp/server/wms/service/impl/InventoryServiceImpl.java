@@ -19,10 +19,10 @@ import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -217,6 +217,12 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         if (CollectionUtils.isEmpty(inventoryList)) {
             throw new ServiceException(new ApiResult(1,String.format("组织【%s】、仓库【%s】、SKU【%s】可用库存不足",dto.getOrgName(),dto.getWarehouseName(),dto.getSkuNo())));
         }
+
+        Integer inventoryQty = inventoryList.stream().map(InventoryEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+        if (MathUtil.compareTo(dto.getQty(),inventoryQty) > 0) {
+            throw new ServiceException(new ApiResult(1,String.format("组织【%s】、仓库【%s】、SKU【%s】可用库存不足",dto.getOrgName(),dto.getWarehouseName(),dto.getSkuNo())));
+        }
+
         /**
          * 拣货规则：
          * 1、如果可用库存存在超过拣货数量则直接顺序取
@@ -260,7 +266,6 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 resultList.add(matches);
                 break;
             }
-
         }
         return resultList;
     }
@@ -283,7 +288,6 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         Map<String, WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
         Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
         list.stream().forEach(data->{
-
             // 仓库名称赋值
             WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(data.getWarehouseId(),(v)->warehouseService.detailWithCache(v));
             if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {

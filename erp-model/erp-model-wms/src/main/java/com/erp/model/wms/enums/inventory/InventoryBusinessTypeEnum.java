@@ -12,7 +12,7 @@ import java.util.Objects;
 public enum InventoryBusinessTypeEnum {
 
     /**
-     * 调用方需请传输code
+     * 调用方需请传输code，不要传输type
      */
 
     INVENTORY_INIT("inventory_init", "00","期初库存"),
@@ -21,8 +21,8 @@ public enum InventoryBusinessTypeEnum {
     PO_INSTOCK_REC("po_instock_rec", "02","采购入库（有收货单）"),
     PO_INSTOCK_UNREC("po_instock_unrec", "03","采购入库（无收货单）"),
 
-    PO_RETURN_REP("po_return_rep", "04","采购退货（退货补货）"),
-    PO_RETURN_REF("po_return_ref", "05","采购退货（退货退款）"),
+    PO_RETURN_REP("po_return_rep", "04","采购退货（库存退货，退货补货）"),
+    PO_RETURN_REF("po_return_ref", "05","采购退货（库存退货，退货退款）"),
 
     INVENTOR_ALLOCATE("inventory_allocate", "06","调拨申请单"),
     DIRECT_ALLOCATE("direct_allocate", "07","直接调拨单（新增）"),
@@ -56,6 +56,8 @@ public enum InventoryBusinessTypeEnum {
     PURCHASE_ORDER_FINISH("purchase_order_finish", "25","采购订单结束交货"),
 
     DIRECT_ALLOCATE_APPLY("direct_allocate_apply", "26","直接调拨单（调拨申请单下推）"),
+
+    PO_RETURN_QC("po_return_qc", "27","采购退货（质检退货，退货补货）"),
     ;
 
     private String code;
@@ -63,21 +65,6 @@ public enum InventoryBusinessTypeEnum {
     private String type;
 
     private String name;
-
-    /**
-    可以确定能固化走交易配置的业务有:
-     01-采购签收
-     02-采购入库（有收货单）
-     03-采购入库（无收货单）
-     04-采购退货（退货补货）
-     05-采购退货（退货退款）
-     06-调拨申请单
-     10-销售发货通知单
-     11-销售出库
-     07-直接调拨单
-     08-分布式调拨调出
-     09-分布式调拨调入
-    */
 
     InventoryBusinessTypeEnum(String type, String code, String name) {
         this.type = type;
