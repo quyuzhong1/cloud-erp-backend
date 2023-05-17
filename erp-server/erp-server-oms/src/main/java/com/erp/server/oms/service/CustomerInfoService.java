@@ -193,4 +193,14 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @return com.erp.model.oms.dto.CustomerDTO.BaseDTO
      */
     CustomerDTO.BaseDTO getBase(String customerId);
+
+
+    /**
+     * 引用客户
+     * @author yl
+     * @date 2023-05-15 14:30
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean quoteCustomer(List<String> ids);
 }

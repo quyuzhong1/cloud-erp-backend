@@ -22,4 +22,6 @@ import java.util.List;
 public interface SoInfoMapper extends BaseMapper<SoInfoEntity> {
 
     IPage<SoInfoDTO.PagingViewDTO> paging(Page query, @Param("params") SoInfoDTO.PagingParamDTO params,@Param("detailIdList") List<String> paramDetailIds );
+
+    List<SoInfoDTO.PagingViewDTO> listExport(@Param("params") SoInfoDTO.ExportDTO dto,@Param("detailIdList") List<String> paramDetailIds);
 }

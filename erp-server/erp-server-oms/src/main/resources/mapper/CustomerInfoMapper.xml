@@ -104,6 +104,12 @@
                     INTERVAL '1
                     DAY' ) > ci.create_time
                 </if>
+                <if test="approveList !=null and approveList.size>0">
+                    AND ci.approve_status IN
+                    <foreach collection="approveList" item="approve" open="(" separator="," close=")">
+                        #{approve}
+                    </foreach>
+                </if>
             </otherwise>
         </choose>
 
@@ -112,12 +118,6 @@
             ${params.param}
         </if>
 
-        <if test="approveList !=null and approveList.size>0">
-            AND ci.approve_status IN
-            <foreach collection="approveList" item="approve" open="(" separator="," close=")">
-                #{approve}
-            </foreach>
-        </if>
         ORDER BY ci.create_time DESC
     </select>
 </mapper>

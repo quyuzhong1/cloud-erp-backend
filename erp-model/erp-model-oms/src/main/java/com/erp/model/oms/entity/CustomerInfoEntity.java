@@ -156,6 +156,12 @@ public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
     private String remark;
 
     /**
+     * 占用状态
+     */
+    @TableField("occupy_status")
+    private Boolean occupyStatus;
+
+    /**
      * 条件字典 oms_dict 获取
      */
     @TableField("condition_dict")

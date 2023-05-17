@@ -716,7 +716,7 @@ public class SoInfoDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ExportDTO extends SoChangeDTO.PagingParamDTO {
+    public static class ExportDTO extends PagingParamDTO {
 
         private List<String> ids;
     }

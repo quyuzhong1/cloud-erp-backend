@@ -285,8 +285,9 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/export")
     public ApiResult exportWarehouse(@RequestBody @Valid SoInfoDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result = soInfoService.exportExcel(dto, response);
+        return result ? success() : failure();
 
-        return success();
     }
 
     /**

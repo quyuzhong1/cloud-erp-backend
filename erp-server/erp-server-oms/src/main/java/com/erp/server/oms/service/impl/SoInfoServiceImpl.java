@@ -15,9 +15,11 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
@@ -47,6 +49,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -723,11 +727,142 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         lambdaUpdate().in(SoInfoEntity::getId, ids).
                 set(SoInfoEntity::getInvalidStatus, Boolean.TRUE).update();
-        List<Pair<String,String>> pairList=list.stream().map(obj->new Pair<>(obj.getId(),obj.getCode())).collect(Collectors.toList());
-        String content="作废了一个销售订单【%s】,作废原因: ".concat(remark);
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        String content = "作废了一个销售订单【%s】,作废原因: ".concat(remark);
         operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "作废");
 
         return Boolean.TRUE;
+    }
+
+
+    /**
+     * 导出数据
+     *
+     * @param dto
+     * @param response
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-17 18:02
+     */
+    @Override
+    public Boolean exportExcel(SoInfoDTO.ExportDTO dto, HttpServletResponse response) {
+        List<String> paramDetailIds = soDetailService.listParamDetailIdsBySearchType(dto.getSearchType());
+        if (Objects.isNull(paramDetailIds)) {
+            paramDetailIds = Collections.emptyList();
+        } else {
+            if (paramDetailIds.size() == 0) {
+                throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+            }
+        }
+        //获取导出数据
+        List<SoInfoDTO.PagingViewDTO> list = baseMapper.listExport(dto, paramDetailIds);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+
+        //详情id
+        List<String> detailIds = list.stream().map(SoInfoDTO.PagingViewDTO::getDetailId).collect(Collectors.toList());
+        List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockFeign.listDetailBySourceDetailId(detailIds);
+        List<String> skuIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+        String warehouseId = list.get(0).getWarehouseId();
+        InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
+        paramDTO.setSkuIds(skuIdList);
+        paramDTO.setWarehouseId(warehouseId);
+        paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        //从wms 获取到sku 的即时库存信息
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
+        //客户id
+        List<String> customerIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getCustomerId).collect(Collectors.toList());
+        List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIdList) ? customerInfoService.listByIds(customerIdList) : Collections.emptyList();
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        for (SoInfoDTO.PagingViewDTO item : list) {
+            ApproveStatusEnum approveStatus = item.getApproveStatus();
+            item.setApproveStatusName(approveStatus.getName());
+            String type = item.getType();
+            item.setTypeName(BillTypeEnum.getName(type));
+            //发货状态
+            Boolean deliveryStatus = item.getDeliveryStatus();
+            String deliveryStatusName = deliveryStatus != null && deliveryStatus ? "已发货" : "未发货";
+            item.setDeliveryStatusName(deliveryStatusName);
+            //作废状态
+            Boolean invalidStatus = item.getInvalidStatus();
+            String invalidStatusName = invalidStatus != null && deliveryStatus ? "已作废" : "未作废";
+            item.setInvalidStatusName(invalidStatusName);
+            String customerName = customerList.stream().filter(c -> c.getId().equals(item.getCustomerId())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setCustomerName(customerName);
+            String skuId = item.getSkuId();
+            //销售数量
+            Integer qty = item.getQty();
+
+            //即时库存
+            Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+            /**
+             * 缺货数量
+             * 当可用即时库存数量小于销售数量时，
+             * 缺货数量=销售数量-可用即时库存数量；
+             * 当可用即时库存数量大于销售数量时，缺货数量为0
+             */
+            Integer scarceQty = 0;
+            Boolean isGre = curInventoryQty > qty;
+
+            Boolean isScarce = !isGre;
+
+            item.setIsScarce(isScarce);
+            /**
+             * 可出数量
+             * 根据可用即时库存计算可出数量，
+             * 当可用即时库存数量大于销售数量时 可出数量=销售数量；
+             * 若可用即时库存数量小于销售数量，可出数量=即时可用库存数量
+             */
+            Integer availableQty = 0;
+            if (!isGre) {
+                scarceQty = qty;
+                availableQty = curInventoryQty;
+
+            } else {
+                availableQty = qty;
+            }
+            item.setScarceQty(scarceQty);
+            item.setAvailableQty(availableQty);
+            /**
+             * 已出库数量
+             * 新增时默认为0
+             * 编辑时根据关联出库单
+             * 总共已发货数量同步
+             *
+             */
+            Integer deliveryQty = soOutstockDetailList.stream().filter(req -> req.getSourceDetailId().equals(item.getDetailId())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            item.setDeliveryQty(deliveryQty);
+            /**
+             * 剩余数量
+             * 销售数量-已出库数量
+             */
+            Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
+            item.setWaitQty(waitQty);
+            SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if (sku != null) {
+                item.setProductName(sku.getSkuName());
+                String unit = sku.getUnitName();
+                item.setUnit(StringUtils.isNotBlank(unit)?unit:"");
+            }
+        }
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/SoInfo.xlsx";
+        String name = "销售订单列表";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("销售订单列表导出出错 {}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+
+
     }
 
 

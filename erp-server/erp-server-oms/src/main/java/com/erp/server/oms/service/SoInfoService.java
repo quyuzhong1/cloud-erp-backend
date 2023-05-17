@@ -8,6 +8,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -136,4 +137,14 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return java.lang.Boolean
      */
     Boolean invalid(List<String> ids, String remark);
+
+    /**
+     * 导出数据
+     * @author yl
+     * @date 2023-05-17 18:02
+     * @param dto
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean exportExcel(SoInfoDTO.ExportDTO dto, HttpServletResponse response);
 }

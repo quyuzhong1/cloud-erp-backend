@@ -1,7 +1,6 @@
 package com.erp.server.oms.controller.feign;
 
 import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.server.oms.service.CustomerInfoService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,5 +24,11 @@ public class CustomerFeignController {
     @PostMapping("/listCustomer")
     public List<CustomerInfoEntity> listCustomer() {
         return customerInfoService.list();
+    }
+
+
+    @PostMapping("/quoteCustomer")
+    public Boolean quoteCustomer(@RequestBody List<String> ids) {
+        return customerInfoService.quoteCustomer(ids);
     }
 }

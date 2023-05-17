@@ -372,7 +372,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         BeanMapper.copy(customer, view);
         String areaId = customer.getAreaId();
         String payCode = customer.getPayCode();
-        view.setPayCodeList(StringUtils.isNotBlank(payCode)?Arrays.asList(payCode.split(",")):Collections.emptyList());
+        view.setPayCodeList(StringUtils.isNotBlank(payCode) ? Arrays.asList(payCode.split(",")) : Collections.emptyList());
         List<DictGlobalAreaDTO.InfoDTO> globalAreaList = sysUserFeign.listGlobalAreaByCountryIds(Arrays.asList(areaId));
         String regionName = globalAreaList.stream().filter(d -> d.getId().equals(areaId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getRegionName())).orElse("");
@@ -642,7 +642,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
-        //TODO 检查能否删除
+        //占用状态
+        long occupyCount = list.stream().filter(s -> s.getOccupyStatus()).count();
+        if (occupyCount > 0) {
+            throw new ServiceException(ApiError.ERROR_92018);
+        }
+
 
         //删除客户
         Boolean result = this.removeByIds(ids);
@@ -684,7 +689,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             approveList.add(ApproveStatusEnum.REJECT.getStatus());
         }
 
-        List<CustomerDTO.PagingViewDTO> list = baseMapper.listExport(dto,approveList);
+        List<CustomerDTO.PagingViewDTO> list = baseMapper.listExport(dto, approveList);
         for (CustomerDTO.PagingViewDTO item : list) {
             Boolean disabled = item.getDisabled();
             String disabledName = disabled ? "停用" : "启用";
@@ -836,6 +841,24 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             base.setAddress(address.getAddress());
         }
         return base;
+    }
+
+    /**
+     * 引用客户
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-15 14:30
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean quoteCustomer(List<String> ids) {
+        if (CollectionUtils.isNotEmpty(ids)) {
+            this.lambdaUpdate().in(CustomerInfoEntity::getId, ids).
+                    set(CustomerInfoEntity::getOccupyStatus, Boolean.TRUE).update();
+        }
+        return Boolean.TRUE;
     }
 
     private Boolean updateApproveStatus(List<CustomerInfoEntity> list, ApproveStatusEnum statusEnum) {
