@@ -24,7 +24,7 @@ public enum NoticeTypeEnum {
     SCM_TASK("SCM_TASK", "供应链系统任务通知", "msg_notice_scm_tag"),
     PLM_TASK("PLM_TASK", "产品研发系统任务通知", "msg_notice_plm_tag"),
     WMS_TASK("WMS_TASK", "仓储系统任务通知", "msg_notice_wms_tag"),
-    OMS_TASK("OMS_TASK", "供应链系统任务通知", "msg_notice_oms_tag"),
+    OMS_TASK("OMS_TASK", "订单系统任务通知", "msg_notice_oms_tag"),
     SYS_TASK("SYS_TASK", "系统服务任务通知", "msg_notice_sys_tag"),
     FLW_TASK("FLW_TASK", "工作流任务通知", "msg_notice_flw_tag"),
     ;
