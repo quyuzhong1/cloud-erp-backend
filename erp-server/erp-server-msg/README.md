@@ -13,7 +13,7 @@ MQ Tag为：RocketMqTagEnum.MSG_NOTICE_TAG.getName()
 
 
 # 3.至少需要填写receiverUserIds、title、content、noticeTypeEnum
-
+调用方法MQProducerService.sendNoticeMsg(默认发送同步消息)
 
 
 # 4.提示：消息服务通过NoticeTypeEnum消息来源获取到需要发送的渠道、消息类型

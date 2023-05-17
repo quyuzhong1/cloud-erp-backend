@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -52,6 +51,7 @@ public class InventoryController extends BaseController {
      */
     @PostMapping(value = "/exportExcel")
     public ApiResult<Void> exportExcel(@RequestBody InventoryDTO.ExportSearchParamDTO dto, HttpServletResponse response) {
+        inventoryService.exportExcel(dto, response);
         return success();
     }
 

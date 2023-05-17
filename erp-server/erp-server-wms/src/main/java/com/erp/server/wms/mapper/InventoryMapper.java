@@ -41,5 +41,12 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      */
     IPage<InventoryDTO.PagingViewDTO> page(Page query, @Param("params") InventoryDTO.SearchParamDTO params);
 
+    /**
+     * 即时库存导出
+     * @param params
+     * @return
+     */
+    List<InventoryDTO.PagingViewDTO> exportInv(@Param("params") InventoryDTO.ExportSearchParamDTO params);
+
 
 }

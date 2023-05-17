@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -168,20 +169,10 @@ public class GlobalExceptionHandler {
         return ApiResult.error(ApiError.ERROR_1023);
     }
 
-
-
-    /**
-     * 兜底的异常
-     *
-     * @param e
-     * @return
-     */
-//    @Profile(value = {"uat", "prod"})
-//    @ExceptionHandler(Exception.class)
-//    public ApiResult resolveException(Exception e) {
-//        log.error("系统异常：", e);
-//       return ApiResult.error(ApiError.Default);
-//    }
-
+    @ExceptionHandler(value = HttpMessageNotReadableException.class)
+    public ApiResult resolveException(HttpMessageNotReadableException e) {
+        log.error("系统异常：", e);
+        return ApiResult.error(ApiError.ERROR_600);
+    }
 
 }

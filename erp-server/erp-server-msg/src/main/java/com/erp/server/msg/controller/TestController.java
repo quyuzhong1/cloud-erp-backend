@@ -76,12 +76,15 @@ public class TestController extends BaseController {
         //noticeMsgInfoDTO.setSendChannels(CollUtil.newArrayList(MessageChannelEnum.FEISHU));
         noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.SCM_TASK);
         // 默认tag请指定为msg_notice_default_tag，可以根据不同业务自行指定
+        /*
         String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
                 noticeMsgInfoDTO, IdUtil.simpleUUID());
         if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
+         */
+        SendResult sendResult = mqProducerService.sendNoticeMsg(noticeMsgInfoDTO, null);
         return success();
     }
 

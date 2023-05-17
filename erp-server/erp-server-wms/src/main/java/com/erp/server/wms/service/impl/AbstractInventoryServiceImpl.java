@@ -137,7 +137,7 @@ public abstract class AbstractInventoryServiceImpl {
             InOutStockCoreDTO param = InventoryUtils.convertInoutStockForTxn(txnFlow, InventoryOperationModeEnum.UN_APPROVE);
 
             InventoryBusinessTypeEnum inventoryBusinessType = InventoryBusinessTypeEnum.of(txnFlow.getDictBizType());// 取原交易流水的业务类型
-            Integer operationQty = Math.abs(txnFlow.getQty());
+            Integer operationQty = Math.abs(txnFlow.getQty());// 原操作流水操作数量（取绝对值正数）
             TransactionFlowDTO transactionFlowDTO = InventoryUtils.wrapTransactionFlowInOutStock(param, txnFlow.getInventoryId(),inventoryBusinessType, txnFlow.getInventoryDetailId(), InventoryStatusEnum.of(txnFlow.getDictInventoryStatus()), txnFlow.getInstockBatchDate(), Math.abs(txnFlow.getQty()), txnFlow.getOrgId());
             transactionFlowDTO.setTransactionNo(transactionNo);
 
@@ -204,8 +204,7 @@ public abstract class AbstractInventoryServiceImpl {
                 }
                 // 更新库存历史表
                 InventoryHisEntity inventoryHis = inventoryHisService.findInventory(inventory.getId(), param.getBillDate());
-                Integer originHisQty = inventoryHis.getQty();
-                Integer afterHisQty = Objects.equals(inventoryModeCur, InventoryModeEnum.OUT_STOCK) ? originHisQty - operationQty : originHisQty + operationQty;
+                Integer afterHisQty = Objects.equals(inventoryModeCur, InventoryModeEnum.OUT_STOCK) ? inventoryHis.getQty() - operationQty : inventoryHis.getQty() + operationQty;
                 updateCnt =  inventoryHisService.updateQtyById(inventoryHis.getId(), afterHisQty, inventoryHis.getVersion());
                 if(updateCnt != 1) {
                     throw new ServiceException(ApiError.ERROR_1027);

@@ -8,6 +8,7 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -113,7 +114,11 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      */
     PagingVO<InventoryDTO.PagingViewDTO> paging(PagingDTO<InventoryDTO.SearchParamDTO> pagingParamDTO);
 
-
+    /**
+     * 导出即时库存Excel
+     * @param param
+     */
+    void exportExcel(InventoryDTO.ExportSearchParamDTO param, HttpServletResponse response);
 
 
 }

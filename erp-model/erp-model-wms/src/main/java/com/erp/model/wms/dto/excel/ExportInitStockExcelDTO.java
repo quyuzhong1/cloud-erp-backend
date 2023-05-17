@@ -23,7 +23,7 @@ public class ExportInitStockExcelDTO implements Serializable {
     /**
      * sku编号
      */
-    @ExcelProperty(value = "SKU", index = 1)
+    @ExcelProperty(value = "SKU编号", index = 1)
     private String skuNo;
 
 

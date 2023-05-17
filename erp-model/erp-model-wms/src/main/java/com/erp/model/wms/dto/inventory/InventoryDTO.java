@@ -1,13 +1,12 @@
 package com.erp.model.wms.dto.inventory;
 
 import com.common.business.dto.base.SortDTO;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -57,9 +56,36 @@ public class InventoryDTO {
         private List<String> orgIdLList;
 
         /**
-         * 是否显示0库存，默认勾上不显示
+         * 是否过滤0实际库存，默认前端页面勾上不显示0库存
          */
         private Boolean hideZeroInventory;
+
+    }
+
+    /**
+     * 即时库存勾选导出
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportInvParamDTO {
+
+        /**
+         * 仓库id（勾选导出必传参数）
+         */
+        @NotEmpty(message = "仓库不能为空")
+        private String warehouseId;
+
+        /**
+         * 库存组织id（勾选导出必传参数）
+         */
+        @NotEmpty(message = "库存组织不能为空")
+        private String orgId;
+
+        /**
+         * sku id（勾选导出必传参数）
+         */
+        @NotEmpty(message = "sku不能为空")
+        private String skuId;
 
     }
 
@@ -70,8 +96,16 @@ public class InventoryDTO {
     @NoArgsConstructor
     public static class ExportSearchParamDTO extends SortDTO {
 
-        private List<String> ids;
+        /**
+         * 勾选行数据（仅传该字段，其他字段不要传输）
+         */
+        private List<ExportInvParamDTO> checkData;
 
+        /**
+         * sku id编码集合，不提供给前端使用
+         */
+        @JsonIgnore
+        private List<String> skuIdList;
 
         /**
          * sku编码
@@ -100,9 +134,9 @@ public class InventoryDTO {
         private List<String> orgIdLList;
 
         /**
-         * 是否显示0库存，默认不显示
+         * 是否过滤0实际库存，默认前端页面勾上不显示0库存
          */
-        private Boolean showZeroInventory;
+        private Boolean hideZeroInventory;
 
     }
 
@@ -172,6 +206,7 @@ public class InventoryDTO {
 
         /**
          * 实际库存数量
+         * 实际库存=可用库存+冻结库存
          */
         private Integer realQty;
 
@@ -194,14 +229,6 @@ public class InventoryDTO {
          * 待检库存数量
          */
         private Integer waitqcQty;
-
-        /**
-         * 实际库存=可用库存+冻结库存
-         * @return
-         */
-        public Integer getRealQty() {
-            return (Objects.nonNull(usableQty) ? usableQty : 0) + (Objects.nonNull(frozenQty) ? frozenQty : 0);
-        }
 
     }
 

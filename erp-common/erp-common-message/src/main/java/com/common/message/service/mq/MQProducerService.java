@@ -5,7 +5,11 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.core.utils.IdUtils;
+import com.common.core.utils.ValidatorUtil;
+import com.common.message.constant.RocketMqTopic;
 import com.common.message.entity.MessageBody;
+import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.enums.NoticeTypeEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.rocketmq.client.producer.SendCallback;
@@ -18,6 +22,7 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -172,4 +177,39 @@ public class MQProducerService<T> {
             }
         });
     }
+
+    /**
+     * 往消息中心发送MQ消息
+     * @param msgInfoDTO
+     * @param isSync（true为同步，其他则为异步）
+     * @return 同步时返回，异步返回null
+     */
+    public SendResult sendNoticeMsg(NoticeMsgInfoDTO msgInfoDTO, Boolean isSync) {
+        ValidatorUtil.validateEntity(msgInfoDTO);
+        String key = IdUtil.simpleUUID();
+        Message<NoticeMsgInfoDTO> msg = MessageBuilder.withPayload(msgInfoDTO)
+                .setHeader(RocketMQHeaders.KEYS, key)
+                .build();
+
+        NoticeTypeEnum noticeTypeEnum = msgInfoDTO.getNoticeTypeEnum();
+        String topic = RocketMqTopic.NOTICE_MSG_TOPIC.replace("${spring.profiles.active}", activeProfile);
+        String destination = StrUtil.format("{}:{}", topic , noticeTypeEnum.getMqTag());
+
+        if(Objects.equals(Boolean.TRUE, isSync)) {
+            return rocketMQTemplate.syncSend(destination, msgInfoDTO);
+        } else {
+            asyncClassMsg(topic, noticeTypeEnum.getMqTag(), (T) msgInfoDTO, key);
+            return null;
+        }
+    }
+
+    /**
+     * 往消息中心发送同步MQ消息
+     * @param msgInfoDTO
+     * @return 同步时返回，异步返回null
+     */
+    public SendResult sendNoticeMsg(NoticeMsgInfoDTO msgInfoDTO) {
+        return sendNoticeMsg(msgInfoDTO, Boolean.TRUE);
+    }
+
 }

@@ -14,15 +14,14 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.StrUtils;
-import com.common.core.utils.ValidatorUtil;
+import com.common.core.utils.*;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
-import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.excel.ExportInventoryExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -41,7 +40,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -217,12 +218,6 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         if (CollectionUtils.isEmpty(inventoryList)) {
             throw new ServiceException(new ApiResult(1,String.format("组织【%s】、仓库【%s】、SKU【%s】可用库存不足",dto.getOrgName(),dto.getWarehouseName(),dto.getSkuNo())));
         }
-
-        Integer inventoryQty = inventoryList.stream().map(InventoryEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
-        if (MathUtil.compareTo(dto.getQty(),inventoryQty) > 0) {
-            throw new ServiceException(new ApiResult(1,String.format("组织【%s】、仓库【%s】、SKU【%s】可用库存不足",dto.getOrgName(),dto.getWarehouseName(),dto.getSkuNo())));
-        }
-
         /**
          * 拣货规则：
          * 1、如果可用库存存在超过拣货数量则直接顺序取
@@ -266,6 +261,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 resultList.add(matches);
                 break;
             }
+
         }
         return resultList;
     }
@@ -278,6 +274,31 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         // 填充名称
         fillInventoryPageData(pageData.getRecords());
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public void exportExcel(InventoryDTO.ExportSearchParamDTO param, HttpServletResponse response) {
+        // 如果是否选导出处理
+        if(CollUtil.isNotEmpty(param.getCheckData())) {
+            List<InventoryDTO.ExportInvParamDTO> checkData = param.getCheckData();
+            List<String> warehouseIds = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getWarehouseId).distinct().collect(Collectors.toList());
+            List<String> orgIds = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getOrgId).distinct().collect(Collectors.toList());
+            List<String> skuIds = checkData.stream().map(InventoryDTO.ExportInvParamDTO::getSkuId).distinct().collect(Collectors.toList());
+            param.setWarehouseIdList(warehouseIds);
+            param.setOrgIdLList(orgIds);
+            param.setSkuIdList(skuIds);
+        }
+        List<InventoryDTO.PagingViewDTO> dataList = inventoryMapper.exportInv(param);
+        if(CollUtil.isEmpty(dataList)) {
+            return;
+        }
+        List<ExportInventoryExcelDTO> resultList = BeanMapperUtils.copyList(ExportInventoryExcelDTO.class, dataList);
+        String fileName = StrUtil.format("即时库存数据{}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+        try {
+            ExcelUtil.export(fileName, "即时库存数据", resultList, ExportInventoryExcelDTO.class, response);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
     }
 
 
