@@ -38,7 +38,7 @@ public interface SoReturnNoticeMapper extends BaseMapper<SoReturnNoticeEntity> {
      * @param pagingParam pagingParam
      * @return java.lang.Integer
      **/
-    Integer listCount( @Param("params") SoReturnNoticeDTO.PagingParam pagingParam);
+    Integer listCount(@Param("params") SoReturnNoticeDTO.PagingParam pagingParam);
 
     /**
      * 导出查询

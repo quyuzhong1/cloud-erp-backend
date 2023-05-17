@@ -40,9 +40,13 @@ public class SoReturnReceiveDTO {
          */
         private String type;
         /**
+         *退货类型
+         */
+        private String returnTypeDict;
+        /**
          * 审核状态
          */
-        private List<String> approveStatusLis;
+        private List<String> approveStatusList;
         /**
          * 作废状态
          */
@@ -51,6 +55,10 @@ public class SoReturnReceiveDTO {
          * 客户id
          */
         private List<String> customerIdList;
+        /**
+         * 库存组织id
+         */
+        private List<String> inventoryOrgIdList;
         /**
          * 销售员id
          */
@@ -76,13 +84,29 @@ public class SoReturnReceiveDTO {
     @NoArgsConstructor
     public static class PagingView {
         /**
-         * 退货订单号
+         * id
+         */
+        private String id;
+        /**
+         * 退货单id
+         */
+        private String sourceId;
+        /**
+         * 退货单明细id
+         */
+        private String sourceDetailId;
+        /**
+         * 退货签收单号
          */
         private String code;
         /**
          * 退货单号
          */
         private String sourceCode;
+        /**
+         * 客户id
+         */
+        private String customerId;
         /**
          * 客户名称
          */
@@ -108,9 +132,9 @@ public class SoReturnReceiveDTO {
          */
         private String invalidStatusName;
         /**
-         * 销售员
+         * sku_id
          */
-        private String sellerName;
+        private String skuId;
         /**
          * SKU
          */
@@ -122,7 +146,11 @@ public class SoReturnReceiveDTO {
         /**
          * 退货类型
          */
-        private String returnType;
+        private String returnTypeDict;
+        /**
+         * 退货类型名称
+         */
+        private String returnTypeDictName;
         /**
          * 销售数量
          */
@@ -135,6 +163,10 @@ public class SoReturnReceiveDTO {
          * 签收数量
          */
         private Integer receiveQty;
+        /**
+         * 销售员
+         */
+        private String sellerName;
         /**
          * 退货日期
          */

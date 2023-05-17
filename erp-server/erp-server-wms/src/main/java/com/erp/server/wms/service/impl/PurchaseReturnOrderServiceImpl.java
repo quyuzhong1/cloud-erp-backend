@@ -147,7 +147,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     obj.setApproveStatusName(null);
                     obj.setInvalidStatus(null);
                     obj.setInvalidStatusName(null);
-                    return;
                 }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));

@@ -159,6 +159,9 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
 
         List<WarehouseReceiveDetailEntity> detailEntityList = listWarehouseReceiveByPodIds(orderDetailIds);
         List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(orderDetailIds);
+
+        List<WarehouseReceiveDetailEntity> receiveDetailEntities = this.listWarehouseReceiveByPodIds(orderDetailIds);
+
         for (WarehouseReceiveDetailDTO.UpdateDTO updateDTO : warehouseReceiveDetailList) {
             WarehouseReceiveDetailEntity warehouseReceiveDetailEntity = new WarehouseReceiveDetailEntity();
             if (StringUtils.isNotBlank(updateDTO.getId())) {
@@ -179,7 +182,10 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
                 if ((receiveQty - returnQty) > purchaseQty) {
                     throw new ServiceException(ApiError.ERROR_99025.code, String.format(ApiError.ERROR_99025.msg, purchaseOrderDetailEntity.getSkuNo()));
                 }
-
+                Integer receive = receiveDetailEntities.stream().filter(obj -> obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderDetailId().equals(warehouseReceiveDetailEntity.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                if (purchaseOrderDetailEntity.getPurchaseQty() + returnQty - receive < updateDTO.getReceiveQty()) {
+                    throw new ServiceException(ApiError.ERROR_99054.code, String.format(ApiError.ERROR_99054.msg, purchaseOrderDetailEntity.getSkuNo()));
+                }
                 warehouseReceiveDetailEntity.setReceiveQty(updateDTO.getReceiveQty());
                 warehouseReceiveDetailEntity.setExceedQty(updateDTO.getExceedQty());
                 warehouseReceiveDetailEntity.setRemark(updateDTO.getRemark());

@@ -487,6 +487,7 @@ public enum ApiError implements Serializable {
     ERROR_99051(99051,"SKU【%s】已完成调拨"),
     ERROR_99052(99052,"未找到加工单"),
     ERROR_99053(99053,"未找到加工单明细"),
+    ERROR_99054(99054,"【%s】收货数量不能大于未交货数量"),
 
 
     /**
