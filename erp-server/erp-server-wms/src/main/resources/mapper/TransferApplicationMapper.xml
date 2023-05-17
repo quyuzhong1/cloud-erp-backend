@@ -236,7 +236,7 @@
             resultType="com.erp.model.wms.dto.TransferApplicationDTO$ViewGenerateTransferInfoDTO">
         select
             ta.code as sourceCode,
-            pd.id as sourceId,
+            ta.id as sourceId,
             pd.id as sourceDetailId,
             ta.transfer_direction as transferDirection,
             pd.sku_id as skuId,
