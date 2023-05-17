@@ -161,8 +161,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
              * 当可用即时库存数量大于销售数量时，缺货数量为0
              */
             Integer scarceQty = 0;
-            //即时库存是否大于 销售数量
-            Boolean isGre = curInventoryQty > qty;
 
             /**
              * 已出库数量
@@ -178,7 +176,10 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
              * 销售数量-已出库数量
              */
             Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
-           
+            if (qty > curInventoryQty) {
+                scarceQty = qty - curInventoryQty;
+            }
+
             item.setScarceQty(scarceQty);
             item.setAvailableQty(getAvailableQty(curInventoryQty, qty));
             item.setDeliveryQty(deliveryQty);
