@@ -292,10 +292,12 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         if(CollUtil.isEmpty(dataList)) {
             return;
         }
+        // 填充名称
+        fillInventoryPageData(dataList);
         List<ExportInventoryExcelDTO> resultList = BeanMapperUtils.copyList(ExportInventoryExcelDTO.class, dataList);
         String fileName = StrUtil.format("即时库存数据{}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
         try {
-            ExcelUtil.export(fileName, "即时库存数据", resultList, ExportInventoryExcelDTO.class, response);
+            ExcelUtil.exportAdapt(fileName, "即时库存数据", resultList, ExportInventoryExcelDTO.class, response, null);
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }

@@ -572,6 +572,8 @@ public class SoInfoDTO implements Serializable {
          */
         private String currency;
 
+
+
         /**
          * 是否含税
          * true 是

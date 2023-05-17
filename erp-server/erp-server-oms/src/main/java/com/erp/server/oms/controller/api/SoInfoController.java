@@ -48,7 +48,7 @@ public class SoInfoController extends BaseController {
      */
     @GetMapping("/tabList")
     public ApiResult<List<SoInfoDTO.TabListDTO>> tabList() {
-        List<SoInfoDTO.TabListDTO>  tabList= soDetailService.tabList();
+        List<SoInfoDTO.TabListDTO> tabList = soDetailService.tabList();
         return success(tabList);
     }
 
@@ -77,12 +77,6 @@ public class SoInfoController extends BaseController {
      * @return
      */
     @PostMapping("/draft")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:so:draft",
-            serviceClass = SoInfoService.class,
-            keyIdName = "id"
-    )
     public ApiResult draft(@RequestBody @Validated SoInfoDTO.AddDTO dto) {
         String id = soInfoService.draft(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
@@ -176,7 +170,7 @@ public class SoInfoController extends BaseController {
             keyIdName = "id"
     )
     public ApiResult update(@RequestBody @Validated SoInfoDTO.UpdateDTO dto) {
-        String id=soInfoService.updateSo(dto);
+        String id = soInfoService.updateSo(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
@@ -187,8 +181,15 @@ public class SoInfoController extends BaseController {
      * @return
      */
     @PostMapping("/updateAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:updateAndSubmit",
+            serviceClass = SoInfoService.class,
+            keyIdName = "id"
+    )
     public ApiResult updateAndSubmit(@RequestBody @Validated SoInfoDTO.UpdateDTO dto) {
-        return success(null);
+        Boolean result = soInfoService.updateAndSubmit(dto);
+        return result ? success() : failure();
     }
 
 
@@ -199,27 +200,64 @@ public class SoInfoController extends BaseController {
      * @return
      */
     @PostMapping("/approve")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:approve",
+            serviceClass = SoInfoService.class,
+            keyIdName = "ids"
+    )
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
-        return success();
+        Boolean result = soInfoService.approve(dto);
+        return result ? success() : failure();
     }
 
     /**
      * 反审核
      */
     @PostMapping("/disApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:disApprove",
+            serviceClass = SoInfoService.class,
+            keyIdName = "ids"
+    )
     public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        return success();
+        Boolean result = soInfoService.disApprove(dto);
+        return result ? success() : failure();
     }
 
     /**
-     * 删除仓库
+     * 撤销流程
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/cancelProcess")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:cancelProcess",
+            serviceClass = SoInfoService.class,
+            keyIdName = "ids")
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = soInfoService.cancelProcess(dto.getIds());
+        return result ? success() : failure();
+    }
+
+    /**
+     * 删除销售订单
      *
      * @param dto
      * @return
      */
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:delete",
+            serviceClass = SoInfoService.class,
+            keyIdName = "ids")
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        return success();
+        Boolean result = soInfoService.deleteByIds(dto.getIds());
+        return result ? success() : failure();
     }
 
     /**
@@ -231,8 +269,14 @@ public class SoInfoController extends BaseController {
      * @date: 2023/5/10 20:11
      */
     @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:invalid",
+            serviceClass = SoInfoService.class,
+            keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        return success();
+        Boolean result = soInfoService.invalid(dto.getIds(),dto.getRemark());
+        return result ? success() : failure();
     }
 
     /**
