@@ -1,5 +1,7 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -78,4 +80,60 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return java.lang.String
      */
     String updateSo(SoInfoDTO.UpdateDTO dto);
+
+    
+    /**
+     * 修改并提交
+     * @author yl
+     * @date 2023-05-17 16:43
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateAndSubmit(SoInfoDTO.UpdateDTO dto);
+
+    /**
+     * 审核
+     * @author yl
+     * @date 2023-05-17 16:46
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean approve(BaseApproveParamDTO dto);
+
+    /**
+     * 反审核
+     * @author yl
+     * @date 2023-05-17 16:48
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean disApprove(BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 撤销流程
+     * @author yl
+     * @date 2023-05-17 16:51
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean cancelProcess(List<String> ids);
+
+    /**
+     * 批量删除
+     * @author yl
+     * @date 2023-05-17 16:53
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean deleteByIds(List<String> ids);
+
+    /**
+     * 作废
+     * @author yl
+     * @date 2023-05-17 17:13
+     * @param ids
+     * @param remark
+     * @return java.lang.Boolean
+     */
+    Boolean invalid(List<String> ids, String remark);
 }

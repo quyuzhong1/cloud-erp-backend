@@ -420,6 +420,7 @@ public enum ApiError implements Serializable {
     ERROR_98058(98058,"收货数量不能大于采购数量"),
     ERROR_99059(99059,"只有已审核采购订单允许下推退货单"),
     ERROR_99060(99060,"只有待质检状态才能分配质检员"),
+    ERROR_98061(98061,"存在不一样的作废状态"),
 
 
 
@@ -512,12 +513,15 @@ public enum ApiError implements Serializable {
     ERROR_92014(92014,"只有已审核的销售退货订单可以下推销售退货通知单"),
     ERROR_92015(92015,"销售订单详情不存在"),
     ERROR_92016(92016,"销售订单不存在"),
-
+    ERROR_92017(92017,"只有待提交,暂存数据支持删除"),
+    ERROR_92018(92018,"存在已被引用的单据,不能删除"),
+    ERROR_92019(92019,"只有待提交,暂存数据支持作废"),
 
 
 
 
     ERROR_end(1000000, "系统错误");
+
 
     public Integer code;
     public String msg;
