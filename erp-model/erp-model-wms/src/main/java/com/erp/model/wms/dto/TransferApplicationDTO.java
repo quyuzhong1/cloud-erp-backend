@@ -439,6 +439,12 @@ public class TransferApplicationDTO implements Serializable {
         /**
          * 来源id
          */
+        @NotBlank(message = "来源编码不能为空")
+        private String sourceCode;
+
+        /**
+         * 来源id
+         */
         @NotBlank(message = "来源id不能为空")
         private String sourceId;
 
