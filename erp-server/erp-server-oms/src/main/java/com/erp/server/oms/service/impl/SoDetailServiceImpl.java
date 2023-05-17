@@ -165,14 +165,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             Boolean isGre = curInventoryQty > qty;
 
             /**
-             * 可出数量
-             * 根据可用即时库存计算可出数量，
-             * 当可用即时库存数量大于销售数量时 可出数量=销售数量；
-             * 若可用即时库存数量小于销售数量，可出数量=即时可用库存数量
-             */
-            Integer availableQty = 0;
-
-            /**
              * 已出库数量
              * 新增时默认为0
              * 编辑时根据关联出库单
@@ -186,15 +178,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
              * 销售数量-已出库数量
              */
             Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
-            if (isGre) {
-                availableQty = qty;
-            } else {
-                availableQty = curInventoryQty;
-                scarceQty = qty - curInventoryQty;
-            }
-
+           
             item.setScarceQty(scarceQty);
-            item.setAvailableQty(availableQty);
+            item.setAvailableQty(getAvailableQty(curInventoryQty, qty));
             item.setDeliveryQty(deliveryQty);
             item.setWaitQty(waitQty);
             //税率
