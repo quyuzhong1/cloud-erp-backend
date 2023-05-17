@@ -204,7 +204,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnEntity.setBillDate(dto.getBillDate());
         soReturnEntity.setReceiverName(dto.getReceiverName());
         soReturnEntity.setTelNumber(dto.getTelNumber());
-        soReturnEntity.setAddressTypeDict(dto.getReceiveAddressDict());
+        soReturnEntity.setAddressTypeDict(dto.getReceiveAddress());
         soReturnEntity.setDeliveryModeDict(dto.getDeliveryModeDict());
         soReturnEntity.setCurrency(dto.getCurrency());
         soReturnEntity.setCurrencySymbol(dto.getCurrencySymbol());
@@ -230,7 +230,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnEntity.setBillDate(dto.getBillDate());
         soReturnEntity.setReceiverName(dto.getReceiverName());
         soReturnEntity.setTelNumber(dto.getTelNumber());
-        soReturnEntity.setAddressTypeDict(dto.getReceiveAddressDict());
+        soReturnEntity.setAddressTypeDict(dto.getReceiveAddress());
         soReturnEntity.setDeliveryModeDict(dto.getDeliveryModeDict());
         soReturnEntity.setCurrency(dto.getCurrency());
         soReturnEntity.setCurrencySymbol(dto.getCurrencySymbol());
