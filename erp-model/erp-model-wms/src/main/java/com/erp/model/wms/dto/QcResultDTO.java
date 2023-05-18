@@ -48,7 +48,7 @@ public class QcResultDTO {
          * 总量
          */
         @NotNull(message = "总量不能为空")
-        @DecimalMax(value = "99999999", message = "最大值为99999999", groups = {UpdateGroup.class, AddGroup.class})
+        @DecimalMax(value = "999999999", message = "最大值为999999999", groups = {UpdateGroup.class, AddGroup.class})
         @DecimalMin(value = "1", message = "质检总量必须大于0", groups = {AddGroup.class})
         private Integer totalQty;
 
@@ -56,7 +56,7 @@ public class QcResultDTO {
          * 质检量
          */
         @NotNull(message = "质检量不能为空")
-        @DecimalMax(value = "99999999", message = "最大值为99999999", groups = {UpdateGroup.class, AddGroup.class})
+        @DecimalMax(value = "999999999", message = "最大值为999999999", groups = {UpdateGroup.class, AddGroup.class})
         @DecimalMin(value = "1", message = "质检量必须大于0", groups = {AddGroup.class})
         private Integer qcQty;
 
@@ -64,7 +64,7 @@ public class QcResultDTO {
          * 质检合格量
          */
         @NotNull(message = "质检合格量不能为空")
-        @DecimalMax(value = "99999999", message = "最大值为99999999", groups = {UpdateGroup.class, AddGroup.class})
+        @DecimalMax(value = "999999999", message = "最大值为999999999", groups = {UpdateGroup.class, AddGroup.class})
         @DecimalMin(value = "0", message = "最小值必须大于0", groups = {AddGroup.class})
         private Integer qcGoodQty;
 
@@ -72,7 +72,7 @@ public class QcResultDTO {
          * 质检不良量
          */
         @NotNull(message = "质检不良量不能为空")
-        @DecimalMax(value = "99999999", message = "最大值为99999999", groups = {UpdateGroup.class, AddGroup.class})
+        @DecimalMax(value = "999999999", message = "最大值为999999999", groups = {UpdateGroup.class, AddGroup.class})
         @DecimalMin(value = "0", message = "最小值为0", groups = {AddGroup.class})
         private Integer qcBadQty;
 

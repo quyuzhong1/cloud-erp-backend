@@ -37,7 +37,7 @@ public class MachineDetailDTO implements Serializable {
          */
         @NotNull(message = "数量不能为空")
         @Min(value = 1,message = "数量最小值为1")
-        @Max(value = 99999999,message = "数量最大值为99999999")
+        @Max(value = 999999999,message = "数量最大值为999999999")
         private Integer qty;
 
         /**
