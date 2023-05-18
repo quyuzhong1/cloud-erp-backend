@@ -354,8 +354,8 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     public Boolean delete(List<String> ids) {
         //根据ids查询
         List<MachineInfoEntity> list = getList(ids);
-        //待提交允许删除
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
+        //待提交并且未作废允许删除
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || obj.getInvalidStatus() ).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }

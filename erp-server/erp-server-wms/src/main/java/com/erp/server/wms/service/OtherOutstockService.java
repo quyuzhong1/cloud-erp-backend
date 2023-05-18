@@ -84,16 +84,53 @@ public interface OtherOutstockService extends SuperService<OtherOutstockEntity> 
      * @return ViewDTO
      */
     OtherOutstockDTO.ViewDTO view(String id);
-
+    /**
+     * @description: 删除
+     * @author Will
+     * @date: 2023/5/18 17:54
+     * @param ids
+     * @return Boolean
+     */
     Boolean delete(List<String> ids);
-
+    /**
+     * @description: 作废
+     * @author Will
+     * @date: 2023/5/18 17:54
+     * @param ids
+     * @param remark
+     * @return Boolean
+     */
     Boolean invalid(List<String> ids, String remark);
-
+    /**
+     * @description: 审核
+     * @author Will
+     * @date: 2023/5/18 17:54
+     * @param baseApproveParamDTO
+     */
     void approve(BaseApproveParamDTO baseApproveParamDTO);
-
+    /**
+     * @description: 反审核
+     * @author Will
+     * @date: 2023/5/18 17:54
+     * @param ids
+     * @return Boolean
+     */
     Boolean disApprove(List<String> ids);
-
+    /**
+     * @description: 取消流程
+     * @author Will
+     * @date: 2023/5/18 17:54
+     * @param ids
+     * @return Boolean
+     */
     Boolean cancelProcess(List<String> ids);
-
+    /**
+     * @description: 导出
+     * @author Will
+     * @date: 2023/5/18 17:55
+     * @param dto
+     * @param response
+     * @return Boolean
+     */
     Boolean exportExcel(OtherOutstockDTO.SearchParamDTO dto, HttpServletResponse response);
 }
