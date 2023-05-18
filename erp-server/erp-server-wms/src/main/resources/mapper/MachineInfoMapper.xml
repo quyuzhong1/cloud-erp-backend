@@ -54,6 +54,9 @@
         left join machine_detail md on mi.id = md.main_id and mi.is_deleted = false
         <where>
             mi.is_deleted = false
+            <if test="params.searchType != null and params.searchType != ''">
+                AND mi.approve_status = #{params.searchType}
+            </if>
             <if test="params.code != null and params.code != ''">
                 and mi.code like concat('%',#{params.code},'%')
             </if>
