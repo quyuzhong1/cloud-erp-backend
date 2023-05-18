@@ -204,7 +204,7 @@ public class SoReturnDTO {
     public static class StatusCountDTO {
 
         /**
-         * 类型(waitSubmit 待提交，reject 审核不通过，approve 已审核)
+         * 类型(toBeApprove 待审核，reject 审核不通过，approve 已审核)
          */
         private String type;
         /**

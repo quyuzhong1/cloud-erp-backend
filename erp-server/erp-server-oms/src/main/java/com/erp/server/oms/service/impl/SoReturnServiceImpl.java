@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -29,6 +30,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
@@ -48,6 +50,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -188,18 +191,34 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public String add(SoReturnDTO.Add dto) {
         //获取销售单信息
         SoInfoEntity soInfoEntity = soInfoService.getById(dto.getSourceId());
         SoReturnEntity soReturnEntity = new SoReturnEntity();
-        BeanMapperUtils.copy(soInfoEntity, soReturnEntity);
-
+        soReturnEntity.setType(soInfoEntity.getType().getCode());
+        soReturnEntity.setSalesOrgId(soInfoEntity.getSalesOrgId());
+        soReturnEntity.setSalesOrgName(soInfoEntity.getSalesOrgName());
+        soReturnEntity.setSalesDeptId(soInfoEntity.getSalesDeptId());
+        if (StringUtils.isNotBlank(soInfoEntity.getSalesDeptId())) {
+            SysDepartmentDTO dept = sysUserFeign.getUserDeptById(soInfoEntity.getSalesDeptId());
+            if (dept != null) {
+                soReturnEntity.setSalesDeptName(dept.getName());
+            }
+        }
+        soReturnEntity.setSellerId(soInfoEntity.getSellerId());
+        soReturnEntity.setSellerName(soInfoEntity.getSellerName());
+        soReturnEntity.setCustomerId(soInfoEntity.getCustomerId());
         List<CustomerInfoEntity> customerInfoEntities = customerInfoService.list();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         soReturnEntity.setCustomerName(customerInfoEntity.getName());
-        soReturnEntity.setId(null);
-        soReturnEntity.setApproveStatus(null);
+        soReturnEntity.setReceiverName(soInfoEntity.getReceiverName());
+        soReturnEntity.setTelNumber(soInfoEntity.getTelNumber());
+        soReturnEntity.setReceiveAddress(soInfoEntity.getReceiveAddress());
+        soReturnEntity.setDeliveryModeDict(soInfoEntity.getDeliveryMode());
+        soReturnEntity.setCurrency(soInfoEntity.getCurrency());
+        soReturnEntity.setCurrencySymbol(soInfoEntity.getCurrencySymbol());
+        soReturnEntity.setIsTax(soInfoEntity.getIsTax());
+        soReturnEntity.setAddressTypeDict(soInfoEntity.getAddressType());
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.THDD, BusinessNoTypeEnum.CODE_THDD.getCode()));
         soReturnEntity.setCode(code);
@@ -213,15 +232,34 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnDTO.Update dto) {
         //获取销售单信息
         SoInfoEntity soInfoEntity = soInfoService.getById(dto.getSourceId());
         SoReturnEntity soReturnEntity = new SoReturnEntity();
-        BeanMapperUtils.copy(soInfoEntity, soReturnEntity);
+        soReturnEntity.setType(soInfoEntity.getType().getCode());
+        soReturnEntity.setSalesOrgId(soInfoEntity.getSalesOrgId());
+        soReturnEntity.setSalesOrgName(soInfoEntity.getSalesOrgName());
+        soReturnEntity.setSalesDeptId(soInfoEntity.getSalesDeptId());
+        if (StringUtils.isNotBlank(soInfoEntity.getSalesDeptId())) {
+            SysDepartmentDTO dept = sysUserFeign.getUserDeptById(soInfoEntity.getSalesDeptId());
+            if (dept != null) {
+                soReturnEntity.setSalesDeptName(dept.getName());
+            }
+        }
+        soReturnEntity.setSellerId(soInfoEntity.getSellerId());
+        soReturnEntity.setSellerName(soInfoEntity.getSellerName());
+        soReturnEntity.setCustomerId(soInfoEntity.getCustomerId());
         List<CustomerInfoEntity> customerInfoEntities = customerInfoService.list();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         soReturnEntity.setCustomerName(customerInfoEntity.getName());
+        soReturnEntity.setReceiverName(soInfoEntity.getReceiverName());
+        soReturnEntity.setTelNumber(soInfoEntity.getTelNumber());
+        soReturnEntity.setReceiveAddress(soInfoEntity.getReceiveAddress());
+        soReturnEntity.setDeliveryModeDict(soInfoEntity.getDeliveryMode());
+        soReturnEntity.setCurrency(soInfoEntity.getCurrency());
+        soReturnEntity.setCurrencySymbol(soInfoEntity.getCurrencySymbol());
+        soReturnEntity.setIsTax(soInfoEntity.getIsTax());
+        soReturnEntity.setAddressTypeDict(soInfoEntity.getAddressType());
         soReturnEntity.setId(dto.getId());
         SoReturnEntity entity = this.getById(dto.getId());
         soReturnEntity.setApproveStatus(entity.getApproveStatus());
@@ -277,7 +315,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean submit(List<String> ids) {
         List<SoReturnEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(entityList)) {
@@ -325,7 +362,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
         List<SoReturnEntity> entityList = this.listByIds(ids);
@@ -363,7 +399,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean disApprove(List<String> ids) {
         List<SoReturnEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
@@ -395,7 +430,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean cancelProcess(List<String> ids) {
         List<SoReturnEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
@@ -424,7 +458,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String remark) {
         List<SoReturnEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
@@ -456,7 +489,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
         List<SoReturnEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
