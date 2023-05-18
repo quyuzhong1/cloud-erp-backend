@@ -7,9 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
 
 /**
- * <p>
- *  前端控制器
- * </p>
+ * 流程任务抄送
  *
  * @author Cloud
  * @since 2023-05-17
