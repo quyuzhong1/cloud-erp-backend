@@ -227,4 +227,12 @@
         </if>
         srr.create_time desc
     </select>
+
+    <select id="generateSoReturnInstockView" resultType="com.erp.model.wms.dto.SoReturnReceiveDTO$GenerateSoReturnInstockView">
+        SELECT
+        *
+        FROM so_return_receive_detail srrd
+        INNER JOIN so_return_receive srr ON srrd.main_id = srr.id AND srrd.is_deleted = FALSE
+        WHERE srr.is_deleted = FALSE
+    </select>
 </mapper>

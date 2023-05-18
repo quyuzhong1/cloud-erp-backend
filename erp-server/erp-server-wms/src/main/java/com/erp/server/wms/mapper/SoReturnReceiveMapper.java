@@ -47,4 +47,13 @@ public interface SoReturnReceiveMapper extends BaseMapper<SoReturnReceiveEntity>
      * @return java.util.List<com.erp.model.wms.dto.SoReturnReceiveDTO.PagingView>
      **/
     List<SoReturnReceiveDTO.PagingView> soReturnReceiveExportExcel(@Param("params") SoReturnReceiveDTO.PagingParam dto);
+
+    /**
+     * 下推退货入库单-列表查询
+     * @Author Luo_WG
+     * @Date 2023/5/18 11:12
+     * @param ids ids
+     * @return java.util.List<com.erp.model.wms.dto.SoReturnReceiveDTO.GenerateSoReturnInstockView>
+     **/
+    List<SoReturnReceiveDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(@Param("params") List<String> ids);
 }

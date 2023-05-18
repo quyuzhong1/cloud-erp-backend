@@ -236,7 +236,6 @@ public class SoDeliveryNoticeDTO {
         /**
          * 承运商id
          */
-        @NotBlank(message = "承运商不能为空")
         private String carrierId;
         /**
          * 运输单号
@@ -293,7 +292,6 @@ public class SoDeliveryNoticeDTO {
         /**
          * 承运商id
          */
-        @NotBlank(message = "承运商不能为空")
         private String carrierId;
         /**
          * 运输单号

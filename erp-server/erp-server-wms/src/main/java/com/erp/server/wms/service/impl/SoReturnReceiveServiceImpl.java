@@ -52,6 +52,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -517,9 +518,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Override
     public Boolean generateSoReturnReceiveSave(List<SoReturnNoticeDTO.GenerateSoReturnReceiveView> list) {
         Boolean flag = Boolean.TRUE;
-        List<String> soReturnIdList = list.stream().map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getMainId).distinct().collect(Collectors.toList());
+        List<String> soReturnNoticeIdList = list.stream().map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getMainId).distinct().collect(Collectors.toList());
         List<String> soDetailIdList = list.stream().map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getSourceDetailId).distinct().collect(Collectors.toList());
-        long count = soReturnNoticeService.listByIds(soReturnIdList).stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
+        long count = soReturnNoticeService.listByIds(soReturnNoticeIdList).stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_92021);
         }
@@ -527,19 +528,20 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         if (CollectionUtils.isEmpty(soDetailEntities)) {
             throw new ServiceException(ApiError.ERROR_92015);
         }
-
-        for (String id : soReturnIdList) {
+        for (String id : soReturnNoticeIdList) {
             List<SoReturnNoticeDTO.GenerateSoReturnReceiveView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
-            String sourceId = viewList.stream().filter(req -> req.getMainId().equals(id)).map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getSourceId).distinct().findFirst().orElse("");
-            SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(sourceId);
+            SoReturnNoticeEntity noticeEntity = soReturnNoticeService.getById(id);
             SoReturnReceiveDTO.Add dto = new SoReturnReceiveDTO.Add();
             dto.setSourceId(id);
-            dto.setInventoryOrgId(soInfoEntity.getWarehouseOrgId());
-            dto.setInventoryOrgId(soInfoEntity.getWarehouseOrgId());
+            dto.setInventoryOrgId(noticeEntity.getInventoryOrgId());
+            dto.setWarehouseKeeperId(noticeEntity.getWarehouseKeeperId());
+            dto.setReturnDate(noticeEntity.getBillDate());
+            dto.setBillDate(LocalDate.now());
             List<SoReturnReceiveDetailDTO.Add> detailList = dto.getDetailList();
             for (SoReturnNoticeDTO.GenerateSoReturnReceiveView view : viewList) {
                 SoReturnReceiveDetailDTO.Add detailAddDTO = new SoReturnReceiveDetailDTO.Add();
                 detailAddDTO.setReturnQty(view.getReturnQty());
+                detailAddDTO.setReceiveQty(view.getReturnQty());
                 detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
                 detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
                 detailAddDTO.setRemark(view.getRemark());
@@ -557,6 +559,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Override
     public List<SoReturnReceiveDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(List<String> ids) {
+        List<SoReturnReceiveDTO.GenerateSoReturnInstockView> viewList = baseMapper.generateSoReturnInstockView(ids);
         return null;
     }
 

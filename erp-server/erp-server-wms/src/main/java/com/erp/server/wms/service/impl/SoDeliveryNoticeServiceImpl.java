@@ -206,8 +206,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     public String add(SoDeliveryNoticeDTO.Add dto) {
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getDeliveryOrgId());
-        //获取采购单供应商信息
-        PurchaseOrderSupplierEntity supplierEntity = scmTaskFeign.getOrderSupplierByOrderId(dto.getCarrierId());
+
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getWarehouseId());
         //获取销售单信息
@@ -222,8 +221,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeEntity.setSourceType(dto.getSourceType());
         soDeliveryNoticeEntity.setDeliveryOrgId(dto.getDeliveryOrgId());
         soDeliveryNoticeEntity.setDeliveryOrgName(sysAccountingCompanyEntity.getCompanyName());
-        soDeliveryNoticeEntity.setCarrierId(dto.getCarrierId());
-        soDeliveryNoticeEntity.setCarrierName(supplierEntity.getSupplierName());
+        //获取采购单供应商信息
+        PurchaseOrderSupplierEntity supplierEntity = scmTaskFeign.getOrderSupplierByOrderId(dto.getCarrierId());
+        if (ObjectUtil.isNotEmpty(supplierEntity)) {
+            soDeliveryNoticeEntity.setCarrierId(dto.getCarrierId());
+            soDeliveryNoticeEntity.setCarrierName(supplierEntity.getSupplierName());
+        }
         soDeliveryNoticeEntity.setWarehouseId(dto.getWarehouseId());
         soDeliveryNoticeEntity.setWarehouseName(warehouseEntity.getName());
         soDeliveryNoticeEntity.setDeliveryModeDict(dto.getDeliveryModeDict());
@@ -241,8 +244,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     public Boolean update(SoDeliveryNoticeDTO.Update dto) {
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getDeliveryOrgId());
-        //获取采购单供应商信息
-        PurchaseOrderSupplierEntity supplierEntity = scmTaskFeign.getOrderSupplierByOrderId(dto.getCarrierId());
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getWarehouseId());
         //获取销售单信息
@@ -257,8 +258,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeEntity.setSourceCode(soInfoEntity.getCode());
         soDeliveryNoticeEntity.setDeliveryOrgId(dto.getDeliveryOrgId());
         soDeliveryNoticeEntity.setDeliveryOrgName(sysAccountingCompanyEntity.getCompanyName());
-        soDeliveryNoticeEntity.setCarrierId(dto.getCarrierId());
-        soDeliveryNoticeEntity.setCarrierName(supplierEntity.getSupplierName());
+        //获取采购单供应商信息
+        PurchaseOrderSupplierEntity supplierEntity = scmTaskFeign.getOrderSupplierByOrderId(dto.getCarrierId());
+        if (ObjectUtil.isNotEmpty(supplierEntity)) {
+            soDeliveryNoticeEntity.setCarrierId(dto.getCarrierId());
+            soDeliveryNoticeEntity.setCarrierName(supplierEntity.getSupplierName());
+        }
         soDeliveryNoticeEntity.setWarehouseId(dto.getWarehouseId());
         soDeliveryNoticeEntity.setWarehouseName(warehouseEntity.getName());
         soDeliveryNoticeEntity.setDeliveryModeDict(dto.getDeliveryModeDict());
