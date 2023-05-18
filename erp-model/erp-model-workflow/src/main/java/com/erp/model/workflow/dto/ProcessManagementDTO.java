@@ -205,6 +205,50 @@ public class ProcessManagementDTO {
         private String activityId;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class BackResultDTO {
+
+        /**
+         * 流程定义id
+         */
+        private String processDefinitionId;
+
+        /**
+         * 流程实例id
+         */
+        private String processInstanceId;
+
+        /**
+         * 当前业务id
+         */
+        private String businessId;
+
+        /**
+         * 当前业务名称
+         */
+        private String businessName;
+
+        /**
+         * 当前节点id
+         */
+        private String activityId;
+
+        /**
+         * 当前节点名称
+         */
+        private String activityName;
+
+        public BackResultDTO(String processDefinitionId, String processInstanceId, String businessId, String businessName, String activityId, String activityName) {
+            this.processDefinitionId = processDefinitionId;
+            this.processInstanceId = processInstanceId;
+            this.businessId = businessId;
+            this.businessName = businessName;
+            this.activityId = activityId;
+            this.activityName = activityName;
+        }
+    }
+
 
 
     @Data
@@ -492,6 +536,39 @@ public class ProcessManagementDTO {
          */
         private String remark;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class RevokeResultDTO {
+
+        /**
+         * 流程定义id
+         */
+        private String processDefinitionId;
+
+        /**
+         * 流程实例id
+         */
+        private String processInstanceId;
+
+        /**
+         * 当前业务id
+         */
+        private String businessId;
+
+        /**
+         * 当前业务名称
+         */
+        private String businessName;
+
+        public RevokeResultDTO(String processDefinitionId, String processInstanceId, String businessId, String businessName) {
+            this.processDefinitionId = processDefinitionId;
+            this.processInstanceId = processInstanceId;
+            this.businessId = businessId;
+            this.businessName = businessName;
+        }
+    }
+
 
     @Data
     @NoArgsConstructor
