@@ -30,6 +30,7 @@ import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
@@ -926,6 +927,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String addressType = customer.getAddressType();
         String addressTypeName = AddressTypeEnum.getName(addressType);
         customer.setAddressTypeName(addressTypeName);
+        //销售部门id
+        String salesDeptId = soInfo.getSalesDeptId();
+        String salesDeptName = "";
+        if (StringUtils.isNotBlank(salesDeptId)) {
+            SysDepartmentDTO dept = sysUserFeign.getUserDeptById(salesDeptId);
+            if (dept != null) {
+                salesDeptName = dept.getName();
+            }
+        }
+        customer.setSalesDeptName(salesDeptName);
         return customer;
     }
 

@@ -25,6 +25,7 @@ import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.constant.OmsConstant;
+import com.erp.server.oms.listener.SoDetailExcelListener;
 import com.erp.server.oms.mapper.SoDetailMapper;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
@@ -410,10 +411,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
     /**
      * 下载模板
-     * @author yl
-     * @date 2023-05-17 19:25
+     *
      * @param response
      * @return void
+     * @author yl
+     * @date 2023-05-17 19:25
      */
     @Override
     public void downloadTemplate(HttpServletResponse response) {
@@ -433,7 +435,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            log.error("下载模板出错了==={}",e);
+            log.error("下载模板出错了==={}", e);
             throw new ServiceException(ApiError.Default);
         }
 
@@ -442,14 +444,23 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
     /**
      * 导入sku
-     * @author yl
-     * @date 2023-05-17 19:43
+     *
      * @param excelFile
      * @param response
      * @return com.erp.model.oms.dto.SoDetailDTO.ImportDTO
+     * @author yl
+     * @date 2023-05-17 19:43
      */
     @Override
     public SoDetailDTO.ImportDTO importSku(MultipartFile excelFile, HttpServletResponse response) {
+        List<SkuVO>  skuList=  plmTaskFeign.listApproveSku();
+        SoDetailExcelListener excelListenerUtil=new SoDetailExcelListener(skuList);
+        try {
+
+        }catch (Exception e){
+            log.error("导入错误=={}", e);
+        }
+
         return null;
     }
 
