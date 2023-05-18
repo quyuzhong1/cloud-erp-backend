@@ -6,6 +6,7 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.MachineDetailDTO;
@@ -146,6 +147,10 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
             //单位
             String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && StringUtils.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
             detail.setUnit(unit);
+            //版本
+            Integer version = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId())).map(SkuVO::getVersion).findFirst().orElse(MathUtil.ZERO);
+            detail.setReferenceVersion(version);
+
             detail.setMainId(mainId);
             //修改操作日志
             if (StringUtils.isNotBlank(detail.getId())) {

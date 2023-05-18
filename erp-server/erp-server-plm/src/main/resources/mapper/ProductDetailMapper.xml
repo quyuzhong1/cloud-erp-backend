@@ -600,6 +600,7 @@
 
     <select id="getSkuInfoBySkuIds" resultType="com.erp.model.plm.vo.SkuVO">
         SELECT
+        pd.version,
         pd.id AS skuId,
         pi.id AS productId,
         pi.spu_no,
