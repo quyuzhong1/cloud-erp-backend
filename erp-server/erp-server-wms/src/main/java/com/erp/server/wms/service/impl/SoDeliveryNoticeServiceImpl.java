@@ -459,10 +459,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 .in(SoDeliveryNoticeEntity::getId, ids)
                 .update();
 
-        //回扣库存
-        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_DELIVERY_NOTICE,ids);
-        inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
-
         //删除拣货详情
         pickingDetailService.deleteBySourceId(ids);
 
