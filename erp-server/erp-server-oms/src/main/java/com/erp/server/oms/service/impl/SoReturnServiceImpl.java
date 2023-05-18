@@ -197,6 +197,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<CustomerInfoEntity> customerInfoEntities = customerInfoService.list();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         soReturnEntity.setCustomerName(customerInfoEntity.getName());
+        soReturnEntity.setId(null);
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.THDD, BusinessNoTypeEnum.CODE_THDD.getCode()));
         soReturnEntity.setCode(code);
