@@ -124,7 +124,7 @@ public class InventoryDTO {
         private List<String> warehouseIdList;
 
         /**
-         * 销售状态集合
+         * 销售状态集合 接口地址：plm/common/enumDropDown?type=SaleState
          */
         private List<Integer> saleStatusList;
 

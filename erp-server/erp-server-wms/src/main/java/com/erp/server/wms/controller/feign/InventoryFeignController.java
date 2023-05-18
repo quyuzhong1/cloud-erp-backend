@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -120,7 +121,7 @@ public class InventoryFeignController extends BaseController {
      * @date 2023-05-16 17:20
      */
     @PostMapping("/listSkuInventory")
-    public List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventory(@RequestBody InventoryQtyDTO.FindSkuInventoryParamDTO dto) {
+    public List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventory(@RequestBody @Valid InventoryQtyDTO.FindSkuInventoryParamDTO dto) {
         List<InventoryQtyDTO.SkuInventoryTotalDTO> resultList = inventoryService.listSkuInventory(dto.getSkuIds(), dto.getWarehouseId(), dto.getWarehouseLocationId(), dto.getInventoryStatus());
         return resultList;
     }
