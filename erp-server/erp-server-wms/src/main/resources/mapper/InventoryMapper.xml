@@ -57,9 +57,9 @@
                         #{item}
                     </foreach>
                 </if>
-                <if test="params.orgIdLList != null and params.orgIdLList.size != ''">
+                <if test="params.orgIdList != null and params.orgIdList.size != ''">
                     and it.org_id in
-                    <foreach collection="params.orgIdLList" item="item" open="(" close=")" separator=",">
+                    <foreach collection="params.orgIdList" item="item" open="(" close=")" separator=",">
                         #{item}
                     </foreach>
                 </if>
@@ -131,9 +131,9 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="params.orgIdLList != null and params.orgIdLList.size != ''">
+            <if test="params.orgIdList != null and params.orgIdList.size != ''">
                 and it.org_id in
-                <foreach collection="params.orgIdLList" item="item" open="(" close=")" separator=",">
+                <foreach collection="params.orgIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>

@@ -17,7 +17,7 @@ import java.util.Objects;
 public enum InventorySourceTypeEnum {
 
     INIT_STOCK("initStock", "期初库存"),
-    WAREHOUSE_RECEIVE("warehouseReceive", "采购签收单（收货单）"),
+    WAREHOUSE_RECEIVE("warehouseReceive", "收货单"),
     PURCHASE_STOCK_IN("purchaseStockIn", "采购入库单"),
     PURCHASE_RETURN_ORDER("purchaseReturnOrder", "采购退货单"),
     TRANSFER_APPLY("transferApplication", "调拨申请单"),

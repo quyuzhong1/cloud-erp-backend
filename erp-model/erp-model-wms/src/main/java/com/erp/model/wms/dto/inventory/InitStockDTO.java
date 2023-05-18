@@ -278,7 +278,7 @@ public class InitStockDTO implements Serializable {
         /**
          * 库存组织集合
          */
-        private List<String> orgIdLList;
+        private List<String> orgIdList;
 
     }
 
@@ -323,7 +323,7 @@ public class InitStockDTO implements Serializable {
         /**
          * 库存组织集合
          */
-        private List<String> orgIdLList;
+        private List<String> orgIdList;
 
     }
 

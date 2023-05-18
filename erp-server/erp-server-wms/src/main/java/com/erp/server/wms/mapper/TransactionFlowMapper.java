@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @Classname: TransactionFlowMapper
@@ -40,5 +41,20 @@ public interface TransactionFlowMapper extends BaseMapper<TransactionFlowEntity>
     IPage<InventoryDTO.TransFlowPagingViewDTO> pagingForInv(Page query, @Param("params") InventoryDTO.TransFlowSearchParamDTO params);
 
 
+    /**
+     * 出入库流水分页查询
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<InventoryDTO.InOutStockTransFlowPagingViewDTO> paging(Page query, @Param("params") InventoryDTO.InOutStockTransFlowSearchParamDTO params);
+
+
+    /**
+     * 出入库流水导出查询
+     * @param params
+     * @return
+     */
+    List<InventoryDTO.InOutStockTransFlowPagingViewDTO> exportList(@Param("params") InventoryDTO.ExportInOutStockTransFlowSearchParamDTO params);
 
 }

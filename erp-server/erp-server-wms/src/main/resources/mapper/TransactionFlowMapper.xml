@@ -50,4 +50,160 @@
             </if>
             order by t.trade_time desc,t.id desc
     </select>
+    <select id="paging" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$InOutStockTransFlowPagingViewDTO">
+        SELECT t.id,t.trade_time,
+            t.bill_date,
+            t.source_type,
+            t.source_code,
+            t.operation_mode,
+            t.sku_id,
+            t.sku_no,
+            t.warehouse_location,
+            t.warehouse_id,
+            t.warehouse_name,
+            t.org_id,
+            t.dict_inventory_status as inventory_status,
+            t.qty,
+            t.cur_inventory_qty as after_qty,
+            t.instock_batch_date,
+            pi.spu_no,
+            ps.sale_state
+        FROM
+            transaction_flow t
+        left join product_detail pd on pd.id = t.sku_id
+        left join product_info pi on pd.product_id = pi.id
+        left join product_sale ps on ps.sku_id = pd.id
+        WHERE
+            t.is_deleted = false
+        <if test="params.skuNoList != null and params.skuNoList.size != ''">
+            and t.sku_no in
+            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.sourceCode != null and params.sourceCode != ''">
+            and t.source_code ilike concat('%', #{params.sourceCode} ,'%')
+        </if>
+        <if test="params.sourceTypeList != null and params.sourceTypeList.size != ''">
+            and t.source_type in
+            <foreach collection="params.sourceTypeList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.spuNoList != null and params.spuNoList.size != ''">
+            and pi.spu_no in
+            <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.saleStatusList != null and params.saleStatusList.size != ''">
+            and ps.sale_state in
+            <foreach collection="params.saleStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+            and t.warehouse_id in
+            <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.orgIdList != null and params.orgIdList.size != ''">
+            and t.org_id in
+            <foreach collection="params.orgIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.dateList != null and params.dateList.size > 0">
+            and t.trade_time >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > t.trade_time
+        </if>
+        <if test="params.param != null and params.param != ''">
+            ${params.param}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        t.create_time desc
+    </select>
+    <select id="exportList" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$InOutStockTransFlowPagingViewDTO">
+        SELECT t.id,t.trade_time,
+        t.bill_date,
+        t.source_type,
+        t.source_code,
+        t.operation_mode,
+        t.sku_id,
+        t.sku_no,
+        t.warehouse_location,
+        t.warehouse_id,
+        t.warehouse_name,
+        t.org_id,
+        t.dict_inventory_status as inventory_status,
+        t.qty,
+        t.cur_inventory_qty as after_qty,
+        t.instock_batch_date,
+        pi.spu_no,
+        ps.sale_state
+        FROM
+        transaction_flow t
+        left join product_detail pd on pd.id = t.sku_id
+        left join product_info pi on pd.product_id = pi.id
+        left join product_sale ps on ps.sku_id = pd.id
+        WHERE
+        t.is_deleted = false
+        <if test="params.ids != null and params.ids.size != ''">
+            and t.id in
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.skuNoList != null and params.skuNoList.size != ''">
+            and t.sku_no in
+            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.sourceCode != null and params.sourceCode != ''">
+            and t.source_code ilike concat('%', #{params.sourceCode} ,'%')
+        </if>
+        <if test="params.sourceTypeList != null and params.sourceTypeList.size != ''">
+            and t.source_type in
+            <foreach collection="params.sourceTypeList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.spuNoList != null and params.spuNoList.size != ''">
+            and pi.spu_no in
+            <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.saleStatusList != null and params.saleStatusList.size != ''">
+            and ps.sale_state in
+            <foreach collection="params.saleStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+            and t.warehouse_id in
+            <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.orgIdList != null and params.orgIdList.size != ''">
+            and t.org_id in
+            <foreach collection="params.orgIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.dateList != null and params.dateList.size > 0">
+            and t.trade_time >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > t.trade_time
+        </if>
+        <if test="params.param != null and params.param != ''">
+            ${params.param}
+        </if>
+        ORDER BY t.create_time desc
+    </select>
 </mapper>

@@ -12,20 +12,24 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
 import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.TransactionFlowMapper;
 import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.TransactionFlowService;
 import com.erp.server.wms.service.WarehouseService;
+import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -51,6 +55,9 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Autowired
     private PlmTaskFeign plmTaskFeign;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
 
     @Override
     public List<TransactionFlowEntity> getUnApprovedTxnFlows(String sourceType, String sourceId) {
@@ -124,15 +131,31 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         pagingParamDTO.getParams().setParam(pagingParamDTO.getParam());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<InventoryDTO.TransFlowPagingViewDTO> pageData = this.baseMapper.pagingForInv(query, pagingParamDTO.getParams());
+        fillInventoryTransactionFlowPageData(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public PagingVO<InventoryDTO.InOutStockTransFlowPagingViewDTO> paging(PagingDTO<InventoryDTO.InOutStockTransFlowSearchParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setParam(pagingParamDTO.getParam());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<InventoryDTO.InOutStockTransFlowPagingViewDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         fillTransactionFlowPageData(pageData.getRecords());
         return new PagingVO(pageData);
     }
 
+    @Override
+    public void exportExcel(InventoryDTO.ExportInOutStockTransFlowSearchParamDTO param, HttpServletResponse response) {
+        List<InventoryDTO.InOutStockTransFlowPagingViewDTO> dataList = this.baseMapper.exportList(param);
+        fillTransactionFlowPageData(dataList);
+
+    }
+
     /**
-     * 填充交易流水其他字段值
+     * 填充即时库存查看交易流水其他字段值
      * @param dataList
      */
-    private void fillTransactionFlowPageData(List<InventoryDTO.TransFlowPagingViewDTO> dataList) {
+    private void fillInventoryTransactionFlowPageData(List<InventoryDTO.TransFlowPagingViewDTO> dataList) {
         if(CollUtil.isEmpty(dataList)) {
             return;
         }
@@ -144,6 +167,33 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
                 SkuVO skuVO = skuMap.get(data.getSkuId());
                 data.setProductName(skuVO.getSkuName());
                 data.setSpuNo(skuVO.getSpuNo());
+            }
+            InventorySourceTypeEnum inventorySourceType = InventorySourceTypeEnum.of(data.getSourceType());
+            data.setSourceTypeName(Optional.ofNullable(inventorySourceType).map(InventorySourceTypeEnum::getName).orElse(""));
+            InventoryOperationModeEnum inventoryOperationMode = InventoryOperationModeEnum.of(data.getOperationMode());
+            data.setOperationModeName(Optional.ofNullable(inventoryOperationMode).map(InventoryOperationModeEnum::getName).orElse(""));
+            InventoryStatusEnum inventoryStatus = InventoryStatusEnum.of(data.getInventoryStatus());
+            data.setInventoryStatusName(Optional.ofNullable(inventoryStatus).map(InventoryStatusEnum::getName).orElse(""));
+        });
+    }
+
+    private void fillTransactionFlowPageData(List<InventoryDTO.InOutStockTransFlowPagingViewDTO> dataList) {
+        if(CollUtil.isEmpty(dataList)) {
+            return;
+        }
+        List<String> skuIds = dataList.stream().map(InventoryDTO.InOutStockTransFlowPagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
+        dataList.stream().forEach(data->{
+            if(skuMap.containsKey(data.getSkuId())) {
+                SkuVO skuVO = skuMap.get(data.getSkuId());
+                data.setProductName(skuVO.getSkuName());
+                data.setSpuNo(skuVO.getSpuNo());
+            }
+            SysAccountingCompanyEntity sysAccountingCompanyEntity = accountingCompanyMap.computeIfAbsent(data.getOrgId(),(v)->sysUserFeign.getCompanyById(v));
+            if(Objects.nonNull(sysAccountingCompanyEntity)) {
+                data.setOrgName(sysAccountingCompanyEntity.getCompanyName());
             }
             InventorySourceTypeEnum inventorySourceType = InventorySourceTypeEnum.of(data.getSourceType());
             data.setSourceTypeName(Optional.ofNullable(inventorySourceType).map(InventorySourceTypeEnum::getName).orElse(""));

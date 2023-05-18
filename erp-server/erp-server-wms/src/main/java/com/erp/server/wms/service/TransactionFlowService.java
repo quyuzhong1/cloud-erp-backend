@@ -9,6 +9,7 @@ import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -48,5 +49,18 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
      * @return
      */
     PagingVO<InventoryDTO.TransFlowPagingViewDTO> pagingForInv(PagingDTO<InventoryDTO.TransFlowSearchParamDTO> pagingParamDTO);
+
+    /**
+     * 分页查询出入库流水
+     * @param pagingParamDTO
+     * @return
+     */
+    PagingVO<InventoryDTO.InOutStockTransFlowPagingViewDTO> paging(PagingDTO<InventoryDTO.InOutStockTransFlowSearchParamDTO> pagingParamDTO);
+
+    /**
+     * 导出出入库流水Excel
+     * @param param
+     */
+    void exportExcel(InventoryDTO.ExportInOutStockTransFlowSearchParamDTO param, HttpServletResponse response);
 
 }
