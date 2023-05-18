@@ -105,6 +105,7 @@
 
     <select id="listSoDetailByMainIds" resultType="com.erp.model.oms.entity.SoDetailEntity">
         SELECT
+            sd.id,
             sd.main_id,
             sd.sku_id,
             sd.sku_no,
