@@ -335,7 +335,9 @@ public class SoInfoDTO implements Serializable {
 
 
         /**
-         * 类型
+         * 类型 来源
+         * http://172.16.100.11:3002/project/110/interface/api/13480
+         * type=BillType
          */
         @NotBlank(message = "单据类型不能为空", groups = {AddGroup.class})
         @StateEnumValue(clazz = BillTypeEnum.class, message = "单据类型有误", groups = {AddGroup.class})
@@ -603,7 +605,9 @@ public class SoInfoDTO implements Serializable {
         private String id;
 
         /**
-         * 类型
+         * 类型 来源
+         * http://172.16.100.11:3002/project/110/interface/api/13480
+         * type=BillType
          */
         @NotBlank(message = "单据类型不能为空")
         @StateEnumValue(clazz = BillTypeEnum.class, message = "单据类型有误")

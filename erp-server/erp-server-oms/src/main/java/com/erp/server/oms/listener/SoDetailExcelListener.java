@@ -32,7 +32,7 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
     /**
      * 成功的数据
      */
-    private List<SoDetailDTO.ExcelDTO> successList = new ArrayList<>();
+    private List<SoDetailDTO.SkuDTO> successList = new ArrayList<>();
     /**
      * 导入错误数据
      */
@@ -77,13 +77,13 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
             errorList.add(soDetailImportExcelDTO);
             return;
         }
-        SoDetailDTO.ExcelDTO addDTO = new SoDetailDTO.ExcelDTO();
-        //是否赠品
+        SoDetailDTO.SkuDTO addDTO = new SoDetailDTO.SkuDTO();
+        //是否补发
         String isReissue = soDetailImportExcelDTO.getIsReissue();
         addDTO.setIsReissue(isReissue.equals("是"));
         //是否赠品
         String isGift = soDetailImportExcelDTO.getIsGift();
-        addDTO.setIsClose(isGift.equals("是"));
+        addDTO.setIsGift(isGift.equals("是"));
 
         //是否关闭
         String isClose = soDetailImportExcelDTO.getIsClose();
@@ -102,11 +102,12 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
         if (StringUtils.isNotBlank(taxRateStr)) {
             taxRate = new BigDecimal(taxRateStr);
         }
+        //价格
+        String priceStr = soDetailImportExcelDTO.getPrice();
+        addDTO.setPrice(new BigDecimal(priceStr));
         addDTO.setTaxRate(taxRate);
         addDTO.setRemark(soDetailImportExcelDTO.getRemark());
         successList.add(addDTO);
-
-
     }
 
     @Override
@@ -120,7 +121,7 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
     }
 
 
-    public List<SoDetailDTO.ExcelDTO> getSuccessList() {
+    public List<SoDetailDTO.SkuDTO> getSuccessList() {
         return successList;
     }
 }

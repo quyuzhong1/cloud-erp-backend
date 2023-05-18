@@ -215,6 +215,15 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(TransferApplicationDTO.UpdateDTO dto) {
+
+        TransferApplicationEntity old = this.getById(dto.getId());
+        if (ObjectUtils.isEmpty(old)) {
+            throw new ServiceException(ApiError.ERROR_99043);
+        }
+        if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(old.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(old.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_1029);
+        }
+
         TransferApplicationEntity entity = new TransferApplicationEntity();
         BeanMapperUtils.copy(dto, entity);
         List<TransferApplicationDetailDTO.UpdateDTO> detailList = dto.getDetailList();
@@ -224,7 +233,6 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         log.info("调拨申请单修改，id=【{}】", dto.getId());
 
         //添加日志
-        TransferApplicationEntity old = this.getById(dto.getId());
         operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), entity.getId(), "", "");
         //更新主表数据
         this.updateById(entity);

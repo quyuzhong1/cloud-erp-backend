@@ -7,7 +7,9 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.CustomerDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.server.oms.service.CustomerInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -256,6 +258,16 @@ public class CustomerInfoController extends BaseController {
     public ApiResult<List<CustomerDTO.InfoDTO>> list() {
         List<CustomerDTO.InfoDTO> list = customerInfoService.listCustomer();
         return success(list);
+    }
+
+    /**
+     * 所有客户列表 没有任何限制
+     */
+    @GetMapping("/listAll")
+    public ApiResult<List<CustomerDTO.InfoDTO>> listAll() {
+        List<CustomerInfoEntity> list = customerInfoService.list();
+        List<CustomerDTO.InfoDTO> resultList=  BeanMapper.copyList(list,CustomerDTO.InfoDTO.class);
+        return success(resultList);
     }
 
     /**

@@ -17,8 +17,10 @@ import com.erp.server.wms.service.OperateLogService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,6 +43,7 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void add(List<MachineSubComponentsDTO.AddDTO> addList, String detailId) {
         if (CollectionUtils.isEmpty(addList)) {
             return;
@@ -54,6 +57,7 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void update(List<MachineSubComponentsDTO.UpdateDTO> updateList, String detailId) {
         if (CollectionUtils.isEmpty(updateList)) {
             return;
@@ -101,11 +105,19 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
      */
     private void doOpHandleDetails (List<MachineSubComponentsEntity> newList, String detailId, Boolean isUpdate) {
 
+        List<MachineSubComponentsEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+
         //SKU信息
         List<String> skuIds = newList.stream().map(MachineSubComponentsEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
+        }
+        //需要修改的数据
+        List<String> ids = newList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(MachineSubComponentsEntity::getId).collect(Collectors.toList());
+        List<MachineSubComponentsEntity> list = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(ids)) {
+            list = this.listByIds(ids);
         }
         for (MachineSubComponentsEntity detail:newList) {
             //单位
@@ -114,12 +126,20 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
             detail.setDetailId(detailId);
             //修改操作日志
             if (StringUtils.isNotBlank(detail.getId())) {
-                MachineSubComponentsEntity old = this.getById(detail.getId());
+                if (CollectionUtils.isEmpty(list)) {
+                    throw new ServiceException(ApiError.ERROR_99056);
+                }
+                MachineSubComponentsEntity old = list.stream().filter(obj -> obj.getId().equals(detail.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_98002);
+                    throw new ServiceException(ApiError.ERROR_99056);
                 }
                 operateLogService.addModuleOperateLogByObj(old,detail, ModuleTypeEnum.MACHINE_INFO.getCode(),detailId,"",String.format("【%s】",old.getSkuNo()));
             }
+        }
+        //添加操作日志
+        if (CollectionUtils.isNotEmpty(addList) && isUpdate) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(detailId, obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加了一个子件SKU【%s】", ModuleTypeEnum.MACHINE_INFO.getCode(), addPairList, "编辑操作");
         }
     }
 

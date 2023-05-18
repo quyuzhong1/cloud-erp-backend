@@ -124,5 +124,5 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @param response
      * @return com.erp.model.oms.dto.SoDetailDTO.ImportDTO
      */
-    SoDetailDTO.ImportDTO importSku(MultipartFile excelFile, HttpServletResponse response);
+    SoDetailDTO.ImportDTO importSku(MultipartFile excelFile, HttpServletResponse response,String warehouseId);
 }

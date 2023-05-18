@@ -17,6 +17,7 @@ import com.erp.server.wms.service.TransferApplicationDetailService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -42,6 +43,7 @@ public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<Trans
 
     
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void add(List<TransferApplicationDetailDTO.AddDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
@@ -55,6 +57,7 @@ public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<Trans
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void update(List<TransferApplicationDetailDTO.UpdateDTO> detailList, String mainId) {
         if (detailList == null) {
             detailList = new ArrayList<>();
@@ -111,8 +114,15 @@ public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<Trans
      */
     private void doOpHandleDetails (List<TransferApplicationDetailEntity> newList, String mainId, Boolean isUpdate) {
 
+        //需要新增的数据
         List<TransferApplicationDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
+        //需要修改的数据
+        List<String> ids = newList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(TransferApplicationDetailEntity::getId).collect(Collectors.toList());
+        List<TransferApplicationDetailEntity> list = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(ids)) {
+            list = this.listByIds(ids);
+        }
 
         //SKU信息
         List<String> skuIds = newList.stream().map(TransferApplicationDetailEntity::getSkuId).collect(Collectors.toList());
@@ -127,9 +137,12 @@ public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<Trans
             detail.setMainId(mainId);
             //修改操作日志
             if (StringUtils.isNotBlank(detail.getId())) {
-                TransferApplicationDetailEntity old = this.getById(detail.getId());
+                if (CollectionUtils.isEmpty(list)) {
+                    throw new ServiceException(ApiError.ERROR_99044);
+                }
+                TransferApplicationDetailEntity old = list.stream().filter(obj -> obj.getId().equals(detail.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_98002);
+                    throw new ServiceException(ApiError.ERROR_99044);
                 }
                 operateLogService.addModuleOperateLogByObj(old,detail, ModuleTypeEnum.TRANSFER_APPLICATION.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
             }

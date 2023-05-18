@@ -304,7 +304,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void back(ProcessManagementDTO.BackDTO dto) {
+    public ProcessManagementDTO.BackResultDTO back(ProcessManagementDTO.BackDTO dto) {
         // 查询流程数据
         ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
         // 审核人校验
@@ -349,6 +349,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 保存流程任务数据
             backUpdateApprove(managementTask.getTaskManagementId(), managementTask.getManagementId(), dto.getApproveType(),dto.getActivityId(), dto.getComment());
         }
+
+        return new ProcessManagementDTO.BackResultDTO(activityInstance.getProcessDefinitionId(), activityInstance.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName(), historicActivityInstance.getActivityId(), historicActivityInstance.getActivityName());
     }
 
     @Override
@@ -375,7 +377,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void transfer(List<ProcessManagementDTO.TransferDTO> dtoList) {
+    public Boolean transfer(List<ProcessManagementDTO.TransferDTO> dtoList) {
         // 查询当前执行任务
         for (ProcessManagementDTO.TransferDTO dto : dtoList) {
             ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getSourceUserId());
@@ -398,11 +400,12 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 更新流程任务数据
             processTaskManagementService.updateTransfer(taskId, dto.getTargetUserId(),findUserDTO.getUserName(), dto.getSourceUserId(), dto.getRemark());
         }
+        return Boolean.TRUE;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void revoke(ProcessManagementDTO.RevokeDTO dto) {
+    public ProcessManagementDTO.RevokeResultDTO revoke(ProcessManagementDTO.RevokeDTO dto) {
         // 查询流程实例
         ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
         if (null == managementTask) {
@@ -441,6 +444,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
         // 更新流程任务数据
         removeByProcessInstanceId(processInstance.getProcessInstanceId());
+        return new ProcessManagementDTO.RevokeResultDTO(processInstance.getProcessDefinitionId(), processInstance.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName());
     }
 
     @Override

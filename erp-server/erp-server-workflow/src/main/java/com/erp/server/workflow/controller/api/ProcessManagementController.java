@@ -60,9 +60,9 @@ public class ProcessManagementController extends BaseController {
      * @param dto
      */
     @PostMapping("/back")
-    public ApiResult backProcess(@RequestBody @Valid ProcessManagementDTO.BackDTO dto) {
-        processManagementService.back(dto);
-        return success();
+    public ApiResult<ProcessManagementDTO.BackResultDTO> backProcess(@RequestBody @Valid ProcessManagementDTO.BackDTO dto) {
+        ProcessManagementDTO.BackResultDTO resultDTO = processManagementService.back(dto);
+        return success(resultDTO);
     }
 
     /**
@@ -70,9 +70,9 @@ public class ProcessManagementController extends BaseController {
      *
      */
     @PostMapping("/revoke")
-    public ApiResult revokeProcess(@RequestBody @Valid ProcessManagementDTO.RevokeDTO dto) {
-        processManagementService.revoke(dto);
-        return success();
+    public ApiResult<ProcessManagementDTO.RevokeResultDTO> revokeProcess(@RequestBody @Valid ProcessManagementDTO.RevokeDTO dto) {
+        ProcessManagementDTO.RevokeResultDTO revokeResult = processManagementService.revoke(dto);
+        return success(revokeResult);
     }
 
 
@@ -80,9 +80,8 @@ public class ProcessManagementController extends BaseController {
      * 转发任务
      */
     @PostMapping("/transfer")
-    public ApiResult transferProcess(@RequestBody @Valid @NotNull List<ProcessManagementDTO.TransferDTO> dto) {
-        processManagementService.transfer(dto);
-        return success();
+    public ApiResult<Boolean> transferProcess(@RequestBody @Valid @NotNull List<ProcessManagementDTO.TransferDTO> dto) {
+        return success(processManagementService.transfer(dto));
     }
 
     /**

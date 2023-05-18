@@ -65,6 +65,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void update(List<MachineDetailDTO.UpdateDTO> detailList, String mainId) {
         if (detailList == null) {
             detailList = new ArrayList<>();
@@ -124,8 +125,15 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
      */
     private void doOpHandleDetails (List<MachineDetailEntity> newList, String mainId, Boolean isUpdate) {
 
+        //需要新增的数据
         List<MachineDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
+        //需要修改的数据
+        List<String> ids = newList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(MachineDetailEntity::getId).collect(Collectors.toList());
+        List<MachineDetailEntity> list = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(ids)) {
+            list = this.listByIds(ids);
+        }
 
         //SKU信息
         List<String> skuIds = newList.stream().map(MachineDetailEntity::getSkuId).collect(Collectors.toList());
@@ -133,6 +141,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
+
         for (MachineDetailEntity detail:newList) {
             //单位
             String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && StringUtils.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
@@ -140,9 +149,12 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
             detail.setMainId(mainId);
             //修改操作日志
             if (StringUtils.isNotBlank(detail.getId())) {
-                MachineDetailEntity old = this.getById(detail.getId());
+                if (CollectionUtils.isEmpty(list)) {
+                    throw new ServiceException(ApiError.ERROR_99053);
+                }
+                MachineDetailEntity old = list.stream().filter(obj -> obj.getId().equals(detail.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_98002);
+                    throw new ServiceException(ApiError.ERROR_99053);
                 }
                 operateLogService.addModuleOperateLogByObj(old,detail, ModuleTypeEnum.MACHINE_INFO.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
             }

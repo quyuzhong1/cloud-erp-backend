@@ -115,8 +115,15 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
      */
     private void doOpHandleDetails (List<TransferInfoDetailEntity> newList, String mainId, Boolean isUpdate) {
 
+        //需要新增的数据
         List<TransferInfoDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
+        //需要修改的数据
+        List<String> ids = newList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(TransferInfoDetailEntity::getId).collect(Collectors.toList());
+        List<TransferInfoDetailEntity> list = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(ids)) {
+            list = this.listByIds(ids);
+        }
 
         //SKU信息
         List<String> skuIds = newList.stream().map(TransferInfoDetailEntity::getSkuId).collect(Collectors.toList());
@@ -131,9 +138,12 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
             detail.setMainId(mainId);
             //修改操作日志
             if (StringUtils.isNotBlank(detail.getId())) {
-                TransferInfoDetailEntity old = this.getById(detail.getId());
+                if (CollectionUtils.isEmpty(list)) {
+                    throw new ServiceException(ApiError.ERROR_99048);
+                }
+                TransferInfoDetailEntity old = list.stream().filter(obj -> obj.getId().equals(detail.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_98002);
+                    throw new ServiceException(ApiError.ERROR_99048);
                 }
                 operateLogService.addModuleOperateLogByObj(old,detail, ModuleTypeEnum.TRANSFER_INFO.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
             }

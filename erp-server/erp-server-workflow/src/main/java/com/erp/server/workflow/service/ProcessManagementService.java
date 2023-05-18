@@ -68,7 +68,7 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * 退回流程
      * @param dto
      */
-    void back(ProcessManagementDTO.BackDTO dto);
+    ProcessManagementDTO.BackResultDTO back(ProcessManagementDTO.BackDTO dto);
 
     /**
      * 根据业务id获取任务
@@ -94,13 +94,13 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * 转办
      * @param dto
      */
-    void transfer(List<ProcessManagementDTO.TransferDTO> dto);
+    Boolean transfer(List<ProcessManagementDTO.TransferDTO> dto);
 
     /**
      * 流程撤销
      * @param dto
      */
-    void revoke(ProcessManagementDTO.RevokeDTO dto);
+    ProcessManagementDTO.RevokeResultDTO revoke(ProcessManagementDTO.RevokeDTO dto);
 
     /**
      * 根据流程实例id删除任务
