@@ -1,9 +1,12 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -13,6 +16,7 @@ import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.server.wms.mapper.SoDeliveryNoticeDetailMapper;
 import com.erp.server.wms.service.SoDeliveryNoticeDetailService;
+import com.erp.server.wms.service.WmsAttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -35,6 +39,9 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
     @Resource
     private SoInfoFeign soInfoFeign;
 
+    @Resource
+    private WmsAttachmentService wmsAttachmentService;
+
     @Override
     public Boolean add(SoDeliveryNoticeDTO.Add dto, String id) {
         List<String> detailIds = dto.getDetailList().stream().map(SoDeliveryNoticeDetailDTO.Add::getSourceDetailId).collect(Collectors.toList());
@@ -51,6 +58,8 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             if (soDetailEntity.getQty() < detailDto.getDeliveryQty() + deliveryQty) {
                 throw new ServiceException(ApiError.ERROR_92009);
             }
+            String idStr = IdWorker.getIdStr();
+            soDeliveryNoticeDetailEntity.setId(idStr);
             soDeliveryNoticeDetailEntity.setMainId(id);
             soDeliveryNoticeDetailEntity.setSkuId(soDetailEntity.getSkuId());
             soDeliveryNoticeDetailEntity.setSkuNo(soDetailEntity.getSkuNo());
@@ -58,6 +67,14 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             soDeliveryNoticeDetailEntity.setIsClose(detailDto.getIsClose());
             soDeliveryNoticeDetailEntity.setRemark(detailDto.getRemark());
             soDeliveryNoticeDetailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+
+            Class<SoDeliveryNoticeDetailEntity> detailEntityClass = SoDeliveryNoticeDetailEntity.class;
+            TableName tableName = detailEntityClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String type = tableName.value();
+            //保存附件
+            wmsAttachmentService.batchSave(detailDto.getAttachUrlList(), detailDto.getAttachNameList(), type, idStr);
+
             list.add(soDeliveryNoticeDetailEntity);
         }
         return this.saveBatch(list);

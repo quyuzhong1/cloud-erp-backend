@@ -20,6 +20,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.OmsAttachmentDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -32,6 +33,7 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
@@ -116,6 +118,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Resource
     private CustomerFeign customerFeign;
+
+    @Resource
+    private WmsAttachmentService wmsAttachmentService;
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
@@ -234,7 +239,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         soDeliveryNoticeEntity.setWarehouseId(dto.getWarehouseId());
         soDeliveryNoticeEntity.setWarehouseName(warehouseEntity.getName());
-        soDeliveryNoticeEntity.setDeliveryModeDict(dto.getDeliveryModeDict());
+        //soDeliveryNoticeEntity.setDeliveryModeDict(dto.getDeliveryModeDict());
         //soDeliveryNoticeEntity.setReceiverName(dto.getReceiverName());
         //soDeliveryNoticeEntity.setTelNumber(dto.getTelNumber());
         //soDeliveryNoticeEntity.setReceiveAddress(dto.getReceiveAddress());
@@ -274,7 +279,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         soDeliveryNoticeEntity.setWarehouseId(dto.getWarehouseId());
         soDeliveryNoticeEntity.setWarehouseName(warehouseEntity.getName());
-        soDeliveryNoticeEntity.setDeliveryModeDict(dto.getDeliveryModeDict());
+        //soDeliveryNoticeEntity.setDeliveryModeDict(dto.getDeliveryModeDict());
         //soDeliveryNoticeEntity.setReceiverName(dto.getReceiverName());
         //soDeliveryNoticeEntity.setTelNumber(dto.getTelNumber());
         //soDeliveryNoticeEntity.setReceiveAddress(dto.getReceiveAddress());
@@ -324,6 +329,16 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             //销售单信息
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(deliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             detailView.setSalesQty(soDetailEntity.getQty());
+
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(id));
+            List<String> attachmentUrlList = attachmentList.stream().
+                    map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).
+                    collect(Collectors.toList());
+            List<String> attachmentNameList = attachmentList.stream().
+                    map(WmsAttachmentDTO.UpdateDTO::getAttachName).
+                    collect(Collectors.toList());
+            detailView.setAttachUrlList(attachmentUrlList);
+            detailView.setAttachNameList(attachmentNameList);
             detailViewDTOS.add(detailView);
         }
         viewDTO.setDetailList(detailViewDTOS);

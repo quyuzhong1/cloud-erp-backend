@@ -246,23 +246,6 @@ public class SoDeliveryNoticeDTO {
          */
         private String warehouseId;
         /**
-         * 收货人
-         */
-        private String receiverName;
-        /**
-         * 联系电话
-         */
-        private String telNumber;
-        /**
-         * 交货方式 oms/common/enumDropDown?type=DeliveryMode
-         * 描述：deliverGoods（发货）selfExtraction（自提）
-         */
-        private String deliveryModeDict;
-        /**
-         * 收货地址
-         */
-        private String receiveAddress;
-        /**
          * 明细信息
          */
         private List<SoDeliveryNoticeDetailDTO.Add> detailList;
