@@ -167,4 +167,14 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return com.erp.model.oms.dto.SoInfoDTO.CustomerDTO
      */
     SoInfoDTO.CustomerDTO getSoCustomer(String id);
+
+    
+    /**
+     * 获取到合同信息
+     * @author yl
+     * @date 2023-05-18 14:12
+     * @param id
+     * @return com.erp.model.oms.dto.SoInfoDTO.ExportPdfDTO
+     */
+    SoInfoDTO.ExportPdfDTO exportSoContractPdf(String id);
 }

@@ -125,4 +125,14 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @return com.erp.model.oms.dto.SoDetailDTO.ImportDTO
      */
     SoDetailDTO.ImportDTO importSku(MultipartFile excelFile, HttpServletResponse response,String warehouseId);
+
+    
+    /**
+     * 获取sku 详情
+     * @author yl
+     * @date 2023-05-18 14:43
+     * @param skuId
+     * @return com.erp.model.oms.dto.SoDetailDTO.SkuDTO
+     */
+    SoDetailDTO.SkuDTO getSkuInfoBySkuId(String skuId,String warehouseId);
 }

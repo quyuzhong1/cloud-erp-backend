@@ -23,7 +23,6 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
-import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -527,7 +526,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             BigDecimal taxRate = item.getTaxRate();
             //单价
             BigDecimal price = item.getPrice();
-            item.setAmount(MathUtil.multiply(price,qty));
+            item.setAmount(MathUtil.multiply(price, qty));
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
@@ -539,7 +538,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 item.setMaxPrice(skuHistoryPrice.getMaxPrice());
                 item.setMinPrice(skuHistoryPrice.getMinPrice());
                 item.setAvgPrice(skuHistoryPrice.getAvgPrice());
-            }else{
+            } else {
                 item.setMaxPrice(price);
                 item.setMinPrice(price);
                 item.setAvgPrice(price);
@@ -558,6 +557,110 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         result.setErrorUrl(url);
 
+        return result;
+    }
+
+
+    /**
+     * 获取sku 详情
+     *
+     * @param skuId
+     * @return com.erp.model.oms.dto.SoDetailDTO.SkuDTO
+     * @author yl
+     * @date 2023-05-18 14:43
+     */
+    @Override
+    public SoDetailDTO.SkuDTO getSkuInfoBySkuId(String skuId, String warehouseId) {
+        SoDetailDTO.SkuDTO result = new SoDetailDTO.SkuDTO();
+        List<String> skuIdList = new ArrayList<>(1);
+        skuIdList.add(skuId);
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
+        SkuVO skuVO = skuList.get(0);
+        //sku的历史价格
+        List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = this.listSkuPriceHistory(skuIdList);
+        InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
+        paramDTO.setSkuIds(skuIdList);
+        paramDTO.setWarehouseId(warehouseId);
+        paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
+
+        String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
+        result.setProductName(skuName);
+        result.setSkuId(skuId);
+        result.setQty(0);
+        String unit = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getUnitName())).orElse("");
+        result.setProductName(skuName);
+        result.setUnit(unit);
+        result.setSkuNo(skuVO.getSkuNo());
+
+                //即时库存
+                Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+        result.setCurInventoryQty(curInventoryQty);
+        //销售数量
+        Integer qty = 0;
+        /**
+         * 缺货数量
+         * 当可用即时库存数量小于销售数量时，
+         * 缺货数量=销售数量-可用即时库存数量；
+         * 当可用即时库存数量大于销售数量时，缺货数量为0
+         */
+        Integer scarceQty = 0;
+
+        /**
+         * 已出库数量
+         * 新增时默认为0
+         * 编辑时根据关联出库单
+         * 总共已发货数量同步
+         *
+         */
+        Integer deliveryQty = 0;
+
+        /**
+         * 剩余数量
+         * 销售数量-已出库数量
+         */
+        Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
+        if (qty > curInventoryQty) {
+            scarceQty = qty - curInventoryQty;
+        }
+
+        result.setScarceQty(scarceQty);
+        result.setAvailableQty(getAvailableQty(curInventoryQty, qty));
+        result.setDeliveryQty(deliveryQty);
+        result.setWaitQty(waitQty);
+        //税率
+        BigDecimal taxRate = BigDecimal.ZERO;
+        //单价
+        BigDecimal price = BigDecimal.ZERO;
+        result.setAmount(MathUtil.multiply(price, qty));
+        //含税单价=销售单价*（税率+1）
+        BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
+        BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+        result.setTaxPrice(taxPrice);
+        result.setPrice(price);
+        result.setTaxRate(taxRate);
+        result.setIsGift(Boolean.FALSE);
+        result.setIsReissue(Boolean.FALSE);
+        result.setIsClose(Boolean.FALSE);
+        result.setRemark("");
+        //历史价格
+        SoDetailDTO.SkuHistoryPriceDTO skuHistoryPrice = skuPriceHistoryList.stream().
+                filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
+        if (skuHistoryPrice != null) {
+            result.setMaxPrice(skuHistoryPrice.getMaxPrice());
+            result.setMinPrice(skuHistoryPrice.getMinPrice());
+            result.setAvgPrice(skuHistoryPrice.getAvgPrice());
+        } else {
+            result.setMaxPrice(price);
+            result.setMinPrice(price);
+            result.setAvgPrice(price);
+        }
         return result;
     }
 
