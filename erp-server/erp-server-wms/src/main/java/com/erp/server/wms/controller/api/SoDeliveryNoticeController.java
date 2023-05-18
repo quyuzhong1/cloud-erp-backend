@@ -6,6 +6,7 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
@@ -290,7 +291,7 @@ public class SoDeliveryNoticeController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/generateSoDeliverySave")
-    public ApiResult generateSoDeliverySave(@RequestBody SoDeliveryNoticeDTO.ListGenerateSoDeliveryView dto) {
+    public ApiResult generateSoDeliverySave(@RequestBody ValidList<SoDeliveryNoticeDTO.GenerateSoDeliveryView> dto) {
         Boolean flag = soDeliveryNoticeService.generateSoDeliverySave(dto.getList());
         return flag == true ? success() : failure();
     }

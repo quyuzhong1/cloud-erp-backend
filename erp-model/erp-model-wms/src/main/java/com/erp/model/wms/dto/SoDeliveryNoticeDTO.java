@@ -462,15 +462,6 @@ public class SoDeliveryNoticeDTO {
     }
 
     /**
-     * 下推发货出库单列表集合
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ListGenerateSoDeliveryView {
-        private List<GenerateSoDeliveryView> list;
-    }
-
-    /**
      * 下推发货出库单列表
      */
     @Data
