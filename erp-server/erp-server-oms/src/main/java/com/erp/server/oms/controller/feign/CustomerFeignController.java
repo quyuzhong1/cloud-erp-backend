@@ -15,11 +15,12 @@ import java.util.List;
 public class CustomerFeignController {
     @Resource
     private CustomerInfoService customerInfoService;
+
     /**
-     * 根据主键id查询销售单主表信息
+     * 获取所有客户信息
      * @Author Luo_WG
-     * @Date 2023/5/15 18:18
-     * @return com.erp.model.oms.entity.SoInfoEntity
+     * @Date 2023/5/17 18:41
+     * @return java.util.List<com.erp.model.oms.entity.CustomerInfoEntity>
      **/
     @PostMapping("/listCustomer")
     public List<CustomerInfoEntity> listCustomer() {

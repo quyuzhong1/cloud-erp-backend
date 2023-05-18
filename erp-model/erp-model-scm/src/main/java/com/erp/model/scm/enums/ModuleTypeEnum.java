@@ -29,6 +29,7 @@ public enum ModuleTypeEnum {
     SO("18", "销售订单"),
     MACHINE_INFO("19", "加工单"),
     OTHER_INSTOCK("20", "其他入库单"),
+    SO_RETURN_RECEIVE("21", "退货签收单"),
 
     ;
 
