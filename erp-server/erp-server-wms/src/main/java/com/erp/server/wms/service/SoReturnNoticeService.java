@@ -155,7 +155,7 @@ public interface SoReturnNoticeService extends SuperService<SoReturnNoticeEntity
      * @param list
      * @return java.lang.Boolean
      **/
-    Boolean generateSoReturnNoticeSave(ValidList<SoReturnDTO.GenerateSoReturnNoticeView> list);
+    Boolean generateSoReturnNoticeSave(List<SoReturnDTO.GenerateSoReturnNoticeView> list);
 
     /**
      * 下推退货签收单-列表查询

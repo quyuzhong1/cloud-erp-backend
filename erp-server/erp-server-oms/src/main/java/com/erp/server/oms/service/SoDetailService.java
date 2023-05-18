@@ -3,6 +3,7 @@ package com.erp.server.oms.service;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -51,10 +52,10 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * 添加详情按钮-列表查询
      * @Author Luo_WG
      * @Date 2023/5/15 16:04
-     * @param id id
+     * @param dto dto
      * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.AddDetailView>
      **/
-    List<SoDetailDTO.AddDetailView> listAddDetailView(String id);
+    List<SoDetailDTO.AddDetailView> listAddDetailView(listAddDetailViewDTO dto);
 
     
     /**

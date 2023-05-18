@@ -2,6 +2,7 @@ package com.erp.server.oms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.oms.dto.SoDetailDTO;
+import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -23,10 +24,10 @@ public interface SoDetailMapper extends BaseMapper<SoDetailEntity> {
      * 添加详情按钮-列表查询
      * @Author Luo_WG
      * @Date 2023/5/15 16:05
-     * @param id id
+     * @param dto dto
      * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.AddDetailView>
      **/
-    List<SoDetailDTO.AddDetailView> listAddDetailView(@Param("id") String id);
+    List<SoDetailDTO.AddDetailView> listAddDetailView(listAddDetailViewDTO dto);
 
     /**
      * 根据sku id list 获取sku 的历史价格

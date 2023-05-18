@@ -13,6 +13,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import org.apache.commons.lang3.StringUtils;
@@ -318,14 +319,14 @@ public class SoInfoController extends BaseController {
     /**
      * 添加详情按钮-列表查询
      *
-     * @param id id
+     * @param dto dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoDetailDTO.AddDetailView>>
      * @Author Luo_WG
      * @Date 2023/5/16 18:43
      **/
     @PostMapping("/listAddDetailView")
-    public ApiResult<List<SoDetailDTO.AddDetailView>> listAddDetailView(@RequestParam("id") String id) {
-        List<SoDetailDTO.AddDetailView> addDetailViews = soDetailService.listAddDetailView(id);
+    public ApiResult<List<SoDetailDTO.AddDetailView>> listAddDetailView(@RequestBody listAddDetailViewDTO dto) {
+        List<SoDetailDTO.AddDetailView> addDetailViews = soDetailService.listAddDetailView(dto);
         return success(addDetailViews);
     }
 

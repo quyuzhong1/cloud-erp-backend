@@ -287,7 +287,7 @@ public class SoReturnNoticeController extends BaseController {
      **/
     @PostMapping(value = "/generateSoReturnNoticeSave")
     public ApiResult generateSoReturnNoticeSave(@RequestBody ValidList<SoReturnDTO.GenerateSoReturnNoticeView> validList) {
-        Boolean flag = soReturnNoticeService.generateSoReturnNoticeSave(validList);
+        Boolean flag = soReturnNoticeService.generateSoReturnNoticeSave(validList.getList());
         return flag == true ? success() : failure();
     }
 

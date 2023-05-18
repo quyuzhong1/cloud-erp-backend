@@ -9,6 +9,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
@@ -148,14 +149,14 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     }
 
     @Override
-    public List<SoDetailDTO.AddDetailView> listAddDetailView(String id) {
-        List<SoDetailDTO.AddDetailView> list = baseMapper.listAddDetailView(id);
+    public List<SoDetailDTO.AddDetailView> listAddDetailView(listAddDetailViewDTO dto) {
+        List<SoDetailDTO.AddDetailView> list = baseMapper.listAddDetailView(dto);
         List<String> detailIds = list.stream().map(SoDetailDTO.AddDetailView::getId).collect(Collectors.toList());
-        List<SoReturnDetailEntity> soReturnDetailEntities = soReturnDetailService.listDetailByMainId(id);
+        List<SoReturnDetailEntity> soReturnDetailEntities = soReturnDetailService.listDetailByMainId(dto.getId());
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySourceDetailId(detailIds);
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
         List<String> skuIdList = list.stream().map(SoDetailDTO.AddDetailView::getSkuId).distinct().collect(Collectors.toList());
-        SoInfoEntity soInfoEntity = soInfoService.getById(id);
+        SoInfoEntity soInfoEntity = soInfoService.getById(dto.getId());
         InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
         paramDTO.setSkuIds(skuIdList);
         paramDTO.setWarehouseId(soInfoEntity.getWarehouseId());

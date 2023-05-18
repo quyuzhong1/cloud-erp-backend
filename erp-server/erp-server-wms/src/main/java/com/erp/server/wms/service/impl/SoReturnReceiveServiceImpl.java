@@ -20,6 +20,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -94,6 +95,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Resource
     private WorkflowFeign workflowFeign;
+
+    @Resource
+    private SoReturnNoticeService soReturnNoticeService;
 
     @Override
     public PagingVO<SoReturnReceiveDTO.PagingView> paging(PagingDTO<SoReturnReceiveDTO.PagingParam> pagingParamDTO) {
@@ -512,7 +516,43 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Override
     public Boolean generateSoReturnReceiveSave(List<SoReturnNoticeDTO.GenerateSoReturnReceiveView> list) {
-        return null;
+        Boolean flag = Boolean.TRUE;
+        List<String> soReturnIdList = list.stream().map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getMainId).distinct().collect(Collectors.toList());
+        List<String> soDetailIdList = list.stream().map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getSourceDetailId).distinct().collect(Collectors.toList());
+        long count = soReturnNoticeService.listByIds(soReturnIdList).stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_92021);
+        }
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(soDetailIdList);
+        if (CollectionUtils.isEmpty(soDetailEntities)) {
+            throw new ServiceException(ApiError.ERROR_92015);
+        }
+
+        for (String id : soReturnIdList) {
+            List<SoReturnNoticeDTO.GenerateSoReturnReceiveView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
+            String sourceId = viewList.stream().filter(req -> req.getMainId().equals(id)).map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getSourceId).distinct().findFirst().orElse("");
+            SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(sourceId);
+            SoReturnReceiveDTO.Add dto = new SoReturnReceiveDTO.Add();
+            dto.setSourceId(id);
+            dto.setInventoryOrgId(soInfoEntity.getWarehouseOrgId());
+            dto.setInventoryOrgId(soInfoEntity.getWarehouseOrgId());
+            List<SoReturnReceiveDetailDTO.Add> detailList = dto.getDetailList();
+            for (SoReturnNoticeDTO.GenerateSoReturnReceiveView view : viewList) {
+                SoReturnReceiveDetailDTO.Add detailAddDTO = new SoReturnReceiveDetailDTO.Add();
+                detailAddDTO.setReturnQty(view.getReturnQty());
+                detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
+                detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
+                detailAddDTO.setRemark(view.getRemark());
+                detailAddDTO.setSourceDetailId(view.getId());
+                detailList.add(detailAddDTO);
+            }
+            dto.setDetailList(detailList);
+            String noticeId = this.add(dto);
+            if (StringUtils.isBlank(noticeId)) {
+                flag = Boolean.FALSE;
+            }
+        }
+        return flag;
     }
 
     @Override

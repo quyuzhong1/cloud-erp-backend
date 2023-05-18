@@ -511,8 +511,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     }
 
     @Override
-    public Boolean generateSoReturnNoticeSave(ValidList<SoReturnDTO.GenerateSoReturnNoticeView> validList) {
-        List<SoReturnDTO.GenerateSoReturnNoticeView> list = validList.getList();
+    public Boolean generateSoReturnNoticeSave(List<SoReturnDTO.GenerateSoReturnNoticeView> list) {
         Boolean flag = Boolean.TRUE;
         List<String> soReturnIdList = list.stream().map(SoReturnDTO.GenerateSoReturnNoticeView::getMainId).distinct().collect(Collectors.toList());
         List<String> soDetailIdList = list.stream().map(SoReturnDTO.GenerateSoReturnNoticeView::getSourceDetailId).distinct().collect(Collectors.toList());
