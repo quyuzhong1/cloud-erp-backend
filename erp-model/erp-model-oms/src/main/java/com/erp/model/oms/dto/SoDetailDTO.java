@@ -706,6 +706,9 @@ public class SoDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class ExportPdfDTO {
 
+
+        private String skuId;
+
         /**
          * 物料编码
          */
@@ -754,7 +757,7 @@ public class SoDetailDTO implements Serializable {
 
 
         /**
-         * 合计
+         * 金额
          */
         private BigDecimal amount;
     }

@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.convert.Convert;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -22,6 +23,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.enums.AddressTypeEnum;
@@ -41,10 +43,7 @@ import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.mapper.SoInfoMapper;
-import com.erp.server.oms.service.CustomerInfoService;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.SoDetailService;
-import com.erp.server.oms.service.SoInfoService;
+import com.erp.server.oms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -55,6 +54,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -87,6 +87,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private CustomerInfoService customerInfoService;
+
+    @Resource
+    private CustomerAddressService customerAddressService;
 
     @Resource
     private SoOutstockFeign soOutstockFeign;
@@ -929,6 +932,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (customerInfo != null) {
             customerName = customerInfo.getName();
         }
+        //收货地址id
+        String receiverAddressId = customer.getReceiverAddressId();
+
+        String receiverAddressName = "";
+        if (StringUtils.isNotBlank(receiverAddressId)) {
+            CustomerAddressEntity addressEntity = customerAddressService.getById(receiverAddressId);
+            if (addressEntity != null) {
+                receiverAddressName = addressEntity.getAddress();
+            }
+        }
+
+        customer.setReceiverAddress(receiverAddressName);
         customer.setCustomerName(customerName);
         String deliveryMode = customer.getDeliveryMode();
         String deliveryModeName = DeliveryModeEnum.getName(deliveryMode);
@@ -967,7 +982,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String approveStatus = customer.getApproveStatus().getStatus();
         String approve = ApproveStatusEnum.APPROVE.getStatus();
         String approveIng = ApproveStatusEnum.APPROVE_ING.getStatus();
-        if (!approve.equals(approveStatus) || !approveIng.equals(approveStatus)) {
+        List<String> statusList = Arrays.asList(approve, approveIng);
+        if (!statusList.contains(approveStatus)) {
             throw new ServiceException(ApiError.ERROR_92022);
         }
         result.setCode(customer.getCode());
@@ -984,6 +1000,24 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         result.setCompany(company);
         result.setCompanyTaxpayerId(companyTaxpayerId);
         result.setCompanyAddress(companyAddress);
+        result.setSellerName(customer.getSellerName());
+        String sellerId = customer.getSellerId();
+        String sellerTelNumber = "";
+        if (StringUtils.isNotBlank(sellerId)) {
+            FindUserDTO userDTO = sysUserFeign.getUserByUserId(sellerId);
+            if (userDTO != null) {
+                sellerTelNumber = userDTO.getMobile();
+            }
+        }
+        result.setSellerTelNumber(sellerTelNumber);
+        List<SoDetailDTO.ExportPdfDTO> details = soDetailService.listExportPdf(id);
+        Integer totalQty = details.stream().mapToInt(SoDetailDTO.ExportPdfDTO::getQty).sum();
+        result.setTotalQty(totalQty);
+        BigDecimal totalAmount = details.stream().map(SoDetailDTO.ExportPdfDTO::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        result.setTotalAmount(totalAmount);
+        result.setDetails(details);
+        String  chineseAmount=  Convert.digitToChinese(totalAmount);
+        result.setChineseAmount(chineseAmount);
         return result;
     }
 

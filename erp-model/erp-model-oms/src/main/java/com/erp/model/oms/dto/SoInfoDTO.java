@@ -849,6 +849,8 @@ public class SoInfoDTO implements Serializable {
          */
         private String sellerName;
 
+        private String sellerId;
+
 
     }
 
@@ -894,6 +896,11 @@ public class SoInfoDTO implements Serializable {
          * 合计
          */
         private BigDecimal totalAmount;
+
+        /**
+         * 大写
+         */
+        private String chineseAmount;
 
         /**
          * 合计数据

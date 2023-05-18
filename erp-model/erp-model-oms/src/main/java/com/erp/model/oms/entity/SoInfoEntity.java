@@ -160,7 +160,7 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
      * 收货地址
      */
     @TableField("receiver_address_id")
-    private String receiveAddressId;
+    private String receiverAddressId;
 
 
 

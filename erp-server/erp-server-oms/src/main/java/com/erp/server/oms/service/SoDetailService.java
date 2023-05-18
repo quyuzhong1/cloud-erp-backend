@@ -135,4 +135,14 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @return com.erp.model.oms.dto.SoDetailDTO.SkuDTO
      */
     SoDetailDTO.SkuDTO getSkuInfoBySkuId(String skuId,String warehouseId);
+
+    
+    /**
+     * 根据主表id 获取合同信息
+     * @author yl
+     * @date 2023-05-18 15:53
+     * @param mainId
+     * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.ExportPdfDTO>
+     */
+    List<SoDetailDTO.ExportPdfDTO> listExportPdf(String mainId);
 }

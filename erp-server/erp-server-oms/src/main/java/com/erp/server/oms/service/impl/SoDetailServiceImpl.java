@@ -598,8 +598,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         result.setUnit(unit);
         result.setSkuNo(skuVO.getSkuNo());
 
-                //即时库存
-                Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+        //即时库存
+        Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
         result.setCurInventoryQty(curInventoryQty);
         //销售数量
@@ -662,6 +662,58 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             result.setAvgPrice(price);
         }
         return result;
+    }
+
+
+    /**
+     * 根据主表id 获取合同信息
+     *
+     * @param mainId
+     * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.ExportPdfDTO>
+     * @author yl
+     * @date 2023-05-18 15:53
+     */
+    @Override
+    public List<SoDetailDTO.ExportPdfDTO> listExportPdf(String mainId) {
+        List<SoDetailEntity> dbList = this.listBaseByMainId(mainId);
+        if (CollectionUtils.isEmpty(dbList)) {
+            return Collections.emptyList();
+        }
+        List<String> skuIdList = dbList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
+
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+
+        List<SoDetailDTO.ExportPdfDTO> resultList = new ArrayList<>(dbList.size());
+        for (SoDetailEntity item : dbList) {
+            SoDetailDTO.ExportPdfDTO result = new SoDetailDTO.ExportPdfDTO();
+            result.setCurrency(item.getCurrency());
+            result.setCurrencySymbol(item.getCurrencySymbol());
+            result.setSkuNo(item.getSkuNo());
+            String skuId = item.getSkuId();
+            result.setSkuId(skuId);
+            result.setQty(item.getQty());
+            result.setAmount(item.getAmount());
+            BigDecimal taxRate = item.getTaxRate();
+            result.setTaxRate(taxRate);
+            //单价
+            BigDecimal price = item.getPrice();
+            //含税单价=销售单价*（税率+1）
+            BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
+            result.setTaxPrice(MathUtil.multiply(price,multiplyTax));
+            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                    findFirst().orElse(null);
+            result.setDeclareModel("");
+            if (skuVO != null) {
+                result.setProductName(skuVO.getSkuName());
+                result.setUnit(skuVO.getUnitName());
+            } else {
+                result.setProductName("");
+                result.setUnit("");
+
+            }
+            resultList.add(result);
+        }
+        return resultList;
     }
 
 
