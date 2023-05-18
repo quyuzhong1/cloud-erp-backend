@@ -10,12 +10,16 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -35,10 +39,9 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.SoReturnReceiveMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.SoReturnReceiveDetailService;
-import com.erp.server.wms.service.SoReturnReceiveService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -47,8 +50,11 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -79,6 +85,15 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private CommonService commonService;
+
+    @Resource
+    private QcInfoService qcInfoService;
+
+    @Resource
+    private WorkflowFeign workflowFeign;
 
     @Override
     public PagingVO<SoReturnReceiveDTO.PagingView> paging(PagingDTO<SoReturnReceiveDTO.PagingParam> pagingParamDTO) {
@@ -299,42 +314,200 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Override
     public Boolean addAndSubmit(SoReturnReceiveDTO.Add dto) {
-        return null;
+        String id = this.add(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        return this.submit(Arrays.asList(id));
     }
 
     @Override
     public Boolean updateAndSubmit(SoReturnReceiveDTO.Update dto) {
-        return null;
+        Boolean update = this.update(dto);
+        if (update) {
+            throw new ServiceException(ApiError.ERROR_1020);
+        }
+        return this.submit(Arrays.asList(dto.getId()));
     }
 
     @Override
     public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
-        return null;
+        List<String> ids = baseApproveParamDTO.getIds();
+        List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //判断是否是审核中的状态
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
+        ).count();
+
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
+        //TODO 待加审核流程
+        if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
+            LoginUser userInfo = commonService.getUserInfo();
+            //审核通过
+            lambdaUpdate().set(SoReturnReceiveEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+                    .set(SoReturnReceiveEntity::getApproveUserId, userInfo.getUid())
+                    .set(SoReturnReceiveEntity::getApproveUserName, userInfo.getUserName())
+                    .set(SoReturnReceiveEntity::getApproveTime, LocalDateTime.now())
+                    .in(SoReturnReceiveEntity::getId, ids)
+                    .update();
+        } else {
+            //审核不通过
+            lambdaUpdate().set(SoReturnReceiveEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
+                    .in(SoReturnReceiveEntity::getId, ids)
+                    .update();
+        }
+        //操作日志
+        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个销售退货通知单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), pairList, "审核操作");
+        return Boolean.TRUE;
     }
 
     @Override
     public Boolean disApprove(List<String> ids) {
-        return null;
+        List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //已审核支持反审核
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+        ).count();
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_99003);
+        }
+        //TODO 待加审核流程
+
+        //下推质检单不能反审核
+        List<QcInfoEntity> qcBySourceId = qcInfoService.listQCBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(qcBySourceId)) {
+            throw new ServiceException(ApiError.ERROR_99042);
+        }
+
+        //修改状态为待提交
+        lambdaUpdate().set(SoReturnReceiveEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .in(SoReturnReceiveEntity::getId, ids)
+                .update();
+
+        //操作日志
+        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("反审核了一个销售退货通知单【%s】", ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), pairList, "反审核操作");
+        return Boolean.TRUE;
     }
 
     @Override
     public Boolean cancelProcess(List<String> ids) {
-        return null;
+        List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //审核中可以撤销
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
+        ).count();
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        //撤销现有流程
+        workflowFeign.cancelProcess(ids);
+        //修改状态为待提交
+        lambdaUpdate().set(SoReturnReceiveEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .in(SoReturnReceiveEntity::getId, ids)
+                .update();
+        //操作日志
+        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("退货签收单【%s】取消流程", ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), pairList, "取消流程操作");
+
+        return Boolean.TRUE;
     }
 
     @Override
     public Boolean invalid(List<String> ids, String remark) {
-        return null;
+        List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //审核不通过 待提交可以作废
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && (entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
+        ).count();
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_98005);
+        }
+        //修改状态为待提交
+        lambdaUpdate().set(SoReturnReceiveEntity::getInvalidStatus, Boolean.TRUE)
+                .set(SoReturnReceiveEntity::getInvalidRemark, remark)
+                .in(SoReturnReceiveEntity::getId, ids)
+                .update();
+        //操作日志
+        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("作废了一个退货签收单【%s】，作废原因：".concat(remark), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), pairList, "作废操作");
+        return Boolean.TRUE;
     }
 
     @Override
     public Boolean delete(List<String> ids) {
-        return null;
+        List<SoReturnReceiveEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //待提交支持删除
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+        ).count();
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        //删除详情表
+        soReturnReceiveDetailService.delete(ids);
+        boolean flag = this.removeByIds(ids);
+        //删除主表
+        return flag;
     }
 
     @Override
     public Boolean exportExcel(SoReturnReceiveDTO.PagingParam dto, HttpServletResponse response) {
-        return null;
+        List<SoReturnReceiveDTO.PagingView> pagingViews = baseMapper.soReturnReceiveExportExcel(dto);
+        //获取sku的id集合
+        List<String> skuIdList = pagingViews.stream().map(SoReturnReceiveDTO.PagingView::getSkuId).collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        //获取界面传过来的采购单详情表id集合
+        List<String> orderDetailIds = pagingViews.stream().map(SoReturnReceiveDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
+        //获取销售单详情信息
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
+        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        for (SoReturnReceiveDTO.PagingView pagingView : pagingViews) {
+            pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
+            pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
+            pagingView.setReturnTypeDictName(ReturnTypeEnum.getName(pagingView.getReturnTypeDict()));
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(pagingView.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95107);
+            }
+            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(pagingView.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            pagingView.setProductName(productDetailEntity.getName());
+            pagingView.setSalesQty(soDetailEntity.getQty());
+            CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+            pagingView.setCustomerName(customerInfoEntity.getName());
+        }
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/soReturnReceiveExport.xlsx";
+        String name = "销售退货签收单";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(pagingViews, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return Boolean.TRUE;
     }
 
     @Override

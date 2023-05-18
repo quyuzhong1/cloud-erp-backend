@@ -201,4 +201,14 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @return java.lang.Boolean
      **/
     List<QcInfoEntity> listQCBySourceId(String sourceId);
+
+
+    /**
+     * 根据来源ids查询质检单
+     * @Author Luo_WG
+     * @Date 2023/5/10 18:12
+     * @param sourceIds
+     * @return java.lang.Boolean
+     **/
+    List<QcInfoEntity> listQCBySourceIds(List<String> sourceIds);
 }

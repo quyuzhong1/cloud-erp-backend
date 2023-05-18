@@ -497,7 +497,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             pagingView.setDeliveryQty(actualQty);
         }
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/SoReturnNoticeExport.xlsx";
+        String excelPath = "excel/soReturnNoticeExport.xlsx";
         String name = "销售退货通知单";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);

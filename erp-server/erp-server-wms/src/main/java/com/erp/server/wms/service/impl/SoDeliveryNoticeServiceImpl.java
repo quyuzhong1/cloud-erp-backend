@@ -552,7 +552,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             pagingView.setCustomerName(customerInfoEntity.getName());
         }
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/SoDeliveryNoticeExport.xlsx";
+        String excelPath = "excel/soDeliveryNoticeExport.xlsx";
         String name = "销售发货通知单";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);

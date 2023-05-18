@@ -1351,7 +1351,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * 根据来源id查询质检单
      * @Author Luo_WG
      * @Date 2023/5/10 18:12
-     * @param id
+     * @param sourceId sourceId
      * @return java.lang.Boolean
      **/
     @Override
@@ -1359,6 +1359,17 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         return lambdaQuery().eq(QcInfoEntity::getSourceId, sourceId).list();
     }
 
+    /**
+     * 根据来源ids查询质检单
+     * @Author Luo_WG
+     * @Date 2023/5/10 18:12
+     * @param sourceIds
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public List<QcInfoEntity> listQCBySourceIds(List<String> sourceIds) {
+        return lambdaQuery().in(QcInfoEntity::getSourceId, sourceIds).list();
+    }
     /**
      * 批量完成
      * 质检数量

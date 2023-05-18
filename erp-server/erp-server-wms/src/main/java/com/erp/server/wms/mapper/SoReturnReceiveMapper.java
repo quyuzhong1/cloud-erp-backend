@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * <p>
  *  Mapper 接口
@@ -36,4 +38,13 @@ public interface SoReturnReceiveMapper extends BaseMapper<SoReturnReceiveEntity>
      * @return java.lang.Integer
      **/
     Integer listCount(@Param("params") SoReturnReceiveDTO.PagingParam pagingParam);
+
+    /**
+     * 导出查询
+     * @Author Luo_WG
+     * @Date 2023/5/18 9:52
+     * @param dto dto
+     * @return java.util.List<com.erp.model.wms.dto.SoReturnReceiveDTO.PagingView>
+     **/
+    List<SoReturnReceiveDTO.PagingView> soReturnReceiveExportExcel(@Param("params") SoReturnReceiveDTO.PagingParam dto);
 }
