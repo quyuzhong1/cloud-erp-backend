@@ -10,7 +10,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 
 /**
  * 销售管理-销售订单
@@ -29,10 +28,10 @@ public class SoDetailController extends BaseController {
     /**
      * 根据skuId 获取产品明细
      */
-    @GetMapping("/listSkuInfoBySkuId")
-    public ApiResult<List<SoDetailDTO.SkuDTO>> listSkuInfoBySkuId(@RequestParam("skuId") String skuId) {
-
-        return success();
+    @GetMapping("/getSkuInfoBySkuId")
+    public ApiResult<SoDetailDTO.SkuDTO> getSkuInfoBySkuId(@RequestParam("skuId") String skuId,@RequestParam("warehouseId") String warehouseId) {
+        SoDetailDTO.SkuDTO skuDTO = soDetailService.getSkuInfoBySkuId(skuId,warehouseId);
+        return success(skuDTO);
     }
 
 
@@ -40,8 +39,8 @@ public class SoDetailController extends BaseController {
      * 销售订单 产品信息导入
      */
     @PostMapping("/import")
-    public ApiResult<SoDetailDTO.ImportDTO> importSku(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "warehouseId") String  warehouseId,HttpServletResponse response) {
-        SoDetailDTO.ImportDTO result = soDetailService.importSku(excelFile,response,warehouseId);
+    public ApiResult<SoDetailDTO.ImportDTO> importSku(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "warehouseId") String warehouseId, HttpServletResponse response) {
+        SoDetailDTO.ImportDTO result = soDetailService.importSku(excelFile, response, warehouseId);
         return success(result);
     }
 

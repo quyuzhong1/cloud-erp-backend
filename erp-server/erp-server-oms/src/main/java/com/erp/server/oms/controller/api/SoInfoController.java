@@ -93,7 +93,7 @@ public class SoInfoController extends BaseController {
     @GetMapping("/list")
     public ApiResult<List<BaseIdDTO.CodeDTO>> list() {
         List<BaseIdDTO.CodeDTO> resultList = soInfoService.listSo();
-        return  success(resultList);
+        return success(resultList);
     }
 
     /**
@@ -103,9 +103,9 @@ public class SoInfoController extends BaseController {
      * @return
      */
     @GetMapping("/soCustomer")
-    public ApiResult<SoInfoDTO.CustomerDTO> getSoCustomer(@RequestParam("id")String id) {
+    public ApiResult<SoInfoDTO.CustomerDTO> getSoCustomer(@RequestParam("id") String id) {
         SoInfoDTO.CustomerDTO result = soInfoService.getSoCustomer(id);
-        return  success(result);
+        return success(result);
     }
 
     /**
@@ -301,7 +301,7 @@ public class SoInfoController extends BaseController {
             serviceClass = SoInfoService.class,
             keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        Boolean result = soInfoService.invalid(dto.getIds(),dto.getRemark());
+        Boolean result = soInfoService.invalid(dto.getIds(), dto.getRemark());
         return result ? success() : failure();
     }
 
@@ -328,6 +328,24 @@ public class SoInfoController extends BaseController {
     public ApiResult<List<SoDetailDTO.AddDetailView>> listAddDetailView(@RequestBody listAddDetailViewDTO dto) {
         List<SoDetailDTO.AddDetailView> addDetailViews = soDetailService.listAddDetailView(dto);
         return success(addDetailViews);
+    }
+
+    /**
+     * 导出销售订单合同PDF
+     *
+     * @return
+     * @author yl
+     * @date 2023-05-18 12:01
+     */
+    @GetMapping("/exportSoContractPdf")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:exportSoContractPdf",
+            serviceClass = SoInfoService.class,
+            keyIdName = "id")
+    public ApiResult<SoInfoDTO.ExportPdfDTO> exportSoContractPdf(@RequestParam("id") String id) {
+        SoInfoDTO.ExportPdfDTO result = soInfoService.exportSoContractPdf(id);
+        return success(result);
     }
 
 
