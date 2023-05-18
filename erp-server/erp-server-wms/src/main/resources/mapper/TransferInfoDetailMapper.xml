@@ -18,8 +18,28 @@
         <result column="sku_no" property="skuNo" />
         <result column="qty" property="qty" />
         <result column="unit" property="unit" />
-        <result column="cur_inventory_qty" property="curInventoryQty" />
         <result column="remark" property="remark" />
     </resultMap>
+
+    <select id="listSourceDetailIds" resultType="com.erp.model.wms.entity.TransferInfoDetailEntity">
+        select
+            tid.main_id,
+            tid.sku_id,
+            tid.sku_no,
+            tid.qty,
+            tid.unit,
+            tid.in_warehouse_location,
+            tid.out_warehouse_location,
+            tid.remark,
+            tid.source_detail_id
+        from transfer_info ti
+        inner join transfer_info_detail tid on ti.id = tid.main_id and tid.is_deleted = false
+        <where>
+            ti.is_deleted = false and ti.invalid_status = false and tid.source_detail_id in
+            <foreach collection="sourceDetailIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </where>
+    </select>
 
 </mapper>

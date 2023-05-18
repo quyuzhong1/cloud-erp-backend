@@ -21,6 +21,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Override
     public List<TransferOutEntity> listBySourceIds(List<String> ids) {
-        return lambdaQuery().in(TransferOutEntity::getSourceId,ids).list();
+        return lambdaQuery()
+                .in(TransferOutEntity::getSourceId,ids)
+                .eq(TransferOutEntity::getInvalidStatus,Boolean.FALSE)
+                .list();
     }
 }

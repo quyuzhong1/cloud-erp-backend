@@ -36,7 +36,7 @@ public class SoDetailImportExcelDTO {
     @ColumnWidth(20)
     @ExcelProperty(value = "销售数量", index = 1)
     @FieldValid(fieldName = "销售数量", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.NUMBER)
-    private Integer qty;
+    private String qty;
 
 
     /**
@@ -62,7 +62,7 @@ public class SoDetailImportExcelDTO {
      */
     @ColumnWidth(10)
     @ExcelProperty(value = "是否赠品", index = 4)
-    @FieldValid(fieldName = "是否赠品",fieldValues = "是,否")
+    @FieldValid(fieldName = "是否赠品",isNotBlank = true,fieldValues = "是,否")
     private String isGift;
 
     /**
@@ -70,8 +70,36 @@ public class SoDetailImportExcelDTO {
      */
     @ColumnWidth(10)
     @ExcelProperty(value = "是否补发", index = 5)
-    @FieldValid(fieldName = "是否补发",fieldValues = "是,否")
+    @FieldValid(fieldName = "是否补发",isNotBlank = true,fieldValues = "是,否")
     private String isReissue;
+
+    /**
+     * 是否补发
+     */
+    @ColumnWidth(10)
+    @ExcelProperty(value = "是否关闭", index = 6)
+    @FieldValid(fieldName = "是否关闭",fieldValues = "是,否, ")
+    private String isClose;
+
+
+
+    /**
+     * 备注
+     */
+    @ColumnWidth(40)
+    @ExcelProperty(value = "备注", index = 7)
+    @FieldValid(fieldName = "备注",maxLength=200)
+    private String remark;
+
+
+
+    /**
+     * 错误信息
+     */
+    @ColumnWidth(100)
+    @ExcelProperty(value = "错误数据", index = 8)
+    private String errorMsg;
+
 
 
 
