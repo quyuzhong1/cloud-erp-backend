@@ -26,6 +26,7 @@ import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -235,9 +236,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
         if (ObjectUtil.isNotEmpty(dto.getCarrierId())) {
             //获取采购单供应商信息
-            PurchaseOrderSupplierEntity supplierEntity = scmTaskFeign.getOrderSupplierByOrderId(dto.getCarrierId());
+            SupplierEntity supplierById = scmTaskFeign.getSupplierById(dto.getCarrierId());
             soDeliveryNoticeEntity.setCarrierId(dto.getCarrierId());
-            soDeliveryNoticeEntity.setCarrierName(supplierEntity.getSupplierName());
+            soDeliveryNoticeEntity.setCarrierName(supplierById.getName());
         }
         soDeliveryNoticeEntity.setWarehouseId(dto.getWarehouseId());
         soDeliveryNoticeEntity.setWarehouseName(warehouseEntity.getName());
@@ -276,9 +277,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeEntity.setDeliveryOrgName(sysAccountingCompanyEntity.getCompanyName());
         if (ObjectUtil.isNotEmpty(dto.getCarrierId())) {
             //获取采购单供应商信息
-            PurchaseOrderSupplierEntity supplierEntity = scmTaskFeign.getOrderSupplierByOrderId(dto.getCarrierId());
+            SupplierEntity supplierById = scmTaskFeign.getSupplierById(dto.getCarrierId());
             soDeliveryNoticeEntity.setCarrierId(dto.getCarrierId());
-            soDeliveryNoticeEntity.setCarrierName(supplierEntity.getSupplierName());
+            soDeliveryNoticeEntity.setCarrierName(supplierById.getName());
         }
         soDeliveryNoticeEntity.setWarehouseId(dto.getWarehouseId());
         soDeliveryNoticeEntity.setWarehouseName(warehouseEntity.getName());
