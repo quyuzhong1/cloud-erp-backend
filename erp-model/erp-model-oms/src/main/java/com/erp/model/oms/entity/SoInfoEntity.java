@@ -2,7 +2,7 @@ package com.erp.model.oms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BillApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
 import lombok.Getter;
@@ -37,7 +37,7 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
      * 审核状态
      */
     @TableField("approve_status")
-    private ApproveStatusEnum approveStatus;
+    private BillApproveStatusEnum approveStatus;
 
     /**
      * 订单类型
