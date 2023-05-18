@@ -268,6 +268,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             detailView.setDeliveryQty(actualQty);
             detailView.setUnDeliveryQty(soDetailEntity.getQty() - actualQty);
             detailView.setSalesAmount(soDetailEntity.getAmount());
+            detailView.setCurrency(soDetailEntity.getCurrency());
+            detailView.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
             detailViewDTOS.add(detailView);
         }
         viewDTO.setDetailList(detailViewDTOS);

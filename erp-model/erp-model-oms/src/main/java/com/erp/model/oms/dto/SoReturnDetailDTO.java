@@ -128,6 +128,14 @@ public class SoReturnDetailDTO {
          */
         private BigDecimal salesAmount;
         /**
+         * 币别
+         */
+        private String currency;
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
          * 退货类型
          */
         private String returnType;
