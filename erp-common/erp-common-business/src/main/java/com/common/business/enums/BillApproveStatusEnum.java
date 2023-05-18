@@ -12,7 +12,8 @@ import java.util.Arrays;
  * @description: TODO
  * @date 2023/3/15 17:28
  */
-public enum ApproveStatusEnum {
+public enum BillApproveStatusEnum {
+    DRAFT("draft", "暂存"),
     WAIT_SUBMIT("waitSubmit", "待提交"),
     APPROVE_ING("approveIng", "审核中"),
     REJECT("reject", "审核不通过"),
@@ -23,7 +24,7 @@ public enum ApproveStatusEnum {
     private String status;
     private String name;
 
-    ApproveStatusEnum(String status, String name) {
+    BillApproveStatusEnum(String status, String name) {
         this.status = status;
         this.name = name;
     }
@@ -38,7 +39,7 @@ public enum ApproveStatusEnum {
 
     public static String getName(String state) {
         if (StringUtils.isNotBlank(state)) {
-            for (ApproveStatusEnum item : ApproveStatusEnum.values()) {
+            for (BillApproveStatusEnum item : BillApproveStatusEnum.values()) {
                 if (state.equals(item.getStatus())) {
                     return item.getName();
                 }
@@ -47,7 +48,7 @@ public enum ApproveStatusEnum {
         return "";
     }
 
-    public static ApproveStatusEnum getByStatus(String status){
+    public static BillApproveStatusEnum getByStatus(String status){
         return Arrays.stream(values()).filter(a -> a.getStatus().equals(status))
                 .findFirst().orElse(null);
     }

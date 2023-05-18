@@ -12,6 +12,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -168,8 +169,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         addEntity.setWarehouseOrgId(warehouseOrgId);
         addEntity.setWarehouseOrgName(warehouseOrgName);
-        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        addEntity.setApproveStatus(ApproveStatusEnum.getByStatus(waitSubmitStatus));
+        String waitSubmitStatus = BillApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        addEntity.setApproveStatus(BillApproveStatusEnum.getByStatus(waitSubmitStatus));
         //保存成功
         Boolean addResult = this.saveOrUpdate(addEntity);
         if (addResult) {
@@ -217,10 +218,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(rejectStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus));
+        Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(ingStatus));
         if (result) {
             //添加日志
-            String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            String content = String.format("状态由[%s]变更为[%s]", BillApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "状态变更");
             //审核不通过
             String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
@@ -468,8 +469,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         draftEntity.setWarehouseOrgId(warehouseOrgId);
         draftEntity.setWarehouseOrgName(warehouseOrgName);
-        String draftStatus = ApproveStatusEnum.DRAFT.getStatus();
-        draftEntity.setApproveStatus(ApproveStatusEnum.getByStatus(draftStatus));
+        String draftStatus = BillApproveStatusEnum.DRAFT.getStatus();
+        draftEntity.setApproveStatus(BillApproveStatusEnum.getByStatus(draftStatus));
         //保存成功
         Boolean draftResult = this.saveOrUpdate(draftEntity);
         if (draftResult) {
@@ -477,7 +478,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             soDetailService.addSoDetail(id, dto.getDetailList());
             if (isFirst) {
                 //添加日志
-                String content = String.format("新增了一个{%s}-销售单", ApproveStatusEnum.DRAFT.getName());
+                String content = String.format("新增了一个{%s}-销售单", BillApproveStatusEnum.DRAFT.getName());
                 addModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), id, "新增操作");
             }
             return id;
@@ -599,12 +600,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus));
+            result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(approveStatus));
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
         } else {
             //审核不通过
             String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
-            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(rejectStatus));
+            result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(rejectStatus));
             content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
         }
         if (result) {
@@ -648,7 +649,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
+        Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(waitSubmitStatus));
         //反审核
         if (result) {
             //添加日志
@@ -680,7 +681,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         //TODO 撤销流程
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
+        Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(waitSubmitStatus));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("销售订单【%s】取消流程", ModuleTypeEnum.SO.getCode(), pairList, "取消流程操作");
         return result;
@@ -699,7 +700,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public Boolean deleteByIds(List<String> ids) {
         List<SoInfoEntity> list = this.listByIds(ids);
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        String draftStatus = ApproveStatusEnum.DRAFT.getStatus();
+        String draftStatus = BillApproveStatusEnum.DRAFT.getStatus();
         List<String> statusList = new ArrayList<>(2);
         statusList.add(waitSubmitStatus);
         statusList.add(draftStatus);
@@ -739,8 +740,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     public Boolean invalid(List<String> ids, String remark) {
         List<SoInfoEntity> list = this.listByIds(ids);
-        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        String draftStatus = ApproveStatusEnum.DRAFT.getStatus();
+        String waitSubmitStatus = BillApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        String draftStatus = BillApproveStatusEnum.DRAFT.getStatus();
         List<String> statusList = new ArrayList<>(2);
         statusList.add(waitSubmitStatus);
         statusList.add(draftStatus);
@@ -1030,7 +1031,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
 
-    private Boolean updateApproveStatus(List<SoInfoEntity> list, ApproveStatusEnum statusEnum) {
+    private Boolean updateApproveStatus(List<SoInfoEntity> list, BillApproveStatusEnum statusEnum) {
         if (CollectionUtils.isNotEmpty(list)) {
             list.forEach(s -> s.setApproveStatus(statusEnum));
             return this.updateBatchById(list);
