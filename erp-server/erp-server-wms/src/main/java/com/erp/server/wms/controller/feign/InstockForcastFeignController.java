@@ -22,7 +22,7 @@ import javax.validation.Valid;
 @AllArgsConstructor
 @RestController
 @RequestMapping("/feign/instockForcast")
-public class InstockForcastController extends BaseController {
+public class InstockForcastFeignController extends BaseController {
 
     private final InstockForcastService instockForcastService;
 

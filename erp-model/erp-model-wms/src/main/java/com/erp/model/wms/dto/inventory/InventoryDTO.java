@@ -10,7 +10,6 @@ import javax.validation.constraints.NotEmpty;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @Classname: InventoryDTO
@@ -53,7 +52,7 @@ public class InventoryDTO {
         /**
          * 库存组织集合
          */
-        private List<String> orgIdLList;
+        private List<String> orgIdList;
 
         /**
          * 是否过滤0实际库存，默认前端页面勾上不显示0库存
@@ -131,7 +130,7 @@ public class InventoryDTO {
         /**
          * 库存组织集合
          */
-        private List<String> orgIdLList;
+        private List<String> orgIdList;
 
         /**
          * 是否过滤0实际库存，默认前端页面勾上不显示0库存
@@ -408,10 +407,10 @@ public class InventoryDTO {
         /**
          * 日期范围
          */
-        private List<String> dateList;
+        private List<LocalDate> dateList;
 
         /**
-         * 单据名称集合
+         * 单据名称集合 接口地址：plm/common/enumDropDown?type=InventorySourceType
          */
         private List<String> sourceTypeList;
 
@@ -434,7 +433,7 @@ public class InventoryDTO {
         /**
          * 库存组织
          */
-        private List<String> orgIdLList;
+        private List<String> orgIdList;
 
     }
 
@@ -485,7 +484,7 @@ public class InventoryDTO {
         /**
          * 库存组织
          */
-        private List<String> orgIdLList;
+        private List<String> orgIdList;
 
     }
 
@@ -538,6 +537,11 @@ public class InventoryDTO {
          * 操作类型名称
          */
         private String operationModeName;
+
+        /**
+         * sku id
+         */
+        private String skuId;
 
         /**
          * sku编号

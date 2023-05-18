@@ -21,7 +21,7 @@ import java.util.List;
 public interface InventoryService extends SuperService<InventoryEntity> {
 
     /**
-     * 根据组织、仓库、库位、状态判断库存是否存在记录（库位为空也作为条件）
+     * 根据组织、仓库、库位、状态判断库存是否存在记录（库位为空也作为条件）;不对外使用
      * @param orgId
      * @param warehouseId
      * @param skuId
@@ -45,7 +45,18 @@ public interface InventoryService extends SuperService<InventoryEntity> {
 
 
     /**
-     * 根据组织、仓库、库位、状态判断库存数据；如果库位为空，则不判断库位
+     * 根据组织、仓库、库位、状态判断库存数据；特别注意：如果库位为空，则库位赋值空库位
+     * @param orgId
+     * @param warehouseId
+     * @param skuId
+     * @param warehouseLocationId
+     * @param status
+     * @return
+     */
+    InventoryEntity findInventoryIncLocation(String orgId,String warehouseId,String skuId, String warehouseLocationId,String status);
+
+    /**
+     * 根据组织、仓库、库位、状态判断库存数据；特别注意：如果库位为空，则不带库位库位查询条件
      * @param orgId
      * @param warehouseId
      * @param skuId
@@ -81,7 +92,7 @@ public interface InventoryService extends SuperService<InventoryEntity> {
 
 
     /**
-     * 根据skuIds 仓库 ，组织 仓位 获取到 sku即时库存
+     * 根据skuIds 仓库 ，组织 仓位 获取到 sku即时库存（库位没传，则查询空库位）
      * @author yl
      * @date 2023-05-16 17:06
      * @param skuIds

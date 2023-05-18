@@ -73,7 +73,7 @@ public class InventoryController extends BaseController {
      */
     @PostMapping("/pageInOutStock")
     public ApiResult<PagingVO<InventoryDTO.InOutStockTransFlowPagingViewDTO>> pageInOutStock(@RequestBody @Validated PagingDTO<InventoryDTO.InOutStockTransFlowSearchParamDTO> dto) {
-        return success(null);
+        return success(transactionFlowService.paging(dto));
     }
 
     /**
@@ -109,7 +109,7 @@ public class InventoryController extends BaseController {
     }
 
     /**
-     * 查询可用库存
+     * 查询可用库存，特别注意：如果库位为空，则库位赋值为空
      * @author Will
      * @date: 2023/5/11 10:10
      * @param dto

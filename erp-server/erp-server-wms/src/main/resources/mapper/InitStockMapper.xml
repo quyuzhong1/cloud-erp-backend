@@ -47,7 +47,7 @@
             left join product_sale ps on ps.sku_id = pd.id
             where isd.is_deleted = false
             <if test="params.code != null and params.code != ''">
-                and ism.code like concat('%',#{params.code},'%')
+                and ism.code ilike concat('%',#{params.code},'%')
             </if>
             <if test="params.skuNoList != null and params.skuNoList.size != ''">
                 and isd.sku_no in
@@ -73,9 +73,9 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="params.orgIdLList != null and params.orgIdLList.size != ''">
+            <if test="params.orgIdList != null and params.orgIdList.size != ''">
                 and ism.org_id in
-                <foreach collection="params.orgIdLList" item="item" open="(" close=")" separator=",">
+                <foreach collection="params.orgIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
@@ -141,9 +141,9 @@
                 #{item}
             </foreach>
         </if>
-        <if test="params.orgIdLList != null and params.orgIdLList.size != ''">
+        <if test="params.orgIdList != null and params.orgIdList.size != ''">
             and ism.org_id in
-            <foreach collection="params.orgIdLList" item="item" open="(" close=")" separator=",">
+            <foreach collection="params.orgIdList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>
