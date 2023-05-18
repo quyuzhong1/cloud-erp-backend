@@ -232,40 +232,6 @@ public class SoReturnDTO {
          */
         private LocalDate billDate;
         /**
-         * 收货人
-         */
-        private String receiverName;
-        /**
-         * 联系电话
-         */
-        private String telNumber;
-        /**
-         * 收货地址
-         */
-        private String receiveAddress;
-        /**
-         * 交货方式 oms/common/enumDropDown?type=DeliveryMode
-         * 描述：deliverGoods（发货）selfExtraction（自提）
-         */
-        private String deliveryModeDict;
-        /**
-         * 币别
-         */
-        private String currency;
-        /**
-         * 币种符号
-         */
-        private String currencySymbol;
-        /**
-         * 是否含税
-         */
-        private Boolean isTax;
-        /**
-         * 地址类型 oms/common/enumDropDown?type=AddressType
-         * 描述：forwarder 货代地址  deliver 发货地址 company 公司地址
-         */
-        private String addressTypeDict;
-        /**
          * 明细信息
          */
         private List<SoReturnDetailDTO.Add> detailList;
@@ -289,40 +255,6 @@ public class SoReturnDTO {
          * 退货日期
          */
         private LocalDate billDate;
-        /**
-         * 收货人
-         */
-        private String receiverName;
-        /**
-         * 联系电话
-         */
-        private String telNumber;
-        /**
-         * 收货地址
-         */
-        private String receiveAddress;
-        /**
-         * 交货方式 oms/common/enumDropDown?type=DeliveryMode
-         * 描述：deliverGoods（发货）selfExtraction（自提）
-         */
-        private String deliveryModeDict;
-        /**
-         * 币别
-         */
-        private String currency;
-        /**
-         * 币种符号
-         */
-        private String currencySymbol;
-        /**
-         * 是否含税
-         */
-        private Boolean isTax;
-        /**
-         * 地址类型 oms/common/enumDropDown?type=AddressType
-         * 描述：forwarder 货代地址  deliver 发货地址 company 公司地址
-         */
-        private String addressTypeDict;
         /**
          * 明细信息
          */
