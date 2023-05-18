@@ -1,6 +1,5 @@
 package com.common.core.utils;
 
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -42,17 +41,13 @@ public class EnumsUtil {
      * 获取value返回枚举对象
      * @param value
      * @param clazz */
-    public static <T extends EnumMessage>  T getEnumObject(Integer value, Class<?> clazz){
+    public static <T extends EnumMessage>  T getEnumObject(Object value, Class<?> clazz){
         try {
             initialSingleEnumMap(clazz);
         } catch (Exception e){
             throw new ServiceException(ApiError.ERROR_9028);
         }
         T retobj= (T)SINGLE_ENUM_MAP.get(value);
-        if (ObjectUtils.isEmpty(retobj)) {
-            retobj= (T)SINGLE_ENUM_MAP.get(String.valueOf(value));
-        }
-
         return retobj;
     }
 

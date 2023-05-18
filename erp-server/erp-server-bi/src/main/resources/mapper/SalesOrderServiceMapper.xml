@@ -7,7 +7,7 @@
 
     <select id="getMonthSales" resultType="com.erp.model.bi.vo.SalesFlagVO">
         SELECT
-        to_char( o.delivery_time, 'MM' ) AS MONTH,
+        to_char( o.${timeFlag}, 'MM' ) AS flag,
         <if test="settleRate !=null and settleRate!=''">
             round(SUM (i.amount_after * i.${settleRate}),2) AS sales
         </if>
@@ -101,7 +101,7 @@
                 ${params.param}
             </if>
         </where>
-        GROUP BY MONTH
+        GROUP BY flag
     </select>
 
     <select id="getBySku" resultType="com.erp.model.bi.vo.SalesVO">
@@ -2571,13 +2571,11 @@
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
         </if>
-        EXTRACT(MONTH FROM o.${timeFlag}) flag,
+        to_char( o.${timeFlag}, 'MM' ) flag,
         COUNT ( DISTINCT ( o.platform_order_id ) ) AS orderCount,
         SUM ( i.quantity ) AS salesQuantity FROM
         dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
-        WHERE
-        EXTRACT ( YEAR FROM o.${timeFlag} ) = EXTRACT ( YEAR FROM NOW( ) )
-
+        WHERE  to_char(o.${timeFlag},'yyyy')=#{year}
         <!-- 部门 -->
         <if test="params.department!=null and params.department.size>0">
             AND o.dept_id IN
@@ -2644,9 +2642,7 @@
         <if test="params.param!=null and params.param!=''">
             ${params.param}
         </if>
-
-        GROUP BY
-        EXTRACT ( MONTH FROM o.${timeFlag} )
+        GROUP BY flag
     </select>
 
     <select id="byLastYear" resultType="com.erp.model.bi.vo.SalesFlagVO">
@@ -2657,12 +2653,11 @@
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
         </if>
-        EXTRACT(MONTH FROM o.${timeFlag}) flag,
+        to_char( o.${timeFlag}, 'MM' ) flag,
         COUNT ( DISTINCT ( o.platform_order_id ) ) AS orderCount,
         SUM ( i.quantity ) AS salesQuantity FROM
         dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
-        WHERE
-        EXTRACT ( YEAR FROM o.${timeFlag} ) = EXTRACT ( YEAR FROM NOW()-interval '1 years' )
+        WHERE  to_char(o.${timeFlag},'yyyy')=#{year}
         <!-- 部门 -->
         <if test="params.department!=null and params.department.size>0">
             AND o.dept_id IN
@@ -2729,9 +2724,8 @@
         <if test="params.param!=null and params.param!=''">
             ${params.param}
         </if>
-
         GROUP BY
-        EXTRACT ( MONTH FROM o.${timeFlag} )
+        flag
     </select>
 
     <select id="byLastMonth" resultType="com.erp.model.bi.vo.SalesFlagVO">
