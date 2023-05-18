@@ -19,9 +19,7 @@ import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.dto.TemplateRoleDTO;
 import com.erp.model.plm.dto.TemplateRoleShowDTO;
 import com.erp.model.plm.dto.TemplateSearchDTO;
-import com.erp.model.plm.entity.ProjectMembersEntity;
 import com.erp.model.plm.entity.ProjectRoleEntity;
-import com.erp.model.plm.entity.TemplateMembersEntity;
 import com.erp.model.plm.entity.TemplateRoleEntity;
 import com.erp.server.plm.mapper.TemplateRoleMapper;
 import com.erp.server.plm.service.ProjectRoleService;
@@ -33,7 +31,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 
 /**
@@ -157,7 +154,7 @@ public class TemplateRoleServiceImpl extends ServiceImpl<TemplateRoleMapper, Tem
         BeanMapperUtils.copy(dto, entity);
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         String uid = loginUser.getUid();
         String userName = loginUser.getUserName();

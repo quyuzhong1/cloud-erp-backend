@@ -153,7 +153,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         String uid = sysUserInfoDTO.getUid();
         SysUserInfoEntity entity = this.getById(uid);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         //验证用户信息
         checkUserInfo(sysUserInfoDTO);
@@ -440,7 +440,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         SysUserInfoEntity userEntity = this.getById(entity.getUserId());
         if (Objects.isNull(userEntity)) {
-            throw new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         Integer userState = userEntity.getUserState();
         //表示禁用

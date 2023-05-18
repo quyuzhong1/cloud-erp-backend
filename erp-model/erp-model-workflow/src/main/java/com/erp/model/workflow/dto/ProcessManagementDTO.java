@@ -82,6 +82,11 @@ public class ProcessManagementDTO {
          * 业务表id
          */
         private String businessId;
+
+        /**
+         * 业务名称 用于流程图显示   任务审核: 产品名称+任务名称  其他申请单: 单据编号
+         */
+        private String businessName;
         /**
          * 流程开始时间
          */
@@ -91,12 +96,13 @@ public class ProcessManagementDTO {
          */
         private String endTime;
 
-        public StartResultDTO(String processDefinitionId, String processInstanceId, String taskId, LocalDateTime processStartTime, String businessId) {
+        public StartResultDTO(String processDefinitionId, String processInstanceId, String taskId, LocalDateTime processStartTime, String businessId, String businessName) {
             this.processDefinitionId = processDefinitionId;
             this.processInstanceId = processInstanceId;
             this.taskId = taskId;
             this.startTime = processStartTime.toString();
             this.businessId = businessId;
+            this.businessName = businessName;
         }
     }
 
@@ -143,6 +149,54 @@ public class ProcessManagementDTO {
 
     @Data
     @NoArgsConstructor
+    public static class ApproveResultDTO{
+        /**
+         * 流程定义id
+         */
+        private String processDefinitionId;
+
+        /**
+         * 流程实例id
+         */
+        private String processInstanceId;
+        /**
+         * 业务表id
+         */
+        private String businessId;
+
+        /**
+         * 业务名称 用于流程图显示   任务审核: 产品名称+任务名称  其他申请单: 单据编号
+         */
+        private String businessName;
+
+        /**
+         * 当前任务id
+         */
+        private String taskId;
+        /**
+         * 当前任务节点名称
+         */
+        private String activityName;
+
+        /**
+         * 当前任务节点id
+         */
+        private String activityId;
+
+        public ApproveResultDTO(String processDefinitionId, String processInstanceId, String businessId,
+                                String businessName, String taskId, String activityName, String activityId) {
+            this.processDefinitionId = processDefinitionId;
+            this.processInstanceId = processInstanceId;
+            this.businessId = businessId;
+            this.businessName = businessName;
+            this.taskId = taskId;
+            this.activityName = activityName;
+            this.activityId = activityId;
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class BackDTO extends ApproveDTO {
         /**
          * 驳回的目标节点 ID
@@ -150,6 +204,8 @@ public class ProcessManagementDTO {
         @NotBlank(message = "驳回的目标节点不能为空")
         private String activityId;
     }
+
+
 
     @Data
     @NoArgsConstructor
@@ -240,6 +296,12 @@ public class ProcessManagementDTO {
         private String curApproveId;
 
         /**
+         * 当前审批人名称
+         */
+        private String curApproveName;
+
+
+        /**
          * 任务状态
          */
         private ApproveStatusEnum taskStatus;
@@ -252,17 +314,22 @@ public class ProcessManagementDTO {
         /**
          * 超时预警时间
          */
-        private Integer timeout_warn_time;
+        private LocalDateTime timeoutWarnTime;
 
         /**
          * 超时时间
          */
-        private Integer timeoutInterval;
+        private LocalDateTime timeoutHandleTime;
 
         /**
          * 超时处理方式
          */
-        private String timeoutHandleType;
+        private DictBasicEnum timeoutHandleType;
+
+        /**
+         * 任务开始时间
+         */
+        private LocalDateTime taskStartTime;
 
         /**
          * 审批时间
@@ -284,9 +351,14 @@ public class ProcessManagementDTO {
         private String executionId;
 
         /**
-         * 申请人id
+         * 审批人id
          */
         private String approveId;
+
+        /**
+         * 审批人名称
+         */
+        private String approveName;
     }
 
     @Data

@@ -103,24 +103,27 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateTransfer(String taskId, String targetUserId, String sourceUserId, String remark) {
-        ProcessTaskManagementEntity entity = lambdaQuery().eq(ProcessTaskManagementEntity::getTaskId, taskId)
-                .eq(ProcessTaskManagementEntity::getCurApproveId, sourceUserId)
+    public void updateTransfer(String taskId, String targetUserId, String targetUserName, String sourceUserId, String remark) {
+        List<ProcessTaskManagementEntity> entityList = lambdaQuery()
+                .eq(ProcessTaskManagementEntity::getTaskId, taskId)
+                .eq(StrUtil.isNotBlank(sourceUserId), ProcessTaskManagementEntity::getCurApproveId, sourceUserId)
                 .eq(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE_ING)
-                .one();
-        if(null == entity){
+                .list();
+        if(CollectionUtil.isEmpty(entityList)){
             throw new ServiceException(ApiError.ERROR_TASK_AUDIT_STATUS);
         }
         // 关闭原有记录
-        boolean update = lambdaUpdate()
+        for (ProcessTaskManagementEntity entity : entityList) {
+            boolean update = lambdaUpdate()
                     .set(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE)
                     .set(ProcessTaskManagementEntity::getApproveTime, LocalDateTime.now())
-                    .set(ProcessTaskManagementEntity::getApproveId, sourceUserId)
-                    .set(ProcessTaskManagementEntity::getRemark, StrUtil.format("{}已将任务转移给{}办理，备注：{}", sourceUserId, targetUserId, remark))
+                    .set(ProcessTaskManagementEntity::getApproveId, entity.getCurApproveId())
+                    .set(ProcessTaskManagementEntity::getRemark, StrUtil.format("【{}】已将任务转移给【{}】办理，备注：{}", entity.getCurApproveName(), targetUserName, remark))
                     .eq(ProcessTaskManagementEntity::getId, entity.getId())
                     .update();
+        }
         // 新增审批记录
-        boolean save = save(ProcessTaskManagementEntity.getByEntity(entity,targetUserId));
+        boolean save = save(ProcessTaskManagementEntity.getByEntity(entityList.get(0), targetUserId));
         if (!save) {
             throw new RuntimeException(" updateTransfer 任务转办 保存流程任务失败");
         }
@@ -139,10 +142,10 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateTimeoutStatus(String taskManagementId, TimeoutStatusEnum timeoutStatusEnum) {
+    public void updateTimeoutStatus(List<String> taskManagementIds, TimeoutStatusEnum timeoutStatusEnum) {
         boolean update = lambdaUpdate()
                 .set(ProcessTaskManagementEntity::getTimeoutStatus, timeoutStatusEnum)
-                .eq(ProcessTaskManagementEntity::getId, taskManagementId)
+                .in(ProcessTaskManagementEntity::getId, taskManagementIds)
                 .update();
         if (!update) {
             throw new RuntimeException("更新任务超时状态失败");

@@ -56,6 +56,6 @@ public interface ProcessManagementMapper extends BaseMapper<ProcessManagementEnt
     /**
      * 根据业务id和业务类型获取流程管理信息
      */
-    List<ProcessManagementDTO.ManagementTaskDTO> listProcessTask(@Param("timeoutStatus")String timeoutStatus);
+    List<ProcessManagementDTO.ManagementTaskDTO> listProcessTask(@Param("taskId") String taskId,@Param("timeoutStatus")String timeoutStatus);
 
 }

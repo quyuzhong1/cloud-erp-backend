@@ -669,7 +669,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (StringUtils.isNotBlank(applyUserId)) {
             FindUserDTO applyUser = sysUserFeign.getUserByUserId(applyUserId);
             if (ObjectUtils.isEmpty(applyUser)) {
-                throw new ServiceException(ApiError.ERROR_9011);
+                throw new ServiceException(ApiError.USER_NOT_EXIST);
             }
             entity.setApplyUserName(applyUser.getUserName());
         }

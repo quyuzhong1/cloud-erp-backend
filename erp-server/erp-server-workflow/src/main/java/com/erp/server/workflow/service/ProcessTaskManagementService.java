@@ -52,7 +52,7 @@ public interface ProcessTaskManagementService extends SuperService<ProcessTaskMa
      * @param sourceUserId
      * @param remark
      */
-    void updateTransfer(String taskId, String targetUserId, String sourceUserId, String remark);
+    void updateTransfer(String taskId, String targetUserId, String targetUserName, String sourceUserId, String remark);
 
     /**
      * 根据流程实例id删除流程任务
@@ -62,8 +62,8 @@ public interface ProcessTaskManagementService extends SuperService<ProcessTaskMa
 
     /**
      * 更新超时状态
-     * @param taskManagementId
+     * @param taskManagementIds
      * @param timeoutStatusEnum
      */
-    void updateTimeoutStatus(String taskManagementId, TimeoutStatusEnum timeoutStatusEnum);
+    void updateTimeoutStatus(List<String> taskManagementIds, TimeoutStatusEnum timeoutStatusEnum);
 }

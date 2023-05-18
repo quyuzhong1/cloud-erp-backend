@@ -74,7 +74,7 @@ public enum ApiError implements Serializable {
      * 从9010 开始  以端口号
      */
     ERROR_9010(9010, "手机号码已存在"),
-    ERROR_9011(9011, "用户不存在"),
+    USER_NOT_EXIST(9011, "用户不存在"),
     ERROR_9012(9012, "用户不存在或者密码错误"),
     ERROR_9013(9013, "存在父级节点，无法删除"),
     ERROR_9014(9014, "核算公司不存在"),

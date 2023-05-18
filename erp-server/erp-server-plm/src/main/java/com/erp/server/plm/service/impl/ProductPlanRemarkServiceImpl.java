@@ -34,7 +34,7 @@ public class ProductPlanRemarkServiceImpl extends ServiceImpl<ProductPlanningRem
         //获取当前登录人
         LoginUser userInfo = commonService.getUserInfo();
         if (ObjectUtils.isEmpty(userInfo)) {
-            throw new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         LambdaUpdateWrapper<ProductPlanRemarkEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(ProductPlanRemarkEntity::getProductPlanId,productPlanId);

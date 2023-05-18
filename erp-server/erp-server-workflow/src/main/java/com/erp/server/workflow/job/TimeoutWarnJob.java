@@ -1,5 +1,6 @@
 package com.erp.server.workflow.job;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.enums.TimeoutStatusEnum;
 import com.erp.server.workflow.service.ProcessManagementService;
@@ -11,7 +12,9 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 超时警告任务
@@ -33,7 +36,12 @@ public class TimeoutWarnJob {
     public void timeoutWarnJob() {
         XxlJobHelper.log("TimeoutWarnJob start.");
         // 获取未发送任务
-        List<ProcessManagementDTO.ManagementTaskDTO> taskList = processManagementService.listUnsendTask(TimeoutStatusEnum.UNSEND.getCode());
+        List<ProcessManagementDTO.ManagementTaskDTO> taskList = processManagementService.listUnsendTask("",TimeoutStatusEnum.UNSEND.getCode());
+        if(CollectionUtil.isEmpty(taskList)){
+            XxlJobHelper.log("TimeoutWarnJob 需要发送任务列表为空 end.");
+            return;
+        }
+
         // 发送消息 通知任务超时
         taskList.forEach(task -> {
             try {
@@ -52,7 +60,11 @@ public class TimeoutWarnJob {
     public void timeoutHandleJob() {
         XxlJobHelper.log("TimeoutHandleJob start.");
         // 获取未发送任务
-        List<ProcessManagementDTO.ManagementTaskDTO> taskList = processManagementService.listUnsendTask(TimeoutStatusEnum.UNSEND.getCode());
+        List<ProcessManagementDTO.ManagementTaskDTO> taskList = processManagementService.listUnsendTask("", TimeoutStatusEnum.UNSEND.getCode());
+        if(CollectionUtil.isEmpty(taskList)){
+            XxlJobHelper.log("TimeoutWarnJob 需要发送任务列表为空 end.");
+            return;
+        }
         // 发送消息 通知任务超时
         taskList.forEach(task -> {
             try {
@@ -61,7 +73,6 @@ public class TimeoutWarnJob {
                 XxlJobHelper.log("TimeoutHandleJob error.", e);
             }
         });
-
         XxlJobHelper.log("TimeoutHandleJob end.");
     }
 }

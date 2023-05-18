@@ -3,6 +3,7 @@ package com.erp.server.workflow.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -18,6 +19,11 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.enums.NoticeTypeEnum;
+import com.erp.model.sys.dto.UserSuperiorDTO;
+import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.workflow.dto.CamundaDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessBusinessEntity;
@@ -31,6 +37,8 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.mapper.ProcessManagementMapper;
 import com.erp.server.workflow.service.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.camunda.bpm.engine.*;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.DelegateTask;
@@ -96,6 +104,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     private SysUserFeign sysUserFeign;
     @Resource
     private ProcessTaskCcService processTaskCcService;
+    @Resource
+    private MQProducerService mqProducerService;
 
 
     @Override
@@ -145,7 +155,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 保存流程数据失败
             throw new ServiceException(ApiError.ERROR_94004);
         }
-        return new ProcessManagementDTO.StartResultDTO(processDefinitionId, processInstanceId, tasks.get(0).getId(),processStartTime, dto.getBusinessId());
+        return new ProcessManagementDTO.StartResultDTO(processDefinitionId, processInstanceId, tasks.get(0).getId(),processStartTime, dto.getBusinessId(), dto.getBusinessName());
     }
 
     /**
@@ -191,8 +201,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void approveProcess(ProcessManagementDTO.ApproveDTO dto) {
-        // 查询流程数据
+    public ProcessManagementDTO.ApproveResultDTO approveProcess(ProcessManagementDTO.ApproveDTO dto) {
         // 查询流程数据
         ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
         // 审核人校验
@@ -227,6 +236,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 保存流程任务数据
             updateApprove(managementTask.getTaskManagementId(), dto.getApproveType(), managementTask.getManagementId(), processInstanceId,dto.getComment());
         }
+        return new ProcessManagementDTO.ApproveResultDTO(currentTask.getProcessDefinitionId(), currentTask.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName(),currentTask.getId(),currentTask.getName(), currentTask.getTaskDefinitionKey());
     }
 
     @Override
@@ -303,6 +313,12 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
         // 审核操作
         String processInstanceId = managementTask.getProcessInstanceId();
+
+        // 获取当前任务
+        Task currentTask = taskService.createTaskQuery().taskId(managementTask.getTaskId()).singleResult();
+        if(null == currentTask) {
+            throw new ServiceException(ApiError.PROCESS_DEFINITION_NODE_NOT_EXIST);
+        }
         // 查询历史任务
         List<HistoricActivityInstance> historyActivityList = historyService
                 .createHistoricActivityInstanceQuery()
@@ -374,10 +390,13 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             }
             // 转发任务给目标人员
             identityService.setAuthenticatedUserId(dto.getSourceUserId());
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getTargetUserId());
+            if(null == findUserDTO){
+                throw new ServiceException(ApiError.USER_NOT_EXIST);
+            }
             taskService.delegateTask(task.getId(), dto.getTargetUserId());
-            Task task2 = taskService.createTaskQuery().taskId(taskId).singleResult();
             // 更新流程任务数据
-            processTaskManagementService.updateTransfer(taskId, dto.getTargetUserId(), dto.getSourceUserId(), dto.getRemark());
+            processTaskManagementService.updateTransfer(taskId, dto.getTargetUserId(),findUserDTO.getUserName(), dto.getSourceUserId(), dto.getRemark());
         }
     }
 
@@ -513,7 +532,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         List<String> candidateUsers = task.getCandidates().stream().map(IdentityLink::getUserId).collect(Collectors.toList());
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(candidateUsers);
         if(CollectionUtil.isEmpty(userList)){
-            throw new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         Map<String, FindUserDTO> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, e -> e ));
         String copyUser = propertiesDTO.getCopyUser();
@@ -560,24 +579,83 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     }
 
     @Override
-    public List<ProcessManagementDTO.ManagementTaskDTO> listUnsendTask(String timeoutStatus) {
-        return baseMapper.listProcessTask(timeoutStatus);
+    public List<ProcessManagementDTO.ManagementTaskDTO> listUnsendTask(String taskId, String timeoutStatus) {
+        return baseMapper.listProcessTask(taskId, timeoutStatus);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void sendTimeoutWarn(ProcessManagementDTO.ManagementTaskDTO task) {
-        // 发送超时提醒消息
-
         // 更新发送状态
-        processTaskManagementService.updateTimeoutStatus(task.getTaskManagementId(), TimeoutStatusEnum.SEND_WARN);
+        processTaskManagementService.updateTimeoutStatus(Collections.singletonList(task.getTaskManagementId()), TimeoutStatusEnum.SEND_WARN);
+        if(task.getTaskStartTime().isEqual(task.getTimeoutWarnTime())){
+            return;
+        }
+        // 发送超时提醒消息
+        NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
+        noticeMsgInfoDTO.setReceiverUserIds(new ArrayList<>(Collections.singletonList(task.getCurApproveId())));
+        noticeMsgInfoDTO.setTitle("【流程管理中心】审批即将超时提醒");
+        noticeMsgInfoDTO.setContent(StrUtil.format("**单据名称: **{}\n**审批开始时间：**{} \n审批即将超时，请尽快处理！", task.getBusinessName(), task.getStartTime()));
+        noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.FLW_TASK);
+        // 默认tag请指定为msg_notice_default_tag，可以根据不同业务自行指定
+        SendResult sendResult = mqProducerService.sendNoticeMsg(noticeMsgInfoDTO, Boolean.TRUE);
+        if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
+            log.error("发送超时提醒消息失败，失败原因：{}", JSONUtil.toJsonStr(sendResult));
+        }
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void sendTimeoutHandle(ProcessManagementDTO.ManagementTaskDTO task) {
-        // 发送超时处理消息
-
+        List<ProcessManagementDTO.ManagementTaskDTO> taskList = listUnsendTask(task.getTaskId(), TimeoutStatusEnum.UNSEND.getCode());
+        if(CollectionUtil.isEmpty(taskList)){
+            return;
+        }
         // 更新发送状态
-        processTaskManagementService.updateTimeoutStatus(task.getTaskManagementId(), TimeoutStatusEnum.SEND_HANDLE);
+        List<String> taskManagementIds = taskList.stream().map(ProcessManagementDTO.ManagementTaskDTO::getTaskManagementId).collect(Collectors.toList());
+        processTaskManagementService.updateTimeoutStatus(taskManagementIds, TimeoutStatusEnum.SEND_HANDLE);
+        // 超时处理
+        String taskId = task.getTaskId();
+        // 查询当前任务
+        Task taskEntity = taskService.createTaskQuery().taskId(taskId).singleResult();
+        if(null == taskEntity){
+            throw new ServiceException(ApiError.ERROR_TASK_AUDIT_STATUS);
+        }
+        identityService.setAuthenticatedUserId(task.getCurApproveId());
+        if(DictBasicEnum.TIMEOUT_HANDLING_ESCALATE.equals(task.getTimeoutHandleType())){
+            // 转上级
+            // 查询当前审批人上级
+            List<String> curUserIds = taskList.stream().map(ProcessManagementDTO.ManagementTaskDTO::getCurApproveId).collect(Collectors.toList());
+            List<UserSuperiorDTO> superiorList = sysUserFeign.listSuperiorByUserIds(curUserIds);
+            if(CollectionUtil.isEmpty(superiorList)){
+                log.error("当前审批人无上级，无法转上级处理，审批人：{} ", task.getCurApproveId());
+                return;
+            }
+            Map<String, List<UserSuperiorDTO>> superiorMap = superiorList.stream()
+                    .filter(item -> ChargeSuperiorEnum.DIRECT_DEPARTMENT_CHARGE.getCode().equals(item.getLevel()))
+                    .collect(Collectors.groupingBy(UserSuperiorDTO::getUserId));
+            // 多个任务对应同一个上级
+            for (String superiorId : superiorMap.keySet()) {
+                List<UserSuperiorDTO> userSuperiors = superiorMap.get(superiorId);
+                if(CollectionUtil.isEmpty(userSuperiors)){
+                    continue;
+                }
+                // 上级相同，直接转上级
+                UserSuperiorDTO userSuperior = userSuperiors.get(0);
+                taskService.delegateTask(taskEntity.getId(), userSuperior.getUserId());
+                // 更新流程任务数据
+                processTaskManagementService.updateTransfer(taskId, userSuperior.getUserId(),userSuperior.getUserName(), "", "【任务超时自动给上级】");
+            }
+        }else if(DictBasicEnum.TIMEOUT_HANDLING_REJECT_APPLICANT.equals(task.getTimeoutHandleType())){
+            // 审核不通过
+            runtimeService.createProcessInstanceModification(task.getProcessInstanceId())
+                    //关闭相关任务
+                    .cancelAllForActivity(taskEntity.getTaskDefinitionKey())
+                    .setAnnotation("审批超时，自动驳回")
+                    .execute();
+            // 保存流程任务数据
+            updateApprove(task.getTaskManagementId(), ApproveTypeEnum.REJECT, task.getManagementId(), task.getProcessInstanceId(), "审批超时，自动驳回");
+        }
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.erp.model.workflow.entity;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -9,6 +10,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 
 import java.io.Serializable;
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 import com.erp.model.workflow.dto.CamundaDTO;
@@ -171,6 +173,10 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
         BeanUtil.copyProperties(entity, insertEntity, "id","createTime","updateTime","version");
         insertEntity.setStartTime(LocalDateTime.now());
         insertEntity.setCurApproveId(targetUserId);
+        Duration warnDuration = Duration.between(entity.getStartTime(), entity.getTimeoutWarnTime());
+        insertEntity.setTimeoutWarnTime(insertEntity.getStartTime().plusHours(warnDuration.toHours()));
+        Duration duration = Duration.between(entity.getStartTime(), entity.getTimeoutHandleTime());
+        insertEntity.setTimeoutHandleTime(insertEntity.getStartTime().plusHours(duration.toHours()));
         return insertEntity;
     }
 

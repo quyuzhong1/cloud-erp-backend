@@ -37,7 +37,6 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -424,7 +423,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         if (StringUtils.isNotBlank(changeUserId)) {
             FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(changeUserId);
             if (ObjectUtils.isEmpty(purchaseUser)) {
-                throw new ServiceException(ApiError.ERROR_9011);
+                throw new ServiceException(ApiError.USER_NOT_EXIST);
             }
             entity.setChangeUserName(purchaseUser.getUserName());
         }

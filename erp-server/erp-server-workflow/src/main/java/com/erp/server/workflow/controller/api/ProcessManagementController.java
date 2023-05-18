@@ -52,9 +52,9 @@ public class ProcessManagementController extends BaseController {
      * @return
      */
     @PostMapping("/approve")
-    public ApiResult approveProcess(@RequestBody @Valid ProcessManagementDTO.ApproveDTO dto) {
-        processManagementService.approveProcess(dto);
-        return success();
+    public ApiResult<ProcessManagementDTO.ApproveResultDTO> approveProcess(@RequestBody @Valid ProcessManagementDTO.ApproveDTO dto) {
+        ProcessManagementDTO.ApproveResultDTO resultDTO = processManagementService.approveProcess(dto);
+        return success(resultDTO);
     }
 
     /**

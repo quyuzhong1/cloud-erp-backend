@@ -32,7 +32,7 @@ public class ProductPlanPurchaseServiceImpl extends ServiceImpl<ProductPlanPurch
         //获取当前登录人
         LoginUser userInfo = commonService.getUserInfo();
         if (ObjectUtils.isEmpty(userInfo)) {
-            throw new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         LambdaUpdateWrapper<ProductPlanPurchaseEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(ProductPlanPurchaseEntity::getProductPlanId,productPlanId);

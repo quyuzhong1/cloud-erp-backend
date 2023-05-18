@@ -155,7 +155,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         dmpShopInfoEntity.setChargeId(dto.getChargeId());
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getChargeId());
         if (ObjectUtils.isEmpty(findUserDTO)) {
-            throw new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         dmpShopInfoEntity.setChargeName(findUserDTO.getUserName());
         dmpShopInfoEntity.setEnableTime(dto.getEnableTime());
