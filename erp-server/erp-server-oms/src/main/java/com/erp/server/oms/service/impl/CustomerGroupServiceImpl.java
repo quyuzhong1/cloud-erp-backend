@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -105,7 +104,7 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
         if (StringUtils.isBlank(groupId)) {
             return this.list();
         }
-        return this.lambdaQuery().eq(CustomerGroupEntity::getId,groupId).list();
+        return this.lambdaQuery().eq(CustomerGroupEntity::getId, groupId).list();
     }
 
 
@@ -139,19 +138,9 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
         //这个是参数传来的名称
         List<String> nameList = groupList.stream().map(CustomerGroupDTO.AddOrUpdateDTO::getName).
                 collect(Collectors.toList());
-        //这个是数据库包含的
-        List<CustomerGroupEntity> containsNameList = dbList.stream().filter(d -> nameList.contains(d.getName())).collect(Collectors.toList());
-
-        int count = 0;
-        for (CustomerGroupEntity item : containsNameList) {
-            String name = item.getName();
-            String id = groupList.stream().filter(g -> g.getName().equals(name)).findFirst().flatMap(obj ->
-                    Optional.ofNullable(obj.getId())).orElse("");
-            if (!item.getId().equals(id)) {
-                count++;
-            }
-        }
-        if (count > 0) {
+        int size = nameList.size();
+        int distinctSize = nameList.stream().distinct().collect(Collectors.toList()).size();
+        if(size!=distinctSize){
             throw new ServiceException(ApiError.ERROR_92001);
         }
 
