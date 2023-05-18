@@ -84,8 +84,7 @@ public class SoInfoController extends BaseController {
 
 
     /**
-     * 获取到
-     * 所有审核通过的销售订单
+     * 获取到所有审核通过的销售订单
      *
      * @param
      * @return
@@ -97,8 +96,7 @@ public class SoInfoController extends BaseController {
     }
 
     /**
-     * 获取到
-     * 所有审核通过的销售订单
+     * 根据销售订单 id 获取客户信息
      *
      * @param
      * @return
