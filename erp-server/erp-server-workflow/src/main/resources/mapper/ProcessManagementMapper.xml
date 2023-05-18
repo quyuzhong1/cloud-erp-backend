@@ -98,9 +98,6 @@
         <include refid="Get_Task_Management"/>
         AND approve_status = 'approveIng'
         AND pm.business_id = #{businessId} AND pm.business_key = #{businessKey} AND ptm.task_status = 'approveIng'
-        <if test="null != userId and userId != ''">
-            AND ptm.cur_approve_id = #{userId}
-        </if>
         ORDER BY ptm.create_time ASC
     </select>
 

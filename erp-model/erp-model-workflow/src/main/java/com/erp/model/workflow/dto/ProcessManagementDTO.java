@@ -496,7 +496,7 @@ public class ProcessManagementDTO {
          *  orSignature 或签  jointSignature 会签
          * 节点类型
          */
-        private DictBasicEnum activityType;
+//        private DictBasicEnum activityType;
 
         public HistoryActivityResultDTO(ManagementTaskDTO task) {
             this.processDefinitionId = task.getProcessDefinitionId();
@@ -508,7 +508,6 @@ public class ProcessManagementDTO {
             this.activityId = task.getCurActivityId();
             this.activityName = task.getCurActivityName();
             this.activityStatus = task.getApproveStatus().getName();
-
         }
     }
 

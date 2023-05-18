@@ -1,14 +1,12 @@
 package com.erp.server.workflow.controller.feign;
 
 import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
-import com.erp.server.workflow.service.ProcessTaskService;
-import com.erp.server.workflow.service.WorkflowBusinessProcessService;
-import com.erp.server.workflow.service.WorkflowBusinessService;
-import com.erp.server.workflow.service.WorkflowService;
+import com.erp.server.workflow.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -17,6 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -42,6 +43,8 @@ public class ProcessFeignController extends BaseController {
 
     @Autowired
     private WorkflowBusinessProcessService businessProcessService;
+    @Resource
+    private ProcessManagementService processManagementService;
 
 
     //启动流程
@@ -237,5 +240,55 @@ public class ProcessFeignController extends BaseController {
         return workflowService.withDrawProcessByBusinessTable(dto);
     }
 
+    /**
+     * 流程启动 -new
+     */
+    @PostMapping("/start")
+    public ProcessManagementDTO.StartResultDTO start(@RequestBody ProcessManagementDTO.StartDTO dto) {
+        return processManagementService.startProcess(dto);
+    }
+
+    /**
+     * 流程审批 -new
+     */
+    @PostMapping("/approve")
+    public ProcessManagementDTO.ApproveResultDTO approve(@RequestBody ProcessManagementDTO.ApproveDTO dto) {
+        return processManagementService.approveProcess(dto);
+    }
+
+    /**
+     * 流程驳回到指定节点 -new
+     */
+    @PostMapping("/back")
+    public ApiResult<ProcessManagementDTO.BackResultDTO> backProcess(@RequestBody @Valid ProcessManagementDTO.BackDTO dto) {
+        ProcessManagementDTO.BackResultDTO resultDTO = processManagementService.back(dto);
+        return success(resultDTO);
+    }
+
+    /**
+     * 流程取回 -new
+     */
+    @PostMapping("/revoke")
+    public ApiResult<ProcessManagementDTO.RevokeResultDTO> revokeProcess(@RequestBody @Valid ProcessManagementDTO.RevokeDTO dto) {
+        ProcessManagementDTO.RevokeResultDTO revokeResult = processManagementService.revoke(dto);
+        return success(revokeResult);
+    }
+
+    /**
+     * 转发任务 - new
+     */
+    @PostMapping("/transfer")
+    public ApiResult<Boolean> transferProcess(@RequestBody @Valid @NotNull List<ProcessManagementDTO.TransferDTO> dto) {
+        return success(processManagementService.transfer(dto));
+    }
+
+    /**
+     * 历史流程节点 - 用于指定人驳回
+     */
+    @PostMapping("/history/activity")
+    public ApiResult<List<ProcessManagementDTO.HistoryActivityResultDTO>> historyActivity(@RequestBody @Valid ProcessManagementDTO.HistoryActivityDTO dto) {
+        List<ProcessManagementDTO.HistoryActivityResultDTO> resultList = processManagementService.historyActivity(dto);
+        return success(resultList);
+    }
 
 }
