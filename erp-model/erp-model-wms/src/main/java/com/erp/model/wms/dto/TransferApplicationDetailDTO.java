@@ -51,7 +51,6 @@ public class TransferApplicationDetailDTO implements Serializable {
         /**
          * 主键id
          */
-        @NotBlank(message = "明细主键id不能为空")
         private String id;
     }
 

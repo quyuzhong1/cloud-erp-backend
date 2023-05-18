@@ -77,7 +77,6 @@ public class MachineDetailDTO implements Serializable {
         /**
          * 主键id
          */
-        @NotBlank(message = "加工明细id不能为空")
         private String id;
 
         /**

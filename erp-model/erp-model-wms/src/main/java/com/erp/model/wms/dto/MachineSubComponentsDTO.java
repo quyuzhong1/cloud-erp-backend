@@ -59,7 +59,6 @@ public class MachineSubComponentsDTO implements Serializable {
         /**
          * 主键id
          */
-        @NotBlank(message = "子件明细id不能为空")
         private String id;
     }
 
