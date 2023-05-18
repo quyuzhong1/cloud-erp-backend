@@ -27,6 +27,7 @@ import com.erp.server.oms.service.SoInfoService;
 import com.erp.server.oms.service.SoReturnDetailService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -64,6 +65,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     private PlmTaskFeign plmTaskFeign;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean add(SoReturnDTO.Add dto, String id) {
         List<String> detailIds = dto.getDetailList().stream().map(SoReturnDetailDTO.Add::getSourceDetailId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailEntitieList = soDetailService.listSoDetailByIds(detailIds);
@@ -94,6 +96,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnDTO.Update dto) {
         List<String> detailIds = dto.getDetailList().stream().map(SoReturnDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailEntitieList = soDetailService.listSoDetailByIds(detailIds);
@@ -124,6 +127,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> mainIds) {
         return lambdaUpdate().set(SoReturnDetailEntity::getIsDeleted, Boolean.TRUE)
                 .in(SoReturnDetailEntity::getMainId, mainIds)

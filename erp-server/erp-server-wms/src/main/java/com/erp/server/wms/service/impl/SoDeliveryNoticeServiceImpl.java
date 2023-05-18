@@ -53,6 +53,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -203,6 +204,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String add(SoDeliveryNoticeDTO.Add dto) {
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getDeliveryOrgId());
@@ -242,6 +244,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean update(SoDeliveryNoticeDTO.Update dto) {
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getDeliveryOrgId());
@@ -323,6 +326,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean submit(List<String> ids) {
         List<SoDeliveryNoticeEntity> soDeliveryNoticeEntityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(soDeliveryNoticeEntityList)) {
@@ -370,6 +374,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
         List<SoDeliveryNoticeEntity> deliveryNoticeEntityList = this.listByIds(ids);
@@ -409,6 +414,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean disApprove(List<String> ids) {
         List<SoDeliveryNoticeEntity> deliveryNoticeEntityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
@@ -447,6 +453,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean cancelProcess(List<String> ids) {
         List<SoDeliveryNoticeEntity> deliveryNoticeEntityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
@@ -475,6 +482,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String remark) {
         List<SoDeliveryNoticeEntity> deliveryNoticeEntityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
@@ -506,6 +514,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
         List<SoDeliveryNoticeEntity> deliveryNoticeEntityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
@@ -637,7 +646,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
                 ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detailEntity.getSkuId())).findFirst().orElse(new ProductDetailEntity());
 
-                List<TransferDTO>  transferList = new ArrayList<>();
                 for (PickingDetailDTO.CommonDTO addDTO : pickingDetailList) {
                     addDTO.setSourceId(entity.getId());
                     addDTO.setSourceCode(entity.getCode());
@@ -646,23 +654,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     addDTO.setUnit(productDetailEntity.getUnitName());
                     addDTO.setWarehouseName(entity.getWarehouseName());
                     addDTO.setOrgName(warehouseEntity.getName());
-
-                    //调拨操作请求实体
-                    TransferDTO transferDTO = new TransferDTO();
-                    BeanMapperUtils.copy(addDTO,transferDTO);
-                    transferDTO.setCurWarehouseId(addDTO.getWarehouseId());
-                    transferDTO.setCurWarehouseLocation(addDTO.getWarehouseLocation());
-                    transferDTO.setTargetWarehouseId(entity.getWarehouseId());
-                    transferList.add(transferDTO);
                 }
                 addList.addAll(pickingDetailList);
-
-                //减少可用库存，添加冻结库存
-                InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
-                inventoryTransferDTO.setMembers(transferList);
-                inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.SHIP_NOTICE.getCode());
-                //更新库存
-                inventoryTransCoreService.approveByType(inventoryTransferDTO);
             }
         }
         //添加拣货明细数据

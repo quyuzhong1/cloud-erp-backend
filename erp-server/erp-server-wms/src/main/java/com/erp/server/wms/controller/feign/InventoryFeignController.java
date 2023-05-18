@@ -84,7 +84,7 @@ public class InventoryFeignController extends BaseController {
     }
 
     /**
-     * 根据组织、仓库、库位、状态获取库存数量；特别注意：如果库位为空，则库位赋值为空
+     * 根据组织、仓库、库位、状态获取库存数量；特别注意：如果库位没传或者为空，则库位字段会赋值为空查询
      *
      * @param orgId
      * @param warehouseId
@@ -112,7 +112,7 @@ public class InventoryFeignController extends BaseController {
 
 
     /**
-     * 获取sku 的即时库存（调用方传入状态）；库位没传，则查询空库位
+     * 获取sku 的即时库存（调用方传入状态）；特别注意：如果库位没传或者为空，则库位字段会赋值为空查询
      *
      * @param dto
      * @return void
