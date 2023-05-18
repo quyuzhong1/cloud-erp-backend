@@ -133,11 +133,19 @@ public interface MachineInfoService extends SuperService<MachineInfoEntity> {
      */
     Boolean exportExcel(MachineInfoDTO.SearchParamDTO dto, HttpServletResponse response);
     /**
-     * 子件明细数据查询
+     * 根据明细id查询子件明细数据
      * @author Will
      * @date: 2023/5/16 19:41
+     * @param detailId
+     * @return List<ViewDTO>
+     */
+    List<MachineSubComponentsDTO.ViewDTO> viewSubComponents(String detailId);
+    /**
+     * @description: 通过SKU查询BOM子集
+     * @author Will
+     * @date: 2023/5/18 17:03
      * @param skuId
      * @return List<ViewDTO>
      */
-    List<MachineSubComponentsDTO.ViewDTO> viewSubComponents(String skuId);
+    List<MachineSubComponentsDTO.ViewDTO> viewBomSubComponents(String skuId);
 }

@@ -10,11 +10,11 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * @description: TODO
  * @date 2023/5/15 18:12
  */
-public enum WorkTypeEnum implements EnumMessage {
+public enum MachineTypeEnum implements EnumMessage {
 
 
-    ASSEMBLE("assemble", "组装"),
-    DISASSEMBLE("disassemble", "拆卸");
+    ORDINARY("ordinary", "普通加工单"),
+    OUTSOURCING("disassemble", "委外加工单");
 
     /**
      * 类型
@@ -27,7 +27,7 @@ public enum WorkTypeEnum implements EnumMessage {
      */
     private String name;
 
-    WorkTypeEnum(String code, String name) {
+    MachineTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -44,8 +44,8 @@ public enum WorkTypeEnum implements EnumMessage {
 
     public static String getByCode(String code) {
 
-        WorkTypeEnum[] enumList = WorkTypeEnum.values();
-        for (WorkTypeEnum item : enumList) {
+        MachineTypeEnum[] enumList = MachineTypeEnum.values();
+        for (MachineTypeEnum item : enumList) {
             if (item.getCode().equals(code)) {
                 return item.getName();
             }

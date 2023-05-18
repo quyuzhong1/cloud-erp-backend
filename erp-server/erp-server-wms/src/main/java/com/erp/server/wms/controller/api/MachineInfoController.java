@@ -179,17 +179,30 @@ public class MachineInfoController extends BaseController {
         MachineInfoDTO.ViewDTO dto = machineInfoService.view(id);
         return success(dto);
     }
+
+    /**
+     * 根据明细id查询子件明细数据
+     * @author Will
+     * @date: 2023/5/16 19:40
+     * @param detailId
+     * @return ApiResult<List<ViewDTO>>
+     */
+    @GetMapping("/viewSubComponents")
+    public ApiResult<List<MachineSubComponentsDTO.ViewDTO>> viewSubComponents(@RequestParam("detailId") String detailId) {
+        List<MachineSubComponentsDTO.ViewDTO> dto = machineInfoService.viewSubComponents(detailId);
+        return success(dto);
+    }
     
     /**
-     * 子件明细数据查询
+     * 通过SKU查询BOM子集
      * @author Will
      * @date: 2023/5/16 19:40
      * @param skuId
      * @return ApiResult<List<ViewDTO>> 
      */
-    @GetMapping("/viewSubComponents")
-    public ApiResult<List<MachineSubComponentsDTO.ViewDTO>> viewSubComponents(@RequestParam("skuId") String skuId) {
-        List<MachineSubComponentsDTO.ViewDTO> dto = machineInfoService.viewSubComponents(skuId);
+    @GetMapping("/viewBomSubComponents")
+    public ApiResult<List<MachineSubComponentsDTO.ViewDTO>> viewBomSubComponents(@RequestParam("skuId") String skuId) {
+        List<MachineSubComponentsDTO.ViewDTO> dto = machineInfoService.viewBomSubComponents(skuId);
         return success(dto);
     }
 
