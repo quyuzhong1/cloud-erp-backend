@@ -328,11 +328,11 @@ public class SoReturnReceiveDTO {
         /**
          * 销售部门id
          */
-        private String deptId;
+        private String salesDeptId;
         /**
          * 销售部门名称
          */
-        private String deptName;
+        private String salesDeptName;
         /**
          * 销售员id
          */
