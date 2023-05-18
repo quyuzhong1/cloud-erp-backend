@@ -65,6 +65,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void update(List<MachineDetailDTO.UpdateDTO> detailList, String mainId) {
         if (detailList == null) {
             detailList = new ArrayList<>();

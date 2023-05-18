@@ -43,10 +43,12 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.OtherInstockMapper;
 import com.erp.server.wms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -155,6 +157,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public String add(OtherInstockDTO.AddDTO dto) {
         OtherInstockEntity entity = new OtherInstockEntity();
         BeanMapperUtils.copy(dto, entity);
@@ -176,6 +179,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public String addAndSubmit(OtherInstockDTO.AddDTO dto) {
         //新增
         String id = this.add(dto);
@@ -188,6 +192,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean update(OtherInstockDTO.UpdateDTO dto) {
         OtherInstockEntity entity = new OtherInstockEntity();
         BeanMapperUtils.copy(dto, entity);
@@ -208,6 +213,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateAndSubmit(OtherInstockDTO.UpdateDTO dto) {
         //修改
         this.update(dto);
@@ -216,6 +222,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean submit(List<String> ids) {
         //根据ids查询
         List<OtherInstockEntity> list = getList(ids);
@@ -274,6 +281,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
         //根据ids查询
         List<OtherInstockEntity> list = getList(ids);
@@ -292,6 +300,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String reason) {
         //根据ids查询
         List<OtherInstockEntity> list = getList(ids);
@@ -318,6 +327,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
         //根据ids查询
@@ -354,6 +364,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean disApprove(List<String> ids) {
         //根据ids查询
         List<OtherInstockEntity> list = getList(ids);
@@ -379,6 +390,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean cancelProcess(List<String> ids) {
         //根据ids查询
         List<OtherInstockEntity> list = getList(ids);

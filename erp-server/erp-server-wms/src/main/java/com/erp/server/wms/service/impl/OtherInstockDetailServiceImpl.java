@@ -6,6 +6,7 @@ import com.erp.model.wms.entity.OtherInstockDetailEntity;
 import com.erp.server.wms.mapper.OtherInstockDetailMapper;
 import com.erp.server.wms.service.OtherInstockDetailService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -22,11 +23,13 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void add(List<OtherInstockDetailDTO.AddDTO> detailList, String mainId) {
 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void update(List<OtherInstockDetailDTO.UpdateDTO> detailList, String mainId) {
 
     }
