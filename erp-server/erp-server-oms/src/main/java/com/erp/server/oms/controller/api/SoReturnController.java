@@ -9,8 +9,11 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.SoReturnEntity;
+import com.erp.server.oms.service.SoDetailService;
+import com.erp.server.oms.service.SoReturnDetailService;
 import com.erp.server.oms.service.SoReturnService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -32,6 +35,9 @@ import java.util.List;
 public class SoReturnController extends BaseController {
     @Resource
     private SoReturnService soReturnService;
+
+    @Resource
+    private SoReturnDetailService soReturnDetailService;
     
     /**
      * 列表查询
@@ -311,5 +317,19 @@ public class SoReturnController extends BaseController {
     public ApiResult<SoReturnEntity> getSoReturnById(@RequestParam("id") String id) {
         SoReturnEntity entity = soReturnService.getById(id);
         return success(entity);
+    }
+
+    /**
+     * 添加详情按钮-列表查询
+     *
+     * @param id id
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoDetailDTO.AddDetailView>>
+     * @Author Luo_WG
+     * @Date 2023/5/16 18:43
+     **/
+    @PostMapping("/listAddDetailView")
+    public ApiResult<List<SoDetailDTO.AddDetailView>> listAddDetailView(@RequestParam("id") String id) {
+        List<SoDetailDTO.AddDetailView> addDetailViews = soReturnDetailService.listAddDetailView(id);
+        return success(addDetailViews);
     }
 }

@@ -1,5 +1,6 @@
 package com.erp.server.oms.mapper;
 
+import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
@@ -21,4 +22,6 @@ public interface SoReturnDetailMapper extends BaseMapper<SoReturnDetailEntity> {
     List<SoReturnDetailEntity> listDetailBySourceId(@Param("ids") List<String> sourceIds);
 
     List<SoReturnDetailEntity> listDetailByIds(@Param("ids") List<String> ids);
+
+    List<SoDetailDTO.AddDetailView> listAddDetailView(@Param("id") String id);
 }
