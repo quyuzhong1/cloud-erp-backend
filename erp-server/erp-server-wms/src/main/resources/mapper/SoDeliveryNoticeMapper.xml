@@ -79,7 +79,7 @@
             </foreach>
         </if>
         <if test="params.createUserIdList != null and params.createUserIdList.size != ''">
-            and sdn.create_user_d in
+            and sdn.create_user_id in
             <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
@@ -199,7 +199,7 @@
                     </foreach>
                 </if>
                 <if test="params.createUserIdList != null and params.createUserIdList.size != ''">
-                    and sdn.create_user_d in
+                    and sdn.create_user_id in
                     <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
                         #{item}
                     </foreach>

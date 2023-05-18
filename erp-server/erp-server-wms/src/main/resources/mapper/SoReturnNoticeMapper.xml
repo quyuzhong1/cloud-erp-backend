@@ -76,7 +76,7 @@
             and srn.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > srn.bill_date
         </if>
         <if test="params.createUserIdList != null and params.createUserIdList.size != ''">
-            and srn.create_user_d in
+            and srn.create_user_id in
             <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
@@ -189,7 +189,7 @@
                     and srn.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > srn.bill_date
                 </if>
                 <if test="params.createUserIdList != null and params.createUserIdList.size != ''">
-                    and srn.create_user_d in
+                    and srn.create_user_id in
                     <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
                         #{item}
                     </foreach>
