@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -9,11 +10,14 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.excel.ExportTransactionFlowDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
 import com.erp.model.wms.entity.TransactionFlowEntity;
@@ -31,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -148,7 +153,13 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     public void exportExcel(InventoryDTO.ExportInOutStockTransFlowSearchParamDTO param, HttpServletResponse response) {
         List<InventoryDTO.InOutStockTransFlowPagingViewDTO> dataList = this.baseMapper.exportList(param);
         fillTransactionFlowPageData(dataList);
-
+        List<ExportTransactionFlowDTO> resultList = BeanMapperUtils.copyList(ExportTransactionFlowDTO.class, dataList);
+        String fileName = StrUtil.format("出入库流水数据{}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+        try {
+            ExcelUtil.exportAdapt(fileName, "出入库流水数据", resultList, ExportTransactionFlowDTO.class, response, null);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
     }
 
     /**

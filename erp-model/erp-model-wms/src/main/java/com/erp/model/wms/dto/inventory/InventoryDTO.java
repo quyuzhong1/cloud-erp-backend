@@ -449,6 +449,11 @@ public class InventoryDTO {
          */
         private List<String> ids;
 
+        /**
+         * 单据编号
+         */
+        private String sourceCode;
+
 
         /**
          * sku编码
@@ -555,7 +560,7 @@ public class InventoryDTO {
         private String orgId;
 
         /**
-         * 库尊组织名称
+         * 库存组织名称
          */
         private String orgName;
 

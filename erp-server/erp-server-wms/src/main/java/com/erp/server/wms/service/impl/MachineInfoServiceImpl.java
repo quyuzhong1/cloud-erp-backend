@@ -510,7 +510,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         for (MachineDetailEntity detailEntity : resultDetails) {
             //操作请求实体
             InOutStockDTO inOutStockDTO = new InOutStockDTO();
-            inOutStockDTO.setSourceType(InventorySourceTypeEnum.TRANSFER_APPLY);
+            inOutStockDTO.setSourceType(InventorySourceTypeEnum.MACHINE_INFO);
             inOutStockDTO.setSourceId(entity.getId());
             inOutStockDTO.setSourceCode(entity.getCode());
             inOutStockDTO.setSourceDetailId(detailEntity.getId());
@@ -554,7 +554,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         for (MachineSubComponentsEntity detailEntity : resultMachineSubComponents) {
             //操作请求实体
             InOutStockDTO inOutStockDTO = new InOutStockDTO();
-            inOutStockDTO.setSourceType(InventorySourceTypeEnum.TRANSFER_APPLY);
+            inOutStockDTO.setSourceType(InventorySourceTypeEnum.MACHINE_INFO);
             inOutStockDTO.setSourceId(entity.getId());
             inOutStockDTO.setSourceCode(entity.getCode());
             inOutStockDTO.setSourceDetailId(detailEntity.getId());
@@ -648,7 +648,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         }
         List<MachineInfoEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_99043);
+            throw new ServiceException(ApiError.ERROR_99052);
         }
         return list;
     }

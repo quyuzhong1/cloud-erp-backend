@@ -410,11 +410,15 @@ public class SoInfoDTO implements Serializable {
         @Size(max = 20, message = "联系电话最大20字符")
         private String telNumber;
 
+
+
         /**
          * 收货人地址
+         * 来源 http://172.16.100.11:3002/project/110/interface/api/13561
+         *
+         *  这个是地址下拉 http://172.16.100.11:3002/project/110/interface/api/13786
          */
-        @Size(max = 50, message = "收货人地址最大50字符")
-        private String receiverAddress;
+        private String receiverAddressId;
 
         /**
          * 交货方式 oms/common/enumDropDown?type=DeliveryMode
@@ -775,6 +779,11 @@ public class SoInfoDTO implements Serializable {
          * 收货人地址
          */
         private String receiverAddress;
+
+        /**
+         * 收货人地址
+         */
+        private String receiverAddressId;
 
         /**
          * 交货方式

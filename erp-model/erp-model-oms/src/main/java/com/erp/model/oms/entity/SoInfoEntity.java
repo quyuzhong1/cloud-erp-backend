@@ -157,6 +157,14 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     private String receiveAddress;
 
     /**
+     * 收货地址
+     */
+    @TableField("receiver_address_id")
+    private String receiveAddressId;
+
+
+
+    /**
      * 交货方式
      */
     @TableField("delivery_mode")

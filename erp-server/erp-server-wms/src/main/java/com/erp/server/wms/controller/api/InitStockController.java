@@ -168,7 +168,7 @@ public class InitStockController extends BaseController {
     @PostMapping(value = "/exportExcel")
     public ApiResult<Void> exportExcel(@RequestBody InitStockDTO.ExportSearchParamDTO dto, HttpServletResponse response) {
         initStockService.exportExcel(dto, response);
-        return success();
+        return null;
     }
 
     /**

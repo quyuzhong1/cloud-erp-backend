@@ -741,5 +741,10 @@ public class CustomerDTO implements Serializable {
          */
         private String address;
 
+        /**
+         * 地址
+         */
+        private String addressId;
+
     }
 }
