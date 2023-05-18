@@ -33,10 +33,14 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.MachineDetailDTO;
 import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.MachineDetailEntity;
 import com.erp.model.wms.entity.MachineInfoEntity;
+import com.erp.model.wms.entity.MachineSubComponentsEntity;
 import com.erp.model.wms.enums.WorkTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -93,6 +97,10 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
     @Resource
     private WorkflowFeign workflowFeign;
+
+    @Resource
+    private MachineSubComponentsService machineSubComponentsService;
+
 
     @Override
     public PagingVO<MachineInfoDTO.ListDTO> paging(PagingDTO<MachineInfoDTO.SearchParamDTO> pagingDTO) {
@@ -192,6 +200,15 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(MachineInfoDTO.UpdateDTO dto) {
+
+        MachineInfoEntity old = this.getById(dto.getId());
+        if (ObjectUtils.isEmpty(old)) {
+            throw new ServiceException(ApiError.ERROR_99052);
+        }
+        if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(old.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(old.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_1029);
+        }
+
         MachineInfoEntity entity = new MachineInfoEntity();
         BeanMapperUtils.copy(dto, entity);
         List<MachineDetailDTO.UpdateDTO> detailList = dto.getDetailList();
@@ -201,7 +218,6 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         log.info("加工单修改，id=【{}】", dto.getId());
 
         //添加日志
-        MachineInfoEntity old = this.getById(dto.getId());
         operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.MACHINE_INFO.getCode(), entity.getId(), "", "");
         //更新主表数据
         this.updateById(entity);
@@ -285,6 +301,8 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             throw new ServiceException(ApiError.ERROR_98009);
         }
         log.info("加工单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
+        //删除子件明细
+        machineSubComponentsService.removeByMainIds(ids);
         //删除明细数据
         machineDetailService.removeByMainIds(ids);
         //删除操作日志
@@ -344,7 +362,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             //更新单据(后面有流程了调用监听可删)
             updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
             //更新库存
-            //updateInventoryTransCore(list);
+            updateInventoryTransCore(list);
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("加工单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
             //中止当前审核流程
@@ -445,6 +463,118 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             resultList.add(viewDTO);
         }
         return resultList;
+    }
+
+    /**
+     * @description: 更新加工单库存
+     * @author Will
+     * @date: 2023/5/18 12:11
+     * @param list
+     */
+    private void updateInventoryTransCore (List<MachineInfoEntity> list) {
+        List<String> ids = list.stream().map(MachineInfoEntity::getId).collect(Collectors.toList());
+        //加工明细
+        List<MachineDetailEntity> detailList = machineDetailService.listByMainIds(ids);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_99053);
+        }
+        //加工子件明细
+        List<String> detailIds = detailList.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
+        List<MachineSubComponentsEntity> machineSubComponentsList = machineSubComponentsService.listByDetailIds(detailIds);
+        if (CollectionUtils.isEmpty(machineSubComponentsList)) {
+            throw new ServiceException(ApiError.ERROR_99056);
+        }
+        for (MachineInfoEntity entity : list) {
+            //加工明细
+            List<MachineDetailEntity> resultDetails = detailList.stream().filter(obj -> obj.getMainId().equals(entity.getId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(resultDetails)) {
+                throw new ServiceException(ApiError.ERROR_99053);
+            }
+            //父级SKU库存更新
+            updateInventoryForMachineDetail(entity,resultDetails);
+
+            //子件SKU库存更新
+            updateInventoryForMachineSubComponents(entity,resultDetails,machineSubComponentsList);
+        }
+    }
+
+    /**
+     * @description: 父级SKU库存更新
+     * @author Will
+     * @date: 2023/5/18 12:10
+     * @param entity
+     * @param resultDetails
+     */
+    private void updateInventoryForMachineDetail (MachineInfoEntity entity ,List<MachineDetailEntity> resultDetails) {
+        List<InOutStockDTO>  inOutStockList = new ArrayList<>();
+        for (MachineDetailEntity detailEntity : resultDetails) {
+            //操作请求实体
+            InOutStockDTO inOutStockDTO = new InOutStockDTO();
+            inOutStockDTO.setSourceType(InventorySourceTypeEnum.TRANSFER_APPLY);
+            inOutStockDTO.setSourceId(entity.getId());
+            inOutStockDTO.setSourceCode(entity.getCode());
+            inOutStockDTO.setSourceDetailId(detailEntity.getId());
+            inOutStockDTO.setBillDate(entity.getBillDate());
+            inOutStockDTO.setSkuId(detailEntity.getSkuId());
+            inOutStockDTO.setSkuNo(detailEntity.getSkuNo());
+            inOutStockDTO.setQty(detailEntity.getQty());
+            inOutStockDTO.setWarehouseId(entity.getWarehouseId());
+            inOutStockDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
+            inOutStockList.add(inOutStockDTO);
+        }
+        //组装父SKU增加库存，拆卸父SKU减少库存
+        InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+        inventoryInOutStockDTO.setMembers(inOutStockList);
+        if (WorkTypeEnum.ASSEMBLE.getCode().equals(entity.getWorkType())) {
+            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_PARENT.getCode());
+        } else {
+            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.DISASSEMBLE_IN_PARENT.getCode());
+        }
+        inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+    }
+
+    /**
+     * @description: 子件SKU库存更新
+     * @author Will
+     * @date: 2023/5/18 12:10
+     * @param entity
+     * @param resultDetails
+     * @param machineSubComponentsList
+     */
+    private void updateInventoryForMachineSubComponents (MachineInfoEntity entity ,List<MachineDetailEntity> resultDetails,List<MachineSubComponentsEntity> machineSubComponentsList) {
+
+        //子件SKU库存更新
+        List<String> resultDetailIds = resultDetails.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
+        List<MachineSubComponentsEntity> resultMachineSubComponents = machineSubComponentsList.stream().filter(obj -> resultDetailIds.contains(obj.getDetailId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(resultMachineSubComponents)) {
+            throw new ServiceException(ApiError.ERROR_99053);
+        }
+        //父级SKU库存更新
+        List<InOutStockDTO>  inOutStockList = new ArrayList<>();
+        for (MachineSubComponentsEntity detailEntity : resultMachineSubComponents) {
+            //操作请求实体
+            InOutStockDTO inOutStockDTO = new InOutStockDTO();
+            inOutStockDTO.setSourceType(InventorySourceTypeEnum.TRANSFER_APPLY);
+            inOutStockDTO.setSourceId(entity.getId());
+            inOutStockDTO.setSourceCode(entity.getCode());
+            inOutStockDTO.setSourceDetailId(detailEntity.getId());
+            inOutStockDTO.setBillDate(entity.getBillDate());
+            inOutStockDTO.setSkuId(detailEntity.getSkuId());
+            inOutStockDTO.setSkuNo(detailEntity.getSkuNo());
+            inOutStockDTO.setQty(detailEntity.getQty());
+            inOutStockDTO.setWarehouseId(detailEntity.getWarehouseId());
+            inOutStockDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
+            inOutStockList.add(inOutStockDTO);
+        }
+        //组装父SKU增加库存，拆卸父SKU减少库存
+        InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+        inventoryInOutStockDTO.setMembers(inOutStockList);
+        if (WorkTypeEnum.ASSEMBLE.getCode().equals(entity.getWorkType())) {
+            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_CHILDD.getCode());
+        } else {
+            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.DISASSEMBLE_IN_CHILD.getCode());
+        }
+        inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
     }
 
     /**

@@ -9,9 +9,11 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
+import com.erp.model.wms.entity.MachineDetailEntity;
 import com.erp.model.wms.entity.MachineSubComponentsEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.MachineSubComponentsMapper;
+import com.erp.server.wms.service.MachineDetailService;
 import com.erp.server.wms.service.MachineSubComponentsService;
 import com.erp.server.wms.service.OperateLogService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -41,6 +43,8 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
     @Resource
     private OperateLogService operateLogService;
 
+    @Resource
+    private MachineDetailService machineDetailService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -83,8 +87,25 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
 
     @Override
     public List<MachineSubComponentsEntity> listByDetailId(String detailId) {
-        List<MachineSubComponentsEntity> list = lambdaQuery().eq(MachineSubComponentsEntity::getDetailId, detailId).list();
-        return list;
+        return lambdaQuery().eq(MachineSubComponentsEntity::getDetailId, detailId).list();
+    }
+
+    @Override
+    public List<MachineSubComponentsEntity> listByDetailIds(List<String> detailIds) {
+        return lambdaQuery().in(MachineSubComponentsEntity::getDetailId, detailIds).list();
+    }
+
+    @Override
+    public void removeByMainIds(List<String> mainIds) {
+        List<MachineDetailEntity> machineDetailList = machineDetailService.listByMainIds(mainIds);
+        if (CollectionUtils.isEmpty(machineDetailList)) {
+            throw new ServiceException(ApiError.ERROR_99053);
+        }
+        List<String> detailIds = machineDetailList.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
+        //删除
+        lambdaUpdate()
+                .in(MachineSubComponentsEntity::getDetailId,detailIds)
+                .remove();
     }
 
 
