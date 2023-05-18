@@ -258,12 +258,12 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     public SoReturnReceiveDTO.View view(String id) {
         SoReturnReceiveDTO.View viewDTO = new SoReturnReceiveDTO.View();
         SoReturnReceiveEntity entity = this.getById(id);
-        BeanMapperUtils.copy(entity, viewDTO);
         //创库保存详情表的集合
         List<SoReturnReceiveDetailDTO.View> detailViewDTOS = new ArrayList<>();
         List<SoReturnReceiveDetailEntity> detailEntityList = soReturnReceiveDetailService.listDetailByMainId(id);
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(entity.getSourceId());
         BeanMapperUtils.copy(soInfoEntity, viewDTO);
+        BeanMapperUtils.copy(entity, viewDTO);
         //获取sku的id集合
         List<String> skuIdList = detailEntityList.stream().map(SoReturnReceiveDetailEntity::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息

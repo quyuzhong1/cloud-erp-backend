@@ -256,12 +256,12 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     public SoReturnNoticeDTO.View view(String id) {
         SoReturnNoticeDTO.View viewDTO = new SoReturnNoticeDTO.View();
         SoReturnNoticeEntity entity = this.getById(id);
-        BeanMapperUtils.copy(entity, viewDTO);
         //创库保存详情表的集合
         List<SoReturnNoticeDetailDTO.View> detailViewDTOS = new ArrayList<>();
         List<SoReturnNoticeDetailEntity> detailEntityList = soReturnNoticeDetailService.listDetailByMainId(id);
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(entity.getSourceId());
         BeanMapperUtils.copy(soInfoEntity, viewDTO);
+        BeanMapperUtils.copy(entity, viewDTO);
         //获取sku的id集合
         List<String> skuIdList = detailEntityList.stream().map(SoReturnNoticeDetailEntity::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息

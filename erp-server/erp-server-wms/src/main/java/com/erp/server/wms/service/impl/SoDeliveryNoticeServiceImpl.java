@@ -290,12 +290,13 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     public SoDeliveryNoticeDTO.View view(String id) {
         SoDeliveryNoticeDTO.View viewDTO = new SoDeliveryNoticeDTO.View();
         SoDeliveryNoticeEntity soDeliveryNoticeEntity = this.getById(id);
-        BeanMapperUtils.copy(soDeliveryNoticeEntity, viewDTO);
+
         //创库保存详情表的集合
         List<SoDeliveryNoticeDetailDTO.View> detailViewDTOS = new ArrayList<>();
         List<SoDeliveryNoticeDetailEntity> detailEntityList = soDeliveryNoticeDetailService.listDetailByMainId(id);
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soDeliveryNoticeEntity.getSourceId());
         BeanMapperUtils.copy(soInfoEntity, viewDTO);
+        BeanMapperUtils.copy(soDeliveryNoticeEntity, viewDTO);
         //获取sku的id集合
         List<String> skuIdList = detailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
