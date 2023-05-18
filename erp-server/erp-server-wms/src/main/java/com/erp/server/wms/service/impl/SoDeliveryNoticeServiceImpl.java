@@ -191,6 +191,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             }
             if (OsDeliveryChangeListTypeEnum.UN_SHIPPED.getCode().equals(item.getCode())) {
                 pagingParam.setDeliveryStatusDict(DeliveryStatusEnum.UN_SHIPPED.getCode());
+                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
             if (OsDeliveryChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {

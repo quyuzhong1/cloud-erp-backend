@@ -523,6 +523,14 @@ public class SoDetailDTO implements Serializable {
          */
         private BigDecimal salesAmount;
         /**
+         * 币种
+         */
+        private String currency;
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+        /**
          * 可出数量
          */
         private Integer availableQty;
