@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
 
@@ -53,7 +54,7 @@ public class SellerDTO  implements Serializable {
         /**
          *备注
          */
-        @NotBlank(message ="销售员备注最大200字符")
+        @Size(max = 200, message = "销售员备注最大200字符")
         private String remark;
 
 

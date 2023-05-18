@@ -288,6 +288,7 @@ public class CustomerDTO implements Serializable {
         /**
          * 币种
          */
+        @NotBlank(message = "结算币种不能为空")
         private String currency;
 
         /**
@@ -302,6 +303,7 @@ public class CustomerDTO implements Serializable {
          * http://172.16.100.11:3002/project/110/interface/api/13435
          * key=customerCompanyCategory
          */
+        @NotBlank(message = "收款条件不能为空")
         private String conditionDict;
 
         /**
@@ -619,6 +621,7 @@ public class CustomerDTO implements Serializable {
         /**
          * 币种
          */
+        @NotBlank(message = "结算币种不能为空")
         private String currency;
 
         /**
@@ -633,6 +636,7 @@ public class CustomerDTO implements Serializable {
          * http://172.16.100.11:3002/project/110/interface/api/13435
          * key=customerCompanyCategory
          */
+        @NotBlank(message = "收款条件不能为空")
         private String conditionDict;
 
         /**

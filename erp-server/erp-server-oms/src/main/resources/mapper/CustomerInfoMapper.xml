@@ -27,7 +27,7 @@
             </foreach>
         </if>
         <if test="params.useOrgIdList !=null and params.useOrgIdList.size>0">
-            AND ci.inner_org_id IN
+            AND ci.use_org_id IN
             <foreach collection="params.useOrgIdList" item="useOrgId" open="(" separator="," close=")">
                 #{useOrgId}
             </foreach>
@@ -88,7 +88,7 @@
                     </foreach>
                 </if>
                 <if test="params.useOrgIdList !=null and params.useOrgIdList.size>0">
-                    AND ci.inner_org_id IN
+                    AND ci.use_org_id IN
                     <foreach collection="params.useOrgIdList" item="useOrgId" open="(" separator="," close=")">
                         #{useOrgId}
                     </foreach>
