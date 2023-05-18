@@ -39,4 +39,19 @@ public interface MachineSubComponentsService extends SuperService<MachineSubComp
      * @return List<MachineSubComponentsEntity>
      */
     List<MachineSubComponentsEntity> listByDetailId(String detailId);
+    /**
+     * @description: 根据明细ids查询子件明细
+     * @author Will
+     * @date: 2023/5/17 15:10
+     * @param detailIds
+     * @return List<MachineSubComponentsEntity>
+     */
+    List<MachineSubComponentsEntity> listByDetailIds(List<String> detailIds);
+    /**
+     * @description: 根据加工单ids删除子件
+     * @author Will
+     * @date: 2023/5/18 12:25
+     * @param mainIds
+     */
+    void removeByMainIds(List<String> mainIds);
 }

@@ -200,6 +200,15 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(TransferInfoDTO.UpdateDTO dto) {
+
+        TransferInfoEntity old = this.getById(dto.getId());
+        if (ObjectUtils.isEmpty(old)) {
+            throw new ServiceException(ApiError.ERROR_99047);
+        }
+        if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(old.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(old.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_1029);
+        }
+
         TransferInfoEntity entity = new TransferInfoEntity();
         BeanMapperUtils.copy(dto, entity);
         List<TransferInfoDetailDTO.UpdateDTO> detailList = dto.getDetailList();
@@ -209,7 +218,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         log.info("直接调拨单修改，id=【{}】", dto.getId());
 
         //添加日志
-        TransferInfoEntity old = this.getById(dto.getId());
         operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "", "");
         //更新主表数据
         this.updateById(entity);
