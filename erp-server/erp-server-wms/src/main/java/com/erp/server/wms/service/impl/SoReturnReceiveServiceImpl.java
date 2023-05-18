@@ -197,6 +197,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         entity.setCustomerName(customerInfoEntity.getName());
         entity.setId(null);
+        entity.setApproveStatus(null);
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.THQS, BusinessNoTypeEnum.CODE_THQS.getCode()));
         entity.setCode(code);
@@ -234,6 +235,8 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         entity.setCustomerName(customerInfoEntity.getName());
 
         entity.setId(dto.getId());
+        SoReturnReceiveEntity byId = this.getById(dto.getId());
+        entity.setApproveStatus(byId.getApproveStatus());
         entity.setSourceId(dto.getSourceId());
         entity.setSourceCode(soReturnEntity.getCode());
         entity.setSourceType(soReturnEntity.getSourceType());

@@ -29,6 +29,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -198,6 +199,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         soReturnEntity.setCustomerName(customerInfoEntity.getName());
         soReturnEntity.setId(null);
+        soReturnEntity.setApproveStatus(null);
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.THDD, BusinessNoTypeEnum.CODE_THDD.getCode()));
         soReturnEntity.setCode(code);
@@ -229,6 +231,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         soReturnEntity.setCustomerName(customerInfoEntity.getName());
         soReturnEntity.setId(dto.getId());
+        SoReturnEntity entity = this.getById(dto.getId());
+        soReturnEntity.setApproveStatus(entity.getApproveStatus());
         soReturnEntity.setSourceId(dto.getSourceId());
         soReturnEntity.setSourceCode(soInfoEntity.getCode());
         soReturnEntity.setBillDate(dto.getBillDate());
