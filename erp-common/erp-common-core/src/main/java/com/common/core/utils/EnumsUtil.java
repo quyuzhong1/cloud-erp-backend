@@ -42,7 +42,7 @@ public class EnumsUtil {
      * 获取value返回枚举对象
      * @param value
      * @param clazz */
-    public static <T extends EnumMessage>  T getEnumObject(Integer value, Class<?> clazz){
+    public static <T extends EnumMessage>  T getEnumObject(Object value, Class<?> clazz){
         try {
             initialSingleEnumMap(clazz);
         } catch (Exception e){
