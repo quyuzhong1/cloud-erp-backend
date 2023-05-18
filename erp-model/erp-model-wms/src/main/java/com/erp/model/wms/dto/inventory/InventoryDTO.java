@@ -449,6 +449,11 @@ public class InventoryDTO {
          */
         private List<String> ids;
 
+        /**
+         * 单据编号
+         */
+        private String sourceCode;
+
 
         /**
          * sku编码

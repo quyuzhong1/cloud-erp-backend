@@ -264,7 +264,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Override
     public Integer getInventoryTotal(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
         InventoryEntity inventory = this.findInventoryIncLocation(orgId, warehouseId, skuId, warehouseLocationId, status);
-        return inventory.getQty();
+        return Objects.isNull(inventory) ? 0 : inventory.getQty();
     }
 
     @Transactional(rollbackFor = Exception.class)

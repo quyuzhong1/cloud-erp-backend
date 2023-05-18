@@ -85,7 +85,7 @@ public interface InventoryFeign {
     void batchUnApprove(@RequestBody @Validated InventoryBatchUnApproveDTO dto);
 
     /**
-     * 获取sku 库存状态数量（调用方传输状态）
+     * 获取sku 库存状态数量（调用方传输状态）特别注意：如果库位没传或者为空，则库位字段会赋值为空查询
      * @author yl
      * @date 2023-05-16 17:17
      * @param paramDTO
