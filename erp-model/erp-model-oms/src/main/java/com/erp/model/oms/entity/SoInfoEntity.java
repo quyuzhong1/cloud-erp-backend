@@ -153,14 +153,14 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     /**
      * 收货地址
      */
-    @TableField("receiver_address")
+    @TableField("receive_address")
     private String receiveAddress;
 
     /**
      * 收货地址
      */
-    @TableField("receiver_address_id")
-    private String receiverAddressId;
+    @TableField("receive_address_id")
+    private String receiveAddressId;
 
 
 

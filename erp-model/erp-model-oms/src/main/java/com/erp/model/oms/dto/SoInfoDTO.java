@@ -418,7 +418,7 @@ public class SoInfoDTO implements Serializable {
          *
          *  这个是地址下拉 http://172.16.100.11:3002/project/110/interface/api/13786
          */
-        private String receiverAddressId;
+        private String receiveAddressId;
 
         /**
          * 交货方式 oms/common/enumDropDown?type=DeliveryMode
@@ -778,12 +778,12 @@ public class SoInfoDTO implements Serializable {
         /**
          * 收货人地址
          */
-        private String receiverAddress;
+        private String receiveAddress;
 
         /**
          * 收货人地址
          */
-        private String receiverAddressId;
+        private String receiveAddressId;
 
         /**
          * 交货方式

@@ -934,7 +934,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             customerName = customerInfo.getName();
         }
         //收货地址id
-        String receiverAddressId = customer.getReceiverAddressId();
+        String receiverAddressId = customer.getReceiveAddressId();
 
         String receiverAddressName = "";
         if (StringUtils.isNotBlank(receiverAddressId)) {
@@ -944,7 +944,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
         }
 
-        customer.setReceiverAddress(receiverAddressName);
+        customer.setReceiveAddress(receiverAddressName);
         customer.setCustomerName(customerName);
         String deliveryMode = customer.getDeliveryMode();
         String deliveryModeName = DeliveryModeEnum.getName(deliveryMode);
@@ -992,7 +992,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         result.setTaxpayerId("");
         result.setContactPerson(customer.getReceiverName());
         result.setContactTelNumber(customer.getTelNumber());
-        result.setContactAddress(customer.getReceiverAddress());
+        result.setContactAddress(customer.getReceiveAddress());
 
         result.setCurrency(customer.getCurrency());
         result.setFirstSignDate(customer.getCreateTime().toLocalDate());
