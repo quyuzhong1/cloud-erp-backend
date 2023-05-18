@@ -444,7 +444,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     public List<TransferInfoEntity> listBySourceIds(List<String> sourceIds) {
-        return lambdaQuery().in(TransferInfoEntity::getSourceId,sourceIds).list();
+        return lambdaQuery()
+                .in(TransferInfoEntity::getSourceId,sourceIds)
+                .eq(TransferInfoEntity::getInvalidStatus,Boolean.FALSE)
+                .list();
     }
 
     /**

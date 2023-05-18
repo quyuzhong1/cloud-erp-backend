@@ -112,6 +112,10 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     @Resource
     private TransferInfoDetailService transferInfoDetailService;
 
+    @Resource
+    private TransferOutDetailService transferOutDetailService;
+
+
     @Override
     public PagingVO<TransferApplicationDTO.ListDTO> paging(PagingDTO<TransferApplicationDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setParam(pagingDTO.getParam());
@@ -482,7 +486,21 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean generateTransferInfo(ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList) {
         List<TransferApplicationDTO.GenerateTransferInfoDTO> list = validList.getList();
+        //生成下推单据
+        generateTransferData(list,MathUtil.ZERO);
+        return Boolean.TRUE;
+    }
 
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean generateTransferOut(ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList) {
+        List<TransferApplicationDTO.GenerateTransferInfoDTO> list = validList.getList();
+        //生成下推单据
+        generateTransferData(list,MathUtil.ONE);
+        return Boolean.TRUE;
+    }
+
+    private void generateTransferData(List<TransferApplicationDTO.GenerateTransferInfoDTO> list,Integer type) {
         //调拨申请单主表信息
         List<String> sourceIds = list.stream().map(TransferApplicationDTO.GenerateTransferInfoDTO::getSourceId).distinct().collect(Collectors.toList());
         List<TransferApplicationEntity> transferApplicationList = this.listByIds(sourceIds);
@@ -490,9 +508,11 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             throw new ServiceException(ApiError.ERROR_99043);
         }
 
-        //直接调拨明细信息
         List<String> sourceDetailIds = list.stream().map(TransferApplicationDTO.GenerateTransferInfoDTO::getSourceDetailId).distinct().collect(Collectors.toList());
+        //直接调拨明细
         List<TransferInfoDetailEntity> transferInfoDetailList = transferInfoDetailService.listSourceDetailIds(sourceDetailIds);
+        //分步式调出明细
+        List<TransferOutDetailEntity> transferOutDetailList = transferOutDetailService.listSourceDetailIds(sourceDetailIds);
 
         //根据来源id分组生成下推直接调拨单
         Map<String, List<TransferApplicationDTO.GenerateTransferInfoDTO>> map = list.stream().collect(Collectors.groupingBy(TransferApplicationDTO.GenerateTransferInfoDTO::getSourceId));
@@ -500,58 +520,74 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         for (Map.Entry<String, List<TransferApplicationDTO.GenerateTransferInfoDTO>> entry : map.entrySet()) {
             List<TransferApplicationDTO.GenerateTransferInfoDTO> value = entry.getValue();
             TransferApplicationDTO.GenerateTransferInfoDTO transferInfoDTO = value.get(0);
-            //直接调拨单
-            TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
-            BeanMapperUtils.copy(transferInfoDTO,addDTO);
 
             //调拨方向
             String transferDirection = transferApplicationList.stream().filter(obj -> obj.getId().equals(transferInfoDTO.getSourceId())).map(TransferApplicationEntity::getTransferDirection).findFirst().orElse("");
-            addDTO.setTransferDirection(transferDirection);
 
-            List<TransferInfoDetailDTO.AddDTO> addDetailList = new ArrayList<>();
-            for (TransferApplicationDTO.GenerateTransferInfoDTO dto : value) {
-                if (CollectionUtils.isNotEmpty(transferInfoDetailList)) {
-                    //已调拨
-                    long count = transferInfoDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(dto.getSourceDetailId())).count();
-                    if (count > 0) {
-                        throw new ServiceException(ApiError.ERROR_99051.code, String.format(ApiError.ERROR_99051.msg, dto.getSkuNo()));
-                    }
+            //直接调拨单
+            if (MathUtil.ZERO.equals(type)) {
+                TransferInfoDTO.AddDTO addInfoDTO = new TransferInfoDTO.AddDTO();
+                BeanMapperUtils.copy(transferInfoDTO,addInfoDTO);
+                addInfoDTO.setTransferDirection(transferDirection);
+                List<TransferInfoDetailDTO.AddDTO> addDetailList = new ArrayList<>();
+                for (TransferApplicationDTO.GenerateTransferInfoDTO dto : value) {
+                    //验证明细是否已经被调拨
+                    checkGenerateTransfer(transferInfoDetailList,transferOutDetailList,dto.getSourceDetailId(),dto.getSkuNo());
+                    TransferInfoDetailDTO.AddDTO addDetailDTO = new TransferInfoDetailDTO.AddDTO();
+                    BeanMapperUtils.copy(dto,addDetailDTO);
+                    addDetailList.add(addDetailDTO);
                 }
-                TransferInfoDetailDTO.AddDTO addDetailDTO = new TransferInfoDetailDTO.AddDTO();
-                BeanMapperUtils.copy(dto,addDetailDTO);
-                addDetailList.add(addDetailDTO);
+                addInfoDTO.setDetailList(addDetailList);
+                //新增直接调拨单
+                transferInfoService.add(addInfoDTO);
             }
-            addDTO.setDetailList(addDetailList);
-            //新增直接调拨单
-            transferInfoService.add(addDTO);
+
+            //分步式调出单
+            if (MathUtil.ONE.equals(type)) {
+                //分步式调出单
+                TransferOutDTO.AddDTO addOutDTO = new TransferOutDTO.AddDTO();
+                BeanMapperUtils.copy(addOutDTO,transferInfoDTO);
+                addOutDTO.setTransferDirection(transferDirection);
+                List<TransferOutDetailDTO.AddDTO> addDetailList = new ArrayList<>();
+                for (TransferApplicationDTO.GenerateTransferInfoDTO dto : value) {
+                    //验证明细是否已经被调拨
+                    checkGenerateTransfer(transferInfoDetailList,transferOutDetailList,dto.getSourceDetailId(),dto.getSkuNo());
+                    TransferOutDetailDTO.AddDTO addDetailDTO = new TransferOutDetailDTO.AddDTO();
+                    BeanMapperUtils.copy(dto,addDetailDTO);
+                    addDetailList.add(addDetailDTO);
+                }
+                addOutDTO.setDetailList(addDetailList);
+                //新增直接调拨单
+                //transferOutService.add(addOutDTO);
+            }
         }
-        return Boolean.TRUE;
+
     }
 
-    @Override
-    public Boolean generateTransferOut(ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList) {
-        List<TransferApplicationDTO.GenerateTransferInfoDTO> list = validList.getList();
-        //根据来源id分组生成下推直接调拨单
-        Map<String, List<TransferApplicationDTO.GenerateTransferInfoDTO>> map = list.stream().collect(Collectors.groupingBy(TransferApplicationDTO.GenerateTransferInfoDTO::getSourceId));
-
-        for (Map.Entry<String, List<TransferApplicationDTO.GenerateTransferInfoDTO>> entry : map.entrySet()) {
-            List<TransferApplicationDTO.GenerateTransferInfoDTO> value = entry.getValue();
-            TransferApplicationDTO.GenerateTransferInfoDTO transferInfoDTO = value.get(0);
-            //直接调拨单
-            TransferOutDTO.AddDTO addDTO = new TransferOutDTO.AddDTO();
-            BeanMapperUtils.copy(addDTO,transferInfoDTO);
-
-            List<TransferOutDetailDTO.AddDTO> addDetailList = new ArrayList<>();
-            for (TransferApplicationDTO.GenerateTransferInfoDTO dto : value) {
-                TransferOutDetailDTO.AddDTO addDetailDTO = new TransferOutDetailDTO.AddDTO();
-                BeanMapperUtils.copy(dto,addDetailDTO);
-                addDetailList.add(addDetailDTO);
+    /**
+     * @description: 验证是否被调拨
+     * @author Will
+     * @date: 2023/5/18 10:10
+     * @param transferInfoDetailList
+     * @param transferOutDetailList
+     * @param sourceDetailId
+     * @param skuNo
+     */
+    private void checkGenerateTransfer (List<TransferInfoDetailEntity> transferInfoDetailList,List<TransferOutDetailEntity> transferOutDetailList,String sourceDetailId,String skuNo) {
+        if (CollectionUtils.isNotEmpty(transferInfoDetailList)) {
+            //直接调拨单调拨
+            long infoCount = transferInfoDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(sourceDetailId)).count();
+            if (infoCount > 0 ) {
+                throw new ServiceException(ApiError.ERROR_99051.code, String.format(ApiError.ERROR_99051.msg, skuNo));
             }
-            addDTO.setDetailList(addDetailList);
-            //新增直接调拨单
-            //transferOutService.add(addDTO);
         }
-        return Boolean.TRUE;
+        if (CollectionUtils.isNotEmpty(transferOutDetailList)) {
+            //分步式调出
+            long infoCount = transferOutDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(sourceDetailId)).count();
+            if (infoCount > 0 ) {
+                throw new ServiceException(ApiError.ERROR_99055.code, String.format(ApiError.ERROR_99055.msg, skuNo));
+            }
+        }
     }
 
     @Override

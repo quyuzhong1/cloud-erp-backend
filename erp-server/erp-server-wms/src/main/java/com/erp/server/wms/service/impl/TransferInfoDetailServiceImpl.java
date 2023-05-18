@@ -97,7 +97,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
 
     @Override
     public List<TransferInfoDetailEntity> listSourceDetailIds(List<String> sourceDetailIds) {
-        return lambdaQuery().in(TransferInfoDetailEntity::getSourceDetailId,sourceDetailIds).list();
+        return baseMapper.listSourceDetailIds(sourceDetailIds);
     }
 
     /**
