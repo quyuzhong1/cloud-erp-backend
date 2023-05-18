@@ -8,8 +8,10 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.server.oms.service.CustomerAddressService;
 import com.erp.server.oms.service.CustomerInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -33,6 +35,8 @@ public class CustomerInfoController extends BaseController {
     @Resource
     private CustomerInfoService customerInfoService;
 
+    @Resource
+    private CustomerAddressService customerAddressService;
 
     /**
      * 获取 tab列表
@@ -301,6 +305,19 @@ public class CustomerInfoController extends BaseController {
     public ApiResult<CustomerDTO.BaseDTO> getBase(@RequestParam("customerId") String customerId) {
         CustomerDTO.BaseDTO result = customerInfoService.getBase(customerId);
         return success(result);
+    }
+
+    /**
+     * 根据客户id 获取地址信息
+     * @Author Luo_WG
+     * @Date 2023/5/18 14:28
+     * @param customerId customerId
+     * @return java.util.List<com.erp.model.oms.dto.CustomerAddressDTO.ViewDTO>
+     **/
+    @GetMapping("/listCustomerAddress")
+    public ApiResult<List<CustomerAddressDTO.ViewDTO>> listCustomerAddress(@RequestParam("customerId") String customerId) {
+        List<CustomerAddressDTO.ViewDTO> viewDTOS = customerAddressService.listByMainId(customerId);
+        return success(viewDTOS);
     }
 
 

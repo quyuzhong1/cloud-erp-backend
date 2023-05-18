@@ -143,7 +143,7 @@ public class SoDeliveryNoticeEntity extends BaseEntity<SoDeliveryNoticeEntity> {
     /**
      * 仓库名称
      */
-    @TableField("warehouse_id")
+    @TableField("warehouse_name")
     private String WarehouseName;
 
     /**
