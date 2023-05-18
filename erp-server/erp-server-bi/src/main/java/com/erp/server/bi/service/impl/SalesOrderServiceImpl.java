@@ -16,6 +16,7 @@ import com.erp.server.bi.constant.BiConstant;
 import com.erp.server.bi.constant.ChartType;
 import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.enums.SiteEnum;
+import com.erp.server.bi.enums.TimeTypeEnum;
 import com.erp.server.bi.mapper.SalesOrderServiceMapper;
 import com.erp.server.bi.service.BiProductDetailService;
 import com.erp.server.bi.service.DmpShopInfoService;
@@ -66,10 +67,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
         String timeFlag = "delivery_time";
-        if (dto.getTimeType() != null && BiConstant.OLD.equals(dto.getTimeType())) {
+        if (dto.getTimeType() != null && TimeTypeEnum.ORDER_TIME.getCode() == dto.getTimeType()) {
             timeFlag = "platform_create_time";
         }
-
         dto.setStartTime(LocalDateUtil.getThisYearStart(now));
         dto.setEndTime(LocalDateUtil.getThisYearEnd(now));
         List<SalesFlagVO> thisYearList = baseMapper.getMonthSales(dto, settleRate, timeFlag);
@@ -77,7 +77,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //去年
         dto.setStartTime(LocalDateUtil.getLastYearStart(now));
         dto.setEndTime(LocalDateUtil.getLastYearEnd(now));
-        List<SalesFlagVO> lastYearList = baseMapper.getMonthSales(dto, timeFlag, settleRate);
+        List<SalesFlagVO> lastYearList = baseMapper.getMonthSales(dto, settleRate, timeFlag);
 
         int initSize = 12;
         List<String> xAxisList = new ArrayList<>(initSize);
@@ -89,7 +89,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         thisYearSeries.setName("销售额");
         List<Object> thisYearDataList = new ArrayList<>(initSize);
         for (int m = 1; m <= 12; m++) {
-            int finalM = m;
+            String finalM = m > 9 ? String.valueOf(m) : "0".concat(String.valueOf(m));
             SalesFlagVO salesFlag = thisYearList.stream().filter(s -> s.getFlag().equals(finalM)).
                     findFirst().orElse(null);
             if (salesFlag != null) {
@@ -100,14 +100,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
         thisYearSeries.setData(thisYearDataList);
         seriesList.add(thisYearSeries);
-
         //去年的
         SeriesVO<Object> lastYearSeries = new SeriesVO();
         lastYearSeries.setName("销售额");
         List<Object> lastYearDataList = new ArrayList<>(initSize);
         for (int m = 1; m <= 12; m++) {
             xAxisList.add(m + "月份");
-            int finalM = m;
+            String finalM = m > 9 ? String.valueOf(m) : "0".concat(String.valueOf(m));
             SalesFlagVO salesFlag = lastYearList.stream().filter(s -> s.getFlag().equals(finalM)).
                     findFirst().orElse(null);
             if (salesFlag != null) {
@@ -116,8 +115,6 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 lastYearDataList.add(BigDecimal.ZERO);
             }
         }
-
-
         lastYearSeries.setData(lastYearDataList);
         seriesList.add(lastYearSeries);
         chart.setXAxis(xAxisList);
@@ -1946,10 +1943,14 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         }
         //获取到结算汇率
         String settleRate = getSettleRate(dto.getSettleMethod());
-
-        List<SalesFlagVO> list = baseMapper.byMarketingCenter(dto, timeFlag, settleRate);
-
-        List<SalesFlagVO> lastYearList = baseMapper.byLastYear(dto, timeFlag, settleRate);
+        LocalDate now = LocalDate.now();
+        //今年
+        String thisYear = String.valueOf(now.getYear());
+        //去年
+        int lastYear = now.minusYears(1).getYear();
+        String lastYearStr = String.valueOf(lastYear);
+        List<SalesFlagVO> list = baseMapper.byMarketingCenter(dto, timeFlag, settleRate, thisYear);
+        List<SalesFlagVO> lastYearList = baseMapper.byLastYear(dto, timeFlag, settleRate, lastYearStr);
         //上个月开始时间
         LocalDateTime lastMonthStart = LocalDateUtil.getLastMonthStart(nowDate);
         //上个月结束时间
@@ -1959,23 +1960,23 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //获取上个月
         SalesFlagVO lastMonth = baseMapper.byLastMonth(dto, settleRate);
 
-
         //获取到当前月
         int nowMonth = LocalDate.now().getMonthValue();
         int year = LocalDate.now().getYear();
         for (int m = 1; m <= nowMonth; m++) {
-            int month = m;
+            String finalM = m > 9 ? String.valueOf(m) : "0".concat(String.valueOf(m));
             SalesCountVO vo = new SalesCountVO();
             vo.setName(year + "年" + m + "月份");
-            SalesFlagVO flag = list.stream().filter(s -> s.getFlag().equals(month)).
+            SalesFlagVO flag = list.stream().filter(s -> s.getFlag().equals(finalM)).
                     findFirst().orElse(null);
             BigDecimal sales = BigDecimal.ZERO;
             if (flag != null) {
                 vo.setSalesQuantity(flag.getSalesQuantity());
                 sales = flag.getSales();
                 vo.setSales(sales);
+                vo.setOrderCount(flag.getOrderCount());
             }
-            SalesFlagVO LastYearFlag = lastYearList.stream().filter(s -> s.getFlag().equals(month)).
+            SalesFlagVO LastYearFlag = lastYearList.stream().filter(s -> s.getFlag().equals(finalM)).
                     findFirst().orElse(null);
             if (LastYearFlag != null) {
                 vo.setYearBasisRatio(getChainRelativeRatio(sales, LastYearFlag.getSales()));
@@ -1984,7 +1985,9 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
             if (m == 1) {
                 vo.setChainRelativeRatio(getChainRelativeRatio(sales, lastMonth.getSales()));
             } else {
-                SalesFlagVO lastMonthFlag = list.stream().filter(s -> s.getFlag().equals(month - 1)).
+                String last = m-1 > 9 ? String.valueOf(m-1) : "0".concat(String.valueOf(m-1));
+
+                SalesFlagVO lastMonthFlag = list.stream().filter(s -> s.getFlag().equals(last)).
                         findFirst().orElse(null);
                 if (lastMonthFlag != null) {
                     vo.setChainRelativeRatio(getChainRelativeRatio(sales, lastMonthFlag.getSales()));
