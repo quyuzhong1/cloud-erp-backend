@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * @Classname: InventoryTransTypeEnum
+ * @Classname: InventoryStatusEnum
  * @Description: 仓库库存状态
  * @CreateTime: 2023-04-25  11:25
  * @Author: zhangchunlin

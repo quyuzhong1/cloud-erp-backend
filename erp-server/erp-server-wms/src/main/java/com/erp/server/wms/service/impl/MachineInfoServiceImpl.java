@@ -39,6 +39,7 @@ import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.MachineDetailEntity;
 import com.erp.model.wms.entity.MachineInfoEntity;
 import com.erp.model.wms.entity.MachineSubComponentsEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.WorkTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -58,10 +59,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -101,6 +99,8 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     @Resource
     private MachineSubComponentsService machineSubComponentsService;
 
+    @Resource
+    private WarehouseService warehouseService;
 
     @Override
     public PagingVO<MachineInfoDTO.ListDTO> paging(PagingDTO<MachineInfoDTO.SearchParamDTO> pagingDTO) {
@@ -168,7 +168,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         MachineInfoEntity entity = new MachineInfoEntity();
         BeanMapperUtils.copy(dto, entity);
         //处理数据id
-        doOpHandleDataId(dto.getInventoryOrgId(), dto.getReceiveOrgId(), dto.getWarehouseKeeperId(),dto.getReceiverId(), entity);
+        doOpHandleDataId(dto.getWarehouseId(), dto.getReceiveOrgId(), dto.getWarehouseKeeperId(),dto.getReceiverId(), entity);
         log.info("加工单新增");
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.ZZCX, BusinessNoTypeEnum.CODE_ZZCX.getCode()));
@@ -213,7 +213,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         BeanMapperUtils.copy(dto, entity);
         List<MachineDetailDTO.UpdateDTO> detailList = dto.getDetailList();
         //处理数据id
-        doOpHandleDataId(dto.getInventoryOrgId(), dto.getReceiveOrgId(), dto.getWarehouseKeeperId(),dto.getReceiverId(), entity);
+        doOpHandleDataId(dto.getWarehouseId(), dto.getReceiveOrgId(), dto.getWarehouseKeeperId(),dto.getReceiverId(), entity);
 
         log.info("加工单修改，id=【{}】", dto.getId());
 
@@ -291,12 +291,71 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     }
 
     @Override
+    public List<MachineSubComponentsDTO.ViewDTO> viewBomSubComponents(String skuId) {
+        List<MachineSubComponentsDTO.ViewDTO> resultList = new ArrayList<>();
+        //查询BOM中SKU子集
+        List<BomChildrenSkuDTO> childrenList = plmTaskFeign.listBomChildBySkuId(skuId);
+        if (CollectionUtils.isEmpty(childrenList)) {
+            return resultList;
+        }
+        for (BomChildrenSkuDTO bomChildrenSkuDTO : childrenList) {
+            MachineSubComponentsDTO.ViewDTO viewDTO = new MachineSubComponentsDTO.ViewDTO();
+            viewDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
+            viewDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+            viewDTO.setProductName(bomChildrenSkuDTO.getSkuName());
+            viewDTO.setUnit(bomChildrenSkuDTO.getUnitName());
+            viewDTO.setQty(bomChildrenSkuDTO.getQuantity());
+            resultList.add(viewDTO);
+        }
+        return resultList;
+    }
+
+    @Override
+    public List<MachineSubComponentsDTO.ViewDTO> viewSubComponents(String detailId) {
+        List<MachineSubComponentsEntity> machineSubComponentsList = machineSubComponentsService.listByDetailId(detailId);
+        if (CollectionUtils.isEmpty(machineSubComponentsList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<MachineSubComponentsDTO.ViewDTO> resultList = BeanMapperUtils.copyList(MachineSubComponentsDTO.ViewDTO.class, machineSubComponentsList);
+
+        List<String> skuIds = resultList.stream().map(MachineSubComponentsDTO.ViewDTO::getSkuId).collect(Collectors.toList());
+        //产品信息
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        //仓库信息
+        List<String> warehouseIds = machineSubComponentsList.stream().map(MachineSubComponentsEntity::getWarehouseId).collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
+        if (CollectionUtils.isEmpty(warehouseList)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+
+        for (MachineSubComponentsDTO.ViewDTO viewDTO : resultList) {
+            //产品信息
+            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(skuVO)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            viewDTO.setSkuNo(skuVO.getSkuNo());
+            viewDTO.setProductName(skuVO.getSkuName());
+            //库存组织
+            String orgId = warehouseList.stream().filter(obj -> obj.getId().equals(viewDTO.getWarehouseId())).map(WarehouseEntity::getOrgId).findFirst().orElse(null);
+            //根据组织、仓库、sku查询可用库存
+            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(orgId, viewDTO.getWarehouseId(), viewDTO.getSkuId(), viewDTO.getWarehouseLocation());
+            viewDTO.setCurInventoryQty(curInventoryQty);
+        }
+
+        return  resultList;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
         //根据ids查询
         List<MachineInfoEntity> list = getList(ids);
-        //待提交允许删除
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
+        //待提交并且未作废允许删除
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || obj.getInvalidStatus() ).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
@@ -445,25 +504,6 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         return Boolean.TRUE;
     }
 
-    @Override
-    public List<MachineSubComponentsDTO.ViewDTO> viewSubComponents(String skuId) {
-        List<MachineSubComponentsDTO.ViewDTO> resultList = new ArrayList<>();
-        //查询BOM中SKU子集
-        List<BomChildrenSkuDTO> childrenList = plmTaskFeign.listBomChildBySkuId(skuId);
-        if (CollectionUtils.isEmpty(childrenList)) {
-            return resultList;
-        }
-        for (BomChildrenSkuDTO bomChildrenSkuDTO : childrenList) {
-            MachineSubComponentsDTO.ViewDTO viewDTO = new MachineSubComponentsDTO.ViewDTO();
-            viewDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
-            viewDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
-            viewDTO.setProductName(bomChildrenSkuDTO.getSkuName());
-            viewDTO.setUnit(bomChildrenSkuDTO.getUnitName());
-            viewDTO.setQty(bomChildrenSkuDTO.getQuantity());
-            resultList.add(viewDTO);
-        }
-        return resultList;
-    }
 
     /**
      * @description: 更新加工单库存
@@ -613,7 +653,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     /**
      * 处理数据id
      */
-    private void doOpHandleDataId(String inventoryOrgId, String receiveOrgId, String warehouseKeeperId,String receiverId, MachineInfoEntity entity) {
+    private void doOpHandleDataId(String warehouseId, String receiveOrgId, String warehouseKeeperId,String receiverId, MachineInfoEntity entity) {
 
         //用户信息
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(warehouseKeeperId,receiverId));
@@ -625,7 +665,15 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             String receiveOrgName = userList.stream().filter(obj -> obj.getUserId().equals(receiveOrgId)).map(FindUserDTO::getUserName).findFirst().orElse("");
             entity.setReceiverName(receiveOrgName);
         }
-
+        //仓库信息
+        WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
+        if  (ObjectUtils.isEmpty(warehouseEntity)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+        entity.setWarehouseName(warehouseEntity.getName());
+        //库存组织
+        String inventoryOrgId = warehouseEntity.getOrgId();
+        entity.setInventoryOrgId(inventoryOrgId);
         //组织信息
         List<BaseIdDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(inventoryOrgId, receiveOrgId));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
@@ -633,7 +681,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         }
         //库存组织名称
         String inventoryOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(inventoryOrgId)).map(BaseIdDTO::getName).findFirst().orElse("");
-        entity.setInventoryOrgId(inventoryOrgName);
+        entity.setInventoryOrgName(inventoryOrgName);
         //收料组织名称
         String receiveOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(receiveOrgId)).map(BaseIdDTO::getName).findFirst().orElse("");
         entity.setReceiveOrgName(receiveOrgName);

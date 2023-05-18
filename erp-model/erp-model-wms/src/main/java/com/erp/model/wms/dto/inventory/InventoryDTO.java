@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -123,7 +124,7 @@ public class InventoryDTO {
         private List<String> warehouseIdList;
 
         /**
-         * 销售状态集合
+         * 销售状态集合 接口地址：plm/common/enumDropDown?type=SaleState
          */
         private List<Integer> saleStatusList;
 
@@ -272,7 +273,7 @@ public class InventoryDTO {
         private List<String> operationModeList;
 
         /**
-         * 库存状态  接口地址：/wms/common/enumDropDown?type=InventoryTransType
+         * 库存状态  接口地址：/wms/common/enumDropDown?type=InventoryStatus
          */
         private List<String> inventoryStatusList;
     }
@@ -625,11 +626,6 @@ public class InventoryDTO {
     @NoArgsConstructor
     public static class InOutStockSummarySearchParamDTO extends SortDTO {
 
-        /**
-         * 流水id集合
-         */
-        private List<String> ids;
-
 
         /**
          * sku编码
@@ -653,6 +649,56 @@ public class InventoryDTO {
         private List<String> warehouseIdList;
 
     }
+
+    /**
+     * 仓库和SKU包装实体
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WareSkuDTO implements Serializable {
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+    }
+
+    /**
+     * 导出出入库列表查询条件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExcelInOutStockSummarySearchParamDTO extends SortDTO {
+
+        /**
+         * sku编码
+         */
+        private List<String> skuNoList;
+
+        /**
+         * 日期范围
+         */
+        private List<String> dateList;
+
+
+        /**
+         * spu编码
+         */
+        private List<String> spuNoList;
+
+        /**
+         * 仓库id集合
+         */
+        private List<String> warehouseIdList;
+
+    }
+
 
     /**
      * 可用库存查询参数
@@ -694,9 +740,14 @@ public class InventoryDTO {
     public static class InOutStockSummaryPagingViewDTO {
 
         /**
-         * 库存id集合
+         * 仓库id
          */
-        private List<String> ids;
+        private String warehouseId;
+
+        /**
+         * sku id
+         */
+        private String skuId;
 
         /**
          * sku编号
@@ -724,74 +775,73 @@ public class InventoryDTO {
         private Integer initQty;
 
         /**
-         * 入库汇总数量
+         * 入库汇总数量（入库）
          */
         private Integer totalInstockQty;
 
         /**
-         * 采购入库数量
+         * 采购入库数量（入库）
          */
         private Integer purchaseInstockQty;
 
         /**
-         * 其他入库数量
+         * 其他入库数量（入库）
          */
         private Integer otherInstockQty;
 
         /**
-         * 调拨入库数量
+         * 调拨入库数量（入库）
          */
         private Integer transferInstockQty;
 
         /**
-         * 盘盈入库数量
+         * 盘盈入库数量（入库）
          */
         private Integer inventoryProfitInstockQty;
 
-
         /**
-         * 销售退货数量
+         * 退货入库数量（入库）
          */
         private Integer saleReturnQty;
 
         /**
-         * 加工入库数量
+         * 加工入库数量（入库）
          */
         private Integer machineInstockQty;
 
         /**
-         * 出库汇总数量
+         * 出库汇总数量（出库）
          */
         private Integer totalOutstockQty;
 
 
         /**
-         * 采购退货数量
+         * 采购退货出库数量（出库）
          */
         private Integer purchaseReturnQty;
 
         /**
-         * 销售出库数量
+         * 销售出库数量（出库）
          */
         private Integer saleOutstockQty;
 
         /**
-         * 其他出库数量
+         * 其他出库数量（出库）
          */
         private Integer otherOutstockQty;
 
         /**
-         * 盘亏出库数量
+         * 盘亏出库数量（出库）
          */
         private Integer inventoryLossOutstockQty;
 
         /**
-         * 调拨出库数量
+         * 调拨出库数量（出库）
          */
         private Integer transferOutstockQty;
 
         /**
-         * 加工出库数量
+         * 加工出库数量（出库）
          */
         private Integer machineOutstockQty;
 

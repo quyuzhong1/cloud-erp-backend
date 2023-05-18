@@ -31,6 +31,7 @@ public class MachineDetailDTO implements Serializable {
         /**
          * SKU
          */
+        @NotBlank(message = "SKU不能为空")
         private String skuNo;
         /**
          * 数量
@@ -66,7 +67,7 @@ public class MachineDetailDTO implements Serializable {
          */
         @NotEmpty(message = "子件明细不能为空")
         @Valid
-        private List<MachineSubComponentsDTO.AddDTO> subComponentsDetailList;
+        private List<MachineSubComponentsDTO.AddDTO> addList;
 
     }
 
@@ -84,7 +85,7 @@ public class MachineDetailDTO implements Serializable {
          */
         @NotEmpty(message = "子件明细不能为空")
         @Valid
-        private List<MachineSubComponentsDTO.UpdateDTO> subComponentsDetailList;
+        private List<MachineSubComponentsDTO.UpdateDTO> updateList;
     }
 
     @Data

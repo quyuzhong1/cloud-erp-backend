@@ -105,12 +105,12 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping(value = "/exportExcelInOutStockSummary")
-    public ApiResult<Void> exportExcelInOutStockSummary(@RequestBody InventoryDTO.InOutStockSummarySearchParamDTO dto, HttpServletResponse response) {
+    public ApiResult<Void> exportExcelInOutStockSummary(@RequestBody InventoryDTO.ExcelInOutStockSummarySearchParamDTO dto, HttpServletResponse response) {
         return null;
     }
 
     /**
-     * 查询可用库存，特别注意：如果库位为空，则库位赋值为空
+     * 查询可用库存，特别注意：如果库位为空，则库位会赋值为空查询
      * @author Will
      * @date: 2023/5/11 10:10
      * @param dto

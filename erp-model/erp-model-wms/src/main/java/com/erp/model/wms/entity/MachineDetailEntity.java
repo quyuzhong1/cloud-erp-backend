@@ -62,12 +62,6 @@ public class MachineDetailEntity extends BaseEntity<MachineDetailEntity> {
     private String warehouseLocation;
 
     /**
-     * 即时库存
-     */
-    @TableField("cur_inventory_qty")
-    private Integer curInventoryQty;
-
-    /**
      * 参照版本
      */
     @TableField("reference_version")

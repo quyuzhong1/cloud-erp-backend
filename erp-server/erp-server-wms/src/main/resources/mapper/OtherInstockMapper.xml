@@ -32,7 +32,71 @@
     </resultMap>
 
     <select id="paging" resultType="com.erp.model.wms.dto.OtherInstockDTO$ListDTO">
-
+        select
+               *
+        from other_instock oi
+        inner join other_instock_detail oid on oi.id = oid.main_id and oi.is_deleted = false
+        <where>
+            oi.is_deleted = false
+            <if test="params.searchType != null and params.searchType != ''">
+                AND oi.approve_status = #{params.searchType}
+            </if>
+            <if test="params.code != null and params.code != ''">
+                and oi.code like concat('%',#{params.code},'%')
+            </if>
+            <if test="params.invalidStatus != null ">
+                and oi.invalid_status = #{params.invalidStatus}
+            </if>
+            <if test="params.transferDirection != null ">
+                and oi.transfer_direction = #{params.transferDirection}
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                and oid.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and oi.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.inWarehouseIdList != null and params.inWarehouseIdList.size > 0">
+                and oi.in_warehouse_id in
+                <foreach collection="params.inWarehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.outWarehouseIdList != null and params.outWarehouseIdList.size > 0">
+                and oi.out_warehouse_id in
+                <foreach collection="params.outWarehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+                and oi.create_user_id in
+                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                and oi.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > oi.create_time
+            </if>
+            <if test="params.billDateList != null and params.billDateList.size > 0">
+                and oi.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > oi.bill_date
+            </if>
+            <if test="params.param != null and params.param != ''">
+                ${params.param}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        oi.create_time desc
     </select>
 
     <select id="listCount" resultType="java.lang.Integer">

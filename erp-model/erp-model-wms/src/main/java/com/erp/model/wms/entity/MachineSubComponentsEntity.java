@@ -72,12 +72,6 @@ public class MachineSubComponentsEntity extends BaseEntity<MachineSubComponentsE
     private String warehouseLocation;
 
     /**
-     * 即时库存
-     */
-    @TableField("cur_inventory_qty")
-    private Integer curInventoryQty;
-
-    /**
      * 备注
      */
     @TableField("remark")

@@ -1,12 +1,17 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.common.business.validator.AddGroup;
+import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.MachineTypeEnum;
+import com.erp.model.wms.enums.WorkTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -177,10 +182,13 @@ public class MachineInfoDTO implements Serializable {
         /**
          * 加工日期
          */
+        @NotNull(message = "加工日期不能为空")
         private LocalDate  billDate;
         /**
          * 事务类型
          */
+        @NotBlank(message = "事务类型不能为空")
+        @StateEnumValue(clazz = WorkTypeEnum.class, message = "事务类型有误", groups = {AddGroup.class})
         private String  workType;
         /**
          * 仓管员id
@@ -189,23 +197,22 @@ public class MachineInfoDTO implements Serializable {
         /**
          * 仓库id
          */
+        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
         /**
          * 领料人id
          */
-        private String  receiverId;
-        /**
-         * 库存组织id
-         */
-        private String  inventoryOrgId;
+        private String receiverId;
         /**
          * 领料组织id
          */
-        private String   receiveOrgId;
+        private String receiveOrgId;
         /**
          * 单据类型
          */
-        private String   type;
+        @NotBlank(message = "单据类型不能为空")
+        @StateEnumValue(clazz = MachineTypeEnum.class, message = "单据类型有误", groups = {AddGroup.class})
+        private String type;
 
     }
 
@@ -269,6 +276,21 @@ public class MachineInfoDTO implements Serializable {
          * 收货仓库名称
          */
         private String warehouseName;
+
+        /**
+         * 领料组织名称
+         */
+        private String  receiveOrgName;
+
+        /**
+         * 库存组织id
+         */
+        private String  inventoryOrgId;
+
+        /**
+         * 库存组织名称
+         */
+        private String  inventoryOrgName;
 
         /**
          * 明细

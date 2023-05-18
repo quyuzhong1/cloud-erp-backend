@@ -243,8 +243,6 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 .eq(InventoryEntity::getWarehouseLocation, StrUtils.null2EmptyWithTrim(warehouseLocationId))
                 .in(InventoryEntity::getSkuId, skuIds);
 
-        warehouseLocationId = StrUtils.null2EmptyWithTrim(warehouseLocationId);
-        queryWrapper.eq(InventoryEntity::getWarehouseLocation, StrUtils.null2EmptyWithTrim(warehouseLocationId));
         List<InventoryEntity> inventoryEntities =  baseMapper.selectList(queryWrapper);
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = Lists.newArrayList();
         Map<String, InventoryEntity> queryInventoryMap = inventoryEntities.stream().collect(Collectors.toMap(InventoryEntity::getSkuId, Function.identity()));

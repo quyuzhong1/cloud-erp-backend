@@ -11,11 +11,13 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.entity.MachineDetailEntity;
 import com.erp.model.wms.entity.MachineSubComponentsEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.MachineSubComponentsMapper;
 import com.erp.server.wms.service.MachineDetailService;
 import com.erp.server.wms.service.MachineSubComponentsService;
 import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.WarehouseService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
@@ -45,6 +47,10 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
 
     @Resource
     private MachineDetailService machineDetailService;
+
+    @Resource
+    private WarehouseService warehouseService;
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -125,7 +131,7 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
      * 处理明细中的数据id
      */
     private void doOpHandleDetails (List<MachineSubComponentsEntity> newList, String detailId, Boolean isUpdate) {
-
+        //需要新增数据
         List<MachineSubComponentsEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
         //SKU信息
@@ -140,11 +146,24 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
         if (CollectionUtils.isNotEmpty(ids)) {
             list = this.listByIds(ids);
         }
+
+        //仓库信息
+        List<String> warehouseIds = newList.stream().map(MachineSubComponentsEntity::getWarehouseId).collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
+        if  (CollectionUtils.isEmpty(warehouseList)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+
         for (MachineSubComponentsEntity detail:newList) {
             //单位
             String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && StringUtils.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
             detail.setUnit(unit);
+            //仓库名称
+            String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(detail.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse(null);
+            detail.setWarehouseName(warehouseName);
+
             detail.setDetailId(detailId);
+
             //修改操作日志
             if (StringUtils.isNotBlank(detail.getId())) {
                 if (CollectionUtils.isEmpty(list)) {
