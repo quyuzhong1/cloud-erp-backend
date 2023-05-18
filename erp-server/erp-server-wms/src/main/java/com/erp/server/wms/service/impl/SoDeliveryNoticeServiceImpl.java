@@ -217,6 +217,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.FHTZ, BusinessNoTypeEnum.CODE_FHTZ.getCode()));
         SoDeliveryNoticeEntity soDeliveryNoticeEntity = new SoDeliveryNoticeEntity();
         BeanMapperUtils.copy(soInfoEntity, soDeliveryNoticeEntity);
+        soDeliveryNoticeEntity.setId(null);
         soDeliveryNoticeEntity.setCode(code);
         soDeliveryNoticeEntity.setSourceId(dto.getSourceId());
         soDeliveryNoticeEntity.setSourceCode(soInfoEntity.getCode());
