@@ -15,6 +15,10 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class SkuVO implements Serializable {
 
+    /**
+     * sku版本号
+     */
+    private Integer version;
 
     private String skuId;
 

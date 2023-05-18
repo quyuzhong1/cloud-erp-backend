@@ -71,7 +71,7 @@ public class MachineDetailEntity extends BaseEntity<MachineDetailEntity> {
      * 参照版本
      */
     @TableField("reference_version")
-    private String referenceVersion;
+    private Integer referenceVersion;
 
     /**
      * 备注
