@@ -25,4 +25,27 @@
         </if>
     </select>
 
+    <select id="listDetailBySourceDetailIds" resultType="com.erp.model.wms.entity.SoReturnNoticeDetailEntity">
+        SELECT
+        srnd.id,
+        srnd.main_id,
+        srnd.sku_id,
+        srnd.sku_no,
+        srnd.return_qty,
+        srnd.return_type_dict,
+        srnd.return_reason_dict,
+        srnd.remark,
+        srnd.source_detail_id,
+        srn.approve_status
+        FROM so_return_notice_detail srnd
+        INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
+        WHERE srn.is_deleted = FALSE
+        <if test="ids != null and ids.size != ''">
+            and srnd.source_detail_id in
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
 </mapper>

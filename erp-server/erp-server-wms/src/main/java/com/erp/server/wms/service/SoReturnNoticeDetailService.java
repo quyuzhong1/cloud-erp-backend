@@ -61,4 +61,13 @@ public interface SoReturnNoticeDetailService extends SuperService<SoReturnNotice
      * @return java.util.List<com.erp.model.oms.entity.SoReturnDetailEntity>
      **/
     List<SoReturnNoticeDetailEntity> listDetailByMainId(String id);
+
+    /**
+     * 根据来源详情id查询详情信息
+     * @Author Luo_WG
+     * @Date 2023/5/18 19:18
+     * @param sourceDetailIds
+     * @return java.util.List<com.erp.model.wms.entity.SoReturnNoticeDetailEntity>
+     **/
+    List<SoReturnNoticeDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds);
 }

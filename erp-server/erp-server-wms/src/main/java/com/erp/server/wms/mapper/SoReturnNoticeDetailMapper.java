@@ -26,4 +26,13 @@ public interface SoReturnNoticeDetailMapper extends BaseMapper<SoReturnNoticeDet
      * @return java.util.List<com.erp.model.wms.entity.SoReturnNoticeDetailEntity>
      **/
     List<SoReturnNoticeDetailEntity> listDetailBySourceIds(@Param("ids") List<String> sourceIds);
+
+    /**
+     * 根据来源详情id查询详情信息
+     * @Author Luo_WG
+     * @Date 2023/5/15 16:55
+     * @param sourceDetailIds sourceDetailIds
+     * @return java.util.List<com.erp.model.wms.entity.SoReturnNoticeDetailEntity>
+     **/
+    List<SoReturnNoticeDetailEntity> listDetailBySourceDetailIds(@Param("ids") List<String> sourceDetailIds);
 }

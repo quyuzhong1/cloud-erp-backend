@@ -36,7 +36,7 @@ public class SoDeliveryNoticeDetailDTO {
          */
         private String remark;
         /**
-         * 销售单明细表id
+         * 退货单明细表id
          */
         private String sourceDetailId;
         /**

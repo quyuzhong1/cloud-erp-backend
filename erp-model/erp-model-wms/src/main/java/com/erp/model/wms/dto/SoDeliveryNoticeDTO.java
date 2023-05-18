@@ -220,7 +220,7 @@ public class SoDeliveryNoticeDTO {
     @NoArgsConstructor
     public static class Add {
         /**
-         * 来源id（销售单id）
+         * 来源id（退货单id）
          */
         @NotBlank(message = "来源id不能为空")
         private String sourceId;
