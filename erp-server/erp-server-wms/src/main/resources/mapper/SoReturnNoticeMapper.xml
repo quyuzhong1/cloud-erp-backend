@@ -230,6 +230,11 @@
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
         WHERE srn.is_deleted = FALSE
-
+        <if test="ids != null and ids.size != ''">
+            and srn.id in
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
     </select>
 </mapper>

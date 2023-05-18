@@ -55,5 +55,5 @@ public interface SoReturnReceiveMapper extends BaseMapper<SoReturnReceiveEntity>
      * @param ids ids
      * @return java.util.List<com.erp.model.wms.dto.SoReturnReceiveDTO.GenerateSoReturnInstockView>
      **/
-    List<SoReturnReceiveDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(@Param("params") List<String> ids);
+    List<SoReturnReceiveDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(@Param("ids") List<String> ids);
 }

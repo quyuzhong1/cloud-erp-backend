@@ -559,7 +559,26 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Override
     public List<SoReturnReceiveDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(List<String> ids) {
-        List<SoReturnReceiveDTO.GenerateSoReturnInstockView> viewList = baseMapper.generateSoReturnInstockView(ids);
+        List<SoReturnReceiveDTO.GenerateSoReturnInstockView> list = baseMapper.generateSoReturnInstockView(ids);
+        //获取界面传过来的采购单详情表id集合
+        List<String> orderDetailIds = list.stream().map(SoReturnReceiveDTO.GenerateSoReturnInstockView::getSourceDetailId).collect(Collectors.toList());
+        //获取销售单详情信息
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
+        //获取sku的id集合
+        List<String> skuIdList = list.stream().map(SoReturnReceiveDTO.GenerateSoReturnInstockView::getSkuId).collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        for (SoReturnReceiveDTO.GenerateSoReturnInstockView view : list) {
+            //销售单信息
+            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(view.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            view.setSalesQty(soDetailEntity.getQty());
+            view.setStockInQty(view.getReceiveQty());
+            view.setSellableQty(view.getReceiveQty());
+            view.setUnSellableQty(MathUtil.ZERO);
+            //产品sku信息
+            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            view.setProductName(productDetailEntity.getName());
+        }
         return null;
     }
 
