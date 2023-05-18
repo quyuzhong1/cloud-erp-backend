@@ -52,7 +52,7 @@ public class InventoryController extends BaseController {
     @PostMapping(value = "/exportInventoryExcel")
     public ApiResult<Void> exportInventoryExcel(@RequestBody InventoryDTO.ExportSearchParamDTO dto, HttpServletResponse response) {
         inventoryService.exportExcel(dto, response);
-        return success();
+        return null;
     }
 
     /**
@@ -85,7 +85,7 @@ public class InventoryController extends BaseController {
     @PostMapping(value = "/exportExcelInOutStock")
     public ApiResult<Void> exportExcelInOutStock(@RequestBody InventoryDTO.ExportInOutStockTransFlowSearchParamDTO dto, HttpServletResponse response) {
         transactionFlowService.exportExcel(dto, response);
-        return success();
+        return null;
     }
 
     /**
@@ -106,7 +106,7 @@ public class InventoryController extends BaseController {
      */
     @PostMapping(value = "/exportExcelInOutStockSummary")
     public ApiResult<Void> exportExcelInOutStockSummary(@RequestBody InventoryDTO.InOutStockSummarySearchParamDTO dto, HttpServletResponse response) {
-        return success();
+        return null;
     }
 
     /**

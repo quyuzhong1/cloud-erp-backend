@@ -46,9 +46,9 @@ public class ExportTransactionFlowDTO implements Serializable {
     private String operationModeName;
 
     /**
-     * 库尊组织名称
+     * 库存组织名称
      */
-    @ExcelProperty(value = "库尊组织", index = 5)
+    @ExcelProperty(value = "库存组织", index = 5)
     private String orgName;
 
     /**

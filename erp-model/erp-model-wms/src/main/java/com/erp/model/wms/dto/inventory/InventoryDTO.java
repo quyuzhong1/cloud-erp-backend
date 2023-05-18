@@ -560,7 +560,7 @@ public class InventoryDTO {
         private String orgId;
 
         /**
-         * 库尊组织名称
+         * 库存组织名称
          */
         private String orgName;
 

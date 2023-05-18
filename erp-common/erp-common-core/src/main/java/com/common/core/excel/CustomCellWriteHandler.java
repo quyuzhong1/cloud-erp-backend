@@ -11,6 +11,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @Classname CustomCellWriteHandler
@@ -49,7 +50,12 @@ public class CustomCellWriteHandler extends AbstractColumnWidthStyleStrategy {
 
     private Integer dataLength(List<CellData> cellDataList, Cell cell, Boolean isHead) {
         if (isHead) {
-            return cell.getStringCellValue().getBytes().length;
+            // 防止空指针
+            String cellValue = cell.getStringCellValue();
+            if(Objects.isNull(cellValue)) {
+                cellValue = "";
+            }
+            return cellValue.getBytes().length;
         } else {
             CellData cellData = cellDataList.get(0);
             CellDataTypeEnum type = cellData.getType();
@@ -58,7 +64,12 @@ public class CustomCellWriteHandler extends AbstractColumnWidthStyleStrategy {
             } else {
                 switch (type) {
                     case STRING:
-                        return cellData.getStringValue().getBytes().length;
+                        // 防止空指针
+                        String val = cellData.getStringValue();
+                        if(Objects.isNull(val)) {
+                            val = "";
+                        }
+                        return val.getBytes().length;
                     case BOOLEAN:
                         return cellData.getBooleanValue().toString().getBytes().length;
                     case NUMBER:
