@@ -5,10 +5,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.server.oms.service.SoDetailService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -42,9 +39,9 @@ public class SoDetailController extends BaseController {
     /**
      * 导入
      */
-    @GetMapping("/import")
-    public ApiResult<SoDetailDTO.ImportDTO> importSku(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        SoDetailDTO.ImportDTO result = soDetailService.importSku(excelFile,response);
+    @PostMapping("/import")
+    public ApiResult<SoDetailDTO.ImportDTO> importSku(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "warehouseId") String  warehouseId,HttpServletResponse response) {
+        SoDetailDTO.ImportDTO result = soDetailService.importSku(excelFile,response,warehouseId);
         return success(result);
     }
 

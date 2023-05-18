@@ -1,14 +1,18 @@
 package com.erp.server.oms.service.impl;
 
+import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.dto.excel.SoDetailImportExcelDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -43,6 +47,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
@@ -453,16 +458,100 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * @date 2023-05-17 19:43
      */
     @Override
-    public SoDetailDTO.ImportDTO importSku(MultipartFile excelFile, HttpServletResponse response) {
-        List<SkuVO>  skuList=  plmTaskFeign.listApproveSku();
-        SoDetailExcelListener excelListenerUtil=new SoDetailExcelListener(skuList);
+    public SoDetailDTO.ImportDTO importSku(MultipartFile excelFile, HttpServletResponse response, String warehouseId) {
+        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        SoDetailExcelListener excelListenerUtil = new SoDetailExcelListener(skuList);
         try {
-
-        }catch (Exception e){
+            EasyExcel.read(excelFile.getInputStream(), SoDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (Exception e) {
             log.error("导入错误=={}", e);
+            throw new ServiceException(ApiError.ERROR_95124);
         }
+        SoDetailDTO.ImportDTO result = new SoDetailDTO.ImportDTO();
+        List<SoDetailDTO.SkuDTO> successList = excelListenerUtil.getSuccessList();
+        List<String> skuIdList = successList.stream().map(SoDetailDTO.SkuDTO::getSkuId).collect(Collectors.toList());
+        //sku的历史价格
+        List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = this.listSkuPriceHistory(skuIdList);
+        InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
+        paramDTO.setSkuIds(skuIdList);
+        paramDTO.setWarehouseId(warehouseId);
+        paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        //从wms 获取到sku 的即时库存信息
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
+        for (SoDetailDTO.SkuDTO item : successList) {
+            String skuId = item.getSkuId();
+            //即时库存
+            Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+            item.setCurInventoryQty(curInventoryQty);
+            //销售数量
+            Integer qty = item.getQty();
+            /**
+             * 缺货数量
+             * 当可用即时库存数量小于销售数量时，
+             * 缺货数量=销售数量-可用即时库存数量；
+             * 当可用即时库存数量大于销售数量时，缺货数量为0
+             */
+            Integer scarceQty = 0;
 
-        return null;
+            /**
+             * 已出库数量
+             * 新增时默认为0
+             * 编辑时根据关联出库单
+             * 总共已发货数量同步
+             *
+             */
+            Integer deliveryQty = 0;
+
+            /**
+             * 剩余数量
+             * 销售数量-已出库数量
+             */
+            Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
+            if (qty > curInventoryQty) {
+                scarceQty = qty - curInventoryQty;
+            }
+
+            item.setScarceQty(scarceQty);
+            item.setAvailableQty(getAvailableQty(curInventoryQty, qty));
+            item.setDeliveryQty(deliveryQty);
+            item.setWaitQty(waitQty);
+            //税率
+            BigDecimal taxRate = item.getTaxRate();
+            //单价
+            BigDecimal price = item.getPrice();
+            item.setAmount(MathUtil.multiply(price,qty));
+            //含税单价=销售单价*（税率+1）
+            BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
+            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            item.setTaxPrice(taxPrice);
+            //历史价格
+            SoDetailDTO.SkuHistoryPriceDTO skuHistoryPrice = skuPriceHistoryList.stream().
+                    filter(p -> p.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if (skuHistoryPrice != null) {
+                item.setMaxPrice(skuHistoryPrice.getMaxPrice());
+                item.setMinPrice(skuHistoryPrice.getMinPrice());
+                item.setAvgPrice(skuHistoryPrice.getAvgPrice());
+            }else{
+                item.setMaxPrice(price);
+                item.setMinPrice(price);
+                item.setAvgPrice(price);
+            }
+        }
+        result.setSuccessList(successList);
+        //导出错误数据
+        List<SoDetailImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "销售订单错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, SoDetailImportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        result.setErrorUrl(url);
+
+        return result;
     }
 
 
