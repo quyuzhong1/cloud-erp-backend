@@ -13,7 +13,7 @@
             sdn.delivery_org_name,
             sdn.approve_status,
             sdn.invalid_status,
-            sdn.delivery_status,
+            sdn.delivery_status_dict,
             sdnd.sku_id,
             sdnd.sku_no,
             sdnd.delivery_qty,
@@ -64,7 +64,7 @@
             </foreach>
         </if>
         <if test="params.deliveryStatusDict != null and params.deliveryStatusDict != ''">
-            and sdn.delivery_status = #{params.deliveryStatusDict}
+            and sdn.delivery_status_dict = #{params.deliveryStatusDict}
         </if>
         <if test="params.invalidStatus != null">
             and sdn.invalid_status = #{params.invalidStatus}
@@ -131,7 +131,7 @@
         sdn.delivery_org_name,
         sdn.approve_status,
         sdn.invalid_status,
-        sdn.delivery_status,
+        sdn.delivery_status_dict,
         sdnd.sku_id,
         sdnd.sku_no,
         sdnd.delivery_qty,
@@ -184,7 +184,7 @@
                     </foreach>
                 </if>
                 <if test="params.deliveryStatusDict != null and params.deliveryStatusDict != ''">
-                    and sdn.delivery_status = #{params.deliveryStatusDict}
+                    and sdn.delivery_status_dict = #{params.deliveryStatusDict}
                 </if>
                 <if test="params.invalidStatus != null">
                     and sdn.invalid_status = #{params.invalidStatus}

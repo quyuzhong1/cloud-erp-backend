@@ -10,6 +10,7 @@ import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.server.wms.mapper.SoReturnInstockMapper;
 import com.erp.server.wms.service.SoReturnInstockService;
 import com.common.business.service.SuperServiceImpl;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletResponse;
@@ -35,11 +36,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public String add(SoReturnInstockDTO.Add dto) {
         return null;
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnInstockDTO.Update dto) {
         return null;
     }
@@ -50,6 +53,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean submit(List<String> ids) {
         return null;
     }
@@ -65,26 +69,31 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
         return null;
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean disApprove(List<String> ids) {
         return null;
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean cancelProcess(List<String> ids) {
         return null;
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String remark) {
         return null;
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
         return null;
     }
@@ -95,6 +104,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean generateSoReturnReceiveSave(List<SoReturnReceiveDTO.GenerateSoReturnInstockView> list) {
         return null;
     }

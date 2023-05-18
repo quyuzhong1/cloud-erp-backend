@@ -35,25 +35,25 @@ public class SoDetailDTO implements Serializable {
         /**
          * sku id
          */
-        @NotBlank(message = "sku不能为空",groups = {AddGroup.class})
+        @NotBlank(message = "sku不能为空", groups = {AddGroup.class})
         private String skuId;
 
         /**
          * 销售数量
          */
-        @NotNull(message = "销售数量不能为空",groups = {AddGroup.class})
+        @NotNull(message = "销售数量不能为空", groups = {AddGroup.class})
         private Integer qty;
 
         /**
          * 单价
          */
-        @NotNull(message = "销售单价不能为空",groups = {AddGroup.class})
+        @NotNull(message = "销售单价不能为空", groups = {AddGroup.class})
         private BigDecimal price;
 
         /**
          * 币种
          */
-        @NotBlank(message = "币种不能为空",groups = {AddGroup.class})
+        @NotBlank(message = "币种不能为空", groups = {AddGroup.class})
         private String currency;
 
 
@@ -65,13 +65,13 @@ public class SoDetailDTO implements Serializable {
         /**
          * 是否赠品
          */
-        @NotNull(message = "是否赠品不能为空",groups = {AddGroup.class})
+        @NotNull(message = "是否赠品不能为空", groups = {AddGroup.class})
         private Boolean isGift;
 
         /**
          * 是否补发
          */
-        @NotNull(message = "是否补发不能为空",groups = {AddGroup.class})
+        @NotNull(message = "是否补发不能为空", groups = {AddGroup.class})
         private Boolean isReissue;
 
         /**
@@ -659,7 +659,6 @@ public class SoDetailDTO implements Serializable {
         private Integer qty;
 
 
-
         /**
          * 单价
          */
@@ -698,5 +697,65 @@ public class SoDetailDTO implements Serializable {
          * 备注
          */
         private String remark;
+    }
+
+    /**
+     * 采购合同明细
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportPdfDTO {
+
+        /**
+         * 物料编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+
+        /**
+         * 型号
+         */
+        private String declareModel;
+
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 单位
+         */
+        private String unit;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+
+        /**
+         * 合计
+         */
+        private BigDecimal amount;
     }
 }

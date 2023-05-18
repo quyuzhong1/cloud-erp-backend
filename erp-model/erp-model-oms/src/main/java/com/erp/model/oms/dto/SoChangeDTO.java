@@ -6,6 +6,9 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -233,6 +236,7 @@ public class SoChangeDTO implements Serializable {
         /**
          * 变更日期
          */
+        @NotNull(message = "变更日期不能为空")
         private LocalDate billDate;
 
 
@@ -242,58 +246,18 @@ public class SoChangeDTO implements Serializable {
         private String changeDeptId;
 
         /**
-         * 变更员id
+         * 变更人
          */
-        private String changeUserId;
+        @NotBlank(message = "变更人不能为空")
+        private String useId;
+
 
 
         /**
-         * 客户id
+         * 变更原因
          */
-        private String customerId;
-
-
-        /**
-         * 收货人
-         */
-        private String receiverName;
-
-        /**
-         * 电话
-         */
-        private String telNumber;
-
-        /**
-         * 收货人地址
-         */
-        private String receiverAddress;
-
-        /**
-         * 交货方式
-         */
-        private String deliveryMode;
-
-
-        /**
-         * 币种
-         */
-        private String currency;
-
-        /**
-         * 是否含税
-         * true 是
-         */
-        private Boolean isTax;
-
-        /**
-         * 地址类型
-         */
-        private String addressType;
-
-
-        /**
-         * 备注
-         */
+        @NotBlank(message = "变更原因不能为空")
+        @Size(max = 200, message = "变更原因最大50字符")
         private String remark;
 
 

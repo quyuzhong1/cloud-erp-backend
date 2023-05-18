@@ -17,17 +17,6 @@ public class SoReturnDetailDTO {
     @NoArgsConstructor
     public static class Add {
         /**
-         * 采购订单id
-         */
-        private String sourceId;
-        /**
-         * 销售数量
-         */
-        @NotNull(message = "销售数量不能为空")
-        @Min(value = 1, message = "销售数量最小值为1")
-        @Max(value = 999999999, message = "销售数量最大值为999999999")
-        private Integer salesQty;
-        /**
          * 退货数量
          */
         @NotNull(message = "退货数量不能为空")

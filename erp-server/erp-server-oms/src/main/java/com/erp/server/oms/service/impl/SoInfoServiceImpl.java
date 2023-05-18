@@ -48,6 +48,7 @@ import com.erp.server.oms.service.SoInfoService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -93,6 +94,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Value("${so.contract.company}")
+    private String company;
+
+    @Value("${so.contract.companyTaxpayerId}")
+    private String companyTaxpayerId;
+
+    @Value("${so.contract.companyAddress}")
+    private String companyAddress;
 
     /**
      * 添加销售订单
@@ -937,7 +946,45 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
         }
         customer.setSalesDeptName(salesDeptName);
+        BillTypeEnum type = soInfo.getType();
+        customer.setTypeName(type.getName());
         return customer;
+    }
+
+
+    /**
+     * 获取到合同信息
+     *
+     * @param id
+     * @return com.erp.model.oms.dto.SoInfoDTO.ExportPdfDTO
+     * @author yl
+     * @date 2023-05-18 14:12
+     */
+    @Override
+    public SoInfoDTO.ExportPdfDTO exportSoContractPdf(String id) {
+        SoInfoDTO.ExportPdfDTO result = new SoInfoDTO.ExportPdfDTO();
+        SoInfoDTO.CustomerDTO customer = this.getSoCustomer(id);
+        String approveStatus = customer.getApproveStatus().getStatus();
+        String approve = ApproveStatusEnum.APPROVE.getStatus();
+        String approveIng = ApproveStatusEnum.APPROVE_ING.getStatus();
+        if (!approve.equals(approveStatus) || !approveIng.equals(approveStatus)) {
+            throw new ServiceException(ApiError.ERROR_92022);
+        }
+        result.setCode(customer.getCode());
+        result.setCustomerName(customer.getCustomerName());
+        result.setTaxpayerId("");
+        result.setContactPerson(customer.getReceiverName());
+        result.setContactTelNumber(customer.getTelNumber());
+        result.setContactAddress(customer.getReceiverAddress());
+
+        result.setCurrency(customer.getCurrency());
+        result.setFirstSignDate(customer.getCreateTime().toLocalDate());
+        result.setSecondSignDate(customer.getCreateTime().toLocalDate());
+
+        result.setCompany(company);
+        result.setCompanyTaxpayerId(companyTaxpayerId);
+        result.setCompanyAddress(companyAddress);
+        return result;
     }
 
 

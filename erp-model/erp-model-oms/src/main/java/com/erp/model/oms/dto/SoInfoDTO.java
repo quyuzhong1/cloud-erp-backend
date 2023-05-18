@@ -730,6 +730,26 @@ public class SoInfoDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CustomerDTO {
+
+
+        /**
+         * 单据类型
+         */
+        private String type;
+
+        private String code;
+
+        private LocalDateTime createTime;
+
+        /**
+         *审核状态
+         */
+        private ApproveStatusEnum approveStatus;
+
+        /**
+         * 单据类型名称
+         */
+        private String typeName;
         /**
          * 客户id
          */
@@ -819,6 +839,92 @@ public class SoInfoDTO implements Serializable {
          * @return
          */
         private String sellerName;
+
+
+    }
+
+
+    /**
+     * 导出销售订单的信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportPdfDTO {
+
+        /**
+         * 合同号
+         */
+        private String code;
+
+        /**
+         * 甲方(购方)
+         */
+        private String customerName;
+
+        /**
+         * 纳税人识别号 (甲方)
+         */
+        private String taxpayerId;
+
+        /**
+         * 联系人 (甲方)
+         */
+        private String contactPerson;
+
+        /**
+         * 联系 电话 (甲方)
+         */
+        private String contactTelNumber;
+
+        /**
+         * 联系地址 (甲方)
+         */
+        private String contactAddress;
+
+        /**
+         * 合计
+         */
+        private BigDecimal totalAmount;
+
+        /**
+         * 合计数据
+         */
+        private Integer totalQty;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+
+        /**
+         * 签订日期(甲方)
+         */
+        private LocalDate firstSignDate;
+
+        /**
+         * 签订日期（乙方）
+         */
+        private LocalDate secondSignDate;
+
+
+        //乙方
+        private String company;
+
+        //乙方 纳税识别号
+        private String companyTaxpayerId;
+
+        //乙方 联系人
+        private String sellerName;
+
+        //乙方 联系电话
+        private String sellerTelNumber;
+
+        //乙方 地址
+        private String companyAddress;
+
+        //明细
+        private List<SoDetailDTO.ExportPdfDTO> details;
 
 
     }
