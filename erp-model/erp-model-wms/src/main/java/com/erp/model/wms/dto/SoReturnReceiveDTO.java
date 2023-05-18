@@ -411,13 +411,29 @@ public class SoReturnReceiveDTO {
     @NoArgsConstructor
     public static class GenerateSoReturnInstockView {
         /**
-         * 退货单id
+         * id
+         */
+        private String id;
+        /**
+         * 主表id
+         */
+        private String mainId;
+        /**
+         * 退货通知单id
          */
         private String sourceId;
+        /**
+         * 退货通知单明细id
+         */
+        private String sourceDetailId;
         /**
          * 退货单号
          */
         private String sourceCode;
+        /**
+         * 单据编号
+         */
+        private String code;
         /**
          * 退货客户
          */

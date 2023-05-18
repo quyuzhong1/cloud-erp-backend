@@ -93,12 +93,12 @@
 
     <select id="listCount" resultType="java.lang.Integer">
         select
-        count(distinct sdn.id)
-        FROM so_delivery_notice sdn
-        INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
-        WHERE sdnd.is_deleted = FALSE
+        count(distinct sr.id)
+        FROM so_return_detail srd
+        INNER JOIN so_return sr ON srd.main_id = sr.id AND srd.is_deleted = FALSE
+        WHERE sr.is_deleted = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-            and sdn.approve_status in
+            and sr.approve_status in
             <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
