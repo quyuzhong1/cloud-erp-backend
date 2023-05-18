@@ -37,7 +37,7 @@ public class SoDetailController extends BaseController {
 
 
     /**
-     * 导入
+     * 销售订单 产品信息导入
      */
     @PostMapping("/import")
     public ApiResult<SoDetailDTO.ImportDTO> importSku(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "warehouseId") String  warehouseId,HttpServletResponse response) {
