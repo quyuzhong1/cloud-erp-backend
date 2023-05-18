@@ -207,7 +207,4 @@
         ORDER BY t.create_time desc
     </select>
 
-    <select id="" resultType="">
-
-    </select>
 </mapper>
