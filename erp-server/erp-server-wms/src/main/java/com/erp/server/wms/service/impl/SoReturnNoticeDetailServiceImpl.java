@@ -23,6 +23,7 @@ import com.erp.server.wms.service.SoDeliveryNoticeDetailService;
 import com.erp.server.wms.service.SoOutstockDetailService;
 import com.erp.server.wms.service.SoReturnNoticeDetailService;
 import com.common.business.service.SuperServiceImpl;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
@@ -52,6 +53,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
     private SoOutstockDetailService soOutstockDetailService;
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean add(SoReturnNoticeDTO.Add dto, String id) {
         //获取退货详情
         List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainId(dto.getSourceId());
@@ -93,6 +95,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnNoticeDTO.Update dto) {
         //获取退货详情
         List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainId(dto.getSourceId());
@@ -135,6 +138,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> mainIds) {
         return lambdaUpdate().set(SoReturnNoticeDetailEntity::getIsDeleted, Boolean.TRUE)
                 .in(SoReturnNoticeDetailEntity::getMainId, mainIds)
