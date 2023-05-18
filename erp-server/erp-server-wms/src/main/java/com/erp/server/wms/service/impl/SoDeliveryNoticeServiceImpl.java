@@ -225,6 +225,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         BeanMapperUtils.copy(soInfoEntity, soDeliveryNoticeEntity);
         soDeliveryNoticeEntity.setId(null);
         soDeliveryNoticeEntity.setApproveStatus(null);
+        soDeliveryNoticeEntity.setDeliveryModeDict(soInfoEntity.getDeliveryMode());
         soDeliveryNoticeEntity.setCode(code);
         soDeliveryNoticeEntity.setSourceId(dto.getSourceId());
         soDeliveryNoticeEntity.setSourceCode(soInfoEntity.getCode());
@@ -266,6 +267,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soDeliveryNoticeEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         soDeliveryNoticeEntity.setCustomerName(customerInfoEntity.getName());
         soDeliveryNoticeEntity.setId(dto.getId());
+        soDeliveryNoticeEntity.setDeliveryModeDict(soInfoEntity.getDeliveryMode());
         SoDeliveryNoticeEntity entity = this.getById(dto.getId());
         soDeliveryNoticeEntity.setApproveStatus(entity.getApproveStatus());
         soDeliveryNoticeEntity.setSourceId(dto.getSourceId());
