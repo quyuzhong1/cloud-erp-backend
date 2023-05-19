@@ -471,6 +471,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 查询流程实例
         Page<ProcessManagementDTO.PagingResultDTO> query = new Page<>(pageDTO.getCurrPage(), pageDTO.getPageSize());
         IPage<ProcessManagementDTO.PagingResultDTO> pageData = baseMapper.paging(query, pageDTO.getParams());
+        pageData.getRecords().stream().peek(record -> record.setProcessStatusName(record.getProcessStatus().getName())).collect(Collectors.toList());
         return new PagingVO<>(pageData);
     }
 
@@ -599,12 +600,13 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
         noticeMsgInfoDTO.setReceiverUserIds(new ArrayList<>(Collections.singletonList(task.getCurApproveId())));
         noticeMsgInfoDTO.setTitle("【流程管理中心】审批即将超时提醒");
-        noticeMsgInfoDTO.setContent(StrUtil.format("**单据名称: **{}\n**审批开始时间：**{} \n审批即将超时，请尽快处理！", task.getBusinessName(), task.getStartTime()));
+        noticeMsgInfoDTO.setContent(StrUtil.format("**单据名称: **{}\n**审批开始时间：**{} \n您有一笔审批即将超时，请尽快处理！", task.getBusinessName(), task.getStartTime()));
         noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.FLW_TASK);
         // 默认tag请指定为msg_notice_default_tag，可以根据不同业务自行指定
         SendResult sendResult = mqProducerService.sendNoticeMsg(noticeMsgInfoDTO, Boolean.TRUE);
         if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
             log.error("发送超时提醒消息失败，失败原因：{}", JSONUtil.toJsonStr(sendResult));
+            throw new ServiceException("发送超时提醒消息失败");
         }
     }
 

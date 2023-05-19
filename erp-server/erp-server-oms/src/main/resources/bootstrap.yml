@@ -44,7 +44,7 @@ seata:
       namespace: ${sfs.nacos.namespace}
   service:
     vgroupMapping: # 事务组与cluster的映射关系
-      wms_seata_tx_group: default
+      oms_seata_tx_group: default
 
 
 

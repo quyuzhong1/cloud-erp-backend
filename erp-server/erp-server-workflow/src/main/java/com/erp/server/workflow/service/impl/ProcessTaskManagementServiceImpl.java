@@ -6,15 +6,22 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.TimeoutStatusEnum;
 import com.erp.server.workflow.mapper.ProcessTaskManagementMapper;
+import com.erp.server.workflow.service.ProcessTaskCcService;
 import com.erp.server.workflow.service.ProcessTaskManagementService;
 import com.common.business.service.SuperServiceImpl;
+import org.apache.rocketmq.client.producer.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,6 +36,9 @@ import java.util.stream.Collectors;
  */
 @Service
 public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTaskManagementMapper, ProcessTaskManagementEntity> implements ProcessTaskManagementService {
+
+    @Resource
+    private ProcessTaskCcService processTaskCcService;
 
     @Override
     public Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String comment, String activityId) {
@@ -62,6 +72,18 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
         if (!update) {
             throw new RuntimeException("更新任务审批状态失败");
         }
+        // 发送抄送消息
+
+//        NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
+//        noticeMsgInfoDTO.setReceiverUserIds(new ArrayList<>(Arrays.asList("1645710077245652993")));
+//        noticeMsgInfoDTO.setTitle("产品提醒: 张三 新建产品名称【iphone14】");
+//        // 请注意：飞书中的**和**中间的数据表示加粗
+//        noticeMsgInfoDTO.setContent("**产品名称: **iphone14\n**产品日期：**2023-04-20");
+//        noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.SCM_TASK);
+//        // 默认tag请指定为msg_notice_default_tag，可以根据不同业务自行指定
+//        SendResult sendResult = mqProducerService.sendNoticeMsg(noticeMsgInfoDTO, null);
+//        // 审批完成后发送抄送消息更新抄送状态
+//        processTaskCcService.updateCcStatus(entity.getProcessInstanceId(), entity.getTaskId());
         return Boolean.TRUE;
     }
 
