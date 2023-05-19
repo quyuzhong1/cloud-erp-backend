@@ -33,10 +33,12 @@ public enum BusinessNoTypeEnum {
     CODE_THDD(22, "thdd","销售退货订单"),
     CODE_THTZ(23, "thtz","销售退货通知单"),
     CODE_XSD(24, "xsd","销售单"),
-    CODE_QTCK(25, "qtck","直接调拨单"),
+    CODE_ZZDB(25, "zzdb","直接调拨单"),
     CODE_ZZCX(26, "zzcx","加工单"),
     CODE_THQS(27, "thqs","退货签收单"),
     CODE_XSCK(28, "xsck","销售出库单"),
+    CODE_QTRK(28, "qtrk","其他入库单"),
+    CODE_QTCK(28, "qtck","其他出库单"),
 
     ;
 

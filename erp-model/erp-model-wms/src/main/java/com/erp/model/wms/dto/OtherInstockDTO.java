@@ -261,7 +261,7 @@ public class OtherInstockDTO implements Serializable {
         private String  approveStatusName;
 
         /**
-         * 库存状态名称
+         * 库存方向名称
          */
         private String  inventoryDirectionName;
 

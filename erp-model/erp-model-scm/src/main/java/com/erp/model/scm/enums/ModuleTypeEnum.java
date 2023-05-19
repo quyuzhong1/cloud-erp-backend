@@ -31,6 +31,7 @@ public enum ModuleTypeEnum {
     OTHER_INSTOCK("20", "其他入库单"),
     SO_RETURN_RECEIVE("21", "退货签收单"),
     SO_OUT_STOCK("22", "销售出库单"),
+    OTHER_OUTSTOCK("23", "其他出库单"),
 
     ;
 

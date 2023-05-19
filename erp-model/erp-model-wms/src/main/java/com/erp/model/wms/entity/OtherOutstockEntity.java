@@ -15,7 +15,7 @@ import java.util.Date;
  * 
  * </p>
  *
- * @author lambda
+ * @author will
  * @since 2023-05-10
  */
 @Getter
@@ -35,6 +35,12 @@ public class OtherOutstockEntity extends BaseEntity<OtherOutstockEntity> {
      */
     @TableField("approve_status")
     private String approveStatus;
+
+    /**
+     * 出库类型
+     */
+    @TableField("type")
+    private String type;
 
     /**
      * 单据日期

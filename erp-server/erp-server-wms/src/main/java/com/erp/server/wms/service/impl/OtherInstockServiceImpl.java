@@ -32,11 +32,15 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.dto.OtherInstockDetailDTO;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.OtherInstockDetailEntity;
 import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
+import com.erp.model.wms.enums.InventoryDirectionEnum;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -169,7 +173,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         doOpHandleDataId(dto.getWarehouseId(),dto.getReceiverId(), dto.getWarehouseKeeperId(), entity);
         log.info("其他入库单新增");
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QTCK, BusinessNoTypeEnum.CODE_QTCK.getCode()));
+        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QTRK, BusinessNoTypeEnum.CODE_QTRK.getCode()));
         entity.setCode(code);
         //新增主表数据
         boolean save = this.save(entity);
@@ -437,15 +441,43 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         return Boolean.TRUE;
     }
 
-
+    /**
+     * @description: 库存变更
+     * @author Will
+     * @date: 2023/5/19 14:36
+     * @param list
+     */
     private void updateInventoryTransCore (List<OtherInstockEntity> list) {
         List<String> ids = list.stream().map(OtherInstockEntity::getId).collect(Collectors.toList());
-        //加工明细
+        //其他入库明细
         List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainIds(ids);
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_99053);
         }
+        List<InOutStockDTO>  inOutStockList = new ArrayList<>();
+        for (OtherInstockDetailEntity detailEntity : detailList) {
+            //其他入库信息
+            OtherInstockEntity entity = list.stream().filter(obj -> obj.getId().equals(detailEntity.getMainId())).findFirst().orElse(null);
 
+            //操作请求实体
+            InOutStockDTO inOutStockDTO = new InOutStockDTO();
+            inOutStockDTO.setSourceType(InventorySourceTypeEnum.OTHER_INSTOCK);
+            inOutStockDTO.setSourceId(entity.getId());
+            inOutStockDTO.setSourceCode(entity.getCode());
+            inOutStockDTO.setSourceDetailId(detailEntity.getId());
+            inOutStockDTO.setBillDate(entity.getBillDate());
+            inOutStockDTO.setSkuId(detailEntity.getSkuId());
+            inOutStockDTO.setSkuNo(detailEntity.getSkuNo());
+            inOutStockDTO.setQty(detailEntity.getActualQty());
+            inOutStockDTO.setWarehouseId(entity.getWarehouseId());
+            inOutStockDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
+            inOutStockList.add(inOutStockDTO);
+        }
+        //其他入库增加库存
+        InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+        inventoryInOutStockDTO.setMembers(inOutStockList);
+        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.OTHER_IN.getCode());
+        inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
 
     }
 
@@ -467,12 +499,6 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             throw new ServiceException(ApiError.ERROR_95084);
         }
 
-        //调拨方向
-        List<DictBasicDTO.ListDTO> inventoryDirectionList = dictBasicService.getByKey(DictBasicEnum.INVENTORY_DIRECTION.getKey());
-        if (CollectionUtils.isEmpty(inventoryDirectionList)) {
-            throw new ServiceException(ApiError.ERROR_99049);
-        }
-
         for (OtherInstockDTO.ListDTO obj : records) {
             //产品名称
             String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
@@ -482,11 +508,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             obj.setProductName(productName);
 
             //库存方向名称
-            String transferDirectionName = inventoryDirectionList.stream().filter(e -> e.getValue().equals(obj.getInventoryDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
-            if (StringUtils.isBlank(transferDirectionName)) {
-                throw new ServiceException(ApiError.ERROR_99049);
-            }
-            obj.setInventoryDirectionName(transferDirectionName);
+            obj.setInventoryDirectionName(InventoryDirectionEnum.getName(obj.getInventoryDirection()));
 
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));

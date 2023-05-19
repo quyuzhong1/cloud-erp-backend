@@ -11,7 +11,7 @@ import org.apache.commons.lang3.StringUtils;
  * @description: TODO
  * @date 2023/5/15 16:43
  */
-public enum TransferDirectionEnum implements EnumMessage {
+public enum InventoryDirectionEnum implements EnumMessage {
 
 
     ORDINARY ("ordinary", "普通"),
@@ -28,7 +28,7 @@ public enum TransferDirectionEnum implements EnumMessage {
      */
     private String name;
 
-    TransferDirectionEnum(String code, String name) {
+    InventoryDirectionEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
