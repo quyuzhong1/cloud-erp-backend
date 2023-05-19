@@ -72,7 +72,19 @@ public class SoReturnInstockDTO {
     @NoArgsConstructor
     public static class PagingView {
         /**
-         * 退货订单号
+         * id
+         */
+        private String id;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+        /**
+         * 退货入库单号
          */
         private String code;
         /**
@@ -83,6 +95,10 @@ public class SoReturnInstockDTO {
          * 单据类型
          */
         private String type;
+        /**
+         * 客户id
+         */
+        private String customerId;
         /**
          * 客户名称
          */
@@ -108,9 +124,17 @@ public class SoReturnInstockDTO {
          */
         private String invalidStatusName;
         /**
+         * 销售员Id
+         */
+        private String sellerId;
+        /**
          * 销售员
          */
         private String sellerName;
+        /**
+         * SkuId
+         */
+        private String skuId;
         /**
          * SKU
          */
@@ -122,7 +146,7 @@ public class SoReturnInstockDTO {
         /**
          * 退货类型
          */
-        private String returnType;
+        private String returnTypeDict;
         /**
          * 销售数量
          */

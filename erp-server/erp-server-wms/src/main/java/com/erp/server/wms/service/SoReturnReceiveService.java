@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
+import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
 import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.common.business.service.SuperService;
 import org.springframework.web.bind.annotation.RequestBody;

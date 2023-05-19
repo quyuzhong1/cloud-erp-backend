@@ -83,4 +83,16 @@ public class SoReturnFeignController {
         return soReturnDetailService.listDetailByMainId(mainId);
     }
 
+    /**
+     * 根据主表ids查询详情表信息
+     * @Author Luo_WG
+     * @Date 2023/4/13 17:44
+     * @param mainIds mainIds
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/listDetailByMainIds")
+    public List<SoReturnDetailEntity> listDetailByMainIds(@RequestBody List<String> mainIds) {
+        return soReturnDetailService.listDetailByMainIds(mainIds);
+    }
+
 }

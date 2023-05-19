@@ -157,6 +157,11 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     }
 
     @Override
+    public List<SoReturnDetailEntity> listDetailByMainIds(List<String> mainIds) {
+        return lambdaQuery().in(SoReturnDetailEntity::getMainId, mainIds).list();
+    }
+
+    @Override
     public List<SoReturnDetailEntity> listDetailBySourceId(List<String> sourceIds) {
         return baseMapper.listDetailBySourceId(sourceIds);
     }

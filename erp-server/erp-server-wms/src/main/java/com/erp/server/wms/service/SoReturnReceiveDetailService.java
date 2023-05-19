@@ -62,4 +62,22 @@ public interface SoReturnReceiveDetailService extends SuperService<SoReturnRecei
      * @return java.util.List<com.erp.model.oms.entity.SoReturnDetailEntity>
      **/
     List<SoReturnReceiveDetailEntity> listDetailByMainId(String id);
+
+    /**
+     * 根据主键ids查询详情表信息
+     * @Author Luo_WG
+     * @Date 2023/5/15 18:56
+     * @param ids ids
+     * @return java.util.List<com.erp.model.oms.entity.SoReturnDetailEntity>
+     **/
+    List<SoReturnReceiveDetailEntity> listDetailByMainIds(List<String> ids);
+
+    /**
+     * 根据详情id查询退货签收单详情
+     * @Author Luo_WG
+     * @Date 2023/5/19 12:03
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.entity.SoReturnReceiveDetailEntity>
+     **/
+    List<SoReturnReceiveDetailEntity> listSoDetailByIds(List<String> ids);
 }

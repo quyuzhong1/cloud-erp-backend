@@ -72,18 +72,6 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
     private String returnReasonDict;
 
     /**
-     * 仓库id
-     */
-    @TableField("warehouse_id")
-    private String warehouseId;
-
-    /**
-     * 仓库名称
-     */
-    @TableField("warehouse_name")
-    private String warehouseName;
-
-    /**
      * 仓位
      */
     @TableField("warehouse_location")

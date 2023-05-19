@@ -60,4 +60,14 @@ public interface SoReturnFeign {
     @PostMapping("feign/soReturn/listDetailByMainId")
     List<SoReturnDetailEntity> listDetailByMainId(@RequestBody String mainId);
 
+    /***
+     * 根据主表ids查询详情表信息
+     * @Author Luo_WG
+     * @Date 2023/5/17 15:55
+     * @param mainIds
+     * @return java.util.List<com.erp.model.oms.entity.SoReturnDetailEntity>
+     **/
+    @PostMapping("feign/soReturn/listDetailByMainIds")
+    List<SoReturnDetailEntity> listDetailByMainIds(@RequestBody List<String> mainIds);
+
 }

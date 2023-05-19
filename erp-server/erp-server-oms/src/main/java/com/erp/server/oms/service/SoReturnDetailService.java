@@ -55,6 +55,15 @@ public interface SoReturnDetailService extends SuperService<SoReturnDetailEntity
     List<SoReturnDetailEntity> listDetailByMainId(String mainId);
 
     /**
+     * 根据主表ids查询详情表信息
+     * @Author Luo_WG
+     * @Date 2023/4/13 17:44
+     * @param mainIds mainIds
+     * @return java.lang.Boolean
+     **/
+    List<SoReturnDetailEntity> listDetailByMainIds(List<String> mainIds);
+
+    /**
      * 根据来源id查询详情信息
      * @Author Luo_WG
      * @Date 2023/5/15 17:18
