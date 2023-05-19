@@ -59,6 +59,10 @@ public class OtherOutstockDTO implements Serializable {
          */
         private String invalidStatusName;
         /**
+         * skuId
+         */
+        private String  skuId;
+        /**
          * sku编码
          */
         private String  skuNo;
@@ -273,6 +277,16 @@ public class OtherOutstockDTO implements Serializable {
         private String  approveStatus;
 
         /**
+         * 审核状态名称
+         */
+        private String  approveStatusName;
+
+        /**
+         * 库存方向名称
+         */
+        private String  inventoryDirectionName;
+
+        /**
          * 客户信息
          */
         private OtherOutstockCustomerDTO.UpdateDTO otherOutstockCustomer;
@@ -280,6 +294,6 @@ public class OtherOutstockDTO implements Serializable {
         /**
          * 明细
          */
-        private List<OtherOutstockDetailDTO.ViewDTO> details;
+        private List<OtherOutstockDetailDTO.ViewDTO> detailList;
     }
 }

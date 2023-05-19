@@ -67,7 +67,7 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
             List<OtherInstockDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.TRANSFER_APPLICATION.getCode(),pairList,"编辑操作");
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.OTHER_INSTOCK.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
         List<OtherInstockDetailEntity> newList = BeanMapperUtils.copyList(OtherInstockDetailEntity.class, detailList);
@@ -141,14 +141,14 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_99044);
                 }
-                operateLogService.addModuleOperateLogByObj(old,detail, ModuleTypeEnum.TRANSFER_APPLICATION.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
+                operateLogService.addModuleOperateLogByObj(old,detail, ModuleTypeEnum.OTHER_INSTOCK.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
             }
         }
 
         //添加操作日志
         if (CollectionUtils.isNotEmpty(addList) && isUpdate) {
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), addPairList, "编辑操作");
+            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.OTHER_INSTOCK.getCode(), addPairList, "编辑操作");
         }
     }
 }
