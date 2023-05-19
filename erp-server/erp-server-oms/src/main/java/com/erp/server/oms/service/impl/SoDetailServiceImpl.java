@@ -23,6 +23,7 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -132,7 +133,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //待发货
         SoInfoDTO.TabListDTO waitDelivery = new SoInfoDTO.TabListDTO();
         waitDelivery.setSearchType(OmsConstant.WAIT_DELIVERY);
-        int waitDeliveryCount = (int) list.stream().filter(s -> !s.getDeliveryStatus()).count();
+        String unShipped = DeliveryStatusEnum.UN_SHIPPED.getCode();
+        int waitDeliveryCount = (int) list.stream().filter(s ->unShipped.equals(s.getDeliveryStatus())).count();
         waitDelivery.setCount(waitDeliveryCount);
         result.add(waitDelivery);
 
@@ -147,7 +149,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //已发货
         SoInfoDTO.TabListDTO delivery = new SoInfoDTO.TabListDTO();
         delivery.setSearchType(OmsConstant.DELIVERY);
-        int deliveryCount = (int) list.stream().filter(s -> s.getDeliveryStatus()).count();
+        String completeShipment = DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode();
+        int deliveryCount = (int) list.stream().filter(s -> completeShipment.equals(s.getDeliveryStatus())).count();
         delivery.setCount(deliveryCount);
         result.add(delivery);
 
@@ -699,7 +702,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             BigDecimal price = item.getPrice();
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
-            result.setTaxPrice(MathUtil.multiply(price,multiplyTax));
+            result.setTaxPrice(MathUtil.multiply(price, multiplyTax));
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().orElse(null);
             result.setDeclareModel("");

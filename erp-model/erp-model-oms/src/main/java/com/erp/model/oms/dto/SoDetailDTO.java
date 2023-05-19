@@ -590,7 +590,7 @@ public class SoDetailDTO implements Serializable {
          * true 已发货
          * false 未发货
          */
-        private Boolean deliveryStatus;
+        private String deliveryStatus;
 
         /**
          * 单价

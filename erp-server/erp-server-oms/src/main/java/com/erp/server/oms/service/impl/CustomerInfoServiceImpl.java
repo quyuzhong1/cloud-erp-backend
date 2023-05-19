@@ -83,6 +83,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private CommonService commonService;
+
     /**
      * 获取到分组的id 集合
      *
@@ -231,8 +234,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(rejectStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus));
+        String userName = commonService.getUserInfo().getUserName();
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus),userName);
         if (result) {
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
@@ -559,15 +562,16 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String comment = dto.getComment();
         Boolean result = true;
         String content = "";
+        String userName = commonService.getUserInfo().getUserName();
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus));
+            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus),userName);
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
         } else {
             //审核不通过
             String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
-            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(rejectStatus));
+            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(rejectStatus),userName);
             content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
         }
         if (result) {
@@ -602,6 +606,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<String> statusList = new ArrayList<>(2);
         statusList.add(approveIngStatus);
         statusList.add(approveStatus);
+
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98014);
@@ -611,8 +616,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
+        String userName = commonService.getUserInfo().getUserName();
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus),userName);
         //反审核
         if (result) {
             //添加日志
@@ -778,9 +783,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
+        String userName = commonService.getUserInfo().getUserName();
         //TODO 撤销流程
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus),userName);
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("客户【%s】取消流程", ModuleTypeEnum.CUSTOMER.getCode(), pairList, "取消流程操作");
         return result;
@@ -862,9 +868,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         return Boolean.TRUE;
     }
 
-    private Boolean updateApproveStatus(List<CustomerInfoEntity> list, ApproveStatusEnum statusEnum) {
+    private Boolean updateApproveStatus(List<CustomerInfoEntity> list, ApproveStatusEnum statusEnum, String approveUserName) {
         if (CollectionUtils.isNotEmpty(list)) {
-            list.forEach(s -> s.setApproveStatus(statusEnum));
+            for (CustomerInfoEntity item : list) {
+                item.setApproveStatus(statusEnum);
+                item.setApproveUserName(approveUserName);
+            }
             return this.updateBatchById(list);
         }
         return true;
