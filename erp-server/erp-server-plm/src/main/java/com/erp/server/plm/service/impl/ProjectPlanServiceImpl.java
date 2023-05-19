@@ -19,7 +19,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.*;
@@ -34,7 +33,6 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.ProjectPlanConstant;
 import com.erp.server.plm.constant.SearchType;
 import com.erp.server.plm.constant.TaskConstant;
-import com.erp.model.plm.dto.AuditParamDTO;
 import com.erp.server.plm.mapper.ProjectPlanMapper;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -46,7 +44,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -685,7 +682,6 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
      * @date 2023-01-29 18:55
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean approvalPass(AuditParamDTO dto) {
         String id = dto.getId();
         ProjectPlanEntity plan = this.getById(id);
