@@ -59,7 +59,7 @@ public class SoDeliveryNoticeController extends BaseController {
      **/
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "receive_user_id",
+            tableField = "seller_id",
             menuCode = "wms:soDeliveryNotice:paging",
             tableAlias = "sdn"
     )
