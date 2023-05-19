@@ -160,7 +160,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
-                if (obj.getDeliveryStatus()) {
+                if (obj.getDeliveryStatus() != null && obj.getDeliveryStatus() == Boolean.TRUE) {
                     obj.setDeliveryStatusName(DeliveryStatusEnum.COMPLETE_SHIPMENT.getName());
                 } else {
                     obj.setDeliveryStatusName(DeliveryStatusEnum.UN_SHIPPED.getName());
@@ -259,7 +259,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeEntity.setSourceType(dto.getSourceType());
         soDeliveryNoticeEntity.setDeliveryOrgId(dto.getDeliveryOrgId());
         soDeliveryNoticeEntity.setDeliveryOrgName(sysAccountingCompanyEntity.getCompanyName());
-
         if (StringUtils.isNotBlank(dto.getCarrierId())) {
             //获取采购单供应商信息
             SupplierEntity supplierById = scmTaskFeign.getSupplierById(dto.getCarrierId());
