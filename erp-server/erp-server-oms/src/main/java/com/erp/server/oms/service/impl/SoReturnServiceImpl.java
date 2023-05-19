@@ -136,7 +136,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                     obj.setSalesOrgName(null);
                     obj.setSellerName(null);
                 }
-                obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus().getStatus()));
+                obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 obj.setTypeName(BillTypeEnum.getName(obj.getType()));
                 ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(null);
@@ -522,7 +522,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySourceDetailId(orderDetailIds);
         List<CustomerInfoEntity> customerInfoEntities = customerInfoService.list();
         for (SoReturnDTO.PagingView pagingView : pagingViews) {
-            pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus().getStatus()));
+            pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
             pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(pagingView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(pagingView.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());

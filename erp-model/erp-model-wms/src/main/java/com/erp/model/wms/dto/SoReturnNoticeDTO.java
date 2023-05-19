@@ -70,7 +70,7 @@ public class SoReturnNoticeDTO {
         /**
          * 创建时间
          */
-        private List<LocalDateTime> createTimeList;
+        private List<LocalDate> createTimeList;
     }
 
     /**

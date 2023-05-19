@@ -65,7 +65,7 @@ public class SoReturnDTO {
         /**
          * 创建时间
          */
-        private List<LocalDateTime> createTimeList;
+        private List<LocalDate> createTimeList;
     }
 
     /**
@@ -105,7 +105,7 @@ public class SoReturnDTO {
         /**
          * 单据状态编号
          */
-        private ApproveStatusEnum approveStatus;
+        private String approveStatus;
         /**
          * 单据状态名称
          */
