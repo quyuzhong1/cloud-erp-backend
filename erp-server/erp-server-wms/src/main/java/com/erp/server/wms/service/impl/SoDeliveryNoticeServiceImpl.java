@@ -260,7 +260,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeEntity.setDeliveryOrgId(dto.getDeliveryOrgId());
         soDeliveryNoticeEntity.setDeliveryOrgName(sysAccountingCompanyEntity.getCompanyName());
 
-        if (ObjectUtil.isNotEmpty(dto.getCarrierId())) {
+        if (StringUtils.isNotBlank(dto.getCarrierId())) {
             //获取采购单供应商信息
             SupplierEntity supplierById = scmTaskFeign.getSupplierById(dto.getCarrierId());
             soDeliveryNoticeEntity.setCarrierId(dto.getCarrierId());
