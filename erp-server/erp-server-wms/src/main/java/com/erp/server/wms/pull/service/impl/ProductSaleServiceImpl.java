@@ -26,13 +26,13 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
         //不存在需要新增，同时判断产品名称是否存在了,存在不同步
         if (ObjectUtil.isNotEmpty(entity)) {
             if (!Objects.equals(entity.getUpdateTime(), productSaleEntity.getUpdateTime())) {
-                return this.updateById(entity);
+                return this.updateById(productSaleEntity);
             } else {
                 // 数据没有发生变更
                 return true;
             }
         } else {
-            return this.save(entity);
+            return this.save(productSaleEntity);
         }
     }
 

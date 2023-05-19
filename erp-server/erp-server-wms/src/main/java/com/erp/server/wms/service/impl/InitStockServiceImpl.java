@@ -203,7 +203,6 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         return result;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String add(InitStockDTO.AddDTO dto) {

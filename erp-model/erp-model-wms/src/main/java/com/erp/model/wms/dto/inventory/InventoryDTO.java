@@ -845,6 +845,13 @@ public class InventoryDTO {
          */
         private Integer machineOutstockQty;
 
+        public Integer getTotalInstockQty() {
+            return this.totalInstockQty = this.purchaseInstockQty + this.otherInstockQty + this.transferInstockQty + this.inventoryProfitInstockQty + this.saleReturnQty + this.machineInstockQty;
+        }
+
+        public Integer getTotalOutstockQty() {
+            return this.totalOutstockQty = this.purchaseReturnQty + this.saleOutstockQty + this.otherOutstockQty + this.inventoryLossOutstockQty + this.transferOutstockQty + this.machineOutstockQty;
+        }
     }
 
 
