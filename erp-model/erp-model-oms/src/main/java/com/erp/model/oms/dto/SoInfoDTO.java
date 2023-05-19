@@ -136,7 +136,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 发货状态
          */
-        private Boolean deliveryStatus;
+        private String deliveryStatus;
         /**
          * 发货状态名
          */

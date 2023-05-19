@@ -38,6 +38,7 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -327,12 +328,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String type = item.getType();
             item.setTypeName(BillTypeEnum.getName(type));
             //发货状态
-            Boolean deliveryStatus = item.getDeliveryStatus();
-            String deliveryStatusName = deliveryStatus != null && deliveryStatus ? "已发货" : "未发货";
+            String deliveryStatus = item.getDeliveryStatus();
+            String deliveryStatusName = DeliveryStatusEnum.getName(deliveryStatus);
             item.setDeliveryStatusName(deliveryStatusName);
             //作废状态
             Boolean invalidStatus = item.getInvalidStatus();
-            String invalidStatusName = invalidStatus != null && deliveryStatus ? "已作废" : "未作废";
+            String invalidStatusName = invalidStatus != null && invalidStatus ? "已作废" : "未作废";
             item.setInvalidStatusName(invalidStatusName);
             String customerName = customerList.stream().filter(c -> c.getId().equals(item.getCustomerId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
@@ -811,13 +812,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             item.setApproveStatusName(approveStatus.getName());
             String type = item.getType();
             item.setTypeName(BillTypeEnum.getName(type));
-            //发货状态
-            Boolean deliveryStatus = item.getDeliveryStatus();
-            String deliveryStatusName = deliveryStatus != null && deliveryStatus ? "已发货" : "未发货";
+            String deliveryStatus = item.getDeliveryStatus();
+            String deliveryStatusName = DeliveryStatusEnum.getName(deliveryStatus);
             item.setDeliveryStatusName(deliveryStatusName);
             //作废状态
             Boolean invalidStatus = item.getInvalidStatus();
-            String invalidStatusName = invalidStatus != null && deliveryStatus ? "已作废" : "未作废";
+            String invalidStatusName = invalidStatus != null && invalidStatus ? "已作废" : "未作废";
             item.setInvalidStatusName(invalidStatusName);
             String customerName = customerList.stream().filter(c -> c.getId().equals(item.getCustomerId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
