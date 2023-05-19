@@ -110,11 +110,14 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 //                    errorMsgList.add(ApiError.ERROR_95015.msg);
 //                }
 //            }
+
         } else {
             //sku重复
             if (productDetailService.checkSkuNo(dto.getSkuNo(), "")) {
                 errorMsgList.add(ApiError.ERROR_95015.msg);
             }
+            productInfoDTO.setSpecType(1);
+            productInfoDTO.setGrade("");
         }
 
         String saleCountryStr = "";
@@ -250,8 +253,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productInfoDTO.setBrandId(productBrand.getId());
         productInfoDTO.setBrandName(productBrand.getValue());
         productInfoDTO.setApprovalStatus(0);
-        productInfoDTO.setSpecType(1);
-        productInfoDTO.setGrade("");
+
         productInfoDTO.setIsNoSpecAdd(MathUtil.ONE);
         if (!CollectionUtils.isEmpty(chargeNameList)) {
             productInfoDTO.setChargeName(chargeNameList.get(0).getUserName());
