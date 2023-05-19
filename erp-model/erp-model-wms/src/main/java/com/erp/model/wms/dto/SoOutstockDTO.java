@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -280,6 +282,7 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 销售订单id
          */
+        @NotBlank(message = "销售订单不能为空")
         private String soId;
 
         /**
@@ -292,16 +295,10 @@ public class SoOutstockDTO implements Serializable {
          */
         private String sourceType;
 
-
-        /**
-         * 单据类型
-         */
-        private String type;
-
-
         /**
          * 仓库id
          */
+        @NotBlank(message = "出货仓库不能为空")
         private String warehouseId;
 
         /**
@@ -309,15 +306,10 @@ public class SoOutstockDTO implements Serializable {
          */
         private String warehouseKeeperId;
 
-
-        /**
-         * 客户id
-         */
-        private String consumerId;
-
         /**
          * 发货组织
          */
+        @NotBlank(message = "发货组织不能为空")
         private String deliveryOrgId;
 
 
@@ -346,30 +338,10 @@ public class SoOutstockDTO implements Serializable {
          */
         private String carrierId;
 
-
-        /**
-         * 收货人
-         */
-        private String receiverName;
-
-        /**
-         * 联系电话
-         */
-        private String telNumber;
-
-        /**
-         * 联系地址
-         */
-        private String receiverAddress;
-
-        /**
-         * 交货方式
-         */
-        private String deliveryModeDict;
-
         /**
          * 详情
          */
+        @Valid
         private List<SoOutstockDetiailDTO.AddDTO> detailList;
 
 

@@ -2,6 +2,7 @@ package com.erp.model.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,13 +35,8 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
      * 审核状态
      */
     @TableField("approve_status")
-    private String approveStatus;
+    private ApproveStatusEnum approveStatus;
 
-    /**
-     * 订单类型
-     */
-    @TableField("type")
-    private String type;
 
     /**
      * 销售订单id
@@ -54,11 +50,7 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     @TableField("carrier_id")
     private String carrierId;
 
-    /**
-     * 承运商 来源供应商
-     */
-    @TableField("carrier_name")
-    private String carrierName;
+
 
     /**
      * 销售订单code
@@ -116,41 +108,6 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     @TableField("warehouse_keeper_name")
     private String warehouseKeeperName;
 
-    /**
-     * 客户id
-     */
-    @TableField("consumer_id ")
-    private String consumerId;
-
-    /**
-     * 客户
-     */
-    @TableField("consumer_name")
-    private String consumerName;
-
-    /**
-     * 收货人
-     */
-    @TableField("receiver_name")
-    private String receiverName;
-
-    /**
-     * 联系电话
-     */
-    @TableField("tel_number")
-    private String telNumber;
-
-    /**
-     * 联系地址
-     */
-    @TableField("receiver_address")
-    private String receiverAddress;
-
-    /**
-     * 交货方式
-     */
-    @TableField("delivery_mode_dict")
-    private String deliveryModeDict;
 
     /**
      * 来源id

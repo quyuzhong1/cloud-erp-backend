@@ -59,11 +59,7 @@ public class SoOutstockDetailEntity extends BaseEntity<SoOutstockDetailEntity> {
     @TableField("warehouse_location")
     private String warehouseLocation;
 
-    /**
-     * 是否关闭 
-     */
-    @TableField("is_close")
-    private Boolean isClose;
+
 
     /**
      * 备注

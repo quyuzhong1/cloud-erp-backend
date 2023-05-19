@@ -6,6 +6,10 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -280,17 +284,24 @@ public class SoOutstockDetiailDTO implements Serializable {
         /**
          * sku id
          */
+        @NotBlank(message = "sku不能为空")
         private String skuId;
 
 
         /**
          * 应发数量
          */
+        @NotNull(message = "应发数量不能为空")
+        @DecimalMin(value = "1", message = "应发数量最小值为1")
+        @DecimalMax(value = "999999999", message = "应发数量最大值")
         private Integer planQty;
 
         /**
          * 实发数量
          */
+        @NotNull(message = "实发数量不能为空")
+        @DecimalMin(value = "1", message = "实发数量最小值为1")
+        @DecimalMax(value = "999999999", message = "实发数量最大值")
         private Integer actualQty;
 
         /**
@@ -299,9 +310,15 @@ public class SoOutstockDetiailDTO implements Serializable {
         private String warehouseLocation;
 
         /**
-         * 是否关闭
+         * 箱麦附件名集合
          */
-        private Boolean isClose;
+        private List<String> attachNameList;
+
+        /**
+         * 箱麦附件url集合
+         */
+        private List<String> attachUrlList;
+
 
         /**
          * 备注

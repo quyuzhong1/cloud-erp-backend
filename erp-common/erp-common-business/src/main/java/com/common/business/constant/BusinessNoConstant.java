@@ -59,4 +59,7 @@ public interface BusinessNoConstant {
     String XSD = "XSD";
 
     String THQS = "THQS";
+
+    //销售出库
+    String XSCK = "XSCK";
 }

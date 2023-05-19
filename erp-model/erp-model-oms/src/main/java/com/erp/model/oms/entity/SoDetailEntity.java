@@ -3,6 +3,7 @@ package com.erp.model.oms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.wms.enums.DeliveryStatusEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -50,11 +51,11 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
 
     /**
      * 发货状态
-     * true 已发货
-     * false 未发货
+     * unShipped 未发货
+     * partialShipment 部分发货
      */
     @TableField("delivery_status")
-    private Boolean deliveryStatus;
+    private DeliveryStatusEnum deliveryStatus;
 
     /**
      * 单价

@@ -1,23 +1,28 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.server.wms.service.SoOutstockService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.List;
 
 /**
- * 销售管理-销售出库
+ * 销售出库-销售出库单
  *
  * @author lambda
  * @since 2023-05-10
@@ -25,6 +30,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/so/outstock")
 public class SoOutstockController extends BaseController {
+
+    @Resource
+    private SoOutstockService soOutstockService;
 
     /**
      * 获取 tab列表
@@ -38,6 +46,7 @@ public class SoOutstockController extends BaseController {
 
     /**
      * 分页列表
+     *
      * @param dto
      * @return
      */
@@ -48,37 +57,48 @@ public class SoOutstockController extends BaseController {
 
     /**
      * 新增
+     *
      * @param dto
      * @return
      */
     @PostMapping("/add")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:so:outstock:add",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "id"
+    )
     public ApiResult add(@RequestBody @Validated SoOutstockDTO.AddDTO dto) {
-        return  success();
+        String id = soOutstockService.add(dto);
+        return StringUtils.isNotBlank(id)?success():failure();
     }
 
     /**
      * 提交
+     *
      * @param dto
      * @return
      */
     @PostMapping("/submit")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return  success();
+        return success();
     }
 
 
     /**
      * 新增并提交
+     *
      * @param dto
      * @return
      */
     @PostMapping("/addAndSubmit")
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated SoOutstockDTO.AddDTO dto) {
-        return  success();
+        return success();
     }
 
     /**
      * 详情
+     *
      * @param dto
      * @return
      */
@@ -89,6 +109,7 @@ public class SoOutstockController extends BaseController {
 
     /**
      * 修改
+     *
      * @param dto
      * @return
      */
@@ -99,6 +120,7 @@ public class SoOutstockController extends BaseController {
 
     /**
      * 修改并提交
+     *
      * @param dto
      * @return
      */
@@ -121,12 +143,12 @@ public class SoOutstockController extends BaseController {
 
     /**
      * 反审核
-     *
      */
     @PostMapping("/disApprove")
     public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        return  success();
+        return success();
     }
+
     /**
      * 删除仓库
      *
@@ -140,14 +162,15 @@ public class SoOutstockController extends BaseController {
 
     /**
      * 作废
-     * @author Will
-     * @date: 2023/5/10 20:11
+     *
      * @param dto
      * @return ApiResult
+     * @author Will
+     * @date: 2023/5/10 20:11
      */
     @PostMapping("/invalid")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        return  success();
+        return success();
     }
 
     /**

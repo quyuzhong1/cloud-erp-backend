@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 
 import java.util.List;
@@ -23,4 +24,14 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return java.util.List<com.erp.model.oms.entity.SoOutstockEntity>
      **/
     List<SoOutstockEntity> listBySourceId(List<String> ids);
+
+    
+    /**
+     * 添加销售出库单
+     * @author yl
+     * @date 2023-05-19 9:50
+     * @param dto
+     * @return java.lang.String
+     */
+    String add(SoOutstockDTO.AddDTO dto);
 }
