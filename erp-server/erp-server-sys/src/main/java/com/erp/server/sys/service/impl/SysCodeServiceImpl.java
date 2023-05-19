@@ -51,7 +51,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         boolean isLock;
         try {
             // 内部会自动续期
-            isLock = lock.tryLock(10, TimeUnit.SECONDS);
+            isLock = lock.tryLock(5, TimeUnit.SECONDS);
             log.info("是否获取到锁: {}", isLock);
             if (!isLock) {
                 throw new ServiceException(ApiError.ERROR_1026);
@@ -91,7 +91,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         RLock lock = redisson.getLock(DistributedLockEnum.SYS_GEN_DOCNO.getCode() + ":" + dto.getType());
         boolean isLock;
         try {
-            isLock = lock.tryLock(10, TimeUnit.SECONDS);
+            isLock = lock.tryLock(5, TimeUnit.SECONDS);
             log.info("是否获取到锁: {}", isLock);
             if (!isLock) {
                 throw new ServiceException(ApiError.ERROR_1026);
@@ -125,7 +125,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         RLock lock = redisson.getLock(DistributedLockEnum.SYS_GEN_DOCNO.getCode() + ":" + dto.getType());
         boolean isLock;
         try {
-            isLock = lock.tryLock(10, TimeUnit.SECONDS);
+            isLock = lock.tryLock(5, TimeUnit.SECONDS);
             log.info("是否获取到锁: {}", isLock);
             if (!isLock) {
                 throw new ServiceException(ApiError.ERROR_1026);
@@ -160,7 +160,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         RLock lock = redisson.getLock(DistributedLockEnum.SYS_GEN_DOCNO.getCode() + ":" + dto.getType());
         boolean isLock;
         try {
-            isLock = lock.tryLock(10, TimeUnit.SECONDS);
+            isLock = lock.tryLock(5, TimeUnit.SECONDS);
             log.info("是否获取到锁: {}", isLock);
             if (!isLock) {
                 throw new ServiceException(ApiError.ERROR_1026);

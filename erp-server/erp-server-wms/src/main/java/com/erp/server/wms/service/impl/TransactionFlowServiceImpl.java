@@ -258,7 +258,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             condition.setWarehouseId(data.getWarehouseId());
             condition.setSkuId(data.getSkuId());
             condition.setDateList(dateList);
-            initStockService.getInitQty(condition);
+            Integer iniQty = initStockService.getInitQty(condition);
+            data.setInitQty(iniQty);
         }
     }
 

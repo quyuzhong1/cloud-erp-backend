@@ -91,6 +91,8 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
     @Resource
     private WorkflowFeign workflowFeign;
 
+    @Resource
+    private OtherOutstockCustomerService otherOutstockCustomerService;
 
     @Override
     public PagingVO<OtherOutstockDTO.ListDTO> paging(PagingDTO<OtherOutstockDTO.SearchParamDTO> pagingDTO) {
@@ -167,6 +169,8 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         if (save) {
             //操作日志
             operateLogService.addModuleOperateLog(String.format("新增了一个其他出库单【%s】", code), ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), entity.getId(), "新增操作");
+            //新增客户信息
+            otherOutstockCustomerService.add(dto.getOtherOutstockCustomer(),entity.getId());
             //新增明细
             otherOutstockDetailService.add(dto.getDetailList(), entity.getId());
         }
@@ -207,6 +211,8 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), entity.getId(), "", "");
         //更新主表数据
         this.updateById(entity);
+        //更新其他出库客户
+        otherOutstockCustomerService.update(dto.getOtherOutstockCustomer());
         //更新明细数据
         otherOutstockDetailService.update(detailList, entity.getId());
         return Boolean.TRUE;
@@ -247,12 +253,12 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //主表信息
         OtherOutstockEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99043);
+            throw new ServiceException(ApiError.ERROR_99061);
         }
         BeanMapperUtils.copy(entity, viewDTO);
         List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(id);
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99044);
+            throw new ServiceException(ApiError.ERROR_99062);
         }
         List<OtherOutstockDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(OtherOutstockDetailDTO.ViewDTO.class, detailList);
 

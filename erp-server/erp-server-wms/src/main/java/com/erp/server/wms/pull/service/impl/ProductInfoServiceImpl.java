@@ -27,13 +27,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //不存在需要新增，同时判断产品是否更新，用最后更新时间
         if (ObjectUtil.isNotEmpty(entity)) {
             if (!Objects.equals(entity.getUpdateTime(), productInfoEntity.getUpdateTime())) {
-                return this.updateById(entity);
+                return this.updateById(productInfoEntity);
             } else {
                 // 数据没有发生变更
                 return true;
             }
         } else {
-            return this.save(entity);
+            return this.save(productInfoEntity);
         }
     }
 
