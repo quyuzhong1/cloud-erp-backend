@@ -2,16 +2,16 @@ package com.erp.server.workflow.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ProcessInstanceStateEnum;
-import com.common.business.interceptor.CommonInterceptor;
-import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.ReflectUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.workflow.mapper.WorkflowMapper;
-import com.erp.server.workflow.service.*;
+import com.erp.server.workflow.service.ActHistoryActivityService;
+import com.erp.server.workflow.service.ProcessTaskService;
+import com.erp.server.workflow.service.WorkflowBusinessProcessService;
+import com.erp.server.workflow.service.WorkflowService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -19,12 +19,8 @@ import org.camunda.bpm.engine.*;
 import org.camunda.bpm.engine.history.HistoricActivityInstance;
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
 import org.camunda.bpm.engine.impl.RepositoryServiceImpl;
-import org.camunda.bpm.engine.impl.persistence.entity.DeploymentEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.ProcessDefinitionEntity;
 import org.camunda.bpm.engine.impl.pvm.process.ActivityImpl;
-import org.camunda.bpm.engine.repository.DecisionDefinition;
-import org.camunda.bpm.engine.repository.Deployment;
-import org.camunda.bpm.engine.repository.ProcessDefinition;
 import org.camunda.bpm.engine.runtime.ActivityInstance;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.Comment;
@@ -377,31 +373,26 @@ public class WorkflowServiceImpl implements WorkflowService {
         if (StringUtils.isBlank(processInstanceId)) {
             return;
         }
-        //获取流程状态
-        int state = checkProcessInstanceState(processInstanceId);
-        if (ProcessInstanceStateEnum.PROCESS_ING.getCode() != state) {
-            throw new ServiceException(ApiError.ERROR_94000);
-        }
+//        //获取流程状态
+//        int state = checkProcessInstanceState(processInstanceId);
+//        if (ProcessInstanceStateEnum.PROCESS_ING.getCode() != state) {
+//            throw new ServiceException(ApiError.ERROR_94000);
+//        }
 
         //判断是否有任务
         List<Task> taskList = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
-        if (CollectionUtils.isEmpty(taskList)) {
-            throw new ServiceException(ApiError.ERROR_94001);
-        }
 
         //获取到流程的节点
         ActivityInstance activityInstance = runtimeService.getActivityInstance(processInstanceId);
-        if (ObjectUtils.isNull(activityInstance) || ObjectUtils.isEmpty(activityInstance.getChildActivityInstances())) {
-            throw new ServiceException(ApiError.ERROR_94002);
-        }
 
-        for (int i = 0; i < taskList.size(); i++) {
-            runtimeService.createProcessInstanceModification(processInstanceId)
-                    .cancelActivityInstance(getInstanceIdForActivity(activityInstance, taskList.get(i).getTaskDefinitionKey()))//关闭相关任务
-                    .setAnnotation("进行了终止流程操作")
-                    .execute();
+        if(CollectionUtils.isNotEmpty(taskList)&&activityInstance!=null){
+            for (int i = 0; i < taskList.size(); i++) {
+                runtimeService.createProcessInstanceModification(processInstanceId)
+                        .cancelActivityInstance(getInstanceIdForActivity(activityInstance, taskList.get(i).getTaskDefinitionKey()))//关闭相关任务
+                        .setAnnotation("进行了终止流程操作")
+                        .execute();
+            }
         }
-
     }
 
 
