@@ -743,9 +743,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SoInfoEntity> list = this.listByIds(ids);
         String waitSubmitStatus = BillApproveStatusEnum.WAIT_SUBMIT.getStatus();
         String draftStatus = BillApproveStatusEnum.DRAFT.getStatus();
-        List<String> statusList = new ArrayList<>(2);
+        String rejectStatus = BillApproveStatusEnum.REJECT.getStatus();
+        List<String> statusList = new ArrayList<>(3);
         statusList.add(waitSubmitStatus);
         statusList.add(draftStatus);
+        statusList.add(rejectStatus);
         long invalidCount = list.stream().filter(d -> !d.getInvalidStatus()).count();
         if (invalidCount != list.size()) {
             throw new ServiceException(ApiError.ERROR_98061);

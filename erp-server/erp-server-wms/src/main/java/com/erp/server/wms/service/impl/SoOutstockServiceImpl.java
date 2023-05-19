@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
+import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -373,6 +374,85 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         }
         return result;
+    }
+
+
+    /**
+     * 作废
+     *
+     * @param ids
+     * @param remark
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-19 14:17
+     */
+    @Override
+    public Boolean invalid(List<String> ids, String remark) {
+        List<SoOutstockEntity> list = this.listByIds(ids);
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(waitSubmitStatus);
+        statusList.add(rejectStatus);
+        long invalidCount = list.stream().filter(d -> !d.getInvalidStatus()).count();
+        if (invalidCount != list.size()) {
+            throw new ServiceException(ApiError.ERROR_98061);
+        }
+        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98005);
+        }
+        lambdaUpdate().in(SoOutstockEntity::getId, ids).
+                set(SoOutstockEntity::getInvalidStatus, Boolean.TRUE).update();
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        String content = "作废了一个销售出库单【%s】,作废原因: ".concat(remark);
+        operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "作废");
+        return Boolean.TRUE;
+
+    }
+
+
+    /**
+     * 获取tab
+     *
+     * @param
+     * @return java.util.List<com.erp.model.wms.dto.SoOutstockDTO.TabListDTO>
+     * @author yl
+     * @date 2023-05-19 14:23
+     */
+    @Override
+    public List<SoOutstockDTO.TabListDTO> tabList() {
+        List<SoOutstockDTO.TabListDTO> resultList = new ArrayList<>();
+        //全部
+        List<SoOutstockEntity> list = this.list();
+        SoOutstockDTO.TabListDTO all = new SoOutstockDTO.TabListDTO();
+        all.setCount(list.size());
+        all.setSearchType(SearchType.ALL);
+        resultList.add(all);
+
+        //待审核
+        ApproveStatusEnum ing = ApproveStatusEnum.getByStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
+        SoOutstockDTO.TabListDTO waitApprove = new SoOutstockDTO.TabListDTO();
+        waitApprove.setCount((int) list.stream().filter(l -> ing.equals(l.getApproveStatus())).count());
+        waitApprove.setSearchType(SearchType.WAIT_APPROVE);
+        resultList.add(waitApprove);
+
+        //已审核
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.getByStatus(ApproveStatusEnum.APPROVE.getStatus());
+        SoOutstockDTO.TabListDTO approve = new SoOutstockDTO.TabListDTO();
+        approve.setCount((int) list.stream().filter(l -> approveStatus.equals(l.getApproveStatus())).count());
+        approve.setSearchType(ApproveStatusEnum.APPROVE.getStatus());
+        resultList.add(approve);
+
+        //审核不通过
+        ApproveStatusEnum rejectStatus = ApproveStatusEnum.getByStatus(ApproveStatusEnum.REJECT.getStatus());
+        SoOutstockDTO.TabListDTO reject = new SoOutstockDTO.TabListDTO();
+        reject.setCount((int) list.stream().filter(l -> rejectStatus.equals(l.getApproveStatus())).count());
+        reject.setSearchType(ApproveStatusEnum.REJECT.getStatus());
+        resultList.add(reject);
+        return resultList;
+
+
     }
 
 

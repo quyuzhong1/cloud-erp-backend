@@ -10,6 +10,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.server.wms.service.SoOutstockService;
 import org.apache.commons.lang3.StringUtils;
@@ -41,7 +42,8 @@ public class SoOutstockController extends BaseController {
      */
     @GetMapping("/tabList")
     public ApiResult<List<SoOutstockDTO.TabListDTO>> tabList() {
-        return success(null);
+        List<SoOutstockDTO.TabListDTO> tabList = soOutstockService.tabList();
+        return success(tabList);
     }
 
     /**
@@ -228,8 +230,14 @@ public class SoOutstockController extends BaseController {
      * @date: 2023/5/10 20:11
      */
     @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:outstock:invalid",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        return success();
+        Boolean result = soOutstockService.invalid(dto.getIds(),dto.getRemark());
+        return result?success():failure();
     }
 
     /**
