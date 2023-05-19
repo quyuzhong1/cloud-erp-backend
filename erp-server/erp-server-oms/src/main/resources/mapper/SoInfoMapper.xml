@@ -181,4 +181,26 @@
         ORDER BY si.create_time DESC
 
     </select>
+
+    <select id="viewGenerateSalesDemand"
+            resultType="com.erp.model.oms.dto.SoInfoDTO$ViewGenerateSalesDemandDTO">
+        select
+               si.approve_status as approveStatus,
+               si.id as sourceId,
+               si.code as sourceCode,
+               sd.id as sourceDetailId,
+               sd.sku_id as skuId,
+               sd.sku_no as skuNo,
+               sd.qty,
+               si.warehouse_id as warehouseId
+        from so_info si
+        left join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
+        <where>
+            si.is_deleted = false and si.id in
+            <foreach collection="params.ids" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+
 </mapper>

@@ -24,4 +24,12 @@ public interface SoInfoMapper extends BaseMapper<SoInfoEntity> {
     IPage<SoInfoDTO.PagingViewDTO> paging(Page query, @Param("params") SoInfoDTO.PagingParamDTO params,@Param("detailIdList") List<String> paramDetailIds );
 
     List<SoInfoDTO.PagingViewDTO> listExport(@Param("params") SoInfoDTO.ExportDTO dto,@Param("detailIdList") List<String> paramDetailIds);
+    /**
+     * @description: 下推备货申请单数据显示
+     * @author Will
+     * @date: 2023/5/19 11:14
+     * @param ids
+     * @return List<ViewGenerateSalesDemandDTO>
+     */
+    List<SoInfoDTO.ViewGenerateSalesDemandDTO> viewGenerateSalesDemand(@Param("ids") List<String> ids);
 }

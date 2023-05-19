@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.convert.Convert;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
@@ -1020,6 +1021,66 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String  chineseAmount=  Convert.digitToChinese(totalAmount);
         result.setChineseAmount(chineseAmount);
         return result;
+    }
+
+    @Override
+    public List<SoInfoDTO.ViewGenerateSalesDemandDTO> viewGenerateSalesDemand(List<String> ids) {
+        List<SoInfoDTO.ViewGenerateSalesDemandDTO> list = baseMapper.viewGenerateSalesDemand(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            return list;
+        }
+        //未审核完成不支持下推备货申请单
+        SoInfoDTO.ViewGenerateSalesDemandDTO viewGenerateSalesDemandDTO = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).findFirst().orElse(null);
+        if (ObjectUtils.isNotEmpty(viewGenerateSalesDemandDTO)) {
+            throw new ServiceException(ApiError.ERROR_92025.code,String.format(ApiError.ERROR_92025.msg,viewGenerateSalesDemandDTO.getSourceCode()));
+        }
+
+        List<String> skuIds = list.stream().map(SoInfoDTO.ViewGenerateSalesDemandDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+
+        Map<String, List<SoInfoDTO.ViewGenerateSalesDemandDTO>> map = list.stream().collect(Collectors.groupingBy(SoInfoDTO.ViewGenerateSalesDemandDTO::getSourceId));
+
+        for (Map.Entry<String, List<SoInfoDTO.ViewGenerateSalesDemandDTO>> entry : map.entrySet()) {
+
+            List<SoInfoDTO.ViewGenerateSalesDemandDTO> value = entry.getValue();
+            InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
+            paramDTO.setSkuIds(skuIds);
+            paramDTO.setWarehouseId(value.get(0).getWarehouseId());
+            paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+            //从wms 获取到sku 的即时库存信息
+            List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
+
+            for (SoInfoDTO.ViewGenerateSalesDemandDTO viewDTO : value) {
+                //即时库存
+                Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(viewDTO.getSkuId())).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+
+                //产品名称
+                String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
+                viewDTO.setProductName(productName);
+
+                //销售数量
+                Integer qty = viewDTO.getQty();
+
+                /**
+                 * 缺货数量
+                 * 当可用即时库存数量小于销售数量时，
+                 * 缺货数量=销售数量-可用即时库存数量；
+                 * 当可用即时库存数量大于销售数量时，缺货数量为0
+                 */
+                Integer scarceQty = 0;
+                Boolean isGre = curInventoryQty > qty;
+                if (!isGre) {
+                    scarceQty = qty;
+                }
+                viewDTO.setScarceQty(scarceQty);
+            }
+        }
+
+        return list;
     }
 
 

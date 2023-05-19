@@ -359,7 +359,9 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/viewGenerateSalesDemand")
     public ApiResult<List<SoInfoDTO.ViewGenerateSalesDemandDTO>> viewGenerateSalesDemand(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<SoInfoDTO.ViewGenerateSalesDemandDTO> list = soDetailService.viewGenerateSalesDemand(dto.getIds());
+        List<SoInfoDTO.ViewGenerateSalesDemandDTO> list = soInfoService.viewGenerateSalesDemand(dto.getIds());
         return success(list);
     }
+
+
 }

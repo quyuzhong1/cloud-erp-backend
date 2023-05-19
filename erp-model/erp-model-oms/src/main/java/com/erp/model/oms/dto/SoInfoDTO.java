@@ -950,16 +950,69 @@ public class SoInfoDTO implements Serializable {
     public static class ViewGenerateSalesDemandDTO {
 
         /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
          * 来源id
          */
         private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
 
         /**
          * 来源明细id
          */
         private String sourceDetailId;
 
+        /**
+         * 来源类型
+         */
+        private String sourceType;
 
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 销售数量
+         */
+        private Integer qty;
+
+        /**
+         * 缺货数量
+         */
+        private Integer scarceQty;
+
+        /**
+         * 备货数量
+         */
+        private Integer planStockQty;
+
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
 
