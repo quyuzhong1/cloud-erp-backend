@@ -46,12 +46,9 @@ public class SoDeliveryNoticeDTO {
          */
         private List<String> approveStatusList;
         /**
-         * 发货状态 wms/common/enumDropDown?type=DeliveryStatus
-         * "unShipped","未发货"
-         * "partialShipment","部分发货"
-         * "completeShipment","已发货"
+         * 发货状态 true ：已发货， false：未发货
          */
-        private String deliveryStatusDict;
+        private Boolean deliveryStatus;
         /**
          * 作废状态
          */
@@ -129,16 +126,13 @@ public class SoDeliveryNoticeDTO {
          */
         private String invalidStatusName;
         /**
-         * 发货状态 wms/common/enumDropDown?type=DeliveryStatus
-         * "unShipped","未发货"
-         * "partialShipment","部分发货"
-         * "completeShipment","已发货"
+         * 发货状态 true ：已发货， false：未发货
          */
-        private String deliveryStatusDict;
+        private Boolean deliveryStatus;
         /**
          * 发货状态名称
          */
-        private String deliveryStatusDictName;
+        private String deliveryStatusName;
         /**
          * skuId
          */
@@ -444,13 +438,13 @@ public class SoDeliveryNoticeDTO {
          */
         private String invalidStatusName;
         /**
-         * 发货状态
+         * 发货状态 true ：已发货， false：未发货
          */
-        private String deliveryStatusDict;
+        private Boolean deliveryStatus;
         /**
          * 发货状态名称
          */
-        private String deliveryStatusDictName;
+        private String deliveryStatusName;
         /**
          * 作废描述
          */

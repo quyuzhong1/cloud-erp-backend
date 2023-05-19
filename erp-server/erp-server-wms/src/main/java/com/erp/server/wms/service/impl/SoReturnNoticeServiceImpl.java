@@ -32,6 +32,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDetailDTO;
@@ -193,13 +194,22 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
         SoReturnNoticeEntity entity = new SoReturnNoticeEntity();
-        BeanMapperUtils.copy(soInfoEntity, entity);
-
+        entity.setType(soInfoEntity.getType().getCode());
+        entity.setSalesOrgId(soInfoEntity.getSalesOrgId());
+        entity.setSalesOrgName(soInfoEntity.getSalesOrgName());
+        entity.setSalesDeptId(soInfoEntity.getSalesDeptId());
+        if (StringUtils.isNotBlank(soInfoEntity.getSalesDeptId())) {
+            SysDepartmentDTO dept = sysUserFeign.getUserDeptById(soInfoEntity.getSalesDeptId());
+            if (dept != null) {
+                entity.setSalesDeptName(dept.getName());
+            }
+        }
+        entity.setSellerId(soInfoEntity.getSellerId());
+        entity.setSellerName(soInfoEntity.getSellerName());
+        entity.setCustomerId(soInfoEntity.getCustomerId());
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
-        CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+        CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         entity.setCustomerName(customerInfoEntity.getName());
-        entity.setId(null);
-        entity.setApproveStatus(null);
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.THTZ, BusinessNoTypeEnum.CODE_THTZ.getCode()));
         entity.setCode(code);
@@ -231,9 +241,21 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         //获取用户信息
         FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
         SoReturnNoticeEntity entity = new SoReturnNoticeEntity();
-        BeanMapperUtils.copy(soInfoEntity, entity);
+        entity.setType(soInfoEntity.getType().getCode());
+        entity.setSalesOrgId(soInfoEntity.getSalesOrgId());
+        entity.setSalesOrgName(soInfoEntity.getSalesOrgName());
+        entity.setSalesDeptId(soInfoEntity.getSalesDeptId());
+        if (StringUtils.isNotBlank(soInfoEntity.getSalesDeptId())) {
+            SysDepartmentDTO dept = sysUserFeign.getUserDeptById(soInfoEntity.getSalesDeptId());
+            if (dept != null) {
+                entity.setSalesDeptName(dept.getName());
+            }
+        }
+        entity.setSellerId(soInfoEntity.getSellerId());
+        entity.setSellerName(soInfoEntity.getSellerName());
+        entity.setCustomerId(soInfoEntity.getCustomerId());
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
-        CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+        CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         entity.setCustomerName(customerInfoEntity.getName());
         entity.setId(dto.getId());
         SoReturnNoticeEntity byId = this.getById(dto.getId());

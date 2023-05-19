@@ -231,13 +231,10 @@ public class SoDeliveryNoticeEntity extends BaseEntity<SoDeliveryNoticeEntity> {
     private String sourceType;
 
     /**
-     * 发货状态 wms/common/enumDropDown?type=DeliveryStatus
-     * "unShipped","未发货"
-     * "partialShipment","部分发货"
-     * "completeShipment","已发货"
+     发货状态 true ：已发货， false：未发货
      */
-    @TableField("delivery_status_dict")
-    private String deliveryStatusDict;
+    @TableField("delivery_status")
+    private Boolean deliveryStatus;
 
 
     public static final String APPROVE_STATUS = "approve_status";
