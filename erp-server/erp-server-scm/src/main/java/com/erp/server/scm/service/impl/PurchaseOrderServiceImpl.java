@@ -36,8 +36,8 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
+import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
@@ -1104,7 +1104,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         long count = entityList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_99059);
+            throw new ServiceException(ApiError.ERROR_98059);
         }
         List<PoInstockDetailEntity> stockInSkuList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
         List<PurchaseReturnOrderDTO.AddDTO> addList = new ArrayList<>();

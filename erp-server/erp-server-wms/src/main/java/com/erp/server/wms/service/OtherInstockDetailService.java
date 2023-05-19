@@ -40,6 +40,14 @@ public interface OtherInstockDetailService extends SuperService<OtherInstockDeta
      */
     List<OtherInstockDetailEntity> listByMainId(String mainId);
     /**
+     * @description: 根据主表ids查询
+     * @author Will
+     * @date: 2023/5/19 14:11
+     * @param mainIds
+     * @return List<OtherInstockDetailEntity>
+     */
+    List<OtherInstockDetailEntity> listByMainIds(List<String> mainIds);
+    /**
      * @description: 根据主表ids删除
      * @author Will
      * @date: 2023/5/17 15:56

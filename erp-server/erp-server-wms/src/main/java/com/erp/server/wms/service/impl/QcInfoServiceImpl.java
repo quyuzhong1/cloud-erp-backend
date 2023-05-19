@@ -964,7 +964,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         String waitQcCode = QcBillStatusEnum.WAIT_QC.getCode();
         long count = qcList.stream().filter(q -> !q.getQcStatus().getCode().equals(waitQcCode)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_99060);
+            throw new ServiceException(ApiError.ERROR_98060);
         }
 
         SysDepartmentUserNumberDTO userInfo = sysUserFeign.getDeptByUserId(qcUserId);

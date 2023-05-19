@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
-import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.ProductPurchaseDTO;
@@ -87,7 +87,8 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
             String ean = entry.getKey();
             List<ProductPurchaseEntity> eanList = entry.getValue();
             if (StringUtils.isNotBlank(ean) && eanList.size() > 1) {
-                throw new ServiceException(new ApiResult(1,"不可新增相同EAN码"));
+                throw new ServiceException(ApiError.ERROR_95164);
+
             }
             //验证数据
             checkProductPurchase(eanList.get(0));
@@ -134,7 +135,7 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
         if (CollectionUtils.isNotEmpty(list)) {
             List<String> ids = list.stream().map(ProductPurchaseEntity::getId).collect(Collectors.toList());
             if (ids.size() > 1 || !ids.contains(entity.getId())) {
-                throw new ServiceException(new ApiResult(1,"EAN码已存在，不可重复新增"));
+                throw new ServiceException(ApiError.ERROR_95164);
             }
         }
     }

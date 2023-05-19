@@ -96,6 +96,10 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     @Resource
     private WorkflowFeign workflowFeign;
 
+    @Resource
+    private InventoryTransCoreService inventoryTransCoreService;
+
+
     @Override
     public PagingVO<OtherInstockDTO.ListDTO> paging(PagingDTO<OtherInstockDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setParam(pagingDTO.getParam());
@@ -350,7 +354,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             //更新单据(后面有流程了调用监听可删)
             updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
             //更新库存
-            //updateInventoryTransCore(list);
+            updateInventoryTransCore(list);
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("其他入库单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
             //中止当前审核流程
@@ -382,7 +386,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         updateApproveStatusForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //回扣库存
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.OTHER_INSTOCK,ids);
-        //inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+        inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("反审核了一个其他入库单【%s】", ModuleTypeEnum.OTHER_INSTOCK.getCode(), pairList, "反审核操作");
@@ -431,6 +435,18 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             throw new ServiceException(ApiError.ERROR_1015);
         }
         return Boolean.TRUE;
+    }
+
+
+    private void updateInventoryTransCore (List<OtherInstockEntity> list) {
+        List<String> ids = list.stream().map(OtherInstockEntity::getId).collect(Collectors.toList());
+        //加工明细
+        List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainIds(ids);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_99053);
+        }
+
+
     }
 
     /**
