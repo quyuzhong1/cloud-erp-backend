@@ -576,7 +576,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             SoReturnNoticeDTO.Add dto = new SoReturnNoticeDTO.Add();
             dto.setSourceId(id);
             dto.setInventoryOrgId(soInfoEntity.getWarehouseOrgId());
-            List<SoReturnNoticeDetailDTO.Add> detailList = dto.getDetailList();
+            List<SoReturnNoticeDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnDTO.GenerateSoReturnNoticeView view : viewList) {
                 SoReturnNoticeDetailDTO.Add detailAddDTO = new SoReturnNoticeDetailDTO.Add();
                 detailAddDTO.setReturnQty(view.getReturnQty());
