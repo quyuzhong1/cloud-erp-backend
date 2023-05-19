@@ -39,6 +39,10 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     @TableField("approve_status")
     private BillApproveStatusEnum approveStatus;
 
+
+    @TableField("approve_user_name")
+    private String approveUserName;
+
     /**
      * 订单类型
      */
