@@ -16,6 +16,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.erp.model.plm.enums.SaleStateEnum;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.ExportInventoryExcelDTO;
@@ -25,6 +26,7 @@ import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.inventory.InventorySaveDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.InventoryMapper;
 import com.erp.server.wms.service.CommonService;
@@ -73,6 +75,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Autowired
     private SysUserFeign sysUserFeign;
+
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
 
     @Override
     public InventoryEntity findInventory(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
@@ -378,6 +383,10 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         if(CollUtil.isEmpty(list)) {
             return;
         }
+        // 此处优化，取最新的产品名称和产品图片，防止数据没同步过来，销售状态和SPU则不取最新的，防止查询和显示不一样
+        List<String> skuIds = list.stream().map(InventoryDTO.PagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
         Map<String, WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
         Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
         list.stream().forEach(data->{
@@ -390,6 +399,12 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             SysAccountingCompanyEntity sysAccountingCompanyEntity = accountingCompanyMap.computeIfAbsent(data.getOrgId(),(v)->sysUserFeign.getCompanyById(v));
             if(Objects.nonNull(sysAccountingCompanyEntity)) {
                 data.setOrgName(sysAccountingCompanyEntity.getCompanyName());
+            }
+            if(skuMap.containsKey(data.getSkuId())) {
+                // 产品名称
+                data.setProductName(skuMap.getOrDefault(data.getSkuId(), new SkuVO()).getSkuName());
+                // 产品图片
+                data.setProductImgUrl(skuMap.getOrDefault(data.getSkuId(), new SkuVO()).getSkuImagesUrl());
             }
             // 销售状态名称
             data.setSaleStateName(SaleStateEnum.getNameByCode(data.getSaleState()));

@@ -63,4 +63,11 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
      */
     void exportExcel(InventoryDTO.ExportInOutStockTransFlowSearchParamDTO param, HttpServletResponse response);
 
+    /**
+     * 出入库列表分页查询
+     * @param pagingParamDTO
+     * @return
+     */
+    PagingVO<InventoryDTO.InOutStockSummaryPagingViewDTO> pagingSummary(PagingDTO<InventoryDTO.InOutStockSummarySearchParamDTO> pagingParamDTO);
+
 }

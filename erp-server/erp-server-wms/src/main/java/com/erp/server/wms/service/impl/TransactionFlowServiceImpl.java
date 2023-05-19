@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -18,6 +19,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.ExportTransactionFlowDTO;
+import com.erp.model.wms.dto.inventory.InitStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
 import com.erp.model.wms.entity.TransactionFlowEntity;
@@ -26,14 +28,17 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.TransactionFlowMapper;
 import com.erp.server.wms.service.CommonService;
+import com.erp.server.wms.service.InitStockService;
 import com.erp.server.wms.service.TransactionFlowService;
 import com.erp.server.wms.service.WarehouseService;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -63,6 +68,9 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Autowired
     private SysUserFeign sysUserFeign;
+
+    @Autowired
+    private InitStockService initStockService;
 
     @Override
     public List<TransactionFlowEntity> getUnApprovedTxnFlows(String sourceType, String sourceId) {
@@ -133,6 +141,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Override
     public PagingVO<InventoryDTO.TransFlowPagingViewDTO> pagingForInv(PagingDTO<InventoryDTO.TransFlowSearchParamDTO> pagingParamDTO) {
+        // 显示所有的库存交易流水
         pagingParamDTO.getParams().setParam(pagingParamDTO.getParam());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<InventoryDTO.TransFlowPagingViewDTO> pageData = this.baseMapper.pagingForInv(query, pagingParamDTO.getParams());
@@ -142,6 +151,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Override
     public PagingVO<InventoryDTO.InOutStockTransFlowPagingViewDTO> paging(PagingDTO<InventoryDTO.InOutStockTransFlowSearchParamDTO> pagingParamDTO) {
+        // 出入库流水，只展示跟出入库交易相关的业务，且无需做状态映射
         pagingParamDTO.getParams().setParam(pagingParamDTO.getParam());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<InventoryDTO.InOutStockTransFlowPagingViewDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
@@ -151,6 +161,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Override
     public void exportExcel(InventoryDTO.ExportInOutStockTransFlowSearchParamDTO param, HttpServletResponse response) {
+        // 出入库流水，只展示跟出入库交易相关的业务，且无需做状态映射
         List<InventoryDTO.InOutStockTransFlowPagingViewDTO> dataList = this.baseMapper.exportList(param);
         fillTransactionFlowPageData(dataList);
         List<ExportTransactionFlowDTO> resultList = BeanMapperUtils.copyList(ExportTransactionFlowDTO.class, dataList);
@@ -160,6 +171,16 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
+    }
+
+    @Override
+    public PagingVO<InventoryDTO.InOutStockSummaryPagingViewDTO> pagingSummary(PagingDTO<InventoryDTO.InOutStockSummarySearchParamDTO> pagingParamDTO) {
+        // 出入库列表，展示跟出入库交易相关的业务，有些单据动作需做状态映射
+        pagingParamDTO.getParams().setParam(pagingParamDTO.getParam());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<InventoryDTO.InOutStockSummaryPagingViewDTO> pageData = this.baseMapper.pagingList(query, pagingParamDTO.getParams());
+        fillTransactionSummary(pageData.getRecords(), pagingParamDTO.getParams().getDateList());
+        return new PagingVO(pageData);
     }
 
     /**
@@ -213,6 +234,32 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             InventoryStatusEnum inventoryStatus = InventoryStatusEnum.of(data.getInventoryStatus());
             data.setInventoryStatusName(Optional.ofNullable(inventoryStatus).map(InventoryStatusEnum::getName).orElse(""));
         });
+    }
+
+    private void fillTransactionSummary(List<InventoryDTO.InOutStockSummaryPagingViewDTO> dataList, List<LocalDate> dateList) {
+        if(CollUtil.isEmpty(dataList)) {
+            return;
+        }
+        List<String> skuIds = dataList.stream().map(InventoryDTO.InOutStockSummaryPagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        // 如果dateList为空，则传值今天
+        if(CollUtil.isEmpty(dateList)) {
+            dateList = Lists.newArrayList(LocalDate.now(), LocalDate.now());
+        }
+        for(InventoryDTO.InOutStockSummaryPagingViewDTO data : dataList) {
+            if(skuMap.containsKey(data.getSkuId())) {
+                SkuVO skuVO = skuMap.get(data.getSkuId());
+                data.setProductName(skuVO.getSkuName());
+                data.setProductImgUrl(skuVO.getSkuImagesUrl());
+            }
+            // 查询期初库存（后续出现性能问题，单独出接口改前端调用）
+            InitStockDTO.ConditionDTO condition = new InitStockDTO.ConditionDTO();
+            condition.setWarehouseId(data.getWarehouseId());
+            condition.setSkuId(data.getSkuId());
+            condition.setDateList(dateList);
+            initStockService.getInitQty(condition);
+        }
     }
 
 }

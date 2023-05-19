@@ -95,7 +95,7 @@ public class InventoryController extends BaseController {
      */
     @PostMapping("/pageInOutStockSummary")
     public ApiResult<PagingVO<InventoryDTO.InOutStockSummaryPagingViewDTO>> pageInOutStockSummary(@RequestBody @Validated PagingDTO<InventoryDTO.InOutStockSummarySearchParamDTO> dto) {
-        return success(null);
+        return success(transactionFlowService.pagingSummary(dto));
     }
 
     /**

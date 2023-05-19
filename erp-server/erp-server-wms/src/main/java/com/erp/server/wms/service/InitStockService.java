@@ -120,6 +120,13 @@ public interface InitStockService extends SuperService<InitStockEntity> {
      */
     void downloadTemplate(HttpServletResponse response);
 
+    /**
+     * 根据条件查询期初数量
+     * @param condition
+     * @return
+     */
+    Integer getInitQty(InitStockDTO.ConditionDTO condition);
+
 
 
 }

@@ -292,7 +292,7 @@ public class InventoryDTO {
         private String id;
 
         /**
-         * 出入库时间
+         * 操作时间
          */
         private LocalDateTime tradeTime;
 
@@ -372,7 +372,7 @@ public class InventoryDTO {
         private String inventoryStatusName;
 
         /**
-         * 出入库数量
+         * 数量
          */
         private Integer qty;
 
@@ -464,7 +464,7 @@ public class InventoryDTO {
         /**
          * 日期范围
          */
-        private List<String> dateList;
+        private List<LocalDate> dateList;
 
         /**
          * 单据名称
@@ -635,7 +635,7 @@ public class InventoryDTO {
         /**
          * 日期范围
          */
-        private List<String> dateList;
+        private List<LocalDate> dateList;
 
 
         /**
@@ -670,7 +670,7 @@ public class InventoryDTO {
     }
 
     /**
-     * 导出出入库列表查询条件
+     * 导出出入库列表查询条件（不做勾选导出）
      */
     @Data
     @NoArgsConstructor
@@ -684,7 +684,7 @@ public class InventoryDTO {
         /**
          * 日期范围
          */
-        private List<String> dateList;
+        private List<LocalDate> dateList;
 
 
         /**
@@ -800,7 +800,7 @@ public class InventoryDTO {
         private Integer inventoryProfitInstockQty;
 
         /**
-         * 退货入库数量（入库）
+         * 销售退货入库数量（入库）
          */
         private Integer saleReturnQty;
 
