@@ -9,6 +9,7 @@ import java.util.Objects;
 
 @NoArgsConstructor
 public enum SourceTypeEnum {
+    //WMS
     SELF_ADD("selfAdd", "手动新增"),
     PURCHASE_ORDER("purchaseOrder", "采购订单"),
     PURCHASE_STOCK_IN("purchaseStockIn", "采购入库单"),
@@ -16,6 +17,14 @@ public enum SourceTypeEnum {
     PURCHASE_RETURN_ORDER("purchaseReturnOrder", "采购退货单"),
     WAREHOUSE_RECEIVE("warehouseReceive", "仓库收货单"),
     TRANSFER_APPLICATION("transferApplication", "调拨申请单"),
+    SO_RETURN_NOTICE("soReturnNotice", "销售退货通知单"),
+    SO_RETURN_RECEIVE("soReturnReceive", "销售退货签收单"),
+    SO_RETURN_INSTOCK("soReturnInstock", "销售退货入库单"),
+    SO_DELIVERY_NOTICE("soDeliveryNotice", "销售发货通知单"),
+
+    //OMS
+    SO_RETURN("soReturn", "销售退货订单"),
+
 
     ;
 
