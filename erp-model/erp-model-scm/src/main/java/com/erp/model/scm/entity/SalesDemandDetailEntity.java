@@ -97,6 +97,12 @@ public class SalesDemandDetailEntity extends BaseEntity<SalesDemandDetailEntity>
     @TableField("variant_property")
     private String variantProperty;
 
+    /**
+     * 来源明细id
+     */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
+
 
     public static final String SKU_ID = "sku_id";
 
@@ -119,6 +125,8 @@ public class SalesDemandDetailEntity extends BaseEntity<SalesDemandDetailEntity>
     public static final String REMARK = "remark";
 
     public static final String VARIANT_PROPERTY = "variant_property";
+
+    public static final String SOURCE_DETAIL_ID = "source_detail_id";
 
     @Override
     public Serializable pkVal() {

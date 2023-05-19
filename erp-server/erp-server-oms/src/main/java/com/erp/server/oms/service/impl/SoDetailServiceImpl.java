@@ -716,6 +716,14 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         return resultList;
     }
 
+    @Override
+    public List<SoInfoDTO.ViewGenerateSalesDemandDTO> viewGenerateSalesDemand(List<String> ids) {
+
+
+
+        return null;
+    }
+
 
     /**
      * 根据sku id list 获取sku 的历史价格

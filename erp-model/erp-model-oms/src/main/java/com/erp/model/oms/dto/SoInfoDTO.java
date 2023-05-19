@@ -944,4 +944,24 @@ public class SoInfoDTO implements Serializable {
 
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewGenerateSalesDemandDTO {
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+
+    }
+
+
+
 }

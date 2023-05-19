@@ -348,5 +348,16 @@ public class SoInfoController extends BaseController {
         return success(result);
     }
 
-
+    /**
+     * 下推备货申请单数据显示
+     * @author Will
+     * @date: 2023/5/18 19:33
+     * @param dto
+     * @return ApiResult<List<AddDetailView>>
+     */
+    @PostMapping("/viewGenerateSalesDemand")
+    public ApiResult<List<SoInfoDTO.ViewGenerateSalesDemandDTO>> viewGenerateSalesDemand(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<SoInfoDTO.ViewGenerateSalesDemandDTO> list = soDetailService.viewGenerateSalesDemand(dto.getIds());
+        return success(list);
+    }
 }

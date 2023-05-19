@@ -127,6 +127,24 @@ public class SalesDemandEntity extends BaseEntity<SalesDemandEntity> {
     @TableField("approve_user_name")
     private String approveUserName;
 
+    /**
+     * 来源id
+     */
+    @TableField("source_id")
+    private String sourceId;
+
+    /**
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
+
+    /**
+     * 来源编码
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
 
     public static final String APPROVE_STATUS = "approve_status";
 
@@ -155,6 +173,12 @@ public class SalesDemandEntity extends BaseEntity<SalesDemandEntity> {
     public static final String INVALID_TIME = "invalid_time";
 
     public static final String APPROVE_TIME = "approve_time";
+
+    public static final String SOURCE_ID = "source_id";
+
+    public static final String SOURCE_TYPE = "source_type";
+
+    public static final String SOURCE_CODE = "source_code";
 
     @Override
     public Serializable pkVal() {
