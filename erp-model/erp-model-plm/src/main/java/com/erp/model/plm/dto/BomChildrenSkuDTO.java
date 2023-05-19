@@ -19,6 +19,10 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class BomChildrenSkuDTO  implements Serializable {
 
+    /**
+     * 父级skuId
+     */
+    private String parentSkuId;
 
     /**
      * sku

@@ -319,6 +319,8 @@ public enum ApiError implements Serializable {
     ERROR_MSG_ID_OR_UNION_ID_IS_NULL(95161, "消息ID或者用户绑定ID为空，发送加急信息失败"),
 
     ERROR_BUSINESS_NOT_EXIT(95162, "业务类型不存在，请检查"),
+    ERROR_95163(95163, "BOM信息不存在"),
+
     ERROR_DOCS_NO(95157,"文档不存在"),
     /**
      * bi 错误
@@ -496,6 +498,7 @@ public enum ApiError implements Serializable {
     ERROR_99054(99054,"【%s】收货数量不能大于未交货数量"),
     ERROR_99055(99055,"SKU【%s】已完成分步式调出"),
     ERROR_99056(99056,"未找到加工单子件明细"),
+    ERROR_99057(99057,"SKU【%s】子件数量合计应等于【%s】"),
 
 
     /**

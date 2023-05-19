@@ -294,7 +294,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     public List<MachineSubComponentsDTO.ViewDTO> viewBomSubComponents(String skuId) {
         List<MachineSubComponentsDTO.ViewDTO> resultList = new ArrayList<>();
         //查询BOM中SKU子集
-        List<BomChildrenSkuDTO> childrenList = plmTaskFeign.listBomChildBySkuId(skuId);
+        List<BomChildrenSkuDTO> childrenList = plmTaskFeign.listBomChildBySkuIds(Arrays.asList(skuId));
         if (CollectionUtils.isEmpty(childrenList)) {
             return resultList;
         }

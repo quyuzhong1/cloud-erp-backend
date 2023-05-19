@@ -197,9 +197,9 @@ public interface PlmTaskFeign {
      * @description: 查询bom子件信息
      * @author Will
      * @date: 2023/5/17 9:32
-     * @param skuId
+     * @param skuIds
      * @return List<BomChildrenSkuDTO>
      */
-    @PostMapping("feign/bom/listBomChildBySkuId")
-    List<BomChildrenSkuDTO> listBomChildBySkuId(@RequestBody String skuId);
+    @PostMapping("feign/bom/listBomChildBySkuIds")
+    List<BomChildrenSkuDTO> listBomChildBySkuIds(@RequestBody List<String> skuIds);
 }

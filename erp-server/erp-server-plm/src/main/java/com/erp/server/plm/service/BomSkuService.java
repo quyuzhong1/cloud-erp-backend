@@ -35,8 +35,8 @@ public interface BomSkuService extends IService<BomSkuEntity> {
      * @description: 查询子集SKU
      * @author Will
      * @date: 2023/5/17 9:40
-     * @param skuId
+     * @param skuIds
      * @return List<BomChildrenSkuDTO>
      */
-    List<BomChildrenSkuDTO> listBomChildBySkuId(String skuId);
+    List<BomChildrenSkuDTO> listBomChildBySkuIds(List<String> skuIds);
 }

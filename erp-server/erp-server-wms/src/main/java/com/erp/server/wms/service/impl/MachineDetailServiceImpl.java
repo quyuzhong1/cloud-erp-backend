@@ -7,9 +7,11 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.MachineDetailDTO;
+import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.entity.MachineDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.MachineDetailMapper;
@@ -137,13 +139,21 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         }
 
         //SKU信息
-        List<String> skuIds = newList.stream().map(MachineDetailEntity::getSkuId).collect(Collectors.toList());
+        List<String> skuIds = newList.stream().map(MachineDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
+        //bom信息
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
+            throw new ServiceException(ApiError.ERROR_95163);
+        }
 
         for (MachineDetailEntity detail:newList) {
+            //验证子件数量
+            checkBomChildrenSku(bomChildrenSkuList,detail,isUpdate);
+
             //单位
             String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && StringUtils.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
             detail.setUnit(unit);
@@ -172,4 +182,35 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         }
     }
 
+    /**
+     * @description: 验证子件数量
+     * @author Will
+     * @date: 2023/5/19 10:58
+     * @param bomChildrenSkuList
+     * @param detail
+     * @param isUpdate
+     */
+    private void checkBomChildrenSku (List<BomChildrenSkuDTO> bomChildrenSkuList,MachineDetailEntity detail, Boolean isUpdate) {
+
+        //验证SKU及子件明细数量
+        List<BomChildrenSkuDTO> bomList = bomChildrenSkuList.stream().filter(obj -> obj.getParentSkuId().equals(detail.getSkuId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(bomList)) {
+            throw new ServiceException(ApiError.ERROR_95163);
+        }
+        //明细子件数量验证
+        for (BomChildrenSkuDTO bomChildrenSkuDTO : bomList) {
+            Integer qty ;
+            if (isUpdate) {
+                List<MachineSubComponentsDTO.UpdateDTO> updateList = detail.getUpdateList();
+                qty = updateList.stream().filter(obj -> obj.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).map(MachineSubComponentsDTO.UpdateDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            } else {
+                List<MachineSubComponentsDTO.AddDTO> updateList = detail.getAddList();
+                qty = updateList.stream().filter(obj -> obj.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).map(MachineSubComponentsDTO.AddDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //如果子件明细合计数量 != 明细数量 * bom子件数量
+            if (MathUtil.compareTo(qty,detail.getQty() * bomChildrenSkuDTO.getQuantity()) != MathUtil.ZERO) {
+                throw new ServiceException(ApiError.ERROR_99055.code, String.format(ApiError.ERROR_99057.msg, bomChildrenSkuDTO.getSkuNo(),detail.getQty() * bomChildrenSkuDTO.getQuantity()));
+            }
+        }
+    }
 }

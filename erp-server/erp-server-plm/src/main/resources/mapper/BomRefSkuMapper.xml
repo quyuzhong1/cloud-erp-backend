@@ -3,8 +3,9 @@
 <mapper namespace="com.erp.server.plm.mapper.BomRefSkuMapper">
 
 
-    <select id="listBomChildBySkuId" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
+    <select id="listBomChildBySkuIds" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
         select
+           pbs.parent_sku_id as parentSkuId,
            pbs.sku_id as skuId,
            pbs.sku_no as skuNo,
            pbs.quantity as quantity,
@@ -15,7 +16,10 @@
         left join product_detail pd on pbs.sku_id = pd.id and pd.is_deleted = false
         <where>
             pbi.is_deleted = false and pbi.state = 4
-            and pbs.parent_sku_id = #{parentSkuId}
+            and pbs.parent_sku_id in
+            <foreach collection="parentSkuIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
         </where>
     </select>
 

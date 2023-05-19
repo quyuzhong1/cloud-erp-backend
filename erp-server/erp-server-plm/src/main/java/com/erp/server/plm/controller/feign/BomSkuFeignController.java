@@ -24,14 +24,14 @@ public class BomSkuFeignController {
     private BomSkuService bomSkuService;
 
     /**
-     * @description: 根据父级skuId查询子集sku
+     * @description: 根据父级skuIds查询子集sku
      * @author Will
      * @date: 2023/5/17 10:11
-     * @param skuId
+     * @param skuIds
      * @return List<BomChildrenSkuDTO>
      */
-    @PostMapping("/listBomChildBySkuId")
-    public List<BomChildrenSkuDTO> listBomChildBySkuId(@RequestBody String skuId) {
-        return bomSkuService.listBomChildBySkuId(skuId);
+    @PostMapping("/listBomChildBySkuIds")
+    public List<BomChildrenSkuDTO> listBomChildBySkuIds(@RequestBody List<String> skuIds) {
+        return bomSkuService.listBomChildBySkuIds(skuIds);
     }
 }
