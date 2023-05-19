@@ -29,9 +29,11 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.wms.dto.OtherOutstockCustomerDTO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.dto.OtherOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
+import com.erp.model.wms.entity.OtherOutstockCustomerEntity;
 import com.erp.model.wms.entity.OtherOutstockDetailEntity;
 import com.erp.model.wms.entity.OtherOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -212,7 +214,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //更新主表数据
         this.updateById(entity);
         //更新其他出库客户
-        otherOutstockCustomerService.update(dto.getOtherOutstockCustomer());
+        otherOutstockCustomerService.update(dto.getOtherOutstockCustomer(),entity.getId());
         //更新明细数据
         otherOutstockDetailService.update(detailList, entity.getId());
         return Boolean.TRUE;
@@ -256,6 +258,17 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             throw new ServiceException(ApiError.ERROR_99061);
         }
         BeanMapperUtils.copy(entity, viewDTO);
+
+        //客户信息
+        OtherOutstockCustomerEntity customerEntity = otherOutstockCustomerService.getByMainId(id);
+        if (ObjectUtils.isEmpty(customerEntity)) {
+            throw new ServiceException(ApiError.ERROR_99063);
+        }
+        OtherOutstockCustomerDTO.UpdateDTO customerDTO = new OtherOutstockCustomerDTO.UpdateDTO();
+        BeanMapperUtils.copy(customerEntity,customerDTO);
+        viewDTO.setOtherOutstockCustomer(customerDTO);
+
+        //明细信息
         List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(id);
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_99062);
@@ -287,6 +300,8 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             throw new ServiceException(ApiError.ERROR_98009);
         }
         log.info("其他出库单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
+        //删除其他出库客户
+        otherOutstockCustomerService.removeByMainIds(ids);
         //删除明细数据
         otherOutstockDetailService.removeByMainIds(ids);
         //删除操作日志
