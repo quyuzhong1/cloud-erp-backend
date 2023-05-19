@@ -72,7 +72,9 @@
             max(pm.end_time) as end_time,
             max(pm.act_process_definition_id) as act_process_definition_id,
             string_agg(ptm.cur_approve_name, ', ') AS cur_approve_name,
-            concat(max(wm.detail_url), max(pm.business_id)) as detail_url
+            concat(max(wm.detail_url),
+            max(pm.business_id)) as detail_url,
+            max(pm.create_time) as create_time
         FROM process_management AS pm
                  LEFT JOIN process_task_management AS ptm  on pm.process_instance_id = ptm.process_instance_id
                  LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code

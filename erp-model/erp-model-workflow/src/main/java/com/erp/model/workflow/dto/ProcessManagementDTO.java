@@ -628,6 +628,11 @@ public class ProcessManagementDTO {
         private ProcessStatusEnum processStatus;
 
         /**
+         * 流程状态
+         */
+        private String processStatusName;
+
+        /**
          * 开始时间
          */
         private LocalDateTime startTime;
@@ -651,6 +656,11 @@ public class ProcessManagementDTO {
          * 项目名称
          */
         private String sysClassify;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
 
     }
 
