@@ -691,9 +691,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<PickingDetailDTO.CommonDTO> addList = new ArrayList<>();
         for (SoDeliveryNoticeEntity entity :list) {
             List<SoDeliveryNoticeDetailEntity> detailEntities = detailList.stream().filter(obj -> obj.getMainId().equals(entity.getId())).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(detailEntities)) {
-                throw new ServiceException(ApiError.ERROR_99044);
-            }
+
             //获取仓库信息
             WarehouseEntity warehouseEntity = warehouseService.getById(entity.getWarehouseId());
 
