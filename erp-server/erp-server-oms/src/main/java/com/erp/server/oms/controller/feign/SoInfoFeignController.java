@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.feign;
 
 import com.common.core.controller.BaseController;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.server.oms.service.SoDetailService;
@@ -62,4 +63,17 @@ public class SoInfoFeignController extends BaseController {
     public List<SoDetailEntity> listSoDetailByMainIds(@RequestBody List<String> ids) {
         return soDetailService.listSoDetailByMainIds(ids);
     }
+
+    /**
+     * 根据主表id 获取对应基础信息
+     * @author yl
+     * @date 2023-05-19 11:14
+     * @param id
+     * @return java.util.List<com.erp.model.oms.entity.SoInfoDTO.CustomerDTO>
+     */
+    @PostMapping("/getSoBaseById")
+    public SoInfoDTO.CustomerDTO getSoBaseById(@RequestBody String id) {
+        return soInfoService.getSoCustomer(id);
+    }
+
 }

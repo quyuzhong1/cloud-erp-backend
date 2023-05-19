@@ -1,5 +1,7 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
@@ -34,4 +36,68 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return java.lang.String
      */
     String add(SoOutstockDTO.AddDTO dto);
+
+    /**
+     * 批量提交
+     * @author yl
+     * @date 2023-05-19 10:34
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean submit(List<String> ids);
+
+    /**
+     * 新增并提交
+     * @author yl
+     * @date 2023-05-19 10:42
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean addAndSubmit(SoOutstockDTO.AddDTO dto);
+
+    
+    /**
+     * 销售出库单详情
+     * @author yl
+     * @date 2023-05-19 10:45
+     * @param id
+     * @return com.erp.model.wms.dto.SoOutstockDTO.ViewDTO
+     */
+    SoOutstockDTO.ViewDTO view(String id);
+
+    /**
+     * 审核
+     * @author yl
+     * @date 2023-05-19 11:42
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean approve(BaseApproveParamDTO dto);
+
+    /**
+     * 反审核
+     * @author yl
+     * @date 2023-05-19 12:10
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean disApprove(BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 撤销流程
+     * @author yl
+     * @date 2023-05-19 12:13
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean cancelProcess(List<String> ids);
+
+    /**
+     * 删除销售出库单
+     * @author yl
+     * @date 2023-05-19 12:16
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean delete(List<String> ids);
 }

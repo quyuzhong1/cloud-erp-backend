@@ -369,11 +369,12 @@ public class SoOutstockDTO implements Serializable {
          */
         private String soCode;
 
-        /**
-         * 单据类型
-         */
-        private String type;
 
+
+        /**
+         * 单据类型名
+         */
+        private String typeName;
 
         /**
          * 来源id
@@ -406,7 +407,6 @@ public class SoOutstockDTO implements Serializable {
          */
         private String deliveryOrgId;
 
-
         /**
          * 仓库id
          */
@@ -419,14 +419,9 @@ public class SoOutstockDTO implements Serializable {
 
 
         /**
-         * 客户id
+         * 客户
          */
-        private String consumerId;
-
-        /**
-         * 客户id
-         */
-        private String consumerName;
+        private String customerName;
 
         /**
          * 要货日期
@@ -437,11 +432,6 @@ public class SoOutstockDTO implements Serializable {
          * 承运商id 来源供应商
          */
         private String carrierId;
-
-        /**
-         * 承运商 来源供应商
-         */
-        private String carrierName;
 
 
         /**
@@ -478,12 +468,13 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 联系地址
          */
-        private String receiverAddress;
+        private String receiveAddress;
+
 
         /**
          * 交货方式
          */
-        private String deliveryModeDict;
+        private String deliveryModeName;
 
 
         private List<SoOutstockDetiailDTO.ViewDTO> detailList;

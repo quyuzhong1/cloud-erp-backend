@@ -372,9 +372,14 @@ public class SoOutstockDetiailDTO implements Serializable {
         private String warehouseLocation;
 
         /**
-         * 是否关闭
+         * 箱麦附件名集合
          */
-        private Boolean isClose;
+        private List<String> attachNameList;
+
+        /**
+         * 箱麦附件url集合
+         */
+        private List<String> attachUrlList;
 
         /**
          * 备注

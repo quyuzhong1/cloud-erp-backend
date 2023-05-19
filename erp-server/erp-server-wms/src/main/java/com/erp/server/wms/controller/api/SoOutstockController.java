@@ -56,7 +56,7 @@ public class SoOutstockController extends BaseController {
     }
 
     /**
-     * 新增
+     * 创建
      *
      * @param dto
      * @return
@@ -70,30 +70,44 @@ public class SoOutstockController extends BaseController {
     )
     public ApiResult add(@RequestBody @Validated SoOutstockDTO.AddDTO dto) {
         String id = soOutstockService.add(dto);
-        return StringUtils.isNotBlank(id)?success():failure();
+        return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
     /**
-     * 提交
+     * 批量提交审核
      *
      * @param dto
      * @return
      */
     @PostMapping("/submit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:outstock:submit",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "ids"
+    )
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success();
+        Boolean result = soOutstockService.submit(dto.getIds());
+        return result ? success() : failure();
     }
 
 
     /**
-     * 新增并提交
+     * 提交审核
      *
      * @param dto
      * @return
      */
     @PostMapping("/addAndSubmit")
-    public ApiResult<Void> addAndSubmit(@RequestBody @Validated SoOutstockDTO.AddDTO dto) {
-        return success();
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:outstock:addAndSubmit",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "id"
+    )
+    public ApiResult addAndSubmit(@RequestBody @Validated SoOutstockDTO.AddDTO dto) {
+        Boolean result = soOutstockService.addAndSubmit(dto);
+        return result ? success() : failure();
     }
 
     /**
@@ -103,8 +117,15 @@ public class SoOutstockController extends BaseController {
      * @return
      */
     @PostMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:outstock:view",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "id"
+    )
     public ApiResult<SoOutstockDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
-        return success(null);
+        SoOutstockDTO.ViewDTO view = soOutstockService.view(dto.getId());
+        return success(view);
     }
 
     /**
@@ -137,27 +158,65 @@ public class SoOutstockController extends BaseController {
      * @return
      */
     @PostMapping("/approve")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:outstock:approve",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "ids"
+    )
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
-        return success();
+        Boolean result = soOutstockService.approve(dto);
+        return result?success():failure();
     }
 
     /**
      * 反审核
      */
     @PostMapping("/disApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:outstock:disApprove",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "ids"
+    )
     public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        return success();
+        Boolean result = soOutstockService.disApprove(dto);
+        return result?success():failure();
+    }
+
+
+    /**
+     * 撤销流程
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/cancelProcess")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:outstock:cancelProcess",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "ids")
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = soOutstockService.cancelProcess(dto.getIds());
+        return result ? success() : failure();
     }
 
     /**
-     * 删除仓库
+     * 删除销售出库单
      *
      * @param dto
      * @return
      */
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:outstock:delete",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "ids")
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        return success();
+        Boolean result = soOutstockService.delete(dto.getIds());
+        return result ? success() : failure();
     }
 
     /**

@@ -450,6 +450,7 @@ public class SoInfoDTO implements Serializable {
 
 
         @Valid
+        @Size(min = 1,message = "销售订单至少要需要添加一个sku",groups = {AddGroup.class})
         private List<SoDetailDTO.AddDTO> detailList;
 
     }

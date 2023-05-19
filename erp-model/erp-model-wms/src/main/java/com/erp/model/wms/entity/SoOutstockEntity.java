@@ -50,6 +50,15 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     @TableField("carrier_id")
     private String carrierId;
 
+    /**
+     * 作废状态
+     * true 作废
+     * false 未作废
+     */
+    @TableField("invalid_status")
+    private Boolean invalidStatus;
+
+
 
 
     /**

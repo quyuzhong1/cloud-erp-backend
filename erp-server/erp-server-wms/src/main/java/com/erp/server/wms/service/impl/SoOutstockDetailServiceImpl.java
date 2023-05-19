@@ -1,17 +1,24 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.SoOutstockDetiailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.WmsAttachmentEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoOutstockDetailMapper;
 import com.erp.server.wms.service.SoOutstockDetailService;
+import com.erp.server.wms.service.WmsAttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +37,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private WmsAttachmentService wmsAttachmentService;
 
     @Override
     public List<SoOutstockDetailEntity> listDetailBySourceDetailId(List<String> sourceDetailIds) {
@@ -55,18 +65,102 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
-        List<SoOutstockDetailEntity> addList = BeanMapper.copyList(detailList, SoOutstockDetailEntity.class);
-        List<String> skuIdList = addList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = detailList.stream().map(SoOutstockDetiailDTO.AddDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-        for (SoOutstockDetailEntity item : addList) {
+
+        Class<SoOutstockDetailEntity> credentialClass = SoOutstockDetailEntity.class;
+        TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+        List<SoOutstockDetailEntity> addList = new ArrayList<>(detailList.size());
+        //获取到表名
+        String type = tableName.value();
+        List<WmsAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
+
+        for (SoOutstockDetiailDTO.AddDTO item : detailList) {
+            SoOutstockDetailEntity addEntity = new SoOutstockDetailEntity();
+            BeanMapper.copy(item, addEntity);
+            String id = IdWorker.getIdStr();
             String skuId = item.getSkuId();
             String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
-            item.setSkuNo(skuNo);
-            item.setMainId(mainId);
+            addEntity.setSkuNo(skuNo);
+            addEntity.setMainId(mainId);
+            addEntity.setId(id);
+            addList.add(addEntity);
+            //附件集合
+            List<String> attachmentUrlList = item.getAttachUrlList();
+            //附件名
+            List<String> attachmentNameList = item.getAttachNameList();
+            if (CollectionUtils.isNotEmpty(attachmentUrlList) && attachmentUrlList.size() == attachmentNameList.size()) {
+                for (int i = 0; i < attachmentUrlList.size(); i++) {
+                    WmsAttachmentEntity attachment = new WmsAttachmentEntity();
+                    attachment.setAttachUrl(attachmentUrlList.get(i));
+                    attachment.setAttachName(attachmentNameList.get(i));
+                    attachment.setBusinessId(id);
+                    attachment.setType(type);
+                    batchAttachmentList.add(attachment);
+                }
+            }
         }
         this.saveBatch(addList);
+        wmsAttachmentService.saveBatch(batchAttachmentList);
+    }
 
+    /**
+     * 根据 main id  获取对应数据
+     *
+     * @param mainId
+     * @return java.util.List<com.erp.model.wms.dto.SoOutstockDetiailDTO.ViewDTO>
+     * @author yl
+     * @date 2023-05-19 11:32
+     */
+    @Override
+    public List<SoOutstockDetiailDTO.ViewDTO> listByMainId(String mainId) {
+        List<SoOutstockDetailEntity> dbList = this.listBaseByMainId(mainId);
+        List<SoOutstockDetiailDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, SoOutstockDetiailDTO.ViewDTO.class);
+        List<String> skuIdList = resultList.stream().map(SoOutstockDetiailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        for(SoOutstockDetiailDTO.ViewDTO item:resultList){
+            String skuId = item.getSkuId();
+            String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
+            item.setProductName(skuName);
+        }
+        return resultList;
+    }
+
+
+    /**
+     * 删除明细
+     * @author yl
+     * @date 2023-05-19 12:28
+     * @param mainIdList
+     * @return void
+     */
+    @Override
+    public void removeByMainIdList(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return;
+        }
+        LambdaQueryWrapper<SoOutstockDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SoOutstockDetailEntity::getMainId, mainIdList);
+        this.remove(queryWrapper);
+
+    }
+
+
+    /**
+     * 获取基础销售出库单列表
+     *
+     * @param mainId
+     * @return java.util.List<com.erp.model.wms.entity.SoOutstockDetailEntity>
+     * @author yl
+     * @date 2023-05-19 11:36
+     */
+    private List<SoOutstockDetailEntity> listBaseByMainId(String mainId) {
+        if (StringUtils.isNotBlank(mainId)) {
+            return this.lambdaQuery().eq(SoOutstockDetailEntity::getMainId, mainId).list();
+        }
+        return Collections.emptyList();
 
     }
 }

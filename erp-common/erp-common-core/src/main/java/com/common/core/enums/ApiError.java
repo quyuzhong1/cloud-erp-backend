@@ -499,6 +499,7 @@ public enum ApiError implements Serializable {
     ERROR_99055(99055,"SKU【%s】已完成分步式调出"),
     ERROR_99056(99056,"未找到加工单子件明细"),
     ERROR_99057(99057,"SKU【%s】子件数量合计应等于【%s】"),
+    ERROR_99058(99058,"销售出库单不存在"),
 
 
     /**
