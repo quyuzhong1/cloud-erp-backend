@@ -10,11 +10,11 @@ import java.util.List;
 public interface WorkOptionMapper {
     Integer getTableNum(WorkOptionDTO.TableNumDTO tableNumDTO);
 
-    Integer getProductDetailNum(WorkOptionDTO.TableNumDTO tableNumDTO);
+    Integer getProductDetailNum(WorkOptionDTO.TableNumDTO tableNumDTO, @Param("status") Integer status);
 
-    Integer getProductChangeNum(WorkOptionDTO.TableNumDTO tableNumDTO);
+    Integer getProductChangeNum(WorkOptionDTO.TableNumDTO tableNumDTO, @Param("status") Integer status);
 
-    Integer getProductBomInfoNum(WorkOptionDTO.TableNumDTO tableNumDTO);
+    Integer getProductBomInfoNum(WorkOptionDTO.TableNumDTO tableNumDTO, @Param("status") Integer status);
 
     List<WorkOptionDTO.StageViewDTO> stageView(@Param("optionUserId") String optionUserId);
 }

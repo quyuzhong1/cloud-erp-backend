@@ -15,7 +15,7 @@
         COUNT(*)
         FROM product_detail
         where 1=1
-        AND status = #{approveStatus}
+        AND status = #{status}
     </select>
 
     <select id="getProductChangeNum" resultType="java.lang.Integer">
@@ -23,7 +23,7 @@
         COUNT(*)
         FROM product_change
         where 1=1
-        AND state = #{approveStatus}
+        AND state = #{status}
     </select>
 
 
@@ -32,7 +32,7 @@
         COUNT(*)
         FROM product_bom_info
         where 1=1
-        AND state = #{approveStatus}
+        AND state = #{status}
     </select>
 
     <select id="stageView" resultType="com.erp.model.workflow.dto.WorkOptionDTO$StageViewDTO">

@@ -50,13 +50,16 @@ public class WorkOptionServiceImpl implements WorkOptionService {
             return listPagingVO.getTotalCount();
         }
         if (tableNumDTO.getTableName().equals("product_detail")) {
-            return workOptionMapper.getProductDetailNum(tableNumDTO);
+            Integer status = Integer.valueOf(tableNumDTO.getApproveStatus());
+            return workOptionMapper.getProductDetailNum(tableNumDTO, status);
         }
         if (tableNumDTO.getTableName().equals("product_bom_info")) {
-            return workOptionMapper.getProductBomInfoNum(tableNumDTO);
+            Integer status = Integer.valueOf(tableNumDTO.getApproveStatus());
+            return workOptionMapper.getProductBomInfoNum(tableNumDTO, status);
         }
         if (tableNumDTO.getTableName().equals("product_change")) {
-            return workOptionMapper.getProductChangeNum(tableNumDTO);
+            Integer status = Integer.valueOf(tableNumDTO.getApproveStatus());
+            return workOptionMapper.getProductChangeNum(tableNumDTO, status);
         }
         return 0;
     }
