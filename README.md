@@ -104,3 +104,4 @@ erp-bi         9070
 erp-scm        9080
 erp-wms        9090
 erp-msg        9100
+erp-oms        9110

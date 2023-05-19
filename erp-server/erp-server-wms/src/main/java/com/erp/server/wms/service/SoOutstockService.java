@@ -100,4 +100,23 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return java.lang.Boolean
      */
     Boolean delete(List<String> ids);
+
+    
+    /**
+     * 作废
+     * @author yl
+     * @date 2023-05-19 14:16
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean invalid(List<String> ids,String remark);
+
+    /**
+     * 获取tab
+     * @author yl
+     * @date 2023-05-19 14:23
+     * @param
+     * @return java.util.List<com.erp.model.wms.dto.SoOutstockDTO.TabListDTO>
+     */
+    List<SoOutstockDTO.TabListDTO> tabList();
 }
