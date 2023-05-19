@@ -288,7 +288,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 发货状态状态
          */
-        private Boolean deliveryStatus;
+        private String deliveryStatus;
 
         /**
          * 要货日期集合

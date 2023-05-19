@@ -37,6 +37,10 @@ public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
     @TableField("approve_status")
     private ApproveStatusEnum approveStatus;
 
+
+    @TableField("approve_user_name")
+    private String approveUserName;
+
     /**
      * 分组id
      */

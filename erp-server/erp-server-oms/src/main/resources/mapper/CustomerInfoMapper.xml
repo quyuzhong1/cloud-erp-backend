@@ -6,6 +6,7 @@
     <select id="paging" resultType="com.erp.model.oms.dto.CustomerDTO$PagingViewDTO">
         SELECT
         id,code,approve_status,
+        approve_user_name,
         name,short_name,disabled,
         use_org_name,group_id,group_name,
         create_user_name,create_time
@@ -58,6 +59,7 @@
     <select id="listExport" resultType="com.erp.model.oms.dto.CustomerDTO$PagingViewDTO">
         SELECT
         id,code,approve_status,
+        approve_user_name,
         name,short_name,disabled,
         use_org_name,group_id,group_name,
         create_user_name,create_time
