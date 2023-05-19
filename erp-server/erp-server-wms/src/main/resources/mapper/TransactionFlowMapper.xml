@@ -75,6 +75,8 @@
         left join product_sale ps on ps.sku_id = pd.id
         WHERE
             t.is_deleted = false
+        <!--暂时不显示盘盈盘亏的单据-->
+        and t.dict_biz_type in ('02','03','04','05','07','08','09','11','12','17','18','19','20','23','24','26')
         <if test="params.skuNoList != null and params.skuNoList.size != ''">
             and t.sku_no in
             <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
@@ -153,6 +155,8 @@
         left join product_sale ps on ps.sku_id = pd.id
         WHERE
         t.is_deleted = false
+        <!--暂时不显示盘盈盘亏的单据-->
+        and t.dict_biz_type in ('02','03','04','05','07','08','09','11','12','17','18','19','20','23','24','26')
         <if test="params.ids != null and params.ids.size != ''">
             and t.id in
             <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
@@ -205,6 +209,71 @@
             ${params.param}
         </if>
         ORDER BY t.create_time desc
+    </select>
+    <select id="pagingList" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$InOutStockSummaryPagingViewDTO">
+        select m.warehouse_id,m.warehouse_name,m.sku_id,m.sku_no,m.spu_no,
+         m.purchase_instock_qty,m.inventory_profit_instock_qty,m.other_instock_qty,m.sale_return_qty,m.transfer_instock_qty,m.machine_instock_qty,
+         m.purchase_return_qty,m.transfer_outstock_qty,m.sale_outstock_qty,m.other_outstock_qty,m.inventory_loss_outstock_qty,m.machine_outstock_qty
+         from (
+        select tf.warehouse_id,max(tf.warehouse_name) as warehouse_name,tf.sku_id,max(tf.sku_no) as sku_no ,max(pi.spu_no) as spu_no,
+        sum(case when tf.dict_biz_type in('02','03') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
+        purchase_instock_qty, -- 采购入库
+        sum(case when tf.dict_biz_type in ('13') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
+        inventory_profit_instock_qty, -- 盘盈入库
+        sum(case when tf.dict_biz_type in ('19') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
+        other_instock_qty, -- 其他入库
+        sum(case when tf.dict_biz_type in ('12') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
+        sale_return_qty, -- 销售退货入库
+        sum(case when tf.dict_biz_type in ('07','26','09') and tf.dict_inventory_status = 'usable' then tf.qty else 0
+        end) as transfer_instock_qty, -- 调拨入库
+        sum(case when tf.dict_biz_type in ('17','24') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
+        machine_instock_qty, -- 加工入库
+
+        sum(case when tf.dict_biz_type in('04','05') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
+        purchase_return_qty, -- 采购退货出库
+        sum(case when tf.dict_biz_type in('08') and tf.dict_inventory_status = 'frozen' then tf.qty else 0 end) as
+        transfer_outstock_qty, -- 调拨出库（分布式调拨出库单，冻结减少）
+        sum(case when tf.dict_biz_type in('11') and tf.dict_inventory_status = 'frozen' then tf.qty else 0 end) as
+        sale_outstock_qty, -- 销售出库（销售出库，冻结减少）
+        sum(case when tf.dict_biz_type in('20') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
+        other_outstock_qty, -- 其他出库
+        sum(case when tf.dict_biz_type in('14') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
+        inventory_loss_outstock_qty, -- 盘亏出库
+        sum(case when tf.dict_biz_type in('18','23') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
+        machine_outstock_qty -- 加工出库
+        from transaction_flow tf
+        left join product_detail pd on pd.id = tf.sku_id
+        left join product_info pi on pd.product_id = pi.id
+        <where>
+                tf.is_deleted = false
+                <if test="params.skuNoList != null and params.skuNoList.size != ''">
+                    and tf.sku_no in
+                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.spuNoList != null and params.spuNoList.size != ''">
+                    and pi.spu_no in
+                    <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+                    and tf.warehouse_id in
+                    <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.dateList != null and params.dateList.size > 0">
+                    and tf.trade_time >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY'
+                    ) > tf.trade_time
+                </if>
+                <if test="params.param != null and params.param != ''">
+                    ${params.param}
+                </if>
+            </where>
+            group by tf.warehouse_id, tf.sku_id
+            ) m ORDER BY m.sku_no asc
     </select>
 
 </mapper>

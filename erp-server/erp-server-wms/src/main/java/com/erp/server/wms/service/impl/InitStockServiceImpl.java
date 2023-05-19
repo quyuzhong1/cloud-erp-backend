@@ -462,6 +462,12 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         }
     }
 
+    @Override
+    public Integer getInitQty(InitStockDTO.ConditionDTO condition) {
+        // 根据仓库、sku、日期范围查询期初数量
+        return this.baseMapper.getTotalQty(condition);
+    }
+
     public void send2Inventory(Map<String, InitStockEntity> initStockEntityMap) {
         Map<String, List<InitStockDetailEntity>> initStockDetailMap = initStockDetailService.findListByIds(new ArrayList<>(initStockEntityMap.keySet()));
         // 调用库存组件

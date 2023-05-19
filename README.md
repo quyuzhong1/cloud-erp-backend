@@ -105,3 +105,11 @@ erp-scm        9080
 erp-wms        9090
 erp-msg        9100
 erp-oms        9110
+
+
+其他中间件端口
+ElasticSearch   9200
+RocketMQ        9876
+Redis           6379
+Nacos           8848
+Seata           8091     

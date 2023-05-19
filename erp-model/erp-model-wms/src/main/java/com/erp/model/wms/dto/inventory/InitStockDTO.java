@@ -359,4 +359,28 @@ public class InitStockDTO implements Serializable {
 
     }
 
+    /**
+     * 按条件查询期初库存数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ConditionDTO {
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * 日期范围
+         */
+        private List<LocalDate> dateList;
+
+    }
+
 }
