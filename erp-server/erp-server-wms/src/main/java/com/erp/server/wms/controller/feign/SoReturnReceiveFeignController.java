@@ -31,7 +31,7 @@ public class SoReturnReceiveFeignController {
      **/
     @PostMapping("/listSoDetailByIds")
     public List<SoReturnReceiveDetailEntity> listSoDetailByIds(@RequestBody List<String> ids) {
-        List<SoReturnReceiveDetailEntity> list = soReturnReceiveDetailService.listSoDetailByIds(ids);
+        List<SoReturnReceiveDetailEntity> list = soReturnReceiveDetailService.listDetailByIds(ids);
         return list;
     }
 }
