@@ -278,6 +278,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         //创库保存详情表的集合
         List<SoReturnDetailDTO.View> detailViewDTOS = new ArrayList<>();
         List<SoReturnDetailEntity> detailEntityList = soReturnDetailService.listDetailByMainId(id);
+        if (CollectionUtils.isEmpty(detailEntityList)) {
+            throw new ServiceException(ApiError.ERROR_92023);
+        }
         SoInfoEntity soInfoEntity = soInfoService.getById(soReturnEntity.getSourceId());
         BeanMapperUtils.copy(soInfoEntity, viewDTO);
         BeanMapperUtils.copy(soReturnEntity, viewDTO);
@@ -524,6 +527,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         for (SoReturnDTO.PagingView pagingView : pagingViews) {
             pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
             pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
+            pagingView.setTypeName(BillTypeEnum.getName(pagingView.getType()));
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(pagingView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(pagingView.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             pagingView.setProductName(productDetailEntity.getName());
@@ -534,6 +538,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             pagingView.setUnit(productDetailEntity.getUnitName());
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             pagingView.setCustomerName(customerInfoEntity.getName());
+            pagingView.setSalesAmount(soDetailEntity.getAmount());
+
         }
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/SoReturnExport.xlsx";
