@@ -71,6 +71,12 @@ public class WarehouseLocationEntity extends BaseEntity<WarehouseLocationEntity>
     @TableField("remark")
     private String remark;
 
+    /**
+     * 占用状态
+     */
+    @TableField("occupy_status")
+    private Boolean occupyStatus;
+
     public static final String TYPE = "type";
 
     public static final String CODE = "code";

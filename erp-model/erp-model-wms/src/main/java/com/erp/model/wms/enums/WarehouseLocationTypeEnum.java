@@ -5,6 +5,10 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Optional;
+
 
 /**
  * <p>
@@ -46,14 +50,23 @@ public enum WarehouseLocationTypeEnum implements EnumMessage {
         return name;
     }
 
-    public static String getName(String code) {
-        if (StringUtils.isNotBlank(code)) {
-            for (WarehouseLocationTypeEnum item : WarehouseLocationTypeEnum.values()) {
-                if (code.equals(item.getCode())) {
-                    return item.getName();
-                }
-            }
-        }
-        return "";
+    /**
+     * 根据代码获取
+     * @param code
+     * @return
+     */
+    public static WarehouseLocationTypeEnum of(String code) {
+        return Arrays.stream(WarehouseLocationTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
+
+    /**
+     * 根据代码获取名称
+     * @param code
+     * @return
+     */
+    public static String getName(String code) {
+        WarehouseLocationTypeEnum WarehouseLocationType =  of(code);
+        return Optional.ofNullable(WarehouseLocationType).map(WarehouseLocationTypeEnum::getName).orElse("");
+    }
+
 }

@@ -30,4 +30,5 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
      * @return
      */
     List<String> getNotEmptySpuNos();
+
 }

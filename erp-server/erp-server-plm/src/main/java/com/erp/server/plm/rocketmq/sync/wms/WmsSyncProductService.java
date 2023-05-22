@@ -23,10 +23,10 @@ public interface WmsSyncProductService {
     void syncProductSkuSaleToWms();
 
     /**
-     * 同步产品信息表数据到中台表
+     * 同步产品信息表数据到WMS仓储服务
      * @Author zhangchunlin
      * @Date 2023-05-11 18:41
      **/
-    void syncProductInfoToDmp();
+    void syncProductInfoToWms();
 
 }

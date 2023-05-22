@@ -22,18 +22,19 @@ import java.util.stream.Collectors;
 public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, ProductInfoEntity> implements ProductInfoService {
 
     @Override
-    public Boolean saveOrUpdateProductInfo(ProductInfoEntity productInfoEntity) {
-        ProductInfoEntity entity = super.getById(productInfoEntity.getId());
-        //不存在需要新增，同时判断产品是否更新，用最后更新时间
-        if (ObjectUtil.isNotEmpty(entity)) {
-            if (!Objects.equals(entity.getUpdateTime(), productInfoEntity.getUpdateTime())) {
-                return this.updateById(productInfoEntity);
+    public void saveOrUpdateProductInfo(List<ProductInfoEntity> productInfoEntities) {
+        for(ProductInfoEntity productInfoEntity : productInfoEntities) {
+            ProductInfoEntity entity = super.getById(productInfoEntity.getId());
+            //不存在需要新增，同时判断产品是否更新，用最后更新时间
+            if (ObjectUtil.isNotEmpty(entity)) {
+                if (!Objects.equals(entity.getUpdateTime(), productInfoEntity.getUpdateTime())) { // 逻辑删除字段也会同步
+                    this.updateById(productInfoEntity);
+                } else {
+                    // 数据没有发生变更
+                }
             } else {
-                // 数据没有发生变更
-                return true;
+                this.saveOrUpdate(productInfoEntity);
             }
-        } else {
-            return this.saveOrUpdate(productInfoEntity);
         }
     }
 

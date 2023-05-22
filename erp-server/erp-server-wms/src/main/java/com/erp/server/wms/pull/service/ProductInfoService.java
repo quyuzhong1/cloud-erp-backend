@@ -12,7 +12,7 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @Author zhangchunlin
      * @Date 2023-05-11 19:18
      **/
-    Boolean saveOrUpdateProductInfo(ProductInfoEntity productInfoEntity);
+    void saveOrUpdateProductInfo(List<ProductInfoEntity> productInfoEntities);
 
     /**
      * 获取所有非空的spu no

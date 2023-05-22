@@ -22,4 +22,18 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      */
     List<WarehouseLocationDTO.LocationListDTO> select(String warehouseId);
 
+    /**
+     * 引用仓位分区
+     * @param ids
+     * @return
+     */
+    void quoteLocation(List<String> ids);
+
+    /**
+     * 根据仓库仓位id获取详细信息（包含分区信息）
+     * @param id
+     * @return
+     */
+    WarehouseLocationDTO.LocationDetailDTO findById(String id);
+
 }

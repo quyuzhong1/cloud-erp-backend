@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * @CreateTime: 2023-05-11  18:12
@@ -37,14 +37,14 @@ public class MQConsumer {
      * 同步plm的产品信息
      */
     @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
+    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC,
             selectorExpression = "sync_wms_product_sku_tag",
             consumerGroup = "${spring.profiles.active}-plm_product_detail_consumer")
-    public class ConsumerPlmProductDetail implements RocketMQListener<ProductDetailEntity> {
+    public class ConsumerPlmProductDetail implements RocketMQListener<List<ProductDetailEntity>> {
         @Override
-        public void onMessage(ProductDetailEntity entity) {
+        public void onMessage(List<ProductDetailEntity> entities) {
             try {
-                productDetailService.saveOrUpdateProductDetail(entity);
+                productDetailService.saveOrUpdateProductDetail(entities);
             } catch (Exception e) {
                 log.error("mq消息消费失败", e);
             }
@@ -55,14 +55,14 @@ public class MQConsumer {
      * 同步plm的产品销售信息
      */
     @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
+    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC,
             selectorExpression = "sync_wms_product_sku_sale_tag",
             consumerGroup = "${spring.profiles.active}-plm_product_sale_consumer")
-    public class ConsumerPlmProductSale implements RocketMQListener<ProductSaleEntity> {
+    public class ConsumerPlmProductSale implements RocketMQListener<List<ProductSaleEntity>> {
         @Override
-        public void onMessage(ProductSaleEntity entity) {
+        public void onMessage(List<ProductSaleEntity> entities) {
             try {
-                productSaleService.saveOrUpdateProductSaleDetail(entity);
+                productSaleService.saveOrUpdateProductSaleDetail(entities);
             }  catch (Exception e) {
                 log.error("mq消息消费失败", e);
             }
@@ -73,14 +73,14 @@ public class MQConsumer {
      * 同步plm的产品详细信息
      */
     @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
+    @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC,
             selectorExpression = "sync_wms_product_info_tag",
-            consumerGroup = "${spring.profiles.active}-plm_product_sale_consumer")
-    public class ConsumerPlmProductInfoSale implements RocketMQListener<ProductInfoEntity> {
+            consumerGroup = "${spring.profiles.active}-plm_product_info_consumer")
+    public class ConsumerPlmProductInfoSale implements RocketMQListener<List<ProductInfoEntity>> {
         @Override
-        public void onMessage(ProductInfoEntity entity) {
+        public void onMessage(List<ProductInfoEntity> entities) {
             try {
-                productInfoService.saveOrUpdateProductInfo(entity);
+                productInfoService.saveOrUpdateProductInfo(entities);
             }  catch (Exception e) {
                 log.error("mq消息消费失败", e);
             }

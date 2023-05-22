@@ -8,6 +8,7 @@ import com.erp.server.wms.pull.service.ProductSaleService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -21,18 +22,19 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean saveOrUpdateProductSaleDetail(ProductSaleEntity productSaleEntity) {
-        ProductSaleEntity entity = super.getById(productSaleEntity.getId());
-        //不存在需要新增，同时判断产品名称是否存在了,存在不同步
-        if (ObjectUtil.isNotEmpty(entity)) {
-            if (!Objects.equals(entity.getUpdateTime(), productSaleEntity.getUpdateTime())) {
-                return this.updateById(productSaleEntity);
+    public void saveOrUpdateProductSaleDetail(List<ProductSaleEntity> productSaleEntities) {
+        for (ProductSaleEntity productSaleEntity : productSaleEntities) {
+            ProductSaleEntity entity = super.getById(productSaleEntity.getId());
+            //不存在需要新增，同时判断产品名称是否存在了,存在不同步
+            if (ObjectUtil.isNotEmpty(entity)) {
+                if (!Objects.equals(entity.getUpdateTime(), productSaleEntity.getUpdateTime())) {
+                    this.updateById(productSaleEntity);
+                } else {
+                    // 数据没有发生变更
+                }
             } else {
-                // 数据没有发生变更
-                return true;
+                this.saveOrUpdate(productSaleEntity);
             }
-        } else {
-            return this.saveOrUpdate(productSaleEntity);
         }
     }
 

@@ -55,11 +55,10 @@ public class PlmJob {
      */
     @XxlJob("productSkuSyncDmp")
     public void productSkuSyncDmp() {
-        syncProductService.syncProductSkuToDmp();
-        wmsSyncProductService.syncProductInfoToDmp();
+        wmsSyncProductService.syncProductInfoToWms();
         wmsSyncProductService.syncProductSkuToWms();
         wmsSyncProductService.syncProductSkuSaleToWms();
-
+        syncProductService.syncProductSkuToDmp();
     }
 
     /**

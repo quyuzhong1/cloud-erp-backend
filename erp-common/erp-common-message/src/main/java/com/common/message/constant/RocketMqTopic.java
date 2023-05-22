@@ -34,4 +34,9 @@ public class RocketMqTopic {
      */
     public static final String DMP_ERP_ORDER_UPDATE_TOPIC = "${spring.profiles.active}-dmp_erp_order_update_topic";
 
+    /**
+     * 推送Plm产品信息到wms
+     */
+    public static final String SYNC_PLM_TO_WMS_PRODUCT_TOPIC = "${spring.profiles.active}-sync_plm_to_wms_product_topic";
+
 }

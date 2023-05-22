@@ -1,5 +1,7 @@
 package com.erp.server.plm.rocketmq.sync.wms.impl;
 
+import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.util.IdUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -42,9 +44,10 @@ public class WmsSyncProductServiceImpl implements WmsSyncProductService {
     public void syncProductSkuToWms() {
         log.info("开始同步产品sku到wms系统");
         List<ProductDetailEntity> list = productDetailService.getProductDetailAll();
+        List<List<ProductDetailEntity>> partitionList = ListUtil.partition(list, 100);// 按100个拆分
         // 异步推送到MQ
-        list.forEach(req -> {
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(),req, req.getId());
+        partitionList.forEach(req -> {
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(),req,  IdUtil.simpleUUID());
         });
         log.info("结束同步产品sku到wms系统");
     }
@@ -53,20 +56,22 @@ public class WmsSyncProductServiceImpl implements WmsSyncProductService {
     public void syncProductSkuSaleToWms() {
         log.info("开始同步产品sku销售信息到wms系统");
         List<ProductSaleEntity> list = productSaleService.list();
+        List<List<ProductSaleEntity>> partitionList = ListUtil.partition(list, 100);// 按100个拆分
         // 异步推送到MQ
-        list.forEach(req -> {
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_SALE_TAG.getName(),req, req.getId());
+        partitionList.forEach(req -> {
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_SALE_TAG.getName(),req, IdUtil.simpleUUID());
         });
         log.info("结束同步产品sku销售信息到wms系统");
     }
 
     @Override
-    public void syncProductInfoToDmp() {
+    public void syncProductInfoToWms() {
         log.info("开始同步产品详细信息到wms系统");
         List<ProductInfoEntity> list = productInfoService.getProductInfoAll();
+        List<List<ProductInfoEntity>> partitionList = ListUtil.partition(list, 100);// 按100个拆分
         // 异步推送到MQ
-        list.forEach(req -> {
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(),req, req.getId());
+        partitionList.forEach(req -> {
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(),req,  IdUtil.simpleUUID());
         });
         log.info("结束同步产品详细信息到wms系统");
     }
