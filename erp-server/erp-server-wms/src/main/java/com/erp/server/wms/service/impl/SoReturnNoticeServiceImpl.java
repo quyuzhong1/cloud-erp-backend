@@ -13,7 +13,6 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
-import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -31,7 +30,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
-import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
@@ -54,7 +52,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -197,7 +194,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
         SoReturnNoticeEntity entity = new SoReturnNoticeEntity();
-        entity.setType(soInfoEntity.getType().getCode());
+        entity.setType(soInfoEntity.getOrderType().getCode());
         entity.setSalesOrgId(soInfoEntity.getSalesOrgId());
         entity.setSalesOrgName(soInfoEntity.getSalesOrgName());
         entity.setSalesDeptId(soInfoEntity.getSalesDeptId());
@@ -244,7 +241,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         //获取用户信息
         FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
         SoReturnNoticeEntity entity = new SoReturnNoticeEntity();
-        entity.setType(soInfoEntity.getType().getCode());
+        entity.setType(soInfoEntity.getOrderType().getCode());
         entity.setSalesOrgId(soInfoEntity.getSalesOrgId());
         entity.setSalesOrgName(soInfoEntity.getSalesOrgName());
         entity.setSalesDeptId(soInfoEntity.getSalesDeptId());

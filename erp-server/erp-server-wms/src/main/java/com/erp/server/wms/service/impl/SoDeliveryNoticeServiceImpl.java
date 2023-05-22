@@ -20,12 +20,10 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.dto.OmsAttachmentDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -36,7 +34,9 @@ import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
-import com.erp.model.wms.dto.inventory.*;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.OsDeliveryChangeListTypeEnum;
@@ -160,7 +160,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
-                if (obj.getDeliveryStatus() != null && obj.getDeliveryStatus() == Boolean.TRUE) {
+                if (obj.getDeliveryStatus() != null && obj.getDeliveryStatus()) {
                     obj.setDeliveryStatusName(DeliveryStatusEnum.COMPLETE_SHIPMENT.getName());
                 } else {
                     obj.setDeliveryStatusName(DeliveryStatusEnum.UN_SHIPPED.getName());
@@ -228,7 +228,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.FHTZ, BusinessNoTypeEnum.CODE_FHTZ.getCode()));
         SoDeliveryNoticeEntity soDeliveryNoticeEntity = new SoDeliveryNoticeEntity();
-        soDeliveryNoticeEntity.setType(soInfoEntity.getType().getCode());
+        soDeliveryNoticeEntity.setType(soInfoEntity.getOrderType().getCode());
         soDeliveryNoticeEntity.setSalesOrgId(soInfoEntity.getSalesOrgId());
         soDeliveryNoticeEntity.setSalesOrgName(soInfoEntity.getSalesOrgName());
         soDeliveryNoticeEntity.setSalesDeptId(soInfoEntity.getSalesDeptId());
@@ -285,7 +285,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //获取销售单信息
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(dto.getSourceId());
         SoDeliveryNoticeEntity soDeliveryNoticeEntity = new SoDeliveryNoticeEntity();
-        soDeliveryNoticeEntity.setType(soInfoEntity.getType().getCode());
+        soDeliveryNoticeEntity.setType(soInfoEntity.getOrderType().getCode());
         soDeliveryNoticeEntity.setSalesOrgId(soInfoEntity.getSalesOrgId());
         soDeliveryNoticeEntity.setSalesOrgName(soInfoEntity.getSalesOrgName());
         soDeliveryNoticeEntity.setSalesDeptId(soInfoEntity.getSalesDeptId());
@@ -633,7 +633,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             pagingView.setUnit(productDetailEntity.getUnitName());
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             pagingView.setCustomerName(customerInfoEntity.getName());
-            pagingView.setDeliveryStatusName(pagingView.getDeliveryStatus() == Boolean.TRUE ? "已发货" : "未发货");
+            pagingView.setDeliveryStatusName(pagingView.getDeliveryStatus()? "已发货" : "未发货");
         }
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/soDeliveryNoticeExport.xlsx";
