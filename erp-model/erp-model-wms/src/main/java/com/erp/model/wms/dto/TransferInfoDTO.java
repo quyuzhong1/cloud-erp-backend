@@ -1,6 +1,10 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.SourceTypeEnum;
+import com.erp.model.wms.enums.TransferDirectionEnum;
+import com.erp.model.wms.enums.TransferTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -188,6 +192,7 @@ public class TransferInfoDTO implements Serializable {
          * 调拨类型
          */
         @NotBlank(message = "调拨类型不能为空")
+        @StateEnumValue(clazz = TransferTypeEnum.class, message = "调拨类型输入值有误")
         private String type;
 
         /**
@@ -200,6 +205,7 @@ public class TransferInfoDTO implements Serializable {
          * 调拨方向
          */
         @NotBlank(message = "调拨方向不能为空")
+        @StateEnumValue(clazz = TransferDirectionEnum.class, message = "调拨方向输入值有误")
         private String transferDirection;
 
         /**
@@ -232,6 +238,7 @@ public class TransferInfoDTO implements Serializable {
         /**
          * 来源类型,selfAdd手动新增，transferApplication调拨申请单
          */
+        @StateEnumValue(clazz = SourceTypeEnum.class, message = "来源类型输入值有误")
         private String sourceType;
     }
 
