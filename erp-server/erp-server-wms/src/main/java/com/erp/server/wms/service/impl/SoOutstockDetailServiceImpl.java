@@ -5,13 +5,18 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.SoOutstockDetiailDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoOutstockDetailMapper;
 import com.erp.server.wms.service.InventoryService;
@@ -39,9 +44,13 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
+    private SoInfoFeign soInfoFeign;
+
+
+    @Resource
     private WmsAttachmentService wmsAttachmentService;
 
-
+    @Resource
     private InventoryService inventoryService;
 
 
@@ -167,15 +176,92 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
     /**
      * 检查数量
-     * @author yl
-     * @date 2023-05-22 15:54
+     *
+     * @param soId       销售订单id
      * @param sourceId
      * @param sourceType
      * @param detailList
      * @return void
+     * @author yl
+     * @date 2023-05-22 15:54
      */
     @Override
-    public void checkOutQty(String sourceId, String sourceType, List<SoOutstockDetiailDTO.AddDTO> detailList) {
+    public void checkOutQty(String warehouseId, String soId, String sourceId, String sourceType, List<SoOutstockDetiailDTO.AddDTO> detailList) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_92029);
+        }
+        //手动新增
+        String selfAdd = SourceTypeEnum.SELF_ADD.getCode();
+        List<String> sourceDetailList = detailList.stream().map(SoOutstockDetiailDTO.AddDTO::getSourceDetailId).collect(Collectors.toList());
+        List<String> skuIdList = detailList.stream().map(SoOutstockDetiailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+
+        List<String> warehouseLocationList = detailList.stream().map(SoOutstockDetiailDTO.AddDTO::getWarehouseLocation).collect(Collectors.toList());
+
+        //这个是已出数量
+        List<SoOutstockDetailEntity> soOutstockDetailList = this.listDetailBySourceDetailId(sourceDetailList);
+
+
+        //表示新增加
+        if (selfAdd.equals(sourceType)) {
+            InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
+            skuInventoryDTO.setSkuIdList(skuIdList);
+            skuInventoryDTO.setWarehouseIdList(Arrays.asList(warehouseId));
+            skuInventoryDTO.setWarehouseLocationIdList(warehouseLocationList);
+            skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+            //可用数量
+            List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
+
+            //这个是销售订单的
+            List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(sourceDetailList);
+            for (SoOutstockDetiailDTO.AddDTO item : detailList) {
+                String skuId = item.getSkuId();
+                //库位
+                String warehouseLocation = item.getWarehouseLocation();
+                //实发数量
+                Integer actualQty = item.getActualQty();
+                //应发数量
+                Integer planQty = item.getPlanQty();
+                if (actualQty > planQty) {
+                    throw new ServiceException(ApiError.ERROR_92027);
+                }
+
+                String sourceDetailId = item.getSourceDetailId();
+                //这个是销售数量
+                Integer soQty = soDetailList.stream().filter(s -> s.getId().equals(sourceDetailId)).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(0);
+
+                //这个是已出的数量
+                Integer outStockQty = soOutstockDetailList.stream().filter(s -> s.getSourceDetailId().equals(sourceDetailId)).
+                        mapToInt(SoOutstockDetailEntity::getActualQty).sum();
+                if (outStockQty + planQty > soQty) {
+                    throw new ServiceException(ApiError.ERROR_92028);
+                }
+                //即时库存
+                Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
+                        equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+                if(planQty>inventory){
+                    throw new ServiceException(ApiError.ERROR_92030);
+                }
+            }
+
+
+        }
+
+
+    }
+
+
+    /**
+     * 根据来源id 集合获取到对应的数据
+     *
+     * @return
+     */
+    public List<SoOutstockDetailEntity> listBySourceDetailIds(List<String> sourceDetailIdList) {
+        if (CollectionUtils.isEmpty(sourceDetailIdList)) {
+            return Collections.emptyList();
+        }
+        List<SoOutstockDetailEntity> list = baseMapper.listSoOutstockBySourceDetailId(sourceDetailIdList);
+        return list.stream().filter(s -> !s.getInvalidStatus()).collect(Collectors.toList());
 
     }
 

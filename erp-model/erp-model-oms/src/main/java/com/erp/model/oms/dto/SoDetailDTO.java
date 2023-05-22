@@ -101,8 +101,15 @@ public class SoDetailDTO implements Serializable {
 
         /**
          * id
+         *
+         * 对与销售出库单 以及下推的单据
+         * 这个id 就是
+         * sourceDetailId
          */
         private String id;
+
+
+
 
 
         /**

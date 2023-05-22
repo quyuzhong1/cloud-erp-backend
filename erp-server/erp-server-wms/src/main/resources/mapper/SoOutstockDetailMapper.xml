@@ -14,7 +14,8 @@
             sod.is_close,
             sod.remark,
             sod.source_detail_id,
-            so.approve_status
+            so.approve_status,
+            so.invalid_status
         FROM so_outstock_detail sod
         INNER JOIN so_outstock so ON sod.main_id = so.id AND sod.is_deleted = FALSE
         WHERE so.is_deleted = FALSE

@@ -26,4 +26,6 @@ public interface SoOutstockDetailMapper extends BaseMapper<SoOutstockDetailEntit
      **/
     List<SoOutstockDetailEntity> listSoOutstockBySourceDetailId(@Param("sourceDetailIds") List<String> sourceDetailIds);
 
+    
+
 }
