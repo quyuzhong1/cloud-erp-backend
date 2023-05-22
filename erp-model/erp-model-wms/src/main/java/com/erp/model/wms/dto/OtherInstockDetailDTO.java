@@ -23,22 +23,22 @@ public class OtherInstockDetailDTO implements Serializable {
          * skuId
          */
         private String  skuId;
+
         /**
          * sku编码
          */
         private String  skuNo;
-        /**
-         * 应收数量
-         */
-        private String  planQty;
+
         /**
          * 实收数量
          */
         private String  actualQty;
+
         /**
          * 库位id
          */
         private String  warehouseLocation;
+
         /**
          * 备注
          */

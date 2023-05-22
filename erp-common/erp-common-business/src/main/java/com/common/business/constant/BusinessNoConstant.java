@@ -41,7 +41,7 @@ public interface BusinessNoConstant {
 
     String DBSQ = "DBSQ";
 
-    String ZZDB = "ZZDB";
+    String ZJDB = "ZJDB";
 
     String ZZCX = "ZZCX";
 
