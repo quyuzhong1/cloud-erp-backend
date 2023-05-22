@@ -237,7 +237,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             result.setTypeName(soInfo.getTypeName());
             result.setSellerName(soInfo.getSellerName());
         }
-        List<SoOutstockDetiailDTO.ViewDTO> detailList = soOutstockDetailService.listByMainId(id);
+        List<SoOutstockDetiailDTO.ViewDTO> detailList = soOutstockDetailService.listByMainId(id,soOutstock.getWarehouseId());
         result.setDetailList(detailList);
         return result;
     }

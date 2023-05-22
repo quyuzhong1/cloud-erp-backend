@@ -366,6 +366,12 @@ public class SoOutstockDetiailDTO implements Serializable {
          */
         private Integer actualQty;
 
+
+        /**
+         * 及时库存
+         */
+        private Integer curInventoryQty;
+
         /**
          * 库位
          */
