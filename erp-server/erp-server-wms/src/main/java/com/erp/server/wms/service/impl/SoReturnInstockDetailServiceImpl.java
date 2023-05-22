@@ -81,7 +81,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnInstockDTO.Update dto) {
-//获取退货单详情表id
+        //获取退货单详情表id
         List<String> returnDetailIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
         List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(returnDetailIds);
         List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailByIds(returnDetailIds);
@@ -121,7 +121,9 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> mainIds) {
-        return null;
+        return lambdaUpdate().set(SoReturnInstockDetailEntity::getIsDeleted, Boolean.TRUE)
+                .in(SoReturnInstockDetailEntity::getMainId, mainIds)
+                .remove();
     }
 
     @Override
@@ -131,7 +133,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
 
     @Override
     public List<SoReturnInstockDetailEntity> listDetailByMainId(String id) {
-        return null;
+        return lambdaQuery().eq(SoReturnInstockDetailEntity::getMainId, id).list();
     }
 
     @Override
