@@ -256,8 +256,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         entity.setReturnDate(soReturnEntity.getBillDate());
 
         entity.setId(dto.getId());
-        SoReturnReceiveEntity byId = this.getById(dto.getId());
-        entity.setApproveStatus(byId.getApproveStatus());
         entity.setSourceId(dto.getSourceId());
         entity.setSourceCode(soReturnEntity.getCode());
         entity.setSourceType(soReturnEntity.getSourceType());
@@ -271,6 +269,10 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             entity.setWarehouseKeeperName(userDTO.getUserName());
         }
         boolean save = this.updateById(entity);
+        //操作日志
+        SoReturnReceiveEntity byId = this.getById(dto.getId());
+        operateLogService.addModuleOperateLogByObj(byId, entity, ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "", "");
+
         soReturnReceiveDetailService.update(dto);
         return save;
     }
@@ -282,8 +284,8 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //创库保存详情表的集合
         List<SoReturnReceiveDetailDTO.View> detailViewDTOS = new ArrayList<>();
         List<SoReturnReceiveDetailEntity> detailEntityList = soReturnReceiveDetailService.listDetailByMainId(id);
-        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(entity.getSourceId());
-        BeanMapperUtils.copy(soInfoEntity, viewDTO);
+        SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(entity.getSourceId());
+        BeanMapperUtils.copy(soReturnEntity, viewDTO);
         BeanMapperUtils.copy(entity, viewDTO);
         //获取sku的id集合
         List<String> skuIdList = detailEntityList.stream().map(SoReturnReceiveDetailEntity::getSkuId).collect(Collectors.toList());
@@ -519,10 +521,15 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<String> skuIdList = pagingViews.stream().map(SoReturnReceiveDTO.PagingView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        //获取界面传过来的采购单详情表id集合
-        List<String> orderDetailIds = pagingViews.stream().map(SoReturnReceiveDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
+        //获取退货单id
+        List<String> returnMainIds = pagingViews.stream().map(SoReturnReceiveDTO.PagingView::getSourceId).distinct().collect(Collectors.toList());
+        //退货单详情
+        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(returnMainIds);
+        //销售单详情id集合
+        List<String> detailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
         //获取销售单详情信息
-        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(detailIds);
+
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         for (SoReturnReceiveDTO.PagingView pagingView : pagingViews) {
             pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));

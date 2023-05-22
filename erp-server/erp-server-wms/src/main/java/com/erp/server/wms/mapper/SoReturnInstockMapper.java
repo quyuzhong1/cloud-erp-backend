@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * <p>
  *  Mapper 接口
@@ -37,4 +39,13 @@ public interface SoReturnInstockMapper extends BaseMapper<SoReturnInstockEntity>
      * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.listCount>
      **/
     Integer listCount(@Param("params") SoReturnInstockDTO.PagingParam params);
+
+    /**
+     * 导出
+     * @Author Luo_WG
+     * @Date 2023/5/22 17:58
+     * @param dto dto
+     * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.PagingView>
+     **/
+    List<SoReturnInstockDTO.PagingView> soReturnInstockExportExcel(@Param("params") SoReturnInstockDTO.PagingParam dto);
 }

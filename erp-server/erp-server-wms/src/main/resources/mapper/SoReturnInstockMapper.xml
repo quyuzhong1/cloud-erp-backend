@@ -114,4 +114,102 @@
         </if>
     </select>
 
+    <select id="soReturnInstockExportExcel" resultType="com.erp.model.wms.dto.SoReturnInstockDTO$PagingView">
+        SELECT
+        sri.id,
+        sri.source_id,
+        srid.source_detail_id,
+        sri.code,
+        sri.source_code,
+        sri.type,
+        sri.customer_id,
+        sri.customer_name,
+        sri.approve_status,
+        sri.invalid_status,
+        sri.seller_id,
+        sri.seller_name,
+        srid.sku_id,
+        srid.sku_no,
+        srid.return_type_dict,
+        srid.must_qty,
+        srid.receive_qty,
+        srid.real_qty,
+        sri.bill_date,
+        sri.approve_user_name,
+        sri.create_user_name,
+        sri.create_time
+        FROM so_return_instock sri
+        INNER JOIN so_return_instock_detail srid ON sri.id = srid.main_id AND sri.is_deleted = FALSE
+        WHERE srid.is_deleted = FALSE
+        <choose>
+            <when test="params.ids!=null and params.ids.size>0 ">
+                AND sri.id IN
+                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </when>
+            <otherwise>
+                <if test="params.skuNoList != null and params.skuNoList.size != ''">
+                    and srid.sku_no in
+                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+
+                <if test="params.code != null and params.code != ''">
+                    and sri.code = #{params.code}
+                </if>
+                <if test="params.sourceCode != null and params.sourceCode != ''">
+                    and sri.source_code = #{params.sourceCode}
+                </if>
+                <if test="params.customerIdList != null and params.customerIdList.size != ''">
+                    and sri.customer_id in
+                    <foreach collection="params.customerIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.sellerIdList != null and params.sellerIdList.size != ''">
+                    and sri.seller_id in
+                    <foreach collection="params.sellerIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.approveStatusList != null and params.approveStatusList.size != ''">
+                    and sri.approve_status in
+                    <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.invalidStatus != null">
+                    and sri.invalid_status = #{params.invalidStatus}
+                </if>
+                <if test="params.returnTypeDict != null and params.returnTypeDict != ''">
+                    and srid.return_type_dict = #{params.returnTypeDict}
+                </if>
+                <if test="params.billDateList != null and params.billDateList.size > 0">
+                    and sri.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sri.bill_date
+                </if>
+                <if test="params.createUserIdList != null and params.createUserIdList.size != ''">
+                    and sri.create_user_id in
+                    <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                    and sri.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sri.create_time
+                </if>
+            </otherwise>
+        </choose>
+        <if test="params.param != null and params.param != ''">
+            ${params.param}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sri.create_time desc
+    </select>
+
 </mapper>

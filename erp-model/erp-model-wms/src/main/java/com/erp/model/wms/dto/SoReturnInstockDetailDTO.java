@@ -135,6 +135,10 @@ public class SoReturnInstockDetailDTO {
          */
         private String skuNo;
         /**
+         * 产品名称
+         */
+        private String productName;
+        /**
          * 销售数量
          */
         private Integer salesQty;

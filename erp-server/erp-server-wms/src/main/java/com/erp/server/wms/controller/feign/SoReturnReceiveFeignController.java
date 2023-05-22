@@ -29,8 +29,8 @@ public class SoReturnReceiveFeignController {
      * @param ids
      * @return java.util.List<com.erp.model.wms.entity.SoReturnReceiveDetailEntity>
      **/
-    @PostMapping("/listSoDetailByIds")
-    public List<SoReturnReceiveDetailEntity> listSoDetailByIds(@RequestBody List<String> ids) {
+    @PostMapping("/listDetailByIds")
+    public List<SoReturnReceiveDetailEntity> listDetailByIds(@RequestBody List<String> ids) {
         List<SoReturnReceiveDetailEntity> list = soReturnReceiveDetailService.listDetailByIds(ids);
         return list;
     }
