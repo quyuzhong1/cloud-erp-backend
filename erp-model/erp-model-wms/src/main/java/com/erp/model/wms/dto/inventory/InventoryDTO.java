@@ -411,28 +411,28 @@ public class InventoryDTO {
         private List<LocalDate> dateList;
 
         /**
-         * 单据名称集合 接口地址：plm/common/enumDropDown?type=InventorySourceType
+         * 单据名称集合 接口地址：wms/common/enumDropDown?type=InventorySourceType
          */
         private List<String> sourceTypeList;
 
 
         /**
-         * spu
+         * spu 接口地址：/wms/drop/down/product/spuNo/list（一次性返回所有）
          */
         private List<String> spuNoList;
 
         /**
-         * 仓库
+         * 仓库  接口地址：/wms/warehouse/list
          */
         private List<String> warehouseIdList;
 
         /**
-         * 销售状态
+         * 销售状态 接口地址：/plm/common/enumDropDown?type=SaleState
          */
         private List<Integer> saleStatusList;
 
         /**
-         * 库存组织
+         * 库存组织 接口地址： /sys/company/list
          */
         private List<String> orgIdList;
 

@@ -7,6 +7,7 @@ import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.pull.service.ProductInfoService;
 import com.erp.server.wms.pull.service.ProductSaleService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ import javax.annotation.Resource;
  * @CreateTime: 2023-05-11  18:12
  * @Author: zhangchunlin
  */
+@Slf4j
 @Component
 public class MQConsumer {
 
@@ -41,7 +43,11 @@ public class MQConsumer {
     public class ConsumerPlmProductDetail implements RocketMQListener<ProductDetailEntity> {
         @Override
         public void onMessage(ProductDetailEntity entity) {
-            productDetailService.saveOrUpdateProductDetail(entity);
+            try {
+                productDetailService.saveOrUpdateProductDetail(entity);
+            } catch (Exception e) {
+                log.error("mq消息消费失败", e);
+            }
         }
     }
 
@@ -55,7 +61,11 @@ public class MQConsumer {
     public class ConsumerPlmProductSale implements RocketMQListener<ProductSaleEntity> {
         @Override
         public void onMessage(ProductSaleEntity entity) {
-            productSaleService.saveOrUpdateProductSaleDetail(entity);
+            try {
+                productSaleService.saveOrUpdateProductSaleDetail(entity);
+            }  catch (Exception e) {
+                log.error("mq消息消费失败", e);
+            }
         }
     }
 
@@ -69,7 +79,11 @@ public class MQConsumer {
     public class ConsumerPlmProductInfoSale implements RocketMQListener<ProductInfoEntity> {
         @Override
         public void onMessage(ProductInfoEntity entity) {
-            productInfoService.saveOrUpdateProductInfo(entity);
+            try {
+                productInfoService.saveOrUpdateProductInfo(entity);
+            }  catch (Exception e) {
+                log.error("mq消息消费失败", e);
+            }
         }
     }
 

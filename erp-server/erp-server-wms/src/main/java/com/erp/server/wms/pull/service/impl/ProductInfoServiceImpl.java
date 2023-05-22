@@ -33,7 +33,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 return true;
             }
         } else {
-            return this.save(productInfoEntity);
+            return this.saveOrUpdate(productInfoEntity);
         }
     }
 

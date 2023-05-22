@@ -32,7 +32,7 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
                 return true;
             }
         } else {
-            return this.save(productSaleEntity);
+            return this.saveOrUpdate(productSaleEntity);
         }
     }
 
