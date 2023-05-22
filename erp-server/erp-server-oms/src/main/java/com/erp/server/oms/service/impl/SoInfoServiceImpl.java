@@ -28,8 +28,8 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
-import com.erp.model.oms.enums.AddressTypeEnum;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.CustomerAddressTypeEnum;
 import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -958,7 +958,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String deliveryModeName = DeliveryModeEnum.getName(deliveryMode);
         customer.setDeliveryModeName(deliveryModeName);
         String addressType = customer.getAddressType();
-        String addressTypeName = AddressTypeEnum.getName(addressType);
+        String addressTypeName = CustomerAddressTypeEnum.getName(addressType);
         customer.setAddressTypeName(addressTypeName);
         //销售部门id
         String salesDeptId = soInfo.getSalesDeptId();

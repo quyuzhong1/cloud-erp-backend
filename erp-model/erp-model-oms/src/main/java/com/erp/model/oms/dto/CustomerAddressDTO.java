@@ -45,9 +45,9 @@ public class CustomerAddressDTO implements Serializable {
         /**
          * 地址类型
          * http://172.16.100.11:3002/project/110/interface/api/13480
-         * type=AddressType
+         * type=CustomerAddressType
          */
-        @StateEnumValue(strValues = {"forwarder","deliver","company"},message = "地址类型有误")
+        @StateEnumValue(strValues = {"forwarder","receive","company"},message = "地址类型有误")
         private String type;
 
         /**
