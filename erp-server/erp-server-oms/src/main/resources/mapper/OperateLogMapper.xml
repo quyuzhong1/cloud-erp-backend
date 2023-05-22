@@ -25,23 +25,23 @@
 
     <select id="paging" resultType="com.erp.model.scm.dto.OperateLogDTO$ListDTO">
         select
-        sol.module_type,
-        sol.business_id,
-        sol.create_time,
-        max(sol.create_user_name) as create_user_name,
-        array_to_string(array_agg(DISTINCT sol.operation),',') as operation,
-        array_to_string(array_agg(DISTINCT sol.content),',') as content
-        from module_operate_log sol
+        ol.module_type,
+        ol.business_id,
+        ol.create_time,
+        max(ol.create_user_name) as create_user_name,
+        array_to_string(array_agg(DISTINCT ol.operation),',') as operation,
+        array_to_string(array_agg(DISTINCT ol.content),',') as content
+        from operate_log ol
         <where>
             <if test="params.businessId !=null and params.businessId!=''">
-                AND sol.business_id = #{params.businessId}
+                AND ol.business_id = #{params.businessId}
             </if>
             <if test="params.pid !=null and params.pid!=''">
-                AND sol.pid = #{params.pid}
+                AND ol.pid = #{params.pid}
             </if>
         </where>
-        group by sol.module_type,sol.business_id,sol.create_time
-        order by sol.create_time desc
+        group by ol.module_type,ol.business_id,ol.create_time
+        order by ol.create_time desc
     </select>
 
 </mapper>
