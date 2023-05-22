@@ -166,6 +166,21 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
 
     /**
+     * 检查数量
+     * @author yl
+     * @date 2023-05-22 15:54
+     * @param sourceId
+     * @param sourceType
+     * @param detailList
+     * @return void
+     */
+    @Override
+    public void checkOutQty(String sourceId, String sourceType, List<SoOutstockDetiailDTO.AddDTO> detailList) {
+
+    }
+
+
+    /**
      * 获取基础销售出库单列表
      *
      * @param mainId

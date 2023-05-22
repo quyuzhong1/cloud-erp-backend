@@ -1,7 +1,7 @@
 package com.erp.model.oms.dto;
 
 import com.common.business.dto.base.SortDTO;
-import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.validator.AddGroup;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.oms.enums.BillTypeEnum;
@@ -70,7 +70,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 审核状态code
          */
-        private ApproveStatusEnum approveStatus;
+        private BillApproveStatusEnum approveStatus;
 
 
         /**
@@ -291,8 +291,8 @@ public class SoInfoDTO implements Serializable {
          * partialShipment 部分发货
          * completeShipment 已发货
          *来源
-         * http://172.16.100.11:3002/project/110/interface/api/13480
-         * type=deliveryStatus
+         * http://172.16.100.11:3002/project/92/interface/api/9259
+         * type=DeliveryStatus
          *
          */
         private String deliveryStatus;
@@ -484,7 +484,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 审核状态code
          */
-        private ApproveStatusEnum approveStatus;
+        private BillApproveStatusEnum approveStatus;
 
         /**
          * 审核状态名
@@ -756,7 +756,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 审核状态
          */
-        private ApproveStatusEnum approveStatus;
+        private BillApproveStatusEnum approveStatus;
 
         /**
          * 单据类型名称

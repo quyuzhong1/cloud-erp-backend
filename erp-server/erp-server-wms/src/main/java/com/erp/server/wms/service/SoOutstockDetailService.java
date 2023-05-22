@@ -55,4 +55,16 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @return void
      */
     void removeByMainIdList(List<String> ids);
+
+    
+    /**
+     * 检查数量
+     * @author yl
+     * @date 2023-05-22 15:54
+     * @param sourceId
+     * @param sourceType
+     * @param detailList
+     * @return void
+     */
+    void checkOutQty(String sourceId, String sourceType, List<SoOutstockDetiailDTO.AddDTO> detailList);
 }

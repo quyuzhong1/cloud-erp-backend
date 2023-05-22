@@ -273,7 +273,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         BeanMapper.copy(soInfo, view);
         String warehouseId = view.getWarehouseId();
-        ApproveStatusEnum approveStatus = view.getApproveStatus();
+        BillApproveStatusEnum approveStatus = view.getApproveStatus();
         view.setApproveStatusName(approveStatus.getName());
         List<SoDetailDTO.ViewDTO> detailList = soDetailService.listByMainId(id, warehouseId);
         view.setDetailList(detailList);
@@ -326,7 +326,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         for (SoInfoDTO.PagingViewDTO item : list) {
             boolean contains = flagList.contains(item.getId());
-            ApproveStatusEnum approveStatus = item.getApproveStatus();
+            BillApproveStatusEnum  approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
             String type = item.getOrderType();
             item.setOrderTypeName(BillTypeEnum.getName(type));
@@ -813,7 +813,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIdList) ? customerInfoService.listByIds(customerIdList) : Collections.emptyList();
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         for (SoInfoDTO.PagingViewDTO item : list) {
-            ApproveStatusEnum approveStatus = item.getApproveStatus();
+            BillApproveStatusEnum  approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
             String type = item.getOrderType();
             item.setOrderTypeName(BillTypeEnum.getName(type));
