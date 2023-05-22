@@ -161,7 +161,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
                 jsonObject.set("deliveryWarehouseCode", warehouseEntity.getKingdeeWarehouseCode());
             }
             //库位
-            jsonObject.set("warehouseLocationName", detail.getWarehouseLocationName());
+            jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
             //入库备注
             jsonObject.set("remark", detail.getRemark());
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(detail.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());

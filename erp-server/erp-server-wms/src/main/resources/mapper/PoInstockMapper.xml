@@ -229,7 +229,7 @@
                psid.sku_no as skuNo,
                psi.delivery_warehouse_name as deliveryWarehouseName,
                psid.stock_in_qty as stockInQty,
-               psid.warehouse_location_name as warehouseLocationName
+               psid.warehouse_location as warehouseLocation
         from po_instock psi
         inner join po_instock_detail psid on psi.id = psid.main_id and psid.is_deleted = false
         <where>

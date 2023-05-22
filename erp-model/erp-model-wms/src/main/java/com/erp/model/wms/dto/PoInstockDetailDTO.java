@@ -37,9 +37,9 @@ public class PoInstockDetailDTO implements Serializable {
         private Integer exceedQty;
 
         /**
-         * 库位id
+         * 库位
          */
-        private String warehouseLocationId;
+        private String warehouseLocation;
 
         /**
          * 备注
