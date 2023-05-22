@@ -28,4 +28,13 @@ public interface SoReturnInstockMapper extends BaseMapper<SoReturnInstockEntity>
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.SoReturnInstockDTO.PagingView>
      **/
     IPage<SoReturnInstockDTO.PagingView> paging(Page query, @Param("params") SoReturnInstockDTO.PagingParam params);
+
+    /**
+     * 列表状态数量统计
+     * @Author Luo_WG
+     * @Date 2023/4/17 13:13
+     * @param params params
+     * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.listCount>
+     **/
+    Integer listCount(@Param("params") SoReturnInstockDTO.PagingParam params);
 }

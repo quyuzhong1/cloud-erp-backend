@@ -340,6 +340,7 @@ public class SoDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class SkuDTO {
 
+
         /**
          * sku id
          */
@@ -587,8 +588,9 @@ public class SoDetailDTO implements Serializable {
 
         /**
          * 发货状态
-         * true 已发货
-         * false 未发货
+         * completeShipment 已发货
+         * unShipped 未发货
+         * partialShipment 部分发货
          */
         private String deliveryStatus;
 

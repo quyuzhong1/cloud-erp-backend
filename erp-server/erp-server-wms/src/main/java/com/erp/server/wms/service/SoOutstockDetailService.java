@@ -41,9 +41,10 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @author yl
      * @date 2023-05-19 11:32
      * @param mainId
+     * @param warehouseId
      * @return java.util.List<com.erp.model.wms.dto.SoOutstockDetiailDTO.ViewDTO>
      */
-    List<SoOutstockDetiailDTO.ViewDTO> listByMainId(String mainId);
+    List<SoOutstockDetiailDTO.ViewDTO> listByMainId(String mainId,String warehouseId);
 
     
     /**

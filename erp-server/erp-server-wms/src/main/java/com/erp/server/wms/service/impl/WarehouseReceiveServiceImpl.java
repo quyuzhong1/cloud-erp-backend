@@ -466,7 +466,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateAndSubmit(WarehouseReceiveDTO.UpdateDTO dto) {
         Boolean update = this.update(dto);
-        if (update) {
+        if (!update) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
         return this.submit(Arrays.asList(dto.getId()));
@@ -912,7 +912,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     PoInstockDetailDTO.AddDTO detailDTO = new PoInstockDetailDTO.AddDTO();
                     detailDTO.setStockInQty(req.getStockInQty());
                     detailDTO.setExceedQty(req.getExceedQty());
-                    detailDTO.setWarehouseLocationId(req.getDeliveryWarehouseId());
                     detailDTO.setRemark(req.getRemark());
                     detailDTO.setSourceDetailId(req.getId());
                     detailDTO.setPurchaseOrderDetailId(req.getPurchaseOrderDetailId());

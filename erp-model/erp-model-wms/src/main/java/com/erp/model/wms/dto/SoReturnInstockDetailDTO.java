@@ -157,7 +157,7 @@ public class SoReturnInstockDetailDTO {
         /**
          * 退货类型
          */
-        private String returnType;
+        private String returnTypeDict;
         /**
          * 退货原因 调用字典接口 类型=ReturnReason
          */

@@ -2,41 +2,47 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.BusinessNoConstant;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.SoDetailEntity;
-import com.erp.model.oms.entity.SoReturnDetailEntity;
+import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
-import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
-import com.erp.model.wms.entity.SoReturnInstockEntity;
-import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.SoReturnInstockMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -68,6 +74,12 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Resource
     private SoOutstockDetailService soOutstockDetailService;
+
+    @Resource
+    private SoReturnInstockDetailService soReturnInstockDetailService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     /**
      * 根据退货单获取销售单已出库数量
@@ -162,13 +174,71 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Override
     public List<SoReturnInstockDTO.StatusCountDTO> listCount(PermissionsDTO dto) {
-        return null;
+        SOReturnChangeListTypeEnum[] values = SOReturnChangeListTypeEnum.values();
+        List<SoReturnInstockDTO.StatusCountDTO> list = new ArrayList<>();
+        for (SOReturnChangeListTypeEnum item : values) {
+            SoReturnInstockDTO.PagingParam pagingParam = new SoReturnInstockDTO.PagingParam();
+            pagingParam.setParam(dto.getParam());
+            SoReturnInstockDTO.StatusCountDTO resultDTO = new SoReturnInstockDTO.StatusCountDTO();
+            Integer count = MathUtil.ZERO;
+            if (SOReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
+                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                count = this.baseMapper.listCount(pagingParam);
+            }
+            if (SOReturnChangeListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
+                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                count = this.baseMapper.listCount(pagingParam);
+            }
+            if (SOReturnChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
+                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+                count = this.baseMapper.listCount(pagingParam);
+            }
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setType(item.getCode());
+            list.add(resultDTO);
+        }
+        return list;
     }
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     public String add(SoReturnInstockDTO.Add dto) {
-        return null;
+        //获取退货单信息
+        SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
+        //获取销售单信息
+        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
+        SoReturnInstockEntity entity = new SoReturnInstockEntity();
+        entity.setType(soInfoEntity.getType().getCode());
+        entity.setSalesOrgId(soInfoEntity.getSalesOrgId());
+        entity.setSalesOrgName(soInfoEntity.getSalesOrgName());
+        entity.setSalesDeptId(soInfoEntity.getSalesDeptId());
+        if (StringUtils.isNotBlank(soInfoEntity.getSalesDeptId())) {
+            SysDepartmentDTO dept = sysUserFeign.getUserDeptById(soInfoEntity.getSalesDeptId());
+            if (dept != null) {
+                entity.setSalesDeptName(dept.getName());
+            }
+        }
+        entity.setSellerId(soInfoEntity.getSellerId());
+        entity.setSellerName(soInfoEntity.getSellerName());
+        entity.setCustomerId(soInfoEntity.getCustomerId());
+        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+        entity.setCustomerName(customerInfoEntity.getName());
+        //生成单号
+        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.THTZ, BusinessNoTypeEnum.CODE_THTZ.getCode()));
+        entity.setCode(code);
+        entity.setSourceId(dto.getSourceId());
+        entity.setSourceCode(soReturnEntity.getCode());
+        entity.setSourceType(soReturnEntity.getSourceType());
+        if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
+            //获取用户信息
+            FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
+            entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
+            entity.setWarehouseKeeperName(userDTO.getUserName());
+        }
+        this.save(entity);
+        soReturnInstockDetailService.add(dto, entity.getId());
+        return soReturnEntity.getId();
     }
 
     @Override

@@ -78,6 +78,10 @@ public class SoDeliveryNoticeDetailDTO {
          */
         private String warehouseId;
         /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
          * 是否关闭
          */
         private Boolean isClose;

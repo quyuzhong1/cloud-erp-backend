@@ -131,10 +131,10 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * 获取sku 详情
      * @author yl
      * @date 2023-05-18 14:43
-     * @param skuId
+     * @param skuNo
      * @return com.erp.model.oms.dto.SoDetailDTO.SkuDTO
      */
-    SoDetailDTO.SkuDTO getSkuInfoBySkuId(String skuId,String warehouseId);
+    SoDetailDTO.SkuDTO getSkuInfoBySkuNo(String skuNo,String warehouseId);
 
     
     /**
@@ -146,4 +146,13 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      */
     List<SoDetailDTO.ExportPdfDTO> listExportPdf(String mainId);
 
+    
+    /**
+     * 根据销售订单id 获取到对应的对应产品信息
+     * @author yl
+     * @date 2023-05-22 14:18
+     * @param soId
+     * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.SkuDTO>
+     */
+    List<SoDetailDTO.ViewDTO> listBySoId(String soId);
 }

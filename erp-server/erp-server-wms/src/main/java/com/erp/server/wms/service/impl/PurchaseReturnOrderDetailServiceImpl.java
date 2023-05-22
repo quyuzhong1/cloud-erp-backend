@@ -11,10 +11,13 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
+import com.erp.model.wms.dto.SoReturnNoticeDetailDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
+import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -22,7 +25,9 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.PurchaseReturnOrderDetailMapper;
 import com.erp.server.wms.service.*;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,6 +60,9 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
 
     @Resource
     private WarehouseReceiveDetailService warehouseReceiveDetailService;
+
+    @Resource
+    private OperateLogService operateLogService;
 
     /**
      * @description: 根据来源明细ids查询退货明细
@@ -203,6 +211,17 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(PurchaseReturnOrderDTO.UpdateDTO dto, String id) {
+        List<String> addList = dto.getPurchasePriceDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).map(PurchaseReturnOrderDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        //原明细数据
+        List<PurchaseReturnOrderDetailEntity> oldList = this.getDetailByMainId(dto.getId());
+        List<String> deleteIds = getDeleteIds(dto.getPurchasePriceDetailList(), oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<PurchaseReturnOrderDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(),pairList,"编辑操作");
+            this.removeByIds(deleteIds);
+        }
         Integer returnQty = 0;
         //创建保存详情的集合
         List<PurchaseReturnOrderDetailEntity> listDetail = new ArrayList<>();
@@ -244,12 +263,32 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
                 } else {
                     throw new ServiceException(ApiError.ERROR_99006);
                 }
+                //修改操作日志
+                if (StringUtils.isNotBlank(purchaseReturnOrderDetailEntity.getId())) {
+                    PurchaseReturnOrderDetailEntity old = this.getById(purchaseReturnOrderDetailEntity.getId());
+                    operateLogService.addModuleOperateLogByObj(old, purchaseReturnOrderDetailEntity, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), dto.getId(), "", String.format("【%s】", old.getSkuNo()));
+                }
                 listDetail.add(purchaseReturnOrderDetailEntity);
             }
         } else {
             notProductOrderUpdate(dto, id, listDetail);
         }
-        return this.saveOrUpdateBatch(listDetail);
+        boolean flag = this.saveOrUpdateBatch(listDetail);
+        //添加操作日志
+        if (CollectionUtils.isNotEmpty(addList)) {
+            List<PurchaseReturnOrderDetailEntity> returnOrderDetailEntities = this.listByIds(addList);
+            List<Pair<String, String>> addPairList = returnOrderDetailEntities.stream().map(obj -> new Pair<>(dto.getId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), addPairList, "编辑操作");
+        }
+        return flag;
+    }
+
+    private List<String> getDeleteIds(List<PurchaseReturnOrderDetailDTO.UpdateDTO> newList, List<PurchaseReturnOrderDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(PurchaseReturnOrderDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(PurchaseReturnOrderDetailEntity
+                ::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 
     /**
@@ -268,6 +307,11 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
             purchaseReturnOrderDetailEntity.setMainId(id);
             purchaseReturnOrderDetailEntity.setReturnQty(updateDTO.getReturnQty());
             listDetail.add(purchaseReturnOrderDetailEntity);
+            //修改操作日志
+            if (StringUtils.isNotBlank(purchaseReturnOrderDetailEntity.getId())) {
+                PurchaseReturnOrderDetailEntity old = this.getById(purchaseReturnOrderDetailEntity.getId());
+                operateLogService.addModuleOperateLogByObj(old, purchaseReturnOrderDetailEntity, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), dto.getId(), "", String.format("【%s】", old.getSkuNo()));
+            }
         }
         return listDetail;
     }

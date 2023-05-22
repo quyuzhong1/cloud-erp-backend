@@ -131,6 +131,20 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     private String sourceType;
 
     /**
+     * 来源code
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
+
+    /**
+     * type
+     * 单据类型 冗余
+     */
+    @TableField("type")
+    private String type;
+
+    /**
      * 仓库id
      */
     @TableField("warehouse_id")
@@ -141,6 +155,20 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
      */
     @TableField("warehouse_name")
     private String warehouseName;
+
+
+    /**
+     * 审核人
+     */
+    @TableField("approve_user_name")
+    private String approveUserName;
+
+    /**
+     * 客户id
+     */
+    @TableField("customer_id")
+    private String customerId;
+
 
 
     public static final String CODE = "code";

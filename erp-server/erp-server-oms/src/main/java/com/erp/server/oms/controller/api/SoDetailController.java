@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * 销售管理-销售订单
@@ -29,9 +30,20 @@ public class SoDetailController extends BaseController {
      * 根据skuId 获取产品明细
      */
     @GetMapping("/getSkuInfoBySkuId")
-    public ApiResult<SoDetailDTO.SkuDTO> getSkuInfoBySkuId(@RequestParam("skuId") String skuId,@RequestParam("warehouseId") String warehouseId) {
-        SoDetailDTO.SkuDTO skuDTO = soDetailService.getSkuInfoBySkuId(skuId,warehouseId);
+    public ApiResult<SoDetailDTO.SkuDTO> getSkuInfoBySkuId(@RequestParam("skuNo") String skuNo,@RequestParam("warehouseId") String warehouseId) {
+        SoDetailDTO.SkuDTO skuDTO = soDetailService.getSkuInfoBySkuNo(skuNo,warehouseId);
         return success(skuDTO);
+    }
+
+
+    /**
+     * 根据销售订单id 获取到对应
+     * 产品明细
+     */
+    @GetMapping("/listBySoId")
+    public ApiResult<List<SoDetailDTO.ViewDTO>> listBySoId(@RequestParam("soId") String soId) {
+        List<SoDetailDTO.ViewDTO> list = soDetailService.listBySoId(soId);
+        return success(list);
     }
 
 

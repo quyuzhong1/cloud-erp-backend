@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -12,10 +13,13 @@ import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -24,10 +28,13 @@ import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.mapper.SoReturnDetailMapper;
+import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import com.erp.server.oms.service.SoReturnDetailService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,6 +76,30 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
 
     @Resource
     private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
+
+    @Resource
+    private OperateLogService operateLogService;
+    /**
+     * 根据退货单获取销售单已出库数量
+     * @Author Luo_WG
+     * @Date 2023/5/19 12:21
+     * @param returnId
+     * @return java.util.List<com.erp.model.wms.entity.SoOutstockDetailEntity>
+     **/
+    private  List<SoOutstockDetailEntity> listSoOutstockByReturnId(String returnId) {
+        //获取退货详情
+        List<SoReturnDetailEntity> returnDetailEntityList = this.listDetailByMainId(returnId);
+        //获取销售订单明细表id
+        List<String> soDetailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        //根据销售单详情id获取发货通知单详情信息
+        List<SoDeliveryNoticeDetailEntity> detailEntityList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(soDetailIds);
+        //获取发货通知单明细表id
+        List<String> deliveryNoticeDetailIdList = detailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
+        soDetailIds.addAll(deliveryNoticeDetailIdList);
+        //根据销售单获取出库单
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySourceDetailId(soDetailIds);
+        return soOutstockDetailEntities;
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -115,18 +146,41 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnDTO.Update dto) {
+        List<String> addList = dto.getDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).map(SoReturnDetailDTO.Update::getId).collect(Collectors.toList());
+        //获取销售单
+        List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByMainIds(Arrays.asList(dto.getSourceId()));
+        //获取销售订单明细表id
+        List<String> soDetailIds = soDetailEntities.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
+        //根据销售单详情id获取发货通知单详情信息
+        List<SoDeliveryNoticeDetailEntity> detailEntityList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(soDetailIds);
+        //获取发货通知单明细表id
+        List<String> deliveryNoticeDetailIdList = detailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
+        soDetailIds.addAll(deliveryNoticeDetailIdList);
+        //根据销售单获取出库单
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySourceDetailId(soDetailIds);
+        //原明细数据
+        List<SoReturnDetailEntity> oldList = this.listDetailByMainId(dto.getId());
+        List<String> deleteIds = getDeleteIds(dto.getDetailList(), oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<SoReturnDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SO_RETURN.getCode(),pairList,"编辑操作");
+            this.removeByIds(deleteIds);
+        }
         List<String> detailIds = dto.getDetailList().stream().map(SoReturnDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailEntitieList = soDetailService.listSoDetailByIds(detailIds);
-
         if (CollectionUtils.isEmpty(soDetailEntitieList)) {
             throw new ServiceException(ApiError.ERROR_92003);
         }
-        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySourceDetailId(detailIds);
         List<SoReturnDetailEntity> soReturnDetailEntities = this.listDetailBySourceId(detailIds);
         List<SoReturnDetailEntity> list = new ArrayList<>();
         for (SoReturnDetailDTO.Update detailDto : dto.getDetailList()) {
             SoReturnDetailEntity soReturnDetailEntity = new SoReturnDetailEntity();
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            if (StringUtils.isNotBlank(detailDto.getId())) {
+                soReturnDetailEntity.setId(detailDto.getId());
+            }
             Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSourceDetailId().equals(detailDto.getSourceDetailId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             if (actualQty < detailDto.getReturnQty() + returnQty) {
@@ -139,8 +193,32 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             soReturnDetailEntity.setRemark(detailDto.getRemark());
             soReturnDetailEntity.setSourceDetailId(detailDto.getSourceDetailId());
             list.add(soReturnDetailEntity);
+            detailDto.setSkuNo(soDetailEntity.getSkuNo());
+            //修改操作日志
+            if (StringUtils.isNotBlank(soReturnDetailEntity.getId())) {
+                SoReturnDetailEntity old = this.getById(soReturnDetailEntity.getId());
+                if (ObjectUtils.isEmpty(old)) {
+                    throw new ServiceException(ApiError.ERROR_98002);
+                }
+                operateLogService.addModuleOperateLogByObj(old,soReturnDetailEntity, ModuleTypeEnum.SO_RETURN.getCode(),dto.getId(),"",String.format("【%s】",old.getSkuNo()));
+            }
         }
-        return this.saveOrUpdateBatch(list);
+        boolean falg = this.saveOrUpdateBatch(list);
+        //添加操作日志
+        if (CollectionUtils.isNotEmpty(addList)) {
+            List<SoReturnDetailEntity> returnDetailEntityList = this.listByIds(addList);
+            List<Pair<String, String>> addPairList = returnDetailEntityList.stream().map(obj -> new Pair<>(dto.getId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), addPairList, "编辑操作");
+        }
+        return falg;
+    }
+
+    private List<String> getDeleteIds(List<SoReturnDetailDTO.Update> newList, List<SoReturnDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(SoReturnDetailDTO.Update::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(SoReturnDetailEntity
+                ::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 
     @Override

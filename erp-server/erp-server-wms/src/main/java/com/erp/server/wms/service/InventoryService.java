@@ -102,6 +102,16 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      */
     List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventory(List<String> skuIds, String warehouseId, String warehouseLocationId, String status);
 
+
+    /**
+     *
+     * @author yl
+     * @date 2023-05-22 12:26
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.inventory.InventoryQtyDTO.SkuInventoryTotalDTO>
+     */
+    List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventory(InventoryQtyDTO.SkuInventoryParamDTO dto);
+
     /**
      * 根据组织、仓库、库位、状态、SKU获取库存数量；如果库位为空，则不判断库位
      * @param orgId

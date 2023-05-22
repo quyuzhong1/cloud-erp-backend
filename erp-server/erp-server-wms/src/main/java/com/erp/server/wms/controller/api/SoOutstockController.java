@@ -56,7 +56,7 @@ public class SoOutstockController extends BaseController {
             tableField = "create_user_id",
             menuCode = "wms:so:outstock:paging",
             serviceClass = SoOutstockService.class,
-            keyIdName = "ss"
+            keyIdName = "so"
     )
     public ApiResult<PagingVO<SoOutstockDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
         PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.paging(dto);
@@ -251,9 +251,15 @@ public class SoOutstockController extends BaseController {
      * 数据
      */
     @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:so:outstock:paging",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "so"
+    )
     public ApiResult exportWarehouse(@RequestBody @Valid SoOutstockDTO.ExportDTO dto, HttpServletResponse response) {
-
-        return success();
+        Boolean result = soOutstockService.exportExcel(dto, response);
+        return result?success():failure();
     }
 
 }

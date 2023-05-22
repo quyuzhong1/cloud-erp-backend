@@ -186,4 +186,13 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return List<ViewGenerateSalesDemandDTO>
      */
     List<SoInfoDTO.ViewGenerateSalesDemandDTO> viewGenerateSalesDemand(List<String> ids);
+
+    /**
+     * 根据销售订单id 集合获取到
+     * @author yl
+     * @date 2023-05-22 10:43
+     * @param soIdList
+     * @return com.erp.model.oms.dto.SoInfoDTO.CustomerDTO
+     */
+    List<SoInfoDTO.CustomerDTO> listSoCustomerByIds(List<String> soIdList);
 }
