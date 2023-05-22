@@ -362,7 +362,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     @Override
     public Boolean updateAndSubmit(SoReturnNoticeDTO.Update dto) {
         Boolean update = this.update(dto);
-        if (update) {
+        if (!update) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
         return this.submit(Arrays.asList(dto.getId()));

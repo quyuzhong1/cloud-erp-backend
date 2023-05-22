@@ -358,7 +358,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Override
     public Boolean updateAndSubmit(SoReturnDTO.Update dto) {
         Boolean update = this.update(dto);
-        if (update) {
+        if (!update) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
         return this.submit(Arrays.asList(dto.getId()));

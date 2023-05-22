@@ -376,7 +376,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(deliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             detailView.setSalesQty(soDetailEntity.getQty());
 
-            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(id));
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(deliveryNoticeDetailEntity.getId()));
             List<String> attachmentUrlList = attachmentList.stream().
                     map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).
                     collect(Collectors.toList());
@@ -433,7 +433,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Override
     public Boolean updateAndSubmit(SoDeliveryNoticeDTO.Update dto) {
         Boolean update = this.update(dto);
-        if (update) {
+        if (!update) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
         return this.submit(Arrays.asList(dto.getId()));
