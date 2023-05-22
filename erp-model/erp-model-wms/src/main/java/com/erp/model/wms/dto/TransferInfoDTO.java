@@ -144,7 +144,7 @@ public class TransferInfoDTO implements Serializable {
         /**
          * 调拨方向
          */
-        private List<String>   transferDirection;
+        private String  transferDirection;
         /**
          * 调拨日期集合
          */

@@ -259,6 +259,9 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         }
         BeanMapperUtils.copy(entity, viewDTO);
 
+        //库存方向
+        viewDTO.setInventoryDirectionName(InventoryDirectionEnum.getName(viewDTO.getInventoryDirection()));
+
         //客户信息
         OtherOutstockCustomerEntity customerEntity = otherOutstockCustomerService.getByMainId(id);
         if (ObjectUtils.isEmpty(customerEntity)) {
@@ -484,7 +487,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             String warehouseKeeperName = userList.stream().filter(obj -> obj.getUserId().equals(warehouseKeeperId)).map(FindUserDTO::getUserName).findFirst().orElse("");
             entity.setWarehouseKeeperName(warehouseKeeperName);
             //领料员
-            String receiveOrgName = userList.stream().filter(obj -> obj.getUserId().equals(receiveOrgId)).map(FindUserDTO::getUserName).findFirst().orElse("");
+            String receiveOrgName = userList.stream().filter(obj -> obj.getUserId().equals(receiverId)).map(FindUserDTO::getUserName).findFirst().orElse("");
             entity.setReceiverName(receiveOrgName);
         }
         //仓库信息

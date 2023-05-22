@@ -29,7 +29,6 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
-import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.dto.OtherInstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -38,7 +37,6 @@ import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.OtherInstockDetailEntity;
 import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -267,11 +265,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         List<OtherInstockDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(OtherInstockDetailDTO.ViewDTO.class, detailList);
 
         //库存方向
-        List<DictBasicDTO.ListDTO> inventoryDirectionList = dictBasicService.getByKey(DictBasicEnum.INVENTORY_DIRECTION.getKey());
-        if (CollectionUtils.isNotEmpty(inventoryDirectionList)) {
-            String name = inventoryDirectionList.stream().filter(obj -> obj.getValue().equals(viewDTO.getInventoryDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse(null);
-            viewDTO.setInventoryDirection(name);
-        }
+        viewDTO.setInventoryDirectionName(InventoryDirectionEnum.getName(viewDTO.getInventoryDirection()));
 
         //产品信息
         List<String> skuIds = detailList.stream().map(OtherInstockDetailEntity::getSkuId).collect(Collectors.toList());
@@ -531,7 +525,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 entity.setWarehouseKeeperName(userDTO.getUserName());
             }
         }
-        //验收员
+        //领料员
         if (StringUtils.isNotBlank(receiverId)) {
             FindUserDTO userDTO = userList.stream().filter(obj -> obj.getUserId().equals(receiverId)).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(userDTO)) {

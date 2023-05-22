@@ -28,7 +28,7 @@ public interface OtherInstockMapper extends BaseMapper<OtherInstockEntity> {
      * @param params
      * @return IPage<ListDTO>
      */
-    IPage<OtherInstockDTO.ListDTO> paging(Page query, @Param("param") OtherInstockDTO.SearchParamDTO params);
+    IPage<OtherInstockDTO.ListDTO> paging(Page query, @Param("params") OtherInstockDTO.SearchParamDTO params);
     /**
      * @description: 查询数量
      * @author Will
@@ -36,7 +36,7 @@ public interface OtherInstockMapper extends BaseMapper<OtherInstockEntity> {
      * @param searchParamDTO
      * @return Integer
      */
-    Integer listCount( @Param("param") OtherInstockDTO.SearchParamDTO searchParamDTO);
+    Integer listCount( @Param("params") OtherInstockDTO.SearchParamDTO searchParamDTO);
     /**
      * @description: 导出数据查询
      * @author Will
@@ -44,5 +44,5 @@ public interface OtherInstockMapper extends BaseMapper<OtherInstockEntity> {
      * @param param 
      * @return List<ListDTO> 
      */
-    List<OtherInstockDTO.ListDTO> listExportExcel(@Param("param") OtherInstockDTO.SearchParamDTO param);
+    List<OtherInstockDTO.ListDTO> listExportExcel(@Param("params") OtherInstockDTO.SearchParamDTO param);
 }
