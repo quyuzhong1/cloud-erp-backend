@@ -99,6 +99,17 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public String add(SoOutstockDTO.AddDTO dto) {
         //TODO 对应检查数量
         String id = IdWorker.getIdStr();
+        //来源类型
+        String sourceType = dto.getSourceType();
+
+        String sourceId = dto.getSourceId();
+
+
+
+
+
+
+
         SoOutstockEntity soOutstock = new SoOutstockEntity();
         BeanMapper.copy(dto, soOutstock);
         soOutstock.setId(id);
@@ -175,7 +186,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(rejectStatus)).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus),userName);
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus), userName);
         if (result) {
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
@@ -234,10 +245,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             result.setSalesOrgName(soInfo.getSalesOrgName());
             result.setRequireDate(soInfo.getRequireDate());
             result.setTelNumber(soInfo.getTelNumber());
-            result.setTypeName(soInfo.getTypeName());
+            result.setTypeName(soInfo.getOrderTypeName());
             result.setSellerName(soInfo.getSellerName());
         }
-        List<SoOutstockDetiailDTO.ViewDTO> detailList = soOutstockDetailService.listByMainId(id,soOutstock.getWarehouseId());
+        List<SoOutstockDetiailDTO.ViewDTO> detailList = soOutstockDetailService.listByMainId(id, soOutstock.getWarehouseId());
         result.setDetailList(detailList);
         return result;
     }
@@ -321,7 +332,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus),userName);
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus), userName);
         //反审核 TODO 需要做什么
         if (result) {
             //添加日志
@@ -352,7 +363,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         //TODO 撤销流程
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus),"");
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus), "");
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("销售出库单【%s】取消流程", ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "取消流程操作");
         return result;
@@ -506,7 +517,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             item.setApproveStatusName(approveStatus.getName());
             String soId = item.getSoId();
             SoInfoDTO.CustomerDTO soInfo = soCustomerList.stream().filter(s -> s.getId().equals(soId)).findFirst().orElse(new SoInfoDTO.CustomerDTO());
-            item.setTypeName(soInfo.getTypeName());
+            item.setTypeName(soInfo.getOrderTypeName());
             item.setSalesOrgName(soInfo.getSalesOrgName());
             item.setCustomerName(soInfo.getCustomerName());
             Boolean invalidStatus = item.getInvalidStatus();
@@ -562,14 +573,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //sku id
         List<String> skuIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-        List<String> flagList = new ArrayList<>();
-
         for (SoOutstockDTO.PagingViewDTO item : list) {
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
             String soId = item.getSoId();
             SoInfoDTO.CustomerDTO soInfo = soCustomerList.stream().filter(s -> s.getId().equals(soId)).findFirst().orElse(new SoInfoDTO.CustomerDTO());
-            item.setTypeName(soInfo.getTypeName());
+            item.setTypeName(soInfo.getOrderTypeName());
             item.setSalesOrgName(soInfo.getSalesOrgName());
             item.setCustomerName(soInfo.getCustomerName());
             Boolean invalidStatus = item.getInvalidStatus();

@@ -46,8 +46,8 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     /**
      * 订单类型
      */
-    @TableField("type")
-    private BillTypeEnum type;
+    @TableField("order_type")
+    private BillTypeEnum orderType;
 
     /**
      * 要货日期

@@ -5,7 +5,7 @@
 
     <select id="paging" resultType="com.erp.model.oms.dto.SoInfoDTO$PagingViewDTO">
         SELECT
-        si.code,si.type,
+        si.code,si.order_type,
         si.approve_status, si.customer_id,
         si.invalid_status, si.sales_org_name,
         si.seller_name,sod.delivery_status,
@@ -28,8 +28,8 @@
         <if test="params.code !=null and params.code!=''">
             AND si.code ILIKE concat('%', #{params.code} ,'%')
         </if>
-        <if test="params.type !=null and params.type!=''">
-            AND si.type=#{params.type}
+        <if test="params.orderType !=null and params.orderType!=''">
+            AND si.order_type=#{params.orderType}
         </if>
         <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
             AND si.approve_status IN
@@ -88,7 +88,7 @@
 
     <select id="listExport" resultType="com.erp.model.oms.dto.SoInfoDTO$PagingViewDTO">
         SELECT
-        si.code,si.type,
+        si.code,si.order_type,
         si.approve_status, si.customer_id,
         si.invalid_status, si.sales_org_name,
         si.seller_name,sod.delivery_status,
@@ -119,8 +119,8 @@
                 <if test="params.code !=null and params.code!=''">
                     AND si.code ILIKE concat('%', #{params.code} ,'%')
                 </if>
-                <if test="params.type !=null and params.type!=''">
-                    AND si.type=#{params.type}
+                <if test="params.orderType !=null and params.orderType!=''">
+                    AND si.order_type=#{params.orderType}
                 </if>
                 <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
                     AND si.approve_status IN

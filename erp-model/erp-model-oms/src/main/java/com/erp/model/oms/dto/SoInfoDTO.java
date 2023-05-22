@@ -87,12 +87,12 @@ public class SoInfoDTO implements Serializable {
         /**
          * 类型
          */
-        private String type;
+        private String orderType;
 
         /**
          * 类型名称
          */
-        private String typeName;
+        private String orderTypeName;
 
         /**
          * 作废状态
@@ -271,7 +271,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 类型
          */
-        private String type;
+        private String orderType;
 
         /**
          * 审核状态集合
@@ -287,6 +287,13 @@ public class SoInfoDTO implements Serializable {
 
         /**
          * 发货状态状态
+         * unShipped 未发货
+         * partialShipment 部分发货
+         * completeShipment 已发货
+         *来源
+         * http://172.16.100.11:3002/project/110/interface/api/13480
+         * type=deliveryStatus
+         *
          */
         private String deliveryStatus;
 
@@ -341,7 +348,7 @@ public class SoInfoDTO implements Serializable {
          */
         @NotBlank(message = "单据类型不能为空", groups = {AddGroup.class})
         @StateEnumValue(clazz = BillTypeEnum.class, message = "单据类型有误", groups = {AddGroup.class})
-        private String type;
+        private String orderType;
 
         /**
          * 要货日期
@@ -487,7 +494,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 类型
          */
-        private String type;
+        private String orderType;
 
         /**
          * 要货日期
@@ -615,7 +622,7 @@ public class SoInfoDTO implements Serializable {
          */
         @NotBlank(message = "单据类型不能为空")
         @StateEnumValue(clazz = BillTypeEnum.class, message = "单据类型有误")
-        private String type;
+        private String orderType;
 
         /**
          * 要货日期
@@ -740,7 +747,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 单据类型
          */
-        private String type;
+        private String orderType;
 
         private String code;
 
@@ -754,7 +761,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 单据类型名称
          */
-        private String typeName;
+        private String orderTypeName;
         /**
          * 客户id
          */
