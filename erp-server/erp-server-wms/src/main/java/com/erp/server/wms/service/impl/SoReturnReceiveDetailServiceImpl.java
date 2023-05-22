@@ -196,8 +196,8 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
     }
 
     @Override
-    public List<SoReturnReceiveDetailEntity> listSoDetailByIds(List<String> ids) {
-        return baseMapper.listSoDetailByIds(ids);
+    public List<SoReturnReceiveDetailEntity> listDetailByIds(List<String> ids) {
+        return baseMapper.listDetailByIds(ids);
     }
 
     @Override

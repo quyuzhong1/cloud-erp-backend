@@ -23,4 +23,16 @@ public interface CfgOperateLogFieldService extends SuperService<CfgOperateLogFie
      * @return List<CfgOperateLogFieldEntity>
      */
     List<CfgOperateLogFieldEntity> listByClassPaths(List<String> classPaths);
+
+
+
+    /**
+     * @description: 新增配置信息
+     * @author Will
+     * @date: 2023/3/22 10:50
+     * @return Boolean
+     */
+    Boolean saveBatchSysLogField();
+
+
 }

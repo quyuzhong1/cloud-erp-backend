@@ -10,41 +10,49 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.wms.dto.SoReturnInstockDTO;
-import com.erp.model.wms.dto.SoReturnReceiveDTO;
-import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
-import com.erp.model.wms.entity.SoReturnInstockEntity;
-import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
+import com.erp.model.wms.dto.*;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.SoReturnInstockMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -82,6 +90,21 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private WarehouseService warehouseService;
+
+    @Resource
+    private OperateLogService operateLogService;
+
+    @Resource
+    private CommonService commonService;
+
+    @Resource
+    private QcInfoService qcInfoService;
+
+    @Resource
+    private WorkflowFeign workflowFeign;
 
     /**
      * 根据退货单获取销售单已出库数量
@@ -153,6 +176,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 }
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
+                obj.setReturnTypeDict(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
                 obj.setType(ReturnTypeEnum.getName(obj.getType()));
                 ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(productDetailEntity)) {
@@ -203,7 +227,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String add(SoReturnInstockDTO.Add dto) {
         //获取退货单信息
         SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
@@ -226,12 +250,19 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         entity.setCustomerName(customerInfoEntity.getName());
+        entity.setInventoryOrgId(soInfoEntity.getWarehouseOrgId());
+        entity.setInventoryOrgName(soInfoEntity.getWarehouseOrgName());
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.THTZ, BusinessNoTypeEnum.CODE_THTZ.getCode()));
         entity.setCode(code);
         entity.setSourceId(dto.getSourceId());
         entity.setSourceCode(soReturnEntity.getCode());
         entity.setSourceType(soReturnEntity.getSourceType());
+        entity.setWarehouseId(dto.getWarehouseId());
+        entity.setBillDate(dto.getBillDate());
+        //获取仓库信息
+        WarehouseEntity warehouseEntity = warehouseService.getById(dto.getWarehouseId());
+        entity.setWarehouseName(warehouseEntity.getName());
         if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
             //获取用户信息
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
@@ -244,65 +275,346 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnInstockDTO.Update dto) {
-        return null;
+        //获取退货单信息
+        SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
+        //获取销售单信息
+        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
+        SoReturnInstockEntity entity = new SoReturnInstockEntity();
+        entity.setType(soInfoEntity.getOrderType().getCode());
+        entity.setSalesOrgId(soInfoEntity.getSalesOrgId());
+        entity.setSalesOrgName(soInfoEntity.getSalesOrgName());
+        entity.setSalesDeptId(soInfoEntity.getSalesDeptId());
+        if (StringUtils.isNotBlank(soInfoEntity.getSalesDeptId())) {
+            SysDepartmentDTO dept = sysUserFeign.getUserDeptById(soInfoEntity.getSalesDeptId());
+            if (dept != null) {
+                entity.setSalesDeptName(dept.getName());
+            }
+        }
+        entity.setSellerId(soInfoEntity.getSellerId());
+        entity.setSellerName(soInfoEntity.getSellerName());
+        entity.setCustomerId(soInfoEntity.getCustomerId());
+        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+        entity.setCustomerName(customerInfoEntity.getName());
+        entity.setInventoryOrgId(soInfoEntity.getWarehouseOrgId());
+        entity.setInventoryOrgName(soInfoEntity.getWarehouseOrgName());
+        entity.setId(dto.getId());
+        entity.setSourceId(dto.getSourceId());
+        entity.setSourceCode(soReturnEntity.getCode());
+        entity.setSourceType(soReturnEntity.getSourceType());
+        entity.setWarehouseId(dto.getWarehouseId());
+        entity.setBillDate(dto.getBillDate());
+        //获取仓库信息
+        WarehouseEntity warehouseEntity = warehouseService.getById(dto.getWarehouseId());
+        entity.setWarehouseName(warehouseEntity.getName());
+        if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
+            //获取用户信息
+            FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
+            entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
+            entity.setWarehouseKeeperName(userDTO.getUserName());
+        }
+        boolean flag = this.updateById(entity);
+        //操作日志
+        SoReturnInstockEntity byId = this.getById(dto.getId());
+        operateLogService.addModuleOperateLogByObj(byId, entity, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "", "");
+
+        soReturnInstockDetailService.update(dto);
+        return flag;
     }
 
     @Override
     public SoReturnInstockDTO.View view(String id) {
-        return null;
+        SoReturnInstockDTO.View viewDTO = new SoReturnInstockDTO.View();
+        SoReturnInstockEntity entity = this.getById(id);
+        //创库保存详情表的集合
+        List<SoReturnInstockDetailDTO.View> detailViewDTOS = new ArrayList<>();
+        List<SoReturnInstockDetailEntity> detailEntityList = soReturnInstockDetailService.listDetailByMainId(id);
+        SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(entity.getSourceId());
+        BeanMapperUtils.copy(soReturnEntity, viewDTO);
+        BeanMapperUtils.copy(entity, viewDTO);
+        //获取sku的id集合
+        List<String> skuIdList = detailEntityList.stream().map(SoReturnInstockDetailEntity::getSkuId).collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIdList);
+        //退货单
+        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(Arrays.asList(entity.getSourceId()));
+        //销售单详情id集合
+        List<String> detailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        //获取销售单详情信息
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(detailIds);
+        viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
+        viewDTO.setInvalidStatusName(InvalidStatusEnum.getName(viewDTO.getInvalidStatus()));
+        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+        viewDTO.setCustomerName(customerInfoEntity.getName());
+
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = listSoOutstockByReturnId(entity.getSourceId());
+        for (SoReturnInstockDetailEntity detailEntity : detailEntityList) {
+            SoReturnInstockDetailDTO.View detailView = new SoReturnInstockDetailDTO.View();
+            BeanMapperUtils.copy(detailEntity, detailView);
+            //产品sku信息
+            ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95107);
+            }
+            detailView.setProductName(productDetailEntity.getName());
+            //销售单信息
+            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            detailView.setSalesQty(soDetailEntity.getQty());
+            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSourceDetailId().equals(detailEntity.getSourceDetailId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            detailView.setDeliveryQty(actualQty);
+            detailViewDTOS.add(detailView);
+        }
+        viewDTO.setDetailList(detailViewDTOS);
+        return viewDTO;
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public Boolean submit(List<String> ids) {
-        return null;
+        List<SoReturnInstockEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(entityList)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+
+        //未作废、待提交、审核不通过才可以提交
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && (entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
+        ).count();
+
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
+
+        //TODO 待加审核流程
+        //操作日志
+        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("提交了一个销售退货通知单【%s】", ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), pairList, "提交操作");
+
+        //更新审核状态
+        lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
+                .in(SoReturnInstockEntity::getId, ids)
+                .update();
+        return Boolean.TRUE;
     }
 
     @Override
     public Boolean addAndSubmit(SoReturnInstockDTO.Add dto) {
-        return null;
+        String id = this.add(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        return this.submit(Arrays.asList(id));
     }
 
     @Override
     public Boolean updateAndSubmit(SoReturnInstockDTO.Update dto) {
-        return null;
+        Boolean update = this.update(dto);
+        if (!update) {
+            throw new ServiceException(ApiError.ERROR_1020);
+        }
+        return this.submit(Arrays.asList(dto.getId()));
     }
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
-        return null;
+        List<String> ids = baseApproveParamDTO.getIds();
+        List<SoReturnInstockEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //判断是否是审核中的状态
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
+        ).count();
+
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
+        //TODO 待加审核流程
+        if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
+            LoginUser userInfo = commonService.getUserInfo();
+            //审核通过
+            lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
+                    .set(SoReturnInstockEntity::getApproveUserId, userInfo.getUid())
+                    .set(SoReturnInstockEntity::getApproveUserName, userInfo.getUserName())
+                    .set(SoReturnInstockEntity::getApproveTime, LocalDateTime.now())
+                    .in(SoReturnInstockEntity::getId, ids)
+                    .update();
+        } else {
+            //审核不通过
+            lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
+                    .in(SoReturnInstockEntity::getId, ids)
+                    .update();
+        }
+        //操作日志
+        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个销售退货通知单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "审核操作");
+        return Boolean.TRUE;
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public Boolean disApprove(List<String> ids) {
-        return null;
+        List<SoReturnInstockEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //已审核支持反审核
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+        ).count();
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_99003);
+        }
+        //TODO 待加审核流程
+
+        //已下推质检单，不能反审核
+        List<QcInfoEntity> qcBySourceId = qcInfoService.listQCBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(qcBySourceId)) {
+            throw new ServiceException(ApiError.ERROR_99042);
+        }
+        //修改状态为待提交
+        lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .in(SoReturnInstockEntity::getId, ids)
+                .update();
+
+        //操作日志
+        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("反审核了一个销售退货通知单【%s】", ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), pairList, "反审核操作");
+        return Boolean.TRUE;
     }
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean cancelProcess(List<String> ids) {
-        return null;
+        List<SoReturnInstockEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //审核中可以撤销
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
+        ).count();
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        //撤销现有流程
+        workflowFeign.cancelProcess(ids);
+        //修改状态为待提交
+        lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .in(SoReturnInstockEntity::getId, ids)
+                .update();
+        //操作日志
+        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("发货通知单【%s】撤销流程", ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "撤销流程操作");
+
+        return Boolean.TRUE;
     }
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String remark) {
-        return null;
+        List<SoReturnInstockEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //审核不通过 待提交可以作废
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && (entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
+        ).count();
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_98005);
+        }
+        //修改状态为待提交
+        lambdaUpdate().set(SoReturnInstockEntity::getInvalidStatus, Boolean.TRUE)
+                .set(SoReturnInstockEntity::getInvalidRemark, remark)
+                .in(SoReturnInstockEntity::getId, ids)
+                .update();
+        //操作日志
+        List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("作废了一个发货通知单【%s】，作废原因：".concat(remark), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "作废操作");
+        return Boolean.TRUE;
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
-        return null;
+        List<SoReturnInstockEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //待提交支持删除
+        long count = entityList.stream().filter(entity -> entity.getInvalidStatus() == false
+                && entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+        ).count();
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        //删除详情表
+        soReturnInstockDetailService.delete(ids);
+        boolean flag = this.removeByIds(ids);
+        //删除主表
+        return flag;
     }
 
     @Override
     public Boolean exportExcel(SoReturnInstockDTO.PagingParam dto, HttpServletResponse response) {
-        return null;
+        List<SoReturnInstockDTO.PagingView> pagingViews = baseMapper.soReturnInstockExportExcel(dto);
+        //获取sku的id集合
+        List<String> skuIdList = pagingViews.stream().map(SoReturnInstockDTO.PagingView::getSkuId).collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        //获取退货单id
+        List<String> returnMainIds = pagingViews.stream().map(SoReturnInstockDTO.PagingView::getSourceId).distinct().collect(Collectors.toList());
+        //退货单
+        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(returnMainIds);
+        //销售单详情id集合
+        List<String> detailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        //获取销售单详情信息
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(detailIds);
+        //根据销售单详情id获取发货通知单详情信息
+        List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(detailIds);
+        //获取发货通知单明细表id
+        List<String> deliveryNoticeDetailIdList = noticeDetailEntities.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
+        detailIds.addAll(deliveryNoticeDetailIdList);
+        //根据销售单获取出库单
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySourceDetailId(detailIds);
+        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        for (SoReturnInstockDTO.PagingView pagingView : pagingViews) {
+            pagingView.setApproveStatus(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
+            pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
+            pagingView.setReturnTypeDict(ReturnTypeEnum.getName(pagingView.getReturnTypeDict()));
+            pagingView.setType(ReturnTypeEnum.getName(pagingView.getType()));
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(pagingView.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95107);
+            }
+            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(pagingView.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            pagingView.setProductName(productDetailEntity.getName());
+            pagingView.setSalesQty(soDetailEntity.getQty());
+            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSourceDetailId().equals(pagingView.getSourceDetailId()) && pagingView.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            pagingView.setDeliveryQty(actualQty);
+            CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+            pagingView.setCustomerName(customerInfoEntity.getName());
+        }
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/soReturnInstock.xlsx";
+        String name = "销售退货入库单";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(pagingViews, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return Boolean.TRUE;
     }
 
     @Override

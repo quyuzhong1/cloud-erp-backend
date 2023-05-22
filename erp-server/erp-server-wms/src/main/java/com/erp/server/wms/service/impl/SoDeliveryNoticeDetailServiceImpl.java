@@ -137,7 +137,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             //获取到表名
             String type = tableName.value();
             //保存附件
-            wmsAttachmentService.batchSave(detailDto.getAttachUrlList(), detailDto.getAttachNameList(), type, detailDto.getId());
+            wmsAttachmentService.batchSaveNotDel(detailDto.getAttachUrlList(), detailDto.getAttachNameList(), type, detailDto.getId());
             //修改操作日志
             if (StringUtils.isNotBlank(soDeliveryNoticeDetailEntity.getId())) {
                 SoDeliveryNoticeDetailEntity old = this.getById(soDeliveryNoticeDetailEntity.getId());

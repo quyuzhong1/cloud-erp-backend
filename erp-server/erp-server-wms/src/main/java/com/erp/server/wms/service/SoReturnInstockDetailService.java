@@ -50,16 +50,25 @@ public interface SoReturnInstockDetailService extends SuperService<SoReturnInsto
      * @Author Luo_WG
      * @Date 2023/5/15 16:55
      * @param sourceIds sourceIds
-     * @return java.util.List<com.erp.model.wms.entity.SoReturnInstockEntity>
+     * @return java.util.List<com.erp.model.wms.entity.SoReturnInstockDetailEntity>
      **/
-    List<SoReturnInstockEntity> listDetailBySourceIds(List<String> sourceIds);
+    List<SoReturnInstockDetailEntity> listDetailBySourceIds(List<String> sourceIds);
 
     /**
      * 根据主键id查询详情表信息
      * @Author Luo_WG
      * @Date 2023/5/15 18:56
      * @param id id
-     * @return java.util.List<com.erp.model.wms.entity.SoReturnInstockEntity>
+     * @return java.util.List<com.erp.model.wms.entity.SoReturnInstockDetailEntity>
      **/
-    List<SoReturnInstockEntity> listDetailByMainId(String id);
+    List<SoReturnInstockDetailEntity> listDetailByMainId(String id);
+
+    /**
+     * 根据来源详情id查询详情信息
+     * @Author Luo_WG
+     * @Date 2023/5/22 15:31
+     * @param sourceDetailIds sourceDetailIds
+     * @return java.util.List<com.erp.model.wms.entity.SoReturnInstockDetailEntity>
+     **/
+    List<SoReturnInstockDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds);
 }

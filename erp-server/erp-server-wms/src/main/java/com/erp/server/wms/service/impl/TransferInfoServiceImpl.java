@@ -121,6 +121,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             if (contains) {
                 obj.setCode(null);
                 obj.setTransferDirection(null);
+                obj.setTransferDirectionName(null);
                 obj.setApproveStatus(null);
                 obj.setApproveStatusName(null);
                 obj.setInvalidStatus(null);

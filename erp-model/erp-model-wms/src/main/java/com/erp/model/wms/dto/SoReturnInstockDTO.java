@@ -240,6 +240,10 @@ public class SoReturnInstockDTO {
     @NoArgsConstructor
     public static class Update {
         /**
+         * 主键id
+         */
+        private String id;
+        /**
          * 退货单id
          */
         private String sourceId;
@@ -268,6 +272,18 @@ public class SoReturnInstockDTO {
     @NoArgsConstructor
     public static class View {
         /**
+         * id
+         */
+        private String id;
+        /**
+         * 退货单id
+         */
+        private String sourceId;
+        /**
+         * 退货单编号
+         */
+        private String sourceCode;
+        /**
          * 单据编号
          */
         private String code;
@@ -275,6 +291,10 @@ public class SoReturnInstockDTO {
          * 审核状态
          */
         private String approveStatus;
+        /**
+         * 审核状态
+         */
+        private String approveStatusName;
         /**
          * 单据类型
          */
@@ -340,17 +360,13 @@ public class SoReturnInstockDTO {
          */
         private String warehouseName;
         /**
-         * 退货单id
-         */
-        private String sourceId;
-        /**
-         * 退货单编号
-         */
-        private String sourceCode;
-        /**
          * 作废状态
          */
         private Boolean invalidStatus;
+        /**
+         * 作废状态
+         */
+        private String invalidStatusName;
         /**
          * 作废描述
          */

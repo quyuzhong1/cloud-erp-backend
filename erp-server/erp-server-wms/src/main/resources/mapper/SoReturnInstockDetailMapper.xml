@@ -2,30 +2,55 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.SoReturnInstockDetailMapper">
 
-    <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.SoReturnInstockDetailEntity">
-        <result column="id" property="id" />
-        <result column="create_user_id" property="createUserId" />
-        <result column="create_user_name" property="createUserName" />
-        <result column="create_time" property="createTime" />
-        <result column="update_user_id" property="updateUserId" />
-        <result column="update_user_name" property="updateUserName" />
-        <result column="update_time" property="updateTime" />
-        <result column="version" property="version" />
-        <result column="is_deleted" property="isDeleted" />
-        <result column="main_id" property="mainId" />
-        <result column="sku_id" property="skuId" />
-        <result column="sku_no" property="skuNo" />
-        <result column="must_qty" property="mustQty" />
-        <result column="receive_qty" property="receiveQty" />
-        <result column="real_qty" property="realQty" />
-        <result column="return_type_dict" property="returnTypeDict" />
-        <result column="return_reason_dict" property="returnReasonDict" />
-        <result column="warehouse_id" property="warehouseId" />
-        <result column="warehouse_name" property="warehouseName" />
-        <result column="warehouse_location" property="warehouseLocation" />
-        <result column="remark" property="remark" />
-        <result column="source_detail_id" property="sourceDetailId" />
-    </resultMap>
+    <select id="listDetailBySourceIds" resultType="com.erp.model.wms.entity.SoReturnInstockDetailEntity">
+        SELECT
+        srid.id,
+        srid.main_id,
+        srid.sku_id,
+        srid.sku_no,
+        srid.must_qty,
+        srid.receive_qty,
+        srid.real_qty,
+        srid.return_type_dict,
+        srid.return_reason_dict,
+        srid.warehouse_location,
+        srid.remark,
+        srid.source_detail_id,
+        sri.approve_Status
+        FROM so_return_instock_detail srid
+        INNER JOIN so_return_instock sri ON sri.id = srid.main_id AND srid.is_deleted = FALSE
+        WHERE sri.is_deleted = FALSE
+        <if test="ids != null and ids.size != ''">
+            and sri.source_id in
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
 
+    <select id="listDetailBySourceDetailIds" resultType="com.erp.model.wms.entity.SoReturnInstockDetailEntity">
+        SELECT
+        srid.id,
+        srid.main_id,
+        srid.sku_id,
+        srid.sku_no,
+        srid.must_qty,
+        srid.receive_qty,
+        srid.real_qty,
+        srid.return_type_dict,
+        srid.return_reason_dict,
+        srid.warehouse_location,
+        srid.remark,
+        srid.source_detail_id,
+        sri.approve_Status
+        FROM so_return_instock_detail srid
+        INNER JOIN so_return_instock sri ON sri.id = srid.main_id AND srid.is_deleted = FALSE
+        WHERE sri.is_deleted = FALSE
+        <if test="ids != null and ids.size != ''">
+            and srid.source_detail_id in
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
 </mapper>

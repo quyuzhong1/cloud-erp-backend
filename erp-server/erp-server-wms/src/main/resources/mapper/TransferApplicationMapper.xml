@@ -118,7 +118,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        ta.create_time desc
+        ta.id desc,tad.id desc
     </select>
 
     <select id="listCount" resultType="java.lang.Integer">
@@ -229,7 +229,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        ta.create_time desc
+        ta.id desc,tad.id desc
     </select>
 
     <select id="viewGenerateTransferInfo"

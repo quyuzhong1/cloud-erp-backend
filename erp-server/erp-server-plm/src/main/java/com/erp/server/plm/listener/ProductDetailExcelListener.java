@@ -10,7 +10,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.BasicDictEntity;
@@ -26,9 +25,7 @@ import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProductUnitService;
 import org.apache.commons.lang.StringUtils;
 
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -116,6 +113,9 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             if (productDetailService.checkSkuNo(dto.getSkuNo(), "")) {
                 errorMsgList.add(ApiError.ERROR_95015.msg);
             }
+            //spu名称，新增单规格名称给随机雪花编码
+            productInfoDTO.setName(IdUtil.getSnowflake().nextIdStr());
+
             productInfoDTO.setSpecType(1);
             productInfoDTO.setGrade("");
         }
@@ -242,8 +242,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         }
 
         ProductNoSpecDTO productNoSpecDTO = new ProductNoSpecDTO();
-        //spu信息
-        productInfoDTO.setName(IdUtil.getSnowflake().nextIdStr());
+
 
 /*        BasicCategoryEntity categoryByName = basicCategoryService.getCategoryByName(dto.getCategory());
         if (!ObjectUtils.isEmpty(categoryByName)) {

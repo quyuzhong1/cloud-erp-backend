@@ -79,5 +79,5 @@ public interface SoReturnReceiveDetailService extends SuperService<SoReturnRecei
      * @param ids
      * @return java.util.List<com.erp.model.wms.entity.SoReturnReceiveDetailEntity>
      **/
-    List<SoReturnReceiveDetailEntity> listSoDetailByIds(List<String> ids);
+    List<SoReturnReceiveDetailEntity> listDetailByIds(List<String> ids);
 }

@@ -42,13 +42,13 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
     private String skuNo;
 
     /**
-     * 退货数量
+     * 应退数量
      */
     @TableField("must_qty")
     private Integer mustQty;
 
     /**
-     * 退货数量
+     * 签收数量
      */
     @TableField("receive_qty")
     private Integer receiveQty;
@@ -89,6 +89,11 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
     @TableField("source_detail_id")
     private String sourceDetailId;
 
+    /**
+     * 审核状态
+     */
+    @TableField(exist = false)
+    private String approveStatus;
 
     public static final String MAIN_ID = "main_id";
 

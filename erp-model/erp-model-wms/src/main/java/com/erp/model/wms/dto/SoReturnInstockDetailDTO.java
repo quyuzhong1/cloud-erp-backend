@@ -43,7 +43,7 @@ public class SoReturnInstockDetailDTO {
         /**
          * 退货原因
          */
-        private String returnReason;
+        private String returnReasonDict;
         /**
          * 仓位
          */
@@ -134,6 +134,10 @@ public class SoReturnInstockDetailDTO {
          * sku编号
          */
         private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
         /**
          * 销售数量
          */

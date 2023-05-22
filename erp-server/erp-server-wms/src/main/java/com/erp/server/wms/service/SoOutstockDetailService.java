@@ -66,5 +66,5 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @param detailList
      * @return void
      */
-    void checkOutQty(String sourceId, String sourceType, List<SoOutstockDetiailDTO.AddDTO> detailList);
+    void checkOutQty(String warehouseId,String soId,String sourceId, String sourceType, List<SoOutstockDetiailDTO.AddDTO> detailList);
 }

@@ -105,7 +105,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String sourceId = dto.getSourceId();
 
         //检查出库数量
-        soOutstockDetailService.checkOutQty(sourceId,sourceType,dto.getDetailList());
+        soOutstockDetailService.checkOutQty(dto.getWarehouseId(),dto.getSoId(),sourceId,sourceType,dto.getDetailList());
 
 
         SoOutstockEntity soOutstock = new SoOutstockEntity();
