@@ -49,4 +49,10 @@ public class InitStockDetailEntity  extends BaseEntity<InitStockDetailEntity> {
     @TableField("warehouse_location")
     private String warehouseLocation;
 
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
 }

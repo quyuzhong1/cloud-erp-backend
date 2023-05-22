@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * @Classname: TransactionFlowService
- * @Description: TODO
+ * @Description:
  * @CreateTime: 2023-04-25  19:43
  * @Author: zhangchunlin
  */
@@ -69,5 +69,11 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
      * @return
      */
     PagingVO<InventoryDTO.InOutStockSummaryPagingViewDTO> pagingSummary(PagingDTO<InventoryDTO.InOutStockSummarySearchParamDTO> pagingParamDTO);
+
+    /**
+     * 导出出入库列表Excel
+     * @param param
+     */
+    void exportSummaryExcel(InventoryDTO.InOutStockSummarySearchParamDTO param, HttpServletResponse response);
 
 }

@@ -149,6 +149,13 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(viewDTO.getOrgId());
         viewDTO.setOrgName(sysAccountingCompanyEntity.getCompanyName());
 
+        // 状态
+        viewDTO.setApproveStatus(entity.getApproveStatus());
+        ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(entity.getApproveStatus());
+        if(Objects.nonNull(approveStatusEnum)) {
+            viewDTO.setApproveStatusName(approveStatusEnum.getName());
+        }
+
         List<InitStockDetailDTO.ViewDTO> members = BeanMapperUtils.copyList(InitStockDetailDTO.ViewDTO.class, entityMembers);
         // 获取SKU产品名称
         List<String> skuIds = members.stream().map(InitStockDetailDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList());

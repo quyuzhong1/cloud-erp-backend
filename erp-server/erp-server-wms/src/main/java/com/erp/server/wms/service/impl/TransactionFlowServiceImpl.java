@@ -1,7 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -33,6 +32,11 @@ import com.erp.server.wms.service.TransactionFlowService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -181,6 +185,51 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         IPage<InventoryDTO.InOutStockSummaryPagingViewDTO> pageData = this.baseMapper.pagingList(query, pagingParamDTO.getParams());
         fillTransactionSummary(pageData.getRecords(), pagingParamDTO.getParams().getDateList());
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public void exportSummaryExcel(InventoryDTO.InOutStockSummarySearchParamDTO param, HttpServletResponse response) {
+        List<InventoryDTO.InOutStockSummaryPagingViewDTO> dataList = this.baseMapper.exportSummaryList(param);
+        fillTransactionSummary(dataList, param.getDateList());
+        // 声明一个工作簿
+        XSSFWorkbook wb = new XSSFWorkbook();
+        // 创建sheet页
+        XSSFSheet sheet = wb.createSheet("出入库列表");
+        sheet.setDefaultColumnWidth(19);
+        XSSFRow rowTitle0 = sheet.createRow(0);// 第一行标题
+        Cell cell = rowTitle0.createCell(0);
+        cell.setCellValue("");
+        cell = rowTitle0.createCell(1);
+        cell.setCellValue("");
+        cell = rowTitle0.createCell(2);
+        cell.setCellValue("");
+        cell = rowTitle0.createCell(3);
+        cell.setCellValue("");
+        cell = rowTitle0.createCell(4);
+        cell.setCellValue("入库");
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 4, 5));
+        cell = rowTitle0.createCell(4);
+        cell.setCellValue("出库");
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 6, 7));
+
+        XSSFRow rowTitle1 = sheet.createRow(1);// 第二行标题
+        cell = rowTitle1.createCell(0);
+        cell.setCellValue("产品信息");
+        cell = rowTitle1.createCell(1);
+        cell.setCellValue("SPU型号");
+        cell = rowTitle1.createCell(2);
+        cell.setCellValue("仓库名称");
+        cell = rowTitle1.createCell(3);
+        cell.setCellValue("期初库存");
+        cell = rowTitle1.createCell(4);
+        cell.setCellValue("入库汇总");
+        cell = rowTitle1.createCell(5);
+        cell.setCellValue("入库类型/数量");
+        cell = rowTitle1.createCell(6);
+        cell.setCellValue("出库汇总");
+        cell = rowTitle1.createCell(7);
+        cell.setCellValue("出库类型/数量");
+
     }
 
     /**

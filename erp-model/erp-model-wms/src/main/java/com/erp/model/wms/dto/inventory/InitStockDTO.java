@@ -126,6 +126,16 @@ public class InitStockDTO implements Serializable {
         private String orgName;
 
         /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatusName;
+
+        /**
          * 期初库存产品明细
          */
         private List<InitStockDetailDTO.ViewDTO> details;

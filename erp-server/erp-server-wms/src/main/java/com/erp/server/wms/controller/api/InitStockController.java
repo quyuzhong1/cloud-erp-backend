@@ -189,7 +189,7 @@ public class InitStockController extends BaseController {
      * @return
      */
     @PostMapping("/importFile")
-    public ApiResult<InitStockDetailDTO.ImportDTO> importFile(@RequestParam("multipartFile") MultipartFile file, HttpServletResponse response) {
+    public ApiResult<InitStockDetailDTO.ImportDTO> importFile(@RequestParam("excelFile") MultipartFile file, HttpServletResponse response) {
         return success(initStockService.importFile(file, response));
     }
 
