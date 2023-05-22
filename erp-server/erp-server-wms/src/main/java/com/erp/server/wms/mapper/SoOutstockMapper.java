@@ -22,4 +22,6 @@ import java.util.List;
 public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
 
     IPage<SoOutstockDTO.PagingViewDTO> paging(Page query, @Param("params") SoOutstockDTO.PagingParamDTO params,@Param("approveList") List<String> approveList);
+
+    List<SoOutstockDTO.PagingViewDTO> listExport(@Param("params") SoOutstockDTO.ExportDTO dto,@Param("approveList") List<String> approveList);
 }

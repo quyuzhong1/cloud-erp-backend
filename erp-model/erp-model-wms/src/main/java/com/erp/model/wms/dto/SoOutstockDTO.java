@@ -61,10 +61,23 @@ public class SoOutstockDTO implements Serializable {
          */
         private String code;
 
+
+        /**
+         * 销售订单id
+         */
+        private String soId;
+
         /**
          * 销售订单code
          */
         private String soCode;
+
+
+        /**
+         * 来源code
+         * 对应发货通知单code
+         */
+        private String sourceCode;
 
 
         /**
@@ -97,7 +110,7 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 作废状态名
          */
-        private Boolean invalidStatusName;
+        private String invalidStatusName;
 
 
         /**
@@ -111,9 +124,15 @@ public class SoOutstockDTO implements Serializable {
         private String customerName;
 
         /**
-         * 销售组织
+         * 仓库id
          */
-        private String salesOrgId;
+        private String warehouseId;
+
+        /**
+         * 出货仓库
+         */
+        private String warehouseName;
+
 
         /**
          * 销售组织名
@@ -131,15 +150,6 @@ public class SoOutstockDTO implements Serializable {
         private String deliveryOrgName;
 
 
-        /**
-         * 承运商id 来源供应商
-         */
-        private String carrierId;
-
-        /**
-         * 承运商 来源供应商
-         */
-        private String carrierName;
 
         /**
          * 出库 日期
@@ -173,6 +183,11 @@ public class SoOutstockDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+
+        /**
+         * 单位
+         */
+        private String unit;
 
         /**
          * 应发数量

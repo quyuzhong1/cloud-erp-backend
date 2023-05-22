@@ -411,12 +411,11 @@ public class SoInfoDTO implements Serializable {
         private String telNumber;
 
 
-
         /**
          * 收货人地址
          * 来源 http://172.16.100.11:3002/project/110/interface/api/13561
-         *
-         *  这个是地址下拉 http://172.16.100.11:3002/project/110/interface/api/13786
+         * <p>
+         * 这个是地址下拉 http://172.16.100.11:3002/project/110/interface/api/13786
          */
         private String receiveAddressId;
 
@@ -450,7 +449,7 @@ public class SoInfoDTO implements Serializable {
 
 
         @Valid
-        @Size(min = 1,message = "销售订单至少要需要添加一个sku",groups = {AddGroup.class})
+        @Size(min = 1, message = "销售订单至少要需要添加一个sku", groups = {AddGroup.class})
         private List<SoDetailDTO.AddDTO> detailList;
 
     }
@@ -737,6 +736,7 @@ public class SoInfoDTO implements Serializable {
     public static class CustomerDTO {
 
 
+        private String id;
         /**
          * 单据类型
          */
@@ -747,7 +747,7 @@ public class SoInfoDTO implements Serializable {
         private LocalDateTime createTime;
 
         /**
-         *审核状态
+         * 审核状态
          */
         private ApproveStatusEnum approveStatus;
 
@@ -1015,7 +1015,6 @@ public class SoInfoDTO implements Serializable {
          */
         private String remark;
     }
-
 
 
 }
