@@ -1,4 +1,4 @@
-package com.erp.model.wms.enums;
+package com.common.business.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -9,8 +9,9 @@ import java.util.Objects;
 
 @NoArgsConstructor
 public enum SourceTypeEnum {
-    //WMS
     SELF_ADD("selfAdd", "手动新增"),
+
+    //WMS
     PURCHASE_ORDER("purchaseOrder", "采购订单"),
     PURCHASE_STOCK_IN("purchaseStockIn", "采购入库单"),
     QC_BILL("qcBill", "质检单"),

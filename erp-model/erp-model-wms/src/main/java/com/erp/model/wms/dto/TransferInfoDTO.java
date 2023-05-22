@@ -1,8 +1,8 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
-import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.erp.model.wms.enums.TransferTypeEnum;
 import lombok.Data;

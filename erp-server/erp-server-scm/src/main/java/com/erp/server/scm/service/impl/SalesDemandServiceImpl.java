@@ -16,6 +16,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -63,6 +64,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -439,6 +441,29 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         resultDTO.setType(PurchaseListTypeEnum.TO_BE_APPROVE.getCode());
         list.add(resultDTO);
         return list;
+    }
+
+    @Override
+    public Boolean generateSalesDemand(ValidList<SalesDemandDTO.GenerateSalesDemandDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        Map<String, List<SalesDemandDTO.GenerateSalesDemandDTO>> map = list.stream().collect(Collectors.groupingBy(SalesDemandDTO.GenerateSalesDemandDTO::getSourceId));
+        for (Map.Entry<String, List<SalesDemandDTO.GenerateSalesDemandDTO>> entry : map.entrySet()) {
+            List<SalesDemandDTO.GenerateSalesDemandDTO> value = entry.getValue();
+            SalesDemandDTO.AddDTO addDTO = new SalesDemandDTO.AddDTO();
+            addDTO.setApplyDate(LocalDate.now());
+            addDTO.setIsFirstMassProduct(Boolean.TRUE);
+
+            List<SalesDemandDetailDTO.AddDTO> addDetailList = new ArrayList<>();
+            for (SalesDemandDTO.GenerateSalesDemandDTO dto : value) {
+                //备货申请明细
+                SalesDemandDetailDTO.AddDTO addDetailDTO = new SalesDemandDetailDTO.AddDTO();
+
+            }
+        }
+
+        return null;
     }
 
     /**

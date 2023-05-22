@@ -1,14 +1,13 @@
 package com.erp.model.scm.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -285,4 +284,66 @@ public class SalesDemandDTO implements Serializable {
         private String approveStatus;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class GenerateSalesDemandDTO {
+
+        /**
+         * 来源id
+         */
+        @NotBlank(message = "来源id不能为空")
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        @NotBlank(message = "来源编码不能为空")
+        private String sourceCode;
+
+        /**
+         * 来源明细id
+         */
+        @NotBlank(message = "来源明细id不能为空")
+        private String sourceDetailId;
+
+        /**
+         * 来源类型
+         */
+        @NotBlank(message = "来源类型不能为空")
+        @StateEnumValue(clazz = SourceTypeEnum.class, message = "来源类型有误")
+        private String sourceType;
+
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库id不能为空")
+        private String warehouseId;
+
+        /**
+         * skuId
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+
+        /**
+         * sku编号
+         */
+        @NotBlank(message = "sku编号不能为空")
+        private String skuNo;
+
+        /**
+         * 备货数量
+         */
+        @NotNull(message = "备货数量不能为空")
+        @Min(value = 1,message = "备货数量最小值为1")
+        @Max(value = 99999999,message = "备货数量最大值为99999999")
+        private Integer planStockQty;
+
+        /**
+         * 备注
+         */
+        @Size(max = 255,message = "备注不能大于255字符")
+        private String remark;
+    }
 }

@@ -38,7 +38,7 @@ public class TransferInfoDetailDTO implements Serializable {
         @NotNull(message = "数量不能为空")
         @Min(value = 1,message = "数量最小值为1")
         @Max(value = 99999999,message = "数量最大值为99999999")
-        private String  qty;
+        private Integer  qty;
 
         /**
          * 调入仓位id

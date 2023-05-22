@@ -7,6 +7,7 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
@@ -339,6 +341,17 @@ public class SalesDemandController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-
+    /**
+     * 下推备货申请单保存
+     * @author Will
+     * @date: 2023/5/22 18:15
+     * @param list
+     * @return ApiResult
+     */
+    @PostMapping(value = "/generateSalesDemand")
+    public ApiResult generateSalesDemand(@RequestBody @Valid ValidList<SalesDemandDTO.GenerateSalesDemandDTO> list) {
+        Boolean flag = salesDemandService.generateSalesDemand(list);
+        return flag == true ? success() : failure();
+    }
 
 }
