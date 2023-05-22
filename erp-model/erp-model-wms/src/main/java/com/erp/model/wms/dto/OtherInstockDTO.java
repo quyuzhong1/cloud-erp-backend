@@ -1,12 +1,16 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.InstockTypeEnum;
+import com.erp.model.wms.enums.InventoryDirectionEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -174,32 +178,37 @@ public class OtherInstockDTO implements Serializable {
         /**
          * 入库日期
          */
+        @NotNull(message = "入库日期不能为空")
         private LocalDate billDate;
 
         /**
          * 库存方向
          */
-        private String   inventoryDirection;
+        @NotBlank(message = "库存方向不能为空")
+        @StateEnumValue(clazz = InventoryDirectionEnum.class, message = "库存方向输入值有误")
+        private String inventoryDirection;
 
         /**
          * 仓管员id
          */
-        private String   warehouseKeeperId;
+        private String warehouseKeeperId;
 
         /**
-         * 验收员id
+         * 领料员id
          */
-        private String   receiverId;
+        private String receiverId;
 
         /**
          * 收货仓库id
          */
-        private String  warehouseId;
+        private String warehouseId;
 
         /**
          * 入库类型
          */
-        private String   type;
+        @NotBlank(message= "入库类型不能为空")
+        @StateEnumValue(clazz = InstockTypeEnum.class, message = "入库类型输入值有误")
+        private String type;
 
     }
 

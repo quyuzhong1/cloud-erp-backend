@@ -26,7 +26,7 @@ public class MachineDetailDTO implements Serializable {
         /**
          * skuId
          */
-        @NotBlank(message = "SKU不能为空")
+        @NotBlank(message = "skuId不能为空")
         private String skuId;
         /**
          * SKU
@@ -95,6 +95,11 @@ public class MachineDetailDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+
+        /**
+         * 单位
+         */
+        private String unit;
 
         /**
          * 即时库存

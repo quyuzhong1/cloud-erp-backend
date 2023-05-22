@@ -1,6 +1,9 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.TransferDirectionEnum;
+import com.erp.model.wms.enums.TransferTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -120,46 +123,57 @@ public class TransferApplicationDTO implements Serializable {
          * 主键ids
          */
         private List<String> ids;
+
         /**
          * 搜索类型
          */
         private String  searchType;
+
         /**
          * 其他出库编号
          */
         private String  code;
+
         /**
          * sku编码集合
          */
         private List<String>  skuNoList;
+
         /**
          * 审核状态集合
          */
         private List<String>  approveStatusList;
+
         /**
          * 作废状态
          */
         private Boolean  invalidStatus;
+
         /**
          * 调拨方向
          */
         private String  transferDirection;
+
         /**
          * 调拨日期集合
          */
         private List<LocalDate>  billDateList;
+
         /**
          * 调入仓库id集合
          */
         private List<String>  inWarehouseIdList;
+
         /**
          * 调出仓库id集合
          */
         private List<String>  outWarehouseIdList;
+
         /**
          * 创建人id集合
          */
         private List<String>  createUserIdList;
+
         /**
          * 创建时间集合
          */
@@ -191,6 +205,7 @@ public class TransferApplicationDTO implements Serializable {
          * 调拨类型
          */
         @NotBlank(message = "调拨类型不能为空")
+        @StateEnumValue(clazz = TransferTypeEnum.class, message = "调拨类型输入值有误")
         private String type;
         /**
          * 调拨日期
@@ -219,6 +234,7 @@ public class TransferApplicationDTO implements Serializable {
          * 调拨方向
          */
         @NotBlank(message = "调拨方向不能为空")
+        @StateEnumValue(clazz = TransferDirectionEnum.class, message = "调拨方向输入值有误")
         private String transferDirection;
         /**
          * 备注

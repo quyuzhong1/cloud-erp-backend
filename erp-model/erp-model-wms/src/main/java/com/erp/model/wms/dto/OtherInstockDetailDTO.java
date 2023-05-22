@@ -3,6 +3,7 @@ package com.erp.model.wms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.*;
 import java.io.Serializable;
 
 /**
@@ -22,16 +23,21 @@ public class OtherInstockDetailDTO implements Serializable {
         /**
          * skuId
          */
+        @NotBlank(message = "skuId不能为空")
         private String  skuId;
 
         /**
          * sku编码
          */
+        @NotBlank(message = "SKU不能为空")
         private String  skuNo;
 
         /**
          * 实收数量
          */
+        @NotNull(message = "实收数量不能为空")
+        @Min(value = 1,message = "实收数量最小值为1")
+        @Max(value = 999999999,message = "实收数量最大值为999999999")
         private String  actualQty;
 
         /**
@@ -42,6 +48,7 @@ public class OtherInstockDetailDTO implements Serializable {
         /**
          * 备注
          */
+        @Size(max = 255,message = "备注不能大于255字符")
         private String  remark;
 
     }
@@ -65,9 +72,8 @@ public class OtherInstockDetailDTO implements Serializable {
         private String productName;
 
         /**
-         * 收货仓库名称
+         * 单位
          */
-        private String warehouseName;
-
+        private String unit;
     }
 }
