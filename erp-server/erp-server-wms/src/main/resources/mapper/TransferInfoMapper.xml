@@ -116,7 +116,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        ti.create_time desc
+        ti.id desc,tid.id desc
     </select>
 
     <select id="listCount" resultType="java.lang.Integer">
@@ -226,7 +226,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        ti.create_time desc
+        ti.id desc,tid.id desc
     </select>
 
 </mapper>
