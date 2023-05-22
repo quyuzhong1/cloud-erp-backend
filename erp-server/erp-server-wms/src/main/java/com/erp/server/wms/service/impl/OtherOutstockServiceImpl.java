@@ -32,12 +32,15 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.OtherOutstockCustomerDTO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.dto.OtherOutstockDetailDTO;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.OtherOutstockCustomerEntity;
 import com.erp.model.wms.entity.OtherOutstockDetailEntity;
 import com.erp.model.wms.entity.OtherOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -362,7 +365,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             //更新单据(后面有流程了调用监听可删)
             updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
             //更新库存
-            //updateInventoryTransCore(list);
+            updateInventoryTransCore(list);
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("其他出库单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
             //中止当前审核流程
@@ -442,6 +445,45 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             throw new ServiceException(ApiError.ERROR_1015);
         }
         return Boolean.TRUE;
+    }
+
+    /**
+     * @description: 其他出库变更库存
+     * @author Will
+     * @date: 2023/5/22 17:26
+     * @param list
+     */
+    private void updateInventoryTransCore (List<OtherOutstockEntity> list) {
+        List<String> ids = list.stream().map(OtherOutstockEntity::getId).collect(Collectors.toList());
+        //其他入库明细
+        List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainIds(ids);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_99062);
+        }
+        List<InOutStockDTO>  inOutStockList = new ArrayList<>();
+        for (OtherOutstockDetailEntity detailEntity : detailList) {
+            //其他出库信息
+            OtherOutstockEntity entity = list.stream().filter(obj -> obj.getId().equals(detailEntity.getMainId())).findFirst().orElse(null);
+
+            //操作请求实体
+            InOutStockDTO inOutStockDTO = new InOutStockDTO();
+            inOutStockDTO.setSourceType(InventorySourceTypeEnum.OTHER_OUTSTOCK);
+            inOutStockDTO.setSourceId(entity.getId());
+            inOutStockDTO.setSourceCode(entity.getCode());
+            inOutStockDTO.setSourceDetailId(detailEntity.getId());
+            inOutStockDTO.setBillDate(entity.getBillDate());
+            inOutStockDTO.setSkuId(detailEntity.getSkuId());
+            inOutStockDTO.setSkuNo(detailEntity.getSkuNo());
+            inOutStockDTO.setQty(detailEntity.getActualQty());
+            inOutStockDTO.setWarehouseId(entity.getWarehouseId());
+            inOutStockDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
+            inOutStockList.add(inOutStockDTO);
+        }
+        //其他出库减少库存
+        InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+        inventoryInOutStockDTO.setMembers(inOutStockList);
+        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.OTHER_OUT.getCode());
+        inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
     }
 
     /**

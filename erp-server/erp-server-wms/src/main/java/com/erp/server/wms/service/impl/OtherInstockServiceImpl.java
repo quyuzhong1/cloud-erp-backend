@@ -446,7 +446,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //其他入库明细
         List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainIds(ids);
         if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_99053);
+            throw new ServiceException(ApiError.ERROR_99060);
         }
         List<InOutStockDTO>  inOutStockList = new ArrayList<>();
         for (OtherInstockDetailEntity detailEntity : detailList) {
