@@ -34,5 +34,5 @@ public interface SoReturnReceiveDetailMapper extends BaseMapper<SoReturnReceiveD
      * @param ids
      * @return java.util.List<com.erp.model.wms.entity.SoReturnReceiveDetailEntity>
      **/
-    List<SoReturnReceiveDetailEntity> listSoDetailByIds(@Param("ids") List<String> ids);
+    List<SoReturnReceiveDetailEntity> listDetailByIds(@Param("ids") List<String> ids);
 }

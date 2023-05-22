@@ -182,7 +182,6 @@ public class SoReturnInstockEntity extends BaseEntity<SoReturnInstockEntity> {
     @TableField("warehouse_name")
     private String warehouseName;
 
-
     public static final String APPROVE_STATUS = "approve_status";
 
     public static final String CODE = "code";

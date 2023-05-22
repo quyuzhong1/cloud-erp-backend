@@ -43,7 +43,7 @@ public class SoReturnInstockDetailDTO {
         /**
          * 退货原因
          */
-        private String returnReason;
+        private String returnReasonDict;
         /**
          * 仓位
          */

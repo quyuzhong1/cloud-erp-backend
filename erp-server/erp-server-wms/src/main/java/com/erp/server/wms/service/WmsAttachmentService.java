@@ -31,6 +31,16 @@ public interface WmsAttachmentService extends SuperService<WmsAttachmentEntity> 
      */
     void batchSave(List<String> attachmentUrlList, List<String> attachmentNameList, String type, String businessId);
 
+    /**
+     * 批量保存附件信息(不删除原有附件)
+     * @Author Luo_WG
+     * @Date 2023/5/22 16:08
+     * @param attachmentUrlList
+     * @param type
+     * @param businessId
+     * @return void
+     **/
+    void batchSaveNotDel(List<String> attachmentUrlList, List<String> attachmentNameList, String type, String businessId);
 
     /**
      * 根据业务表id获取附件信息

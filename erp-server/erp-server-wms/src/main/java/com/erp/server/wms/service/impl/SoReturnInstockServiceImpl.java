@@ -83,6 +83,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private WarehouseService warehouseService;
+
     /**
      * 根据退货单获取销售单已出库数量
      * @Author Luo_WG
@@ -226,12 +229,19 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         entity.setCustomerName(customerInfoEntity.getName());
+        entity.setInventoryOrgId(soInfoEntity.getWarehouseOrgId());
+        entity.setInventoryOrgName(soInfoEntity.getWarehouseOrgName());
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.THTZ, BusinessNoTypeEnum.CODE_THTZ.getCode()));
         entity.setCode(code);
         entity.setSourceId(dto.getSourceId());
         entity.setSourceCode(soReturnEntity.getCode());
         entity.setSourceType(soReturnEntity.getSourceType());
+        entity.setWarehouseId(dto.getWarehouseId());
+        entity.setBillDate(dto.getBillDate());
+        //获取仓库信息
+        WarehouseEntity warehouseEntity = warehouseService.getById(dto.getWarehouseId());
+        entity.setWarehouseName(warehouseEntity.getName());
         if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
             //获取用户信息
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
