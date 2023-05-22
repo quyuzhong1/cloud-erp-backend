@@ -2,12 +2,16 @@ package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.PoInstockDetailDTO;
+import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.model.oms.entity.SoDetailEntity;
@@ -15,10 +19,12 @@ import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.server.wms.mapper.SoDeliveryNoticeDetailMapper;
+import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SoDeliveryNoticeDetailService;
 import com.erp.server.wms.service.WmsAttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -41,6 +47,9 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
 
     @Resource
     private WmsAttachmentService wmsAttachmentService;
+
+    @Resource
+    private OperateLogService operateLogService;
 
     @Override
     public Boolean add(SoDeliveryNoticeDTO.Add dto, String id) {
@@ -82,11 +91,23 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
 
     @Override
     public Boolean update(SoDeliveryNoticeDTO.Update dto) {
+        List<SoDeliveryNoticeDetailDTO.Update> addList = dto.getDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
         List<String> detailIds = dto.getDetailList().stream().map(SoDeliveryNoticeDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByIds(detailIds);
         if (CollectionUtils.isEmpty(soDetailEntitieList)) {
             throw new ServiceException(ApiError.ERROR_92003);
         }
+        //原明细数据
+        List<SoDeliveryNoticeDetailEntity> oldList = this.listDetailByMainId(dto.getId());
+        List<String> deleteIds = getDeleteIds(dto.getDetailList(), oldList);
+        if (CollectionUtils.isNotEmpty(detailIds)) {
+            List<SoDeliveryNoticeDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PO_INSTOCK.getCode(),pairList,"编辑操作");
+            this.removeByIds(deleteIds);
+        }
+
         List<SoDeliveryNoticeDetailEntity> list = new ArrayList<>();
         List<SoDeliveryNoticeDetailEntity> detailEntityList = this.listDetailBySourceDetailIds(detailIds);
         for (SoDeliveryNoticeDetailDTO.Update detailDto : dto.getDetailList()) {
@@ -96,20 +117,53 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             if (StringUtils.isNotBlank(detailDto.getId())) {
                 soDeliveryNoticeDetailEntity.setId(detailDto.getId());
                 deliveryQty = detailEntityList.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && req.getId() != detailDto.getId()).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            } else {
+                String idStr = IdWorker.getIdStr();
+                detailDto.setId(idStr);
             }
             if (soDetailEntity.getQty() < detailDto.getDeliveryQty() + deliveryQty) {
-                throw new ServiceException(ApiError.ERROR_92009);
+                throw new ServiceException(ApiError.ERROR_92010);
             }
             soDeliveryNoticeDetailEntity.setMainId(detailDto.getMainId());
             soDeliveryNoticeDetailEntity.setSkuId(soDetailEntity.getSkuId());
             soDeliveryNoticeDetailEntity.setSkuNo(soDetailEntity.getSkuNo());
+            detailDto.setSkuNo(soDetailEntity.getSkuNo());
             soDeliveryNoticeDetailEntity.setDeliveryQty(detailDto.getDeliveryQty());
             soDeliveryNoticeDetailEntity.setIsClose(detailDto.getIsClose());
             soDeliveryNoticeDetailEntity.setRemark(detailDto.getRemark());
             soDeliveryNoticeDetailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+            Class<SoDeliveryNoticeDetailEntity> detailEntityClass = SoDeliveryNoticeDetailEntity.class;
+            TableName tableName = detailEntityClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String type = tableName.value();
+            //保存附件
+            wmsAttachmentService.batchSave(detailDto.getAttachUrlList(), detailDto.getAttachNameList(), type, detailDto.getId());
+            //修改操作日志
+            if (StringUtils.isNotBlank(soDeliveryNoticeDetailEntity.getId())) {
+                SoDeliveryNoticeDetailEntity old = this.getById(soDeliveryNoticeDetailEntity.getId());
+                if (ObjectUtils.isEmpty(old)) {
+                    throw new ServiceException(ApiError.ERROR_98002);
+                }
+                operateLogService.addModuleOperateLogByObj(old,soDeliveryNoticeDetailEntity, ModuleTypeEnum.PO_INSTOCK.getCode(),dto.getId(),"",String.format("【%s】",old.getSkuNo()));
+            }
             list.add(soDeliveryNoticeDetailEntity);
         }
+
+        //添加操作日志
+        if (CollectionUtils.isNotEmpty(addList)) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(dto.getId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.PO_INSTOCK.getCode(), addPairList, "编辑操作");
+        }
         return this.saveOrUpdateBatch(list);
+    }
+
+
+    private List<String> getDeleteIds(List<SoDeliveryNoticeDetailDTO.Update> newList, List<SoDeliveryNoticeDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(SoDeliveryNoticeDetailDTO.Update::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(SoDeliveryNoticeDetailEntity
+                ::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 
     @Override

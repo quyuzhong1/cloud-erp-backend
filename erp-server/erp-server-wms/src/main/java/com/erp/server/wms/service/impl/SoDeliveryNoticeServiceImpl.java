@@ -258,6 +258,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeEntity.setSourceCode(soInfoEntity.getCode());
         soDeliveryNoticeEntity.setSourceType(dto.getSourceType());
         soDeliveryNoticeEntity.setDeliveryOrgId(dto.getDeliveryOrgId());
+        soDeliveryNoticeEntity.setTrackNo(dto.getTrackNo());
         soDeliveryNoticeEntity.setDeliveryOrgName(sysAccountingCompanyEntity.getCompanyName());
         if (StringUtils.isNotBlank(dto.getCarrierId())) {
             //获取采购单供应商信息
@@ -539,7 +540,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
         //操作日志
         List<Pair<String, String>> pairList = deliveryNoticeEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("发货通知单【%s】取消流程", ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "取消流程操作");
+        operateLogService.batchAddModuleOperateLog("发货通知单【%s】撤销流程", ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "撤销流程操作");
 
         return Boolean.TRUE;
     }
@@ -632,6 +633,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             pagingView.setUnit(productDetailEntity.getUnitName());
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             pagingView.setCustomerName(customerInfoEntity.getName());
+            pagingView.setDeliveryStatusName(pagingView.getDeliveryStatus() == Boolean.TRUE ? "已发货" : "未发货");
         }
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/soDeliveryNoticeExport.xlsx";
@@ -701,9 +703,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
 
             for (SoDeliveryNoticeDetailEntity detailEntity : detailEntities) {
-
+                //获取核算公司
+                SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
                 //查询可用库存生成拣货明细
-                PickingDetailDTO.InventoryParamDTO dto = new PickingDetailDTO.InventoryParamDTO(warehouseEntity.getOrgId(),warehouseEntity.getName(),entity.getWarehouseId(),
+                PickingDetailDTO.InventoryParamDTO dto = new PickingDetailDTO.InventoryParamDTO(warehouseEntity.getOrgId(),sysAccountingCompanyEntity.getCompanyName(),entity.getWarehouseId(),
                         entity.getWarehouseName(),detailEntity.getSkuId(),detailEntity.getSkuNo(),detailEntity.getDeliveryQty());
                 List<InventoryEntity> inventoryList = inventoryService.listPickingDetailInventory(dto);
 

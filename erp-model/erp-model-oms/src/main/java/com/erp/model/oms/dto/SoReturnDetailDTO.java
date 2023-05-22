@@ -138,7 +138,7 @@ public class SoReturnDetailDTO {
         /**
          * 退货类型
          */
-        private String returnType;
+        private String returnTypeDict;
         /**
          * 备注
          */

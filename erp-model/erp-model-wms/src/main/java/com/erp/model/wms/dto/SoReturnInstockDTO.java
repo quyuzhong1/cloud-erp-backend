@@ -40,9 +40,13 @@ public class SoReturnInstockDTO {
          */
         private String type;
         /**
+         * 退货类型
+         */
+        private String returnTypeDict;
+        /**
          * 审核状态
          */
-        private List<String> approveStatusLis;
+        private List<String> approveStatusList;
         /**
          * 作废状态
          */

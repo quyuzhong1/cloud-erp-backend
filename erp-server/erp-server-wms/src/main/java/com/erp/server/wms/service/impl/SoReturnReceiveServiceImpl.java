@@ -460,7 +460,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 .update();
         //操作日志
         List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("退货签收单【%s】取消流程", ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), pairList, "取消流程操作");
+        operateLogService.batchAddModuleOperateLog("退货签收单【%s】撤销流程", ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), pairList, "撤销流程操作");
 
         return Boolean.TRUE;
     }
