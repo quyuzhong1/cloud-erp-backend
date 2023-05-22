@@ -70,16 +70,10 @@ public class PoInstockDetailEntity extends BaseEntity<PoInstockDetailEntity> {
     private Integer receiveQty;
 
     /**
-     * 库位id
-     */
-    @TableField("warehouse_location_id")
-    private String warehouseLocationId;
-
-    /**
      * 库位名称
      */
-    @TableField("warehouse_location_name")
-    private String warehouseLocationName;
+    @TableField("warehouse_location")
+    private String warehouseLocation;
 
     /**
      * 备注
@@ -120,9 +114,7 @@ public class PoInstockDetailEntity extends BaseEntity<PoInstockDetailEntity> {
 
     public static final String EXCEED_QTY = "exceed_qty";
 
-    public static final String WAREHOUSE_LOCATION_ID = "warehouse_location_id";
-
-    public static final String WAREHOUSE_LOCATION_NAME = "warehouse_location_name";
+    public static final String WAREHOUSE_LOCATION = "warehouse_location";
 
     public static final String REMARK = "remark";
 
