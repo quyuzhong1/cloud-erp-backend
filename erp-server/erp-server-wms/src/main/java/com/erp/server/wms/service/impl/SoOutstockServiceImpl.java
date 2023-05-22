@@ -1,7 +1,9 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
@@ -9,9 +11,11 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -453,6 +457,49 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return resultList;
 
 
+    }
+
+    /**
+     * 分页列表
+     *
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.SoOutstockDTO.PagingViewDTO>
+     * @author yl
+     * @date 2023-05-22 8:56
+     */
+    @Override
+    public PagingVO<SoOutstockDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
+        SoOutstockDTO.PagingParamDTO params = dto.getParams();
+        params.setParam(dto.getParam());
+        String searchType = params.getSearchType();
+
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        //根据搜索类型获取到审核状态
+        List<String> approveList = listBySearchType(searchType);
+        IPage pageData = baseMapper.paging(query, params, approveList);
+
+
+
+        return null;
+    }
+
+    private List<String> listBySearchType(String searchType) {
+        List<String> approveList = new ArrayList<>();
+        //待审核
+        if (SearchType.WAIT_APPROVE.equals(searchType)) {
+            approveList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+        }
+
+        //已审核
+        if (ApproveStatusEnum.APPROVE.getStatus().equals(searchType)) {
+            approveList.add(ApproveStatusEnum.APPROVE.getStatus());
+        }
+
+        //审核不通过
+        if (ApproveStatusEnum.REJECT.getStatus().equals(searchType)) {
+            approveList.add(ApproveStatusEnum.REJECT.getStatus());
+        }
+        return approveList;
     }
 
 

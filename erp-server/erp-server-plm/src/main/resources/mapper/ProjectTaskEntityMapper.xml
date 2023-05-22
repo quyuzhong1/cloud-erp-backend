@@ -15,6 +15,7 @@
             pt.plan_end_time as planEndTime,
             pt.priority,
             pt.status,
+            pt.schedule_status,
             pt.is_fixed as isFixed,
             pt.charge_name as chargeName,
             pt.quote_sys_task_id as quoteSysTaskId,
@@ -292,6 +293,7 @@
             pt.plan_end_time as planEndTime,
             pt.priority,
             pt.status,
+            pt.schedule_status,
             pt.is_fixed as isFixed,
             pt.charge_name as chargeName,
             pt.quote_sys_task_id as quoteSysTaskId,
@@ -573,7 +575,7 @@
 
     <select id="listProductTaskBySearchCategory" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
         SELECT
-        pt.id,
+               pt.id,
                pt.pid,
                pt.phase_id as phaseId,
                pt.phase_name as phaseName,
@@ -584,6 +586,7 @@
                pt.priority,
                pt.status,
                pt.is_fixed as isFixed,
+               pt.schedule_status,
                pt.charge_name as chargeName,
                pt.quote_sys_task_id as quoteSysTaskId,
                pt.product_id as productId,

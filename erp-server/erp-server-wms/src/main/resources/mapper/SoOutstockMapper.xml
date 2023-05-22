@@ -3,5 +3,40 @@
 <mapper namespace="com.erp.server.wms.mapper.SoOutstockMapper">
 
 
+    <select id="paging" resultType="com.erp.model.wms.dto.SoOutstockDTO$PagingViewDTO">
+        SELECT
+           id,
+           code,
+           so_id,
 
+           so_code,
+           approve_status,
+           delivery_org_name,
+           carrier_id,
+           carrier_name,
+           invalid_status,
+           plan_delivery_date,
+           actual_delivery_date,
+           pack_date,warehouse_name,
+           sku_id,sku_no,
+           plan_qty,actual_qty,
+           source_detail_id
+        FROM so_outstock so
+        INNER JOIN so_outstock_detail sod
+        ON so.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </select>
 </mapper>
