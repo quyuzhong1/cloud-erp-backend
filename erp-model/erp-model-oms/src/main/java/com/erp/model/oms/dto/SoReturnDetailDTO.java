@@ -72,6 +72,10 @@ public class SoReturnDetailDTO {
          */
         private String remark;
         /**
+         * sku
+         */
+        private String skuNo;
+        /**
          * 销售单明细表id
          */
         private String sourceDetailId;

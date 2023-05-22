@@ -91,7 +91,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
 
     @Override
     public Boolean update(SoDeliveryNoticeDTO.Update dto) {
-        List<SoDeliveryNoticeDetailDTO.Update> addList = dto.getDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        List<String> addList = dto.getDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).map(SoDeliveryNoticeDetailDTO.Update::getId).collect(Collectors.toList());
         List<String> detailIds = dto.getDetailList().stream().map(SoDeliveryNoticeDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByIds(detailIds);
         if (CollectionUtils.isEmpty(soDetailEntitieList)) {
@@ -100,11 +100,11 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         //原明细数据
         List<SoDeliveryNoticeDetailEntity> oldList = this.listDetailByMainId(dto.getId());
         List<String> deleteIds = getDeleteIds(dto.getDetailList(), oldList);
-        if (CollectionUtils.isNotEmpty(detailIds)) {
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<SoDeliveryNoticeDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PO_INSTOCK.getCode(),pairList,"编辑操作");
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
 
@@ -144,15 +144,16 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_98002);
                 }
-                operateLogService.addModuleOperateLogByObj(old,soDeliveryNoticeDetailEntity, ModuleTypeEnum.PO_INSTOCK.getCode(),dto.getId(),"",String.format("【%s】",old.getSkuNo()));
+                operateLogService.addModuleOperateLogByObj(old,soDeliveryNoticeDetailEntity, ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),dto.getId(),"",String.format("【%s】",old.getSkuNo()));
             }
             list.add(soDeliveryNoticeDetailEntity);
         }
 
         //添加操作日志
         if (CollectionUtils.isNotEmpty(addList)) {
-            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(dto.getId(), obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.PO_INSTOCK.getCode(), addPairList, "编辑操作");
+            List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntities = this.listByIds(addList);
+            List<Pair<String, String>> addPairList = soDeliveryNoticeDetailEntities.stream().map(obj -> new Pair<>(dto.getId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), addPairList, "编辑操作");
         }
         return this.saveOrUpdateBatch(list);
     }
