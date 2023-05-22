@@ -20,6 +20,7 @@ import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -34,6 +35,7 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.constant.OmsConstant;
 import com.erp.server.oms.listener.SoDetailExcelListener;
 import com.erp.server.oms.mapper.SoDetailMapper;
+import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import com.erp.server.oms.service.SoReturnDetailService;
@@ -89,6 +91,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private OperateLogService operateLogService;
 
 
     /**
@@ -369,6 +374,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
         List<Pair<String, String>> pairList = updateList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         List<String> deleteIdList = getDeleteIds(pairList, dbList);
+        List<SoDetailEntity> removeList = dbList.stream().filter(r -> deleteIdList.contains(r.getId())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             this.removeByIds(deleteIdList);
         }
@@ -401,6 +407,23 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
             item.setCurrencySymbol(symbol);
         }
+        //这是删除
+        List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("删除了一个销售产品【%s】", ModuleTypeEnum.SO.getCode(), removePairList, "编辑操作");
+
+        //这是添加
+        List<Pair<String, String>> addPairList = saveOrUpdateList.stream().filter(s->StringUtils.isBlank(s.getId())). map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("添加了一个销售产品【%s】", ModuleTypeEnum.SO.getCode(), addPairList, "编辑操作");
+        //修改的
+        updateEntityList=saveOrUpdateList.stream().filter(s->StringUtils.isNotBlank(s.getId())).collect(Collectors.toList());
+        for (SoDetailEntity update : updateEntityList) {
+            String id = update.getId();
+            SoDetailEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
+            if(old!=null){
+                operateLogService.addModuleOperateLogByObj(old,update, ModuleTypeEnum.SO.getCode(),mainId,"","");
+            }
+        }
+
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
 
@@ -729,6 +752,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         String warehouseId = soInfo.getWarehouseId();
 
         List<SoDetailEntity> dbList = this.listBaseByMainId(soId);
+        //获取未关闭的数据
+        dbList=dbList.stream().filter(s->s.getIsClose()).collect(Collectors.toList());
         List<SoDetailDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, SoDetailDTO.ViewDTO.class);
         List<String> skuIdList = resultList.stream().map(SoDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);

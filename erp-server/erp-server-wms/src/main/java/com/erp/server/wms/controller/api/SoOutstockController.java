@@ -143,8 +143,15 @@ public class SoOutstockController extends BaseController {
      * @return
      */
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:outstock:update",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "id"
+    )
     public ApiResult update(@RequestBody @Validated SoOutstockDTO.UpdateDTO dto) {
-        return success(null);
+        String id=soOutstockService.updateSoOutstock(dto);
+        return StringUtils.isNotBlank(id)? success():failure();
     }
 
     /**
@@ -154,8 +161,15 @@ public class SoOutstockController extends BaseController {
      * @return
      */
     @PostMapping("/updateAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:so:outstock:updateAndSubmit",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "id"
+    )
     public ApiResult updateAndSubmit(@RequestBody @Validated SoOutstockDTO.UpdateDTO dto) {
-        return success(null);
+        Boolean result=soOutstockService.updateAndSubmit(dto);
+        return result?success(null):failure();
     }
 
 

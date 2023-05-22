@@ -543,6 +543,7 @@ public enum ApiError implements Serializable {
     ERROR_92028(92028,"应发数量不能大于可出数量"),
     ERROR_92029(92029,"销售出库单详情不能为空"),
     ERROR_92030(92030,"应发数量不能大于库存数量"),
+    ERROR_92031(92031,"应发数量不等于发货数量"),
 
     ERROR_end(1000000, "系统错误");
 

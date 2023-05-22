@@ -66,5 +66,16 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @param detailList
      * @return void
      */
-    void checkOutQty(String warehouseId,String soId,String sourceId, String sourceType, List<SoOutstockDetiailDTO.AddDTO> detailList);
+    void checkOutQty(String warehouseId,String soId,String sourceId, String sourceType, List<SoOutstockDetiailDTO.UpdateDTO> detailList);
+
+    
+    /**
+     * 修改明细信息
+     * @author yl
+     * @date 2023-05-22 18:19
+     * @param id
+     * @param detailList
+     * @return void
+     */
+    void updateDetail(String id, List<SoOutstockDetiailDTO.UpdateDTO> detailList);
 }

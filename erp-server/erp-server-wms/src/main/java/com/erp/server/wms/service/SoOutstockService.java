@@ -143,4 +143,23 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return java.lang.Boolean
      */
     Boolean exportExcel(SoOutstockDTO.ExportDTO dto, HttpServletResponse response);
+
+    
+    /**
+     * 修改销售出库单
+     * @author yl
+     * @date 2023-05-22 17:58
+     * @param dto
+     * @return java.lang.String
+     */
+    String updateSoOutstock(SoOutstockDTO.UpdateDTO dto);
+
+    /**
+     * 修改并提交
+     * @author yl
+     * @date 2023-05-22 19:04
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateAndSubmit(SoOutstockDTO.UpdateDTO dto);
 }
