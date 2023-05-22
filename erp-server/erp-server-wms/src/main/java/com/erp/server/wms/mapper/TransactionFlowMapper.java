@@ -71,6 +71,6 @@ public interface TransactionFlowMapper extends BaseMapper<TransactionFlowEntity>
      * @param params
      * @return
      */
-    List<InventoryDTO.InOutStockSummaryPagingViewDTO> exportSummaryList(@Param("params") InventoryDTO.InOutStockSummarySearchParamDTO params);
+    List<InventoryDTO.InOutStockSummaryPagingViewDTO> exportSummaryList(@Param("params") InventoryDTO.ExcelInOutStockSummarySearchParamDTO params);
 
 }

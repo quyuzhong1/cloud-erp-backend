@@ -745,6 +745,11 @@ public class InventoryDTO {
         private String warehouseId;
 
         /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
          * sku id
          */
         private String skuId;

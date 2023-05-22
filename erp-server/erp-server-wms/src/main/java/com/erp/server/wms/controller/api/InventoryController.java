@@ -105,8 +105,8 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping(value = "/exportExcelInOutStockSummary")
-    public ApiResult<Void> exportExcelInOutStockSummary(@RequestBody InventoryDTO.ExcelInOutStockSummarySearchParamDTO dto, HttpServletResponse response) {
-        return null;
+    public void exportExcelInOutStockSummary(@RequestBody InventoryDTO.ExcelInOutStockSummarySearchParamDTO dto, HttpServletResponse response) {
+        transactionFlowService.exportSummaryExcel(dto, response);
     }
 
     /**

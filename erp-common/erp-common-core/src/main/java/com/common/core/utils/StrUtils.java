@@ -144,4 +144,38 @@ public class StrUtils {
         }
     }
 
+    /**
+     * 左补全字符
+     *
+     * @param w84PaddingStr 需要补全的字符
+     * @param digit         补全后字符的位数
+     * @param paddingStr    补全使用的字符
+     */
+    public static String leftPadding(String w84PaddingStr, int digit, String paddingStr) {
+        w84PaddingStr = null2EmptyWithTrim(w84PaddingStr);
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < digit - w84PaddingStr.length(); i++) {
+            sb.append(paddingStr);
+        }
+        sb.append(w84PaddingStr);
+        return sb.toString();
+    }
+
+    /**
+     * 右补全字符
+     *
+     * @param w84PaddingStr 需要补全的字符
+     * @param digit         补全后字符的位数
+     * @param paddingStr    补全使用的字符
+     */
+    public static String rightPadding(String w84PaddingStr, int digit, String paddingStr) {
+        w84PaddingStr = null2EmptyWithTrim(w84PaddingStr);
+        StringBuffer sb = new StringBuffer();
+        sb.append(w84PaddingStr);
+        for (int i = 0; i < digit - w84PaddingStr.length(); i++) {
+            sb.append(paddingStr);
+        }
+        return sb.toString();
+    }
+
 }

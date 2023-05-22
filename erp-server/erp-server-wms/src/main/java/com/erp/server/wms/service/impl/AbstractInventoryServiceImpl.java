@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.DistributedLockEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
@@ -141,8 +142,8 @@ public abstract class AbstractInventoryServiceImpl {
             TransactionFlowDTO transactionFlowDTO = InventoryUtils.wrapTransactionFlowInOutStock(param, txnFlow.getInventoryId(),inventoryBusinessType, txnFlow.getInventoryDetailId(), InventoryStatusEnum.of(txnFlow.getDictInventoryStatus()), txnFlow.getInstockBatchDate(), Math.abs(txnFlow.getQty()), txnFlow.getOrgId());
             transactionFlowDTO.setTransactionNo(transactionNo);
 
-            // 按照仓库+SKU进行锁定，暂不考虑库位，防止数据冲突
-            String lockKey = StrUtil.format( "{}:{}:{}",DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), txnFlow.getWarehouseId(), txnFlow.getSkuId());
+            // 按照仓库+SKU进行锁定，考虑库位，防止数据冲突
+            String lockKey = StrUtil.format( "{}:{}:{}:{}",DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), txnFlow.getWarehouseId(), StrUtils.null2EmptyWithTrim(txnFlow.getWarehouseLocation()), txnFlow.getSkuId());
             RReadWriteLock rwLock = redisson.getReadWriteLock(lockKey);
             RLock rlock = rwLock.writeLock();// 获取写锁
             boolean isLock;
@@ -256,7 +257,7 @@ public abstract class AbstractInventoryServiceImpl {
         LocalDate billDate = param.getBillDate();
         log.info("交易业务：【{}】，来源单据：【{}】，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走入库逻辑", businessType.getName(), sourceTypeEnum.getName(), param.getSourceId(), param.getSkuNo(), inventoryStatusEnum.getName());
         // 按照仓库+SKU进行锁定，暂不考虑库位，防止数据冲突
-        String lockKey = StrUtil.format( "{}:{}:{}", DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), warehouseId, skuId);
+        String lockKey = StrUtil.format( "{}:{}:{}:{}", DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), warehouseId, StrUtils.null2EmptyWithTrim(warehouseLocationId) ,skuId);
         RReadWriteLock rwLock = redisson.getReadWriteLock(lockKey);
         RLock rlock = rwLock.writeLock();// 获取写锁
         boolean isLock;
@@ -332,7 +333,7 @@ public abstract class AbstractInventoryServiceImpl {
         LocalDate billDate = param.getBillDate();
         log.info("交易业务：【{}】，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走出库逻辑", businessType.getName(), sourceTypeEnum.getName(), param.getSourceId(), inventoryStatusEnum.getName(), param.getSkuNo());
         // 按照仓库+SKU进行锁定，暂不考虑库位，防止数据冲突
-        String lockKey = StrUtil.format( "{}:{}:{}",DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), warehouseId, skuId);
+        String lockKey = StrUtil.format( "{}:{}:{}:{}",DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), warehouseId, StrUtils.null2EmptyWithTrim(warehouseLocationId), skuId);
         RReadWriteLock rwLock = redisson.getReadWriteLock(lockKey);
         RLock rlock = rwLock.writeLock();// 获取写锁
         boolean isLock;

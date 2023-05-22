@@ -5,16 +5,24 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.server.wms.service.InventoryStockService;
+import com.erp.server.wms.service.WarehouseLocationService;
+import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.utils.InventoryUtils;
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -28,8 +36,16 @@ import java.util.stream.Collectors;
 @Slf4j
 public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl implements InventoryStockService {
 
+    @Autowired
+    private WarehouseService warehouseService;
+
+    @Autowired
+    private WarehouseLocationService warehouseLocationService;
+
     @Override
     public <T extends InventoryStockBaseDTO> void checkParam(List<T> paramList, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRules) {
+        Map<String, WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
+        Map<String, WarehouseLocationEntity> warehouseLocationMap = Maps.newHashMap();
         for(InventoryStockBaseDTO baseParam : paramList) {
             if(baseParam instanceof TransferDTO) { // 调拨走交易规则
                 TransferDTO param = (TransferDTO)baseParam;
@@ -37,6 +53,29 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
 
                 //当前仓和目的仓不能一样
                 ValidatorUtil.isTrue(!Objects.equals(param.getCurWarehouseId(), param.getTargetWarehouseId()),()->new ServiceException(ApiError.ERROR_99039));
+
+                // 当前仓仓库和仓位信息
+                WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(param.getCurWarehouseId(),(v)->warehouseService.detailWithCache(v));
+                if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
+                    throw new ServiceException(ApiError.ERROR_99002);
+                }
+                if(StrUtils.isNotEmpty(param.getCurWarehouseLocation())) {
+                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getCurWarehouseLocation(),(v)->warehouseLocationService.getById(v));
+                    if(Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
+                        throw new ServiceException("仓位信息不存在");
+                    }
+                }
+                // 目的仓仓库和仓位信息
+                warehouseDetail = warehouseMap.computeIfAbsent(param.getTargetWarehouseId(),(v)->warehouseService.detailWithCache(v));
+                if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
+                    throw new ServiceException(ApiError.ERROR_99002);
+                }
+                if(StrUtils.isNotEmpty(param.getTargetWarehouseLocation())) {
+                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getTargetWarehouseLocation(),(v)->warehouseLocationService.getById(v));
+                    if(Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
+                        throw new ServiceException("仓位信息不存在");
+                    }
+                }
 
                 inventoryHelper.checkCommonBiz(param.getSourceType(), param.getSourceId(), param.getBillDate());// 通用检查
                 inventoryHelper.checkAllowTrade(param.getSourceType(), param.getCurWarehouseId(), param.getSkuNo());// 当前仓关账检查
@@ -73,6 +112,29 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
 
                 //当前仓和目的仓不能一样
                 ValidatorUtil.isTrue(!Objects.equals(param.getCurWarehouseId(), param.getTargetWarehouseId()),()->new ServiceException(ApiError.ERROR_99039));
+
+                // 当前仓仓库和仓位信息
+                WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(param.getCurWarehouseId(),(v)->warehouseService.detailWithCache(v));
+                if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
+                    throw new ServiceException(ApiError.ERROR_99002);
+                }
+                if(StrUtils.isNotEmpty(param.getCurWarehouseLocation())) {
+                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getCurWarehouseLocation(),(v)->warehouseLocationService.getById(v));
+                    if(Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
+                        throw new ServiceException("仓位信息不存在");
+                    }
+                }
+                // 目的仓仓库和仓位信息
+                warehouseDetail = warehouseMap.computeIfAbsent(param.getTargetWarehouseId(),(v)->warehouseService.detailWithCache(v));
+                if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
+                    throw new ServiceException(ApiError.ERROR_99002);
+                }
+                if(StrUtils.isNotEmpty(param.getTargetWarehouseLocation())) {
+                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getTargetWarehouseLocation(),(v)->warehouseLocationService.getById(v));
+                    if(Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
+                        throw new ServiceException("仓位信息不存在");
+                    }
+                }
 
                 inventoryHelper.checkCommonBiz(param.getSourceType(), param.getSourceId(), param.getBillDate());// 通用检查
                 inventoryHelper.checkAllowTrade(param.getSourceType(), param.getCurWarehouseId(), param.getSkuNo());// 当前仓关账检查

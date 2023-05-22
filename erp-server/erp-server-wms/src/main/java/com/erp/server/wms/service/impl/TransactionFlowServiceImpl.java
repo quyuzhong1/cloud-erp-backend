@@ -32,16 +32,17 @@ import com.erp.server.wms.service.TransactionFlowService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.apache.poi.ss.usermodel.Cell;
+import org.apache.commons.io.IOUtils;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.OutputStream;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -110,7 +111,6 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         transactionFlowEntity.setWarehouseId(param.getWarehouseId());
         transactionFlowEntity.setWarehouseName(warehouse.getName());
         transactionFlowEntity.setWarehouseLocation(param.getWarehouseLocation());
-        // TODO 暂时还没有库位表
         transactionFlowEntity.setDictInventoryStatus(param.getDictInventoryStatus());
         // 批次日期取库存明细表上关联的日期
         transactionFlowEntity.setInstockBatchDate(param.getInstockBatchDate());
@@ -188,15 +188,51 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     }
 
     @Override
-    public void exportSummaryExcel(InventoryDTO.InOutStockSummarySearchParamDTO param, HttpServletResponse response) {
+    public void exportSummaryExcel(InventoryDTO.ExcelInOutStockSummarySearchParamDTO param, HttpServletResponse response) {
+        OutputStream outputStream = null;
         List<InventoryDTO.InOutStockSummaryPagingViewDTO> dataList = this.baseMapper.exportSummaryList(param);
         fillTransactionSummary(dataList, param.getDateList());
         // 声明一个工作簿
         XSSFWorkbook wb = new XSSFWorkbook();
+        XSSFCellStyle contentCellStyle = wb.createCellStyle();
+        contentCellStyle.setAlignment(HorizontalAlignment.LEFT); // 水平居左
+        contentCellStyle.setVerticalAlignment(VerticalAlignment.CENTER); //垂直居中
+        contentCellStyle.setWrapText(true);//自动换行
+        contentCellStyle.setBorderBottom(BorderStyle.THIN); //下边框
+        contentCellStyle.setBorderLeft(BorderStyle.THIN);//左边框
+        contentCellStyle.setBorderTop(BorderStyle.THIN);//上边框
+        contentCellStyle.setBorderRight(BorderStyle.THIN);//右边框
+
+        Font titleFont = wb.createFont();
+        titleFont.setBold(true);
+        titleFont.setFontHeightInPoints((short) 13);
+        CellStyle titleStyle = wb.createCellStyle();
+        //设置水平居中
+        titleStyle.setAlignment(HorizontalAlignment.LEFT);
+        //设置垂直对齐的样式为居中对齐;
+        titleStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        titleStyle.setFont(titleFont);
+        titleStyle.setBorderBottom(BorderStyle.THIN); //下边框
+        titleStyle.setBorderLeft(BorderStyle.THIN);//左边框
+        titleStyle.setBorderTop(BorderStyle.THIN);//上边框
+        titleStyle.setBorderRight(BorderStyle.THIN);//右边框
+
+        CellStyle titleNoBorderStyle = wb.createCellStyle();
+        //设置水平居中
+        titleNoBorderStyle.setAlignment(HorizontalAlignment.LEFT);
+        //设置垂直对齐的样式为居中对齐;
+        titleNoBorderStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        titleNoBorderStyle.setFont(titleFont);
+
         // 创建sheet页
         XSSFSheet sheet = wb.createSheet("出入库列表");
-        sheet.setDefaultColumnWidth(19);
-        XSSFRow rowTitle0 = sheet.createRow(0);// 第一行标题
+        sheet.setDefaultColumnWidth(1 * 256);
+        sheet.setColumnWidth(0, 30 * 256);
+        sheet.setColumnWidth(5, 40 * 256);
+        sheet.setColumnWidth(7, 40 * 256);
+
+        int rowNo = 0;
+        XSSFRow rowTitle0 = sheet.createRow(rowNo);// 第一行标题
         Cell cell = rowTitle0.createCell(0);
         cell.setCellValue("");
         cell = rowTitle0.createCell(1);
@@ -206,29 +242,94 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         cell = rowTitle0.createCell(3);
         cell.setCellValue("");
         cell = rowTitle0.createCell(4);
+        cell.setCellStyle(titleNoBorderStyle);
         cell.setCellValue("入库");
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 4, 5));
-        cell = rowTitle0.createCell(4);
+        cell = rowTitle0.createCell(6);
+        cell.setCellStyle(titleNoBorderStyle);
         cell.setCellValue("出库");
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 6, 7));
 
-        XSSFRow rowTitle1 = sheet.createRow(1);// 第二行标题
+        ++rowNo;
+        XSSFRow rowTitle1 = sheet.createRow(rowNo);// 第二行标题
         cell = rowTitle1.createCell(0);
+        cell.setCellStyle(titleStyle);
         cell.setCellValue("产品信息");
         cell = rowTitle1.createCell(1);
+        cell.setCellStyle(titleStyle);
         cell.setCellValue("SPU型号");
         cell = rowTitle1.createCell(2);
+        cell.setCellStyle(titleStyle);
         cell.setCellValue("仓库名称");
         cell = rowTitle1.createCell(3);
+        cell.setCellStyle(titleStyle);
         cell.setCellValue("期初库存");
         cell = rowTitle1.createCell(4);
+        cell.setCellStyle(titleStyle);
         cell.setCellValue("入库汇总");
         cell = rowTitle1.createCell(5);
+        cell.setCellStyle(titleStyle);
         cell.setCellValue("入库类型/数量");
         cell = rowTitle1.createCell(6);
+        cell.setCellStyle(titleStyle);
         cell.setCellValue("出库汇总");
         cell = rowTitle1.createCell(7);
+        cell.setCellStyle(titleStyle);
         cell.setCellValue("出库类型/数量");
+
+        // 内容行
+        for(int i = 0;i < dataList.size();i++) {
+            InventoryDTO.InOutStockSummaryPagingViewDTO data = dataList.get(i);
+            ++rowNo;
+
+            XSSFRow rowContent = sheet.createRow(rowNo);
+            rowContent.setHeight((short) (40 * 20));
+            rowContent.setHeightInPoints((short) 50);
+            cell = rowContent.createCell(0);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtil.format("{}\n{}", data.getSkuNo(), data.getProductName()));
+            cell = rowContent.createCell(1);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getSpuNo()));
+            cell = rowContent.createCell(2);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getWarehouseName()));
+            cell = rowContent.createCell(3);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getInitQty()));
+            cell = rowContent.createCell(4);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getTotalInstockQty()));
+            cell = rowContent.createCell(5);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtil.format("采购入库：{}盘盈入库：{}\n其他入库：{}退货入库：{}\n调拨入库：{}加工入库：{}",
+                    StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getPurchaseInstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getInventoryProfitInstockQty()), 10, " "),
+                    StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getOtherInstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getSaleReturnQty()), 10, " "),
+                    StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getTransferInstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getMachineInstockQty()), 10, " " )));
+            cell = rowContent.createCell(6);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getTotalOutstockQty()));
+            cell = rowContent.createCell(7);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtil.format("采购退货：{}调拨出库：{}\n销售出库：{}盘亏出库：{}\n其他出库：{}加工出库：{}",
+                    StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getPurchaseReturnQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getTransferOutstockQty()), 10, " "),
+                    StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getSaleOutstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getInventoryLossOutstockQty()), 10, " "),
+                    StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getOtherOutstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getMachineOutstockQty()),10, " ") ));
+        }
+
+        String fileName = StrUtil.format("出入库列表数据{}.xlsx", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+        try {
+            response.setCharacterEncoding("utf-8");
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+            outputStream = response.getOutputStream();
+            wb.write(outputStream);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        } finally {
+            IOUtils.closeQuietly(outputStream);
+        }
 
     }
 
@@ -296,11 +397,17 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         if(CollUtil.isEmpty(dateList)) {
             dateList = Lists.newArrayList(LocalDate.now(), LocalDate.now());
         }
+        Map<String,WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
         for(InventoryDTO.InOutStockSummaryPagingViewDTO data : dataList) {
             if(skuMap.containsKey(data.getSkuId())) {
                 SkuVO skuVO = skuMap.get(data.getSkuId());
                 data.setProductName(skuVO.getSkuName());
                 data.setProductImgUrl(skuVO.getSkuImagesUrl());
+            }
+            // 仓库名称赋值
+            WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(data.getWarehouseId(), (v) -> warehouseService.detailWithCache(v));
+            if (Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+                data.setWarehouseName(warehouseDetail.getName());
             }
             // 查询期初库存（后续出现性能问题，单独出接口改前端调用）
             InitStockDTO.ConditionDTO condition = new InitStockDTO.ConditionDTO();

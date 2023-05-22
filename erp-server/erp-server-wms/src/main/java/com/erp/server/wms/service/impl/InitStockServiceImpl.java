@@ -541,6 +541,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
      * @param details
      */
     public void checkAddRepeateSku(InitStockDTO.AddDTO mainDTO, List<InitStockDetailDTO.AddDTO> details) {
+        WarehouseDTO.UpdateDTO warehouseDTO = warehouseService.detailWithCache(mainDTO.getWarehouseId());
         // 不允许出现重复的sku
         Map<String,List<InitStockDetailDTO.AddDTO>> skuMap = details.stream().collect(Collectors.groupingBy(InitStockDetailDTO.AddDTO::getSkuId));
         skuMap.forEach((skuId,skuIdList)->{
@@ -549,7 +550,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
             }
             // 同一个仓库相同SKU仅可添加一次（不包括已作废单据）
             Integer checkCnt = initStockDetailService.countCondition(mainDTO.getWarehouseId(), skuId, null);
-            ValidatorUtil.isTrue(checkCnt <= 0,()->new ServiceException(StrUtil.format("sku编码【{}】在仓库已经存在", skuIdList.get(0).getSkuNo())));
+            ValidatorUtil.isTrue(checkCnt <= 0,()->new ServiceException(StrUtil.format("sku编码【{}】在仓库【{}】中已经存在", skuIdList.get(0).getSkuNo(), warehouseDTO.getName())));
         });
 
     }
@@ -559,6 +560,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
      * @param details
      */
     public void checkUpdateRepeateSku(InitStockDTO.UpdateDTO mainDTO, List<InitStockDetailDTO.UpdateDTO> details, String mainId) {
+        WarehouseDTO.UpdateDTO warehouseDTO = warehouseService.detailWithCache(mainDTO.getWarehouseId());
         Map<String,List<InitStockDetailDTO.UpdateDTO>> skuMap = details.stream().collect(Collectors.groupingBy(InitStockDetailDTO.UpdateDTO::getSkuId));
         skuMap.forEach((skuId,members)->{
             // 不允许出现重复的sku
@@ -573,7 +575,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
             }
             // 同一个仓库相同SKU仅可添加一次（不包括已作废单据）,修改需排除本身
             Integer checkCnt = initStockDetailService.countCondition(mainDTO.getWarehouseId(), skuId, mainId);
-            ValidatorUtil.isTrue(checkCnt <= 0,()->new ServiceException(StrUtil.format("sku编码【{}】在仓库已经存在", member.getSkuNo())));
+            ValidatorUtil.isTrue(checkCnt <= 0,()->new ServiceException(StrUtil.format("sku编码【{}】在仓库【{}】中已经存在", member.getSkuNo(), warehouseDTO.getName())));
         });
     }
 

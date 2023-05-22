@@ -5,16 +5,24 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
+import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.server.wms.service.InventoryStockService;
+import com.erp.server.wms.service.WarehouseLocationService;
+import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.utils.InventoryUtils;
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -27,11 +35,31 @@ import java.util.Objects;
 @Service
 public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceImpl implements InventoryStockService {
 
+    @Autowired
+    private WarehouseService warehouseService;
+
+    @Autowired
+    private WarehouseLocationService warehouseLocationService;
+
     @Override
     public <T extends InventoryStockBaseDTO> void checkParam(List<T> paramList, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRules) {
+        Map<String, WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
+        Map<String, WarehouseLocationEntity> warehouseLocationMap = Maps.newHashMap();
         for(InventoryStockBaseDTO baseParam : paramList) {
             InOutStockDTO param = (InOutStockDTO)baseParam;
             ValidatorUtil.validateEntity(param);
+
+            WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(param.getWarehouseId(),(v)->warehouseService.detailWithCache(v));
+            if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
+                throw new ServiceException(ApiError.ERROR_99002);
+            }
+            if(StrUtils.isNotEmpty(param.getWarehouseLocation())) {
+                WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getWarehouseLocation(),(v)->warehouseLocationService.getById(v));
+                if(Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
+                    throw new ServiceException("仓位信息不存在");
+                }
+            }
+
             inventoryHelper.checkCommonBiz(param.getSourceType(), param.getSourceId(), param.getBillDate());// 通用检查
             inventoryHelper.checkAllowTrade(param.getSourceType(), param.getWarehouseId(), param.getSkuNo());// 关账检查
 

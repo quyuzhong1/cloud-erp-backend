@@ -105,7 +105,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         // 组织+仓库+库位+SKU+状态 确定唯一一条记录
         // 此处使用读写锁，避免并发情况下读取的数据不一致，读跟读之间不冲突，读写或写写冲突，暂不考虑库位
         InventoryStatusEnum inventoryStatus = InventoryStatusEnum.of(status);
-        String lockKey = StrUtil.format("{}:{}:{}", DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), warehouseId, skuId);
+        String lockKey = StrUtil.format("{}:{}:{}:{}", DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), warehouseId, StrUtils.null2EmptyWithTrim(warehouseLocationId), skuId);
         RReadWriteLock rwLock = redisson.getReadWriteLock(lockKey);
         RLock rlock = rwLock.readLock();
         boolean isLock;

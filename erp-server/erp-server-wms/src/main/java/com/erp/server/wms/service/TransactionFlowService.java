@@ -74,6 +74,6 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
      * 导出出入库列表Excel
      * @param param
      */
-    void exportSummaryExcel(InventoryDTO.InOutStockSummarySearchParamDTO param, HttpServletResponse response);
+    void exportSummaryExcel(InventoryDTO.ExcelInOutStockSummarySearchParamDTO param, HttpServletResponse response);
 
 }
