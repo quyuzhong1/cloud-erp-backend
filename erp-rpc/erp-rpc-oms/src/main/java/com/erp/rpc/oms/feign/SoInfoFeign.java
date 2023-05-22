@@ -23,4 +23,7 @@ public interface SoInfoFeign {
 
     @PostMapping("feign/soInfo/getSoBaseById")
     SoInfoDTO.CustomerDTO getSoBaseById(@RequestBody String id);
+
+    @PostMapping("feign/soInfo/listSoCustomerByIds")
+    List<SoInfoDTO.CustomerDTO> listSoCustomer(List<String> soIdList);
 }

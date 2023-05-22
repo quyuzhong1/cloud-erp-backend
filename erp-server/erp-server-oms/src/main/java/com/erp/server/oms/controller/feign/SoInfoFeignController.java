@@ -76,4 +76,17 @@ public class SoInfoFeignController extends BaseController {
         return soInfoService.getSoCustomer(id);
     }
 
+    /**
+     * 根据销售订单id 集合 获取到对应客户信息
+     * @author yl
+     * @date 2023-05-22 10:41
+     * @param soIdList
+     * @return com.erp.model.oms.dto.SoInfoDTO.CustomerDTO
+     */
+    @PostMapping("/listSoCustomerByIds")
+    public List<SoInfoDTO.CustomerDTO> listSoCustomerByIds(@RequestBody List<String> soIdList) {
+        return soInfoService.listSoCustomerByIds(soIdList);
+    }
+
+
 }

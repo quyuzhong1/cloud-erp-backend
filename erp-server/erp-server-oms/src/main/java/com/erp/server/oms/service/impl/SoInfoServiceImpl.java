@@ -214,8 +214,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         statusList.add(rejectStatus);
         statusList.add(waitSubmitStatus);
         String userName = commonService.getUserInfo().getUserName();
-
-
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
@@ -226,7 +224,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(rejectStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
-        Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(ingStatus),userName);
+        Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(ingStatus), userName);
         if (result) {
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", BillApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
@@ -610,12 +608,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-            result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(approveStatus),userName);
+            result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(approveStatus), userName);
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
         } else {
             //审核不通过
             String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
-            result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(rejectStatus),userName);
+            result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(rejectStatus), userName);
             content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
         }
         if (result) {
@@ -661,7 +659,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
-        Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(waitSubmitStatus),userName);
+        Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(waitSubmitStatus), userName);
         //反审核
         if (result) {
             //添加日志
@@ -694,7 +692,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String userName = commonService.getUserInfo().getUserName();
         //TODO 撤销流程
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(waitSubmitStatus),userName);
+        Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(waitSubmitStatus), userName);
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("销售订单【%s】取消流程", ModuleTypeEnum.SO.getCode(), pairList, "取消流程操作");
         return result;
@@ -1031,7 +1029,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         BigDecimal totalAmount = details.stream().map(SoDetailDTO.ExportPdfDTO::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         result.setTotalAmount(totalAmount);
         result.setDetails(details);
-        String  chineseAmount=  Convert.digitToChinese(totalAmount);
+        String chineseAmount = Convert.digitToChinese(totalAmount);
         result.setChineseAmount(chineseAmount);
         return result;
     }
@@ -1045,7 +1043,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //未审核完成不支持下推备货申请单
         SoInfoDTO.ViewGenerateSalesDemandDTO viewGenerateSalesDemandDTO = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).findFirst().orElse(null);
         if (ObjectUtils.isNotEmpty(viewGenerateSalesDemandDTO)) {
-            throw new ServiceException(ApiError.ERROR_92025.code,String.format(ApiError.ERROR_92025.msg,viewGenerateSalesDemandDTO.getSourceCode()));
+            throw new ServiceException(ApiError.ERROR_92025.code, String.format(ApiError.ERROR_92025.msg, viewGenerateSalesDemandDTO.getSourceCode()));
         }
 
         List<String> skuIds = list.stream().map(SoInfoDTO.ViewGenerateSalesDemandDTO::getSkuId).collect(Collectors.toList());
@@ -1098,6 +1096,35 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
 
     /**
+     * 方法说明
+     *
+     * @param soIdList
+     * @return com.erp.model.oms.dto.SoInfoDTO.CustomerDTO
+     * @author yl
+     * @date 2023-05-22 10:44
+     */
+    @Override
+    public List<SoInfoDTO.CustomerDTO> listSoCustomerByIds(List<String> soIdList) {
+        if (CollectionUtils.isEmpty(soIdList)) {
+            return Collections.emptyList();
+        }
+        List<SoInfoEntity> soList = this.listByIds(soIdList);
+        List<SoInfoDTO.CustomerDTO> resultList = BeanMapper.copyList(soList, SoInfoDTO.CustomerDTO.class);
+        List<String> customerIds = resultList.stream().map(SoInfoDTO.CustomerDTO::getCustomerId).collect(Collectors.toList());
+        List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIds) ? customerInfoService.listByIds(customerIds) : Collections.emptyList();
+        for (SoInfoDTO.CustomerDTO item : resultList) {
+            String customerId = item.getCustomerId();
+            String customerName = customerList.stream().filter(c -> c.getId().equals(customerId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setCustomerName(customerName);
+            String type = item.getType();
+            item.setTypeName(BillTypeEnum.getName(type));
+        }
+        return resultList;
+    }
+
+
+    /**
      * 添加日志
      */
     private void addModuleOperateLog(String content, String code, String businessId, String operation) {
@@ -1105,9 +1132,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
 
-    private Boolean updateApproveStatus(List<SoInfoEntity> list, BillApproveStatusEnum statusEnum,String  approveUserName) {
+    private Boolean updateApproveStatus(List<SoInfoEntity> list, BillApproveStatusEnum statusEnum, String approveUserName) {
         if (CollectionUtils.isNotEmpty(list)) {
-            for(SoInfoEntity item:list){
+            for (SoInfoEntity item : list) {
                 item.setApproveStatus(statusEnum);
                 item.setApproveUserName(approveUserName);
             }

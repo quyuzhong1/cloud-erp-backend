@@ -8,6 +8,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -131,4 +132,15 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.SoOutstockDTO.PagingViewDTO>
      */
     PagingVO<SoOutstockDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto);
+
+    
+    /**
+     * 导出销售出库单
+     * @author yl
+     * @date 2023-05-22 11:41
+     * @param dto
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean exportExcel(SoOutstockDTO.ExportDTO dto, HttpServletResponse response);
 }
