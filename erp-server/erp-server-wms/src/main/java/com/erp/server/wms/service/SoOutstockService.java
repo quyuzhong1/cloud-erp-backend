@@ -2,7 +2,9 @@ package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 
@@ -119,4 +121,14 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return java.util.List<com.erp.model.wms.dto.SoOutstockDTO.TabListDTO>
      */
     List<SoOutstockDTO.TabListDTO> tabList();
+
+    
+    /**
+     * 分页列表
+     * @author yl
+     * @date 2023-05-22 8:56
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.SoOutstockDTO.PagingViewDTO>
+     */
+    PagingVO<SoOutstockDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto);
 }

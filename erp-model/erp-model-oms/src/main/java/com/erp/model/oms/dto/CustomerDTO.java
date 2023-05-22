@@ -294,7 +294,7 @@ public class CustomerDTO implements Serializable {
         /**
          * 备注
          */
-        @Size(max = 200, message = "最大200字符")
+        @Size(max = 200, message = "备注最大200字符")
         private String remark;
 
 
@@ -627,7 +627,7 @@ public class CustomerDTO implements Serializable {
         /**
          * 备注
          */
-        @Size(max = 200, message = "最大200字符")
+        @Size(max = 200, message = "备注最大200字符")
         private String remark;
 
 

@@ -10,7 +10,6 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.server.wms.service.SoOutstockService;
 import org.apache.commons.lang3.StringUtils;
@@ -53,8 +52,15 @@ public class SoOutstockController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:so:outstock:paging",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "ss"
+    )
     public ApiResult<PagingVO<SoOutstockDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
-        return success(null);
+        PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.paging(dto);
+        return success(pagingVO);
     }
 
     /**

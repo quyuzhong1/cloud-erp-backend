@@ -6,7 +6,6 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -119,6 +118,19 @@ public class TaskPagingShowDTO implements Serializable {
      * 6 完成待审核 7 审核中   8 审核通过  9 审核不通过
      */
     private Integer status;
+
+
+    /**
+     * 排期状态
+     * 状态排期状态
+     * waitSubmit 待提交
+     * waitAudit 待审核
+     * auditIng 审核中
+     * auditNoPass 审核不通过
+     * auditPass审核通过
+     *
+     */
+    private String scheduleStatus;
 
     /**
      * 状态名

@@ -1,8 +1,14 @@
 package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,4 +21,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
 
+    IPage<SoOutstockDTO.PagingViewDTO> paging(Page query, @Param("params") SoOutstockDTO.PagingParamDTO params,@Param("approveList") List<String> approveList);
 }
