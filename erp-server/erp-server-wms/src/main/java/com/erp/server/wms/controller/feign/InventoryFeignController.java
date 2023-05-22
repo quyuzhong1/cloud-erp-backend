@@ -127,4 +127,11 @@ public class InventoryFeignController extends BaseController {
     }
 
 
+    @PostMapping("/listSkuInventoryByParam")
+    public List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventoryByParam(@RequestBody @Valid InventoryQtyDTO.SkuInventoryParamDTO dto) {
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> resultList = inventoryService.listSkuInventory(dto);
+        return resultList;
+    }
+
+
 }

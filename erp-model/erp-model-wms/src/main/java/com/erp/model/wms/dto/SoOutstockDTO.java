@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -369,6 +370,7 @@ public class SoOutstockDTO implements Serializable {
          * 详情
          */
         @Valid
+        @Size(min = 1, message = "销售出库详情不能为空")
         private List<SoOutstockDetiailDTO.AddDTO> detailList;
 
 
@@ -519,11 +521,13 @@ public class SoOutstockDTO implements Serializable {
         /**
          * id
          */
+        @NotBlank(message = "销售出库单不能为空")
         private String id;
 
         /**
          * 销售订单id
          */
+        @NotBlank(message = "销售订单不能为空")
         private String soId;
 
         /**
@@ -546,6 +550,7 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 仓库id
          */
+        @NotBlank(message = "出货仓库不能为空")
         private String warehouseId;
 
         /**
@@ -562,6 +567,7 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 发货组织
          */
+        @NotBlank(message = "发货组织不能为空")
         private String deliveryOrgId;
 
 
@@ -614,6 +620,7 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 详情
          */
+        @Size(min = 1, message = "销售出库详情不能为空")
         private List<SoOutstockDetiailDTO.UpdateDTO> detailList;
 
     }

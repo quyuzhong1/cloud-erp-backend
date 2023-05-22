@@ -94,4 +94,15 @@ public interface InventoryFeign {
     @PostMapping("feign/inventory/listSkuInventory")
     List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventory(@RequestBody InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO);
 
+
+    /**
+     * 获取sku 库存状态数量（调用方传输状态）特别注意：如果库位没传或者为空，则库位字段会赋值为空查询
+     * @author yl
+     * @date 2023-05-16 17:17
+     * @param paramDTO
+     * @return java.util.List<com.erp.model.wms.dto.InventoryDTO.SkuInventoryTotalDTO>
+     */
+    @PostMapping("feign/inventory/listSkuInventoryByParam")
+    List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventoryByParam(@RequestBody InventoryQtyDTO.SkuInventoryParamDTO paramDTO);
+
 }

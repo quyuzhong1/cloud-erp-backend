@@ -3,6 +3,7 @@ package com.erp.model.wms.dto.inventory;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -63,12 +64,14 @@ public class InventoryQtyDTO implements Serializable {
     public static class SkuInventoryParamDTO {
 
         @NotNull
-        @Size(min = 1,message = "最少传输一条sku信息")
+        @Size(min = 1,message = "sku不能为空")
         private List<String> skuIdList;
 
         /**
          * 仓库id
          */
+        @NotNull
+        @Size(min = 1,message = "仓库不能为空")
         private List<String> warehouseIdList;
 
         /**
@@ -79,7 +82,7 @@ public class InventoryQtyDTO implements Serializable {
         /**
          * 库存状态, 请查看枚举类 InventoryStatusEnum
          */
-        @NotEmpty(message = "库存状态不能为空")
+        @NotBlank(message = "库存状态不能为空")
         private String inventoryStatus;
 
 

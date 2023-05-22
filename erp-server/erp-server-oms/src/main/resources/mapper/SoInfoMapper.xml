@@ -16,7 +16,7 @@
         sod.qty,sod.amount,
         sod.currency,sod.currency_symbol
         FROM so_detail sod
-        LEFT JOIN so_info si
+        INNER JOIN so_info si
         ON sod.main_id =si.id AND si.is_deleted=false
         WHERE sod.is_deleted=false
         <if test="params.skuNoList !=null and params.skuNoList.size>0">
@@ -99,7 +99,7 @@
         sod.qty,sod.amount,
         sod.currency,sod.currency_symbol
         FROM so_detail sod
-        LEFT JOIN so_info si
+        INNER JOIN so_info si
         ON sod.main_id =si.id AND si.is_deleted=false
         WHERE sod.is_deleted=false
         <choose>
