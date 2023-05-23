@@ -218,6 +218,10 @@ public class SoReturnNoticeDTO {
          */
         private String warehouseKeeperId;
         /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
          * 明细信息
          */
         private List<SoReturnNoticeDetailDTO.Add> detailList;
@@ -249,6 +253,10 @@ public class SoReturnNoticeDTO {
          * 仓管员
          */
         private String warehouseKeeperId;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
         /**
          * 明细信息
          */
@@ -365,6 +373,14 @@ public class SoReturnNoticeDTO {
          * 审核时间
          */
         private LocalDateTime approveTime;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
         /**
          * 明细信息
          */

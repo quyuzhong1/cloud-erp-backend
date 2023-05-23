@@ -348,10 +348,11 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         viewDTO.setCustomerName(customerInfoEntity.getName());
-        entity.setWarehouseId(soInfoEntity.getWarehouseId());
+        viewDTO.setBillDate(soReturnEntity.getBillDate());
+        viewDTO.setWarehouseId(soInfoEntity.getWarehouseId());
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(soInfoEntity.getWarehouseId()));
         if (CollectionUtils.isNotEmpty(warehouseList)) {
-            entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
+            viewDTO.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
         }
         for (SoReturnNoticeDetailEntity detailEntity : detailEntityList) {
             SoReturnNoticeDetailDTO.View detailView = new SoReturnNoticeDetailDTO.View();

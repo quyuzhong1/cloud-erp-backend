@@ -238,6 +238,10 @@ public class SoReturnReceiveDTO {
          */
         private LocalDate billDate;
         /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
          * 明细信息
          */
         private List<SoReturnReceiveDetailDTO.Add> detailList;
@@ -273,6 +277,10 @@ public class SoReturnReceiveDTO {
          * 签收日期
          */
         private LocalDate billDate;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
         /**
          * 明细信息
          */
@@ -393,6 +401,14 @@ public class SoReturnReceiveDTO {
          * 审核时间
          */
         private LocalDateTime approveTime;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
         /**
          * 明细信息
          */

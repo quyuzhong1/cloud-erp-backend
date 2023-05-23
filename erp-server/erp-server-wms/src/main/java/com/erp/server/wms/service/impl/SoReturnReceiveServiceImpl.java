@@ -319,11 +319,13 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         viewDTO.setCustomerName(customerInfoEntity.getName());
-        entity.setWarehouseId(soInfoEntity.getWarehouseId());
+        viewDTO.setWarehouseId(soInfoEntity.getWarehouseId());
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(soInfoEntity.getWarehouseId()));
         if (CollectionUtils.isNotEmpty(warehouseList)) {
-            entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
+            viewDTO.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
         }
+        viewDTO.setReturnDate(soReturnEntity.getBillDate());
+        viewDTO.setBillDate(entity.getBillDate());
         for (SoReturnReceiveDetailEntity detailEntity : detailEntityList) {
             SoReturnReceiveDetailDTO.View detailView = new SoReturnReceiveDetailDTO.View();
             BeanMapperUtils.copy(detailEntity, detailView);
