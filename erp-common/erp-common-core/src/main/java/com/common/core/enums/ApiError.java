@@ -430,6 +430,7 @@ public enum ApiError implements Serializable {
     ERROR_98060(98060,"只有待质检状态才能分配质检员"),
     ERROR_98061(98061,"存在不一样的作废状态"),
     ERROR_98062(98062,"销售订单【%s】下推备货申请单SKU【%s】数量不能超过【%s】"),
+    ERROR_98063(98063,"只有审核通过才能下推销售出库单"),
 
 
 

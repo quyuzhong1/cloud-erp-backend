@@ -376,6 +376,84 @@ public class SoOutstockDTO implements Serializable {
 
     }
 
+
+
+    /**
+     * 下推销售出库单列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateSoOutstockViewDTO {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 主键id
+         */
+        private String mainId;
+        /**
+         * 销售单id
+         */
+        private String sourceId;
+        /**
+         * 销售单详情表id
+         */
+        private String sourceDetailId;
+        /**
+         * 销售单号
+         */
+        private String sourceCode;
+        /**
+         * 单据编号
+         */
+        private String code;
+        /**
+         * 客户
+         */
+        private String customerName;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * SKU
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 销售数量
+         */
+        private Integer salesQty;
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 要货日期
+         */
+        private LocalDate requireDate;
+        /**
+         * 预计发货日期
+         */
+        private LocalDate planDeliveryDate;
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
     /**
      * 详情
      */

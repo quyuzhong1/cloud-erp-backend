@@ -3,11 +3,10 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
-import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
-import com.common.business.service.SuperService;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
@@ -164,8 +163,8 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * 下推销售出库单-保存
      * @Author Luo_WG
      * @Date 2023/5/11 11:11
-     * @param list
+     * @param idList
      * @return void
      **/
-    Boolean generateSoDeliverySave(List<SoDeliveryNoticeDTO.GenerateSoDeliveryView> list);
+    Boolean generateSoDeliverySave(List<String> idList);
 }

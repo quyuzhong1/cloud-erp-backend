@@ -95,13 +95,13 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Resource
     private WorkflowFeign workflowFeign;
-    
+
     @Resource
     private WarehouseService warehouseService;
 
     @Resource
     private OperateLogService operateLogService;
-    
+
     @Resource
     private CommonService commonService;
 
@@ -505,7 +505,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 .in(SoDeliveryNoticeEntity::getId, ids)
                 .update();
         //回滚库存
-        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_DELIVERY_NOTICE,ids);
+        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_DELIVERY_NOTICE, ids);
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
         //删除拣货详情
         pickingDetailService.deleteBySourceId(ids);
@@ -633,7 +633,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             pagingView.setUnit(productDetailEntity.getUnitName());
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             pagingView.setCustomerName(customerInfoEntity.getName());
-            pagingView.setDeliveryStatusName(pagingView.getDeliveryStatus()? "已发货" : "未发货");
+            pagingView.setDeliveryStatusName(pagingView.getDeliveryStatus() ? "已发货" : "未发货");
         }
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/soDeliveryNoticeExport.xlsx";
@@ -677,8 +677,29 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         return generateSoDeliveryViews;
     }
 
+
+    /**
+     * 下推销售出库单
+     *
+     * @param idList
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-23 11:31
+     */
     @Override
-    public Boolean generateSoDeliverySave(List<SoDeliveryNoticeDTO.GenerateSoDeliveryView> list) {
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean generateSoDeliverySave(List<String> idList) {
+        if (CollectionUtils.isEmpty(idList)) {
+            return Boolean.FALSE;
+        }
+        List<SoDeliveryNoticeEntity> list = this.listByIds(idList);
+        String approve = ApproveStatusEnum.APPROVE.getStatus();
+        long count = list.stream().filter(s -> !s.getApproveStatus().equals(approve)).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98063);
+        }
+
+
         return null;
     }
 
@@ -691,7 +712,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         //拣货明细集合
         List<PickingDetailDTO.CommonDTO> addList = new ArrayList<>();
-        for (SoDeliveryNoticeEntity entity :list) {
+        for (SoDeliveryNoticeEntity entity : list) {
             List<SoDeliveryNoticeDetailEntity> detailEntities = detailList.stream().filter(obj -> obj.getMainId().equals(entity.getId())).collect(Collectors.toList());
 
             //获取仓库信息
@@ -706,14 +727,14 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 //获取核算公司
                 SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(warehouseEntity.getOrgId());
                 //查询可用库存生成拣货明细
-                PickingDetailDTO.InventoryParamDTO dto = new PickingDetailDTO.InventoryParamDTO(warehouseEntity.getOrgId(),sysAccountingCompanyEntity.getCompanyName(),entity.getWarehouseId(),
-                        entity.getWarehouseName(),detailEntity.getSkuId(),detailEntity.getSkuNo(),detailEntity.getDeliveryQty());
+                PickingDetailDTO.InventoryParamDTO dto = new PickingDetailDTO.InventoryParamDTO(warehouseEntity.getOrgId(), sysAccountingCompanyEntity.getCompanyName(), entity.getWarehouseId(),
+                        entity.getWarehouseName(), detailEntity.getSkuId(), detailEntity.getSkuNo(), detailEntity.getDeliveryQty());
                 List<InventoryEntity> inventoryList = inventoryService.listPickingDetailInventory(dto);
 
                 List<PickingDetailDTO.CommonDTO> pickingDetailList = BeanMapperUtils.copyList(PickingDetailDTO.CommonDTO.class, inventoryList);
 
                 ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detailEntity.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-                List<InOutStockDTO>  inOutStockList = new ArrayList<>();
+                List<InOutStockDTO> inOutStockList = new ArrayList<>();
                 for (PickingDetailDTO.CommonDTO addDTO : pickingDetailList) {
                     addDTO.setSourceId(entity.getId());
                     addDTO.setSourceCode(entity.getCode());
