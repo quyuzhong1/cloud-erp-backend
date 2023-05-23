@@ -1486,11 +1486,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //销售单id
         List<String> soDetailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(soDetailIds);
-
-
         for (SoReturnInstockDTO.GenerateSoReturnInstockView view : list) {
             SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(view.getMainId());
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailService.getById(view.getId());
+            view.setId(soReturnReceiveEntity.getId());
+            view.setSourceDetailId(soReturnReceiveDetailEntity.getSourceDetailId());
             view.setCode(soReturnReceiveEntity.getSourceCode());
             view.setCustomerId(soReturnReceiveEntity.getCustomerId());
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(view.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
