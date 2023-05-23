@@ -365,15 +365,32 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         wmsAttachmentService.saveBatch(batchAttachmentList);
 
         //这是添加
-        List<Pair<String, String>> addPairList = addEntityList.stream(). map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+        List<Pair<String, String>> addPairList = addEntityList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("添加了一个销售产品【%s】", ModuleTypeEnum.SO_OUT_STOCK.getCode(), addPairList, "编辑操作");
         for (SoOutstockDetailEntity update : updateEntityList) {
             String id = update.getId();
             SoOutstockDetailEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
-            if(old!=null){
-                operateLogService.addModuleOperateLogByObj(old,update, ModuleTypeEnum.SO_OUT_STOCK.getCode(),mainId,"","");
+            if (old != null) {
+                operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.SO_OUT_STOCK.getCode(), mainId, "", "");
             }
         }
+    }
+
+
+    /**
+     * 获取到销售出库明细 根据主表id
+     *
+     * @param mainIds
+     * @return java.util.List<com.erp.model.wms.entity.SoOutstockDetailEntity>
+     * @author yl
+     * @date 2023-05-23 9:28
+     */
+    @Override
+    public List<SoOutstockDetailEntity> listByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(SoOutstockDetailEntity::getMainId,mainIds).list();
     }
 
     private List<String> getDeleteIds(List<Pair<String, String>> pairList, List<SoOutstockDetailEntity> dbList) {

@@ -78,4 +78,13 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @return void
      */
     void updateDetail(String id, List<SoOutstockDetiailDTO.UpdateDTO> detailList);
+
+    /**
+     * 获取到销售出库明细 根据主表id
+     * @author yl
+     * @date 2023-05-23 9:28
+     * @param noticeSoOutstockIds
+     * @return java.util.List<com.erp.model.wms.entity.SoOutstockDetailEntity>
+     */
+    List<SoOutstockDetailEntity> listByMainIds(List<String> noticeSoOutstockIds);
 }
