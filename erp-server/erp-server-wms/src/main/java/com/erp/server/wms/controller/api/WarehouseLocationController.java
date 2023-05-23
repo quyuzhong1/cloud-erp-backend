@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.util.StrUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
@@ -46,7 +47,8 @@ public class WarehouseLocationController extends BaseController {
      */
     /*
     @PostMapping(value = "/init")
-    public ApiResult<Void> init(@RequestParam(value = "warehouseId")String warehouseId) {
+    public ApiResult<Void> init(@RequestParam(value = "warehouseId")String warehouseId,
+                                @RequestParam(value = "prefix")String prefix) {
         // 新增分区
         WarehouseLocationEntity warehouseLocationEntity = new WarehouseLocationEntity();
         warehouseLocationEntity.setWarehouseId(warehouseId);
@@ -61,7 +63,7 @@ public class WarehouseLocationController extends BaseController {
         warehouseLocationEntity = new WarehouseLocationEntity();
         warehouseLocationEntity.setWarehouseId(warehouseId);
         warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
-        warehouseLocationEntity.setCode("C000001");
+        warehouseLocationEntity.setCode(StrUtil.format("{}000001", prefix));
         warehouseLocationEntity.setName("");
         warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
         warehouseLocationEntity.setParentId(areaId);
@@ -70,7 +72,7 @@ public class WarehouseLocationController extends BaseController {
         warehouseLocationEntity = new WarehouseLocationEntity();
         warehouseLocationEntity.setWarehouseId(warehouseId);
         warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
-        warehouseLocationEntity.setCode("C000002");
+        warehouseLocationEntity.setCode(StrUtil.format("{}000002", prefix));
         warehouseLocationEntity.setName("");
         warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
         warehouseLocationEntity.setParentId(areaId);
@@ -79,7 +81,7 @@ public class WarehouseLocationController extends BaseController {
         warehouseLocationEntity = new WarehouseLocationEntity();
         warehouseLocationEntity.setWarehouseId(warehouseId);
         warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
-        warehouseLocationEntity.setCode("C000003");
+        warehouseLocationEntity.setCode(StrUtil.format("{}000003", prefix));
         warehouseLocationEntity.setName("");
         warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
         warehouseLocationEntity.setParentId(areaId);
@@ -88,7 +90,16 @@ public class WarehouseLocationController extends BaseController {
         warehouseLocationEntity = new WarehouseLocationEntity();
         warehouseLocationEntity.setWarehouseId(warehouseId);
         warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
-        warehouseLocationEntity.setCode("C000004");
+        warehouseLocationEntity.setCode(StrUtil.format("{}000004", prefix));
+        warehouseLocationEntity.setName("");
+        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
+        warehouseLocationEntity.setParentId(areaId);
+        warehouseLocationService.save(warehouseLocationEntity);
+
+        warehouseLocationEntity = new WarehouseLocationEntity();
+        warehouseLocationEntity.setWarehouseId(warehouseId);
+        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
+        warehouseLocationEntity.setCode(StrUtil.format("{}000005", prefix));
         warehouseLocationEntity.setName("");
         warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
         warehouseLocationEntity.setParentId(areaId);

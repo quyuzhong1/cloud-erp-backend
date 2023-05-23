@@ -487,6 +487,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
                 InOutStockDTO inOutStockDTO = new InOutStockDTO();
                 inOutStockDTO.setWarehouseId(initStock.getWarehouseId());
                 inOutStockDTO.setSourceType(InventorySourceTypeEnum.INIT_STOCK);
+                inOutStockDTO.setWarehouseLocation(member.getWarehouseLocation());
                 inOutStockDTO.setSourceId(initStock.getId());
                 inOutStockDTO.setSourceCode(initStock.getCode());
                 inOutStockDTO.setBillDate(initStock.getBillDate());

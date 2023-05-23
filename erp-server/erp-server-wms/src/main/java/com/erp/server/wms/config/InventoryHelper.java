@@ -169,9 +169,9 @@ public class InventoryHelper {
         if(Objects.isNull(inventory)) {
             log.warn("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 出库时未找到库存数据", warehouseId, orgId, warehouseLocationId,skuId, skuNo);
             if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
-                throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), inventoryStatusName));
+                throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), skuNo, inventoryStatusName));
             } else {
-                throw new ServiceException(StrUtil.format("{}库存数量不足", inventoryStatusName));
+                throw new ServiceException(StrUtil.format("【{}】【{}】库存数量不足", skuNo, inventoryStatusName));
             }
         }
         Integer inventoryQty = inventory.getQty();
@@ -179,9 +179,9 @@ public class InventoryHelper {
                 businessType.getName(), status.getName(), qty, inventoryQty);
         if(inventoryQty < qty) {
             if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
-                throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), inventoryStatusName));
+                throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), skuNo, inventoryStatusName));
             } else {
-                throw new ServiceException(StrUtil.format("{}库存数量不足", inventoryStatusName));
+                throw new ServiceException(StrUtil.format("【{}】【{}】库存数量不足", skuNo, inventoryStatusName));
             }
         }
     }
