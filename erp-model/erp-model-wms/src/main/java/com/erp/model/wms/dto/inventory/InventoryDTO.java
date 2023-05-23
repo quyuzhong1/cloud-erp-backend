@@ -855,8 +855,33 @@ public class InventoryDTO {
         }
 
         public Integer getTotalOutstockQty() {
-            return this.totalOutstockQty = this.purchaseReturnQty + this.saleOutstockQty + this.otherOutstockQty + this.inventoryLossOutstockQty + this.transferOutstockQty + this.machineOutstockQty;
+            return this.totalOutstockQty = Math.abs(this.purchaseReturnQty + this.saleOutstockQty + this.otherOutstockQty + this.inventoryLossOutstockQty + this.transferOutstockQty + this.machineOutstockQty);
         }
+
+        public Integer getPurchaseReturnQty() {
+            return Math.abs(purchaseReturnQty);
+        }
+
+        public Integer getSaleOutstockQty() {
+            return Math.abs(saleOutstockQty);
+        }
+
+        public Integer getOtherOutstockQty() {
+            return Math.abs(otherOutstockQty);
+        }
+
+        public Integer getInventoryLossOutstockQty() {
+            return Math.abs(inventoryLossOutstockQty);
+        }
+
+        public Integer getTransferOutstockQty() {
+            return Math.abs(transferOutstockQty);
+        }
+
+        public Integer getMachineOutstockQty() {
+            return Math.abs(machineOutstockQty);
+        }
+
     }
 
 
