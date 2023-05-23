@@ -698,4 +698,96 @@ public class QcInfoDTO implements Serializable {
         @NotBlank(message = "质检员不能为空")
         private String qcUserId;
     }
+
+    /**
+     * 下推退货入库单-列表查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateSoReturnInstockView {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 主表id
+         */
+        private String mainId;
+        /**
+         * 退货通知单id
+         */
+        private String sourceId;
+        /**
+         * 退货通知单明细id
+         */
+        private String sourceDetailId;
+        /**
+         * 退货单号
+         */
+        private String sourceCode;
+        /**
+         * 单据编号
+         */
+        private String code;
+        /**
+         * 退货客户
+         */
+        private String customerName;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 销售数量
+         */
+        private Integer salesQty;
+        /**
+         * 应退数量
+         */
+        private Integer mustQty;
+        /**
+         * 签收数量
+         */
+        private Integer receiveQty;
+        /**
+         * 入库数量
+         */
+        private Integer stockInQty;
+        /**
+         * 不良品数量
+         */
+        private Integer unSellableQty;
+        /**
+         * 良品数量
+         */
+        private Integer sellableQty;
+        /**
+         * 退货类型
+         */
+        private String returnTypeDict;
+        /**
+         * 退货原因
+         */
+        private String  returnReasonDict;
+        /**
+         * 仓库
+         */
+        private String warehouseLocation;
+        /**
+         * 仓位
+         */
+        private String warehouseId;
+        /**
+         * 备注
+         */
+        private String remark;
+    }
 }

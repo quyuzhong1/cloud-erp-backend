@@ -6,8 +6,10 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
@@ -281,12 +283,12 @@ public class SoReturnInstockController extends BaseController {
      * 下推退货入库单-保存
      * @Author Luo_WG
      * @Date 2023/4/13 18:59
-     * @param dto dto
+     * @param list list
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/generateSoReturnInstockSave")
-    public ApiResult generateSoReturnInstockSave(@RequestBody SoReturnReceiveDTO.ListGenerateSoReturnInstockView dto) {
-        Boolean flag = soReturnInstockService.generateSoReturnReceiveSave(dto.getList());
+    public ApiResult generateSoReturnInstockSave(@RequestBody ValidList<QcInfoDTO.GenerateSoReturnInstockView> list) {
+        Boolean flag = soReturnInstockService.generateSoReturnInstockSave(list.getList());
         return flag == true ? success() : failure();
     }
 }

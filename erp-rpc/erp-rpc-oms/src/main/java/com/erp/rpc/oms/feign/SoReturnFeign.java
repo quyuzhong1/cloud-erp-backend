@@ -1,5 +1,6 @@
 package com.erp.rpc.oms.feign;
 
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
 import org.springframework.cloud.openfeign.FeignClient;

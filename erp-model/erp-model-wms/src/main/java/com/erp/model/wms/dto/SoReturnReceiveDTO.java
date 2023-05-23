@@ -218,6 +218,10 @@ public class SoReturnReceiveDTO {
          */
         private String sourceId;
         /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
          * 退货日期
          */
         private LocalDate returnDate;
@@ -393,90 +397,5 @@ public class SoReturnReceiveDTO {
          * 明细信息
          */
         private List<SoReturnReceiveDetailDTO.View> detailList;
-    }
-
-    /**
-     * 下推退货入库单列表集合
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ListGenerateSoReturnInstockView {
-        private List<GenerateSoReturnInstockView> list;
-    }
-
-    /**
-     * 下推退货入库单-列表查询
-     */
-    @Data
-    @NoArgsConstructor
-    public static class GenerateSoReturnInstockView {
-        /**
-         * id
-         */
-        private String id;
-        /**
-         * 主表id
-         */
-        private String mainId;
-        /**
-         * 退货通知单id
-         */
-        private String sourceId;
-        /**
-         * 退货通知单明细id
-         */
-        private String sourceDetailId;
-        /**
-         * 退货单号
-         */
-        private String sourceCode;
-        /**
-         * 单据编号
-         */
-        private String code;
-        /**
-         * 退货客户
-         */
-        private String customerName;
-        /**
-         * skuId
-         */
-        private String skuId;
-        /**
-         * sku
-         */
-        private String skuNo;
-        /**
-         * 产品名称
-         */
-        private String productName;
-        /**
-         * 销售数量
-         */
-        private Integer salesQty;
-        /**
-         * 应退数量
-         */
-        private Integer mustQty;
-        /**
-         * 签收数量
-         */
-        private Integer receiveQty;
-        /**
-         * 入库数量
-         */
-        private Integer stockInQty;
-        /**
-         * 不良品数量
-         */
-        private Integer unSellableQty;
-        /**
-         * 良品数量
-         */
-        private Integer sellableQty;
-        /**
-         * 备注
-         */
-        private String remark;
     }
 }

@@ -49,7 +49,8 @@
             md.remark,
             mi.approve_user_name as approveUserName,
             mi.create_user_name as createUserName,
-            mi.create_time as createTime
+            mi.create_time as createTime,
+            md.warehouse_location as warehouseLocation
         from machine_info mi
         inner join machine_detail md on mi.id = md.main_id and mi.is_deleted = false
         <where>

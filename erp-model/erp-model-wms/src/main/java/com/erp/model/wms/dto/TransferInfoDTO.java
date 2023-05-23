@@ -34,78 +34,107 @@ public class TransferInfoDTO implements Serializable {
          * 主键id
          */
         private String  id;
+
         /**
          * 调拨单号
          */
         private String  code;
+
         /**
          * 调拨方向
          */
-        private String   transferDirection;
+        private String transferDirection;
+
         /**
          * 调拨方向名称
          */
-        private String   transferDirectionName;
+        private String transferDirectionName;
+
         /**
          * 状态
          */
-        private String   approveStatus;
+        private String approveStatus;
+
         /**
          * 状态名称
          */
-        private String   approveStatusName;
+        private String approveStatusName;
+
         /**
          * 作废状态
          */
-        private Boolean  invalidStatus;
+        private Boolean invalidStatus;
+
         /**
          * 作废状态名称
          */
         private String invalidStatusName;
+
         /**
          * skuId
          */
         private String  skuId;
+
         /**
          * sku编码
          */
         private String  skuNo;
+
         /**
          * 产品名称
          */
         private String  productName;
+
         /**
          * 调拨日期
          */
         private LocalDate billDate;
+
         /**
          * 数量
          */
         private Integer qty;
+
         /**
          * 单位
          */
-        private String  unit;
+        private String unit;
+
         /**
          * 调入仓库名称
          */
-        private String   inWarehouseName;
+        private String inWarehouseName;
+
         /**
          * 调出仓库名称
          */
-        private String   outWarehouseName;
+        private String outWarehouseName;
+
+        /**
+         * 调入仓位
+         */
+        private String inWarehouseLocation;
+
+        /**
+         * 调出仓位
+         */
+        private String outWarehouseLocation;
+
         /**
          * 备注
          */
-        private String  remark;
+        private String remark;
+
         /**
          * 审核人名称
          */
-        private String   approveUserName;
+        private String approveUserName;
+
         /**
          * 创建人名称
          */
-        private String  createUserName;
+        private String createUserName;
+
         /**
          * 创建时间
          */

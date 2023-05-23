@@ -12,6 +12,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -21,6 +22,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -87,6 +89,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Resource
     private SoReturnInstockDetailService soReturnInstockDetailService;
+
+    @Resource
+    private SoReturnReceiveService soReturnReceiveService;
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -619,7 +624,47 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean generateSoReturnReceiveSave(List<SoReturnReceiveDTO.GenerateSoReturnInstockView> list) {
-        return null;
+    public Boolean generateSoReturnInstockSave(List<QcInfoDTO.GenerateSoReturnInstockView> list) {
+        Boolean flag = Boolean.TRUE;
+        List<String> soReceiveIdList = list.stream().map(QcInfoDTO.GenerateSoReturnInstockView::getMainId).distinct().collect(Collectors.toList());
+        List<String> soDetailIdList = list.stream().map(QcInfoDTO.GenerateSoReturnInstockView::getSourceDetailId).distinct().collect(Collectors.toList());
+        long count = soReturnReceiveDetailService.listByIds(soReceiveIdList).stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_92032);
+        }
+        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByIds(soDetailIdList);
+        if (CollectionUtils.isEmpty(returnDetailEntityList)) {
+            throw new ServiceException(ApiError.ERROR_92023);
+        }
+
+        for (String id : soReceiveIdList) {
+            List<QcInfoDTO.GenerateSoReturnInstockView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
+            QcInfoEntity qcInfoEntity = qcInfoService.getById(id);
+            SoReturnReceiveEntity receiveEntity = soReturnReceiveService.getById(qcInfoEntity.getSourceId());
+            SoReturnInstockDTO.Add dto = new  SoReturnInstockDTO.Add();
+            dto.setSourceId(id);
+            dto.setSourceType(SourceTypeEnum.QC_BILL.getCode());
+            dto.setWarehouseId(qcInfoEntity.getWarehouseId());
+            dto.setWarehouseKeeperId(receiveEntity.getWarehouseKeeperId());
+            List<SoReturnInstockDetailDTO.Add> detailList = new ArrayList<>();
+            for (QcInfoDTO.GenerateSoReturnInstockView view : viewList) {
+                SoReturnInstockDetailDTO.Add detailAddDTO = new SoReturnInstockDetailDTO.Add();
+                detailAddDTO.setMustQty(view.getMustQty());
+                detailAddDTO.setReceiveQty(view.getReceiveQty());
+                detailAddDTO.setRealQty(view.getReceiveQty());
+                detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
+                detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
+                detailAddDTO.setWarehouseLocation(view.getWarehouseLocation());
+                detailAddDTO.setRemark(view.getRemark());
+                detailAddDTO.setSourceDetailId(view.getId());
+                detailList.add(detailAddDTO);
+            }
+            dto.setDetailList(detailList);
+            String noticeId = this.add(dto);
+            if (StringUtils.isBlank(noticeId)) {
+                flag = Boolean.FALSE;
+            }
+        }
+        return flag;
     }
 }

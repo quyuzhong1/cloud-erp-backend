@@ -33,70 +33,92 @@ public class OtherInstockDTO implements Serializable {
          * 主键id
          */
         private String  id;
+
         /**
          * 其他入库编号
          */
-        private String  code;
+        private String code;
+
         /**
          * 库存方向
          */
-        private String   inventoryDirection;
+        private String inventoryDirection;
+
         /**
          * 库存方向名称
          */
-        private String   inventoryDirectionName;
+        private String inventoryDirectionName;
+
         /**
          * 状态
          */
-        private String   approveStatus;
+        private String approveStatus;
+
         /**
          * 状态名称
          */
-        private String   approveStatusName;
+        private String approveStatusName;
+
         /**
          * 作废状态
          */
-        private Boolean  invalidStatus;
+        private Boolean invalidStatus;
+
         /**
          * 作废状态名称
          */
         private String invalidStatusName;
+
         /**
          * skuId
          */
-        private String  skuId;
+        private String skuId;
+
         /**
          * sku编码
          */
-        private String  skuNo;
+        private String skuNo;
+
         /**
          * 产品名称
          */
-        private String  productName;
+        private String productName;
+
         /**
          * 入库日期
          */
         private LocalDate billDate;
+
         /**
          * 实收数量
          */
         private Integer actualQty;
+
         /**
          * 单位
          */
-        private String  unit;
+        private String unit;
+
         /**
          * 收货仓库名称
          */
-        private String    warehouseName;
+        private String warehouseName;
+
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+
         /**
          * 审核人名称
          */
-        private String    approveUserName;
+        private String approveUserName;
+
         /**
          * 创建人名称
          */
-        private String  createUserName;
+        private String createUserName;
+
         /**
          * 创建时间
          */
