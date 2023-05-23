@@ -68,22 +68,6 @@ public class InventoryFeignController extends BaseController {
         inventoryTransCoreService.unApprove(dto);
     }
 
-
-    /**
-     * 根据组织、仓库、库位、状态获取可用库存数量；如果库位为空，则不判断库位
-     *
-     * @param orgId
-     * @param warehouseId
-     * @param skuId
-     * @param warehouseLocationId
-     * @return
-     */
-    @PostMapping("/getUsableInventoryTotal")
-    public Integer getUsableInventoryTotal(@RequestParam(value = "orgId") String orgId, @RequestParam(value = "warehouseId") String warehouseId,
-                                           @RequestParam(value = "skuId") String skuId, @RequestParam(value = "warehouseLocationId", required = false) String warehouseLocationId) {
-        return inventoryService.getUsableInventoryTotal(orgId, warehouseId, skuId, warehouseLocationId);
-    }
-
     /**
      * 根据组织、仓库、库位、状态获取库存数量；特别注意：如果库位没传或者为空，则库位字段会赋值为空查询
      *

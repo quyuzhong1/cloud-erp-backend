@@ -8,18 +8,15 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
-import com.erp.model.plm.enums.ProductDetailStateEnum;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.inventory.InitStockDetailDTO;
 import com.erp.model.wms.entity.InitStockDetailEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.InitStockDetailMapper;
 import com.erp.server.wms.service.InitStockDetailService;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.WarehouseLocationService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,9 +44,6 @@ public class InitStockDetailServiceImpl extends SuperServiceImpl<InitStockDetail
 
     @Autowired
     private PlmTaskFeign plmTaskFeign;
-
-    @Autowired
-    private WarehouseLocationService warehouseLocationService;
 
     @Override
     public List<InitStockDetailEntity> findList(String mainId) {
@@ -145,11 +139,6 @@ public class InitStockDetailServiceImpl extends SuperServiceImpl<InitStockDetail
             }
             data.setMainId(mainId);
             data.setSkuNo(skuMap.get(data.getSkuId()).getSkuNo());// 填充真实的sku no
-            // 验证库位
-            if(StrUtils.isNotEmpty(data.getWarehouseLocation())) {
-                WarehouseLocationEntity warehouseLocationEntity = warehouseLocationService.getById(data.getWarehouseLocation());
-                ValidatorUtil.isTrue(Objects.nonNull(warehouseLocationEntity),()->new ServiceException("仓位信息不存在"));
-            }
             data.setWarehouseLocation(StrUtils.null2EmptyWithTrim(data.getWarehouseLocation()));
             // 修改时添加日志
             if(StrUtils.isNotEmpty(data.getId())) {

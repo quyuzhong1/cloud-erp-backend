@@ -60,7 +60,7 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
                     throw new ServiceException(ApiError.ERROR_99002);
                 }
                 if(StrUtils.isNotEmpty(param.getCurWarehouseLocation())) {
-                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getCurWarehouseLocation(),(v)->warehouseLocationService.getById(v));
+                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getCurWarehouseLocation(),(v)->warehouseLocationService.findByWarehouseIdAndCode(param.getCurWarehouseId(), v));
                     if(Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
                         throw new ServiceException("仓位信息不存在");
                     }
@@ -71,7 +71,7 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
                     throw new ServiceException(ApiError.ERROR_99002);
                 }
                 if(StrUtils.isNotEmpty(param.getTargetWarehouseLocation())) {
-                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getTargetWarehouseLocation(),(v)->warehouseLocationService.getById(v));
+                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getTargetWarehouseLocation(),(v)->warehouseLocationService.findByWarehouseIdAndCode(param.getTargetWarehouseId(), v));
                     if(Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
                         throw new ServiceException("仓位信息不存在");
                     }
@@ -119,7 +119,7 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
                     throw new ServiceException(ApiError.ERROR_99002);
                 }
                 if(StrUtils.isNotEmpty(param.getCurWarehouseLocation())) {
-                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getCurWarehouseLocation(),(v)->warehouseLocationService.getById(v));
+                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getCurWarehouseLocation(),(v)->warehouseLocationService.findByWarehouseIdAndCode(param.getCurWarehouseId(), v));
                     if(Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
                         throw new ServiceException("仓位信息不存在");
                     }
@@ -130,7 +130,7 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
                     throw new ServiceException(ApiError.ERROR_99002);
                 }
                 if(StrUtils.isNotEmpty(param.getTargetWarehouseLocation())) {
-                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getTargetWarehouseLocation(),(v)->warehouseLocationService.getById(v));
+                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getTargetWarehouseLocation(),(v)->warehouseLocationService.findByWarehouseIdAndCode(param.getTargetWarehouseId(), v));
                     if(Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
                         throw new ServiceException("仓位信息不存在");
                     }

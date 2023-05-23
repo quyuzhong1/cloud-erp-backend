@@ -240,7 +240,7 @@ public abstract class AbstractInventoryServiceImpl {
         String skuId = param.getSkuId();
         String skuNo = param.getSkuNo();
         // 库位
-        String warehouseLocationId = param.getWarehouseLocation();
+        String warehouseLocation = param.getWarehouseLocation();
         // 数量
         Integer qty = param.getQty();
         // 来源
@@ -258,7 +258,7 @@ public abstract class AbstractInventoryServiceImpl {
         LocalDate billDate = param.getBillDate();
         log.info("交易业务：【{}】，来源单据：【{}】，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走入库逻辑", businessType.getName(), sourceTypeEnum.getName(), param.getSourceId(), param.getSkuNo(), inventoryStatusEnum.getName());
         // 按照仓库+SKU进行锁定，暂不考虑库位，防止数据冲突
-        String lockKey = StrUtil.format( "{}:{}:{}:{}", DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), warehouseId, StrUtils.null2EmptyWithTrim(warehouseLocationId) ,skuId);
+        String lockKey = StrUtil.format( "{}:{}:{}:{}", DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), warehouseId, StrUtils.null2EmptyWithTrim(warehouseLocation) ,skuId);
         RReadWriteLock rwLock = redisson.getReadWriteLock(lockKey);
         RLock rlock = rwLock.writeLock();// 获取写锁
         boolean isLock;
@@ -272,7 +272,7 @@ public abstract class AbstractInventoryServiceImpl {
             log.info("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】新增或修改库存", inventoryStatusEnum.getName(), warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName());
 
             // 此处注意，入库传不传仓位都带仓位条件查询
-            InventorySaveDTO inventorySaveDTO = inventoryService.addOrUpdate(warehouseId, orgId, warehouseLocationId, skuId, skuNo, inventoryStatusEnum.getCode(), qty);
+            InventorySaveDTO inventorySaveDTO = inventoryService.addOrUpdate(warehouseId, orgId, warehouseLocation, skuId, skuNo, inventoryStatusEnum.getCode(), qty);
             String inventoryInfoId = inventorySaveDTO.getInventoryId();
             Integer originInventoryQty = inventorySaveDTO.getQty();// 库存原数量
             Integer afterInventoryQty = originInventoryQty + qty;
@@ -316,7 +316,7 @@ public abstract class AbstractInventoryServiceImpl {
         String skuId = param.getSkuId();
         String skuNo = param.getSkuNo();
         // 库位
-        String warehouseLocationId = param.getWarehouseLocation();
+        String warehouseLocation = param.getWarehouseLocation();
         // 数量
         Integer qty = param.getQty();
         // 来源
@@ -334,7 +334,7 @@ public abstract class AbstractInventoryServiceImpl {
         LocalDate billDate = param.getBillDate();
         log.info("交易业务：【{}】，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走出库逻辑", businessType.getName(), sourceTypeEnum.getName(), param.getSourceId(), inventoryStatusEnum.getName(), param.getSkuNo());
         // 按照仓库+SKU进行锁定，暂不考虑库位，防止数据冲突
-        String lockKey = StrUtil.format( "{}:{}:{}:{}",DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), warehouseId, StrUtils.null2EmptyWithTrim(warehouseLocationId), skuId);
+        String lockKey = StrUtil.format( "{}:{}:{}:{}",DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), warehouseId, StrUtils.null2EmptyWithTrim(warehouseLocation), skuId);
         RReadWriteLock rwLock = redisson.getReadWriteLock(lockKey);
         RLock rlock = rwLock.writeLock();// 获取写锁
         boolean isLock;
@@ -345,7 +345,7 @@ public abstract class AbstractInventoryServiceImpl {
                 throw new ServiceException(ApiError.ERROR_1026);
             }
             log.info("库存状态：【{}】，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】", inventoryStatusEnum.getName(), businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
-            InventoryEntity inventory = inventoryService.findInventory(orgId, warehouseId, skuId, warehouseLocationId, inventoryStatusEnum.getCode());
+            InventoryEntity inventory = inventoryService.findInventory(orgId, warehouseId, skuId, warehouseLocation, inventoryStatusEnum.getCode());
             String inventoryStatusName = Optional.ofNullable(inventoryStatusEnum).map(InventoryStatusEnum::getName).orElse("");
             if(Objects.isNull(inventory)) {
                 log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】在库存实时表中不存在数据，无法出库", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName());

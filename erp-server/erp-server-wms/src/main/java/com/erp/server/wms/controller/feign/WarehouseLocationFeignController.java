@@ -5,7 +5,6 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.server.wms.service.WarehouseLocationService;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

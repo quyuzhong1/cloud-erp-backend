@@ -54,7 +54,7 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
                 throw new ServiceException(ApiError.ERROR_99002);
             }
             if(StrUtils.isNotEmpty(param.getWarehouseLocation())) {
-                WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getWarehouseLocation(),(v)->warehouseLocationService.getById(v));
+                WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getWarehouseLocation(),(v)->warehouseLocationService.findByWarehouseIdAndCode(param.getWarehouseId(), v));
                 if(Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
                     throw new ServiceException("仓位信息不存在");
                 }

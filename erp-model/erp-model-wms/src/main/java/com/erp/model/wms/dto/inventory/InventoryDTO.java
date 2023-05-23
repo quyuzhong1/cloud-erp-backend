@@ -725,9 +725,9 @@ public class InventoryDTO {
         private String skuId;
 
         /**
-         * 库位id
+         * 库位编码
          */
-        private String warehouseLocationId;
+        private String warehouseLocation;
 
     }
 

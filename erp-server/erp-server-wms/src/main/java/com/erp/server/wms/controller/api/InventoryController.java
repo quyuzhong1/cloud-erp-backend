@@ -122,4 +122,17 @@ public class InventoryController extends BaseController {
         return success(usableInventoryTotal);
     }
 
+    /**
+     * 查询可用库存，特别注意：带库位查询，传空则按空库位查询
+     * @author Will
+     * @date: 2023/5/23 10:10
+     * @param dto
+     * @return ApiResult<Integer>
+     */
+    @PostMapping(value = "/getLocationUsableInventoryTotal")
+    public ApiResult<Integer> getLocationUsableInventoryTotal(@RequestBody @Validated InventoryDTO.UsableInventoryParamDTO dto) {
+        Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(dto.getOrgId(), dto.getWarehouseId(), dto.getSkuId(), dto.getWarehouseLocation());
+        return success(usableInventoryTotal);
+    }
+
 }

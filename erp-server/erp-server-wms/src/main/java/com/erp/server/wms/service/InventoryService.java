@@ -25,11 +25,11 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @param orgId
      * @param warehouseId
      * @param skuId
-     * @param warehouseLocationId
+     * @param warehouseLocation
      * @param status
      * @return
      */
-    InventoryEntity findInventory(String orgId,String warehouseId,String skuId, String warehouseLocationId,String status);
+    InventoryEntity findInventory(String orgId,String warehouseId,String skuId, String warehouseLocation,String status);
 
 
     /**
@@ -37,11 +37,11 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @param orgId
      * @param warehouseId
      * @param skuId
-     * @param warehouseLocationId
+     * @param warehouseLocation
      * @param status
      * @return
      */
-    InventoryEntity findInventoryLock(String orgId,String warehouseId,String skuId, String warehouseLocationId,String status);
+    InventoryEntity findInventoryLock(String orgId,String warehouseId,String skuId, String warehouseLocation,String status);
 
 
     /**
@@ -49,32 +49,32 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @param orgId
      * @param warehouseId
      * @param skuId
-     * @param warehouseLocationId
+     * @param warehouseLocation
      * @param status
      * @return
      */
-    InventoryEntity findInventoryIncLocation(String orgId,String warehouseId,String skuId, String warehouseLocationId,String status);
+    InventoryEntity findInventoryIncLocation(String orgId,String warehouseId,String skuId, String warehouseLocation,String status);
 
     /**
      * 根据组织、仓库、库位、状态判断库存数据；特别注意：如果库位为空，则不带库位库位查询条件
      * @param orgId
      * @param warehouseId
      * @param skuId
-     * @param warehouseLocationId
+     * @param warehouseLocation
      * @param status
      * @return
      */
-    List<InventoryEntity> findInventoryCheckLocation(String orgId,String warehouseId,String skuId, String warehouseLocationId,String status);
+    List<InventoryEntity> findInventoryCheckLocation(String orgId,String warehouseId,String skuId, String warehouseLocation,String status);
 
     /**
      * 根据组织、仓库、库位、状态获取可用库存数量；如果库位为空，则赋值空库位
      * @param orgId
      * @param warehouseId
      * @param skuId
-     * @param warehouseLocationId
+     * @param warehouseLocation
      * @return
      */
-    Integer getUsableInventoryTotal(String orgId,String warehouseId,String skuId, String warehouseLocationId);
+    Integer getUsableInventoryTotal(String orgId,String warehouseId,String skuId, String warehouseLocation);
 
     /**
      * 根据组织、仓库、SKU获取可用库存数量；特别注意：不带库位查询条件
@@ -106,10 +106,10 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @date 2023-05-16 17:06
      * @param skuIds
      * @param warehouseId
-     * @param warehouseLocationId
+     * @param warehouseLocation
      * @return java.util.List<com.erp.model.wms.dto.InventoryDTO.SkuInventoryTotalDTO>
      */
-    List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventory(List<String> skuIds, String warehouseId, String warehouseLocationId, String status);
+    List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventory(List<String> skuIds, String warehouseId, String warehouseLocation, String status);
 
 
     /**
@@ -126,11 +126,11 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @param orgId
      * @param warehouseId
      * @param skuId
-     * @param warehouseLocationId
+     * @param warehouseLocation
      * @param status
      * @return
      */
-    Integer getInventoryTotal(String orgId,String warehouseId,String skuId, String warehouseLocationId,String status);
+    Integer getInventoryTotal(String orgId,String warehouseId,String skuId, String warehouseLocation,String status);
 
     /**
      * 修改库存表数量
