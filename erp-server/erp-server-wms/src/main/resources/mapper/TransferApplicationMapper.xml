@@ -239,6 +239,7 @@
             ta.id as sourceId,
             pd.id as sourceDetailId,
             ta.transfer_direction as transferDirection,
+            ta.approve_status as approveStatus,
             pd.sku_id as skuId,
             pd.sku_no as skuNo,
             pd.qty as qty,

@@ -99,8 +99,19 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
      * @param newList
      */
     private void checkPlanStockQty (List<SalesDemandDetailEntity> newList) {
-        //来源明细ids
-        List<String> sourceDetailIds = newList.stream().filter(obj -> StringUtils.isNotBlank(obj.getSourceDetailId())).map(SalesDemandDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        //明细ids
+        List<String> ids = newList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(SalesDemandDetailEntity::getId).collect(Collectors.toList());
+
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        //查询需要更新的数据，用于取来源明细id
+        List<SalesDemandDetailEntity> foundList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(foundList)) {
+            return;
+        }
+        List<String> sourceDetailIds = foundList.stream().map(SalesDemandDetailEntity::getSourceDetailId).collect(Collectors.toList());
+
         if (CollectionUtils.isEmpty(sourceDetailIds)) {
             return;
         }
@@ -110,16 +121,23 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
         List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(sourceDetailIds);
 
         for (SalesDemandDetailEntity entity : newList) {
+            //来源明细id
+            String sourceDetailId = foundList.stream().filter(obj -> obj.getId().equals(entity.getId())).map(SalesDemandDetailEntity::getSourceDetailId).findFirst().orElse(null);
+
+            if (StringUtils.isBlank(sourceDetailId)) {
+                continue;
+            }
+
             //销售数量
             Integer qty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(soDetailList)) {
-                qty = soDetailList.stream().filter(obj -> obj.getId().equals(entity.getSourceDetailId())).map(SoDetailEntity::getQty).findFirst().orElse(MathUtil.ZERO);
+                qty = soDetailList.stream().filter(obj -> obj.getId().equals(sourceDetailId)).map(SoDetailEntity::getQty).findFirst().orElse(MathUtil.ZERO);
 
             }
             //已下推数量
             Integer refQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(salesDemandDetailList)) {
-                refQty = salesDemandDetailList.stream().filter(obj -> !obj.getId().equals(entity.getId())).map(SalesDemandDetailEntity::getPlanStockQty).reduce(MathUtil.ZERO, Integer::sum);
+                refQty = salesDemandDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(sourceDetailId) && !obj.getId().equals(entity.getId())).map(SalesDemandDetailEntity::getPlanStockQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             if (entity.getPlanStockQty().intValue() > qty.intValue() - refQty.intValue()) {
                 throw new ServiceException(ApiError.ERROR_98064.code,String.format(ApiError.ERROR_98064.msg,entity.getSkuNo(),qty.intValue() - refQty.intValue()));

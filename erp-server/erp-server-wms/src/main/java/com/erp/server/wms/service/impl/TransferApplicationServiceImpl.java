@@ -616,6 +616,11 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         if (CollectionUtils.isEmpty(list)) {
             return list;
         }
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_99064);
+        }
+
         List<String> skuIds = list.stream().map(TransferApplicationDTO.ViewGenerateTransferInfoDTO::getSkuId).collect(Collectors.toList());
         //产品信息
         List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);

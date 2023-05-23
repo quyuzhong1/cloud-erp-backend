@@ -511,6 +511,7 @@ public enum ApiError implements Serializable {
     ERROR_99061(99061,"未找到其他出库单"),
     ERROR_99062(99062,"未找到其他出库单明细"),
     ERROR_99063(99063,"未找到其他出库客户信息"),
+    ERROR_99064(99064,"只有已审核调拨申请单支持下推单据"),
 
     /**
      * OMS 错误

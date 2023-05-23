@@ -27,6 +27,7 @@
 
     <select id="listBySourceDetailIds" resultType="com.erp.model.scm.entity.SalesDemandDetailEntity">
         select
+            sdd.id,
             sdd.sales_demand_id,
             sdd.sku_id,
             sdd.sku_no,
