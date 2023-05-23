@@ -4,10 +4,13 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.common.business.service.SuperService;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -166,4 +169,12 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoReturnDTO.GenerateSoReturnNoticeView>
      **/
     List<SoReturnEntity> listSoReturnByApproveStatus();
+
+    /**
+     * 根据退货单id查询退货单信息
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    SoReturnEntity getSoReturnById(String id);
 }

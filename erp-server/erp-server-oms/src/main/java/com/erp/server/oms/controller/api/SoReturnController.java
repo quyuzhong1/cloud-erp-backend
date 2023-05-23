@@ -311,7 +311,7 @@ public class SoReturnController extends BaseController {
      **/
     @GetMapping(value = "/getSoReturnById")
     public ApiResult<SoReturnEntity> getSoReturnById(@RequestParam("id") String id) {
-        SoReturnEntity entity = soReturnService.getById(id);
+        SoReturnEntity entity = soReturnService.getSoReturnById(id);
         return success(entity);
     }
 

@@ -29,12 +29,14 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.SoReturnNoticeFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.mapper.SoReturnMapper;
 import com.erp.server.oms.service.*;
@@ -97,6 +99,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Resource
     private CustomerInfoService customerInfoService;
+
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
 
     @Override
     public PagingVO<SoReturnDTO.PagingView> paging(PagingDTO<SoReturnDTO.PagingParam> pagingParamDTO) {
@@ -574,6 +579,16 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             generateSoReturnNoticeView.setSourceDetailId(generateSoReturnNoticeView.getSourceDetailId());
         }
         return list;
+    }
+
+    @Override
+    public SoReturnEntity getSoReturnById(String id) {
+        SoReturnEntity entity = this.getById(id);
+        SoInfoEntity soInfoEntity = soInfoService.getById(entity.getSourceId());
+        entity.setWarehouseId(soInfoEntity.getWarehouseId());
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(soInfoEntity.getWarehouseId()));
+        entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
+        return entity;
     }
 
     @Override

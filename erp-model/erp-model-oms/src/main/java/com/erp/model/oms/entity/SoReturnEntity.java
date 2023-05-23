@@ -194,6 +194,17 @@ public class SoReturnEntity extends BaseEntity<SoReturnEntity> {
     @TableField("source_type")
     private String sourceType;
 
+    /**
+     * 仓库id
+     */
+    @TableField(exist = false)
+    private String warehouseId;
+
+    /**
+     * 仓库名称
+     */
+    @TableField(exist = false)
+    private String warehouseName;
 
     public static final String APPROVE_STATUS = "approve_status";
 
