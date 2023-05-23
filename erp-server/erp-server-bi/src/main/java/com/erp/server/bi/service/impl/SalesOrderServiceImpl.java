@@ -1963,6 +1963,13 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //获取到当前月
         int nowMonth = LocalDate.now().getMonthValue();
         int year = LocalDate.now().getYear();
+
+        //总的销售额
+        BigDecimal totalSales = list.stream().
+                filter(s -> s.getSales() != null).
+                map(SalesFlagVO::getSales).
+                reduce(BigDecimal.ZERO, BigDecimal::add);
+
         for (int m = 1; m <= nowMonth; m++) {
             String finalM = m > 9 ? String.valueOf(m) : "0".concat(String.valueOf(m));
             SalesCountVO vo = new SalesCountVO();
@@ -1975,6 +1982,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 sales = flag.getSales();
                 vo.setSales(sales);
                 vo.setOrderCount(flag.getOrderCount());
+                vo.setSalesRatio(getSalesRatio(totalSales, sales));
             }
             SalesFlagVO LastYearFlag = lastYearList.stream().filter(s -> s.getFlag().equals(finalM)).
                     findFirst().orElse(null);
