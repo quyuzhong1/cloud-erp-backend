@@ -13,6 +13,7 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -26,8 +27,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetiailDTO;
-import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -79,6 +79,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private CommonService commonService;
+
+    @Resource
+    private SoDeliveryNoticeService soDeliveryNoticeService;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -275,8 +278,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         Boolean result = true;
         String content = "";
         String userName = commonService.getUserInfo().getUserName();
+        Boolean isPass = dto.getType().equals(ApproveType.PASS);
         //TODO 需要做什么 释放冻结 销售订单的发货状态
-        if (dto.getType().equals(ApproveType.PASS)) {
+        if (isPass) {
             //审核通过
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus), userName);
@@ -288,6 +292,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
         }
         if (result) {
+            //处理对应数据
+            if (isPass) {
+                handleData(list);
+            }
             //添加日志
             List<Pair<String, String>> pairList = list.stream().
                     map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
@@ -295,6 +303,51 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
 
         return result;
+    }
+
+
+    /**
+     * 处理数据
+     * 需要更改发货状态
+     *
+     * @param list
+     * @return void
+     * @author yl
+     * @date 2023-05-22 20:01
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void handleData(List<SoOutstockEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //发货通知单
+        String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
+        //发货通知单的 id
+        List<SoOutstockEntity> noticeSoOutstockList = list.stream().filter(s -> s.getSourceType().equals(soDeliveryNotice)).
+                collect(Collectors.toList());
+        List<String> noticeSoOutstockIds = noticeSoOutstockList.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
+
+        List<String> noticeIdList = noticeSoOutstockList.stream().map(SoOutstockEntity::getSourceId).collect(Collectors.toList());
+        //发货通知集合
+        List<SoDeliveryNoticeEntity> noticeList = soDeliveryNoticeService.listByIds(noticeIdList);
+
+        for (SoDeliveryNoticeEntity item : noticeList) {
+            String deliveryNoticeId = item.getId();
+            SoOutstockEntity noticeSoOutstock = noticeSoOutstockList.stream().filter(o -> o.getSourceId().equals(deliveryNoticeId)).findFirst().orElse(null);
+            if (noticeSoOutstock != null) {
+                //更新打包时间
+                item.setPackDate(noticeSoOutstock.getPackDate());
+                item.setActualDeliveryDate(noticeSoOutstock.getActualDeliveryDate());
+            }
+            item.setDeliveryStatus(Boolean.TRUE);
+
+        }
+        //更改打包日期
+        soDeliveryNoticeService.updateBatchById(noticeList);
+
+        List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockDetailService.listByMainIds(noticeSoOutstockIds);
+
+
     }
 
 
@@ -674,7 +727,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     public Boolean updateAndSubmit(SoOutstockDTO.UpdateDTO dto) {
         String id = this.updateSoOutstock(dto);
-        if(StringUtils.isBlank(id)){
+        if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
         return this.submit(Arrays.asList(id));
