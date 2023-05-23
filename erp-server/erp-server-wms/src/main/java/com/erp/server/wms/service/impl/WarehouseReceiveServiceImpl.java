@@ -495,7 +495,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
-        List<String> ids = baseApproveParamDTO.getIds();
+        List<String> ids = baseApproveParamDTO.getIds().stream().distinct().collect(Collectors.toList());
         List<WarehouseReceiveEntity> warehouseReceiveList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(warehouseReceiveList)) {
             throw new ServiceException(ApiError.ERROR_98004);
