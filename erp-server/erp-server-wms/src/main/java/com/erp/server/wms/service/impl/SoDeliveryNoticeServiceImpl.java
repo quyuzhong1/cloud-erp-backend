@@ -31,10 +31,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
-import com.erp.model.wms.dto.PickingDetailDTO;
-import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
-import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
-import com.erp.model.wms.dto.WmsAttachmentDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
@@ -650,8 +647,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
 
-
-
     /**
      * 下推销售出库单
      *
@@ -671,6 +666,23 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         long count = list.stream().filter(s -> !s.getApproveStatus().equals(approve)).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98063);
+        }
+        List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList = new ArrayList<>(idList.size());
+        //发货通知单详情
+        List<SoDeliveryNoticeDetailEntity> deliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailByMainIds(idList);
+        for (SoDeliveryNoticeEntity item : list) {
+            SoOutstockDTO.GenerateSoOutstockViewDTO result = new SoOutstockDTO.GenerateSoOutstockViewDTO();
+            result.setSoId(item.getSourceId());
+            result.setSourceId(item.getId());
+            result.setSourceCode(item.getCode());
+            result.setCarrierId(item.getCarrierId());
+            result.setDeliveryOrgId(item.getDeliveryOrgId());
+            result.setDeliveryOrgName(item.getDeliveryOrgName());
+            result.setTrackNo(item.getTrackNo());
+            result.setWarehouseId(item.getWarehouseId());
+            result.setWarehouseName(item.getWarehouseName());
+
+            resultList.add(result);
         }
 
 
