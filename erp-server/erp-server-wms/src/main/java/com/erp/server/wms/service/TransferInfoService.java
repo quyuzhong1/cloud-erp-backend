@@ -139,4 +139,15 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @return List<TransferInfoEntity>
      */
     List<TransferInfoEntity> listBySourceIds(List<String> sourceIds);
+    /**
+     * @description: 更新金蝶状态等信息
+     * @author Will
+     * @date: 2023/5/23 17:41
+     * @param id
+     * @param syncKingdeeStatus
+     * @param syncKingdeeId
+     * @param operate
+     * @return Boolean
+     */
+    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String operate);
 }

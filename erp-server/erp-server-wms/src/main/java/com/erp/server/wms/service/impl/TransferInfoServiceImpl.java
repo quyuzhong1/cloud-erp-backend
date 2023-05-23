@@ -14,6 +14,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -459,6 +460,17 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 .list();
     }
 
+    @Override
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId,String operate) {
+        return  this.lambdaUpdate()
+                .eq(TransferInfoEntity::getId,id)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),TransferInfoEntity::getSyncKingdeeStatus,syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),TransferInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId),TransferInfoEntity::getSyncKingdeeId,syncKingdeeId)
+                .set(StringUtils.isNotBlank(operate),TransferInfoEntity::getSyncOperate,operate)
+                .update();
+    }
+
     /**
      * @description:更新库存
      * @author Will
@@ -471,7 +483,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_99048);
         }
-        List<TransferDTO>  transferList = new ArrayList<>();
+        List<TransferDTO>  addTransferList = new ArrayList<>();
+        List<TransferDTO>  pushTransferList = new ArrayList<>();
+
         for (TransferInfoDetailEntity detailEntity : detailList) {
 
             TransferInfoEntity transferInfoEntity = list.stream().filter(obj -> obj.getId().equals(detailEntity.getMainId())).findFirst().orElse(null);
@@ -493,13 +507,28 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             transferDTO.setSkuId(detailEntity.getSkuId());
             transferDTO.setSkuNo(detailEntity.getSkuNo());
             transferDTO.setQty(detailEntity.getQty());
-            transferList.add(transferDTO);
+            if (SourceTypeEnum.SELF_ADD.getCode().equals(transferInfoEntity.getSourceType())) {
+                addTransferList.add(transferDTO);
+            } else {
+                pushTransferList.add(transferDTO);
+            }
         }
-        InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
-        inventoryTransferDTO.setMembers(transferList);
-        inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.DIRECT_ALLOCATE.getCode());
-        //更新库存
-        inventoryTransCoreService.approveByType(inventoryTransferDTO);
+        //手动新增数据更新库存
+        if (CollectionUtils.isNotEmpty(addTransferList)) {
+            InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
+            inventoryTransferDTO.setMembers(addTransferList);
+            inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.DIRECT_ALLOCATE.getCode());
+            //更新库存
+            inventoryTransCoreService.approveByType(inventoryTransferDTO);
+        }
+        //下推数据更新库存
+        if (CollectionUtils.isNotEmpty(pushTransferList)) {
+            InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
+            inventoryTransferDTO.setMembers(pushTransferList);
+            inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.DIRECT_ALLOCATE_APPLY.getCode());
+            //更新库存
+            inventoryTransCoreService.approveByType(inventoryTransferDTO);
+        }
     }
 
     /**

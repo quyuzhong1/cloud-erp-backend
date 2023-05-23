@@ -185,7 +185,12 @@ public enum RocketMqTagEnum {
     /**
      * 部门同步金蝶
      */
-    KINGDEE_SYS_DEPARTMENT_TAG(37, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_sys_department_tag"),
+    KINGDEE_SYS_DEPARTMENT_TAG(38, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_sys_department_tag"),
+
+    /**
+     * 直接调拨单同步金蝶
+     */
+    KINGDEE_TRANSFER_INFO_TAG(39, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_transfer_info_tag"),
 
     //-----------------------------消息通知--------------------------------------------
 

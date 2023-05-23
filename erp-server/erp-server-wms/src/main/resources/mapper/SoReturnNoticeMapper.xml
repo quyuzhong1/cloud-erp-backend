@@ -19,6 +19,8 @@
             srn.bill_date,
             srn.approve_user_name,
             srn.create_user_name,
+            srnd.return_type_dict,
+            srnd.return_reason_dict,
             srn.create_time
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE

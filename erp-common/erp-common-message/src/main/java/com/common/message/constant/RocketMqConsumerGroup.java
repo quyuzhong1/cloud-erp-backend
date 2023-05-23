@@ -59,9 +59,14 @@ public class RocketMqConsumerGroup {
     public static final String SYNC_KINGDEE_SUPPLIER = "${spring.profiles.active}-sync_kingdee_supplier";
 
     /**
-     * 金蝶供入库单
+     * 金蝶入库单
      */
     public static final String SYNC_KINGDEE_PURCHASE_STOCK_IN = "${spring.profiles.active}-sync_kingdee_stock_in";
+
+    /**
+     * 金蝶直接调拨单
+     */
+    public static final String SYNC_KINGDEE_TRANSFER_INFO = "${spring.profiles.active}-sync_kingdee_transfer_info";
 
     //-----------------------------------------------------------------dmp数据更新------------------------------------------------------
 
