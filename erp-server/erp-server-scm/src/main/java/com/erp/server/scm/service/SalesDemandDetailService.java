@@ -56,4 +56,12 @@ public interface SalesDemandDetailService extends SuperService<SalesDemandDetail
      * @return SalesDemandDetailEntity
      */
     SalesDemandDetailEntity getBySalesDemandIdAndSkuId(String salesDemandId, String skuNo);
+    /**
+     * @description: 根据来源明细ids查询
+     * @author Will
+     * @date: 2023/5/23 9:56
+     * @param sourceDetailIds
+     * @return List<SalesDemandDetailEntity>
+     */
+    List<SalesDemandDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds);
 }

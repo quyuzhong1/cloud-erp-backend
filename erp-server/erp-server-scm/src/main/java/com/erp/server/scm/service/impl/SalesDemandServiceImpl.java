@@ -116,8 +116,6 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         //清空明细数据
         List<SalesDemandDTO.ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(records)) {
-            List<String> ids = records.stream().map(SalesDemandDTO.ListDTO::getId).collect(Collectors.toList());
-            //查询流程id判断是否存在流程 TODO
 
             List<String> list = new ArrayList<>();
             records.forEach(obj -> {
@@ -444,26 +442,48 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean generateSalesDemand(ValidList<SalesDemandDTO.GenerateSalesDemandDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
+        //备货申请单明细
+        List<String> sourceDetailIds = list.stream().map(SalesDemandDTO.GenerateSalesDemandDTO::getSourceDetailId).collect(Collectors.toList());
+        List<SalesDemandDetailEntity> salesDemandDetailList = salesDemandDetailService.listBySourceDetailIds(sourceDetailIds);
+
         Map<String, List<SalesDemandDTO.GenerateSalesDemandDTO>> map = list.stream().collect(Collectors.groupingBy(SalesDemandDTO.GenerateSalesDemandDTO::getSourceId));
         for (Map.Entry<String, List<SalesDemandDTO.GenerateSalesDemandDTO>> entry : map.entrySet()) {
             List<SalesDemandDTO.GenerateSalesDemandDTO> value = entry.getValue();
             SalesDemandDTO.AddDTO addDTO = new SalesDemandDTO.AddDTO();
             addDTO.setApplyDate(LocalDate.now());
             addDTO.setIsFirstMassProduct(Boolean.TRUE);
-
+            addDTO.setSourceId(value.get(0).getSourceId());
+            addDTO.setSourceCode(value.get(0).getSourceCode());
+            addDTO.setSourceType(value.get(0).getSourceType());
             List<SalesDemandDetailDTO.AddDTO> addDetailList = new ArrayList<>();
             for (SalesDemandDTO.GenerateSalesDemandDTO dto : value) {
+                if (CollectionUtils.isNotEmpty(salesDemandDetailList)) {
+                    //已下推数量
+                    Integer totalQty = salesDemandDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(dto.getSourceDetailId())).map(SalesDemandDetailEntity::getPlanStockQty).reduce(MathUtil.ZERO, Integer::sum);
+                    if (dto.getPlanStockQty().intValue() > dto.getQty().intValue() - totalQty.intValue() ) {
+                        throw new ServiceException(ApiError.ERROR_98062.code,String.format(ApiError.ERROR_98062.msg,dto.getSourceCode(),dto.getSkuNo(),dto.getQty().intValue() - totalQty.intValue()));
+                    }
+                }
+
                 //备货申请明细
                 SalesDemandDetailDTO.AddDTO addDetailDTO = new SalesDemandDetailDTO.AddDTO();
-
+                addDetailDTO.setSourceDetailId(dto.getSourceDetailId());
+                addDetailDTO.setSkuId(dto.getSkuId());
+                addDetailDTO.setSkuNo(dto.getSkuNo());
+                addDetailDTO.setPlanStockQty(dto.getPlanStockQty());
+                addDetailDTO.setDestWarehouseId(dto.getWarehouseId());
+                addDetailDTO.setRemark(dto.getRemark());
+                addDetailList.add(addDetailDTO);
             }
+            addDTO.setDetails(addDetailList);
+            this.add(addDTO);
         }
-
-        return null;
+        return Boolean.TRUE;
     }
 
     /**

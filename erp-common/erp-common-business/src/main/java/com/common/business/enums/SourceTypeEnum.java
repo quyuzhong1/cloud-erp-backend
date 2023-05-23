@@ -25,6 +25,7 @@ public enum SourceTypeEnum {
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单"),
+    SO_INFO("soInfo", "销售订单"),
 
 
     ;

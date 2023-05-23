@@ -235,6 +235,21 @@ public class SalesDemandDTO implements Serializable {
         @Size(max = 255,message = "备货原因不能大于255字符")
         private String remark;
 
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
     }
 
 
@@ -331,6 +346,14 @@ public class SalesDemandDTO implements Serializable {
          */
         @NotBlank(message = "sku编号不能为空")
         private String skuNo;
+
+        /**
+         * 销售订单数量
+         */
+        @NotNull(message = "销售订单数量不能为空")
+        @Min(value = 1,message = "销售订单数量最小值为1")
+        @Max(value = 99999999,message = "销售订单数量最大值为99999999")
+        private Integer qty;
 
         /**
          * 备货数量

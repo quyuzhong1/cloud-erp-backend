@@ -25,4 +25,29 @@
         <result column="remark" property="remark" />
     </resultMap>
 
+    <select id="listBySourceDetailIds" resultType="com.erp.model.scm.entity.SalesDemandDetailEntity">
+        select
+            sdd.sales_demand_id,
+            sdd.sku_id,
+            sdd.sku_no,
+            sdd.product_name,
+            sdd.unit_qty,
+            sdd.is_urgent,
+            sdd.plan_delivery_date,
+            sdd.plan_stock_qty,
+            sdd.dest_warehouse_id,
+            sdd.dest_warehouse_name,
+            sdd.remark,
+            sdd.variant_property,
+            sdd.source_detail_id
+        from sales_demand sd
+        left join sales_demand_detail sdd on sd.id = sdd.sales_demand_id and sdd.is_deleted = false
+        <where>
+            sd.is_deleted = false and sd.invalid_status = false and sdd.source_detail_id in
+            <foreach collection="sourceDetailIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+
 </mapper>

@@ -90,6 +90,11 @@ public class SalesDemandDetailDTO implements Serializable {
         @Size(max = 255,message = "备注不能大于255字符")
         private String remark;
 
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
     }
 
     @Data
