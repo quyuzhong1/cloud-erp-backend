@@ -292,4 +292,18 @@ public class SoOutstockController extends BaseController {
         return result?success():failure();
     }
 
+
+    /**
+     * 销售订单关联销售出库单
+     * @author yl
+     * @date 2023-05-23 18:01
+     * @param soId
+     * @return com.common.core.controller.vo.ApiResult
+     */
+    @GetMapping("/listSoRefSoOutstock")
+    public ApiResult soRefSoOutstock(@RequestParam("soId") String soId) {
+        return success();
+    }
+
+
 }
