@@ -48,11 +48,12 @@ public interface InitStockDetailService  extends SuperService<InitStockDetailEnt
     /**
      * 根据仓库、sku id、状态获取已经存在的数据
      * @param warehouseId
+     * @param warehouseLocation
      * @param skuId
      * @param mainId
      * @return
      */
-    Integer countCondition(String warehouseId, String skuId, String mainId);
+    Integer countCondition(String warehouseId, String warehouseLocation, String skuId, String mainId);
 
     /**
      * 根据主单id集合获取明细数据

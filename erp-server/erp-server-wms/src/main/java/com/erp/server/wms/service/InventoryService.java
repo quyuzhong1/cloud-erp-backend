@@ -77,6 +77,15 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     Integer getUsableInventoryTotal(String orgId,String warehouseId,String skuId, String warehouseLocationId);
 
     /**
+     * 根据组织、仓库、SKU获取可用库存数量；特别注意：不带库位查询条件
+     * @param orgId
+     * @param warehouseId
+     * @param skuId
+     * @return
+     */
+    Integer getUsableInventoryTotal(String orgId,String warehouseId,String skuId);
+
+    /**
      * 新增或修改库存
      * @param warehouseId
      * @param orgId

@@ -193,6 +193,16 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         return this.getInventoryTotal(orgId, warehouseId, skuId, warehouseLocationId, InventoryStatusEnum.USABLE.getCode());
     }
 
+    @Override
+    public Integer getUsableInventoryTotal(String orgId, String warehouseId, String skuId) {
+        LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(InventoryEntity::getWarehouseId, warehouseId).eq(InventoryEntity::getOrgId, orgId)
+                .eq(InventoryEntity::getSkuId, skuId)
+                .eq(InventoryEntity::getDictInventoryStatus, InventoryStatusEnum.USABLE.getCode());
+        List<InventoryEntity> list = baseMapper.selectList(queryWrapper);
+        return CollUtil.isEmpty(list) ? 0 : list.stream().collect(Collectors.summingInt(InventoryEntity::getQty));
+    }
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public InventorySaveDTO addOrUpdate(String warehouseId, String orgId, String warehouseLocation, String skuId, String skuNo, String inventoryStatus, Integer qty) {

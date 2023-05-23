@@ -19,9 +19,10 @@ public interface InitStockDetailMapper extends BaseMapper<InitStockDetailEntity>
     /**
      * 根据仓库和状态集合判断是否存在sku（不能为作废状态）
      * @param warehouseId
+     * @param warehouseLocation
      * @param skuId
      * @return
      */
-    Integer countCondition(@Param(value = "warehouseId") String warehouseId,@Param(value = "skuId")  String skuId, @Param(value = "id")  String id);
+    Integer countCondition(@Param(value = "warehouseId") String warehouseId,@Param(value = "warehouseLocation") String warehouseLocation, @Param(value = "skuId")  String skuId, @Param(value = "id")  String id);
 
 }
