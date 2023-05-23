@@ -361,6 +361,7 @@ public class SoOutstockDTO implements Serializable {
 
         /**
          * 承运商id 来源供应商
+         * http://172.16.100.11:3002/project/83/interface/api/14038    categoryType=logistics
          */
         private String carrierId;
 
