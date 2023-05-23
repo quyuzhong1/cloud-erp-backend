@@ -132,9 +132,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Resource
     private SoReturnReceiveService soReturnReceiveService;
 
-    @Resource
-    private SoReturnReceiveDetailDTO soReturnReceiveDetailDTO;
-
     /**
      * 保存 质检单
      *

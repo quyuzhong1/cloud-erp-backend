@@ -6,10 +6,11 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 
 @Data
 @NoArgsConstructor
-public class SoReturnReceiveDetailDTO {
+public class SoReturnReceiveDetailDTO implements Serializable {
     /**
      * 添加
      */
