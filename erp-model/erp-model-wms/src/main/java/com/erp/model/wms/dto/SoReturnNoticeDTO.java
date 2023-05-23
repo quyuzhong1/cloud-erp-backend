@@ -148,7 +148,11 @@ public class SoReturnNoticeDTO {
          * 退货类型 wms/common/enumDropDown?type=ReturnType
          * 描述：refund 退货扣款 replenishment 退货补货
          */
-        private ReturnTypeEnum returnTypeDict;
+        private String returnTypeDict;
+        /**
+         * 退货类型
+         */
+        private String returnTypeDictName;
         /**
          * 销售数量
          */

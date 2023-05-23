@@ -279,6 +279,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-05-19 11:42
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean approve(BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<SoOutstockEntity> list = this.listByIds(ids);
@@ -382,6 +383,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SALES_DELIVERY_ORDER.getType());
         List<InOutStockDTO> members = baseMapper.listInventoryInOut(allList);
+        members.forEach(obj->obj.setSourceType(InventorySourceTypeEnum.PURCHASE_STOCK_OUT));
         if (CollectionUtils.isNotEmpty(members)) {
             inventoryInOutStockDTO.setMembers(members);
             inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
@@ -400,6 +402,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-05-19 12:10
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean disApprove(BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<SoOutstockEntity> list = this.listByIds(ids);
@@ -449,6 +452,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-05-19 12:13
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean cancelProcess(List<String> ids) {
         List<SoOutstockEntity> list = this.listByIds(ids);
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus().getStatus())).count();
@@ -637,6 +641,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 item.setCreateUserName("");
                 item.setCreateTime(null);
             }
+            flagList.add(item.getId());
         }
         return new PagingVO<>(pageData);
     }
