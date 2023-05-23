@@ -7,6 +7,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -273,6 +274,21 @@ public class SoOutstockController extends BaseController {
     )
     public ApiResult exportWarehouse(@RequestBody @Valid SoOutstockDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = soOutstockService.exportExcel(dto, response);
+        return result?success():failure();
+    }
+
+
+    
+    /**
+     * 下推销售出库单
+     * @author yl
+     * @date 2023-05-23 15:15
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult
+     */
+    @PostMapping("/generateSoOutstock")
+    public ApiResult generateSoOutstock(@RequestBody @Valid ValidList<SoOutstockDTO.GenerateSoOutstockViewDTO> dto) {
+        Boolean result = soOutstockService.addPushDownNo(dto);
         return result?success():failure();
     }
 

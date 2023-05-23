@@ -779,13 +779,21 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     /**
      * 销售出库单保存下推单据
+     *
+     * @param list
+     * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-23 14:30
-     * @param resultList
-     * @return java.lang.Boolean
      */
     @Override
-    public Boolean addPushDownNo(List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList) {
+    public Boolean addPushDownNo(List<SoOutstockDTO.GenerateSoOutstockViewDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.FALSE;
+        }
+        Map<String, List<SoOutstockDTO.GenerateSoOutstockViewDTO>> map =list.stream().collect(Collectors.groupingBy(SoOutstockDTO.GenerateSoOutstockViewDTO::getSourceId));
+         for(Map.Entry<String,List<SoOutstockDTO.GenerateSoOutstockViewDTO>> entry:map.entrySet()){
+
+         }
         return null;
     }
 
