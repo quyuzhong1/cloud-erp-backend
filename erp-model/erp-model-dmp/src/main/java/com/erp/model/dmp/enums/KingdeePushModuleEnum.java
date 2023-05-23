@@ -22,6 +22,7 @@ public enum KingdeePushModuleEnum {
     BD_SUPPLIER("BD_Supplier","供应商"),
     STK_INSTOCK("STK_InStock","采购入库单"),
     BD_DEPARTMENT("BD_Department","部门"),
+    STK_TRANSFERDIRECT("STK_TransferDirect","直接调拨单"),
 
     ;
     private String code;

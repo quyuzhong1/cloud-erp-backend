@@ -99,6 +99,7 @@ public class CfgApiFieldMapServiceImpl extends ServiceImpl<CfgApiFieldMapMapper,
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void update(CfgApiFieldMapDTO dto) {
         //同一个平台、模块下相同字段对应关系只能存在一个
 //        checkCfgApiFieldMap(dto);
@@ -161,6 +162,7 @@ public class CfgApiFieldMapServiceImpl extends ServiceImpl<CfgApiFieldMapMapper,
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void batchDelete(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_1003);

@@ -24,6 +24,7 @@ public enum ApiModuleTypeEnum {
     SUPPLIER(13, "supplier", "供应商管理","scm"),
     PURCHASE_STOCK_IN(14, "purchaseStockIn", "入库单","wms"),
     SYS_DEPARTMENT(15, "sys_department", "部门","sys"),
+    STK_TRANSFERDIRECT(16, "STK_TransferDirect", "直接调拨单","wms"),
 
     ;
     private Integer code;

@@ -14,10 +14,9 @@ import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeTransferInfoService;
-import com.erp.server.wms.service.PoInstockService;
 import com.erp.server.wms.service.TransferInfoDetailService;
+import com.erp.server.wms.service.TransferInfoService;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -41,13 +40,10 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
     private SysUserFeign sysUserFeign;
 
     @Resource
-    private ScmTaskFeign scmTaskFeign;
-
-    @Resource
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
-    private PoInstockService poInstockService;
+    private TransferInfoService transferInfoService;
 
     @Resource
     private TransferInfoDetailService transferInfoDetailService;
@@ -136,10 +132,10 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
 
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PURCHASE_STOCK_IN_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
+            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_TRANSFER_INFO_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return poInstockService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "");
+                return transferInfoService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "",operate);
             }
             return Boolean.TRUE;
         });
