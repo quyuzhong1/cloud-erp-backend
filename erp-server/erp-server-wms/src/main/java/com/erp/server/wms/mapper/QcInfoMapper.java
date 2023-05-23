@@ -110,5 +110,5 @@ public interface QcInfoMapper extends BaseMapper<QcInfoEntity> {
      * @param ids ids
      * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.GenerateSoReturnInstockView>
      **/
-    List<SoReturnInstockDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(List<String> ids);
+    List<SoReturnInstockDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(@Param("ids") List<String> ids);
 }

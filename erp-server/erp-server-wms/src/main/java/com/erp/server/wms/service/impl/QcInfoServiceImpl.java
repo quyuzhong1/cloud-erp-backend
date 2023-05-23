@@ -151,6 +151,12 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Resource
     private SoReturnReceiveDetailService soReturnReceiveDetailService;
 
+    @Resource
+    private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
+
+    @Resource
+    private SoOutstockDetailService soOutstockDetailService;
+
     /**
      * 保存 质检单
      *
@@ -1484,7 +1490,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
         for (SoReturnInstockDTO.GenerateSoReturnInstockView view : list) {
             SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(view.getMainId());
-
+            SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailService.getById(view.getId());
             view.setCode(soReturnReceiveEntity.getSourceCode());
             view.setCustomerId(soReturnReceiveEntity.getCustomerId());
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(view.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
@@ -1495,12 +1501,38 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(req -> req.getId().equals(view.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(req -> req.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             view.setSalesQty(soDetailEntity.getQty());
-
-
+            List<SoOutstockDetailEntity> soOutstockDetailEntities = listSoOutstockByReturnId(soReturnDetailEntity.getMainId());
+            Integer actualQty = soOutstockDetailEntities.stream().filter(req -> req.getId().equals(soDetailEntity.getId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            view.setDeliveryQty(actualQty);
+            view.setMustQty(soReturnReceiveDetailEntity.getReturnQty());
+            view.setReceiveQty(soReturnReceiveDetailEntity.getReceiveQty());
+            view.setReturnTypeDict(soReturnReceiveDetailEntity.getReturnTypeDict());
+            view.setReturnReasonDict(soReturnReceiveDetailEntity.getReturnReasonDict());
         }
         return list;
     }
 
+    /**
+     * 根据退货单获取销售单已出库数量
+     * @Author Luo_WG
+     * @Date 2023/5/19 12:21
+     * @param returnId
+     * @return java.util.List<com.erp.model.wms.entity.SoOutstockDetailEntity>
+     **/
+    private  List<SoOutstockDetailEntity> listSoOutstockByReturnId(String returnId) {
+        //获取退货详情
+        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainId(returnId);
+        //获取销售订单明细表id
+        List<String> soDetailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        //根据销售单详情id获取发货通知单详情信息
+        List<SoDeliveryNoticeDetailEntity> detailEntityList = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(soDetailIds);
+        //获取发货通知单明细表id
+        List<String> deliveryNoticeDetailIdList = detailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
+        soDetailIds.addAll(deliveryNoticeDetailIdList);
+        //根据销售单获取出库单
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySourceDetailId(soDetailIds);
+        return soOutstockDetailEntities;
+    }
     /**
      * 根据来源id查询质检单
      * @Author Luo_WG

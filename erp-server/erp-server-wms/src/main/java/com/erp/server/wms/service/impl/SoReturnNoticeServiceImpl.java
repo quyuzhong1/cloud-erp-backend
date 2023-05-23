@@ -231,6 +231,12 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
         SoReturnNoticeEntity entity = new SoReturnNoticeEntity();
+        //获取用户信息
+        if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
+            FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
+            entity.setWarehouseKeeperId(userDTO.getUserId());
+            entity.setWarehouseKeeperName(userDTO.getUserName());
+        }
         entity.setType(soInfoEntity.getOrderType().getCode());
         entity.setSalesOrgId(soInfoEntity.getSalesOrgId());
         entity.setSalesOrgName(soInfoEntity.getSalesOrgName());
@@ -281,9 +287,13 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
-        //获取用户信息
-        FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
         SoReturnNoticeEntity entity = new SoReturnNoticeEntity();
+        //获取用户信息
+        if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
+            FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
+            entity.setWarehouseKeeperId(userDTO.getUserId());
+            entity.setWarehouseKeeperName(userDTO.getUserName());
+        }
         entity.setType(soInfoEntity.getOrderType().getCode());
         entity.setSalesOrgId(soInfoEntity.getSalesOrgId());
         entity.setSalesOrgName(soInfoEntity.getSalesOrgName());
@@ -314,7 +324,6 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
             entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
         }
-        entity.setWarehouseKeeperName(userDTO.getUserName());
         boolean flag = this.updateById(entity);
         //操作日志
         SoReturnNoticeEntity byId = this.getById(dto.getId());
