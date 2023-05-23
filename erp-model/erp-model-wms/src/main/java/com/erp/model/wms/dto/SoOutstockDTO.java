@@ -8,8 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -393,6 +392,13 @@ public class SoOutstockDTO implements Serializable {
         @NotBlank(message = "来源不能为空")
         private String sourceId;
 
+
+        /**
+         * 来源类型
+         */
+        @NotBlank(message = "来源类型不能为空")
+        private String sourceType;
+
         /**
          * 来源code
          */
@@ -408,6 +414,11 @@ public class SoOutstockDTO implements Serializable {
          * 发货组织
          */
         private String deliveryOrgName;
+
+        /**
+         * 预计发货时间
+         */
+        private LocalDate planDeliveryDate;
 
         /**
          * 承运商
@@ -432,8 +443,43 @@ public class SoOutstockDTO implements Serializable {
         private String warehouseName;
 
 
-        @Valid
-        private List<SoOutstockDetailDTO.GenerateViewDTO>  detailList;
+        @NotBlank(message = "来源明细不能为空")
+        private String sourceDetailId;
+
+        @NotBlank(message = "sku不能为空")
+        private String skuId;
+
+        @NotBlank(message = "sku no不能为空")
+        private String skuNo;
+
+
+        private String warehouseLocation;
+
+
+        /**
+         * 箱麦附件名集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 箱麦附件url集合
+         */
+        private List<String> attachUrlList;
+
+
+        /**
+         * 发货数量
+         */
+        @NotNull(message = "发货数量不能为空")
+        @DecimalMin(value = "1",message ="发货数最小值为1")
+        @DecimalMax(value = "999999999",message ="发货数最大值为999999999")
+        private Integer deliveryQty;
+
+
+
+
+
+
 
 
     }

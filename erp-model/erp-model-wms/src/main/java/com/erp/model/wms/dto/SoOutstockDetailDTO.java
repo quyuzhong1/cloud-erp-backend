@@ -465,31 +465,5 @@ public class SoOutstockDetailDTO implements Serializable {
 
     }
 
-    @Data
-    @NoArgsConstructor
-    public static class GenerateViewDTO {
 
-
-        @NotBlank(message = "sku不能为空")
-        private String skuId;
-
-        @NotBlank(message = "sku no不能为空")
-        private String skuNo;
-
-        @NotBlank(message = "库位不能为空")
-        private String warehouseLocation;
-
-
-        /**
-         * 应发数量
-         */
-        private String planQty;
-
-
-        /**
-         * 实发数量
-         */
-        private String actualQty;
-
-    }
 }

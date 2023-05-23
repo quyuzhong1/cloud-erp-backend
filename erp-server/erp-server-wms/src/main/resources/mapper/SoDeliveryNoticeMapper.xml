@@ -223,5 +223,43 @@
         sdn.create_time desc
     </select>
 
+    <select id="listGenerateSoOutstockView"
+            resultType="com.erp.model.wms.dto.SoOutstockDTO$GenerateSoOutstockViewDTO">
+
+      SELECT
+        sdn.id AS sourceId,
+        sdn.source_id AS soId,
+        sdn.code AS sourceCode,
+        sdn.delivery_org_id,
+        sdn.delivery_org_name,
+        sdn.plan_delivery_date,
+        sdn.carrier_id,
+        sdn.track_no,
+        sdn.warehouse_id,
+        sdn.warehouse_name,
+        sdnd.id AS sourceDetailId,
+        sdnd.sku_id,
+        sdnd.sku_no,
+        sdnd.delivery_qty
+      FROM so_delivery_notice  sdn
+      INNER JOIN so_delivery_notice_detail sdnd
+      ON  sdn.id=sdnd.main_id AND  sdnd.is_deleted=FALSE
+      WHERE sdn.is_deleted=FALSE
+      <if test="idList !=null and idList.size>0">
+          and sdn.id in
+          <foreach collection="idList" item="id" open="(" close=")" separator=",">
+              #{id}
+          </foreach>
+      </if>
+
+
+
+
+
+
+
+
+    </select>
+
 
 </mapper>

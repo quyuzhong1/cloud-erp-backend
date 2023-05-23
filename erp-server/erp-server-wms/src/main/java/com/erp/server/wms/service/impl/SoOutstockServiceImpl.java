@@ -776,6 +776,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return this.submit(Arrays.asList(id));
     }
 
+
+    /**
+     * 销售出库单保存下推单据
+     * @author yl
+     * @date 2023-05-23 14:30
+     * @param resultList
+     * @return java.lang.Boolean
+     */
+    @Override
+    public Boolean addPushDownNo(List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList) {
+        return null;
+    }
+
     private List<String> listBySearchType(String searchType) {
         List<String> approveList = new ArrayList<>();
         //待审核
