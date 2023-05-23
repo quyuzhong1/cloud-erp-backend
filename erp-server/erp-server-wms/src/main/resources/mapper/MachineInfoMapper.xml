@@ -98,7 +98,7 @@
                 and mi.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > mi.bill_date
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
         ORDER BY
@@ -124,7 +124,7 @@
                 </foreach>
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
     </select>
@@ -198,7 +198,7 @@
                     and mi.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > mi.bill_date
                 </if>
                 <if test="params.permissionSql != null and params.permissionSql != ''">
-                    ${params.permissionSql }
+                    ${params.permissionSql}
                 </if>
             </if>
         </where>

@@ -4,6 +4,9 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -408,21 +411,25 @@ public class SoReturnInstockDTO {
          */
         private String mainId;
         /**
-         * 退货通知单id
+         * 来源id
          */
         private String sourceId;
         /**
-         * 退货通知单明细id
+         * 来源明细id
          */
         private String sourceDetailId;
         /**
-         * 退货单号
+         * 来源单号
          */
         private String sourceCode;
         /**
          * 单据编号
          */
         private String code;
+        /**
+         * 退货客户id
+         */
+        private String customerId;
         /**
          * 退货客户
          */
@@ -444,6 +451,10 @@ public class SoReturnInstockDTO {
          */
         private Integer salesQty;
         /**
+         * 已出库数量
+         */
+        private Integer deliveryQty;
+        /**
          * 应退数量
          */
         private Integer mustQty;
@@ -452,17 +463,9 @@ public class SoReturnInstockDTO {
          */
         private Integer receiveQty;
         /**
-         * 入库数量
+         * 实退数量
          */
-        private Integer stockInQty;
-        /**
-         * 不良品数量
-         */
-        private Integer unSellableQty;
-        /**
-         * 良品数量
-         */
-        private Integer sellableQty;
+        private Integer realQty;
         /**
          * 退货类型
          */

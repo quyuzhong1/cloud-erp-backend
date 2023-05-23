@@ -73,7 +73,7 @@
                 and doi.delivery_time &lt;= #{params.deliveryTime_end}::timestamp
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
 
@@ -146,7 +146,7 @@
                 and doi.delivery_time &lt;= #{params.deliveryTime_end}::timestamp
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
     </select>

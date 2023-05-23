@@ -175,7 +175,7 @@
             </if>
         </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql }
+            ${params.permissionSql}
         </if>
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
             AND pt.name LIKE concat('%',#{params.searchKeyword},'%')
@@ -423,7 +423,7 @@
                 AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where a.is_deleted = false and b.status in (0,1,2,3,7) and a.task_id = t.id)
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
 
@@ -453,7 +453,7 @@
             AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where a.is_deleted = false and b.status in (0,1,2,3,7) and a.task_id = t.id)
         </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql }
+            ${params.permissionSql}
         </if>
         GROUP BY t.plan_end_time
     </select>
@@ -481,7 +481,7 @@
                 AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where a.is_deleted = false and b.status in (0,1,2,3,7) and a.task_id = t.id)
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
 
@@ -511,7 +511,7 @@
             AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where a.is_deleted = false and b.status in (0,1,2,3,7) and a.task_id = t.id)
         </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql }
+            ${params.permissionSql}
         </if>
         GROUP BY t.plan_end_time
     </select>
@@ -541,7 +541,7 @@
                 AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where a.is_deleted = false and b.status in (0,1,2,3,7) and a.task_id = t.id)
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY t.product_id
@@ -570,7 +570,7 @@
             AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where a.is_deleted = false and b.status in (0,1,2,3,7) and a.task_id = t.id)
         </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql }
+            ${params.permissionSql}
         </if>
         GROUP BY t.plan_end_time
     </select>
@@ -686,7 +686,7 @@
                 </if>
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
             ORDER BY
             <if test="params.sortList != null and params.sortList.size > 0">

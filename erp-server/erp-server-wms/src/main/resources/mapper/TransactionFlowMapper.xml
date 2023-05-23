@@ -120,7 +120,7 @@
             and t.trade_time >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > t.trade_time
         </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql }
+            ${params.permissionSql}
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -206,7 +206,7 @@
             and t.trade_time >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > t.trade_time
         </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql }
+            ${params.permissionSql}
         </if>
         ORDER BY t.create_time desc
     </select>
@@ -269,7 +269,7 @@
                     ) > tf.trade_time
                 </if>
                 <if test="params.permissionSql != null and params.permissionSql != ''">
-                    ${params.permissionSql }
+                    ${params.permissionSql}
                 </if>
             </where>
             group by tf.warehouse_id, tf.sku_id
@@ -335,7 +335,7 @@
                 ) > tf.trade_time
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
         group by tf.warehouse_id, tf.sku_id

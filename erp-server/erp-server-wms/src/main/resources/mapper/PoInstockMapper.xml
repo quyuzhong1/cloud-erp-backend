@@ -84,7 +84,7 @@
                 and psi.stock_in_date >= #{params.stockInDateList[0]} and  (#{params.stockInDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > psi.stock_in_date
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
         ORDER BY
@@ -110,7 +110,7 @@
                 </foreach>
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
     </select>
@@ -203,7 +203,7 @@
                     and psi.stock_in_date >= #{params.stockInDateList[0]} and  (#{params.stockInDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > psi.stock_in_date
                 </if>
                 <if test="params.permissionSql != null and params.permissionSql != ''">
-                    ${params.permissionSql }
+                    ${params.permissionSql}
                 </if>
             </if>
         </where>

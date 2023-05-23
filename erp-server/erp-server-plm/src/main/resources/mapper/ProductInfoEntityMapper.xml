@@ -128,7 +128,7 @@
         </if>
 
         <if test="params.permissionSql!=null  and params.permissionSql!=''">
-            AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql })
+            AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
             )
         </if>
 
@@ -237,7 +237,7 @@
         </if>
 
         <if test="params.permissionSql!=null  and params.permissionSql!=''">
-            AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql })
+            AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
             )
         </if>
         ORDER BY p.create_time DESC
@@ -359,7 +359,7 @@
             AND p.create_time &lt;= #{params.endTime}
         </if>
         <if test="params.permissionSql!=null  and params.permissionSql!=''">
-            AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql })
+            AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
         </if>
         ORDER BY pi.create_time DESC
 
@@ -456,7 +456,7 @@
             AND p.create_time &lt;= #{params.endTime}
         </if>
         <if test="params.permissionSql!=null  and params.permissionSql!=''">
-            AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql })
+            AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
         </if>
         ORDER BY pi.create_time DESC
     </select>

@@ -22,7 +22,7 @@
                 and bdsc.shop_name like concat('%',#{params.shopName},'%')
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
         order by bdsc.month,bdsc.id
@@ -47,7 +47,7 @@
                 and bdsc.shop_name like concat('%',#{params.shopName},'%')
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
     </select>

@@ -615,6 +615,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
                 detailAddDTO.setRemark(view.getRemark());
                 detailAddDTO.setSourceDetailId(view.getId());
+
                 detailList.add(detailAddDTO);
             }
             dto.setDetailList(detailList);

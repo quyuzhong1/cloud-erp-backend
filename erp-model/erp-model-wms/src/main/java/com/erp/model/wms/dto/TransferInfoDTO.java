@@ -12,6 +12,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -255,6 +256,12 @@ public class TransferInfoDTO implements Serializable {
         private String inWarehouseId;
 
         /**
+         * 备注
+         */
+        @Size(max = 255,message = "备注不能大于255字符")
+        private String  remark;
+
+        /**
          * 来源id
          */
         private String sourceId;
@@ -269,6 +276,8 @@ public class TransferInfoDTO implements Serializable {
          */
         @StateEnumValue(clazz = SourceTypeEnum.class, message = "来源类型输入值有误")
         private String sourceType;
+
+
     }
 
     @Data

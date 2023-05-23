@@ -82,7 +82,7 @@
                 and pp.plan_listing_date &lt;= #{params.planListingDateEnd}::timestamp
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
         ORDER BY
@@ -190,7 +190,7 @@
                 and pp.plan_listing_date &lt;= #{params.planListingDateEnd}::timestamp
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
         ORDER BY

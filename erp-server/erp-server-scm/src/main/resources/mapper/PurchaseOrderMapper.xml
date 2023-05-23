@@ -126,7 +126,7 @@
                 and po.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.approve_time
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
         ORDER BY
@@ -239,7 +239,7 @@
                     and po.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.approve_time
                 </if>
                 <if test="params.permissionSql != null and params.permissionSql != ''">
-                    ${params.permissionSql }
+                    ${params.permissionSql}
                 </if>
             </if>
         </where>
@@ -272,7 +272,7 @@
                 </foreach>
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
     </select>

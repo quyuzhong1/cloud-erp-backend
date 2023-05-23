@@ -22,6 +22,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;

@@ -99,7 +99,7 @@
                 and sd.approve_time >= #{params.approvePassTimeList[0]} and  (#{params.approvePassTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sd.approve_time
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
         ORDER BY
@@ -199,7 +199,7 @@
                 </if>
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
         ORDER BY
@@ -225,7 +225,7 @@
                 </foreach>
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
     </select>
