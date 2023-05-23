@@ -12,6 +12,7 @@ import com.erp.model.oms.dto.SoReturnDetailDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
+import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
@@ -28,10 +29,7 @@ import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.mapper.SoReturnDetailMapper;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.SoDetailService;
-import com.erp.server.oms.service.SoInfoService;
-import com.erp.server.oms.service.SoReturnDetailService;
+import com.erp.server.oms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -79,6 +77,9 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private SoReturnService soReturnService;
     /**
      * 根据退货单获取销售单已出库数量
      * @Author Luo_WG
@@ -259,13 +260,15 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         List<String> skuIdList = list.stream().map(SoDetailDTO.AddDetailView::getSkuId).distinct().collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIdList);
-        SoInfoEntity soInfoEntity = soInfoService.getById(id);
+        SoReturnEntity soReturnEntity = soReturnService.getById(id);
+        SoInfoEntity soInfoEntity = soInfoService.getById(soReturnEntity.getSourceId());
         InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
         paramDTO.setSkuIds(skuIdList);
         paramDTO.setWarehouseId(soInfoEntity.getWarehouseId());
         paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
         //从wms 获取到sku 的即时库存信息
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
+
         for (SoDetailDTO.AddDetailView addDetailView : list) {
             ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(addDetailView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             addDetailView.setVariantProperty(productDetailEntity.getVariantProperty());

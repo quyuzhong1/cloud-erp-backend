@@ -54,12 +54,14 @@
         sd.sku_id,
         sd.sku_no,
         si.warehouse_org_id AS inventoryOrgId,
-        sd.qty,
+        sd.qty AS salesQty,
         sd.amount AS salesAmount,
         sd.is_gift,
         sd.is_close,
         sd.remark,
-        si.warehouse_id
+        si.warehouse_id,
+        sd.currency,
+        sd.currency_Symbol
         FROM so_detail sd
         INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
         INNER JOIN so_return sr ON sr.source_id = si.id AND sr.is_deleted = FALSE
