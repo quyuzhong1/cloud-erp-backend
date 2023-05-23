@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.entity.InstockForcastEntity;
 
+import java.util.List;
+
 /**
  * <p>
  * 入库预报表 服务类
@@ -33,6 +35,13 @@ public interface InstockForcastService extends SuperService<InstockForcastEntity
      * @param purchaseOrderId
      */
     void purchaseOrderUnApprove(String purchaseOrderId);
+
+    /**
+     * 采购订单批量反审核
+     * @param purchaseOrderIds
+     * @return
+     */
+    void purchaseOrderUnApproveBatch(List<String> purchaseOrderIds);
 
     /**
      * 采购订单结束交货

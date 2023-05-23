@@ -97,7 +97,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         instockForcastEntity.setPurchaseOrderId(purchaseOrderId);
         instockForcastEntity.setOrgId(orgId);
         instockForcastEntity.setWarehouseId(dto.getWarehouseId());
-        instockForcastEntity.setBillDate(LocalDate.now().minusDays(14));// 单据日期取采购订单日期
+        instockForcastEntity.setBillDate(LocalDate.now());// 单据日期取采购订单日期
 
         // 保存主单信息
         this.save(instockForcastEntity);
@@ -145,6 +145,15 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         inventoryTransCoreService.unApprove(inventoryUnApproveDTO);
         // 更新入库预报为已删除
         instockForcastMapper.updateDeletedById(instockForcastEntity.getId());
+    }
+
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void purchaseOrderUnApproveBatch(List<String> purchaseOrderIds) {
+        purchaseOrderIds.stream().forEach(purchaseOrderId->{
+            purchaseOrderUnApprove(purchaseOrderId);
+        });
     }
 
     @Transactional(rollbackFor = Exception.class)

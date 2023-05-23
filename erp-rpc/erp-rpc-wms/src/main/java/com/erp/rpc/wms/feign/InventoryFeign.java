@@ -71,6 +71,13 @@ public interface InventoryFeign {
     void purchaseOrderUnApprove(@RequestParam(value = "purchaseOrderId")String purchaseOrderId);
 
     /**
+     * 采购订单反审核, 入库预报处理（批量）
+     * @param purchaseOrderIds
+     */
+    @PostMapping(value = "/feign/instockForcast/purchaseOrderUnApproveBatch")
+    void purchaseOrderUnApproveBatch(@RequestParam(value = "purchaseOrderIds") List<String> purchaseOrderIds);
+
+    /**
      * 采购订单结束交货
      * @param dto
      */

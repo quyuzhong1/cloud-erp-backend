@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import com.common.core.controller.BaseController;
 
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * <p>
@@ -42,6 +43,15 @@ public class InstockForcastFeignController extends BaseController {
     @PostMapping(value = "/purchaseOrderUnApprove")
     public void purchaseOrderUnApprove(@RequestParam(value = "purchaseOrderId")String purchaseOrderId) {
         instockForcastService.purchaseOrderUnApprove(purchaseOrderId);
+    }
+
+    /**
+     * 采购订单反审核（批量）
+     * @param purchaseOrderIds
+     */
+    @PostMapping(value = "/purchaseOrderUnApproveBatch")
+    public void purchaseOrderUnApproveBatch(@RequestParam(value = "purchaseOrderIds") List<String> purchaseOrderIds) {
+        instockForcastService.purchaseOrderUnApproveBatch(purchaseOrderIds);
     }
 
     /**

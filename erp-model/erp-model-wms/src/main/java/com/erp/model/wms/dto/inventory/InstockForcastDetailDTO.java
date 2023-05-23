@@ -52,7 +52,7 @@ public class InstockForcastDetailDTO implements Serializable {
         /**
          * 产品名称
          */
-        @Size(max = 50, message = "产品名称长度不能超过19位")
+        @Size(max = 50, message = "产品名称长度不能超过50位")
         private String productName;
 
     }

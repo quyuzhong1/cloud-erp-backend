@@ -26,6 +26,7 @@ public class FeignErrorDecoder implements ErrorDecoder {
     public Exception decode(String methodKey, Response response) {
         try {
             String message = Util.toString(response.body().asReader());
+            log.error("feign远程调用异常，原始异常信息：{}", message);
             JSONObject jsonObject = JSONObject.parseObject(message);
             if (jsonObject.containsKey("trace")) {
                 String trace = StrUtils.null2EmptyWithTrim(jsonObject.getString("trace"));
