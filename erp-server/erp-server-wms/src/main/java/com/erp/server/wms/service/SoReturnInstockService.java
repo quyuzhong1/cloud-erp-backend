@@ -156,5 +156,5 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @param list
      * @return java.lang.Boolean
      **/
-    Boolean generateSoReturnInstockSave(List<QcInfoDTO.GenerateSoReturnInstockView> list);
+    Boolean generateSoReturnInstockSave(List<SoReturnInstockDTO.GenerateSoReturnInstockView> list);
 }

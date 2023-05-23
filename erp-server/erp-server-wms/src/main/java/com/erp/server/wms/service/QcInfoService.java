@@ -3,11 +3,9 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.PoInstockDTO;
-import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
-import com.erp.model.wms.dto.QcInfoDTO;
-import com.erp.model.wms.dto.QcResultDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.QcInfoEntity;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -192,6 +190,24 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @return 
      */
     Boolean autoReceiveToQcDTO(List<QcInfoDTO.ReceiveToQcDTO>  dto);
+
+    /**
+     * 退货签收单下推质检单
+     * @Author Luo_WG
+     * @Date 2023/5/23 14:05
+     * @param list list
+     * @return java.lang.Boolean
+     **/
+     Boolean returnReceiveGenerateQCSave(List<String> list);
+
+    /**
+     * 下推退货入库单-列表查询
+     * @Author Luo_WG
+     * @Date 2023/5/23 15:52
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.GenerateSoReturnInstockView>
+     **/
+    List<SoReturnInstockDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(List<String> ids);
 
     /**
      * 根据来源id查询质检单

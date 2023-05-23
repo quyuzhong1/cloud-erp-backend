@@ -160,13 +160,13 @@ public interface SoReturnReceiveService extends SuperService<SoReturnReceiveEnti
     Boolean generateSoReturnReceiveSave(List<SoReturnNoticeDTO.GenerateSoReturnReceiveView> list);
 
     /**
-     * 下推退货入库单-列表查询
+     * 签收单下推质检单-列表查询
      * @Author Luo_WG
      * @Date 2023/5/11 11:46
      * @param ids
      * @return java.util.List<com.erp.model.wms.dto.SoReturnReceiveDTO.GenerateSoReturnInstockView>
      **/
-    List<QcInfoDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(List<String> ids);
+    List<QcInfoDTO.ReceiveGenerateQcView> receiveGenerateQcView(List<String> ids);
 
     /**
      * 根据来源id查询签收单

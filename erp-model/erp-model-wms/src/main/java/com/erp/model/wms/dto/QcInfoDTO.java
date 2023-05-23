@@ -700,11 +700,11 @@ public class QcInfoDTO implements Serializable {
     }
 
     /**
-     * 下推退货入库单-列表查询
+     * 退货签收单下推质检单
      */
     @Data
     @NoArgsConstructor
-    public static class GenerateSoReturnInstockView {
+    public static class ReceiveGenerateQcView {
         /**
          * id
          */
@@ -730,10 +730,6 @@ public class QcInfoDTO implements Serializable {
          */
         private String code;
         /**
-         * 退货客户
-         */
-        private String customerName;
-        /**
          * skuId
          */
         private String skuId;
@@ -742,41 +738,9 @@ public class QcInfoDTO implements Serializable {
          */
         private String skuNo;
         /**
-         * 产品名称
-         */
-        private String productName;
-        /**
-         * 销售数量
-         */
-        private Integer salesQty;
-        /**
-         * 应退数量
-         */
-        private Integer mustQty;
-        /**
          * 签收数量
          */
         private Integer receiveQty;
-        /**
-         * 入库数量
-         */
-        private Integer stockInQty;
-        /**
-         * 不良品数量
-         */
-        private Integer unSellableQty;
-        /**
-         * 良品数量
-         */
-        private Integer sellableQty;
-        /**
-         * 退货类型
-         */
-        private String returnTypeDict;
-        /**
-         * 退货原因
-         */
-        private String  returnReasonDict;
         /**
          * 仓库
          */

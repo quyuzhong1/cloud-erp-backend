@@ -129,6 +129,12 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Resource
     private WarehouseReceiveDetailService warehouseReceiveDetailService;
 
+    @Resource
+    private SoReturnReceiveService soReturnReceiveService;
+
+    @Resource
+    private SoReturnReceiveDetailDTO soReturnReceiveDetailDTO;
+
     /**
      * 保存 质检单
      *
@@ -1345,6 +1351,107 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             qcReportDetailService.saveBatch(addQcReportDetailList);
         }
         return batchQc;
+    }
+
+    /**
+     * 退货签收单下推质检单-保存
+     * @Author Luo_WG
+     * @Date 2023/5/23 14:05
+     * @param receiveIds receiveIds
+     * @return java.lang.Boolean
+     **/
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean returnReceiveGenerateQCSave(List<String> receiveIds) {
+        List<QcInfoDTO.ReceiveGenerateQcView> receiveGenerateQcViews = soReturnReceiveService.receiveGenerateQcView(receiveIds);
+
+        List<QcInfoEntity> addQcList = new ArrayList<>(receiveIds.size());
+        //质检结果
+        List<QcResultEntity> addQcResultList = new ArrayList<>(receiveIds.size());
+
+        //质检产品
+        List<QcProductEntity> addQcProductList = new ArrayList<>(receiveIds.size());
+
+        //质检报告
+        List<QcReportDetailEntity> addQcReportDetailList = new ArrayList<>(receiveIds.size());
+
+        //质检类型的集合
+        List<QcReportDTO.ListDTO> list = qcReportService.listByQcType(Arrays.asList(QcTypeEnum.RETURN_QC.getCode()));
+        Map<String, List<QcReportDTO.ListDTO>> qcTypeMap = list.stream().collect(Collectors.groupingBy(QcReportDTO.ListDTO::getQcType));
+        String qcUserId = commonService.getUserInfo().getUid();
+        String qcUserName = commonService.getUserInfo().getUserName();
+        String departId = "";
+        String departName = "";
+        //质检员
+        if (StringUtils.isNotBlank(qcUserId)) {
+            SysDepartmentUserNumberDTO userDTO = sysUserFeign.getDeptByUserId(qcUserId);
+            departId = userDTO.getDepartmentId();
+            departName = userDTO.getDepartmentName();
+        }
+
+        for (QcInfoDTO.ReceiveGenerateQcView item : receiveGenerateQcViews) {
+            QcInfoEntity qcInfo = new QcInfoEntity();
+            String id = IdWorker.getIdStr();
+            qcInfo.setId(id);
+            qcInfo.setPurchaseOrderCode("");
+            qcInfo.setPurchaseOrderId("");
+            qcInfo.setSupplierId("");
+            qcInfo.setWarehouseId(item.getWarehouseId());
+            qcInfo.setQcDeptId(departId);
+            qcInfo.setQcDeptName(departName);
+            qcInfo.setQcUserId(qcUserId);
+            qcInfo.setQcUserName(qcUserName);
+            qcInfo.setSourceId(item.getId());
+            qcInfo.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
+            addQcList.add(qcInfo);
+            //质检结果
+            QcResultEntity qcResult = new QcResultEntity();
+            qcResult.setMainId(id);
+            String qcType = QcTypeEnum.RETURN_QC.getCode();
+            Boolean isInside = QcTypeEnum.getIsInsideByCode(qcType);
+            qcResult.setQcType(qcType);
+            qcResult.setIsInside(isInside);
+            qcResult.setTotalQty(item.getReceiveQty());
+            qcResult.setPurchaseOrderDetailId("");
+            addQcResultList.add(qcResult);
+
+            //质检产品
+            QcProductEntity qcProduct = new QcProductEntity();
+            BeanMapper.copy(item, qcProduct);
+            qcProduct.setMainId(id);
+            addQcProductList.add(qcProduct);
+
+            //质检报告信息
+            List<QcReportDTO.ListDTO> reportList = qcTypeMap.get(qcType);
+            if (CollectionUtils.isNotEmpty(reportList)) {
+                for (QcReportDTO.ListDTO report : reportList) {
+                    QcReportDetailEntity qcReportDetail = new QcReportDetailEntity();
+                    qcReportDetail.setMainId(id);
+                    qcReportDetail.setQcReportId(report.getQcReportId());
+                    addQcReportDetailList.add(qcReportDetail);
+                }
+            }
+        }
+        //添加质检单
+        Boolean batchQc = this.saveBatch(addQcList);
+        if (batchQc) {
+            qcProductService.saveBatch(addQcProductList);
+            qcResultService.saveBatch(addQcResultList);
+            qcReportDetailService.saveBatch(addQcReportDetailList);
+        }
+        return batchQc;
+    }
+
+    /**
+     * 下推退货入库单-列表查询
+     * @Author Luo_WG
+     * @Date 2023/5/23 15:52
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.GenerateSoReturnInstockView>
+     **/
+    @Override
+    public List<SoReturnInstockDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(List<String> ids) {
+        return null;
     }
 
     /**

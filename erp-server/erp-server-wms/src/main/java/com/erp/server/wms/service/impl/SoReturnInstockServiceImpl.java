@@ -623,10 +623,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean generateSoReturnInstockSave(List<QcInfoDTO.GenerateSoReturnInstockView> list) {
+    public Boolean generateSoReturnInstockSave(List<SoReturnInstockDTO.GenerateSoReturnInstockView> list) {
         Boolean flag = Boolean.TRUE;
-        List<String> soReceiveIdList = list.stream().map(QcInfoDTO.GenerateSoReturnInstockView::getMainId).distinct().collect(Collectors.toList());
-        List<String> soDetailIdList = list.stream().map(QcInfoDTO.GenerateSoReturnInstockView::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<String> soReceiveIdList = list.stream().map(SoReturnInstockDTO.GenerateSoReturnInstockView::getMainId).distinct().collect(Collectors.toList());
+        List<String> soDetailIdList = list.stream().map(SoReturnInstockDTO.GenerateSoReturnInstockView::getSourceDetailId).distinct().collect(Collectors.toList());
         long count = soReturnReceiveDetailService.listByIds(soReceiveIdList).stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_92032);
@@ -637,7 +637,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
 
         for (String id : soReceiveIdList) {
-            List<QcInfoDTO.GenerateSoReturnInstockView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
+            List<SoReturnInstockDTO.GenerateSoReturnInstockView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
             QcInfoEntity qcInfoEntity = qcInfoService.getById(id);
             SoReturnReceiveEntity receiveEntity = soReturnReceiveService.getById(qcInfoEntity.getSourceId());
             SoReturnInstockDTO.Add dto = new  SoReturnInstockDTO.Add();
@@ -646,7 +646,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             dto.setWarehouseId(qcInfoEntity.getWarehouseId());
             dto.setWarehouseKeeperId(receiveEntity.getWarehouseKeeperId());
             List<SoReturnInstockDetailDTO.Add> detailList = new ArrayList<>();
-            for (QcInfoDTO.GenerateSoReturnInstockView view : viewList) {
+            for (SoReturnInstockDTO.GenerateSoReturnInstockView view : viewList) {
                 SoReturnInstockDetailDTO.Add detailAddDTO = new SoReturnInstockDetailDTO.Add();
                 detailAddDTO.setMustQty(view.getMustQty());
                 detailAddDTO.setReceiveQty(view.getReceiveQty());

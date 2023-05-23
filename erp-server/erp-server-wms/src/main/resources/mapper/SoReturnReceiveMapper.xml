@@ -228,7 +228,7 @@
         srr.create_time desc
     </select>
 
-    <select id="generateSoReturnInstockView" resultType="com.erp.model.wms.dto.QcInfoDTO$GenerateSoReturnInstockView">
+    <select id="receiveGenerateQcView" resultType="com.erp.model.wms.dto.QcInfoDTO$ReceiveGenerateQcView">
         SELECT
         srrd.id,
         srrd.main_id,
@@ -236,11 +236,8 @@
         srrd.source_detail_id,
         srr.source_code,
         srr.code,
-        srr.customer_id,
-        srr.customer_name,
         srrd.sku_id,
         srrd.sku_no,
-        srrd.return_qty AS mustQty,
         srrd.receive_qty,
         srrd.remark
         FROM so_return_receive_detail srrd
@@ -252,5 +249,6 @@
                 #{id}
             </foreach>
         </if>
+        ORDER BY srrd.main_id
     </select>
 </mapper>

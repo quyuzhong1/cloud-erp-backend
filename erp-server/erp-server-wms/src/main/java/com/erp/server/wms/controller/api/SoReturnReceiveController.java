@@ -11,6 +11,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.wms.dto.QcInfoDTO;
+import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.server.wms.service.SoReturnReceiveService;
@@ -290,18 +291,5 @@ public class SoReturnReceiveController extends BaseController {
     public ApiResult generateSoReturnReceiveSave(@RequestBody ValidList<SoReturnNoticeDTO.GenerateSoReturnReceiveView> validList) {
         Boolean flag = soReturnReceiveService.generateSoReturnReceiveSave(validList.getList());
         return flag == true ? success() : failure();
-    }
-
-    /**
-     * 下推退货入库单-列表查询
-     * @Author Luo_WG
-     * @Date 2023/4/13 18:59
-     * @param dto dto
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @PostMapping(value = "/generateSoReturnInstockView")
-    public ApiResult<List<QcInfoDTO.GenerateSoReturnInstockView>> generateSoReturnInstockView(@RequestBody BaseIdsDTO.IdsDTO dto) {
-        List<QcInfoDTO.GenerateSoReturnInstockView> generateSoDeliveryViews = soReturnReceiveService.generateSoReturnInstockView(dto.getIds());
-        return success(generateSoDeliveryViews);
     }
 }

@@ -33,6 +33,7 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDetailDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -100,6 +101,9 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
 
     @Resource
     private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
+
+    @Resource
+    private WarehouseService warehouseService;
 
     /**
      * 根据退货单获取销售单已出库数量
@@ -240,6 +244,12 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         entity.setCustomerName(customerInfoEntity.getName());
+        entity.setWarehouseId(soInfoEntity.getWarehouseId());
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(soInfoEntity.getWarehouseId()));
+        if (CollectionUtils.isNotEmpty(warehouseList)) {
+            entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
+        }
+
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.THTZ, BusinessNoTypeEnum.CODE_THTZ.getCode()));
         entity.setCode(code);
@@ -287,6 +297,11 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         entity.setCustomerName(customerInfoEntity.getName());
+        entity.setWarehouseId(soInfoEntity.getWarehouseId());
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(soInfoEntity.getWarehouseId()));
+        if (CollectionUtils.isNotEmpty(warehouseList)) {
+            entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
+        }
         entity.setId(dto.getId());
         entity.setSourceId(dto.getSourceId());
         entity.setSourceCode(soReturnEntity.getCode());
@@ -314,6 +329,8 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         List<SoReturnNoticeDetailDTO.View> detailViewDTOS = new ArrayList<>();
         List<SoReturnNoticeDetailEntity> detailEntityList = soReturnNoticeDetailService.listDetailByMainId(id);
         SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(entity.getSourceId());
+        //获取销售单信息
+        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
         BeanMapperUtils.copy(soReturnEntity, viewDTO);
         BeanMapperUtils.copy(entity, viewDTO);
         //获取sku的id集合
@@ -331,6 +348,11 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         viewDTO.setCustomerName(customerInfoEntity.getName());
+        entity.setWarehouseId(soInfoEntity.getWarehouseId());
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(soInfoEntity.getWarehouseId()));
+        if (CollectionUtils.isNotEmpty(warehouseList)) {
+            entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
+        }
         for (SoReturnNoticeDetailEntity detailEntity : detailEntityList) {
             SoReturnNoticeDetailDTO.View detailView = new SoReturnNoticeDetailDTO.View();
             BeanMapperUtils.copy(detailEntity, detailView);

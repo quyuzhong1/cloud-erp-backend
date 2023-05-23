@@ -287,7 +287,7 @@ public class SoReturnInstockController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/generateSoReturnInstockSave")
-    public ApiResult generateSoReturnInstockSave(@RequestBody ValidList<QcInfoDTO.GenerateSoReturnInstockView> list) {
+    public ApiResult generateSoReturnInstockSave(@RequestBody ValidList<SoReturnInstockDTO.GenerateSoReturnInstockView> list) {
         Boolean flag = soReturnInstockService.generateSoReturnInstockSave(list.getList());
         return flag == true ? success() : failure();
     }
