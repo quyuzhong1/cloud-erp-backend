@@ -140,6 +140,7 @@
         ood.actual_qty as actualQty,
         ood.unit,
         oo.warehouse_name as warehouseName,
+        ood.warehouse_location as warehouseLocation,
         oo.approve_user_name as approveUserName,
         oo.create_user_name as createUserName,
         oo.create_time as createTime
