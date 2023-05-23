@@ -433,6 +433,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         if (CollectionUtils.isNotEmpty(projectPlanIds)) {
             LambdaQueryWrapper<ProjectPlanTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.in(ProjectPlanTaskEntity::getProjectPlanId, projectPlanIds);
+            queryWrapper.orderByDesc(ProjectPlanTaskEntity::getChangeEndTime);
             return this.list(queryWrapper);
         }
         return new ArrayList<>();

@@ -154,15 +154,15 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         List<String> noContainDocsPowerList = docsPower.getNoContainDocsPowerList();
 
         //两个都有
-        if (CollectionUtils.isNotEmpty(containDocsPowerList)&&CollectionUtils.isNotEmpty(noContainDocsPowerList)) {
+        if (CollectionUtils.isNotEmpty(containDocsPowerList) && CollectionUtils.isNotEmpty(noContainDocsPowerList)) {
             pageData = baseMapper.paging(query, params, docsPower);
         }
         //有文档权限  没有数据权限
-        if(CollectionUtils.isNotEmpty(containDocsPowerList)&&CollectionUtils.isEmpty(noContainDocsPowerList)){
+        if (CollectionUtils.isNotEmpty(containDocsPowerList) && CollectionUtils.isEmpty(noContainDocsPowerList)) {
             pageData = baseMapper.containPaging(query, params, containDocsPowerList);
         }
         //没有有文档权限  有数据权限
-        if(CollectionUtils.isEmpty(containDocsPowerList)&&CollectionUtils.isNotEmpty(noContainDocsPowerList)){
+        if (CollectionUtils.isEmpty(containDocsPowerList) && CollectionUtils.isNotEmpty(noContainDocsPowerList)) {
             pageData = baseMapper.noContainPaging(query, params, noContainDocsPowerList);
         }
 
@@ -585,21 +585,21 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             for (TaskDeliveryDocsEntity item : deliveryDocsList) {
                 String deliveryDocsId = item.getId();
                 //未设置文档权限可以看所有
-                    DocsPermissionEntity permission = allPermissionDeliveryDocsList.stream().filter(p -> p.getDeliveryDocsId().equals(deliveryDocsId)).
-                            findFirst().orElse(null);
+                List<DocsPermissionEntity> permissionList = allPermissionDeliveryDocsList.stream().filter(p -> p.getDeliveryDocsId().equals(deliveryDocsId)).collect(Collectors.toList());
                     //表示有权限
-                    if (permission != null) {
+                if (CollectionUtils.isNotEmpty(permissionList)) {
+                    for (DocsPermissionEntity permission : permissionList) {
                         if (userRoleIds.contains(permission.getQueryRoleId())) {
                             findDeliveryDocsIds.add(deliveryDocsId);
                         }
                         if (StringUtils.isBlank(permission.getQueryRoleId())) {
                             findDeliveryDocsIds.add(deliveryDocsId);
                         }
+                    }
                     } else {
                         //没有设置权限 也应该看到
                         findDeliveryDocsIds.add(deliveryDocsId);
                     }
-
 
             }
 
@@ -657,24 +657,24 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             for (TaskDeliveryDocsEntity item : deliveryDocsList) {
                 String deliveryDocsId = item.getId();
                 //未设置文档权限可以看所有
-                DocsPermissionEntity permission = allPermissionDeliveryDocsList.stream().filter(p -> p.getDeliveryDocsId().equals(deliveryDocsId)).
-                        findFirst().orElse(null);
+                List<DocsPermissionEntity> permissionList = allPermissionDeliveryDocsList.stream().filter(p -> p.getDeliveryDocsId().equals(deliveryDocsId)).collect(Collectors.toList());
+
                 //表示有权限
-                if (permission != null) {
+                if (CollectionUtils.isNotEmpty(permissionList)) {
+                    for (DocsPermissionEntity permission : permissionList) {
                     if (userRoleIds.contains(permission.getQueryRoleId())) {
                         containDocsPowerList.add(deliveryDocsId);
                     }
                     if (StringUtils.isBlank(permission.getQueryRoleId())) {
                         noContainDocsPowerList.add(deliveryDocsId);
                     }
-                } else {
+                    }
+                } else{
                     //没有设置权限 也应该看到
                     noContainDocsPowerList.add(deliveryDocsId);
                 }
 
-
             }
-
         }
         result.setContainDocsPowerList(containDocsPowerList);
         noContainDocsPowerList = noContainDocsPowerList.stream().filter(n -> !containDocsPowerList.contains(n)).collect(Collectors.toList());
