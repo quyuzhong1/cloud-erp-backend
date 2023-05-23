@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * 供应商管理
@@ -293,6 +294,19 @@ public class SupplierController extends BaseController {
     public ApiResult<SupplierDTO.ViewDTO> getSupplierContact(@RequestParam(value = "supplierId") String supplierId) {
         SupplierDTO.ViewDTO viewDTO = supplierService.getBySupplierId(supplierId);
         return success(viewDTO);
+    }
+
+
+    /**
+     * 根据供应商类型 获取到 对应供应商
+     * logistics 物流供应商
+     * other 货代供应商
+     * @return
+     */
+    @GetMapping("/listSupplierByCategoryType")
+    public ApiResult<List<BaseIdDTO>> listSupplierByCategoryType(@RequestParam("categoryType") String categoryType) {
+        List<BaseIdDTO> list = supplierService.listSupplierByCategoryType(categoryType);
+        return success(list);
     }
 
 }

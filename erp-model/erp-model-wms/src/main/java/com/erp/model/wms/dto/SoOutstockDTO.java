@@ -476,6 +476,9 @@ public class SoOutstockDTO implements Serializable {
         private Integer deliveryQty;
 
 
+        private String remark;
+
+
 
 
 
@@ -495,6 +498,11 @@ public class SoOutstockDTO implements Serializable {
          * id
          */
         private String id;
+
+        /**
+         * 出库单号
+         */
+        private String code;
 
         /**
          * 销售订单id

@@ -535,7 +535,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     private List<String> setTaskDeliveryAuth(BaseSearchDTO params) {
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         String userAccount = "";
-        String userId = "";
+        String userId = "1633756775134134274";
         if (loginUser != null) {
             userAccount = loginUser.getUserAccount();
             userId = loginUser.getUid();
@@ -567,21 +567,21 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             for (TaskDeliveryDocsEntity item : deliveryDocsList) {
                 String deliveryDocsId = item.getId();
                 //未设置文档权限可以看所有
-                DocsPermissionEntity permission = allPermissionDeliveryDocsList.stream().filter(p -> p.getDeliveryDocsId().equals(deliveryDocsId)).
-                        findFirst().orElse(null);
+               List<DocsPermissionEntity>  permissionList = allPermissionDeliveryDocsList.stream().filter(p -> p.getDeliveryDocsId().equals(deliveryDocsId)).collect(Collectors.toList());
                 //表示有权限
-                if (permission != null) {
-                    if (userRoleIds.contains(permission.getQueryRoleId())) {
-                        findDeliveryDocsIds.add(deliveryDocsId);
-                    }
-                    if (StringUtils.isBlank(permission.getQueryRoleId())) {
-                        findDeliveryDocsIds.add(deliveryDocsId);
-                    }
+                if (CollectionUtils.isNotEmpty(permissionList)) {
+                     for(DocsPermissionEntity permission:permissionList){
+                         if (userRoleIds.contains(permission.getQueryRoleId())) {
+                             findDeliveryDocsIds.add(deliveryDocsId);
+                         }
+                         if (StringUtils.isBlank(permission.getQueryRoleId())) {
+                             findDeliveryDocsIds.add(deliveryDocsId);
+                         }
+                     }
                 } else {
                     //没有设置权限 也应该看到
                     findDeliveryDocsIds.add(deliveryDocsId);
                 }
-
 
             }
 

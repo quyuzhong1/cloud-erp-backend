@@ -786,15 +786,57 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-05-23 14:30
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean addPushDownNo(List<SoOutstockDTO.GenerateSoOutstockViewDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.FALSE;
         }
-        Map<String, List<SoOutstockDTO.GenerateSoOutstockViewDTO>> map =list.stream().collect(Collectors.groupingBy(SoOutstockDTO.GenerateSoOutstockViewDTO::getSourceId));
-         for(Map.Entry<String,List<SoOutstockDTO.GenerateSoOutstockViewDTO>> entry:map.entrySet()){
+        Map<String, List<SoOutstockDTO.GenerateSoOutstockViewDTO>> map = list.stream().collect(Collectors.groupingBy(SoOutstockDTO.GenerateSoOutstockViewDTO::getSourceId));
+        List<SoOutstockDTO.AddDTO> addList = new ArrayList<>(map.size());
+        for (Map.Entry<String, List<SoOutstockDTO.GenerateSoOutstockViewDTO>> entry : map.entrySet()) {
+            //来源id
+            String sourceId = entry.getKey();
+            List<SoOutstockDTO.GenerateSoOutstockViewDTO> generateInfoList = entry.getValue();
+            SoOutstockDTO.GenerateSoOutstockViewDTO generateInfo = generateInfoList.stream().filter(g -> StringUtils.isNotBlank(g.getSourceCode())).findFirst().orElse(null);
+            if (generateInfo != null) {
+                SoOutstockDTO.AddDTO add = new SoOutstockDTO.AddDTO();
+                add.setSoId(generateInfo.getSoId());
+                add.setSourceId(generateInfo.getSourceId());
+                add.setSourceType(generateInfo.getSourceType());
+                add.setCarrierId(generateInfo.getCarrierId());
+                add.setDeliveryOrgId(generateInfo.getDeliveryOrgId());
+                add.setPlanDeliveryDate(generateInfo.getPlanDeliveryDate());
+                add.setWarehouseId(generateInfo.getWarehouseId());
+                add.setTrackNo(generateInfo.getTrackNo());
 
-         }
-        return null;
+                List<SoOutstockDetailDTO.AddDTO> detailList = new ArrayList<>(generateInfoList.size());
+                for (SoOutstockDTO.GenerateSoOutstockViewDTO item : generateInfoList) {
+                    SoOutstockDetailDTO.AddDTO detail = new SoOutstockDetailDTO.AddDTO();
+                    detail.setSourceDetailId(item.getSourceDetailId());
+                    detail.setSkuId(item.getSkuId());
+                    detail.setRemark(item.getRemark());
+                    detail.setWarehouseLocation(item.getWarehouseLocation());
+                    detail.setActualQty(item.getDeliveryQty());
+                    detail.setPlanQty(item.getDeliveryQty());
+                    detail.setAttachNameList(item.getAttachNameList());
+                    detail.setAttachUrlList(item.getAttachUrlList());
+                    detailList.add(detail);
+                }
+                add.setDetailList(detailList);
+                addList.add(add);
+            }
+
+        }
+        return this.batchAdd(addList);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean batchAdd(List<SoOutstockDTO.AddDTO> addList) {
+        if (CollectionUtils.isEmpty(addList)) {
+            return Boolean.FALSE;
+        }
+        addList.forEach(obj->add(obj));
+        return Boolean.TRUE;
     }
 
     private List<String> listBySearchType(String searchType) {

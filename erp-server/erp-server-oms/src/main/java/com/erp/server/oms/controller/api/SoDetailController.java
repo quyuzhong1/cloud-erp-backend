@@ -37,8 +37,8 @@ public class SoDetailController extends BaseController {
 
 
     /**
-     * 根据销售订单id 获取到对应
-     * 产品明细
+     * 根据销售订单id 获取到对应产品明细
+     *
      */
     @GetMapping("/listBySoId")
     public ApiResult<List<SoDetailDTO.ViewDTO>> listBySoId(@RequestParam("soId") String soId) {

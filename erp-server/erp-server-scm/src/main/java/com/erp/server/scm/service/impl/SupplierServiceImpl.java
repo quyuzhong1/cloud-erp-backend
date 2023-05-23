@@ -930,12 +930,27 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
     @Override
     public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId) {
-        return  this.lambdaUpdate()
-                .in(SupplierEntity::getId,ids)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),SupplierEntity::getSyncKingdeeStatus,syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),SupplierEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId),SupplierEntity::getSyncKingdeeId,syncKingdeeId)
+        return this.lambdaUpdate()
+                .in(SupplierEntity::getId, ids)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), SupplierEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), SupplierEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), SupplierEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
+    }
+
+
+    /**
+     * 根据供应商类型 获取对应供应商
+     *
+     * @param categoryType
+     * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
+     * @author yl
+     * @date 2023-05-23 16:31
+     */
+    @Override
+    public List<BaseIdDTO> listSupplierByCategoryType(String categoryType) {
+        String supplierCategory = DictBasicEnum.SUPPLIER_CATEGORY.getType();
+        return baseMapper.listSupplierByCategoryType(supplierCategory,categoryType);
     }
 
     /**
