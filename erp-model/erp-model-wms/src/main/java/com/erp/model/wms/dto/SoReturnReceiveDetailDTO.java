@@ -7,6 +7,8 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
+@Data
+@NoArgsConstructor
 public class SoReturnReceiveDetailDTO {
     /**
      * 添加
