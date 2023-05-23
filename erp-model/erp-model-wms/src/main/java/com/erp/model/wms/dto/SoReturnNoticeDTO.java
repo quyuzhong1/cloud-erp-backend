@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
@@ -205,6 +206,10 @@ public class SoReturnNoticeDTO {
          */
         private String sourceId;
         /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
          * 库存组织id
          */
         private String inventoryOrgId;
@@ -384,6 +389,14 @@ public class SoReturnNoticeDTO {
          * 退货单id
          */
         private String sourceId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 仓管员id
+         */
+        private String warehouseKeeperId;
         /**
          * 退货单明细id
          */

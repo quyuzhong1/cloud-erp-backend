@@ -12,6 +12,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -578,6 +579,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             SoReturnNoticeEntity noticeEntity = soReturnNoticeService.getById(id);
             SoReturnReceiveDTO.Add dto = new SoReturnReceiveDTO.Add();
             dto.setSourceId(id);
+            dto.setSourceType(SourceTypeEnum.SO_RETURN_NOTICE.getCode());
             dto.setInventoryOrgId(noticeEntity.getInventoryOrgId());
             dto.setWarehouseKeeperId(noticeEntity.getWarehouseKeeperId());
             dto.setReturnDate(noticeEntity.getBillDate());
@@ -603,10 +605,10 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     }
 
     @Override
-    public List<SoReturnReceiveDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(List<String> ids) {
-        List<SoReturnReceiveDTO.GenerateSoReturnInstockView> list = baseMapper.generateSoReturnInstockView(ids);
+    public List<QcInfoDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(List<String> ids) {
+      /*  List<QcInfoDTO.GenerateSoReturnInstockView> list = baseMapper.generateSoReturnInstockView(ids);
         //获取界面传过来的采购单详情表id集合
-        List<String> orderDetailIds = list.stream().map(SoReturnReceiveDTO.GenerateSoReturnInstockView::getSourceDetailId).collect(Collectors.toList());
+        List<String> orderDetailIds = list.stream().map(QcInfoDTO.GenerateSoReturnInstockView::getSourceDetailId).collect(Collectors.toList());
         //获取销售单详情信息
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
         //获取sku的id集合
@@ -623,7 +625,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             //产品sku信息
             ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             view.setProductName(productDetailEntity.getName());
-        }
+        }*/
         return null;
     }
 

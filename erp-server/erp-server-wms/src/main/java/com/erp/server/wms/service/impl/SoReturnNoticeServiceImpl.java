@@ -12,6 +12,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -616,6 +617,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(sourceId);
             SoReturnNoticeDTO.Add dto = new SoReturnNoticeDTO.Add();
             dto.setSourceId(id);
+            dto.setSourceType(SourceTypeEnum.SO_RETURN.getCode());
             dto.setInventoryOrgId(soInfoEntity.getWarehouseOrgId());
             List<SoReturnNoticeDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnDTO.GenerateSoReturnNoticeView view : viewList) {

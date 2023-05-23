@@ -216,6 +216,10 @@ public class SoReturnInstockDTO {
          */
         private String sourceId;
         /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
          * 入库日期
          */
         private LocalDate billDate;

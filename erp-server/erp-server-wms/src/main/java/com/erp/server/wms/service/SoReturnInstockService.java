@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
@@ -155,5 +156,5 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @param list
      * @return java.lang.Boolean
      **/
-    Boolean generateSoReturnReceiveSave(List<SoReturnReceiveDTO.GenerateSoReturnInstockView> list);
+    Boolean generateSoReturnInstockSave(List<QcInfoDTO.GenerateSoReturnInstockView> list);
 }
