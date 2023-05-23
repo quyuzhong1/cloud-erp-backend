@@ -82,7 +82,7 @@ public class BiModuleServiceImpl extends ServiceImpl<BiModuleMapper, BiModuleEnt
     public PagingVO<ModulePagingDTO> paging(PagingDTO<BaseSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         IPage pageData = baseMapper.paging(query, params);
         List<ModulePagingDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {

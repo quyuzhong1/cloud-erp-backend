@@ -63,8 +63,8 @@
                         #{item}
                     </foreach>
                 </if>
-                <if test="params.param != null and params.param != ''">
-                    ${params.param}
+                <if test="params.permissionSql != null and params.permissionSql != ''">
+                    ${params.permissionSql }
                 </if>
             </where>
             group by it.warehouse_id,it.org_id,it.sku_id,it.dict_inventory_status
@@ -137,8 +137,8 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql }
             </if>
         </where>
         group by it.warehouse_id,it.org_id,it.sku_id,it.dict_inventory_status

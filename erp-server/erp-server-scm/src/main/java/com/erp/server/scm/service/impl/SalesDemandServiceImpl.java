@@ -110,7 +110,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
 
     @Override
     public PagingVO<SalesDemandDTO.ListDTO> paging(PagingDTO<SalesDemandDTO.SearchParamDTO> pagingDTO) {
-        pagingDTO.getParams().setParam(pagingDTO.getParam());
+        pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<SalesDemandDTO.ListDTO> pageData = baseMapper.paging(query, pagingDTO.getParams());
         //清空明细数据
@@ -430,7 +430,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
     @Override
     public List<ListStatusCountDTO.SalesDemandCountDTO> listCount(PermissionsDTO dto) {
         SalesDemandDTO.SearchParamDTO searchParamDTO = new SalesDemandDTO.SearchParamDTO();
-        searchParamDTO.setParam(dto.getParam());
+        searchParamDTO.setPermissionSql(dto.getPermissionSql());
         List<ListStatusCountDTO.SalesDemandCountDTO> list = new ArrayList<>();
         ListStatusCountDTO.SalesDemandCountDTO resultDTO = new ListStatusCountDTO.SalesDemandCountDTO();
         searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));

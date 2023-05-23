@@ -84,8 +84,8 @@
         <if test="params.createTimeList != null and params.createTimeList.size > 0">
             and srn.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > srn.create_time
         </if>
-        <if test="params.param != null and params.param != ''">
-            ${params.param}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql }
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -108,8 +108,8 @@
                 #{item}
             </foreach>
         </if>
-        <if test="params.param != null and params.param != ''">
-            ${params.param}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql }
         </if>
     </select>
 
@@ -199,8 +199,8 @@
                 </if>
             </otherwise>
         </choose>
-        <if test="params.param != null and params.param != ''">
-            ${params.param}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql }
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">

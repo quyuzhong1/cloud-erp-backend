@@ -30,7 +30,7 @@ public @interface DataPermission {
     /**
      * 拼接的sql
      */
-    String param() default "param";
+    String permissionSql() default "permissionSql";
 
     /**
      * 操作类型 查询：query 修改：update 删除：delete

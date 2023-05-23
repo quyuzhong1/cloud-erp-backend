@@ -10,6 +10,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoReturnDTO;
+import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.server.wms.service.SoReturnReceiveService;
@@ -299,8 +300,8 @@ public class SoReturnReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/generateSoReturnInstockView")
-    public ApiResult<List<SoReturnReceiveDTO.GenerateSoReturnInstockView>> generateSoReturnInstockView(@RequestBody BaseIdsDTO.IdsDTO dto) {
-        List<SoReturnReceiveDTO.GenerateSoReturnInstockView> generateSoDeliveryViews = soReturnReceiveService.generateSoReturnInstockView(dto.getIds());
+    public ApiResult<List<QcInfoDTO.GenerateSoReturnInstockView>> generateSoReturnInstockView(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<QcInfoDTO.GenerateSoReturnInstockView> generateSoDeliveryViews = soReturnReceiveService.generateSoReturnInstockView(dto.getIds());
         return success(generateSoDeliveryViews);
     }
 }

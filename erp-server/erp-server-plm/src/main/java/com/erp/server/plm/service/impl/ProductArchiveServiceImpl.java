@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -47,7 +46,7 @@ public class ProductArchiveServiceImpl extends ServiceImpl<ProductArchiveMapper,
 
     @Override
     public PagingVO paging(PagingDTO<ProductSearchDTO> dto) {
-        dto.getParams().setParam(dto.getParam());
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         ProductSearchDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params);

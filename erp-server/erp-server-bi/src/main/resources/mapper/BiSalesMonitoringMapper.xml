@@ -22,8 +22,8 @@
         where doio.platform_create_time is not null
           and (to_char(doio.platform_create_time,'YYYY') = to_char(CURRENT_DATE,'YYYY')
           or to_char(doio.platform_create_time,'YYYYMM') = to_char(CURRENT_DATE + INTERVAL '-1 MONTH','YYYYMM'))
-        <if test="dto.param != null and dto.param != ''">
-            ${dto.param}
+        <if test="dto.permissionSql != null and dto.permissionSql != ''">
+            ${dto.permissionSql }
         </if>
     </select>
 

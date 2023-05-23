@@ -62,7 +62,7 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
     public PagingVO<DmpRefundInfoDTO> paging(PagingDTO<DmpRefundInfoSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         DmpRefundInfoSearchDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         IPage<DmpRefundInfoDTO> pageData = baseMapper.paging(query, params);
         if (CollectionUtils.isNotEmpty(pageData.getRecords())) {
             pageData.getRecords().forEach(obj -> obj.setRefundStatusName(RefundStatusEnum.getName(obj.getRefundStatus())));

@@ -100,7 +100,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Override
     public PagingVO<SoReturnDTO.PagingView> paging(PagingDTO<SoReturnDTO.PagingParam> pagingParamDTO) {
-        pagingParamDTO.getParams().setParam(pagingParamDTO.getParam());
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<SoReturnDTO.PagingView> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
@@ -164,7 +164,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<SoReturnDTO.StatusCountDTO> list = new ArrayList<>();
         for (SOReturnChangeListTypeEnum item : values) {
             SoReturnDTO.PagingParam pagingParam = new SoReturnDTO.PagingParam();
-            pagingParam.setParam(dto.getParam());
+            pagingParam.setPermissionSql(dto.getPermissionSql());
             SoReturnDTO.StatusCountDTO resultDTO = new SoReturnDTO.StatusCountDTO();
             Integer count = MathUtil.ZERO;
             if (SOReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {

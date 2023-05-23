@@ -39,8 +39,8 @@
             <if test="params.searchContent != null and params.searchContent != ''">
                 and (btm.sku_no like concat('%',#{params.searchContent},'%')  or btm.spu_no like concat('%',#{params.searchContent},'%'))
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql }
             </if>
         </where>
         order by btm.year

@@ -11,26 +11,20 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.StateEnumValue;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.AuditParamDTO;
 import com.erp.model.plm.dto.ProductDetailOperateDTO;
-import com.erp.model.plm.dto.TaskOperateDTO;
 import com.erp.model.sys.vo.SysMenuVO;
-import com.erp.model.wms.dto.WarehouseReceiveDTO;
-import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.workflow.dto.ApproveParamDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
-import com.erp.model.workflow.entity.WorkMenuEntity;
 import com.erp.model.workflow.entity.WorkOptionEntity;
 import com.erp.model.workflow.enums.ApproveSearchOptionEnum;
 import com.erp.model.workflow.enums.SysClassifyEnum;
 import com.erp.model.workflow.enums.TableNameEnum;
-import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
@@ -41,14 +35,9 @@ import com.erp.server.workflow.utils.GetHttpGatewayIpPortUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.sql.rowset.serial.SerialException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -429,7 +418,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      **/
     @Override
     public PagingVO<List<WorkOptionDTO.ApproveViewDTO>> approveView(PagingDTO<WorkOptionDTO.ApproveViewParamDTO> dto) {
-        dto.getParams().setParam(dto.getParam());
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         LoginUser userInfo = commonService.getUserInfo();
         dto.getParams().setUserId(userInfo.getUid());

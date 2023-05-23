@@ -20,8 +20,8 @@
          </if>
 
         <!--权限-->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql }
         </if>
          ORDER BY create_time DESC
 

@@ -273,7 +273,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public PagingVO<List<TaskPagingShowDTO>> paging(PagingDTO<TaskPagingDTO> dto) {
-        dto.getParams().setParam(dto.getParam());
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         TaskPagingDTO params = dto.getParams();
@@ -1680,7 +1680,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         TaskSearchParamDTO params = searchParamDTO.getParams();
-        params.setParam(searchParamDTO.getParam());
+        params.setPermissionSql(searchParamDTO.getPermissionSql());
         Page query = new Page(searchParamDTO.getCurrPage(), searchParamDTO.getPageSize());
         //"assignToMe", "myCreate", "all"
         String taskProperty = TaskConstant.ALL;
@@ -1830,11 +1830,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public PagingVO<List<TaskPagingShowDTO>> assignToMePaging(PagingDTO<TaskSearchParamDTO> searchParamDTO) {
-        searchParamDTO.getParams().setParam(searchParamDTO.getParam());
+        searchParamDTO.getParams().setPermissionSql(searchParamDTO.getPermissionSql());
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         TaskSearchParamDTO params = searchParamDTO.getParams();
-        params.setParam(searchParamDTO.getParam());
+        params.setPermissionSql(searchParamDTO.getPermissionSql());
         Page query = new Page(searchParamDTO.getCurrPage(), searchParamDTO.getPageSize());
         //"assignToMe", "myCreate", "all"
         String taskProperty = TaskConstant.ASSIGN_TO_ME;
@@ -1985,11 +1985,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public PagingVO<List<TaskPagingShowDTO>> assignToMeWaitAuditPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO) {
-        searchParamDTO.getParams().setParam("");
+        searchParamDTO.getParams().setPermissionSql("");
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         TaskSearchParamDTO params = searchParamDTO.getParams();
-        params.setParam(searchParamDTO.getParam());
+        params.setPermissionSql(searchParamDTO.getPermissionSql());
         Page query = new Page(searchParamDTO.getCurrPage(), searchParamDTO.getPageSize());
         //"assignToMe", "myCreate", "all"
         String taskProperty = TaskConstant.ASSIGN_TO_ME;
@@ -2140,7 +2140,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         String productId = params.getProductId();
-        String param = params.getParam();
+        String param = params.getPermissionSql();
 
         List<ProductTaskCategoryCountDTO> list = new ArrayList<>();
         //这个是我完成的任务
@@ -2536,7 +2536,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public PagingVO<List<TaskPagingShowDTO>> myCreatePaging(PagingDTO<TaskSearchParamDTO> searchParamDTO) {
-        searchParamDTO.getParams().setParam(searchParamDTO.getParam());
+        searchParamDTO.getParams().setPermissionSql(searchParamDTO.getPermissionSql());
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         TaskSearchParamDTO params = searchParamDTO.getParams();

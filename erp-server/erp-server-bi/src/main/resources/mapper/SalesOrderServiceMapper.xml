@@ -97,8 +97,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         GROUP BY flag
@@ -199,8 +199,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         GROUP BY i.sku_no
@@ -304,8 +304,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         GROUP BY i.sku_no,o.${findTime}
@@ -406,8 +406,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         GROUP BY sku_no
@@ -508,8 +508,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
 
@@ -547,8 +547,8 @@
                 </if>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         GROUP BY source_platform
@@ -622,8 +622,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         GROUP BY o.shop_no
@@ -696,8 +696,8 @@
             </foreach>
         </if>
         <!-- 权限 -->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql }
         </if>
 
         GROUP BY o.shop_no,o.${findTime}
@@ -756,8 +756,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         GROUP BY o.shop_no
@@ -852,8 +852,8 @@
             </foreach>
         </if>
         <!-- 权限 -->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql }
         </if>
         GROUP BY
         o.shop_no,
@@ -958,8 +958,8 @@
             </foreach>
         </if>
         <!-- 权限 -->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql }
         </if>
 
         GROUP BY o.shop_no,i.new_sign
@@ -1057,8 +1057,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         GROUP BY o.country_name_cn
@@ -1158,8 +1158,8 @@
             </foreach>
         </if>
         <!-- 权限 -->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql }
         </if>
         GROUP BY i.sku_no,o.shop_no
     </select>
@@ -1255,8 +1255,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         GROUP BY i.sku_no
@@ -1354,8 +1354,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         GROUP BY o.source_platform
@@ -1392,8 +1392,8 @@
             </if>
         </if>
         <!-- 权限 -->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql }
         </if>
 
         GROUP BY country_name_cn
@@ -1491,8 +1491,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         GROUP BY o.charge_id
@@ -1591,8 +1591,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         GROUP BY o.dept_id
@@ -1690,8 +1690,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         GROUP BY i.new_sign
@@ -1790,8 +1790,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         GROUP BY i.new_sign,o.source_platform
@@ -1890,8 +1890,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         GROUP BY i.new_sign,i.sku_no
@@ -1990,8 +1990,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         GROUP BY o.shop_no
@@ -2088,8 +2088,8 @@
             </foreach>
         </if>
         <!-- 权限 -->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql }
         </if>
         GROUP BY i.sku_no
         ORDER BY sales DESC LIMIT 20
@@ -2185,8 +2185,8 @@
             </foreach>
         </if>
         <!-- 权限 -->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql }
         </if>
         GROUP BY i.sku_no
         ORDER BY sales DESC LIMIT 20
@@ -2320,8 +2320,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         GROUP BY pi.brand_name
@@ -2455,8 +2455,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         GROUP BY i.new_sign,o.charge_id
@@ -2556,8 +2556,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         GROUP BY i.new_sign,o.dept_id
@@ -2639,8 +2639,8 @@
             </foreach>
         </if>
         <!-- 权限 -->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql }
         </if>
         GROUP BY flag
     </select>
@@ -2721,8 +2721,8 @@
             </foreach>
         </if>
         <!-- 权限 -->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql }
         </if>
         GROUP BY
         flag
@@ -2821,8 +2821,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         LIMIT 1
@@ -2868,8 +2868,8 @@
                 )
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         GROUP BY o.source_platform
@@ -2967,8 +2967,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         group by name order by name asc
@@ -3066,8 +3066,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         group by name order by name asc
@@ -3164,8 +3164,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         group by name order by name asc
@@ -3265,8 +3265,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql }
             </if>
         </where>
         group by name order by name asc
