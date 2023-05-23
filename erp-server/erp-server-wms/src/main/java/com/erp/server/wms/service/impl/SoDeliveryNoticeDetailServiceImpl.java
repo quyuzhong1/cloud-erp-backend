@@ -7,17 +7,13 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.SoReturnDetailEntity;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.PoInstockDetailDTO;
-import com.erp.model.wms.entity.PoInstockDetailEntity;
-import com.erp.model.wms.enums.ReturnTypeEnum;
-import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
+import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.server.wms.mapper.SoDeliveryNoticeDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SoDeliveryNoticeDetailService;
@@ -104,7 +100,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             List<SoDeliveryNoticeDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),pairList,"编辑操作");
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "编辑操作");
             this.removeByIds(deleteIds);
         }
 
@@ -144,7 +140,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_98002);
                 }
-                operateLogService.addModuleOperateLogByObj(old,soDeliveryNoticeDetailEntity, ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),dto.getId(),"",String.format("【%s】",old.getSkuNo()));
+                operateLogService.addModuleOperateLogByObj(old, soDeliveryNoticeDetailEntity, ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), dto.getId(), "", String.format("【%s】", old.getSkuNo()));
             }
             list.add(soDeliveryNoticeDetailEntity);
         }
@@ -192,5 +188,32 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
     @Override
     public List<SoDeliveryNoticeDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds) {
         return baseMapper.listDetailBySourceDetailIds(sourceDetailIds);
+    }
+
+
+    /**
+     * 处理数据 更改销售订单的发货状态
+     *
+     * @param ids
+     * @return void
+     * @author yl
+     * @date 2023-05-23 10:02
+     */
+    @Override
+    public void handleData(List<String> ids) {
+        if (CollectionUtils.isNotEmpty(ids)) {
+            List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList = new ArrayList<>(ids.size());
+            List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = this.listByIds(ids);
+            for (SoDeliveryNoticeDetailEntity item : soDeliveryNoticeDetailList) {
+                SoDetailDTO.UpdateDeliveryStatusDTO param = new SoDetailDTO.UpdateDeliveryStatusDTO();
+                param.setId(item.getSourceDetailId());
+                param.setDeliveryQty(item.getDeliveryQty());
+                paramList.add(param);
+            }
+            soInfoFeign.updateDeliveryStatus(paramList);
+
+        }
+
+
     }
 }

@@ -781,4 +781,24 @@ public class SoDetailDTO implements Serializable {
          */
         private BigDecimal amount;
     }
+
+
+
+    /**
+     * 修改发货状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDeliveryStatusDTO {
+
+
+        private String id;
+
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+    }
 }

@@ -1,12 +1,8 @@
 package com.erp.server.wms.service;
 
-import com.erp.model.oms.dto.SoReturnDTO;
-import com.erp.model.oms.dto.SoReturnDetailDTO;
-import com.erp.model.oms.entity.SoReturnDetailEntity;
-import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
-import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
-import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
+import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 
 import java.util.List;
 
@@ -82,4 +78,14 @@ public interface SoDeliveryNoticeDetailService extends SuperService<SoDeliveryNo
      * @return java.util.List<com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity>
      **/
     List<SoDeliveryNoticeDetailEntity> listDetailBySourceDetailIds(List<String> sourceIds);
+
+
+    /**
+     * 处理数据 更改销售订单的发货状态
+     * @author yl
+     * @date 2023-05-23 10:02
+     * @param sourceDetailIdList
+     * @return void
+     */
+    void handleData(List<String> sourceDetailIdList);
 }

@@ -83,6 +83,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Resource
     private SoDeliveryNoticeService soDeliveryNoticeService;
 
+    @Resource
+    private SoDeliveryNoticeDetailService  soDeliveryNoticeDetailService;
+
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
         return lambdaQuery().in(SoOutstockEntity::getSourceId, ids).list();
@@ -340,13 +343,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 item.setActualDeliveryDate(noticeSoOutstock.getActualDeliveryDate());
             }
             item.setDeliveryStatus(Boolean.TRUE);
-
         }
-        //更改打包日期
+        //更改打包日期 以及发货状态
         soDeliveryNoticeService.updateBatchById(noticeList);
-
+        //这个是发货通知的详情
         List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockDetailService.listByMainIds(noticeSoOutstockIds);
-
+        //来源明细
+        List<String> sourceDetailIdList = soOutstockDetailList.stream().map(SoOutstockDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        //处理数据 更改销售订单的发货状态
+        soDeliveryNoticeDetailService.handleData(sourceDetailIdList);
 
     }
 

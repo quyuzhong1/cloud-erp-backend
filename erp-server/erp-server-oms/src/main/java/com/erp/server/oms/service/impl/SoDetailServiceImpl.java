@@ -412,15 +412,15 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         operateLogService.batchAddModuleOperateLog("删除了一个销售产品【%s】", ModuleTypeEnum.SO.getCode(), removePairList, "编辑操作");
 
         //这是添加
-        List<Pair<String, String>> addPairList = saveOrUpdateList.stream().filter(s->StringUtils.isBlank(s.getId())). map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+        List<Pair<String, String>> addPairList = saveOrUpdateList.stream().filter(s -> StringUtils.isBlank(s.getId())).map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("添加了一个销售产品【%s】", ModuleTypeEnum.SO.getCode(), addPairList, "编辑操作");
         //修改的
-        updateEntityList=saveOrUpdateList.stream().filter(s->StringUtils.isNotBlank(s.getId())).collect(Collectors.toList());
+        updateEntityList = saveOrUpdateList.stream().filter(s -> StringUtils.isNotBlank(s.getId())).collect(Collectors.toList());
         for (SoDetailEntity update : updateEntityList) {
             String id = update.getId();
             SoDetailEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
-            if(old!=null){
-                operateLogService.addModuleOperateLogByObj(old,update, ModuleTypeEnum.SO.getCode(),mainId,"","");
+            if (old != null) {
+                operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.SO.getCode(), mainId, "", "");
             }
         }
 
@@ -753,7 +753,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
         List<SoDetailEntity> dbList = this.listBaseByMainId(soId);
         //获取未关闭的数据
-        dbList=dbList.stream().filter(s->s.getIsClose()).collect(Collectors.toList());
+        dbList = dbList.stream().filter(s -> s.getIsClose()).collect(Collectors.toList());
         List<SoDetailDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, SoDetailDTO.ViewDTO.class);
         List<String> skuIdList = resultList.stream().map(SoDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
@@ -767,7 +767,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //从wms 获取到sku 的即时库存信息
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
 
-        for(SoDetailDTO.ViewDTO item:resultList){
+        for (SoDetailDTO.ViewDTO item : resultList) {
             String skuId = item.getSkuId();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
@@ -820,11 +820,39 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             item.setTaxPrice(taxPrice);
+        }
+        return resultList;
+    }
 
+
+    /**
+     * 更改发货状态
+     *
+     * @param paramList
+     * @return void
+     * @author yl
+     * @date 2023-05-23 10:26
+     */
+    @Override
+    public void updateDeliveryStatus(List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList) {
+        if (CollectionUtils.isNotEmpty(paramList)) {
+            List<String> idList = paramList.stream().map(SoDetailDTO.UpdateDeliveryStatusDTO::getId).collect(Collectors.toList());
+            List<SoDetailEntity> soDetailList = this.listByIds(idList);
+            for (SoDetailEntity item : soDetailList) {
+                String id = item.getId();
+                Integer qty = item.getQty();
+                Integer deliveryQty = paramList.stream().filter(p -> p.getId().equals(id)).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getDeliveryQty())).orElse(0);
+                if (deliveryQty >= qty) {
+                    item.setDeliveryStatus(DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode());
+                }
+                if (deliveryQty < qty && deliveryQty != 0) {
+                    item.setDeliveryStatus(DeliveryStatusEnum.PARTIAL_SHIPMENT.getCode());
+                }
+            }
+            this.updateBatchById(soDetailList);
         }
 
-
-        return resultList;
     }
 
 

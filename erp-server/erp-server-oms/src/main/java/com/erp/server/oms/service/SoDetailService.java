@@ -155,4 +155,14 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.SkuDTO>
      */
     List<SoDetailDTO.ViewDTO> listBySoId(String soId);
+
+    
+    /**
+     * 更改发货状态
+     * @author yl
+     * @date 2023-05-23 10:26
+     * @param paramList
+     * @return void
+     */
+    void updateDeliveryStatus(List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList);
 }

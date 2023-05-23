@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.feign;
 
 import com.common.core.controller.BaseController;
+import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -97,6 +98,15 @@ public class SoInfoFeignController extends BaseController {
     @PostMapping("/listSoCustomerByIds")
     public List<SoInfoDTO.CustomerDTO> listSoCustomerByIds(@RequestBody List<String> soIdList) {
         return soInfoService.listSoCustomerByIds(soIdList);
+    }
+
+    /**
+     * 更改发货状态
+     * @param paramList
+     */
+    @PostMapping("/updateDeliveryStatus")
+    public void updateDeliveryStatus(@RequestBody List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList) {
+         soDetailService.updateDeliveryStatus(paramList);
     }
 
 

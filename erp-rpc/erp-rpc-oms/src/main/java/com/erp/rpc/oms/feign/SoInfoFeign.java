@@ -1,5 +1,6 @@
 package com.erp.rpc.oms.feign;
 
+import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -25,5 +26,12 @@ public interface SoInfoFeign {
     SoInfoDTO.CustomerDTO getSoBaseById(@RequestBody String id);
 
     @PostMapping("feign/soInfo/listSoCustomerByIds")
-    List<SoInfoDTO.CustomerDTO> listSoCustomer(List<String> soIdList);
+    List<SoInfoDTO.CustomerDTO> listSoCustomer(@RequestBody List<String> soIdList);
+
+    /**
+     * 更改销售订单发货状态
+     * @param paramList
+     */
+    @PostMapping("feign/soInfo/updateDeliveryStatus")
+    void updateDeliveryStatus(@RequestBody List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList);
 }
