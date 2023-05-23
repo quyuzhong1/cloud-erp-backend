@@ -17,9 +17,9 @@ feign:
 seata:
   enabled: true
   application-id : ${spring.application.name}
-  tx-service-group: bi_seata_tx_group
+  tx-service-group: bi_tx_group
   use-jdk-proxy: true
-  #  data-source-proxy-mode: AT
+  data-source-proxy-mode: XA
   enable-auto-data-source-proxy: true
   # TC服务注册中心的配置，微服务根据这些信息去注册中心获取tc服务地址
   registry:
@@ -42,4 +42,4 @@ seata:
       namespace: ${sfs.nacos.namespace}
   service:
     vgroupMapping: # 事务组与cluster的映射关系
-      bi_seata_tx_group: default
+      bi_tx_group: default

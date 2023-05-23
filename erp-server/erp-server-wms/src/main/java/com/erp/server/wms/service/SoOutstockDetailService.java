@@ -1,7 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
-import com.erp.model.wms.dto.SoOutstockDetiailDTO;
+import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 
 import java.util.List;
@@ -33,7 +33,7 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @param detailList
      * @return void
      */
-    void add(String mainId, List<SoOutstockDetiailDTO.AddDTO> detailList);
+    void add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList);
 
     
     /**
@@ -44,7 +44,7 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @param warehouseId
      * @return java.util.List<com.erp.model.wms.dto.SoOutstockDetiailDTO.ViewDTO>
      */
-    List<SoOutstockDetiailDTO.ViewDTO> listByMainId(String mainId,String warehouseId);
+    List<SoOutstockDetailDTO.ViewDTO> listByMainId(String mainId, String warehouseId);
 
     
     /**
@@ -66,7 +66,7 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @param detailList
      * @return void
      */
-    void checkOutQty(String warehouseId,String soId,String sourceId, String sourceType, List<SoOutstockDetiailDTO.UpdateDTO> detailList);
+    void checkOutQty(String warehouseId,String soId,String sourceId, String sourceType, List<SoOutstockDetailDTO.UpdateDTO> detailList);
 
     
     /**
@@ -77,7 +77,7 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @param detailList
      * @return void
      */
-    void updateDetail(String id, List<SoOutstockDetiailDTO.UpdateDTO> detailList);
+    void updateDetail(String id, List<SoOutstockDetailDTO.UpdateDTO> detailList);
 
     /**
      * 获取到销售出库明细 根据主表id

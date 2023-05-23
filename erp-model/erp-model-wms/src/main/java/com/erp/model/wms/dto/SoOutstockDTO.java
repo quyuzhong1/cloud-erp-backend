@@ -8,8 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -149,7 +148,6 @@ public class SoOutstockDTO implements Serializable {
          * 发货组织名
          */
         private String deliveryOrgName;
-
 
 
         /**
@@ -371,11 +369,10 @@ public class SoOutstockDTO implements Serializable {
          */
         @Valid
         @Size(min = 1, message = "销售出库详情不能为空")
-        private List<SoOutstockDetiailDTO.AddDTO> detailList;
+        private List<SoOutstockDetailDTO.AddDTO> detailList;
 
 
     }
-
 
 
     /**
@@ -385,73 +382,106 @@ public class SoOutstockDTO implements Serializable {
     @NoArgsConstructor
     public static class GenerateSoOutstockViewDTO {
         /**
-         * id
+         * 销售订单id
          */
-        private String id;
+        @NotBlank(message = "销售订单不能为空")
+        private String soId;
         /**
-         * 主键id
+         * 来源id
          */
-        private String mainId;
-        /**
-         * 销售单id
-         */
+        @NotBlank(message = "来源不能为空")
         private String sourceId;
+
+
         /**
-         * 销售单详情表id
+         * 来源类型
          */
-        private String sourceDetailId;
+        @NotBlank(message = "来源类型不能为空")
+        private String sourceType;
+
         /**
-         * 销售单号
+         * 来源code
          */
+        @NotBlank(message = "来源code不能为空")
         private String sourceCode;
+
         /**
-         * 单据编号
+         * 发货组织
          */
-        private String code;
+        private String deliveryOrgId;
+
         /**
-         * 客户
+         * 发货组织
          */
-        private String customerName;
+        private String deliveryOrgName;
+
         /**
-         * skuId
+         * 预计发货时间
          */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 承运商
+         */
+        private String carrierId;
+
+        /**
+         * 运输单号
+         */
+        private String trackNo;
+
+
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库不能为空")
+        private String warehouseId;
+
+        /**
+         * 仓库名
+         */
+        private String warehouseName;
+
+
+        @NotBlank(message = "来源明细不能为空")
+        private String sourceDetailId;
+
+        @NotBlank(message = "sku不能为空")
         private String skuId;
-        /**
-         * SKU
-         */
+
+        @NotBlank(message = "sku no不能为空")
         private String skuNo;
+
+
+        private String warehouseLocation;
+
+
         /**
-         * 产品名称
+         * 箱麦附件名集合
          */
-        private String productName;
+        private List<String> attachNameList;
+
         /**
-         * 销售数量
+         * 箱麦附件url集合
          */
-        private Integer salesQty;
+        private List<String> attachUrlList;
+
+
         /**
          * 发货数量
          */
+        @NotNull(message = "发货数量不能为空")
+        @DecimalMin(value = "1",message ="发货数最小值为1")
+        @DecimalMax(value = "999999999",message ="发货数最大值为999999999")
         private Integer deliveryQty;
-        /**
-         * 要货日期
-         */
-        private LocalDate requireDate;
-        /**
-         * 预计发货日期
-         */
-        private LocalDate planDeliveryDate;
-        /**
-         * 附件名集合
-         */
-        private List<String> attachNameList;
-        /**
-         * 附件url集合
-         */
-        private List<String> attachUrlList;
-        /**
-         * 备注
-         */
-        private String remark;
+
+
+
+
+
+
+
+
     }
 
     /**
@@ -475,7 +505,6 @@ public class SoOutstockDTO implements Serializable {
          * 销售订单id
          */
         private String soCode;
-
 
 
         /**
@@ -584,7 +613,7 @@ public class SoOutstockDTO implements Serializable {
         private String deliveryModeName;
 
 
-        private List<SoOutstockDetiailDTO.ViewDTO> detailList;
+        private List<SoOutstockDetailDTO.ViewDTO> detailList;
 
     }
 
@@ -699,7 +728,7 @@ public class SoOutstockDTO implements Serializable {
          * 详情
          */
         @Size(min = 1, message = "销售出库详情不能为空")
-        private List<SoOutstockDetiailDTO.UpdateDTO> detailList;
+        private List<SoOutstockDetailDTO.UpdateDTO> detailList;
 
     }
 

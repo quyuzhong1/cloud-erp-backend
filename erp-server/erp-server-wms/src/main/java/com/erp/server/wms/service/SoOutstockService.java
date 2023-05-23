@@ -162,4 +162,14 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return java.lang.Boolean
      */
     Boolean updateAndSubmit(SoOutstockDTO.UpdateDTO dto);
+
+    
+    /**
+     * 销售出库单保存下推单据
+     * @author yl
+     * @date 2023-05-23 14:30
+     * @param resultList
+     * @return java.lang.Boolean
+     */
+    Boolean addPushDownNo(List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList);
 }

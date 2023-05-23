@@ -5,6 +5,8 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.model.scm.entity.SalesDemandDetailEntity;
@@ -90,11 +92,39 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
         this.saveOrUpdateBatch(newList);
     }
 
+    /**
+     * @description: 验证下推数量
+     * @author Will
+     * @date: 2023/5/23 12:09
+     * @param newList
+     */
     private void checkPlanStockQty (List<SalesDemandDetailEntity> newList) {
         //来源明细ids
         List<String> sourceDetailIds = newList.stream().filter(obj -> StringUtils.isNotBlank(obj.getSourceDetailId())).map(SalesDemandDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(sourceDetailIds)) {
+            return;
+        }
+        //来源单据明细id相同的其他备货申请单明细
+        List<SalesDemandDetailEntity> salesDemandDetailList = this.listBySourceDetailIds(sourceDetailIds);
+        //销售订单明细
+        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(sourceDetailIds);
 
+        for (SalesDemandDetailEntity entity : newList) {
+            //销售数量
+            Integer qty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(soDetailList)) {
+                qty = soDetailList.stream().filter(obj -> obj.getId().equals(entity.getSourceDetailId())).map(SoDetailEntity::getQty).findFirst().orElse(MathUtil.ZERO);
 
+            }
+            //已下推数量
+            Integer refQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(salesDemandDetailList)) {
+                refQty = salesDemandDetailList.stream().filter(obj -> !obj.getId().equals(entity.getId())).map(SalesDemandDetailEntity::getPlanStockQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            if (entity.getPlanStockQty().intValue() > qty.intValue() - refQty.intValue()) {
+                throw new ServiceException(ApiError.ERROR_98064.code,String.format(ApiError.ERROR_98064.msg,entity.getSkuNo(),qty.intValue() - refQty.intValue()));
+            }
+        }
     }
 
     /**

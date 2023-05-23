@@ -31,10 +31,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
-import com.erp.model.wms.dto.PickingDetailDTO;
-import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
-import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
-import com.erp.model.wms.dto.WmsAttachmentDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
@@ -650,8 +647,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
 
-
-
     /**
      * 下推销售出库单
      *
@@ -672,9 +667,25 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98063);
         }
+        //获取到销售退货单 下推列表
+        List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList = baseMapper.listGenerateSoOutstockView(idList);
+        List<String> detailIds = resultList.stream().map(SoOutstockDTO.GenerateSoOutstockViewDTO::getSourceId).collect(Collectors.toList());
+        String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
+        //附件信息
+        List<WmsAttachmentDTO.UpdateDTO> attachmentDbList = wmsAttachmentService.getByBusinessIds(detailIds);
 
-
-        return null;
+        for (SoOutstockDTO.GenerateSoOutstockViewDTO item : resultList) {
+            item.setSourceType(soDeliveryNotice);
+            String detailId = item.getSourceDetailId();
+            //附件信息
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentDbList.stream().filter(a -> a.getBusinessId().equals(detailId)).collect(Collectors.toList());
+            List<String> attachmentNameList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
+            List<String> attachmentUrlList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+            item.setAttachNameList(attachmentNameList);
+            item.setAttachUrlList(attachmentUrlList);
+        }
+        //销售出库单保存下推单据
+        return soOutstockService.addPushDownNo(resultList);
     }
 
     private void generatePickingDetail(List<SoDeliveryNoticeEntity> list) {

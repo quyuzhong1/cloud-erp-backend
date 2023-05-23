@@ -11,7 +11,7 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.SoOutstockDetiailDTO;
+import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
@@ -82,11 +82,11 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      * @date 2023-05-19 10:18
      */
     @Override
-    public void add(String mainId, List<SoOutstockDetiailDTO.AddDTO> detailList) {
+    public void add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
-        List<String> skuIdList = detailList.stream().map(SoOutstockDetiailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
         Class<SoOutstockDetailEntity> credentialClass = SoOutstockDetailEntity.class;
@@ -96,7 +96,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         String type = tableName.value();
         List<WmsAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
 
-        for (SoOutstockDetiailDTO.AddDTO item : detailList) {
+        for (SoOutstockDetailDTO.AddDTO item : detailList) {
             SoOutstockDetailEntity addEntity = new SoOutstockDetailEntity();
             BeanMapper.copy(item, addEntity);
             String id = IdWorker.getIdStr();
@@ -135,11 +135,11 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      * @date 2023-05-19 11:32
      */
     @Override
-    public List<SoOutstockDetiailDTO.ViewDTO> listByMainId(String mainId, String warehouseId) {
+    public List<SoOutstockDetailDTO.ViewDTO> listByMainId(String mainId, String warehouseId) {
         List<SoOutstockDetailEntity> dbList = this.listBaseByMainId(mainId);
-        List<SoOutstockDetiailDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, SoOutstockDetiailDTO.ViewDTO.class);
-        List<String> skuIdList = resultList.stream().map(SoOutstockDetiailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
-        List<String> warehouseLocationList = resultList.stream().map(SoOutstockDetiailDTO.ViewDTO::getWarehouseLocation).collect(Collectors.toList());
+        List<SoOutstockDetailDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, SoOutstockDetailDTO.ViewDTO.class);
+        List<String> skuIdList = resultList.stream().map(SoOutstockDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
+        List<String> warehouseLocationList = resultList.stream().map(SoOutstockDetailDTO.ViewDTO::getWarehouseLocation).collect(Collectors.toList());
         InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
         skuInventoryDTO.setSkuIdList(skuIdList);
         skuInventoryDTO.setWarehouseIdList(Arrays.asList(warehouseId));
@@ -148,7 +148,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         //可用库存
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-        for (SoOutstockDetiailDTO.ViewDTO item : resultList) {
+        for (SoOutstockDetailDTO.ViewDTO item : resultList) {
             String skuId = item.getSkuId();
             String warehouseLocation = item.getWarehouseLocation();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
@@ -194,15 +194,15 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      * @date 2023-05-22 15:54
      */
     @Override
-    public void checkOutQty(String warehouseId, String soId, String sourceId, String sourceType, List<SoOutstockDetiailDTO.UpdateDTO> detailList) {
+    public void checkOutQty(String warehouseId, String soId, String sourceId, String sourceType, List<SoOutstockDetailDTO.UpdateDTO> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_92029);
         }
         //手动新增
         String selfAdd = SourceTypeEnum.SELF_ADD.getCode();
-        List<String> sourceDetailIdList = detailList.stream().map(SoOutstockDetiailDTO.AddDTO::getSourceDetailId).collect(Collectors.toList());
-        List<String> skuIdList = detailList.stream().map(SoOutstockDetiailDTO.AddDTO::getSkuId).collect(Collectors.toList());
-        List<String> warehouseLocationList = detailList.stream().map(SoOutstockDetiailDTO.AddDTO::getWarehouseLocation).collect(Collectors.toList());
+        List<String> sourceDetailIdList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getSourceDetailId).collect(Collectors.toList());
+        List<String> skuIdList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+        List<String> warehouseLocationList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getWarehouseLocation).collect(Collectors.toList());
         //这个是已出数量
         List<SoOutstockDetailEntity> soOutstockDetailList = this.listDetailBySourceDetailId(sourceDetailIdList);
         //表示新增加
@@ -216,7 +216,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
             //这个是销售订单的
             List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(sourceDetailIdList);
-            for (SoOutstockDetiailDTO.UpdateDTO item : detailList) {
+            for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
                 String id = item.getId();
                 String skuId = item.getSkuId();
                 //库位
@@ -253,7 +253,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         } else {
             //表示是发货通知单的
             List<SoDeliveryNoticeDetailEntity> deliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(sourceDetailIdList);
-            for (SoOutstockDetiailDTO.UpdateDTO item : detailList) {
+            for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
                 String sourceDetailId = item.getSourceDetailId();
                 String id = item.getId();
                 Integer deliveryQty = deliveryNoticeDetailList.stream().filter(d -> d.getSourceDetailId().equals(sourceDetailId)).
@@ -294,11 +294,11 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      * @date 2023-05-22 18:21
      */
     @Override
-    public void updateDetail(String mainId, List<SoOutstockDetiailDTO.UpdateDTO> detailList) {
+    public void updateDetail(String mainId, List<SoOutstockDetailDTO.UpdateDTO> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_92029);
         }
-        List<SoOutstockDetiailDTO.UpdateDTO> updateList = detailList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
+        List<SoOutstockDetailDTO.UpdateDTO> updateList = detailList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
         List<SoOutstockDetailEntity> dbList = this.listBaseByMainId(mainId);
         List<Pair<String, String>> pairList = updateList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         List<String> deleteIdList = getDeleteIds(pairList, dbList);
@@ -312,7 +312,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         operateLogService.batchAddModuleOperateLog("删除了一个产品【%s】", ModuleTypeEnum.SO_OUT_STOCK.getCode(), removePairList, "编辑操作");
 
 
-        List<String> skuIdList = detailList.stream().map(SoOutstockDetiailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+        List<String> skuIdList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
 
         Class<SoOutstockDetailEntity> credentialClass = SoOutstockDetailEntity.class;
@@ -326,7 +326,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         String type = tableName.value();
         List<WmsAttachmentEntity> batchAttachmentList = new ArrayList<>(10);
 
-        for (SoOutstockDetiailDTO.UpdateDTO item : detailList) {
+        for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
             String id = item.getId();
             Boolean isAdd = StringUtils.isBlank(id);
             SoOutstockDetailEntity entity = new SoOutstockDetailEntity();

@@ -216,7 +216,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         }
         //取值统计为已经有排期时间的统计数值
         Integer scheduleTaskCount = Math.toIntExact(taskList.stream().filter(t -> t.getPlanEndTime() != null &&
-                t.getPlanStartTime() != null ).count());
+                t.getPlanStartTime() != null).count());
 
         /**
          * 未排期任务数
@@ -433,6 +433,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
         if (CollectionUtils.isNotEmpty(projectPlanIds)) {
             LambdaQueryWrapper<ProjectPlanTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.in(ProjectPlanTaskEntity::getProjectPlanId, projectPlanIds);
+            queryWrapper.orderByDesc(ProjectPlanTaskEntity::getChangeEndTime);
             return this.list(queryWrapper);
         }
         return new ArrayList<>();
