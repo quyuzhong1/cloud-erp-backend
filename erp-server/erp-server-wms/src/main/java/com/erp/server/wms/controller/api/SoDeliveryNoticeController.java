@@ -282,19 +282,7 @@ public class SoDeliveryNoticeController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-    /**
-     * 下推销售出库单-列表查询
-     *
-     * @param dto dto
-     * @return com.common.core.controller.vo.ApiResult
-     * @Author Luo_WG
-     * @Date 2023/4/13 18:59
-     **/
-    @PostMapping(value = "/generateSoDeliveryView")
-    public ApiResult<List<SoDeliveryNoticeDTO.GenerateSoDeliveryView>> generateSoDeliveryView(@RequestBody BaseIdsDTO.IdsDTO dto) {
-        List<SoDeliveryNoticeDTO.GenerateSoDeliveryView> generateSoDeliveryViews = soDeliveryNoticeService.generateStockInView(dto.getIds());
-        return success(generateSoDeliveryViews);
-    }
+
 
     /**
      * 下推销售出库单-保存

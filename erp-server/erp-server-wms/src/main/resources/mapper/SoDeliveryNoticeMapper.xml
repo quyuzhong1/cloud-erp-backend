@@ -223,28 +223,5 @@
         sdn.create_time desc
     </select>
 
-    <select id="generateStockInView" resultType="com.erp.model.wms.dto.SoDeliveryNoticeDTO$GenerateSoDeliveryView">
-        SELECT
-            sdnd.id,
-            sdnd.main_id,
-            sdn.source_id,
-            sdnd.source_detail_id,
-            sdn.source_code,
-            sdn.code,
-            sdn.customer_name,
-            sdnd.sku_id,
-            sdnd.sku_no,
-            sdn.require_date,
-            sdn.plan_delivery_date,
-            sdnd.remark
-        FROM so_delivery_notice sdn
-        INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
-        WHERE sdnd.is_deleted = FALSE
-        <if test="ids != null and ids.size != ''">
-            and sdn.id in
-            <foreach collection="ids" item="id" open="(" close=")" separator=",">
-                #{id}
-            </foreach>
-        </if>
-    </select>
+
 </mapper>

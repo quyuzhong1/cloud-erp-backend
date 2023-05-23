@@ -150,14 +150,7 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      **/
     Boolean exportExcel(@RequestBody SoDeliveryNoticeDTO.PagingParam dto, HttpServletResponse response);
 
-    /**
-     * 下推销售出库单列表查询
-     * @Author Luo_WG
-     * @Date 2023/5/11 11:06
-     * @param ids
-     * @return java.util.List<com.erp.model.wms.dto.SoDeliveryNoticeDTO.GenerateSoDeliveryView>
-     **/
-    List<SoDeliveryNoticeDTO.GenerateSoDeliveryView> generateStockInView(List<String> ids);
+
 
     /**
      * 下推销售出库单-保存

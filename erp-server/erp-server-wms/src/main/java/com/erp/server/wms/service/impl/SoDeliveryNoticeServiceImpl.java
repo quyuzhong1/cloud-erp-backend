@@ -649,33 +649,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         return Boolean.TRUE;
     }
 
-    @Override
-    public List<SoDeliveryNoticeDTO.GenerateSoDeliveryView> generateStockInView(List<String> ids) {
-        List<SoDeliveryNoticeDTO.GenerateSoDeliveryView> generateSoDeliveryViews = baseMapper.generateStockInView(ids);
-        //获取界面传过来的采购单详情表id集合
-        List<String> orderDetailIds = generateSoDeliveryViews.stream().map(SoDeliveryNoticeDTO.GenerateSoDeliveryView::getSourceDetailId).collect(Collectors.toList());
-        //获取销售单详情信息
-        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
-        //获取sku的id集合
-        List<String> skuIdList = generateSoDeliveryViews.stream().map(SoDeliveryNoticeDTO.GenerateSoDeliveryView::getSkuId).collect(Collectors.toList());
-        //根据ids查询sku信息
-        List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        for (SoDeliveryNoticeDTO.GenerateSoDeliveryView generateSoDeliveryView : generateSoDeliveryViews) {
-            //销售单信息
-            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(generateSoDeliveryView.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
-            generateSoDeliveryView.setSalesQty(soDetailEntity.getQty());
-            generateSoDeliveryView.setDeliveryQty(soDetailEntity.getQty());
-            generateSoDeliveryView.setPlanDeliveryDate(generateSoDeliveryView.getRequireDate());
 
-            //产品sku信息
-            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(entityClass -> entityClass.getId().equals(generateSoDeliveryView.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95107);
-            }
-            generateSoDeliveryView.setProductName(productDetailEntity.getName());
-        }
-        return generateSoDeliveryViews;
-    }
 
 
     /**
