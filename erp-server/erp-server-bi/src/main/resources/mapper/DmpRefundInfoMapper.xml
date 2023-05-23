@@ -61,7 +61,7 @@
                 and dri.order_time &lt;= #{params.orderTime_end}::timestamp
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
 
@@ -111,7 +111,7 @@
                 and dri.order_time &lt;= #{params.orderTime_end}::timestamp
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
     </select>

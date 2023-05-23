@@ -28,7 +28,7 @@
                 and bdsc.create_time &lt;= #{params.createTime_end}::timestamp
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
         order by bdsc.year,bdsc.id
@@ -65,7 +65,7 @@
                 and bdsc.create_time &lt;= #{params.createTime_end}::timestamp
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
         order by bdsc.year

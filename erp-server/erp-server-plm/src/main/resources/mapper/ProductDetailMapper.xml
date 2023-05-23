@@ -234,7 +234,7 @@
         </if>
 
         <if test="params.permissionSql != '' and params.permissionSql != null">
-            ${params.permissionSql }
+            ${params.permissionSql}
         </if>
         ORDER BY pd.create_time DESC
     </select>

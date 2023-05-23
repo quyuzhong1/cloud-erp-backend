@@ -17,7 +17,7 @@
                 qb.qc_date
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
         group by qb.qc_status
@@ -39,7 +39,7 @@
                 and qb.qc_date >= #{beginDate} and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
         group by dateStr, qb.qc_status order by dateStr asc
@@ -67,7 +67,7 @@
                 qb.qc_date
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
         group by qb.qc_user_id,qc_user_name
@@ -111,7 +111,7 @@
                 </if>
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
     </select>
@@ -138,10 +138,10 @@
                 qb.qc_date
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
         group by qb.qc_user_id,qc_user_name
@@ -186,7 +186,7 @@
                 </if>
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql }
+                ${params.permissionSql}
             </if>
         </where>
     </select>
@@ -284,7 +284,7 @@
         </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
-            ${params.permissionSql }
+            ${params.permissionSql}
         </if>
         ORDER BY qb.create_time DESC
     </select>
@@ -392,7 +392,7 @@
         </choose>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
-            ${params.permissionSql }
+            ${params.permissionSql}
         </if>
         ORDER BY qb.create_time DESC
     </select>
@@ -420,4 +420,16 @@
 
     </select>
 
+    <select id="generateSoReturnInstockView" resultType="com.erp.model.wms.dto.SoReturnInstockDTO$GenerateSoReturnInstockView">
+        SELECT
+            qi.id,
+            qi.code,
+            qi.source_id,
+            qi.source_type,
+            qp.sku_id,
+            qp.sku_no
+        FROM qc_info qi
+        INNER JOIN qc_product qp ON qi.id = qp.main_id AND qi.is_deleted=FALSE
+        WHERE qb.is_deleted=FALS
+    </select>
 </mapper>

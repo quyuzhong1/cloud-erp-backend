@@ -26,7 +26,7 @@
                 </foreach>
             </if>
             <if test="params.permissionSql!=null and params.permissionSql!=''  ">
-                AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql })
+                AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
             </if>
         ORDER BY pa.archive_time DESC
 

@@ -1448,7 +1448,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      **/
     @Override
     public List<SoReturnInstockDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(List<String> ids) {
-        return null;
+        List<SoReturnInstockDTO.GenerateSoReturnInstockView> list = baseMapper.generateSoReturnInstockView(ids);
+        for (SoReturnInstockDTO.GenerateSoReturnInstockView view : list) {
+
+        }
+        return list;
     }
 
     /**

@@ -81,7 +81,7 @@
 
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
-            ${params.permissionSql }
+            ${params.permissionSql}
         </if>
 
         ORDER BY
@@ -179,7 +179,7 @@
 
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
-            ${params.permissionSql }
+            ${params.permissionSql}
         </if>
     </select>
     <select id="listSupplierByCategoryType" resultType="com.common.business.dto.base.BaseIdDTO">
