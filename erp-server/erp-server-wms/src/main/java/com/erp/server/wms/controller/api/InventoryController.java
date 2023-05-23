@@ -110,7 +110,7 @@ public class InventoryController extends BaseController {
     }
 
     /**
-     * 查询可用库存，特别注意：不带库位查询，包含带库位和不带库位的数量汇总
+     * 查询可用库存，特别注意：不带库位查询，包含有库位和空库位的数量汇总
      * @author Will
      * @date: 2023/5/11 10:10
      * @param dto
