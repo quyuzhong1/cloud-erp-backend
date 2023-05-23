@@ -474,7 +474,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     public PagingVO<List<SchedulePagingVO>> paging(PagingDTO<SearchPagingDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         SearchPagingDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         String searchType = params.getSearchType();
         List<String> idList = new ArrayList<>();
         List<String> statusList = new ArrayList<>();

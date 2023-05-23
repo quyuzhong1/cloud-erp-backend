@@ -89,8 +89,8 @@
         <if test="params.createTime != null and params.createTime.size > 0">
             and wr.create_time >= #{params.createTime[0]} and  (#{params.createTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.create_time
         </if>
-        <if test="params.param != null and params.param != ''">
-            ${params.param}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql }
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -113,8 +113,8 @@
                 #{item}
             </foreach>
         </if>
-        <if test="params.param != null and params.param != ''">
-            ${params.param}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql }
         </if>
     </select>
 
@@ -276,8 +276,8 @@
         <if test="params.createTime != null and params.createTime.size > 0">
             and wr.create_time >= #{params.createTime[0]} and  (#{params.createTime[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > wr.create_time
         </if>
-        <if test="params.param != null and params.param != ''">
-            ${params.param}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql }
         </if>
         ORDER BY wr.create_time DESC, wr.id
     </select>

@@ -545,7 +545,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @Override
     public PagingVO<PurchasePriceChangeDTO.PagingViewDTO> paging(PagingDTO<PurchasePriceChangeDTO.PagingParamDTO> dto) {
         PurchasePriceChangeDTO.PagingParamDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
 
         String searchType = params.getSearchType();

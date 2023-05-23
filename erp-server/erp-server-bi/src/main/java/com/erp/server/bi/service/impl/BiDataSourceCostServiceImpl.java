@@ -79,7 +79,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
     public PagingVO<LinkedHashMap<String,Object>> paging(PagingDTO<BiDataSourceCostSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BiDataSourceCostSearchDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         IPage<LinkedHashMap<String,Object>> pageData = baseMapper.paging(query, params);
         LinkedHashMap<String,Object> resultMap = new LinkedHashMap<>();
         LinkedHashMap<String, Object> headMap = new LinkedHashMap<>();
@@ -138,7 +138,7 @@ public class BiDataSourceCostServiceImpl extends ServiceImpl<BiDataSourceCostMap
                 .in(CollectionUtil.isNotEmpty(dto.getShopName()), BiDataSourceCostEntity::getShopName, dto.getShopName())
                 .in(CollectionUtil.isNotEmpty(dto.getUserId()), BiDataSourceCostEntity::getChargeId, dto.getUserId())
                 .eq(BiDataSourceCostEntity::getMonth, maxMonthEntity.getMonth())
-                .last(StrUtil.isNotBlank(dto.getParam()), dto.getParam())
+                .last(StrUtil.isNotBlank(dto.getPermissionSql()), dto.getPermissionSql())
                 .list();
         if (CollectionUtils.isEmpty(dataSourceCostList)) {
             return new ArrayList<>();

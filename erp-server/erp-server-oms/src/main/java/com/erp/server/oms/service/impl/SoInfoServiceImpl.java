@@ -293,7 +293,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     public PagingVO<SoInfoDTO.PagingViewDTO> paging(PagingDTO<SoInfoDTO.PagingParamDTO> dto) {
         SoInfoDTO.PagingParamDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         List<String> paramDetailIds = soDetailService.listParamDetailIdsBySearchType(params.getSearchType());
         if (Objects.isNull(paramDetailIds)) {

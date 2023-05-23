@@ -104,7 +104,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
     @Override
     public PagingVO<OtherInstockDTO.ListDTO> paging(PagingDTO<OtherInstockDTO.SearchParamDTO> pagingDTO) {
-        pagingDTO.getParams().setParam(pagingDTO.getParam());
+        pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<OtherInstockDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
         List<OtherInstockDTO.ListDTO> records = pageData.getRecords();
@@ -140,7 +140,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         List<OtherInstockDTO.ListStatusCountDTO> list = new ArrayList<>();
         for (PurchaseChangeListTypeEnum item : values) {
             OtherInstockDTO.SearchParamDTO searchParamDTO = new OtherInstockDTO.SearchParamDTO();
-            searchParamDTO.setParam(dto.getParam());
+            searchParamDTO.setPermissionSql(dto.getPermissionSql());
             OtherInstockDTO.ListStatusCountDTO resultDTO = new OtherInstockDTO.ListStatusCountDTO();
             Integer count = MathUtil.ZERO;
             if (PurchaseChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {

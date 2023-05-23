@@ -353,7 +353,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     @Override
     public PagingVO<List<BomPagingVO>> paging(PagingDTO<SearchPagingDTO> dto) {
         SearchPagingDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         String searchKeyword = params.getSearchKeyword();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         String searchType = params.getSearchType();

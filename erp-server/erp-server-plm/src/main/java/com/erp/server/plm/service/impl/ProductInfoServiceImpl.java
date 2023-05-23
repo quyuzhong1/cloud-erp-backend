@@ -464,7 +464,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public PagingVO paging(PagingDTO<ProductSearchDTO> dto) {
-        dto.getParams().setParam(dto.getParam());
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = new Page();
         ProductSearchDTO params = dto.getParams();

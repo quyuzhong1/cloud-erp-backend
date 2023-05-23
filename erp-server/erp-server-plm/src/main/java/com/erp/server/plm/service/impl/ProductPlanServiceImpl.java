@@ -107,7 +107,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
     @Override
     public PagingVO<List<ProductPlanVO>> paging(PagingDTO<ProductPlanSearchDTO> pagingDTO) {
-        pagingDTO.getParams().setParam(pagingDTO.getParam());
+        pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ProductPlanVO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
         List<ProductPlanVO> records = pageData.getRecords();

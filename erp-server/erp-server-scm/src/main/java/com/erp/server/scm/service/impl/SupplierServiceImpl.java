@@ -324,7 +324,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     public PagingVO<SupplierDTO.PagingViewDTO> paging(PagingDTO<SupplierDTO.PagingParamDTO> dto) {
         SupplierDTO.PagingParamDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
         List<SupplierDTO.PagingViewDTO> list = pageData.getRecords();

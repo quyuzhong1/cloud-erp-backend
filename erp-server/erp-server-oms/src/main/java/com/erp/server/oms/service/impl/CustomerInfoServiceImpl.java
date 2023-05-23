@@ -300,7 +300,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Override
     public PagingVO<CustomerDTO.PagingViewDTO> paging(PagingDTO<CustomerDTO.PagingParamDTO> dto) {
         CustomerDTO.PagingParamDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         String searchType = params.getSearchType();
         List<String> approveList = new ArrayList<>();
         //待审核

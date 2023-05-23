@@ -386,7 +386,7 @@ public class QcRuleServiceImpl extends SuperServiceImpl<QcRuleMapper, QcRuleEnti
     public PagingVO<QcRuleDTO.PagingViewDTO> paging(PagingDTO<QcRuleDTO.PagingParamDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         QcRuleDTO.PagingParamDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         IPage pageData = baseMapper.paging(query, params);
         List<QcRuleDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {

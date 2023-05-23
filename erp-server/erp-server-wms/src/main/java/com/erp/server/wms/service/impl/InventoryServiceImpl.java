@@ -389,7 +389,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Override
     public PagingVO<InventoryDTO.PagingViewDTO> paging(PagingDTO<InventoryDTO.SearchParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setParam(pagingParamDTO.getParam());
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<InventoryDTO.PagingViewDTO> pageData = this.baseMapper.page(query, pagingParamDTO.getParams());
         // 填充名称

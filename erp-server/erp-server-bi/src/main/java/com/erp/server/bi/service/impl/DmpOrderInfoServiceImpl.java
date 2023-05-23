@@ -87,7 +87,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
     public PagingVO<DmpOrderInfoDTO> paging(PagingDTO<DmpOrderInfoSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         DmpOrderInfoSearchDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         IPage<DmpOrderInfoDTO> pageData = baseMapper.paging(query, params);
         List<DmpOrderInfoDTO> records = pageData.getRecords();
         dmpOrderInfoHand(records);
@@ -163,7 +163,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
                 // 店铺
                 .in(CollectionUtils.isNotEmpty(dto.getShopName()), "shop_name", dto.getShopName())
                 // 权限
-                .last(StringUtils.isNotBlank(dto.getParam()), dto.getParam());
+                .last(StringUtils.isNotBlank(dto.getPermissionSql()), dto.getPermissionSql());
         return query;
     }
 
@@ -292,7 +292,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         List<DmpShopInfoEntity> shopList = dmpShopInfoService.lambdaQuery()
                 .eq(DmpShopInfoEntity::getStatus, 1)
                 .eq(DmpShopInfoEntity::getStoreSign, "cn")
-                .last(StringUtils.isNotBlank(dto.getParam()), dto.getParam())
+                .last(StringUtils.isNotBlank(dto.getPermissionSql()), dto.getPermissionSql())
                 .list();
         if (CollectionUtils.isEmpty(shopList)) {
             return new TargetSaleSumVO(BigDecimal.ZERO);
@@ -352,7 +352,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         // 查询目标销售额
         Map<Integer, BigDecimal> quarterTargetMap = new HashMap<>(4);
         // 统计目标销售额
-        BiTargetManagementEntity target = biTargetManagementService.getMonthSales(start, end, dto.getParam(), 1);
+        BiTargetManagementEntity target = biTargetManagementService.getMonthSales(start, end, dto.getPermissionSql(), 1);
         if(ObjectUtil.isNull(target)){
             return getQuarterResultList(quarterTargetMap, new HashMap<>(4),start.getYear());
         }
@@ -390,7 +390,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             .ge(flag2, "delivery_time", start)
             .le(flag2, "delivery_time", end)
             .groupBy(StringUtils.isNotBlank(groupStr), groupStr)
-            .last(StringUtils.isNotBlank(dto.getParam()), dto.getParam());
+            .last(StringUtils.isNotBlank(dto.getPermissionSql()), dto.getPermissionSql());
         List<DmpOrderInfoEntity> entityList = baseMapper.selectList(qw);
         return entityList;
     }
@@ -405,7 +405,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         Map<Integer, Integer> quarterTargetMap = new HashMap<>(4);
 
         // 统计目标销量
-        BiTargetManagementEntity target = biTargetManagementService.getMonthSales(start, end, dto.getParam(), 0);
+        BiTargetManagementEntity target = biTargetManagementService.getMonthSales(start, end, dto.getPermissionSql(), 0);
         if(ObjectUtil.isNull(target)){
             return getQuarterVolumeResultList(quarterTargetMap, new HashMap<>(4),start.getYear());
         }
@@ -449,7 +449,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         // 查询目标销售额
         Map<Integer, BigDecimal> monthTargetMap = new HashMap<>(4);
         // 统计目标销量
-        BiTargetManagementEntity target = biTargetManagementService.getMonthSales(start, end, dto.getParam(), 1);
+        BiTargetManagementEntity target = biTargetManagementService.getMonthSales(start, end, dto.getPermissionSql(), 1);
         if(ObjectUtil.isNull(target)){
             return getMonthResultList(monthTargetMap, new HashMap<>(4),start.getYear());
         }
@@ -494,7 +494,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         // 查询目标销量
         Map<Integer, Integer> quarterTargetMap = new HashMap<>(4);
         // 统计目标销量
-        BiTargetManagementEntity target = biTargetManagementService.getMonthSales(start, end, dto.getParam(), 1);
+        BiTargetManagementEntity target = biTargetManagementService.getMonthSales(start, end, dto.getPermissionSql(), 1);
         if(ObjectUtil.isNull(target)){
             return getMonthVolumeResultList(quarterTargetMap, new HashMap<>(4),start.getYear());
         }
@@ -544,7 +544,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN);
         LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfMonth())), LocalTime.MAX);
         // 查询目标数据
-        List<BiTargetManagementEntity> targetList = biTargetManagementService.getSales(start, end, dto.getParam());
+        List<BiTargetManagementEntity> targetList = biTargetManagementService.getSales(start, end, dto.getPermissionSql());
         if(CollectionUtil.isEmpty(targetList)){
             return new ArrayList<>();
         }
@@ -596,7 +596,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN);
         LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfMonth())), LocalTime.MAX);
         // 查询目标数据
-        List<BiTargetManagementEntity> targetList = biTargetManagementService.getSales(start, end, dto.getParam());
+        List<BiTargetManagementEntity> targetList = biTargetManagementService.getSales(start, end, dto.getPermissionSql());
         if(CollectionUtil.isEmpty(targetList)){
             return new ArrayList<>();
         }
@@ -651,7 +651,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN);
         LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfMonth())), LocalTime.MAX);
         // 查询目标数据
-        List<BiTargetManagementEntity> targetList = biTargetManagementService.getSales(start, end, dto.getParam());
+        List<BiTargetManagementEntity> targetList = biTargetManagementService.getSales(start, end, dto.getPermissionSql());
         if(CollectionUtil.isEmpty(targetList)){
             return new ArrayList<>();
         }
@@ -713,7 +713,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         // 获取月度开始时间和结束时间
         LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN);
         LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfMonth())), LocalTime.MAX);
-        List<BiTargetManagementEntity> targetList = biTargetManagementService.getSales(start,end, dto.getParam());
+        List<BiTargetManagementEntity> targetList = biTargetManagementService.getSales(start,end, dto.getPermissionSql());
         if(CollectionUtil.isEmpty(targetList)){
             return new ArrayList<>();
         }
@@ -781,7 +781,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         // 获取月度开始时间和结束时间
         LocalDateTime start = LocalDateTime.of(LocalDate.from(dto.getStartTime().with(TemporalAdjusters.firstDayOfMonth())), LocalTime.MIN);
         LocalDateTime end = LocalDateTime.of(LocalDate.from(dto.getEndTime().with(TemporalAdjusters.lastDayOfMonth())), LocalTime.MAX);
-        List<BiTargetManagementEntity> targetList = biTargetManagementService.getSales(start,end, dto.getParam());
+        List<BiTargetManagementEntity> targetList = biTargetManagementService.getSales(start,end, dto.getPermissionSql());
         if(CollectionUtil.isEmpty(targetList)){
             return new ArrayList<>();
         }

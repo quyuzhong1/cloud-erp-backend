@@ -146,7 +146,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     @Override
     public PagingVO<InventoryDTO.TransFlowPagingViewDTO> pagingForInv(PagingDTO<InventoryDTO.TransFlowSearchParamDTO> pagingParamDTO) {
         // 显示所有的库存交易流水
-        pagingParamDTO.getParams().setParam(pagingParamDTO.getParam());
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<InventoryDTO.TransFlowPagingViewDTO> pageData = this.baseMapper.pagingForInv(query, pagingParamDTO.getParams());
         fillInventoryTransactionFlowPageData(pageData.getRecords());
@@ -156,7 +156,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     @Override
     public PagingVO<InventoryDTO.InOutStockTransFlowPagingViewDTO> paging(PagingDTO<InventoryDTO.InOutStockTransFlowSearchParamDTO> pagingParamDTO) {
         // 出入库流水，只展示跟出入库交易相关的业务，且无需做状态映射
-        pagingParamDTO.getParams().setParam(pagingParamDTO.getParam());
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<InventoryDTO.InOutStockTransFlowPagingViewDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         fillTransactionFlowPageData(pageData.getRecords());
@@ -180,7 +180,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     @Override
     public PagingVO<InventoryDTO.InOutStockSummaryPagingViewDTO> pagingSummary(PagingDTO<InventoryDTO.InOutStockSummarySearchParamDTO> pagingParamDTO) {
         // 出入库列表，展示跟出入库交易相关的业务，有些单据动作需做状态映射
-        pagingParamDTO.getParams().setParam(pagingParamDTO.getParam());
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<InventoryDTO.InOutStockSummaryPagingViewDTO> pageData = this.baseMapper.pagingList(query, pagingParamDTO.getParams());
         fillTransactionSummary(pageData.getRecords(), pagingParamDTO.getParams().getDateList());

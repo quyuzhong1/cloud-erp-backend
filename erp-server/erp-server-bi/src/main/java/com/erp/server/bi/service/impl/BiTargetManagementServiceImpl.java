@@ -36,7 +36,7 @@ public class BiTargetManagementServiceImpl extends ServiceImpl<BiTargetManagemen
     public PagingVO<BiTargetManagementShowDTO> paging(PagingDTO<AdvanceSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         AdvanceSearchDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         IPage<BiTargetManagementShowDTO> pageData = baseMapper.paging(query, params);
         return new PagingVO(pageData);
     }

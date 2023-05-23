@@ -94,8 +94,8 @@
             <if test="params.billDateList != null and params.billDateList.size > 0">
                 and oi.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > oi.bill_date
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql }
             </if>
         </where>
         ORDER BY
@@ -120,8 +120,8 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql }
             </if>
         </where>
     </select>
@@ -195,8 +195,8 @@
                 <if test="params.billDateList != null and params.billDateList.size > 0">
                     and oi.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > oi.bill_date
                 </if>
-                <if test="params.param != null and params.param != ''">
-                    ${params.param}
+                <if test="params.permissionSql != null and params.permissionSql != ''">
+                    ${params.permissionSql }
                 </if>
             </if>
         </where>

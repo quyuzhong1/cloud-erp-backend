@@ -209,7 +209,7 @@ public class DataPermissionAspect {
                 }
             }
         }
-        ObjectUtils.setFieldValue(params[inject.index()], inject.param(), sqlString.toString());
+        ObjectUtils.setFieldValue(params[inject.index()], inject.permissionSql(), sqlString.toString());
     }
 
     /**

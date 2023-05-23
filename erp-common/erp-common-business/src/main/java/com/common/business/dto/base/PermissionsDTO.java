@@ -26,5 +26,5 @@ public class PermissionsDTO  implements Serializable {
     /**
      * 拼接的sql
      */
-    private String param;
+    private String permissionSql;
 }

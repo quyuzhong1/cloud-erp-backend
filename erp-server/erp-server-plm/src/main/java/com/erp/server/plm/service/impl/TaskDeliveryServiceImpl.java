@@ -145,7 +145,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     public PagingVO<List<DeliveryDocsDTO>> paging(PagingDTO<BaseSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         DocsDTO.DeliveryDocsPowerDTO docsPower = listDeliveryDocs(params.getFlagId());
         IPage pageData = new Page();
         //包含

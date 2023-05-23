@@ -2,6 +2,7 @@ package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -55,5 +56,5 @@ public interface SoReturnReceiveMapper extends BaseMapper<SoReturnReceiveEntity>
      * @param ids ids
      * @return java.util.List<com.erp.model.wms.dto.SoReturnReceiveDTO.GenerateSoReturnInstockView>
      **/
-    List<SoReturnReceiveDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(@Param("ids") List<String> ids);
+    List<QcInfoDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(@Param("ids") List<String> ids);
 }

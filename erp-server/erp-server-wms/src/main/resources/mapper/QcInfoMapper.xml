@@ -16,8 +16,8 @@
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql }
             </if>
         </where>
         group by qb.qc_status
@@ -38,8 +38,8 @@
             <if test="beginDate != null and endDate != null">
                 and qb.qc_date >= #{beginDate} and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY' ) > qb.qc_date
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql }
             </if>
         </where>
         group by dateStr, qb.qc_status order by dateStr asc
@@ -66,8 +66,8 @@
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql }
             </if>
         </where>
         group by qb.qc_user_id,qc_user_name
@@ -110,8 +110,8 @@
                     and (qb.qc_finish_time::timestamp > wr.approve_time::timestamp + '1 day' or (now() > wr.approve_time::timestamp + '1 day' and qb.qc_status = 'waitQc'))
                 </if>
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql }
             </if>
         </where>
     </select>
@@ -137,11 +137,11 @@
                 and qb.qc_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >
                 qb.qc_date
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql }
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql }
             </if>
         </where>
         group by qb.qc_user_id,qc_user_name
@@ -185,8 +185,8 @@
                     and (qb.qc_finish_time::timestamp > wr.approve_time::timestamp + '1 day' or (now() > wr.approve_time::timestamp + '1 day' and qb.qc_status = 'waitQc'))
                 </if>
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql }
             </if>
         </where>
     </select>
@@ -283,8 +283,8 @@
             DAY' ) > qb.create_time
         </if>
         <!--权限-->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql }
         </if>
         ORDER BY qb.create_time DESC
     </select>
@@ -391,8 +391,8 @@
             </otherwise>
         </choose>
         <!--权限-->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql }
         </if>
         ORDER BY qb.create_time DESC
     </select>

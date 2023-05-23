@@ -125,7 +125,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
-        pagingParamDTO.getParams().setParam(pagingParamDTO.getParam());
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<SoDeliveryNoticeDTO.PagingView> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
@@ -188,7 +188,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<SoDeliveryNoticeDTO.StatusCountDTO> list = new ArrayList<>();
         for (OsDeliveryChangeListTypeEnum item : values) {
             SoDeliveryNoticeDTO.PagingParam pagingParam = new SoDeliveryNoticeDTO.PagingParam();
-            pagingParam.setParam(dto.getParam());
+            pagingParam.setPermissionSql(dto.getPermissionSql());
             SoDeliveryNoticeDTO.StatusCountDTO resultDTO = new SoDeliveryNoticeDTO.StatusCountDTO();
             Integer count = MathUtil.ZERO;
             if (OsDeliveryChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {

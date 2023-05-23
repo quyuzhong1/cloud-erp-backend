@@ -33,7 +33,6 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDetailDTO;
-import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -126,7 +125,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
 
     @Override
     public PagingVO<SoReturnNoticeDTO.PagingView> paging(PagingDTO<SoReturnNoticeDTO.PagingParam> pagingParamDTO) {
-        pagingParamDTO.getParams().setParam(pagingParamDTO.getParam());
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<SoReturnNoticeDTO.PagingView> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
@@ -193,7 +192,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         List<SoReturnNoticeDTO.StatusCountDTO> list = new ArrayList<>();
         for (SOReturnChangeListTypeEnum item : values) {
             SoReturnNoticeDTO.PagingParam pagingParam = new SoReturnNoticeDTO.PagingParam();
-            pagingParam.setParam(dto.getParam());
+            pagingParam.setPermissionSql(dto.getPermissionSql());
             SoReturnNoticeDTO.StatusCountDTO resultDTO = new SoReturnNoticeDTO.StatusCountDTO();
             Integer count = MathUtil.ZERO;
             if (SOReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {

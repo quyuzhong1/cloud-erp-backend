@@ -122,7 +122,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
      **/
     @Override
     public PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> paging(PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setParam(pagingParamDTO.getParam());
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<PurchaseReturnOrderDTO.PagingViewDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         //明细数据
@@ -747,7 +747,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         List<PurchaseReturnOrderDTO.ReturnOrderCountDTO> list = new ArrayList<>();
         for (PurchaseChangeListTypeEnum item : values) {
             PurchaseReturnOrderDTO.PagingParamDTO pagingParamDTO = new PurchaseReturnOrderDTO.PagingParamDTO();
-            pagingParamDTO.setParam(dto.getParam());
+            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
             PurchaseReturnOrderDTO.ReturnOrderCountDTO resultDTO = new PurchaseReturnOrderDTO.ReturnOrderCountDTO();
             Integer count = MathUtil.ZERO;
             if (PurchaseChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {

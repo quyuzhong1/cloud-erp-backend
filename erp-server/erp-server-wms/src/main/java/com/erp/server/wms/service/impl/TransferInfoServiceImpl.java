@@ -105,7 +105,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     public PagingVO<TransferInfoDTO.ListDTO> paging(PagingDTO<TransferInfoDTO.SearchParamDTO> pagingDTO) {
-        pagingDTO.getParams().setParam(pagingDTO.getParam());
+        pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<TransferInfoDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
         List<TransferInfoDTO.ListDTO> records = pageData.getRecords();
@@ -141,7 +141,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<TransferInfoDTO.ListStatusCountDTO> list = new ArrayList<>();
         for (PurchaseChangeListTypeEnum item : values) {
             TransferInfoDTO.SearchParamDTO searchParamDTO = new TransferInfoDTO.SearchParamDTO();
-            searchParamDTO.setParam(dto.getParam());
+            searchParamDTO.setPermissionSql(dto.getPermissionSql());
             TransferInfoDTO.ListStatusCountDTO resultDTO = new TransferInfoDTO.ListStatusCountDTO();
             Integer count = MathUtil.ZERO;
             if (PurchaseChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {

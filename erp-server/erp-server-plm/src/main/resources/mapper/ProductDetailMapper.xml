@@ -233,8 +233,8 @@
             AND pd.create_time &lt;= #{params.endTime}
         </if>
 
-        <if test="params.param != '' and params.param != null">
-            ${params.param}
+        <if test="params.permissionSql != '' and params.permissionSql != null">
+            ${params.permissionSql }
         </if>
         ORDER BY pd.create_time DESC
     </select>

@@ -105,7 +105,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
     @Override
     public PagingVO<PoInstockDTO.ListDTO> paging(PagingDTO<PoInstockDTO.SearchParamDTO> pagingDTO) {
-        pagingDTO.getParams().setParam(pagingDTO.getParam());
+        pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<PoInstockDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
         List<PoInstockDTO.ListDTO> records = pageData.getRecords();
@@ -141,7 +141,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<PoInstockDTO.ListStatusCountDTO> list = new ArrayList<>();
         for (PurchaseChangeListTypeEnum item : values) {
             PoInstockDTO.SearchParamDTO searchParamDTO = new PoInstockDTO.SearchParamDTO();
-            searchParamDTO.setParam(dto.getParam());
+            searchParamDTO.setPermissionSql(dto.getPermissionSql());
             PoInstockDTO.ListStatusCountDTO resultDTO = new PoInstockDTO.ListStatusCountDTO();
             Integer count = MathUtil.ZERO;
             if (PurchaseChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {

@@ -104,7 +104,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
     @Override
     public PagingVO<MachineInfoDTO.ListDTO> paging(PagingDTO<MachineInfoDTO.SearchParamDTO> pagingDTO) {
-        pagingDTO.getParams().setParam(pagingDTO.getParam());
+        pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<MachineInfoDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
         List<MachineInfoDTO.ListDTO> records = pageData.getRecords();
@@ -140,7 +140,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         List<MachineInfoDTO.ListStatusCountDTO> list = new ArrayList<>();
         for (PurchaseChangeListTypeEnum item : values) {
             MachineInfoDTO.SearchParamDTO searchParamDTO = new MachineInfoDTO.SearchParamDTO();
-            searchParamDTO.setParam(dto.getParam());
+            searchParamDTO.setPermissionSql(dto.getPermissionSql());
             MachineInfoDTO.ListStatusCountDTO resultDTO = new MachineInfoDTO.ListStatusCountDTO();
             Integer count = MathUtil.ZERO;
             if (PurchaseChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {

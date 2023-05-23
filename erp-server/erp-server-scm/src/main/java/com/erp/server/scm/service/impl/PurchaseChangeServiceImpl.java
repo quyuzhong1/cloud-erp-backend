@@ -102,7 +102,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
     @Override
     public PagingVO<PurchaseChangeDTO.ListDTO> paging(PagingDTO<PurchaseChangeDTO.SearchParamDTO> pagingDTO) {
-        pagingDTO.getParams().setParam(pagingDTO.getParam());
+        pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<PurchaseChangeDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
         //清空明细数据
@@ -392,7 +392,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         List<ListStatusCountDTO.PurchaseChangeCountDTO> list = new ArrayList<>();
         for (PurchaseChangeListTypeEnum item: values) {
             PurchaseChangeDTO.SearchParamDTO searchParamDTO = new PurchaseChangeDTO.SearchParamDTO();
-            searchParamDTO.setParam(dto.getParam());
+            searchParamDTO.setPermissionSql(dto.getPermissionSql());
             ListStatusCountDTO.PurchaseChangeCountDTO resultDTO = new ListStatusCountDTO.PurchaseChangeCountDTO();
             Integer count = MathUtil.ZERO;
             if (PurchaseChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {

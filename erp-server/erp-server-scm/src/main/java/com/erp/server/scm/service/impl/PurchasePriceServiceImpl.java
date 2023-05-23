@@ -482,7 +482,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Override
     public PagingVO<PurchasePriceDTO.PagingViewDTO> paging(PagingDTO<PurchasePriceDTO.PagingParamDTO> dto) {
         PurchasePriceDTO.PagingParamDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         String searchType = params.getSearchType();
         List<String> statusList = new ArrayList<>(1);
         //待我审核
