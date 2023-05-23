@@ -142,6 +142,7 @@
         md.qty,
         md.unit,
         mi.warehouse_name as warehouseName,
+        md.warehouse_location as warehouseLocation,
         md.remark,
         mi.approve_user_name as approveUserName,
         mi.create_user_name as createUserName,
