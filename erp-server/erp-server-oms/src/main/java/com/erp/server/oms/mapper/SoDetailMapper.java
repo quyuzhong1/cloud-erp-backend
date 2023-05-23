@@ -69,8 +69,8 @@ public interface SoDetailMapper extends BaseMapper<SoDetailEntity> {
      * 根据发货状态获取
      * @author yl
      * @date 2023-05-17 14:12
-     * @param deliveryStatus 发货状态
+     * @param deliveryStatusList 发货状态
      * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.InfoDTO>
      */
-    List<SoDetailDTO.InfoDTO> listSoDetailByDeliveryStatus(@Param("deliveryStatus") Boolean deliveryStatus);
+    List<SoDetailDTO.InfoDTO> listSoDetailByDeliveryStatus(@Param("deliveryStatusList") List<String> deliveryStatusList);
 }

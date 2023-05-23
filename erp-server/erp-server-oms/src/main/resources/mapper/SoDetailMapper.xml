@@ -37,7 +37,7 @@
           MIN(price) AS minPrice,
           sku_id,
           COUNT(sku_id) AS count,
-	      round( SUM ( price ) / COUNT ( sku_id ), 2 ) avgPrice
+	      round( SUM ( price*qty ) / sum(qty), 2 ) avgPrice
         FROM so_detail
         WHERE is_deleted=FALSE
         GROUP BY sku_id
@@ -98,8 +98,11 @@
         FROM so_detail sd
         INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
         WHERE si.is_deleted=FALSE
-        <if test="deliveryStatus !=null ">
-          AND  sd.delivery_status=#{deliveryStatus}
+        <if test="deliveryStatusList !=null  and deliveryStatusList.size>0">
+            AND  sd.delivery_status IN
+            <foreach collection="deliveryStatusList" item="deliveryStatus" open="(" separator="," close=")">
+                #{deliveryStatus}
+            </foreach>
         </if>
     </select>
 
