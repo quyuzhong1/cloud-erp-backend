@@ -172,4 +172,14 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return java.lang.Boolean
      */
     Boolean addPushDownNo(List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList);
+
+    
+    /**
+     * 销售订单获取销售出库单的数据
+     * @author yl
+     * @date 2023-05-23 18:37
+     * @param
+     * @return java.util.List<com.erp.model.wms.dto.SoOutstockDTO.SoRefDTO>
+     */
+    List<SoOutstockDTO.SoRefDTO> listSoRefSoOutstockBySoId(String soId);
 }

@@ -151,8 +151,8 @@ public class SoOutstockController extends BaseController {
             keyIdName = "id"
     )
     public ApiResult update(@RequestBody @Validated SoOutstockDTO.UpdateDTO dto) {
-        String id=soOutstockService.updateSoOutstock(dto);
-        return StringUtils.isNotBlank(id)? success():failure();
+        String id = soOutstockService.updateSoOutstock(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -169,8 +169,8 @@ public class SoOutstockController extends BaseController {
             keyIdName = "id"
     )
     public ApiResult updateAndSubmit(@RequestBody @Validated SoOutstockDTO.UpdateDTO dto) {
-        Boolean result=soOutstockService.updateAndSubmit(dto);
-        return result?success(null):failure();
+        Boolean result = soOutstockService.updateAndSubmit(dto);
+        return result ? success(null) : failure();
     }
 
 
@@ -189,7 +189,7 @@ public class SoOutstockController extends BaseController {
     )
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
         Boolean result = soOutstockService.approve(dto);
-        return result?success():failure();
+        return result ? success() : failure();
     }
 
     /**
@@ -204,7 +204,7 @@ public class SoOutstockController extends BaseController {
     )
     public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean result = soOutstockService.disApprove(dto);
-        return result?success():failure();
+        return result ? success() : failure();
     }
 
 
@@ -257,8 +257,8 @@ public class SoOutstockController extends BaseController {
             serviceClass = SoOutstockService.class,
             keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        Boolean result = soOutstockService.invalid(dto.getIds(),dto.getRemark());
-        return result?success():failure();
+        Boolean result = soOutstockService.invalid(dto.getIds(), dto.getRemark());
+        return result ? success() : failure();
     }
 
     /**
@@ -274,35 +274,37 @@ public class SoOutstockController extends BaseController {
     )
     public ApiResult exportWarehouse(@RequestBody @Valid SoOutstockDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = soOutstockService.exportExcel(dto, response);
-        return result?success():failure();
+        return result ? success() : failure();
     }
 
 
-    
     /**
      * 下推销售出库单
-     * @author yl
-     * @date 2023-05-23 15:15
+     *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-05-23 15:15
      */
     @PostMapping("/generateSoOutstock")
     public ApiResult generateSoOutstock(@RequestBody @Valid ValidList<SoOutstockDTO.GenerateSoOutstockViewDTO> dto) {
         Boolean result = soOutstockService.addPushDownNo(dto);
-        return result?success():failure();
+        return result ? success() : failure();
     }
 
 
     /**
      * 销售订单关联销售出库单
-     * @author yl
-     * @date 2023-05-23 18:01
+     *
      * @param soId
      * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-05-23 18:01
      */
     @GetMapping("/listSoRefSoOutstock")
-    public ApiResult soRefSoOutstock(@RequestParam("soId") String soId) {
-        return success();
+    public ApiResult<List<SoOutstockDTO.SoRefDTO>> soRefSoOutstock(@RequestParam("soId") String soId) {
+        List<SoOutstockDTO.SoRefDTO> list = soOutstockService.listSoRefSoOutstockBySoId(soId);
+        return success(list);
     }
 
 

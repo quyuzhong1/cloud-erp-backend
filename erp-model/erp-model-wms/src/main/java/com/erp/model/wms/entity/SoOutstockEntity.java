@@ -141,8 +141,8 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
      * type
      * 单据类型 冗余
      */
-    @TableField("type")
-    private String type;
+    @TableField("order_type")
+    private String orderType;
 
     /**
      * 仓库id

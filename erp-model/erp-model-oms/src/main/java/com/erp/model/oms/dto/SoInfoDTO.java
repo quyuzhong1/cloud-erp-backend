@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.PositiveOrZero;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -390,11 +391,13 @@ public class SoInfoDTO implements Serializable {
         /**
          * 银行手续费
          */
+        @PositiveOrZero(message = "银行手续费不能为负数", groups = {AddGroup.class})
         private BigDecimal bankServiceFee;
 
         /**
          * 运费
          */
+        @PositiveOrZero(message = "运费不能为负数", groups = {AddGroup.class})
         private BigDecimal shippingFee;
 
         /**
@@ -449,7 +452,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 地址类型
          * http://172.16.100.11:3002/project/110/interface/api/13480
-         * type=AddressType
+         * type=CustomerAddressType
          */
         @StateEnumValue(strValues = {"forwarder", "deliver", "company"}, message = "地址类型有误", groups = {AddGroup.class})
         private String addressType;

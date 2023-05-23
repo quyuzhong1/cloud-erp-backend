@@ -296,16 +296,18 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         skuIds = skuIds.stream().distinct().collect(Collectors.toList());
         List<String> warehouseIdList = dto.getWarehouseIdList();
         List<String> warehouseLocationIdList = dto.getWarehouseLocationIdList();
-        if (CollectionUtils.isEmpty(skuIds) || CollectionUtils.isEmpty(warehouseIdList) || CollectionUtils.isEmpty(warehouseLocationIdList)) {
+        if (CollectionUtils.isEmpty(skuIds) || CollectionUtils.isEmpty(warehouseIdList)) {
             return Collections.emptyList();
         }
 
+        Boolean isExist = CollectionUtils.isNotEmpty(warehouseLocationIdList);
         LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(InventoryEntity::getWarehouseId, warehouseIdList)
-                .eq(InventoryEntity::getDictInventoryStatus, status)
-                .in(InventoryEntity::getWarehouseLocation, warehouseLocationIdList)
-                .in(InventoryEntity::getSkuId, skuIds);
-
+        queryWrapper.in(InventoryEntity::getWarehouseId, warehouseIdList);
+        queryWrapper.eq(InventoryEntity::getDictInventoryStatus, status);
+        if (isExist) {
+            queryWrapper.eq(InventoryEntity::getWarehouseLocation, warehouseLocationIdList);
+        }
+        queryWrapper.in(InventoryEntity::getSkuId, skuIds);
         List<InventoryEntity> inventoryEntities = baseMapper.selectList(queryWrapper);
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = Lists.newArrayList();
         for (InventoryEntity item : inventoryEntities) {

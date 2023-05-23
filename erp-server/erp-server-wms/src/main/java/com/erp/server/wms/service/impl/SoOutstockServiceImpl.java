@@ -383,7 +383,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SALES_DELIVERY_ORDER.getType());
         List<InOutStockDTO> members = baseMapper.listInventoryInOut(allList);
-        members.forEach(obj->obj.setSourceType(InventorySourceTypeEnum.PURCHASE_STOCK_OUT));
+        members.forEach(obj -> obj.setSourceType(InventorySourceTypeEnum.PURCHASE_STOCK_OUT));
         if (CollectionUtils.isNotEmpty(members)) {
             inventoryInOutStockDTO.setMembers(members);
             inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
@@ -835,12 +835,28 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return this.batchAdd(addList);
     }
 
+
+    /**
+     * 销售订单获取销售出库单的数据
+     *
+     * @param
+     * @return java.util.List<com.erp.model.wms.dto.SoOutstockDTO.SoRefDTO>
+     * @author yl
+     * @date 2023-05-23 18:37
+     */
+    @Override
+    public List<SoOutstockDTO.SoRefDTO> listSoRefSoOutstockBySoId(String soId) {
+        SoInfoDTO.CustomerDTO soCustomer = soInfoFeign.getSoBaseById(soId);
+        List<SoOutstockDTO.SoRefDTO> resultList = baseMapper.listSoRefSoOutstockBySoId(soId);
+        return resultList;
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchAdd(List<SoOutstockDTO.AddDTO> addList) {
         if (CollectionUtils.isEmpty(addList)) {
             return Boolean.FALSE;
         }
-        addList.forEach(obj->add(obj));
+        addList.forEach(obj -> add(obj));
         return Boolean.TRUE;
     }
 

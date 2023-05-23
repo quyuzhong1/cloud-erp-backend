@@ -472,18 +472,12 @@ public class SoOutstockDTO implements Serializable {
          * 发货数量
          */
         @NotNull(message = "发货数量不能为空")
-        @DecimalMin(value = "1",message ="发货数最小值为1")
-        @DecimalMax(value = "999999999",message ="发货数最大值为999999999")
+        @DecimalMin(value = "1", message = "发货数最小值为1")
+        @DecimalMax(value = "999999999", message = "发货数最大值为999999999")
         private Integer deliveryQty;
 
 
         private String remark;
-
-
-
-
-
-
 
 
     }
@@ -746,5 +740,131 @@ public class SoOutstockDTO implements Serializable {
     public static class ExportDTO extends PagingParamDTO {
 
         private List<String> ids;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SoRefDTO {
+
+        /**
+         * 出库单号
+         */
+        private String code;
+
+        /**
+         * 单据类型
+         */
+        private String orderType;
+
+        /**
+         * 单据类型名
+         */
+        private String orderTypeName;
+
+        /**
+         * 客户id
+         */
+        private String  customerId;
+
+        /**
+         * 客户名
+         */
+        private String  customerName;
+
+        /**
+         * 发货组织id
+         */
+        private String deliveryOrgId;
+
+        /**
+         * 发货组织名
+         */
+        private String deliveryOrgName;
+
+
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku no
+         */
+        private String skuNo;
+
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+
+        /**
+         * 应发数量
+         */
+        private Integer planQty;
+
+        /**
+         * 实发数量
+         */
+        private Integer actualQty;
+
+        /**
+         * 库存单位
+         */
+        private String unit;
+
+        /**
+         * 出货仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 出货仓库
+         */
+        private String warehouseName;
+
+
+        /**
+         * 出库 日期
+         */
+        private LocalDate outStockDate;
+
+
+        /**
+         * 预计发货日期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 打包日期
+         */
+        private LocalDate packDate;
+
+
+        /**
+         * 实际发货时间
+         */
+        private LocalDate actualDeliveryDate;
+
+
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime createTime;
+
+
+
+
+
+
     }
 }

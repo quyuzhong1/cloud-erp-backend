@@ -711,6 +711,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * @date 2023-05-17 16:53
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean deleteByIds(List<String> ids) {
         List<SoInfoEntity> list = this.listByIds(ids);
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -808,13 +809,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> detailIds = list.stream().map(SoInfoDTO.PagingViewDTO::getDetailId).collect(Collectors.toList());
         List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockFeign.listDetailBySourceDetailId(detailIds);
         List<String> skuIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
-        String warehouseId = list.get(0).getWarehouseId();
-        InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
-        paramDTO.setSkuIds(skuIdList);
-        paramDTO.setWarehouseId(warehouseId);
-        paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        List<String> warehouseIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getWarehouseId).collect(Collectors.toList());
+        InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
+        skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        skuInventoryDTO.setWarehouseIdList(warehouseIdList);
+        skuInventoryDTO.setSkuIdList(skuIdList);
+
+
         //从wms 获取到sku 的即时库存信息
-        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventoryByParam(skuInventoryDTO);
         //客户id
         List<String> customerIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getCustomerId).collect(Collectors.toList());
         List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIdList) ? customerInfoService.listByIds(customerIdList) : Collections.emptyList();
@@ -822,6 +825,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         for (SoInfoDTO.PagingViewDTO item : list) {
             BillApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
+            String warehouseId = item.getWarehouseId();
             String type = item.getOrderType();
             item.setOrderTypeName(BillTypeEnum.getName(type));
             String deliveryStatus = item.getDeliveryStatus();
@@ -839,7 +843,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             Integer qty = item.getQty();
 
             //即时库存
-            Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+            Integer curInventoryQty = skuInventoryTotalList.stream().filter(
+                    s -> s.getSkuId().equals(skuId)&&
+                            s.getWarehouseId().equals(warehouseId)
+            ).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
             /**
              * 缺货数量

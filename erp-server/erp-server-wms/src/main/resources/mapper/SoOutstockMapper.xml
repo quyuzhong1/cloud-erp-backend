@@ -214,7 +214,8 @@
         sod.warehouse_location,
         sod.actual_qty AS qty
         FROM so_outstock so
-        INNER JOIN so_outstock_detail sod AND  sod.is_deleted=FALSE
+        INNER JOIN so_outstock_detail sod  ON sod.main_id=so.id
+        AND  sod.is_deleted=FALSE
         WHERE so.is_deleted=FALSE
         <if test="params.ids!=null and params.ids.size>0">
             AND so.id IN
@@ -222,6 +223,31 @@
                 #{id}
             </foreach>
         </if>
+    </select>
+
+    <select id="listSoRefSoOutstockBySoId" resultType="com.erp.model.wms.dto.SoOutstockDTO$SoRefDTO">
+            SELECT
+              so.code,
+              so.order_type,
+              so.delivery_org_id,
+              so.delivery_org_name,
+              so.warehouse_id,
+              so.warehouse_name,
+              so.plan_delivery_date,
+              so.pack_date,
+              so.actual_delivery_date,
+              so.create_time,
+              so.create_user_name,
+              sod.sku_id,
+              sod.sku_no,
+              sod.plan_qty,
+              sod.actual_qty
+            FROM so_outstock so
+            INNER JOIN so_outstock_detail sod  ON sod.main_id=so.id
+            AND  sod.is_deleted=FALSE
+            WHERE so.is_deleted=FALSE
+            AND so.so_id=#{soId}
+
 
 
     </select>

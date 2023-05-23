@@ -47,6 +47,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -123,7 +124,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //所有的
         List<SoDetailDTO.InfoDTO> list = baseMapper.listAllSoDetail();
         SoInfoDTO.TabListDTO all = new SoInfoDTO.TabListDTO();
-        all.setCount(list.size());
+        int allCount = (int) list.stream().
+                map(SoDetailDTO.InfoDTO::getMainId).distinct().count();
+        all.setCount(allCount);
         all.setSearchType(OmsConstant.ALL);
         result.add(all);
 
@@ -131,7 +134,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         SoInfoDTO.TabListDTO waitApprove = new SoInfoDTO.TabListDTO();
         waitApprove.setSearchType(OmsConstant.WAIT_APPROVE);
-        int waitApproveCount = (int) list.stream().filter(s -> approveIngStatus.equals(s.getApproveStatus())).count();
+        int waitApproveCount = (int) list.stream().filter(s -> approveIngStatus.equals(s.getApproveStatus())).
+                map(SoDetailDTO.InfoDTO::getMainId).distinct().count();
         waitApprove.setCount(waitApproveCount);
         result.add(waitApprove);
 
@@ -139,8 +143,15 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //待发货
         SoInfoDTO.TabListDTO waitDelivery = new SoInfoDTO.TabListDTO();
         waitDelivery.setSearchType(OmsConstant.WAIT_DELIVERY);
-        String unShipped = DeliveryStatusEnum.UN_SHIPPED.getCode();
-        int waitDeliveryCount = (int) list.stream().filter(s -> unShipped.equals(s.getDeliveryStatus())).count();
+
+        //已发货
+        String completeShipment = DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode();
+        //已审核
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        //已审核+未发货+部分发货的
+        int waitDeliveryCount = (int) list.stream().filter(s -> s.getApproveStatus().equals(approveStatus) &&
+                !completeShipment.equals(s.getDeliveryStatus())).
+                map(SoDetailDTO.InfoDTO::getMainId).distinct().count();
         waitDelivery.setCount(waitDeliveryCount);
         result.add(waitDelivery);
 
@@ -148,18 +159,18 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
         SoInfoDTO.TabListDTO reject = new SoInfoDTO.TabListDTO();
         reject.setSearchType(OmsConstant.REJECT);
-        int rejectCount = (int) list.stream().filter(s -> rejectStatus.equals(s.getApproveStatus())).count();
+        int rejectCount = (int) list.stream().filter(s -> rejectStatus.equals(s.getApproveStatus())).
+                map(SoDetailDTO.InfoDTO::getMainId).distinct().count();
         reject.setCount(rejectCount);
         result.add(reject);
 
         //已发货
         SoInfoDTO.TabListDTO delivery = new SoInfoDTO.TabListDTO();
         delivery.setSearchType(OmsConstant.DELIVERY);
-        String completeShipment = DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode();
-        int deliveryCount = (int) list.stream().filter(s -> completeShipment.equals(s.getDeliveryStatus())).count();
+        int deliveryCount = (int) list.stream().filter(s -> completeShipment.equals(s.getDeliveryStatus())).
+                map(SoDetailDTO.InfoDTO::getMainId).distinct().count();
         delivery.setCount(deliveryCount);
         result.add(delivery);
-
         return result;
     }
 
@@ -437,12 +448,13 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * @date 2023-05-17 17:09
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void removeByMainIdList(List<String> mainIdList) {
         if (CollectionUtils.isEmpty(mainIdList)) {
             return;
         }
         LambdaQueryWrapper<SoDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SoDetailEntity::getMainId, mainIdList);
+        queryWrapper.in(SoDetailEntity::getMainId, mainIdList);
         this.remove(queryWrapper);
 
     }

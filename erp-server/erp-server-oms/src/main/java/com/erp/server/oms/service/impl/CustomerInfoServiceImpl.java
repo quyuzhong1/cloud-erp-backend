@@ -144,7 +144,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         //付款方
         List<String> payCodeList = dto.getPayCodeList();
         String payCode = CollectionUtils.isNotEmpty(payCodeList) ? payCodeList.stream().collect(Collectors.joining(",")) : "";
-        addEntity.setCode(payCode);
+        addEntity.setPayCode(payCode);
         //获取客户分组信息
         List<CustomerGroupEntity> customerGroupList = customerGroupService.listById(groupId);
         String groupName = customerGroupList.stream().filter(d -> d.getId().equals(groupId)).findFirst().

@@ -356,6 +356,11 @@ public class SoOutstockDetailDTO implements Serializable {
          */
         private String productName;
 
+        /**
+         * 库存单位
+         */
+        private String unit;
+
 
         /**
          * 应发数量
