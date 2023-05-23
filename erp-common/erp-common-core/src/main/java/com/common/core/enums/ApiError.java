@@ -65,6 +65,8 @@ public enum ApiError implements Serializable {
     ERROR_1027(1027, "数据已被他人修改，为避免数据错误，请稍后再试"),
     ERROR_1028(1028, "名称不能重复"),
     ERROR_1029(1029, "只有待提交和审核不通过数据支持修改"),
+    ERROR_1030(1030, "未找到来源单据"),
+    ERROR_1031(1031, "未找到来源单据明细"),
 
 
 
@@ -431,6 +433,7 @@ public enum ApiError implements Serializable {
     ERROR_98061(98061,"存在不一样的作废状态"),
     ERROR_98062(98062,"销售订单【%s】下推备货申请单SKU【%s】数量不能超过【%s】"),
     ERROR_98063(98063,"只有审核通过才能下推销售出库单"),
+    ERROR_98064(98064,"备货申请单SKU【%s】数量不能超过【%s】"),
 
 
 
