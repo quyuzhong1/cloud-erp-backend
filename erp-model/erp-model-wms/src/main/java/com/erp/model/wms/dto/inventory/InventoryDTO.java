@@ -725,7 +725,7 @@ public class InventoryDTO {
         private String skuId;
 
         /**
-         * 库位编码
+         * 库位编码（查询仓库下SKU的库存数量，不要传该字段）
          */
         private String warehouseLocation;
 

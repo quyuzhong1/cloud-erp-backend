@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -39,19 +40,26 @@ import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.WarehouseReceiveMapper;
 import com.erp.server.wms.service.*;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,6 +68,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -115,6 +124,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     @Resource
     private PurchaseReturnOrderService purchaseReturnOrderService;
+
+    @Autowired
+    private InventoryTransCoreService inventoryTransCoreService;
 
     /**
      * 主页分页查询
@@ -485,7 +497,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
         List<WarehouseReceiveEntity> warehouseReceiveList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(ids)) {
+        if (CollectionUtils.isEmpty(warehouseReceiveList)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
 
@@ -512,6 +524,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             //根据条件生成质检单
             createQcBill(ids);
 
+            // 更新库存数据
+            updateInventoryTransCore(warehouseReceiveList);
         } else {
             //审核不通过
             lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -637,6 +651,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 .in(WarehouseReceiveEntity::getId, ids)
                 .update();
+
+        // 更新库存数据，回扣库存
+        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.WAREHOUSE_RECEIVE,ids);
+        inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
 
         //操作日志
         List<Pair<String, String>> pairList = warehouseReceiveList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -1041,5 +1059,38 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             }
         }
         return Boolean.TRUE;
+    }
+
+    /**
+     * 更新库存数据
+     * @param list
+     */
+    private void updateInventoryTransCore(List<WarehouseReceiveEntity> list) {
+        List<String> ids = list.stream().map(WarehouseReceiveEntity::getId).distinct().collect(Collectors.toList());
+        Map<String,WarehouseReceiveEntity> receiveMap =  list.stream().collect(Collectors.toMap(WarehouseReceiveEntity::getId, Function.identity()));
+        List<WarehouseReceiveDetailEntity> details = warehouseReceiveDetailService.listDetailByMainIds(ids);
+        if(CollUtil.isEmpty(details)) {
+            throw new ServiceException("未找到收货单明细数据");
+        }
+        InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.PO_RECEIVE.getCode());
+        List<InOutStockDTO> members = Lists.newArrayList();
+        for(WarehouseReceiveDetailEntity detail : details) {
+            WarehouseReceiveEntity warehouseReceiveEntity = receiveMap.get(detail.getMainId());
+            InOutStockDTO inOutStockDTO = new InOutStockDTO();
+            inOutStockDTO.setSourceType(InventorySourceTypeEnum.WAREHOUSE_RECEIVE);
+            inOutStockDTO.setSourceId(warehouseReceiveEntity.getId());
+            inOutStockDTO.setSourceCode(warehouseReceiveEntity.getCode());
+            inOutStockDTO.setSourceDetailId(detail.getId());
+            inOutStockDTO.setBillDate(warehouseReceiveEntity.getBillDate());
+            inOutStockDTO.setSkuId(detail.getSkuId());
+            inOutStockDTO.setSkuNo(detail.getSkuNo());
+            inOutStockDTO.setQty(detail.getReceiveQty());
+            inOutStockDTO.setWarehouseId(warehouseReceiveEntity.getDeliveryWarehouseId());
+            inOutStockDTO.setWarehouseLocation("");
+            members.add(inOutStockDTO);
+        }
+        inventoryInOutStockDTO.setMembers(members);
+        inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
     }
 }
