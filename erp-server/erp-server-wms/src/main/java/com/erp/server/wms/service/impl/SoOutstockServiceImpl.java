@@ -27,7 +27,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.SoOutstockDetiailDTO;
+import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
@@ -123,14 +123,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String sourceId = dto.getSourceId();
 
         //检查出库数量
-        List<SoOutstockDetiailDTO.UpdateDTO> detailList = BeanMapper.copyList(dto.getDetailList(), SoOutstockDetiailDTO.UpdateDTO.class);
+        List<SoOutstockDetailDTO.UpdateDTO> detailList = BeanMapper.copyList(dto.getDetailList(), SoOutstockDetailDTO.UpdateDTO.class);
         soOutstockDetailService.checkOutQty(dto.getWarehouseId(), dto.getSoId(), sourceId, sourceType, detailList);
 
 
         SoOutstockEntity soOutstock = new SoOutstockEntity();
         BeanMapper.copy(dto, soOutstock);
         soOutstock.setId(id);
-        List<SoOutstockDetiailDTO.AddDTO> addDetailList = dto.getDetailList();
+        List<SoOutstockDetailDTO.AddDTO> addDetailList = dto.getDetailList();
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSCK, BusinessNoTypeEnum.CODE_XSCK.getCode()));
         soOutstock.setCode(code);
         //发货组织
@@ -264,7 +264,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             result.setTypeName(soInfo.getOrderTypeName());
             result.setSellerName(soInfo.getSellerName());
         }
-        List<SoOutstockDetiailDTO.ViewDTO> detailList = soOutstockDetailService.listByMainId(id, soOutstock.getWarehouseId());
+        List<SoOutstockDetailDTO.ViewDTO> detailList = soOutstockDetailService.listByMainId(id, soOutstock.getWarehouseId());
         result.setDetailList(detailList);
         return result;
     }
@@ -713,7 +713,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (Objects.isNull(soOutstock)) {
             throw new ServiceException(ApiError.ERROR_99058);
         }
-        List<SoOutstockDetiailDTO.UpdateDTO> detailList = dto.getDetailList();
+        List<SoOutstockDetailDTO.UpdateDTO> detailList = dto.getDetailList();
         //检查出库数量
         soOutstockDetailService.checkOutQty(dto.getWarehouseId(), dto.getSoId(), dto.getSourceId(), dto.getSourceType(), detailList);
         String code = soOutstock.getCode();

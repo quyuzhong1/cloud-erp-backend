@@ -26,7 +26,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class SoOutstockDetiailDTO implements Serializable {
+public class SoOutstockDetailDTO implements Serializable {
 
     /**
      * tab list
@@ -463,5 +463,10 @@ public class SoOutstockDetiailDTO implements Serializable {
          */
         private String approveStatus;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class GenerateViewDTO {
     }
 }
