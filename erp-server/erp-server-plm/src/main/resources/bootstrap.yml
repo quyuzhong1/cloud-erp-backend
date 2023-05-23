@@ -20,7 +20,7 @@ mybatis-plus:
 seata:
   enabled: true
   application-id : ${spring.application.name}
-  tx-service-group: plm_tx_group
+  tx-service-group: plm_seata_tx_group
   use-jdk-proxy: true
   data-source-proxy-mode: XA
   enable-auto-data-source-proxy: true
@@ -45,4 +45,4 @@ seata:
       namespace: ${sfs.nacos.namespace}
   service:
     vgroupMapping: # 事务组与cluster的映射关系
-      plm_tx_group: default
+      plm_seata_tx_group: default
