@@ -36,70 +36,92 @@ public class MachineInfoDTO implements Serializable {
          * 主键id
          */
         private String  id;
+
         /**
          * 加工单号
          */
-        private String  code;
+        private String code;
+
         /**
          * 事务类型
          */
-        private String   workType;
+        private String workType;
+
         /**
          * 事务类型名称
          */
-        private String   workTypeName;
+        private String workTypeName;
+
         /**
          * 状态
          */
-        private String   approveStatus;
+        private String approveStatus;
+
         /**
          * 状态名称
          */
-        private String   approveStatusName;
+        private String approveStatusName;
+
         /**
          * 作废状态
          */
-        private Boolean  invalidStatus;
+        private Boolean invalidStatus;
+
         /**
          * 作废状态名称
          */
         private String invalidStatusName;
+
         /**
          * sku编码
          */
-        private String  skuId;
+        private String skuId;
+
         /**
          * sku编码
          */
-        private String  skuNo;
+        private String skuNo;
+
         /**
          * 产品名称
          */
-        private String  productName;
+        private String productName;
+
         /**
          * 加工日期
          */
         private LocalDate billDate;
+
         /**
          * 数量
          */
         private Integer qty;
+
         /**
          * 单位
          */
-        private String  unit;
+        private String unit;
+
         /**
          * 仓库名称
          */
-        private String   warehouseName;
+        private String warehouseName;
+
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+
         /**
          * 审核人名称
          */
-        private String   approveUserName;
+        private String approveUserName;
+
         /**
          * 创建人名称
          */
-        private String  createUserName;
+        private String createUserName;
+
         /**
          * 创建时间
          */

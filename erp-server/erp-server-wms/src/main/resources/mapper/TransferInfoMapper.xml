@@ -53,7 +53,9 @@
             tid.remark,
             ti.approve_user_name as approveUserName,
             ti.create_user_name as createUserName,
-            ti.create_time as createTime
+            ti.create_time as createTime,
+            tid.in_warehouse_location as inWarehouseLocation,
+            tid.out_warehouse_location as outWarehouseLocation
         from transfer_info ti
         inner join transfer_info_detail tid on ti.id = tid.main_id and tid.is_deleted = false
         <where>
