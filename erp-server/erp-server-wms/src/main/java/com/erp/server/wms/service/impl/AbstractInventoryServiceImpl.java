@@ -161,13 +161,14 @@ public abstract class AbstractInventoryServiceImpl {
                 WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(txnFlow.getWarehouseId());
                 InventoryStatusEnum inventoryStatusEnum = InventoryStatusEnum.of(txnFlow.getDictInventoryStatus());
                 String inventoryStatusName = Optional.ofNullable(inventoryStatusEnum).map(InventoryStatusEnum::getName).orElse("");
+                String skuNo = txnFlow.getSkuNo();
                 if(Objects.equals(inventoryModeCur, InventoryModeEnum.OUT_STOCK)) {
                     if(inventoryDetail.getQty() < txnFlow.getQty()) {
                         log.info("反审核》》》，仓库：【{}】，组织：【{}】，SKU ID：【{}】，SKU编号：【{}】, 交易业务：【{}】，来源单据类型：【{}】, 单据id：【{}】，SKU编号：【{}】，原库存明细id：【{}】，原库存明细数量【{}】，原交易流水数量【{}】，不足以反审核", txnFlow.getWarehouseId(), txnFlow.getOrgId(), txnFlow.getSkuId(), txnFlow.getSkuNo(), txnFlow.getSkuId(), inventoryBusinessType.getName(), InventorySourceTypeEnum.of(txnFlow.getSourceType()).getName(), param.getSourceId(), param.getSkuNo(), inventoryDetail.getQty(), txnFlow.getQty());
                         if (Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
-                            throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), inventoryStatusName));
+                            throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), skuNo, inventoryStatusName));
                         } else {
-                            throw new ServiceException(StrUtil.format("{}库存数量不足", inventoryStatusName));
+                            throw new ServiceException(StrUtil.format("【{}】【{}】库存数量不足", skuNo, inventoryStatusName));
                         }
                     }
                 }
@@ -181,9 +182,9 @@ public abstract class AbstractInventoryServiceImpl {
                     if(inventory.getQty() < txnFlow.getQty()) {
                         log.info("反审核》》》，仓库：{}，组织：{}，SKU ID：{}，SKU编号：{}, 交易业务：{}，来源单据类型：{}, 单据id：【{}】，SKU编号：【{}】，原库存明细id：【{}】，原库存数量【{}】，原交易流水数量【{}】，不足以反审核", txnFlow.getWarehouseId(), txnFlow.getOrgId(), txnFlow.getSkuNo(), txnFlow.getSkuId(), inventoryBusinessType.getName(), InventorySourceTypeEnum.of(txnFlow.getSourceType()).getName(), param.getSourceId(), param.getSkuNo(), inventory.getQty(), txnFlow.getQty());
                         if (Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
-                            throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), inventoryStatusName));
+                            throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), skuNo, inventoryStatusName));
                         } else {
-                            throw new ServiceException(StrUtil.format("{}库存数量不足", inventoryStatusName));
+                            throw new ServiceException(StrUtil.format("【{}】【{}】库存数量不足", skuNo, inventoryStatusName));
                         }
                     }
                     transactionInventoryQty = transactionInventoryQty - operationQty;
@@ -349,9 +350,9 @@ public abstract class AbstractInventoryServiceImpl {
             if(Objects.isNull(inventory)) {
                 log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】在库存实时表中不存在数据，无法出库", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName());
                 if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
-                    throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), inventoryStatusName));
+                    throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), skuNo, inventoryStatusName));
                 } else {
-                    throw new ServiceException(StrUtil.format("{}库存数量不足", inventoryStatusName));
+                    throw new ServiceException(StrUtil.format("【{}】【{}】库存数量不足", skuNo, inventoryStatusName));
                 }
             }
             Integer originQty = inventory.getQty();
@@ -359,9 +360,9 @@ public abstract class AbstractInventoryServiceImpl {
             // 判断库存数量是否足够出库
             if(originQty < qty) {
                 if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
-                    throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), inventoryStatusName));
+                    throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), skuNo, inventoryStatusName));
                 } else {
-                    throw new ServiceException(StrUtil.format("{}库存数量不足", inventoryStatusName));
+                    throw new ServiceException(StrUtil.format("【{}】【{}】库存数量不足", skuNo, inventoryStatusName));
                 }
             }
             // 查询库存明细，排序，雪花算法id在单机上是严格递增的，但是在分布式环境下不是严格递增的（因为不同的机器的MAC地址/机器ID/数据中心不一样等等），此处改为按创建时间递增排序
@@ -397,9 +398,9 @@ public abstract class AbstractInventoryServiceImpl {
             }
             if(waitOutQty > 0) {
                 if (Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
-                    throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), inventoryStatusName));
+                    throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), skuNo,  inventoryStatusName));
                 } else {
-                    throw new ServiceException(StrUtil.format("{}库存数量不足", inventoryStatusName));
+                    throw new ServiceException(StrUtil.format("【{}】【{}】库存数量不足", skuNo, inventoryStatusName));
                 }
             }
             // 更新库存表
