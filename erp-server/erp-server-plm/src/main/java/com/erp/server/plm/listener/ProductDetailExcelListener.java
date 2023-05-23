@@ -241,8 +241,6 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         }
 
         ProductNoSpecDTO productNoSpecDTO = new ProductNoSpecDTO();
-        //spu信息
-        productInfoDTO.setName(IdUtil.getSnowflake().nextIdStr());
 
 /*        BasicCategoryEntity categoryByName = basicCategoryService.getCategoryByName(dto.getCategory());
         if (!ObjectUtils.isEmpty(categoryByName)) {
