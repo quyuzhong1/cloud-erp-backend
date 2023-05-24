@@ -567,15 +567,6 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
                 throw new ServiceException(StrUtil.format("sku编码【{}】在仓库【{}】仓位【{}】中已经存在", addDTO.getSkuNo(), warehouseDTO.getName(), warehouseLocationCode));
             }
         }
-        // 不允许出现重复的sku
-        Map<String,List<InitStockDetailDTO.AddDTO>> skuMap = details.stream().collect(Collectors.groupingBy(InitStockDetailDTO.AddDTO::getSkuId));
-        skuMap.forEach((skuId,skuIdList)->{
-            if(skuIdList.size() > 1) {
-                throw new ServiceException(StrUtil.format("sku编码【{}】不能重复", skuIdList.get(0).getSkuNo()));
-            }
-
-        });
-
     }
 
     /**

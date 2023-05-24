@@ -442,9 +442,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean finishDelivery(List<String> ids) {
         //ids为采购订单明细id集合
+        List<PurchaseOrderEntity> list =  getList(ids);
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByIds(ids);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
@@ -455,6 +457,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         //更新明细中的交货状态
         purchaseOrderDetailService.updateArrivalStatusByIds(ArrivalStatusEnum.ARRIVED.getCode(), ids);
+
+        // 更新库存
 
         //操作日志
         List<Pair<String, String>> pairList = purchaseOrderDetailList.stream().map(obj -> new Pair<>(obj.getPurchaseOrderId(), obj.getSkuNo())).collect(Collectors.toList());
@@ -1274,6 +1278,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (CollectionUtils.isEmpty(ids)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
+        ids = ids.stream().distinct().collect(Collectors.toList());
         List<PurchaseOrderEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_98016);
@@ -1476,7 +1481,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     /**
-     * @description: 更新库存
+     * @description: 更新库存（采购订单审核）
      * @author zhangchunlin
      * @date: 2023/5/23 12:11
      * @param list
@@ -1507,6 +1512,16 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             inventoryForcastDTO.setDetails(details);
             inventoryFeign.generateByPurchaseOrder(inventoryForcastDTO);
         });
+    }
+
+    /**
+     * 更新库存（结束交货）
+     * @param list
+     * @param details
+     */
+    public void updateInventoryFinish(List<PurchaseOrderEntity> list, List<PurchaseOrderDetailEntity> details) {
+        Map<String, PurchaseOrderEntity> poMap = list.stream().collect(Collectors.toMap(PurchaseOrderEntity::getId, Function.identity()));
+        Map<String,List<PurchaseOrderDetailEntity>> detailMap = details.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getPurchaseOrderId));
     }
 
 
