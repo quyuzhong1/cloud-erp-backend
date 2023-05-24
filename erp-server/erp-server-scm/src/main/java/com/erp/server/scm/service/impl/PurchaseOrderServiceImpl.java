@@ -1481,7 +1481,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      * @date: 2023/5/23 12:11
      * @param list
      */
-    private void updateInventoryTransCore (List<PurchaseOrderEntity> list) {
+    public void updateInventoryTransCore (List<PurchaseOrderEntity> list) {
         Map<String,PurchaseOrderEntity> orderMap =  list.stream().collect(Collectors.toMap(PurchaseOrderEntity::getId, Function.identity()));
         // 获取采购订单明细
         orderMap.forEach((id,order)->{

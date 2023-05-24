@@ -1065,7 +1065,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      * 更新库存数据
      * @param list
      */
-    private void updateInventoryTransCore(List<WarehouseReceiveEntity> list) {
+    public void updateInventoryTransCore(List<WarehouseReceiveEntity> list) {
         List<String> ids = list.stream().map(WarehouseReceiveEntity::getId).distinct().collect(Collectors.toList());
         Map<String,WarehouseReceiveEntity> receiveMap =  list.stream().collect(Collectors.toMap(WarehouseReceiveEntity::getId, Function.identity()));
         List<WarehouseReceiveDetailEntity> details = warehouseReceiveDetailService.listDetailByMainIds(ids);
