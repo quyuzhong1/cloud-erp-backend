@@ -24,4 +24,13 @@ public interface InstockForcastDetailService extends SuperService<InstockForcast
      */
     List<InstockForcastDetailEntity> add(InstockForcastDTO.AddDTO dto, String id);
 
+    /**
+     * 根据入库预报主单id和采购订单明细id获取入库预报明细信息
+     * @param mainId
+     * @param purchaseOrderDetailId
+     * @return
+     */
+    InstockForcastDetailEntity find(String mainId, String purchaseOrderDetailId);
+
+
 }
