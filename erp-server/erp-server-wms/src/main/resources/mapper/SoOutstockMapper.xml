@@ -209,7 +209,7 @@
         so.warehouse_id,
         so.id AS sourceId,
         so.code AS sourceCode,
-        sod.id AS sourceDetailId
+        sod.id AS sourceDetailId,
         sod.sku_id,sod.sku_no,
         sod.warehouse_location,
         sod.actual_qty AS qty
@@ -217,9 +217,9 @@
         INNER JOIN so_outstock_detail sod  ON sod.main_id=so.id
         AND  sod.is_deleted=FALSE
         WHERE so.is_deleted=FALSE
-        <if test="params.ids!=null and params.ids.size>0">
+        <if test="ids!=null and ids.size>0">
             AND so.id IN
-            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
                 #{id}
             </foreach>
         </if>

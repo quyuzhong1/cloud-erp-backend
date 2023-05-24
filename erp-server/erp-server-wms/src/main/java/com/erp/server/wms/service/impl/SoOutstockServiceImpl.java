@@ -52,6 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -352,7 +353,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> noticeSoOutstockIds = noticeSoOutstockList.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
         List<String> noticeIdList = noticeSoOutstockList.stream().map(SoOutstockEntity::getSourceId).collect(Collectors.toList());
         //发货通知集合
-        List<SoDeliveryNoticeEntity> noticeList = soDeliveryNoticeService.listByIds(noticeIdList);
+        List<SoDeliveryNoticeEntity> noticeList =CollectionUtils.isNotEmpty(noticeIdList)? soDeliveryNoticeService.listByIds(noticeIdList):Collections.emptyList();
         for (SoDeliveryNoticeEntity item : noticeList) {
             String deliveryNoticeId = item.getId();
             SoOutstockEntity noticeSoOutstock = noticeSoOutstockList.stream().filter(o -> o.getSourceId().equals(deliveryNoticeId)).findFirst().orElse(null);
@@ -383,9 +384,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         soInfoFeign.updateDeliveryStatus(paramList);
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SALES_DELIVERY_ORDER.getType());
+        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SALES_DELIVERY_ORDER.getCode());
         List<InOutStockDTO> members = baseMapper.listInventoryInOut(allList);
-        members.forEach(obj -> obj.setSourceType(InventorySourceTypeEnum.PURCHASE_STOCK_OUT));
+        for(InOutStockDTO member:members){
+            member.setSourceType(InventorySourceTypeEnum.PURCHASE_STOCK_OUT);
+            member.setBillDate(LocalDate.now());
+        }
         if (CollectionUtils.isNotEmpty(members)) {
             inventoryInOutStockDTO.setMembers(members);
             inventoryTransCoreService.approveByType(inventoryInOutStockDTO);

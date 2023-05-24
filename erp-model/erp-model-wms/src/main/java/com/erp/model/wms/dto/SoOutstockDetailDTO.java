@@ -6,10 +6,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.DecimalMax;
-import javax.validation.constraints.DecimalMin;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -323,6 +320,7 @@ public class SoOutstockDetailDTO implements Serializable {
         /**
          * 备注
          */
+        @Size(max = 250, message = "备注最大255个字符")
         private String remark;
 
         /**
