@@ -46,10 +46,10 @@ public class KingdeeTransferInfoConsumer implements RocketMQListener<Map<String,
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_TRANSFERDIRECT.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "MB20230418-002"));
+        queryFilters.add(String.format("FBillNo = '%s'", "ZJDB23052400004"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FID,FStockOutOrgId.FNumber,FOwnerTypeOutIdHead,FOwnerTypeIdHead,FOwnerTypeOutId,FOwnerTypeId,FKeeperTypeId";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
+        String fieldKeys = "FID,FStockOutOrgId.FNumber,FOwnerTypeOutIdHead,FOwnerTypeIdHead,FOwnerTypeOutId,FOwnerTypeId,FBillEntry_FEntryID";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,0);
         System.out.println(queryList);
 
     }
@@ -121,20 +121,14 @@ public class KingdeeTransferInfoConsumer implements RocketMQListener<Map<String,
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
             //给修改json对象赋值ID
-            setQueryJSONObject(id,apiUtils,platformEntity,map,type,json);
+            KingdeeUtils.makeFieldJson(json,"FId",".", id);
+            //更新数据不能传入库组织
+            json.remove("FStockOrgId");
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
         }
-    }
-
-    /**
-     * 给修改json对象赋值ID
-     */
-    private void setQueryJSONObject (String id, KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,JSONObject json) {
-        //主单据id
-        KingdeeUtils.makeFieldJson(json,"FId",".", id);
     }
 }

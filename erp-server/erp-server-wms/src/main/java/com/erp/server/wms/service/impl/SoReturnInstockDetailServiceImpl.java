@@ -115,8 +115,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             Integer realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
             //签收单数量
             Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (StringUtils.isBlank(detailDto.getId())) {
-                realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && req.getId() != detailDto.getId()).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (StringUtils.isNotBlank(detailDto.getId())) {
+                realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             if (receiveQty <  detailDto.getRealQty() + realQty) {
                 throw new ServiceException(ApiError.ERROR_92026);

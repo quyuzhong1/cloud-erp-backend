@@ -179,11 +179,12 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         for (SoReturnDetailDTO.Update detailDto : dto.getDetailList()) {
             SoReturnDetailEntity soReturnDetailEntity = new SoReturnDetailEntity();
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
-            if (StringUtils.isNotBlank(detailDto.getId())) {
-                soReturnDetailEntity.setId(detailDto.getId());
-            }
             Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSourceDetailId().equals(detailDto.getSourceDetailId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (StringUtils.isNotBlank(detailDto.getId())) {
+                soReturnDetailEntity.setId(detailDto.getId());
+                returnQty = soReturnDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
             if (actualQty < detailDto.getReturnQty() + returnQty) {
                 throw new ServiceException(ApiError.ERROR_92009);
             }
