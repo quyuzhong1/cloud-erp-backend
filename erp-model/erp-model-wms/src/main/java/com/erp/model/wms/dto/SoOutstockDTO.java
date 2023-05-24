@@ -79,6 +79,12 @@ public class SoOutstockDTO implements Serializable {
          */
         private String sourceCode;
 
+        /**
+         * 来源id
+         *
+         */
+        private String sourceId;
+
 
         /**
          * 审核状态code
@@ -95,12 +101,12 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 类型
          */
-        private String type;
+        private String orderType;
 
         /**
          * 类型名称
          */
-        private String typeName;
+        private String orderTypeName;
 
         /**
          * 作废状态
@@ -255,7 +261,7 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 类型
          */
-        private String type;
+        private String orderType;
 
         /**
          * 审核列表集合
@@ -348,6 +354,12 @@ public class SoOutstockDTO implements Serializable {
          * 打包日期
          */
         private LocalDate packDate;
+
+
+        /**
+         * 客户id
+         */
+        private String customerId;
 
         /**
          * 实际发货日期
@@ -670,7 +682,9 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 单据类型
          */
-        private String type;
+        private String orderType;
+
+
 
 
         /**

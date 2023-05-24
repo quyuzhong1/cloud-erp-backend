@@ -25,6 +25,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -171,12 +172,13 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      * @date 2023-05-19 12:28
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void removeByMainIdList(List<String> mainIdList) {
         if (CollectionUtils.isEmpty(mainIdList)) {
             return;
         }
         LambdaQueryWrapper<SoOutstockDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SoOutstockDetailEntity::getMainId, mainIdList);
+        queryWrapper.in(SoOutstockDetailEntity::getMainId, mainIdList);
         this.remove(queryWrapper);
 
     }

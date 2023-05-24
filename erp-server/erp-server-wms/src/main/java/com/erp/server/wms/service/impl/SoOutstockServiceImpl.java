@@ -141,6 +141,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         SoOutstockEntity soOutstock = new SoOutstockEntity();
         BeanMapper.copy(dto, soOutstock);
         soOutstock.setSoCode(soInfo.getCode());
+        soOutstock.setCustomerId(soInfo.getCustomerId());
         soOutstock.setId(id);
         List<SoOutstockDetailDTO.AddDTO> addDetailList = dto.getDetailList();
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSCK, BusinessNoTypeEnum.CODE_XSCK.getCode()));
@@ -498,6 +499,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-05-19 12:16
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean delete(List<String> ids) {
         List<SoOutstockEntity> list = this.listByIds(ids);
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -635,7 +637,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             item.setApproveStatusName(approveStatus.getName());
             String soId = item.getSoId();
             SoInfoDTO.CustomerDTO soInfo = soCustomerList.stream().filter(s -> s.getId().equals(soId)).findFirst().orElse(new SoInfoDTO.CustomerDTO());
-            item.setTypeName(soInfo.getOrderTypeName());
+            item.setOrderType(soInfo.getOrderTypeName());
             item.setSalesOrgName(soInfo.getSalesOrgName());
             item.setCustomerName(soInfo.getCustomerName());
             Boolean invalidStatus = item.getInvalidStatus();
@@ -650,7 +652,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 item.setCode("");
                 item.setSoCode("");
                 item.setSourceCode("");
-                item.setTypeName("");
+                item.setOrderType("");
                 item.setApproveStatusName("");
                 item.setCustomerName("");
                 item.setDeliveryOrgName("");
@@ -696,7 +698,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             item.setApproveStatusName(approveStatus.getName());
             String soId = item.getSoId();
             SoInfoDTO.CustomerDTO soInfo = soCustomerList.stream().filter(s -> s.getId().equals(soId)).findFirst().orElse(new SoInfoDTO.CustomerDTO());
-            item.setTypeName(soInfo.getOrderTypeName());
+            item.setOrderTypeName(soInfo.getOrderTypeName());
             item.setSalesOrgName(soInfo.getSalesOrgName());
             item.setCustomerName(soInfo.getCustomerName());
             Boolean invalidStatus = item.getInvalidStatus();
@@ -758,6 +760,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         BeanMapper.copy(dto, soOutstock);
         soOutstock.setCode(code);
         soOutstock.setSoCode(soInfo.getCode());
+        soOutstock.setCustomerId(soInfo.getCustomerId());
         //发货组织
         String deliveryOrgId = dto.getDeliveryOrgId();
         //仓库id

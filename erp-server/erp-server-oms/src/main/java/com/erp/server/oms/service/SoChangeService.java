@@ -16,7 +16,7 @@ public interface SoChangeService extends SuperService<SoChangeEntity> {
 
     
     /**
-     * 添加销售订单
+     * 添加销售订单变更
      * @author yl
      * @date 2023-05-18 11:54
      * @param dto
