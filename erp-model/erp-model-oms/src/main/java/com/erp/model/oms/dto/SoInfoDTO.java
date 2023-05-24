@@ -422,7 +422,7 @@ public class SoInfoDTO implements Serializable {
 
 
         /**
-         * 收货人地址
+         * 收货人id地址
          * 来源 http://172.16.100.11:3002/project/110/interface/api/13561
          * <p>
          * 这个是地址下拉 http://172.16.100.11:3002/project/110/interface/api/13786
@@ -454,7 +454,7 @@ public class SoInfoDTO implements Serializable {
          * http://172.16.100.11:3002/project/110/interface/api/13480
          * type=CustomerAddressType
          */
-        @StateEnumValue(strValues = {"forwarder", "deliver", "company"}, message = "地址类型有误", groups = {AddGroup.class})
+        @StateEnumValue(strValues = {"forwarder", "receive", "company"}, message = "地址类型有误", groups = {AddGroup.class})
         private String addressType;
 
 
@@ -572,10 +572,20 @@ public class SoInfoDTO implements Serializable {
          */
         private String telNumber;
 
+
+
         /**
          * 收货人地址
          */
-        private String receiverAddress;
+        private String receiveAddress;
+
+        /**
+         * 收货人id地址
+         * 来源 http://172.16.100.11:3002/project/110/interface/api/13561
+         * <p>
+         * 这个是地址下拉 http://172.16.100.11:3002/project/110/interface/api/13786
+         */
+        private String receiveAddressId;
 
         /**
          * 交货方式
@@ -722,9 +732,9 @@ public class SoInfoDTO implements Serializable {
         /**
          * 地址类型
          * http://172.16.100.11:3002/project/110/interface/api/13480
-         * type=AddressType
+         * type=CustomerAddressType
          */
-        @StateEnumValue(strValues = {"forwarder", "deliver", "company"}, message = "地址类型有误", groups = {AddGroup.class})
+        @StateEnumValue(strValues = {"forwarder", "receive", "company"}, message = "地址类型有误", groups = {AddGroup.class})
         private String addressType;
 
         @Valid

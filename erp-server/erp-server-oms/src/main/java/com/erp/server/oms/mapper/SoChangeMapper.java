@@ -32,4 +32,15 @@ public interface SoChangeMapper extends BaseMapper<SoChangeEntity> {
     List<SoChangeDTO.ApproveCountDTO> listApproveCount();
 
     IPage<SoChangeDTO.PagingViewDTO> paging(Page query, @Param("params")SoChangeDTO.PagingParamDTO params, @Param("approveList") List<String> approveList);
+
+    
+    /**
+     * 导出数据
+     * @author yl
+     * @date 2023-05-24 17:49
+     * @param dto
+     * @param approveList
+     * @return java.util.List<com.erp.model.oms.dto.SoChangeDTO.PagingViewDTO>
+     */
+    List<SoChangeDTO.PagingViewDTO> listExport(@Param("params") SoChangeDTO.ExportDTO dto,@Param("approveList") List<String> approveList);
 }

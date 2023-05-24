@@ -185,12 +185,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //根据ids查询sku信息
         List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIdList);
         SoInfoEntity soInfoEntity = soInfoService.getById(dto.getId());
-        InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
-        paramDTO.setSkuIds(skuIdList);
-        paramDTO.setWarehouseId(soInfoEntity.getWarehouseId());
-        paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
         //从wms 获取到sku 的即时库存信息
-        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSkuInventoryTotalList(skuIdList, soInfoEntity.getWarehouseId());
         for (SoDetailDTO.AddDetailView addDetailView : list) {
             //产品sku信息
             ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(addDetailView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
@@ -214,6 +210,26 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
 
     /**
+     * 获取到sku 的即时库存
+     *
+     * @param skuIdList
+     * @param warehouseId
+     * @return java.util.List<com.erp.model.wms.dto.inventory.InventoryQtyDTO.SkuInventoryTotalDTO>
+     * @author yl
+     * @date 2023-05-24 18:59
+     */
+    private List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventoryTotalList(List<String> skuIdList, String warehouseId) {
+        InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
+        paramDTO.setSkuIds(skuIdList);
+        paramDTO.setWarehouseId(warehouseId);
+        paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        //从wms 获取到sku 的即时库存信息
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
+        return skuInventoryTotalList;
+    }
+
+
+    /**
      * 获取订单详情数据
      *
      * @param mainId
@@ -227,14 +243,10 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<SoDetailDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, SoDetailDTO.ViewDTO.class);
         List<String> skuIdList = resultList.stream().map(SoDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-        InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
-        paramDTO.setSkuIds(skuIdList);
-        paramDTO.setWarehouseId(warehouseId);
-        paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
         //从wms 获取到sku 的即时库存信息
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = new ArrayList<>();
-        if(StringUtils.isNotBlank(warehouseId) &&CollectionUtils.isNotEmpty(skuIdList)){
-            skuInventoryTotalList=inventoryFeign.listSkuInventory(paramDTO);
+        if (StringUtils.isNotBlank(warehouseId) && CollectionUtils.isNotEmpty(skuIdList)) {
+            skuInventoryTotalList = listSkuInventoryTotalList(skuIdList, warehouseId);
         }
 
         List<String> detailIds = dbList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
@@ -527,12 +539,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<String> skuIdList = successList.stream().map(SoDetailDTO.SkuDTO::getSkuId).collect(Collectors.toList());
         //sku的历史价格
         List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = this.listSkuPriceHistory(skuIdList);
-        InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
-        paramDTO.setSkuIds(skuIdList);
-        paramDTO.setWarehouseId(warehouseId);
-        paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
         //从wms 获取到sku 的即时库存信息
-        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSkuInventoryTotalList(skuIdList, warehouseId);
         for (SoDetailDTO.SkuDTO item : successList) {
             String skuId = item.getSkuId();
             //即时库存
@@ -633,11 +641,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         skuIdList.add(skuId);
         //sku的历史价格
         List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = this.listSkuPriceHistory(skuIdList);
-        InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
-        paramDTO.setSkuIds(skuIdList);
-        paramDTO.setWarehouseId(warehouseId);
-        paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
-        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSkuInventoryTotalList(skuIdList, warehouseId);
 
         String skuName = sku.getName();
         result.setProductName(skuName);
@@ -781,13 +785,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         List<String> detailIds = dbList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
         List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockFeign.listDetailBySourceDetailId(detailIds);
-
-        InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
-        paramDTO.setSkuIds(skuIdList);
-        paramDTO.setWarehouseId(warehouseId);
-        paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
         //从wms 获取到sku 的即时库存信息
-        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSkuInventoryTotalList(skuIdList, warehouseId);
 
         for (SoDetailDTO.ViewDTO item : resultList) {
             String skuId = item.getSkuId();
@@ -873,6 +872,46 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 }
             }
             this.updateBatchById(soDetailList);
+        }
+
+    }
+
+
+    /**
+     * 检查sku 数量是否够用
+     *
+     * @param warehouseId
+     * @param detailList
+     * @return void
+     * @author yl
+     * @date 2023-05-24 18:42
+     */
+    @Override
+    public void checkSkuQty(String warehouseId, List<SoDetailDTO.AddDTO> detailList) {
+        if (CollectionUtils.isNotEmpty(detailList)) {
+            List<String> skuIdList = detailList.stream().map(SoDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
+            List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+            List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSkuInventoryTotalList(skuIdList, warehouseId);
+            List<String> scarceSkuList = new ArrayList<>(skuIdList.size());
+            for (SoDetailDTO.AddDTO item : detailList) {
+                int qty = item.getQty();
+                String skuId = item.getSkuId();
+                //即时库存
+                Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+                if (qty >= curInventoryQty) {
+                    String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+                            flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
+                    scarceSkuList.add(skuNo);
+                }
+            }
+
+            //表示有
+            if (CollectionUtils.isNotEmpty(scarceSkuList)) {
+                String scarceSkuNo = scarceSkuList.stream().collect(Collectors.joining(","));
+                throw new ServiceException(ApiError.ERROR_92035.code, String.format(ApiError.ERROR_92035.msg, scarceSkuNo));
+            }
+
         }
 
     }

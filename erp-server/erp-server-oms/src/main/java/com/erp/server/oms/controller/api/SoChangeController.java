@@ -125,8 +125,15 @@ public class SoChangeController extends BaseController {
      * @return
      */
     @PostMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "user_id",
+            menuCode = "oms:soChange:submit",
+            serviceClass = SoChangeService.class,
+            keyIdName = "id"
+    )
     public ApiResult<SoChangeDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
-        return success(null);
+        SoChangeDTO.ViewDTO view = soChangeService.view(dto.getId());
+        return success(view);
     }
 
 
@@ -201,8 +208,9 @@ public class SoChangeController extends BaseController {
      */
     @PostMapping("/export")
     public ApiResult exportWarehouse(@RequestBody @Valid SoChangeDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result = soChangeService.exportExcel(dto, response);
+        return result ? success() : failure();
 
-        return success();
     }
 
 

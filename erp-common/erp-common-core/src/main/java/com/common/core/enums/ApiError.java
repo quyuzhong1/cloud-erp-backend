@@ -436,6 +436,7 @@ public enum ApiError implements Serializable {
     ERROR_98062(98062,"销售订单【%s】下推备货申请单SKU【%s】数量不能超过【%s】"),
     ERROR_98063(98063,"只有审核通过才能下推单据"),
     ERROR_98064(98064,"备货申请单SKU【%s】数量不能超过【%s】"),
+    ERROR_INVALID_TO_SUBMIT(98065,"已作废单据不能提交审核"),
 
 
 
@@ -554,6 +555,9 @@ public enum ApiError implements Serializable {
     ERROR_92031(92031,"应发数量不等于发货数量"),
 	ERROR_92032(92032,"只有已审核的销售退货签收单可以下推销售退货入库单"),
     ERROR_92033(92033,"只有已审核的销售订单可以变更销售订单"),
+    ERROR_92034(92034,"销售变更单不存在"),
+    ERROR_92035(92035,"以下产品缺货【%s】"),
+
 
     ERROR_end(1000000, "系统错误");
 

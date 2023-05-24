@@ -165,4 +165,15 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @return void
      */
     void updateDeliveryStatus(List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList);
+
+    
+    /**
+     * 检查sku 数量是否够用
+     * @author yl
+     * @date 2023-05-24 18:42
+     * @param warehouseId
+     * @param detailList
+     * @return void
+     */
+    void checkSkuQty(String warehouseId, List<SoDetailDTO.AddDTO> detailList);
 }

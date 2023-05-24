@@ -197,6 +197,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             return false;
         }
         List<SoOutstockEntity> list = this.listByIds(ids);
+        long invalidCount= list.stream().filter(s -> s.getInvalidStatus()).count();
+        if(invalidCount>0){
+            throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
+        }
+
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         //审核不通过

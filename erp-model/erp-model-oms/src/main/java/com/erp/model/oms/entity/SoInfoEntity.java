@@ -160,7 +160,10 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     private String receiveAddress;
 
     /**
-     * 收货地址
+     * 收货人id地址
+     * 来源 http://172.16.100.11:3002/project/110/interface/api/13561
+     * <p>
+     * 这个是地址下拉 http://172.16.100.11:3002/project/110/interface/api/13786
      */
     @TableField("receive_address_id")
     private String receiveAddressId;

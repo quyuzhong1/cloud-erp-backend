@@ -125,6 +125,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public String add(SoInfoDTO.AddDTO dto) {
         //id
         String id = dto.getId();
+        //检查sku 数量
+        soDetailService.checkSkuQty(dto.getWarehouseId(),dto.getDetailList());
         String customerId = dto.getCustomerId();
         if (StringUtils.isNotBlank(customerId)) {
             customerInfoService.quoteCustomer(Arrays.asList(customerId));
@@ -205,6 +207,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             return false;
         }
         List<SoInfoEntity> list = this.listByIds(ids);
+        long invalidCount= list.stream().filter(s -> s.getInvalidStatus()).count();
+        if(invalidCount>0){
+            throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
+        }
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         //审核不通过
@@ -351,7 +357,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             //即时库存
             Integer curInventoryQty = skuInventoryTotalList.stream().filter(
-                    s -> s.getSkuId().equals(skuId)&&
+                    s -> s.getSkuId().equals(skuId) &&
                             s.getWarehouseId().equals(warehouseId)
             ).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
@@ -844,7 +850,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             //即时库存
             Integer curInventoryQty = skuInventoryTotalList.stream().filter(
-                    s -> s.getSkuId().equals(skuId)&&
+                    s -> s.getSkuId().equals(skuId) &&
                             s.getWarehouseId().equals(warehouseId)
             ).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
@@ -870,7 +876,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if (!isGre) {
                 scarceQty = qty;
                 availableQty = curInventoryQty;
-
             } else {
                 availableQty = qty;
             }

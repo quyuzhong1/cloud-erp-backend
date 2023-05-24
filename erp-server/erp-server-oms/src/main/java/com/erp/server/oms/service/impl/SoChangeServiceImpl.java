@@ -14,8 +14,10 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoChangeEntity;
@@ -29,12 +31,16 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.SoChangeMapper;
 import com.erp.server.oms.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -47,6 +53,7 @@ import java.util.stream.Collectors;
  * @since 2023-05-10
  */
 @Service
+@Slf4j
 public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChangeEntity> implements SoChangeService {
 
 
@@ -299,7 +306,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         List<String> customerIdList = list.stream().map(SoChangeDTO.PagingViewDTO::getCustomerId).collect(Collectors.toList());
         List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIdList) ? customerInfoService.listByIds(customerIdList) : Collections.emptyList();
         List<String> flagList = new ArrayList<>();
-        for(SoChangeDTO.PagingViewDTO item:list){
+        for (SoChangeDTO.PagingViewDTO item : list) {
             boolean contains = flagList.contains(item.getId());
             BillTypeEnum orderType = item.getOrderType();
             item.setOrderTypeName(orderType.getName());
@@ -333,6 +340,91 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             flagList.add(item.getId());
         }
         return new PagingVO<>(pageData);
+    }
+
+
+    /**
+     * 导出数据
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-24 17:47
+     */
+    @Override
+    public Boolean exportExcel(SoChangeDTO.ExportDTO dto, HttpServletResponse response) {
+        String searchType = dto.getSearchType();
+        List<String> approveList = listBySearchType(searchType);
+        List<SoChangeDTO.PagingViewDTO> list = baseMapper.listExport(dto, approveList);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+
+        List<String> skuIdList = list.stream().map(SoChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+
+        //客户id
+        List<String> customerIdList = list.stream().map(SoChangeDTO.PagingViewDTO::getCustomerId).collect(Collectors.toList());
+        List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIdList) ? customerInfoService.listByIds(customerIdList) : Collections.emptyList();
+        for (SoChangeDTO.PagingViewDTO item : list) {
+            BillTypeEnum orderType = item.getOrderType();
+            item.setOrderTypeName(orderType.getName());
+            ApproveStatusEnum approveStatus = item.getApproveStatus();
+            item.setApproveStatusName(approveStatus.getName());
+            //作废状态
+            Boolean invalidStatus = item.getInvalidStatus();
+            String invalidStatusName = invalidStatus != null && invalidStatus ? "已作废" : "未作废";
+            item.setInvalidStatusName(invalidStatusName);
+            String customerName = customerList.stream().filter(c -> c.getId().equals(item.getCustomerId())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setCustomerName(customerName);
+            String skuId = item.getSkuId();
+            SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if (sku != null) {
+                item.setProductName(sku.getSkuName());
+                item.setUnit(sku.getUnitName());
+            }
+            BigDecimal amount = item.getAmount();
+            String currencySymbol = item.getCurrencySymbol();
+            item.setAmountStr(currencySymbol + amount);
+
+            BigDecimal oldAmount = item.getOldAmount();
+            String oldCurrencySymbol = item.getOldCurrencySymbol();
+            item.setOldAmountStr(oldCurrencySymbol + oldAmount);
+        }
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/SoChange.xlsx";
+        String name = "销售变更单列表";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("销售变更单列表导出出错 {}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+
+
+    }
+
+
+    /**
+     * 详情
+     *
+     * @param id
+     * @return com.erp.model.oms.dto.SoChangeDTO.ViewDTO
+     * @author yl
+     * @date 2023-05-24 18:04
+     */
+    @Override
+    public SoChangeDTO.ViewDTO view(String id) {
+        SoChangeEntity soChange = this.getById(id);
+        if(Objects.isNull(soChange)){
+            throw new ServiceException(ApiError.ERROR_92034);
+        }
+        return null;
     }
 
     private List<String> listBySearchType(String searchType) {

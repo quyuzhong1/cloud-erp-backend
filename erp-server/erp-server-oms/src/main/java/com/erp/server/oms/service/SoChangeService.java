@@ -6,6 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -65,4 +66,24 @@ public interface SoChangeService extends SuperService<SoChangeEntity> {
      * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.SoChangeDTO.PagingViewDTO>
      */
     PagingVO<SoChangeDTO.PagingViewDTO> paging(PagingDTO<SoChangeDTO.PagingParamDTO> dto);
+
+    
+    /**
+     * 导出数据
+     * @author yl
+     * @date 2023-05-24 17:47
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean exportExcel(SoChangeDTO.ExportDTO dto,HttpServletResponse response);
+
+    
+    /**
+     * 详情
+     * @author yl
+     * @date 2023-05-24 18:04
+     * @param id
+     * @return com.erp.model.oms.dto.SoChangeDTO.ViewDTO
+     */
+    SoChangeDTO.ViewDTO view(String id);
 }

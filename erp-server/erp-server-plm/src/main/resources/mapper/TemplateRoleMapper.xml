@@ -11,9 +11,9 @@
             tr.name,
             tm.id as membersId,
             tm.member_name,
-            tr.create_user_id,
-            tr.create_user_name,
-            tr.create_time,
+            trrm.create_user_id,
+            trrm.create_user_name,
+            trrm.create_time,
             tr.template_id,
             trrm.id as roleRefMembersId
         from  template_role tr

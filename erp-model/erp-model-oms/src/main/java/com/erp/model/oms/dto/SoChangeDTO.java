@@ -146,7 +146,7 @@ public class SoChangeDTO implements Serializable {
         private String productName;
 
         /**
-         * 销售数量
+         * 新销售数量
          */
         private Integer qty;
 
@@ -156,9 +156,14 @@ public class SoChangeDTO implements Serializable {
         private Integer oldQty;
 
         /**
-         * 销售金额
+         * 新销售金额
          */
         private BigDecimal amount;
+
+        /**
+         * 销售金额 字符串 导出用到
+         */
+        private String amountStr;
 
         /**
          * 币种符号
@@ -169,6 +174,12 @@ public class SoChangeDTO implements Serializable {
          * 原销售金额
          */
         private BigDecimal oldAmount;
+
+
+        /**
+         * 原销售金额 字符串 导出用到
+         */
+        private String oldAmountStr;
 
         /**
          * 原币种符号
@@ -293,7 +304,6 @@ public class SoChangeDTO implements Serializable {
          */
         @NotBlank(message = "变更人不能为空")
         private String useId;
-
 
 
         /**
