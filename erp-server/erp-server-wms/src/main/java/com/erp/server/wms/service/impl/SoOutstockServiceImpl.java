@@ -262,6 +262,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         SoOutstockDTO.ViewDTO result = new SoOutstockDTO.ViewDTO();
         BeanMapper.copy(soOutstock, result);
+        ApproveStatusEnum approveStatus = soOutstock.getApproveStatus();
+        result.setApproveStatusName(approveStatus.getName());
         String soId = soOutstock.getSoId();
         SoInfoDTO.CustomerDTO soInfo = soInfoFeign.getSoBaseById(soId);
         if (soInfo != null) {
@@ -275,6 +277,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             result.setTelNumber(soInfo.getTelNumber());
             result.setTypeName(soInfo.getOrderTypeName());
             result.setSellerName(soInfo.getSellerName());
+            result.setSalesDeptId(soInfo.getSalesDeptId());
+            result.setSalesDeptName(soInfo.getSalesDeptName());
+
         }
         List<SoOutstockDetailDTO.ViewDTO> detailList = soOutstockDetailService.listByMainId(id, soOutstock.getWarehouseId());
         result.setDetailList(detailList);

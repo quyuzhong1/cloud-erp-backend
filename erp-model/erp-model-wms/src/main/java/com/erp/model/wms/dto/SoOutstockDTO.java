@@ -509,6 +509,10 @@ public class SoOutstockDTO implements Serializable {
          */
         private String soCode;
 
+        private ApproveStatusEnum approveStatus;
+
+        private String approveStatusName;
+
 
         /**
          * 单据类型名
@@ -540,6 +544,18 @@ public class SoOutstockDTO implements Serializable {
          * 销售员
          */
         private String sellerName;
+
+
+
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+
+        /**
+         * 销售部门id
+         */
+        private String salesDeptName;
 
         /**
          * 发货组织
@@ -764,12 +780,12 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 客户id
          */
-        private String  customerId;
+        private String customerId;
 
         /**
          * 客户名
          */
-        private String  customerName;
+        private String customerName;
 
         /**
          * 发货组织id
@@ -780,7 +796,6 @@ public class SoOutstockDTO implements Serializable {
          * 发货组织名
          */
         private String deliveryOrgName;
-
 
 
         /**
@@ -849,7 +864,6 @@ public class SoOutstockDTO implements Serializable {
         private LocalDate actualDeliveryDate;
 
 
-
         /**
          * 创建人名称
          */
@@ -860,10 +874,6 @@ public class SoOutstockDTO implements Serializable {
          */
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime createTime;
-
-
-
-
 
 
     }
