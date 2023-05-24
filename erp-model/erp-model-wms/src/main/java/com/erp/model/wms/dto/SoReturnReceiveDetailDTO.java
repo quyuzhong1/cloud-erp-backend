@@ -137,9 +137,17 @@ public class SoReturnReceiveDetailDTO implements Serializable {
          */
         private String returnTypeDict;
         /**
+         * 退货类型名称
+         */
+        private String returnTypeDictName;
+        /**
          * 退货原因 调用字典接口 类型=ReturnReason
          */
         private String returnReasonDict;
+        /**
+         * 退货原因名称
+         */
+        private String returnReasonDictName;
         /**
          * 备注
          */
