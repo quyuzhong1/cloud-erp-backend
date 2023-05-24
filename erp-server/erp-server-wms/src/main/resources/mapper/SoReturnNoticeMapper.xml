@@ -231,7 +231,8 @@
             srnd.return_qty,
             srnd.return_type_dict,
             srnd.return_reason_dict,
-            srnd.remark
+            srnd.remark,
+            srn.approve_status
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
         WHERE srn.is_deleted = FALSE

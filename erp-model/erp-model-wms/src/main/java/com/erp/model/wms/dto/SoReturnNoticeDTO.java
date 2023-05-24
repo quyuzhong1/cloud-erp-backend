@@ -465,10 +465,14 @@ public class SoReturnNoticeDTO {
         /**
          * 退货原因 调用字典接口 类型=ReturnReason
          */
-        private String  returnReasonDict;
+        private String returnReasonDict;
         /**
          * 备注
          */
-        private String  remark;
+        private String remark;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
     }
 }

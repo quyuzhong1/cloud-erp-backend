@@ -634,6 +634,11 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Override
     public List<QcInfoDTO.ReceiveGenerateQcView> receiveGenerateQcView(List<String> ids) {
         List<QcInfoDTO.ReceiveGenerateQcView> list = baseMapper.receiveGenerateQcView(ids);
+        String approve = ApproveStatusEnum.APPROVE.getStatus();
+        long count = list.stream().filter(s -> !s.getApproveStatus().equals(approve)).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98063);
+        }
         return list;
     }
 

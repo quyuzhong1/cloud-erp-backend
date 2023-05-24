@@ -486,5 +486,9 @@ public class SoReturnInstockDTO {
          * 备注
          */
         private String remark;
+        /**
+         * 质检状态
+         */
+        private String qcStatus;
     }
 }
