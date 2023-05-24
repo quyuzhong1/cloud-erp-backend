@@ -120,11 +120,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String id = IdWorker.getIdStr();
         //来源类型
         String sourceType = dto.getSourceType();
-        if(StringUtils.isBlank(sourceType)){
-            sourceType=SourceTypeEnum.SELF_ADD.getCode();
+        if (StringUtils.isBlank(sourceType)) {
+            sourceType = SourceTypeEnum.SELF_ADD.getCode();
         }
         String sourceId = dto.getSourceId();
         List<SoOutstockDetailDTO.AddDTO> detailList = dto.getDetailList();
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_92029);
+        }
         //检查出库数量
         List<SoOutstockDetailDTO.UpdateDTO> checkList = BeanMapper.copyList(detailList, SoOutstockDetailDTO.UpdateDTO.class);
         soOutstockDetailService.checkOutQty(dto.getWarehouseId(), dto.getSoId(), sourceId, sourceType, checkList);
@@ -353,7 +356,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> noticeSoOutstockIds = noticeSoOutstockList.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
         List<String> noticeIdList = noticeSoOutstockList.stream().map(SoOutstockEntity::getSourceId).collect(Collectors.toList());
         //发货通知集合
-        List<SoDeliveryNoticeEntity> noticeList =CollectionUtils.isNotEmpty(noticeIdList)? soDeliveryNoticeService.listByIds(noticeIdList):Collections.emptyList();
+        List<SoDeliveryNoticeEntity> noticeList = CollectionUtils.isNotEmpty(noticeIdList) ? soDeliveryNoticeService.listByIds(noticeIdList) : Collections.emptyList();
         for (SoDeliveryNoticeEntity item : noticeList) {
             String deliveryNoticeId = item.getId();
             SoOutstockEntity noticeSoOutstock = noticeSoOutstockList.stream().filter(o -> o.getSourceId().equals(deliveryNoticeId)).findFirst().orElse(null);
@@ -386,7 +389,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SALES_DELIVERY_ORDER.getCode());
         List<InOutStockDTO> members = baseMapper.listInventoryInOut(allList);
-        for(InOutStockDTO member:members){
+        for (InOutStockDTO member : members) {
             member.setSourceType(InventorySourceTypeEnum.PURCHASE_STOCK_OUT);
             member.setBillDate(LocalDate.now());
         }

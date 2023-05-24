@@ -232,7 +232,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         paramDTO.setWarehouseId(warehouseId);
         paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
         //从wms 获取到sku 的即时库存信息
-        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = new ArrayList<>();
+        if(StringUtils.isNotBlank(warehouseId) &&CollectionUtils.isNotEmpty(skuIdList)){
+            skuInventoryTotalList=inventoryFeign.listSkuInventory(paramDTO);
+        }
+
         List<String> detailIds = dbList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
         List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockFeign.listDetailBySourceDetailId(detailIds);
         //sku的历史价格
