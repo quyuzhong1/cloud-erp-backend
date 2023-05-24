@@ -278,6 +278,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getWarehouseId());
         if (ObjectUtil.isNotEmpty(warehouseEntity)) {
+            entity.setWarehouseId(dto.getWarehouseId());
             entity.setWarehouseName(warehouseEntity.getName());
         }
         this.save(entity);
@@ -335,6 +336,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getWarehouseId());
         if (ObjectUtil.isNotEmpty(warehouseEntity)) {
+            entity.setWarehouseId(dto.getWarehouseId());
             entity.setWarehouseName(warehouseEntity.getName());
         }
         boolean flag = this.updateById(entity);
@@ -374,8 +376,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         viewDTO.setCustomerName(customerInfoEntity.getName());
         viewDTO.setBillDate(soReturnEntity.getBillDate());
-        viewDTO.setWarehouseId(soInfoEntity.getWarehouseId());
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(soInfoEntity.getWarehouseId()));
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(entity.getWarehouseId()));
         if (CollectionUtils.isNotEmpty(warehouseList)) {
             viewDTO.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
         }
