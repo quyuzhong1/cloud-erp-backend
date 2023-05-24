@@ -46,7 +46,7 @@ public class ImportInitStockExcelDTO implements Serializable {
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index = 6)
+    @ExcelProperty(value = "错误数据", index = 4)
     private String  errorMsg;
 
 }
