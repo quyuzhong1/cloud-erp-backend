@@ -33,7 +33,7 @@ public enum DeliveryModeEnum {
     }
 
     public static String getName(String code) {
-        for (BillTypeEnum billTypeEnum : BillTypeEnum.values()) {
+        for (DeliveryModeEnum billTypeEnum : DeliveryModeEnum.values()) {
             if (code.equals(billTypeEnum.getCode())) {
                 return billTypeEnum.getName();
             }
