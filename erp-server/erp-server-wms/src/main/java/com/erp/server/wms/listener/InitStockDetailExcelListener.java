@@ -69,7 +69,7 @@ public class InitStockDetailExcelListener extends AnalysisEventListener<ImportIn
                 addDTO.setSkuId(skuEntity.getSkuId());
                 addDTO.setSkuNo(skuEntity.getSkuNo());
                 addDTO.setProductName(skuEntity.getSpuName());
-                // TODO 仓位待处理
+                addDTO.setWarehouseLocation(importInitStockExcelDTO.getWarehouseLocation());
                 addDTO.setRemark(StrUtils.null2EmptyWithTrim(importInitStockExcelDTO.getRemark()));
                 successList.add(addDTO);
             }

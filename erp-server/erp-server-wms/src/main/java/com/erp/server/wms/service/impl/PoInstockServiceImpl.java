@@ -972,7 +972,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
      * @date: 2023/5/23 15:19
      * @param list
      */
-    private void updateInventoryTransCore (List<PoInstockEntity> list) {
+    public void updateInventoryTransCore (List<PoInstockEntity> list) {
         List<String> ids = list.stream().map(PoInstockEntity::getId).distinct().collect(Collectors.toList());
         Map<String,PoInstockEntity> mainMap = list.stream().collect(Collectors.toMap(PoInstockEntity::getId, Function.identity()));
         List<PoInstockDetailEntity> detailEntityList = poInstockDetailService.listByMainIds(ids);
@@ -985,10 +985,10 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         Map<String,PoInstockEntity> receiveMap = Maps.newHashMap();// 有收货单的主单
         Map<String,PoInstockEntity> noReceiveMap = Maps.newHashMap();// 无收货单的主单
         // 此处注意，需区分有无收货单
-        detailMap.forEach((mainId, details)->{
-            PoInstockEntity poInstockEntity = mainMap.get(mainId);
+        mainMap.forEach((mainId, poInstockEntity)->{
             String sourceType = poInstockEntity.getSourceType();
             SourceTypeEnum sourceTypeEnum = SourceTypeEnum.of(sourceType);
+            List<PoInstockDetailEntity> details = detailMap.get(mainId);
             if(Objects.equals(SourceTypeEnum.WAREHOUSE_RECEIVE, sourceTypeEnum)) { // 有收货单
                 receiveMap.put(mainId, poInstockEntity);
                 receiveDetailList.addAll(details);
@@ -998,6 +998,18 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             }
         });
         // 有收货单的库存处理
+        receiveInventory(receiveMap, receiveDetailList);
+        // 无收货单的库存处理
+        noReceiveInventory(noReceiveMap, noReceiveDetailList);
+    }
+
+    /**
+     * 采购入库（有收货单）
+     * @param receiveMap
+     * @param receiveDetailList
+     */
+    public void receiveInventory(Map<String,PoInstockEntity> receiveMap,
+                                 List<PoInstockDetailEntity> receiveDetailList) { // 采购入库（有收货单）
         if(CollUtil.isNotEmpty(receiveDetailList)) {
             InventoryInOutStockDTO receiveInventoryInOutStockDTO = new InventoryInOutStockDTO();
             receiveInventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.PO_INSTOCK_REC.getCode());
@@ -1020,7 +1032,15 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             receiveInventoryInOutStockDTO.setMembers(receiveMembers);
             inventoryTransCoreService.approveByType(receiveInventoryInOutStockDTO);
         }
-        // 无收货单的库存处理
+    }
+
+    /**
+     * 采购入库（无收货单）
+     * @param noReceiveMap
+     * @param noReceiveDetailList
+     */
+    public void noReceiveInventory(Map<String,PoInstockEntity> noReceiveMap,
+                                 List<PoInstockDetailEntity> noReceiveDetailList) { // 采购入库（无收货单）
         if(CollUtil.isNotEmpty(noReceiveDetailList)) {
             InventoryInOutStockDTO noReceiveInventoryInOutStockDTO = new InventoryInOutStockDTO();
             noReceiveInventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.PO_INSTOCK_UNREC.getCode());
@@ -1044,4 +1064,5 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             inventoryTransCoreService.approveByType(noReceiveInventoryInOutStockDTO);
         }
     }
+
 }
