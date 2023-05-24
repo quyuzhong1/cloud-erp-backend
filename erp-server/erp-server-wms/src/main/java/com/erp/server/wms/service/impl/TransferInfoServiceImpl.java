@@ -343,6 +343,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 .set(TransferInfoEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
                 .set(TransferInfoEntity::getInvalidRemark, reason)
                 .update();
+
+        //发送金蝶
+        list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
+
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个直接调拨单【%s】，作废原因：".concat(reason), ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "作废操作");
@@ -408,6 +412,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //回扣库存
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.TRANSFER_INFO,ids);
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+
+        //发送金蝶
+        list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("反审核了一个直接调拨单【%s】", ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "反审核操作");
