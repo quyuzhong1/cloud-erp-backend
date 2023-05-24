@@ -448,7 +448,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     public Boolean finishDelivery(List<String> ids) {
         //ids为采购订单明细id集合
         List<PurchaseOrderEntity> list =  getList(ids);
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByIds(ids);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByPurchaseOrderIds(ids);
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
@@ -1522,6 +1522,13 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     public void updateInventoryFinish(List<PurchaseOrderEntity> list, List<PurchaseOrderDetailEntity> details) {
         Map<String, PurchaseOrderEntity> poMap = list.stream().collect(Collectors.toMap(PurchaseOrderEntity::getId, Function.identity()));
         Map<String,List<PurchaseOrderDetailEntity>> detailMap = details.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getPurchaseOrderId));
+
+        List<String> podIds = details.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+        //收货信息
+        List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+        //退货数量
+        List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
+
         poMap.forEach((mainId, po)->{
             InstockForcastDTO.FinishDeliveryDTO inventoryDTO = new InstockForcastDTO.FinishDeliveryDTO();
             inventoryDTO.setPurchaseOrderId(mainId);
@@ -1532,7 +1539,18 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 InventoryFinishDeliveryDetailDTO.AddDTO inventoryMember = new InventoryFinishDeliveryDetailDTO.AddDTO();
                 inventoryMember.setSkuId(member.getSkuId());
                 inventoryMember.setSkuNo(member.getSkuNo());
-                inventoryMember.setQty(member.getPurchaseQty());// TODO 待交货量计算
+
+                Integer qty = MathUtil.ZERO;
+                Integer returnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(member.getId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                if (CollectionUtils.isNotEmpty(receiveDetailList)) {
+                    //已到货数据待收货数量默认给0
+                    if (!ArrivalStatusEnum.ARRIVED.getCode().equals(member.getArrivalStatus())) {
+                        qty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(member.getId()))
+                                .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                    }
+                }
+                Integer deliveryQty = member.getPurchaseQty() + returnQty - qty;
+                inventoryMember.setQty(deliveryQty);// 待交货量计算
                 inventoryMembers.add(inventoryMember);
             });
             inventoryDTO.setMembers(inventoryMembers);

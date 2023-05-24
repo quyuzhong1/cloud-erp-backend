@@ -162,10 +162,10 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         String purchaseOrderId = dto.getPurchaseOrderId();
         InstockForcastEntity instockForcastEntity = findByPurchaseOrderId(purchaseOrderId);
         if(Objects.isNull(instockForcastEntity)) {
-            log.warn("采购订单id：【{}】未找到未删除的入库预报，不做结束交货处理", purchaseOrderId);
-            return;
+            log.error("采购订单id：【{}】未找到未删除的入库预报，", purchaseOrderId);
+            // 此处报错
+            throw new ServiceException("采购订单还未下推生成入库预报");
         }
-        // TODO 下推收货单的时候是否需要更新入库预报明细数量
         // 调用库存组件，更新库存信息
         InventoryInOutStockDTO inventoryDto = new InventoryInOutStockDTO();
         inventoryDto.setBusinessType(InventoryBusinessTypeEnum.PURCHASE_ORDER_FINISH.getCode());
