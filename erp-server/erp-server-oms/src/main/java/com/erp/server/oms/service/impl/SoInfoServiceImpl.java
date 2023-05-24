@@ -984,8 +984,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
         }
         customer.setSalesDeptName(salesDeptName);
-        BillTypeEnum type = soInfo.getOrderType();
-        customer.setOrderTypeName(type.getName());
+        String type = soInfo.getOrderType();
+        customer.setOrderTypeName(BillTypeEnum.getName(type));
         return customer;
     }
 

@@ -225,7 +225,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.FHTZ, BusinessNoTypeEnum.CODE_FHTZ.getCode()));
         SoDeliveryNoticeEntity soDeliveryNoticeEntity = new SoDeliveryNoticeEntity();
-        soDeliveryNoticeEntity.setType(soInfoEntity.getOrderType().getCode());
+        soDeliveryNoticeEntity.setType(soInfoEntity.getOrderType());
         soDeliveryNoticeEntity.setSalesOrgId(soInfoEntity.getSalesOrgId());
         soDeliveryNoticeEntity.setSalesOrgName(soInfoEntity.getSalesOrgName());
         soDeliveryNoticeEntity.setSalesDeptId(soInfoEntity.getSalesDeptId());
@@ -282,7 +282,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //获取销售单信息
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(dto.getSourceId());
         SoDeliveryNoticeEntity soDeliveryNoticeEntity = new SoDeliveryNoticeEntity();
-        soDeliveryNoticeEntity.setType(soInfoEntity.getOrderType().getCode());
+        soDeliveryNoticeEntity.setType(soInfoEntity.getOrderType());
         soDeliveryNoticeEntity.setSalesOrgId(soInfoEntity.getSalesOrgId());
         soDeliveryNoticeEntity.setSalesOrgName(soInfoEntity.getSalesOrgName());
         soDeliveryNoticeEntity.setSalesDeptId(soInfoEntity.getSalesDeptId());

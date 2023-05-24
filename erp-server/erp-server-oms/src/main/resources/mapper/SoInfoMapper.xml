@@ -12,6 +12,7 @@
         si.require_date,si.create_user_name,
         si.create_time,si.warehouse_id,
         si.id,sod.id AS detailId,
+        si.approve_user_name,
         sod.sku_id,sod.sku_no,
         sod.qty,sod.amount,
         sod.currency,sod.currency_symbol
@@ -95,6 +96,7 @@
         si.require_date,si.create_user_name,
         si.create_time,si.warehouse_id,
         si.id,sod.id AS detailId,
+        si.approve_user_name,
         sod.sku_id,sod.sku_no,
         sod.qty,sod.amount,
         sod.currency,sod.currency_symbol

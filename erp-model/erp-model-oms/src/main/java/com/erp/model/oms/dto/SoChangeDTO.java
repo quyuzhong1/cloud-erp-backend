@@ -2,6 +2,7 @@ package com.erp.model.oms.dto;
 
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -35,6 +36,20 @@ public class SoChangeDTO implements Serializable {
          * 类型
          */
         private String searchType;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ApproveCountDTO {
+        /**
+         * 类型
+         */
+        private String approveStatus;
 
         /**
          * 数量
@@ -79,12 +94,12 @@ public class SoChangeDTO implements Serializable {
         /**
          * 类型
          */
-        private String type;
+        private String orderType;
 
         /**
          * 类型名称
          */
-        private String typeName;
+        private String orderTypeName;
 
         /**
          * 作废状态
@@ -170,6 +185,17 @@ public class SoChangeDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
+
+
+        /**
+         * all 全部
+         * waitApprove 待审核
+         * approve 已审核
+         * reject 审核不通过
+         */
+        @StateEnumValue(strValues = {"all", "waitApprove", "approve", "reject"}, message = "搜索类型有误")
+        @NotBlank(message = "搜索类型不能为空")
+        private String searchType;
         /**
          * sku no 集合
          */
@@ -188,7 +214,7 @@ public class SoChangeDTO implements Serializable {
         /**
          * 类型
          */
-        private String type;
+        private String orderType;
 
         /**
          * 审核列表集合

@@ -12,6 +12,7 @@ import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
@@ -146,15 +147,26 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         skuInventoryDTO.setWarehouseIdList(Arrays.asList(warehouseId));
         skuInventoryDTO.setWarehouseLocationIdList(warehouseLocationList);
         skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        List<String> idList = dbList.stream().map(SoOutstockDetailEntity::getId).collect(Collectors.toList());
+        //附件信息
+        List<WmsAttachmentDTO.UpdateDTO> attachmentDbList = wmsAttachmentService.getByBusinessIds(idList);
         //可用库存
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         for (SoOutstockDetailDTO.ViewDTO item : resultList) {
             String skuId = item.getSkuId();
+            String id = item.getId();
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentDbList.stream().filter(a -> a.getBusinessId().equals(id)).collect(Collectors.toList());
+            item.setAttachNameList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList()));
+            item.setAttachUrlList(attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList()));
             String warehouseLocation = item.getWarehouseLocation();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
             item.setProductName(skuName);
+
+            String unit = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getUnitName())).orElse("");
+            item.setUnit(unit);
             Integer curInventoryQty = skuInventoryList.stream().filter(i -> i.getSkuId().equals(skuId) && i.getWarehouseLocationId().equals(warehouseLocation)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
             item.setCurInventoryQty(curInventoryQty);
@@ -254,7 +266,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
         } else {
             //表示是发货通知单的
-            List<SoDeliveryNoticeDetailEntity> deliveryNoticeDetailList = CollectionUtils.isNotEmpty(sourceDetailIdList)?soDeliveryNoticeDetailService.listByIds(sourceDetailIdList):Collections.emptyList();
+            List<SoDeliveryNoticeDetailEntity> deliveryNoticeDetailList = CollectionUtils.isNotEmpty(sourceDetailIdList) ? soDeliveryNoticeDetailService.listByIds(sourceDetailIdList) : Collections.emptyList();
             for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
                 String sourceDetailId = item.getSourceDetailId();
                 String id = item.getId();
@@ -392,7 +404,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if (CollectionUtils.isEmpty(mainIds)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(SoOutstockDetailEntity::getMainId,mainIds).list();
+        return this.lambdaQuery().in(SoOutstockDetailEntity::getMainId, mainIds).list();
     }
 
     private List<String> getDeleteIds(List<Pair<String, String>> pairList, List<SoOutstockDetailEntity> dbList) {

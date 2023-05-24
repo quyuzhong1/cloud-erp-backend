@@ -46,7 +46,7 @@
             and sri.code = #{params.code}
         </if>
         <if test="params.sourceCode != null and params.sourceCode != ''">
-            and sri.source_code = #{params.sourceCode}
+            and sri.so_code = #{params.sourceCode}
         </if>
         <if test="params.customerIdList != null and params.customerIdList.size != ''">
             and sri.customer_id in
@@ -160,7 +160,7 @@
                     and sri.code = #{params.code}
                 </if>
                 <if test="params.sourceCode != null and params.sourceCode != ''">
-                    and sri.source_code = #{params.sourceCode}
+                    and sri.so_code = #{params.sourceCode}
                 </if>
                 <if test="params.customerIdList != null and params.customerIdList.size != ''">
                     and sri.customer_id in

@@ -182,6 +182,18 @@ public class SoReturnNoticeEntity extends BaseEntity<SoReturnNoticeEntity> {
     @TableField("warehouse_name")
     private String warehouseName;
 
+    /**
+     * 销售单编号
+     */
+    @TableField("so_code")
+    private String soCode;
+
+    /**
+     * 销售单id
+     */
+    @TableField("so_id")
+    private String soId;
+
 
     public static final String APPROVE_STATUS = "approve_status";
 

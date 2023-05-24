@@ -42,7 +42,8 @@ public class SoChangeController extends BaseController {
      */
     @GetMapping("/tabList")
     public ApiResult<List<SoChangeDTO.TabListDTO>> tabList() {
-        return success(null);
+        List<SoChangeDTO.TabListDTO> tabList = soChangeService.tabList();
+        return success(tabList);
     }
 
 
@@ -82,8 +83,15 @@ public class SoChangeController extends BaseController {
      * @return
      */
     @PostMapping("/submit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "user_id",
+            menuCode = "oms:soChange:submit",
+            serviceClass = SoChangeService.class,
+            keyIdName = "id"
+    )
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success();
+        Boolean result = soChangeService.submit(dto.getIds());
+        return result ? success() : failure();
     }
 
     /**
@@ -93,8 +101,15 @@ public class SoChangeController extends BaseController {
      * @return
      */
     @PostMapping("/addAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "user_id",
+            menuCode = "oms:soChange:submit",
+            serviceClass = SoChangeService.class,
+            keyIdName = "id"
+    )
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated SoChangeDTO.AddDTO dto) {
-        return success();
+        Boolean result = soChangeService.addAndSubmit(dto);
+        return result ? success() : failure();
     }
 
     /**

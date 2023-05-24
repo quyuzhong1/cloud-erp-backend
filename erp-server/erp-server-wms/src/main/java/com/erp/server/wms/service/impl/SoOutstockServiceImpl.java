@@ -143,6 +143,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setSoCode(soInfo.getCode());
         soOutstock.setCustomerId(soInfo.getCustomerId());
         soOutstock.setId(id);
+        soOutstock.setOrderType(soInfo.getOrderType());
         List<SoOutstockDetailDTO.AddDTO> addDetailList = dto.getDetailList();
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSCK, BusinessNoTypeEnum.CODE_XSCK.getCode()));
         soOutstock.setCode(code);
@@ -570,7 +571,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     public List<SoOutstockDTO.TabListDTO> tabList() {
-        List<SoOutstockDTO.TabListDTO> resultList = new ArrayList<>();
+        List<SoOutstockDTO.TabListDTO> resultList = new ArrayList<>(4);
         //全部
         List<SoOutstockEntity> list = this.list();
         SoOutstockDTO.TabListDTO all = new SoOutstockDTO.TabListDTO();
@@ -761,6 +762,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setCode(code);
         soOutstock.setSoCode(soInfo.getCode());
         soOutstock.setCustomerId(soInfo.getCustomerId());
+        soOutstock.setOrderType(soInfo.getOrderType());
         //发货组织
         String deliveryOrgId = dto.getDeliveryOrgId();
         //仓库id
@@ -841,6 +843,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 SoOutstockDTO.AddDTO add = new SoOutstockDTO.AddDTO();
                 add.setSoId(generateInfo.getSoId());
                 add.setSourceId(generateInfo.getSourceId());
+                add.setSourceCode(generateInfo.getSourceCode());
                 add.setSourceType(generateInfo.getSourceType());
                 add.setCarrierId(generateInfo.getCarrierId());
                 add.setDeliveryOrgId(generateInfo.getDeliveryOrgId());

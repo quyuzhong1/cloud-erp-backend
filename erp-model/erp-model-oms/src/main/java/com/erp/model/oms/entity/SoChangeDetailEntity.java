@@ -3,6 +3,7 @@ package com.erp.model.oms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.oms.enums.SoChangeTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -33,8 +34,8 @@ public class SoChangeDetailEntity extends BaseEntity<SoChangeDetailEntity> {
     /**
      * 类型
      */
-    @TableField("type")
-    private String type;
+    @TableField("change_type")
+    private SoChangeTypeEnum changeType;
 
     /**
      * skuid
@@ -101,6 +102,12 @@ public class SoChangeDetailEntity extends BaseEntity<SoChangeDetailEntity> {
      */
     @TableField("old_currency")
     private String oldCurrency;
+
+    /**
+     * 原币种符号
+     */
+    @TableField("old_currency_symbol")
+    private String oldCurrencySymbol;
 
     /**
      * 币种

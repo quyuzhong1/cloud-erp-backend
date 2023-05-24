@@ -192,6 +192,8 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     public String add(SoReturnReceiveDTO.Add dto) {
         //获取退货单信息
         SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
+        //获取销售单信息
+        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
         SoReturnReceiveEntity entity = new SoReturnReceiveEntity();
@@ -205,6 +207,8 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 entity.setSalesDeptName(dept.getName());
             }
         }
+        entity.setSoId(soInfoEntity.getId());
+        entity.setSoCode(soInfoEntity.getCode());
         entity.setSellerId(soReturnEntity.getSellerId());
         entity.setSellerName(soReturnEntity.getSellerName());
         entity.setCustomerId(soReturnEntity.getCustomerId());
@@ -243,6 +247,8 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     public Boolean update(SoReturnReceiveDTO.Update dto) {
         //获取退货单信息
         SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
+        //获取销售单信息
+        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
 
@@ -257,6 +263,8 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 entity.setSalesDeptName(dept.getName());
             }
         }
+        entity.setSoId(soInfoEntity.getId());
+        entity.setSoCode(soInfoEntity.getCode());
         entity.setSellerId(soReturnEntity.getSellerId());
         entity.setSellerName(soReturnEntity.getSellerName());
         entity.setCustomerId(soReturnEntity.getCustomerId());
@@ -300,8 +308,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<SoReturnReceiveDetailDTO.View> detailViewDTOS = new ArrayList<>();
         List<SoReturnReceiveDetailEntity> detailEntityList = soReturnReceiveDetailService.listDetailByMainId(id);
         SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(entity.getSourceId());
-        //获取销售单信息
-        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
         BeanMapperUtils.copy(soReturnEntity, viewDTO);
         BeanMapperUtils.copy(entity, viewDTO);
         //获取sku的id集合
