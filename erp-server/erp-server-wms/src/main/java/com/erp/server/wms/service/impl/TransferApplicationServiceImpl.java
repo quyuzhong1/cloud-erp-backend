@@ -787,19 +787,19 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             throw new ServiceException(ApiError.ERROR_99002);
         }
         //组织信息
-        List<BaseIdDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(inWarehouse.getOrgId(), outWarehouse.getOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(inWarehouse.getOrgId(), outWarehouse.getOrgId()));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
             throw new ServiceException(ApiError.ERROR_9014);
         }
         entity.setInWarehouseName(inWarehouse.getName());
         entity.setInOrgId(inWarehouse.getOrgId());
         //调入组织名称
-        String inOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(inWarehouse.getOrgId())).map(BaseIdDTO::getName).findFirst().orElse("");
+        String inOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(inWarehouse.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
         entity.setInOrgName(inOrgName);
         entity.setOutOrgId(outWarehouse.getOrgId());
         entity.setOutWarehouseName(outWarehouse.getName());
         //调出组织名称
-        String outOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(outWarehouse.getOrgId())).map(BaseIdDTO::getName).findFirst().orElse("");
+        String outOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(outWarehouse.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
         entity.setOutOrgName(outOrgName);
     }
 

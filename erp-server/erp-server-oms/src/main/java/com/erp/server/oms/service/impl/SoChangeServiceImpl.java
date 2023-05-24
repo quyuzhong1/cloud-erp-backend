@@ -1,36 +1,41 @@
 package com.erp.server.oms.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.SoChangeDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoChangeEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.SoChangeMapper;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.SoChangeDetailService;
-import com.erp.server.oms.service.SoChangeService;
+import com.erp.server.oms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -48,12 +53,21 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
 
     @Resource
     private OperateLogService operateLogService;
 
     @Resource
     private SoChangeDetailService soChangeDetailService;
+
+    @Resource
+    private SoInfoService soInfoService;
+
+    @Resource
+    private CustomerInfoService customerInfoService;
 
     /**
      * 添加销售订单
@@ -65,6 +79,10 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      */
     @Override
     public String add(SoChangeDTO.AddDTO dto) {
+        //销售订单
+        String soId = dto.getSoId();
+        //检查能否变更
+        checkIsChange(soId);
         String id = IdWorker.getIdStr();
         SoChangeEntity soChange = new SoChangeEntity();
         BeanMapper.copy(dto, soChange);
@@ -98,6 +116,45 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             return id;
         }
         return "";
+    }
+
+
+    /**
+     * 检查能否变更
+     * 单据状态为已审核并且不在“变更中”才可变更
+     *
+     * @param soId
+     * @return void
+     * @author yl
+     * @date 2023-05-24 16:10
+     */
+    private void checkIsChange(String soId) {
+        SoInfoEntity soInfo = soInfoService.getById(soId);
+        if (Objects.isNull(soInfo)) {
+            throw new ServiceException(ApiError.ERROR_92003);
+        }
+        String approveStatus = soInfo.getApproveStatus().getStatus();
+        String approve = ApproveStatusEnum.APPROVE.getStatus();
+        if (!approve.equals(approveStatus)) {
+            throw new ServiceException(ApiError.ERROR_92033);
+        }
+
+
+    }
+
+
+    /**
+     * 根据 so id 获取对应数据
+     *
+     * @return
+     */
+    public List<SoChangeEntity> listBySoId(String soId, String id) {
+        LambdaQueryWrapper<SoChangeEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SoChangeEntity::getSoId, soId);
+        if (StringUtils.isNotBlank(id)) {
+            queryWrapper.ne(SoChangeEntity::getId, id);
+        }
+        return this.list(queryWrapper);
     }
 
 
@@ -211,6 +268,88 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         reject.setSearchType(rejectStatus);
         resultList.add(reject);
         return resultList;
+    }
+
+
+    /**
+     * 分页列表
+     *
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.SoChangeDTO.PagingViewDTO>
+     * @author yl
+     * @date 2023-05-24 16:44
+     */
+    @Override
+    public PagingVO<SoChangeDTO.PagingViewDTO> paging(PagingDTO<SoChangeDTO.PagingParamDTO> dto) {
+        SoChangeDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        String searchType = params.getSearchType();
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        //根据搜索类型获取到审核状态
+        List<String> approveList = listBySearchType(searchType);
+        IPage pageData = baseMapper.paging(query, params, approveList);
+        List<SoChangeDTO.PagingViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>(pageData);
+        }
+        List<String> skuIdList = list.stream().map(SoChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+
+        //客户id
+        List<String> customerIdList = list.stream().map(SoChangeDTO.PagingViewDTO::getCustomerId).collect(Collectors.toList());
+        List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIdList) ? customerInfoService.listByIds(customerIdList) : Collections.emptyList();
+        List<String> flagList = new ArrayList<>();
+        for(SoChangeDTO.PagingViewDTO item:list){
+            boolean contains = flagList.contains(item.getId());
+            BillTypeEnum orderType = item.getOrderType();
+            item.setOrderTypeName(orderType.getName());
+            ApproveStatusEnum approveStatus = item.getApproveStatus();
+            item.setApproveStatusName(approveStatus.getName());
+            //作废状态
+            Boolean invalidStatus = item.getInvalidStatus();
+            String invalidStatusName = invalidStatus != null && invalidStatus ? "已作废" : "未作废";
+            item.setInvalidStatusName(invalidStatusName);
+            String customerName = customerList.stream().filter(c -> c.getId().equals(item.getCustomerId())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setCustomerName(customerName);
+            String skuId = item.getSkuId();
+            SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+            if (sku != null) {
+                item.setProductName(sku.getSkuName());
+                item.setUnit(sku.getUnitName());
+            }
+            if (contains) {
+                item.setId("");
+                item.setCode("");
+                item.setSoCode("");
+                item.setOrderType(null);
+                item.setOrderTypeName("");
+                item.setApproveStatusName("");
+                item.setCustomerName("");
+                item.setInvalidStatusName("");
+                item.setCreateUserName("");
+                item.setCreateTime(null);
+            }
+            flagList.add(item.getId());
+        }
+        return new PagingVO<>(pageData);
+    }
+
+    private List<String> listBySearchType(String searchType) {
+        List<String> approveList = new ArrayList<>(3);
+        //待审核
+        if (SearchType.WAIT_APPROVE.equals(searchType)) {
+            approveList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+        }
+        //已审核
+        if (ApproveStatusEnum.APPROVE.getStatus().equals(searchType)) {
+            approveList.add(ApproveStatusEnum.APPROVE.getStatus());
+        }
+        //审核不通过
+        if (ApproveStatusEnum.REJECT.getStatus().equals(searchType)) {
+            approveList.add(ApproveStatusEnum.REJECT.getStatus());
+        }
+        return approveList;
     }
 
     private Boolean updateApproveStatus(List<SoChangeEntity> list, ApproveStatusEnum statusEnum) {

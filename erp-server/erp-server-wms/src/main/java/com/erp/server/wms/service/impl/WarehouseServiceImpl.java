@@ -102,10 +102,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
 
         List<String> orgIds = list.stream().map(WarehouseEntity::getOrgId).collect(Collectors.toList());
-        List<BaseIdDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
             for (WarehouseDTO.ListDTO listDTO : resultList) {
-                String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(listDTO.getOrgId())).map(BaseIdDTO::getName).findFirst().orElse(null);
+                String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse(null);
                 listDTO.setOrgName(orgName);
             }
         }
@@ -408,7 +408,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         //获取用户信息
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
         List<String> orgIdList = list.stream().map(WarehouseDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
 
         for (WarehouseDTO.PagingViewDTO item : list) {
             //类型id
@@ -456,7 +456,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             //获取用户信息
             List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
             List<String> orgIdList = viewList.stream().map(WarehouseDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
-            List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
+            List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
 
             for (WarehouseDTO.PagingViewDTO item : viewList) {
                 WarehouseExportExcelDTO excelDTO = new WarehouseExportExcelDTO();
@@ -542,7 +542,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         //获取到仓库类型
         List<DictBasicDTO.ListDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
         List<FindUserDTO> userList = sysUserFeign.getUserList();
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(new ArrayList<>());
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(new ArrayList<>());
         List<WarehouseEntity> warehouseList = this.list();
         WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, dictBasicList, userList, orgList,warehouseList);
         try {

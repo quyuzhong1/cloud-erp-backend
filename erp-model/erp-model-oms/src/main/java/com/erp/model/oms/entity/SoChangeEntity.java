@@ -9,7 +9,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -43,7 +43,7 @@ public class SoChangeEntity extends BaseEntity<SoChangeEntity> {
      * 变更日期
      */
     @TableField("bill_date")
-    private Date billDate;
+    private LocalDate billDate;
 
     /**
      * 销售订单id
@@ -74,6 +74,12 @@ public class SoChangeEntity extends BaseEntity<SoChangeEntity> {
      */
     @TableField("dept_name")
     private String deptName;
+
+    @TableField("invalid_status")
+    private Boolean invalidStatus;
+
+    @TableField("invalid_remark")
+    private Boolean invalidRemark;
 
     /**
      * 变更原因

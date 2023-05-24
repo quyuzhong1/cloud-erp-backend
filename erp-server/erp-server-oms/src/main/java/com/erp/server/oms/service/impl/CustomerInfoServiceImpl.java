@@ -159,7 +159,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         //使用组织
         String useOrgId = dto.getUseOrgId();
         //组织列表
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(innerOrgId, useOrgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(innerOrgId, useOrgId));
 
         String innerOrgName = orgList.stream().filter(d -> d.getId().equals(innerOrgId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
@@ -477,7 +477,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         //使用组织
         String useOrgId = dto.getUseOrgId();
         //组织列表
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(innerOrgId, useOrgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(innerOrgId, useOrgId));
 
         String innerOrgName = orgList.stream().filter(d -> d.getId().equals(innerOrgId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");

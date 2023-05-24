@@ -19,6 +19,12 @@ public class SysAccountingCompanyEntity implements Serializable {
 
     @TableId(type = IdType.ASSIGN_ID)
     private String id;
+
+    /**
+     * 公司编码
+     */
+    private String code;
+
     /**
      * 公司名
      */

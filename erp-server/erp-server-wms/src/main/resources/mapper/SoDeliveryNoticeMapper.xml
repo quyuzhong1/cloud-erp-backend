@@ -237,6 +237,7 @@
         sdn.track_no,
         sdn.warehouse_id,
         sdn.warehouse_name,
+        sdn.type AS orderType,
         sdnd.id AS sourceDetailId,
         sdnd.sku_id,
         sdnd.sku_no,

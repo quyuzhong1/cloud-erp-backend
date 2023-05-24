@@ -139,7 +139,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         Boolean isPass = getIsPass(dto.getPurchasePriceChangeDetailList());
 
         //获取组织
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
         if (CollectionUtils.isNotEmpty(orgList)) {
             changeEntity.setPurchaseOrgName(orgList.get(0).getName());
         }
@@ -340,7 +340,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         }
         String orgId = dto.getPurchaseOrgId();
         //获取组织
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
         if (CollectionUtils.isNotEmpty(orgList)) {
             priceChangeEntity.setPurchaseOrgName(orgList.get(0).getName());
         }

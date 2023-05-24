@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -84,6 +85,18 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         resultMap.put("transferDirection", entity.getTransferDirection());
         //备注
         resultMap.put("remark", entity.getRemark());
+
+        //组织机构编码
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getInOrgId(), entity.getOutOrgId()));
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            //调入组织机构编码
+            String inOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            resultMap.put("inOrgCode", inOrgCode);
+
+            //调出组织机构编码
+            String outOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOutOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            resultMap.put("outOrgCode", outOrgCode);
+        }
 
         List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {

@@ -166,7 +166,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             warehouseOrgId = warehouseList.get(0).getOrgId();
         }
         //组织列表
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId, warehouseOrgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId, warehouseOrgId));
         String salesOrgName = orgList.stream().filter(d -> d.getId().equals(salesOrgId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         addEntity.setSalesOrgName(salesOrgName);
@@ -472,7 +472,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
         }
         //组织列表
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId, warehouseOrgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId, warehouseOrgId));
         String salesOrgName = orgList.stream().filter(d -> d.getId().equals(salesOrgId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         draftEntity.setSalesOrgName(salesOrgName);
@@ -545,7 +545,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             warehouseOrgId = warehouseList.get(0).getOrgId();
         }
         //组织列表
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId, warehouseOrgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId, warehouseOrgId));
         String salesOrgName = orgList.stream().filter(d -> d.getId().equals(salesOrgId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         soInfo.setSalesOrgName(salesOrgName);

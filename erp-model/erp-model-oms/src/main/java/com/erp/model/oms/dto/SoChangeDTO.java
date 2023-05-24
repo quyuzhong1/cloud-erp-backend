@@ -3,6 +3,7 @@ package com.erp.model.oms.dto;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.oms.enums.BillTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -94,7 +95,7 @@ public class SoChangeDTO implements Serializable {
         /**
          * 类型
          */
-        private String orderType;
+        private BillTypeEnum orderType;
 
         /**
          * 类型名称
@@ -109,7 +110,7 @@ public class SoChangeDTO implements Serializable {
         /**
          * 作废状态名
          */
-        private Boolean invalidStatusName;
+        private String invalidStatusName;
 
 
         /**
@@ -135,6 +136,11 @@ public class SoChangeDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 产品单位
+         */
+        private String unit;
+
+        /**
          * 产品名称
          */
         private String productName;
@@ -155,9 +161,19 @@ public class SoChangeDTO implements Serializable {
         private BigDecimal amount;
 
         /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
          * 原销售金额
          */
         private BigDecimal oldAmount;
+
+        /**
+         * 原币种符号
+         */
+        private String oldCurrencySymbol;
 
         /**
          * 最新审核人
@@ -241,7 +257,7 @@ public class SoChangeDTO implements Serializable {
         /**
          * 创建时间
          */
-        private List<LocalDateTime> createTimeList;
+        private List<LocalDate> createTimeList;
 
     }
 

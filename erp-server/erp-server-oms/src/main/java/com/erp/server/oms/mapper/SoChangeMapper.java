@@ -1,9 +1,12 @@
 package com.erp.server.oms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -27,4 +30,6 @@ public interface SoChangeMapper extends BaseMapper<SoChangeEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoChangeDTO.ApproveCountDTO>
      */
     List<SoChangeDTO.ApproveCountDTO> listApproveCount();
+
+    IPage<SoChangeDTO.PagingViewDTO> paging(Page query, @Param("params")SoChangeDTO.PagingParamDTO params, @Param("approveList") List<String> approveList);
 }

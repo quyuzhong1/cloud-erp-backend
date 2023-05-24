@@ -541,12 +541,12 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         entity.setWarehouseName(warehouse.getName());
 
         //组织信息
-        List<BaseIdDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(warehouse.getOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(warehouse.getOrgId()));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
             throw new ServiceException(ApiError.ERROR_9014);
         }
         //仓库组织名称
-        String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(warehouse.getOrgId())).map(BaseIdDTO::getName).findFirst().orElse("");
+        String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(warehouse.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
         entity.setOrgId(warehouse.getOrgId());
         entity.setOrgName(orgName);
 

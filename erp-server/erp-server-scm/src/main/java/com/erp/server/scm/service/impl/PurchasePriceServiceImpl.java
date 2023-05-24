@@ -121,7 +121,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
         String orgId = dto.getPurchaseOrgId();
         //获取组织
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
         if (CollectionUtils.isNotEmpty(orgList)) {
             purchasePrice.setPurchaseOrgName(orgList.get(0).getName());
         }
@@ -249,7 +249,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
         String orgId = dto.getPurchaseOrgId();
         //获取组织
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
         if (CollectionUtils.isNotEmpty(orgList)) {
             purchasePrice.setPurchaseOrgName(orgList.get(0).getName());
         }
