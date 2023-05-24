@@ -377,29 +377,27 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean transfer(List<ProcessManagementDTO.TransferDTO> dtoList) {
+    public Boolean transfer(ProcessManagementDTO.TransferDTO dto) {
         // 查询当前执行任务
-        for (ProcessManagementDTO.TransferDTO dto : dtoList) {
-            ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getSourceUserId());
-            if (null == managementTask) {
-                throw new ServiceException(ApiError.PROCESS_DEFINITION_NODE_NOT_EXIST);
-            }
-            String taskId = managementTask.getTaskId();
-            // 查询当前任务
-            Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
-            if(null == task){
-                throw new ServiceException(ApiError.ERROR_TASK_AUDIT_STATUS);
-            }
-            // 转发任务给目标人员
-            identityService.setAuthenticatedUserId(dto.getSourceUserId());
-            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getTargetUserId());
-            if(null == findUserDTO){
-                throw new ServiceException(ApiError.USER_NOT_EXIST);
-            }
-            taskService.delegateTask(task.getId(), dto.getTargetUserId());
-            // 更新流程任务数据
-            processTaskManagementService.updateTransfer(taskId, dto.getTargetUserId(),findUserDTO.getUserName(), dto.getSourceUserId(), dto.getRemark());
+        ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getSourceUserId());
+        if (null == managementTask) {
+            throw new ServiceException(ApiError.PROCESS_DEFINITION_NODE_NOT_EXIST);
         }
+        String taskId = managementTask.getTaskId();
+        // 查询当前任务
+        Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+        if(null == task){
+            throw new ServiceException(ApiError.ERROR_TASK_AUDIT_STATUS);
+        }
+        // 转发任务给目标人员
+        identityService.setAuthenticatedUserId(dto.getSourceUserId());
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getTargetUserId());
+        if(null == findUserDTO){
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
+        }
+        taskService.delegateTask(task.getId(), dto.getTargetUserId());
+        // 更新流程任务数据
+        processTaskManagementService.updateTransfer(taskId, dto.getTargetUserId(),findUserDTO.getUserName(), dto.getSourceUserId(), dto.getRemark());
         return Boolean.TRUE;
     }
 
@@ -471,12 +469,19 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 查询流程实例
         Page<ProcessManagementDTO.PagingResultDTO> query = new Page<>(pageDTO.getCurrPage(), pageDTO.getPageSize());
         IPage<ProcessManagementDTO.PagingResultDTO> pageData = baseMapper.paging(query, pageDTO.getParams());
-        pageData.getRecords().stream().peek(record -> record.setProcessStatusName(record.getProcessStatus().getName())).collect(Collectors.toList());
+        pageData.getRecords().stream().peek(record ->{
+            if(null != record.getProcessStatus()){
+                record.setProcessStatusName(record.getProcessStatus().getName());
+            }
+            if(null != record.getTaskStatus()){
+                record.setTaskStatusName(record.getTaskStatus().getName());
+            }
+        }).collect(Collectors.toList());
         return new PagingVO<>(pageData);
     }
 
     @Override
-    public void export(ProcessManagementDTO.SearchDTO dto, HttpServletResponse response) throws Exception {
+    public void export(ProcessManagementDTO.ExportDTO dto, HttpServletResponse response) throws Exception {
         // 查询流程实例
         List<ProcessManagementDTO.PagingResultDTO> list = baseMapper.export(dto);
         if (CollectionUtil.isEmpty(list)) {
@@ -664,6 +669,40 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 保存流程任务数据
             updateApprove(task.getTaskManagementId(), ApproveTypeEnum.REJECT, task.getManagementId(), task.getProcessInstanceId(), "审批超时，自动驳回");
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean transferBatch(ProcessManagementDTO.TransferBatchDTO dto) {
+        // 查询当前执行任务
+        List<ProcessManagementDTO.ManagementTaskDTO> managementTasks  = listTaskById(dto.getIds());
+        if(CollectionUtil.isEmpty(managementTasks)){
+            throw new ServiceException(ApiError.TASK_NOT_EXIST);
+        }
+        for (ProcessManagementDTO.ManagementTaskDTO managementTask : managementTasks) {
+            String taskId = managementTask.getTaskId();
+            // 查询当前任务
+            Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+            if(null == task){
+                throw new ServiceException(ApiError.ERROR_TASK_AUDIT_STATUS);
+            }
+            // 转发任务给目标人员
+            identityService.setAuthenticatedUserId(dto.getTargetUserId());
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getTargetUserId());
+            if(null == findUserDTO){
+                throw new ServiceException(ApiError.USER_NOT_EXIST);
+            }
+            taskService.delegateTask(task.getId(), dto.getTargetUserId());
+            // 更新流程任务数据
+            processTaskManagementService.updateTransfer(taskId, dto.getTargetUserId(),findUserDTO.getUserName(), managementTask.getCurApproveId(), dto.getRemark());
+        }
+        return Boolean.TRUE;
+    }
+
+
+    @Override
+    public List<ProcessManagementDTO.ManagementTaskDTO> listTaskById(List<String> ids) {
+        return baseMapper.listProcessTaskByIds(ids);
     }
 
     @Override

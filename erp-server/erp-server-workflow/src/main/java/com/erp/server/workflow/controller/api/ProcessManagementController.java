@@ -77,10 +77,18 @@ public class ProcessManagementController extends BaseController {
 
 
     /**
-     * 转发任务
+     * 批量-转办任务-流程管理
+     */
+    @PostMapping("/transfer/batch")
+    public ApiResult<Boolean> transferBatchProcess(@RequestBody @Valid ProcessManagementDTO.TransferBatchDTO dto) {
+        return success(processManagementService.transferBatch(dto));
+    }
+
+    /**
+     * 转办-业务流程
      */
     @PostMapping("/transfer")
-    public ApiResult<Boolean> transferProcess(@RequestBody @Valid @NotNull List<ProcessManagementDTO.TransferDTO> dto) {
+    public ApiResult<Boolean> transferProcess(@RequestBody @Valid ProcessManagementDTO.TransferDTO dto) {
         return success(processManagementService.transfer(dto));
     }
 
@@ -105,7 +113,7 @@ public class ProcessManagementController extends BaseController {
      * 流程管理导出
      */
     @PostMapping("/export")
-    public void export(@RequestBody @Valid ProcessManagementDTO.SearchDTO dto, HttpServletResponse response) {
+    public void export(@RequestBody @Valid ProcessManagementDTO.ExportDTO dto, HttpServletResponse response) {
         try {
             processManagementService.export(dto, response);
         } catch (Exception e) {

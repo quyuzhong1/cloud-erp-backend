@@ -44,18 +44,24 @@ public interface ProcessManagementMapper extends BaseMapper<ProcessManagementEnt
      * @param params
      * @return IPage<ProcessManagementDTO.PagingResultDTO>
      */
-    IPage<ProcessManagementDTO.PagingResultDTO> paging(Page page, @Param("param") ProcessManagementDTO.SearchDTO params);
+    IPage<ProcessManagementDTO.PagingResultDTO> paging(Page page, @Param("param") ProcessManagementDTO.SearchDTO param);
 
     /**
      * 导出
      * @param dto
      * @return
      */
-    List<ProcessManagementDTO.PagingResultDTO> export(ProcessManagementDTO.SearchDTO dto);
+    List<ProcessManagementDTO.PagingResultDTO> export(@Param("param") ProcessManagementDTO.ExportDTO dto);
 
     /**
      * 根据业务id和业务类型获取流程管理信息
      */
     List<ProcessManagementDTO.ManagementTaskDTO> listProcessTask(@Param("taskId") String taskId,@Param("timeoutStatus")String timeoutStatus);
 
+    /**
+     * 根据业务id和业务类型获取流程管理信息
+     * @param ids
+     * @return List<ProcessManagementDTO.ManagementTaskDTO>
+     */
+    List<ProcessManagementDTO.ManagementTaskDTO> listProcessTaskByIds(@Param("ids") List<String> ids);
 }

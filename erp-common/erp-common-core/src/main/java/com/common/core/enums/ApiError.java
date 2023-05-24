@@ -146,6 +146,8 @@ public enum ApiError implements Serializable {
     PROCESS_TASK_NOT_REJECT(94021,"当前任务无法驳回"),
     ERROR_940022(94022,"模块已存在请不要重复操作"),
 
+    TASK_NOT_EXIST(94023,"任务已审核或不存在"),
+
 
 
 

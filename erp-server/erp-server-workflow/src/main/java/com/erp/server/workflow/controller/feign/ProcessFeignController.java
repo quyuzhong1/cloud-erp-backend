@@ -278,7 +278,7 @@ public class ProcessFeignController extends BaseController {
      * 转发任务 - new
      */
     @PostMapping("/transfer")
-    public ApiResult<Boolean> transferProcess(@RequestBody @Valid @NotNull List<ProcessManagementDTO.TransferDTO> dto) {
+    public ApiResult<Boolean> transferProcess(@RequestBody @Valid ProcessManagementDTO.TransferDTO dto) {
         return success(processManagementService.transfer(dto));
     }
 
