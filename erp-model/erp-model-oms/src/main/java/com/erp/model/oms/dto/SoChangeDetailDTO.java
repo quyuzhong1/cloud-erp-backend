@@ -3,6 +3,10 @@ package com.erp.model.oms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -30,27 +34,40 @@ public class SoChangeDetailDTO implements Serializable {
         /**
          * 销售订单详情id
          */
+        @NotBlank(message = "销售订单详情不能为空")
         private String  soDetailId;
 
         /**
          * sku id
          */
+        @NotBlank(message = "sku不能为空")
         private String skuId;
 
         /**
          * 变更类型
          */
+        @NotNull(message = "变更类型不能为空")
         private String type;
 
         /**
          * 销售数量
          */
+        @NotNull(message = "销售数量不能为空")
+        @DecimalMax(value = "999999999",message ="销售数量最大值")
         private Integer qty;
 
         /**
          * 单价
          */
+        @NotNull(message = "销售单价不能为空")
         private BigDecimal price;
+
+
+        /**
+         * 币种
+         */
+        @NotBlank(message = "币种不能为空")
+        private String currency;
 
 
         /**
@@ -61,11 +78,13 @@ public class SoChangeDetailDTO implements Serializable {
         /**
          * 是否赠品
          */
+        @NotNull(message = "是否赠品不能为空")
         private Boolean isGift;
 
         /**
          * 是否补发
          */
+        @NotNull(message = "是否补发不能为空")
         private Boolean isReissue;
 
         /**
@@ -77,6 +96,7 @@ public class SoChangeDetailDTO implements Serializable {
         /**
          * 备注
          */
+        @Size(max = 200, message = "备注最大200字符")
         private String remark;
 
 
