@@ -54,8 +54,14 @@ public class SoChangeController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "user_id",
+            menuCode = "oms:soChange:paging",
+            tableAlias = "sc"
+    )
     public ApiResult<PagingVO<SoChangeDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SoChangeDTO.PagingParamDTO> dto) {
-        return success(null);
+        PagingVO<SoChangeDTO.PagingViewDTO> pagingVO = soChangeService.paging(dto);
+        return success(pagingVO);
     }
 
     /**

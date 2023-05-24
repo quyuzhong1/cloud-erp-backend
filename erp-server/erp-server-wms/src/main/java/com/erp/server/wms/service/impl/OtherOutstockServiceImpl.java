@@ -542,15 +542,15 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         String inventoryOrgId = warehouseEntity.getOrgId();
         entity.setInventoryOrgId(inventoryOrgId);
         //组织信息
-        List<BaseIdDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(inventoryOrgId, receiveOrgId));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(inventoryOrgId, receiveOrgId));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
             throw new ServiceException(ApiError.ERROR_9014);
         }
         //库存组织名称
-        String inventoryOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(inventoryOrgId)).map(BaseIdDTO::getName).findFirst().orElse("");
+        String inventoryOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(inventoryOrgId)).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
         entity.setInventoryOrgName(inventoryOrgName);
         //收料组织名称
-        String receiveOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(receiveOrgId)).map(BaseIdDTO::getName).findFirst().orElse("");
+        String receiveOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(receiveOrgId)).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
         entity.setReceiveOrgName(receiveOrgName);
     }
 

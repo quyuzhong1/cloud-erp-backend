@@ -21,7 +21,10 @@ import com.erp.server.sys.service.SysAccountingCompanyService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Administrator
@@ -156,23 +159,25 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
      * @date 2023-03-22 15:29
      */
     @Override
-    public List<BaseIdDTO> getByIds(List<String> ids) {
-        List<BaseIdDTO> resultList = new ArrayList<>(20);
+    public List<BaseIdDTO.CodeDTO> getByIds(List<String> ids) {
+        List<BaseIdDTO.CodeDTO> resultList = new ArrayList<>(20);
         if (CollectionUtils.isEmpty(ids)) {
             List<SysAccountingCompanyEntity> allList = this.list();
             for (SysAccountingCompanyEntity item : allList) {
-                BaseIdDTO dto = new BaseIdDTO();
+                BaseIdDTO.CodeDTO dto = new BaseIdDTO.CodeDTO();
                 dto.setId(item.getId());
                 dto.setName(item.getCompanyName());
+                dto.setCode(item.getCode());
                 resultList.add(dto);
             }
             return resultList;
         }
         List<SysAccountingCompanyEntity> list = this.listByIds(ids);
         for (SysAccountingCompanyEntity item : list) {
-            BaseIdDTO dto = new BaseIdDTO();
+            BaseIdDTO.CodeDTO dto = new BaseIdDTO.CodeDTO();
             dto.setId(item.getId());
             dto.setName(item.getCompanyName());
+            dto.setCode(item.getCode());
             resultList.add(dto);
         }
         return resultList;
