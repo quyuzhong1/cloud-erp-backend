@@ -130,12 +130,12 @@ public class InitStockDetailServiceImpl extends SuperServiceImpl<InitStockDetail
             InitStockDetailEntity data = list.get(i);
             SkuVO skuVO = skuMap.get(data.getSkuId());
             if(Objects.isNull(skuVO)) {
-                throw new ServiceException(StrUtil.format("第{}行SKU【{}】错误", (i + 1), data.getSkuNo()));
+                throw new ServiceException(StrUtil.format("SKU【{}】错误", data.getSkuNo()));
             }
             // 验证产品是否审核通过
             Integer skuStatus = skuVO.getStatus();
             if(!Objects.equals(skuStatus, ProductDetailStatusEnum.APPROVAL_PASS.getCode())) {
-                throw new ServiceException(StrUtil.format("第{}行SKU【{}】未审核通过", (i + 1), data.getSkuNo()));
+                throw new ServiceException(StrUtil.format("SKU【{}】未审核通过", data.getSkuNo()));
             }
             data.setMainId(mainId);
             data.setSkuNo(skuMap.get(data.getSkuId()).getSkuNo());// 填充真实的sku no
