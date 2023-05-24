@@ -66,7 +66,7 @@
         INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
         INNER JOIN so_return sr ON sr.source_id = si.id AND si.is_deleted = FALSE
         INNER JOIN so_return_detail srd ON srd.main_id = sr.id AND sr.is_deleted = FALSE
-        WHERE srd.is_deleted = FALSE
+        WHERE srd.is_deleted = FALSE AND sd.is_close = FALSE
         <if test="id != null and id != ''">
             AND sr.id = #{id}
         </if>

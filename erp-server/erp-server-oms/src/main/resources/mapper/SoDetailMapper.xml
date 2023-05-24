@@ -19,7 +19,7 @@
             sd.currency_symbol
         FROM so_detail sd
         INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
-        WHERE si.is_deleted = FALSE
+        WHERE si.is_deleted = FALSE AND sd.is_close = FALSE
         <if test="id != null and id != ''">
             AND si.id = #{id}
         </if>
