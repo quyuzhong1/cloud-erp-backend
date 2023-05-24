@@ -153,11 +153,15 @@
         <if test="params.status == 'initiate'">
             AND ptm.cur_approve_id = #{params.userId}
         </if>
-        <if test="params.sysClassify != '' and  params.sysClassify != null">
-            AND wm.sys_classify = #{params.sysClassify}
+
+        <if test="params.sysClassifyList != null and params.sysClassifyList.size > 0">
+            AND wm.sys_classify IN
+            <foreach collection="params.sysClassifyList" item="item" open="(" close=")">
+                AND wm.sys_classify = #{item}
+            </foreach>
         </if>
         <if test="params.sourceCode != '' and  params.sourceCode != null">
-            AND pm.business_code = concat('%',#{params.sysClassify},'%')
+            AND pm.business_code = concat('%',#{params.sourceCode},'%')
         </if>
     </select>
 

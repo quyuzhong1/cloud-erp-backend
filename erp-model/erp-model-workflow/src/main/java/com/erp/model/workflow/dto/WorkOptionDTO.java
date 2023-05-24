@@ -353,14 +353,14 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
     @NoArgsConstructor
     public static class ApproveViewParamDTO extends SortDTO {
         /**
-         * 数据审核状态（代办、已办、已发送）
+         * 数据审核状态（代办、已办、抄送我、已发送）
          */
         private String status;
 
         /**
          * 系统分类 plm wms scm
          */
-        private String sysClassify;
+        private List<String> sysClassifyList;
 
         /**
          * 界面可不传默认登录人
