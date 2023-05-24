@@ -357,12 +357,12 @@ public class TransferApplicationController extends BaseController {
      * 查询拣货明细
      * @author Will
      * @date: 2023/5/16 12:09
-     * @param id
+     * @param dto
      * @return ApiResult<List<CommonDTO>>
      */
     @PostMapping("/listPickingDetail")
-    public ApiResult<List<PickingDetailDTO.CommonDTO>> listPickingDetail(@RequestParam("id") String id) {
-        List<PickingDetailDTO.CommonDTO> list = transferApplicationService.listPickingDetail(id);
+    public ApiResult<List<PickingDetailDTO.CommonDTO>> listPickingDetail(@RequestBody @Valid PickingDetailDTO.SearchParamDTO dto) {
+        List<PickingDetailDTO.CommonDTO> list = transferApplicationService.listPickingDetail(dto);
         return success(list);
     }
 }

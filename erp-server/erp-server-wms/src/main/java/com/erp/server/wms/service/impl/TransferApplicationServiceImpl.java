@@ -603,8 +603,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     }
 
     @Override
-    public List<PickingDetailDTO.CommonDTO> listPickingDetail(String id) {
-        return pickingDetailService.listPickingDetailBySourceId(id);
+    public List<PickingDetailDTO.CommonDTO> listPickingDetail(PickingDetailDTO.SearchParamDTO dto) {
+        return pickingDetailService.listPickingDetailBySourceId(dto);
     }
 
 

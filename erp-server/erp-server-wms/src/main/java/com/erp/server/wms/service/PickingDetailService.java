@@ -35,8 +35,8 @@ public interface PickingDetailService extends SuperService<PickingDetailEntity> 
       * @description: 根据来源id查询拣货信息
       * @author Will
       * @date: 2023/5/16 12:20
-      * @param sourceId
+      * @param dto
       * @return List<CommonDTO>
       */
-     List<PickingDetailDTO.CommonDTO> listPickingDetailBySourceId(String sourceId);
+     List<PickingDetailDTO.CommonDTO> listPickingDetailBySourceId(PickingDetailDTO.SearchParamDTO dto);
 }

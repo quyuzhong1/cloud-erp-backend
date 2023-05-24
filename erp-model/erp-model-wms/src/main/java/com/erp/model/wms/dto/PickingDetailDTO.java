@@ -5,8 +5,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author Will
@@ -17,6 +19,22 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 public class PickingDetailDTO implements Serializable {
+
+    @Data
+    @NoArgsConstructor
+    public static class SearchParamDTO {
+
+        /**
+         * 来源id
+         */
+        @NotBlank(message = "来源id不能为空")
+        private String sourceId;
+
+        /**
+         * sku编码
+         */
+        private List<String> skuNoList;
+    }
 
     @Data
     @NoArgsConstructor

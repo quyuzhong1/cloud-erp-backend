@@ -41,8 +41,11 @@ public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapp
     }
 
     @Override
-    public List<PickingDetailDTO.CommonDTO> listPickingDetailBySourceId(String sourceId) {
-        List<PickingDetailEntity> list = lambdaQuery().eq(PickingDetailEntity::getSourceId, sourceId).list();
+    public List<PickingDetailDTO.CommonDTO> listPickingDetailBySourceId(PickingDetailDTO.SearchParamDTO dto) {
+        List<PickingDetailEntity> list = lambdaQuery()
+                .eq(PickingDetailEntity::getSourceId, dto.getSourceId())
+                .in(CollectionUtils.isNotEmpty(dto.getSkuNoList()),PickingDetailEntity::getSkuNo,dto.getSkuNoList())
+                .list();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }

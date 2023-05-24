@@ -171,8 +171,8 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      * @description: 查询拣货名称
      * @author Will
      * @date: 2023/5/16 12:09
-     * @param id
+     * @param dto
      * @return List<CommonDTO>
      */
-    List<PickingDetailDTO.CommonDTO> listPickingDetail(String id);
+    List<PickingDetailDTO.CommonDTO> listPickingDetail(PickingDetailDTO.SearchParamDTO dto);
 }

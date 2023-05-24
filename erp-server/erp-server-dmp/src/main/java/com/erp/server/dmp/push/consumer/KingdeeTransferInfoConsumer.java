@@ -5,6 +5,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
@@ -29,10 +30,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 对接金蝶入库单
- * @Author Luo_WG
- * @Date 2023/4/23 19:47
- **/
+ * @description: 直接调拨单推送至金蝶
+ * @author Will
+ * @date: 2023/5/24 18:17
+ */
 @Service
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_transfer_info_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_TRANSFER_INFO)
@@ -61,9 +62,6 @@ public class KingdeeTransferInfoConsumer implements RocketMQListener<Map<String,
 
         log.info("直接调拨单开始推送金蝶 map = {}", JSONUtil.toJsonStr(map));
 
-
-        //业务id
-        String  businessId = String.valueOf(map.get("id"));
         //业务编码
         String code = (String) map.get("code");
 
@@ -73,6 +71,79 @@ public class KingdeeTransferInfoConsumer implements RocketMQListener<Map<String,
         }
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_TRANSFERDIRECT.getCode());
+
+        //操作项
+        String operate = (String) map.get("operate");
+        /**
+         * 作废
+         */
+        if (SyncKingdeeOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
+            operateInvalid(apiUtils,platformEntity,map,type,code,operate);
+        }
+        /**
+         * 反审核
+         */
+        if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
+            operateDisapprove(apiUtils,platformEntity, map,type);
+        }
+        /**
+         * 审核
+         */
+        if (SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
+            operateApprove(apiUtils,platformEntity, map,type);
+        }
+    }
+
+
+    /**
+     * @description: 作废
+     * @author Will
+     * @date: 2023/5/24 17:57
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     * @param code
+     * @param operate
+     */
+    private void operateInvalid(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type, String code,String operate) {
+        //作废
+        kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
+        return;
+    }
+
+    /**
+     * @description: 反审核
+     * @author Will
+     * @date: 2023/5/24 17:57
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     */
+    private void operateDisapprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        String syncKingdeeId = (String) map.get("syncKingdeeId");
+        if (StringUtils.isBlank(syncKingdeeId)) {
+            return;
+        }
+        //反审核
+        kingdeeCommonService.unAudit(platformEntity, map, apiUtils, syncKingdeeId, type);
+        return;
+    }
+
+
+    /**
+     * @description: 审核
+     * @author Will
+     * @date: 2023/5/24 18:10
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     */
+    private void operateApprove(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        //业务id
+        String  businessId = String.valueOf(map.get("id"));
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(),type);
@@ -91,29 +162,15 @@ public class KingdeeTransferInfoConsumer implements RocketMQListener<Map<String,
         try {
             model = kingdeeCommonService.view(apiUtils,(String)map.get("syncKingdeeId"),(String)map.get("code"));
         } catch (Exception e) {
-
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
             return;
         }
-
         //查找到数据后，判断其审核状态
         String documentStatus = (String)model.get("DocumentStatus");
         String id = String.valueOf(model.get("Id")) ;
         Boolean flag = Boolean.FALSE;
 
-        //操作项
-        String operate = (String) map.get("operate");
-        if (SyncKingdeeOperateEnum.OPERATE_INVALID.getCode().equals(operate)) {
-            //作废
-            kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
-            return;
-        }
-        if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            //反审核
-            kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
-            return;
-        }
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
             flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
