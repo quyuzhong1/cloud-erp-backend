@@ -409,7 +409,7 @@ public class SoOutstockDetailDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public class UpdateDTO extends AddDTO {
+    public static class UpdateDTO extends AddDTO {
 
         private String id;
     }

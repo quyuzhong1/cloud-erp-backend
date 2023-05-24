@@ -305,10 +305,11 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         queryWrapper.in(InventoryEntity::getWarehouseId, warehouseIdList);
         queryWrapper.eq(InventoryEntity::getDictInventoryStatus, status);
         if (isExist) {
-            queryWrapper.eq(InventoryEntity::getWarehouseLocation, warehouseLocationIdList);
+            queryWrapper.in(InventoryEntity::getWarehouseLocation, warehouseLocationIdList);
         }
         queryWrapper.in(InventoryEntity::getSkuId, skuIds);
-        List<InventoryEntity> inventoryEntities = baseMapper.selectList(queryWrapper);
+
+        List<InventoryEntity> inventoryEntities = this.list(queryWrapper);
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = Lists.newArrayList();
         for (InventoryEntity item : inventoryEntities) {
             InventoryQtyDTO.SkuInventoryTotalDTO result = new InventoryQtyDTO.SkuInventoryTotalDTO();

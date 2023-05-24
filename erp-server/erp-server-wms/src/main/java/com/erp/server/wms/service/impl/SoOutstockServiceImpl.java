@@ -119,12 +119,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String id = IdWorker.getIdStr();
         //来源类型
         String sourceType = dto.getSourceType();
-
+        if(StringUtils.isBlank(sourceType)){
+            sourceType=SourceTypeEnum.SELF_ADD.getCode();
+        }
         String sourceId = dto.getSourceId();
-
+        List<SoOutstockDetailDTO.AddDTO> detailList = dto.getDetailList();
         //检查出库数量
-        List<SoOutstockDetailDTO.UpdateDTO> detailList = BeanMapper.copyList(dto.getDetailList(), SoOutstockDetailDTO.UpdateDTO.class);
-        soOutstockDetailService.checkOutQty(dto.getWarehouseId(), dto.getSoId(), sourceId, sourceType, detailList);
+        List<SoOutstockDetailDTO.UpdateDTO> checkList = BeanMapper.copyList(detailList, SoOutstockDetailDTO.UpdateDTO.class);
+        soOutstockDetailService.checkOutQty(dto.getWarehouseId(), dto.getSoId(), sourceId, sourceType, checkList);
 
 
         SoOutstockEntity soOutstock = new SoOutstockEntity();
