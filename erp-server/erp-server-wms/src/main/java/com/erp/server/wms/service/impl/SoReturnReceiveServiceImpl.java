@@ -238,8 +238,11 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             entity.setWarehouseKeeperName(userDTO.getUserName());
         }
         this.save(entity);
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("新增了一个销售退货签收单【%s】", code), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "新增操作");
+
         soReturnReceiveDetailService.add(dto, entity.getId());
-        return soReturnEntity.getId();
+        return entity.getId();
     }
 
     @Override

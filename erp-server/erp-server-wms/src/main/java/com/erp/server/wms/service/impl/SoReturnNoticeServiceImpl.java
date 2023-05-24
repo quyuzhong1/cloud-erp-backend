@@ -283,8 +283,11 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             entity.setWarehouseName(warehouseEntity.getName());
         }
         this.save(entity);
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("新增了一个销售退货通知单【%s】", code), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "新增操作");
+
         soReturnNoticeDetailService.add(dto, entity.getId());
-        return soReturnEntity.getId();
+        return entity.getId();
     }
 
     @Override
