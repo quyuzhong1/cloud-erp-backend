@@ -45,7 +45,7 @@
             and srr.code = #{params.code}
         </if>
         <if test="params.sourceCode != null and params.sourceCode != ''">
-            and srr.source_code = #{params.sourceCode}
+            and srr.so_code = #{params.sourceCode}
         </if>
         <if test="params.customerIdList != null and params.customerIdList.size != ''">
             and srr.customer_id in
@@ -167,7 +167,7 @@
                     and srr.code = #{params.code}
                 </if>
                 <if test="params.sourceCode != null and params.sourceCode != ''">
-                    and srr.source_code = #{params.sourceCode}
+                    and srr.so_code = #{params.sourceCode}
                 </if>
                 <if test="params.customerIdList != null and params.customerIdList.size != ''">
                     and srr.customer_id in

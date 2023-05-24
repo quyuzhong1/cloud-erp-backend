@@ -259,6 +259,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 entity.setSalesDeptName(dept.getName());
             }
         }
+        entity.setSoId(soInfoEntity.getId());
+        entity.setSoCode(soInfoEntity.getCode());
         entity.setSellerId(soInfoEntity.getSellerId());
         entity.setSellerName(soInfoEntity.getSellerName());
         entity.setCustomerId(soInfoEntity.getCustomerId());
@@ -307,6 +309,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 entity.setSalesDeptName(dept.getName());
             }
         }
+        entity.setSoId(soInfoEntity.getId());
+        entity.setSoCode(soInfoEntity.getCode());
         entity.setSellerId(soInfoEntity.getSellerId());
         entity.setSellerName(soInfoEntity.getSellerName());
         entity.setCustomerId(soInfoEntity.getCustomerId());
