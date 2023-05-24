@@ -482,11 +482,13 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if (CollectionUtil.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
+        list.stream().peek(x -> x.setProcessStatusName(x.getProcessStatus().getName())).collect(Collectors.toList());
+        List<ProcessManagementDTO.ExportResultDTO> exportList = BeanUtil.copyToList(list, ProcessManagementDTO.ExportResultDTO.class);
         // 导出
         String excelPath = "excel/process_management.xlsx";
         String name = "流程管理";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        new ExcelPrintUtils().patchExport(list, response, StrUtil.format("{}_{}", name, date), excelPath);
+        new ExcelPrintUtils().patchExport(exportList, response, StrUtil.format("{}_{}", name, date), excelPath);
     }
 
     @Override

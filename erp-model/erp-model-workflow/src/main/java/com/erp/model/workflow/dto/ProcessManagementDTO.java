@@ -664,6 +664,61 @@ public class ProcessManagementDTO {
 
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportResultDTO {
+
+        /**
+         * 流程实例ID
+         */
+        private String processInstanceId;
+
+        /**
+         * 流程定义ID
+         */
+        private String processDefinitionId;
+        /**
+         * 流程定义版本
+         */
+        private Integer processVersion;
+        /**
+         * 流程名称
+         */
+        private String processName;
+
+        /**
+         * 业务ID
+         */
+        private String businessId;
+
+        /**
+         * 业务编码
+         */
+        private String businessCode;
+
+        /**
+         * 业务名称
+         */
+        private String businessName;
+
+        /**
+         * 审批人名称
+         */
+        private String curApproveName;
+
+        /**
+         * 流程状态
+         */
+        private String processStatusName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+    }
+
     @Data
     @NoArgsConstructor
     public static class ProgressDTO {

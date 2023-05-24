@@ -105,14 +105,12 @@ public class ProcessManagementController extends BaseController {
      * 流程管理导出
      */
     @PostMapping("/export")
-    public ApiResult<String> export(@RequestBody @Valid ProcessManagementDTO.SearchDTO dto, HttpServletResponse response) {
+    public void export(@RequestBody @Valid ProcessManagementDTO.SearchDTO dto, HttpServletResponse response) {
         try {
             processManagementService.export(dto, response);
         } catch (Exception e) {
             log.error("导出流程管理数据失败 dot = {}", JSONUtil.toJsonStr(dto), e);
-            return failure(e.getMessage());
         }
-        return success();
     }
     /**
      * 查看流程进度
