@@ -116,12 +116,12 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
                 deliveryQty = detailEntityList.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && req.getId() != detailDto.getId()).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             } else {
                 String idStr = IdWorker.getIdStr();
-                detailDto.setId(idStr);
+                soDeliveryNoticeDetailEntity.setId(idStr);
             }
             if (soDetailEntity.getQty() < detailDto.getDeliveryQty() + deliveryQty) {
                 throw new ServiceException(ApiError.ERROR_92010);
             }
-            soDeliveryNoticeDetailEntity.setMainId(detailDto.getMainId());
+            soDeliveryNoticeDetailEntity.setMainId(dto.getId());
             soDeliveryNoticeDetailEntity.setSkuId(soDetailEntity.getSkuId());
             soDeliveryNoticeDetailEntity.setSkuNo(soDetailEntity.getSkuNo());
             detailDto.setSkuNo(soDetailEntity.getSkuNo());
@@ -134,14 +134,14 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             //获取到表名
             String type = tableName.value();
             //保存附件
-            wmsAttachmentService.batchSaveNotDel(detailDto.getAttachUrlList(), detailDto.getAttachNameList(), type, detailDto.getId());
+            wmsAttachmentService.batchSaveNotDel(detailDto.getAttachUrlList(), detailDto.getAttachNameList(), type, soDeliveryNoticeDetailEntity.getId());
             //修改操作日志
-            if (StringUtils.isNotBlank(soDeliveryNoticeDetailEntity.getId())) {
+            if (StringUtils.isNotBlank(detailDto.getId())) {
                 SoDeliveryNoticeDetailEntity old = this.getById(soDeliveryNoticeDetailEntity.getId());
-                if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_98002);
+                if (ObjectUtils.isNotEmpty(old)) {
+                    operateLogService.addModuleOperateLogByObj(old, soDeliveryNoticeDetailEntity, ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), dto.getId(), "", String.format("【%s】", old.getSkuNo()));
+
                 }
-                operateLogService.addModuleOperateLogByObj(old, soDeliveryNoticeDetailEntity, ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), dto.getId(), "", String.format("【%s】", old.getSkuNo()));
             }
             list.add(soDeliveryNoticeDetailEntity);
         }

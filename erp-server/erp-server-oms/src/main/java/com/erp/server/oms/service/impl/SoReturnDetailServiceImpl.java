@@ -187,6 +187,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             if (actualQty < detailDto.getReturnQty() + returnQty) {
                 throw new ServiceException(ApiError.ERROR_92009);
             }
+            soReturnDetailEntity.setMainId(dto.getId());
             soReturnDetailEntity.setSkuId(soDetailEntity.getSkuId());
             soReturnDetailEntity.setSkuNo(soDetailEntity.getSkuNo());
             soReturnDetailEntity.setReturnQty(detailDto.getReturnQty());

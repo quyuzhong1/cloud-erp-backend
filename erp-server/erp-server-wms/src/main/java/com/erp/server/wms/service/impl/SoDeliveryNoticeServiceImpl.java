@@ -128,6 +128,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
             return new PagingVO(new Page());
         }
+
         //明细数据
         List<SoDeliveryNoticeDTO.PagingView> records = pageData.getRecords();
         //获取sku的id集合

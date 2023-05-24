@@ -27,9 +27,10 @@
         sri.approve_user_name,
         sri.create_user_name,
         sri.create_time
-        FROM so_return_instock sri
-        INNER JOIN so_return_instock_detail srid ON sri.id = srid.main_id AND sri.is_deleted = FALSE
+        FROM so_return_instock_detail srid
+        INNER JOIN so_return_instock sri ON sri.id = srid.main_id
         WHERE srid.is_deleted = FALSE
+        AND sri.is_deleted = FALSE
         <if test="params.ids != null and params.ids.size != ''">
             and sri.id in
             <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
