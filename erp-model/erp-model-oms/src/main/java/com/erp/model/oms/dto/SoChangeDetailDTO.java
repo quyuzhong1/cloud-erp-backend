@@ -45,9 +45,10 @@ public class SoChangeDetailDTO implements Serializable {
 
         /**
          * 变更类型
+         * 来源 http://172.16.100.11:3002/project/110/interface/api/13480  type=SoChangeType
          */
         @NotNull(message = "变更类型不能为空")
-        private String type;
+        private String changeType;
 
         /**
          * 销售数量

@@ -244,7 +244,7 @@ public class SoChangeDTO implements Serializable {
         /**
          * 变更部门id
          */
-        private String changeDeptId;
+        private String deptId;
 
         /**
          * 变更人
