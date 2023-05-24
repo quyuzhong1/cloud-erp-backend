@@ -65,11 +65,11 @@ public class InitStockDetailServiceImpl extends SuperServiceImpl<InitStockDetail
     }
 
     @Override
-    public InitStockDetailEntity findDetail(String mainId, String skuId) {
+    public List<InitStockDetailEntity> findDetail(String mainId, String skuId) {
         return lambdaQuery()
                 .eq(InitStockDetailEntity::getMainId,mainId)
                 .eq(InitStockDetailEntity::getSkuId,skuId)
-                .one();
+                .list();
     }
 
     @Transactional(rollbackFor = Exception.class)
