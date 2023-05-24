@@ -23,6 +23,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -120,18 +121,26 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String id = IdWorker.getIdStr();
         //来源类型
         String sourceType = dto.getSourceType();
-        if(StringUtils.isBlank(sourceType)){
-            sourceType=SourceTypeEnum.SELF_ADD.getCode();
+        if (StringUtils.isBlank(sourceType)) {
+            sourceType = SourceTypeEnum.SELF_ADD.getCode();
         }
         String sourceId = dto.getSourceId();
         List<SoOutstockDetailDTO.AddDTO> detailList = dto.getDetailList();
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_92029);
+        }
         //检查出库数量
         List<SoOutstockDetailDTO.UpdateDTO> checkList = BeanMapper.copyList(detailList, SoOutstockDetailDTO.UpdateDTO.class);
         soOutstockDetailService.checkOutQty(dto.getWarehouseId(), dto.getSoId(), sourceId, sourceType, checkList);
-
-
+        //销售订单
+        String soId = dto.getSoId();
+        SoInfoEntity soInfo = soInfoFeign.getSoInfoById(soId);
+        if (Objects.isNull(soInfo)) {
+            throw new ServiceException(ApiError.ERROR_92003);
+        }
         SoOutstockEntity soOutstock = new SoOutstockEntity();
         BeanMapper.copy(dto, soOutstock);
+        soOutstock.setSoCode(soInfo.getCode());
         soOutstock.setId(id);
         List<SoOutstockDetailDTO.AddDTO> addDetailList = dto.getDetailList();
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSCK, BusinessNoTypeEnum.CODE_XSCK.getCode()));
@@ -253,6 +262,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         SoOutstockDTO.ViewDTO result = new SoOutstockDTO.ViewDTO();
         BeanMapper.copy(soOutstock, result);
+        ApproveStatusEnum approveStatus = soOutstock.getApproveStatus();
+        result.setApproveStatusName(approveStatus.getName());
         String soId = soOutstock.getSoId();
         SoInfoDTO.CustomerDTO soInfo = soInfoFeign.getSoBaseById(soId);
         if (soInfo != null) {
@@ -266,6 +277,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             result.setTelNumber(soInfo.getTelNumber());
             result.setTypeName(soInfo.getOrderTypeName());
             result.setSellerName(soInfo.getSellerName());
+            result.setSalesDeptId(soInfo.getSalesDeptId());
+            result.setSalesDeptName(soInfo.getSalesDeptName());
+
         }
         List<SoOutstockDetailDTO.ViewDTO> detailList = soOutstockDetailService.listByMainId(id, soOutstock.getWarehouseId());
         result.setDetailList(detailList);
@@ -353,7 +367,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> noticeSoOutstockIds = noticeSoOutstockList.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
         List<String> noticeIdList = noticeSoOutstockList.stream().map(SoOutstockEntity::getSourceId).collect(Collectors.toList());
         //发货通知集合
-        List<SoDeliveryNoticeEntity> noticeList =CollectionUtils.isNotEmpty(noticeIdList)? soDeliveryNoticeService.listByIds(noticeIdList):Collections.emptyList();
+        List<SoDeliveryNoticeEntity> noticeList = CollectionUtils.isNotEmpty(noticeIdList) ? soDeliveryNoticeService.listByIds(noticeIdList) : Collections.emptyList();
         for (SoDeliveryNoticeEntity item : noticeList) {
             String deliveryNoticeId = item.getId();
             SoOutstockEntity noticeSoOutstock = noticeSoOutstockList.stream().filter(o -> o.getSourceId().equals(deliveryNoticeId)).findFirst().orElse(null);
@@ -386,7 +400,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SALES_DELIVERY_ORDER.getCode());
         List<InOutStockDTO> members = baseMapper.listInventoryInOut(allList);
-        for(InOutStockDTO member:members){
+        for (InOutStockDTO member : members) {
             member.setSourceType(InventorySourceTypeEnum.PURCHASE_STOCK_OUT);
             member.setBillDate(LocalDate.now());
         }
@@ -731,8 +745,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //旧的
         SoOutstockEntity old = new SoOutstockEntity();
         BeanMapper.copy(soOutstock, old);
+
+        String soId = dto.getSoId();
+        SoInfoEntity soInfo = soInfoFeign.getSoInfoById(soId);
+        if (Objects.isNull(soInfo)) {
+            throw new ServiceException(ApiError.ERROR_92003);
+        }
         BeanMapper.copy(dto, soOutstock);
         soOutstock.setCode(code);
+        soOutstock.setSoCode(soInfo.getCode());
         //发货组织
         String deliveryOrgId = dto.getDeliveryOrgId();
         //仓库id

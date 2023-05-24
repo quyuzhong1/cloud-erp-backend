@@ -40,6 +40,7 @@
 	      round( SUM ( price*qty ) / sum(qty), 2 ) avgPrice
         FROM so_detail
         WHERE is_deleted=FALSE
+        AND sku_id!='' and qty!=0
         GROUP BY sku_id
     </select>
 
