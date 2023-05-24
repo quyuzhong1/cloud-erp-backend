@@ -181,7 +181,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         List<ExportInitStockExcelDTO> resultList = BeanMapperUtils.copyList(ExportInitStockExcelDTO.class, list);
         String fileName = "期初库存数据";
         try {
-            ExcelUtil.export(fileName, "期初库存数据", resultList, ExportInitStockExcelDTO.class, response);
+            ExcelUtil.exportAdapt(fileName, "期初库存数据", resultList, ExportInitStockExcelDTO.class, response, null);
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
