@@ -61,10 +61,6 @@ public class SoReturnReceiveDetailDTO implements Serializable {
          */
         private String id;
         /**
-         * 主键id
-         */
-        private String mainId;
-        /**
          * 退货数量
          */
         @NotNull(message = "退货数量不能为空")

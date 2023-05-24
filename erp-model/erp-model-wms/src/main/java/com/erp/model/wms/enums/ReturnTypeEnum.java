@@ -34,9 +34,9 @@ public enum  ReturnTypeEnum {
     }
 
     public static String getName(String code) {
-        for (ReturnModeEnum returnModeEnum : ReturnModeEnum.values()) {
-            if (code.equals(returnModeEnum.getCode())) {
-                return returnModeEnum.getName();
+        for (ReturnTypeEnum returnTypeEnum : ReturnTypeEnum.values()) {
+            if (code.equals(returnTypeEnum.getCode())) {
+                return returnTypeEnum.getName();
             }
         }
         return "";

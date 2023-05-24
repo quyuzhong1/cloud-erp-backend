@@ -88,14 +88,14 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             SoReturnReceiveDetailEntity detailEntity = new SoReturnReceiveDetailEntity();
             SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_92016);
+                throw new ServiceException(ApiError.ERROR_92023);
             }
             Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSkuId().equals(soReturnDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             if (actualQty < detailDto.getReturnQty()) {
                 throw new ServiceException(ApiError.ERROR_92009);
             }
-            if (detailDto.getReceiveQty() < returnQty) {
+            if (detailDto.getReceiveQty() > returnQty) {
                 throw new ServiceException(ApiError.ERROR_92020);
             }
             detailEntity.setMainId(id);
@@ -133,19 +133,19 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
         for (SoReturnReceiveDetailDTO.Update detailDto : dto.getDetailList()) {
             SoReturnReceiveDetailEntity detailEntity = new SoReturnReceiveDetailEntity();
             SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(soReturnDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_92016);
+            if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_92023);
             }
             Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSkuId().equals(soReturnDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             if (actualQty < detailDto.getReturnQty()) {
                 throw new ServiceException(ApiError.ERROR_92009);
             }
-            if (detailDto.getReceiveQty() < returnQty) {
+            if (detailDto.getReceiveQty() > returnQty) {
                 throw new ServiceException(ApiError.ERROR_92020);
             }
-            detailEntity.setId(dto.getId());
-            detailEntity.setMainId(detailDto.getMainId());
+            detailEntity.setId(detailDto.getId());
+            detailEntity.setMainId(dto.getId());
             detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
             detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
             detailEntity.setReturnQty(detailDto.getReturnQty());
@@ -166,7 +166,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             List<Pair<String, String>> addPairList = returnNoticeDetailEntities.stream().map(obj -> new Pair<>(dto.getId(), obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), addPairList, "编辑操作");
         }
-        return this.saveBatch(list);
+        return this.saveOrUpdateBatch(list);
     }
 
     private List<String> getDeleteIds(List<SoReturnReceiveDetailDTO.Update> newList, List<SoReturnReceiveDetailEntity> oldList) {
