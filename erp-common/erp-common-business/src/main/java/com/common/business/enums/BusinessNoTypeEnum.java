@@ -27,7 +27,6 @@ public enum BusinessNoTypeEnum {
     CODE_DEPT(17, "bm","部门编号"),
     CODE_RKYB(18, "rkyb","入库预报"),
     CODE_DBSQ(19, "dbsq","调拨申请"),
-    CODE_FHTZ(19, "fhtz","发货通知单"),
     CODE_CUST(20, "cust","客户"),
     CODE_INIT_STOCK(21, "init_stock","期初库存"),
     CODE_THDD(22, "thdd","销售退货订单"),
@@ -37,8 +36,10 @@ public enum BusinessNoTypeEnum {
     CODE_ZZCX(26, "zzcx","加工单"),
     CODE_THQS(27, "thqs","退货签收单"),
     CODE_XSCK(28, "xsck","销售出库单"),
-    CODE_QTRK(28, "qtrk","其他入库单"),
-    CODE_QTCK(28, "qtck","其他出库单"),
+    CODE_QTRK(29, "qtrk","其他入库单"),
+    CODE_QTCK(30, "qtck","其他出库单"),
+    CODE_XSBG(31, "xsbg","销售变更单"),
+    CODE_FHTZ(32, "fhtz","发货通知单"),
 
     ;
 

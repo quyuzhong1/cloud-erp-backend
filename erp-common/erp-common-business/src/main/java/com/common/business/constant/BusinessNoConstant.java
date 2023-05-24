@@ -62,6 +62,9 @@ public interface BusinessNoConstant {
     //销售订单
     String XSD = "XSD";
 
+    //销售订单变更
+    String XSBG = "XSBG";
+
     String THQS = "THQS";
 
     //销售出库

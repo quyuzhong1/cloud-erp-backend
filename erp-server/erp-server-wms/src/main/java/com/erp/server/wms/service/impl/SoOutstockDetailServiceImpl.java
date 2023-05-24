@@ -254,11 +254,11 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
         } else {
             //表示是发货通知单的
-            List<SoDeliveryNoticeDetailEntity> deliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(sourceDetailIdList);
+            List<SoDeliveryNoticeDetailEntity> deliveryNoticeDetailList = CollectionUtils.isNotEmpty(sourceDetailIdList)?soDeliveryNoticeDetailService.listByIds(sourceDetailIdList):Collections.emptyList();
             for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
                 String sourceDetailId = item.getSourceDetailId();
                 String id = item.getId();
-                Integer deliveryQty = deliveryNoticeDetailList.stream().filter(d -> d.getSourceDetailId().equals(sourceDetailId)).
+                Integer deliveryQty = deliveryNoticeDetailList.stream().filter(d -> d.getId().equals(sourceDetailId)).
                         findFirst().flatMap(obj -> Optional.ofNullable(obj.getDeliveryQty())).orElse(0);
                 //实发数量
                 Integer actualQty = item.getActualQty();
