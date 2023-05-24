@@ -23,6 +23,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -131,10 +132,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //检查出库数量
         List<SoOutstockDetailDTO.UpdateDTO> checkList = BeanMapper.copyList(detailList, SoOutstockDetailDTO.UpdateDTO.class);
         soOutstockDetailService.checkOutQty(dto.getWarehouseId(), dto.getSoId(), sourceId, sourceType, checkList);
-
-
+        //销售订单
+        String soId = dto.getSoId();
+        SoInfoEntity soInfo = soInfoFeign.getSoInfoById(soId);
+        if (Objects.isNull(soInfo)) {
+            throw new ServiceException(ApiError.ERROR_92003);
+        }
         SoOutstockEntity soOutstock = new SoOutstockEntity();
         BeanMapper.copy(dto, soOutstock);
+        soOutstock.setSoCode(soInfo.getCode());
         soOutstock.setId(id);
         List<SoOutstockDetailDTO.AddDTO> addDetailList = dto.getDetailList();
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSCK, BusinessNoTypeEnum.CODE_XSCK.getCode()));
@@ -734,8 +740,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //旧的
         SoOutstockEntity old = new SoOutstockEntity();
         BeanMapper.copy(soOutstock, old);
+
+        String soId = dto.getSoId();
+        SoInfoEntity soInfo = soInfoFeign.getSoInfoById(soId);
+        if (Objects.isNull(soInfo)) {
+            throw new ServiceException(ApiError.ERROR_92003);
+        }
         BeanMapper.copy(dto, soOutstock);
         soOutstock.setCode(code);
+        soOutstock.setSoCode(soInfo.getCode());
         //发货组织
         String deliveryOrgId = dto.getDeliveryOrgId();
         //仓库id
