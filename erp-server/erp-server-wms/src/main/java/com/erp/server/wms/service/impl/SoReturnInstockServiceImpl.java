@@ -636,7 +636,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (CollectionUtils.isEmpty(returnDetailEntityList)) {
             throw new ServiceException(ApiError.ERROR_92023);
         }
-
         for (String id : soReceiveIdList) {
             List<SoReturnInstockDTO.GenerateSoReturnInstockView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
             QcInfoEntity qcInfoEntity = qcInfoService.getById(id);
@@ -651,7 +650,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 SoReturnInstockDetailDTO.Add detailAddDTO = new SoReturnInstockDetailDTO.Add();
                 detailAddDTO.setMustQty(view.getMustQty());
                 detailAddDTO.setReceiveQty(view.getReceiveQty());
-                detailAddDTO.setRealQty(view.getReceiveQty());
+                detailAddDTO.setRealQty(view.getRealQty());
                 detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
                 detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
                 detailAddDTO.setWarehouseLocation(view.getWarehouseLocation());

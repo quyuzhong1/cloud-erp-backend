@@ -1506,6 +1506,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             view.setDeliveryQty(actualQty);
             view.setMustQty(soReturnReceiveDetailEntity.getReturnQty());
             view.setReceiveQty(soReturnReceiveDetailEntity.getReceiveQty());
+            view.setRealQty(soReturnReceiveDetailEntity.getReceiveQty());
             view.setReturnTypeDict(soReturnReceiveDetailEntity.getReturnTypeDict());
             view.setReturnReasonDict(soReturnReceiveDetailEntity.getReturnReasonDict());
         }
