@@ -145,7 +145,7 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
                     .update();
         }
         // 新增审批记录
-        boolean save = save(ProcessTaskManagementEntity.getByEntity(entityList.get(0), targetUserId));
+        boolean save = save(ProcessTaskManagementEntity.getByEntity(entityList.get(0), targetUserId, targetUserName));
         if (!save) {
             throw new RuntimeException(" updateTransfer 任务转办 保存流程任务失败");
         }

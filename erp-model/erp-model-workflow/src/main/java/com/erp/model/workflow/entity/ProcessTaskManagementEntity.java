@@ -168,11 +168,12 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
         this.curActivityName = activityName;
     }
 
-    public static ProcessTaskManagementEntity getByEntity(ProcessTaskManagementEntity entity, String targetUserId) {
+    public static ProcessTaskManagementEntity getByEntity(ProcessTaskManagementEntity entity, String targetUserId, String targetUserName) {
         ProcessTaskManagementEntity insertEntity = new ProcessTaskManagementEntity();
         BeanUtil.copyProperties(entity, insertEntity, "id","createTime","updateTime","version");
         insertEntity.setStartTime(LocalDateTime.now());
         insertEntity.setCurApproveId(targetUserId);
+        insertEntity.setCurApproveName(targetUserName);
         Duration warnDuration = Duration.between(entity.getStartTime(), entity.getTimeoutWarnTime());
         insertEntity.setTimeoutWarnTime(insertEntity.getStartTime().plusHours(warnDuration.toHours()));
         Duration duration = Duration.between(entity.getStartTime(), entity.getTimeoutHandleTime());
