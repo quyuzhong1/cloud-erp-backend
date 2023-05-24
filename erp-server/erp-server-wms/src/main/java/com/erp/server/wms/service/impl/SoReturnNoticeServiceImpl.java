@@ -238,6 +238,8 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             entity.setWarehouseKeeperId(userDTO.getUserId());
             entity.setWarehouseKeeperName(userDTO.getUserName());
         }
+        entity.setSoId(soInfoEntity.getId());
+        entity.setSoCode(soInfoEntity.getCode());
         entity.setType(soInfoEntity.getOrderType());
         entity.setSalesOrgId(soInfoEntity.getSalesOrgId());
         entity.setSalesOrgName(soInfoEntity.getSalesOrgName());
@@ -301,6 +303,8 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             entity.setWarehouseKeeperId(userDTO.getUserId());
             entity.setWarehouseKeeperName(userDTO.getUserName());
         }
+        entity.setSoId(soInfoEntity.getId());
+        entity.setSoCode(soInfoEntity.getCode());
         entity.setType(soInfoEntity.getOrderType());
         entity.setSalesOrgId(soInfoEntity.getSalesOrgId());
         entity.setSalesOrgName(soInfoEntity.getSalesOrgName());
