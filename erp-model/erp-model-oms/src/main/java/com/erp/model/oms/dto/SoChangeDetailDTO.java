@@ -91,10 +91,7 @@ public class SoChangeDetailDTO implements Serializable {
         @NotNull(message = "是否补发不能为空")
         private Boolean isReissue;
 
-        /**
-         * 是否关闭
-         */
-        private Boolean isClose;
+
 
 
         /**

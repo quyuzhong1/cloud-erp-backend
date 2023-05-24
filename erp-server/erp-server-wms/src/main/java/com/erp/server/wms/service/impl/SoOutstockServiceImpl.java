@@ -638,7 +638,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             item.setApproveStatusName(approveStatus.getName());
             String soId = item.getSoId();
             SoInfoDTO.CustomerDTO soInfo = soCustomerList.stream().filter(s -> s.getId().equals(soId)).findFirst().orElse(new SoInfoDTO.CustomerDTO());
-            item.setOrderType(soInfo.getOrderTypeName());
+            item.setOrderTypeName(soInfo.getOrderTypeName());
             item.setSalesOrgName(soInfo.getSalesOrgName());
             item.setCustomerName(soInfo.getCustomerName());
             Boolean invalidStatus = item.getInvalidStatus();
@@ -654,6 +654,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 item.setSoCode("");
                 item.setSourceCode("");
                 item.setOrderType("");
+                item.setOrderTypeName("");
                 item.setApproveStatusName("");
                 item.setCustomerName("");
                 item.setDeliveryOrgName("");
@@ -850,7 +851,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 add.setPlanDeliveryDate(generateInfo.getPlanDeliveryDate());
                 add.setWarehouseId(generateInfo.getWarehouseId());
                 add.setTrackNo(generateInfo.getTrackNo());
-
                 List<SoOutstockDetailDTO.AddDTO> detailList = new ArrayList<>(generateInfoList.size());
                 for (SoOutstockDTO.GenerateSoOutstockViewDTO item : generateInfoList) {
                     SoOutstockDetailDTO.AddDTO detail = new SoOutstockDetailDTO.AddDTO();
