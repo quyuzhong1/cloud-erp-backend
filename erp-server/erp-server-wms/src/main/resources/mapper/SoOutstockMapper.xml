@@ -10,6 +10,7 @@
         so.so_id,
         so.so_code,
         so.source_code,
+        so.source_id,
         so.approve_status,
         so.delivery_org_name,
         so.carrier_id,
@@ -44,8 +45,8 @@
         <if test="params.soCode !=null and params.soCode!=''">
             AND so.so_code ILIKE concat('%', #{params.soCode} ,'%')
         </if>
-        <if test="params.type !=null and params.type!=''">
-            AND so.type =#{params.type}
+        <if test="params.orderType !=null and params.orderType!=''">
+            AND so.order_type =#{params.orderType}
         </if>
         <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
             AND so.approve_status IN
@@ -103,6 +104,7 @@
            so.code,
            so.so_id,
            so.so_code,
+           so.source_id,
            so.source_code,
            so.approve_status,
            so.delivery_org_name,
@@ -146,8 +148,8 @@
                 <if test="params.soCode !=null and params.soCode!=''">
                     AND so.so_code ILIKE concat('%', #{params.soCode} ,'%')
                 </if>
-                <if test="params.type !=null and params.type!=''">
-                    AND so.type =#{params.type}
+                <if test="params.orderType !=null and params.orderType!=''">
+                    AND so.order_type =#{params.orderType}
                 </if>
                 <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
                     AND so.approve_status IN
