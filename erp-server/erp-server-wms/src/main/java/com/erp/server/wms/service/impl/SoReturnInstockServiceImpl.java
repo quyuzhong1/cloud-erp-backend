@@ -289,7 +289,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         this.save(entity);
 
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("新增了一个采购入库单【%s】", code), ModuleTypeEnum.PO_INSTOCK.getCode(), entity.getId(), "新增操作");
+        operateLogService.addModuleOperateLog(String.format("新增了一个销售退货入库单【%s】", code), ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "新增操作");
 
         soReturnInstockDetailService.add(dto, entity.getId());
         return entity.getId();

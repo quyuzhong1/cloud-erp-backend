@@ -228,6 +228,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnEntity.setSourceType(dto.getSourceType());
         soReturnEntity.setBillDate(dto.getBillDate());
         this.save(soReturnEntity);
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("新增了一个销售退货入库单【%s】", code), ModuleTypeEnum.SO_RETURN.getCode(), soReturnEntity.getId(), "新增操作");
+
         soReturnDetailService.add(dto, soReturnEntity.getId());
         return soReturnEntity.getId();
     }
