@@ -348,4 +348,9 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
     public List<PurchaseReturnOrderDetailEntity> listReturnOrderDetailByPodIds(List<String> podIds) {
         return baseMapper.listReturnOrderDetailByPodIds(podIds);
     }
+
+    @Override
+    public List<PurchaseReturnOrderDetailEntity> listByMainIds(List<String> mainIds) {
+        return lambdaQuery().in(PurchaseReturnOrderDetailEntity::getMainId,mainIds).list();
+    }
 }

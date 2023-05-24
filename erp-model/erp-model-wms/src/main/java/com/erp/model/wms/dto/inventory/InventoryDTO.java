@@ -709,8 +709,10 @@ public class InventoryDTO {
         /**
          * 组织id
          */
+        /*
         @NotBlank(message = "仓库组织不能为空")
         private String orgId;
+         */
 
         /**
          * 仓库id

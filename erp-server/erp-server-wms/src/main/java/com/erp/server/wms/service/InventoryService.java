@@ -67,23 +67,21 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     List<InventoryEntity> findInventoryCheckLocation(String orgId,String warehouseId,String skuId, String warehouseLocation,String status);
 
     /**
-     * 根据组织、仓库、库位、状态获取可用库存数量；如果库位为空，则赋值空库位
-     * @param orgId
+     * 根据仓库、库位、状态获取可用库存数量；如果库位为空，则赋值空库位
      * @param warehouseId
      * @param skuId
      * @param warehouseLocation
      * @return
      */
-    Integer getUsableInventoryTotal(String orgId,String warehouseId,String skuId, String warehouseLocation);
+    Integer getUsableInventoryTotal(String warehouseId,String skuId, String warehouseLocation);
 
     /**
-     * 根据组织、仓库、SKU获取可用库存数量；特别注意：不带库位查询条件
-     * @param orgId
+     * 根据仓库、SKU获取可用库存数量；特别注意：不带库位查询条件
      * @param warehouseId
      * @param skuId
      * @return
      */
-    Integer getUsableInventoryTotal(String orgId,String warehouseId,String skuId);
+    Integer getUsableInventoryTotal(String warehouseId,String skuId);
 
     /**
      * 新增或修改库存

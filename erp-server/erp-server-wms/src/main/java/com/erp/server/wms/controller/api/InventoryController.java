@@ -118,7 +118,7 @@ public class InventoryController extends BaseController {
      */
     @PostMapping(value = "/getUsableInventoryTotal")
     public ApiResult<Integer> getUsableInventoryTotal(@RequestBody @Validated InventoryDTO.UsableInventoryParamDTO dto) {
-        Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(dto.getOrgId(), dto.getWarehouseId(), dto.getSkuId());
+        Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(dto.getWarehouseId(), dto.getSkuId());
         return success(usableInventoryTotal);
     }
 
@@ -131,7 +131,7 @@ public class InventoryController extends BaseController {
      */
     @PostMapping(value = "/getLocationUsableInventoryTotal")
     public ApiResult<Integer> getLocationUsableInventoryTotal(@RequestBody @Validated InventoryDTO.UsableInventoryParamDTO dto) {
-        Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(dto.getOrgId(), dto.getWarehouseId(), dto.getSkuId(), dto.getWarehouseLocation());
+        Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(dto.getWarehouseId(), dto.getSkuId(), dto.getWarehouseLocation());
         return success(usableInventoryTotal);
     }
 

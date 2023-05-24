@@ -58,6 +58,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -483,6 +484,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId());
                 }
             }
+
+            // 更新库存信息
         } else {
             //审核不通过
             lambdaUpdate().set(PurchaseReturnOrderEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -943,4 +946,21 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         }
         return Boolean.TRUE;
     }
+
+    /**
+     * 更新库存信息
+     * @param list
+     */
+    private void updateInventoryTransCore (List<PurchaseReturnOrderEntity> list) {
+        List<String> ids = list.stream().map(PurchaseReturnOrderEntity::getId).distinct().collect(Collectors.toList());
+        Map<String,PurchaseReturnOrderEntity> mainMap = list.stream().collect(Collectors.toMap(PurchaseReturnOrderEntity::getId, Function.identity()));
+        List<PurchaseReturnOrderDetailEntity> detailEntityList = purchaseReturnOrderDetailService.listByMainIds(ids);
+        if (CollectionUtils.isEmpty(detailEntityList)) {
+            throw new ServiceException("未找到采购退货单明细信息");
+        }
+        // 明细按主单id分组
+        Map<String,List<PurchaseReturnOrderDetailEntity>> detailMap = detailEntityList.stream().collect(Collectors.groupingBy(PurchaseReturnOrderDetailEntity::getMainId));
+        // 分3种情况，
+    }
+
 }
