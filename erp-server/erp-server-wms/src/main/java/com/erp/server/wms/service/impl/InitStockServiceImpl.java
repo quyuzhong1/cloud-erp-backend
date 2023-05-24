@@ -361,7 +361,8 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         IntStream.range(0,ids.size()).forEach(idx->{
             String id = ids.get(idx);
             ValidatorUtil.isTrue(initStockEntityMap.containsKey(id),()->new ServiceException("期初库存数据不存在"));
-            ValidatorUtil.isTrue(Objects.equals(initStockEntityMap.get(id).getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()),()->new ServiceException("只有待提交并且未作废数据支持删除"));
+            InitStockEntity initStockEntity = initStockEntityMap.get(id);
+            ValidatorUtil.isTrue(Objects.equals(initStockEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) && Objects.equals(initStockEntity.getInvalidStatus(), Boolean.FALSE),()->new ServiceException("只有待提交并且未作废数据支持删除"));
         });
         // 删除期初库存日志数据
         log.info("删除 开始删除期初库存日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
