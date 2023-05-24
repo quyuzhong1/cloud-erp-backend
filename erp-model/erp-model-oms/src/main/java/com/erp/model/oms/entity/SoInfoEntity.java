@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
-import com.erp.model.oms.enums.BillTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -47,7 +46,7 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
      * 订单类型
      */
     @TableField("order_type")
-    private BillTypeEnum orderType;
+    private String orderType;
 
     /**
      * 要货日期

@@ -3,5 +3,12 @@
 <mapper namespace="com.erp.server.oms.mapper.SoChangeMapper">
 
 
-
+    <select id="listApproveCount" resultType="com.erp.model.oms.dto.SoChangeDTO$ApproveCountDTO">
+         SELECT
+            approve_status,
+	        count(*)
+	     FROM   so_outstock
+	     WHERE is_deleted=FALSE
+         GROUP BY approve_status
+    </select>
 </mapper>

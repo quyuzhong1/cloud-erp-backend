@@ -22,7 +22,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -30,7 +29,8 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.SoReturnInstockDTO;
+import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
@@ -249,7 +249,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         //获取销售单信息
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
         SoReturnInstockEntity entity = new SoReturnInstockEntity();
-        entity.setType(soInfoEntity.getOrderType().getCode());
+        entity.setType(soInfoEntity.getOrderType());
         entity.setSalesOrgId(soInfoEntity.getSalesOrgId());
         entity.setSalesOrgName(soInfoEntity.getSalesOrgName());
         entity.setSalesDeptId(soInfoEntity.getSalesDeptId());
@@ -297,7 +297,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         //获取销售单信息
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
         SoReturnInstockEntity entity = new SoReturnInstockEntity();
-        entity.setType(soInfoEntity.getOrderType().getCode());
+        entity.setType(soInfoEntity.getOrderType());
         entity.setSalesOrgId(soInfoEntity.getSalesOrgId());
         entity.setSalesOrgName(soInfoEntity.getSalesOrgName());
         entity.setSalesDeptId(soInfoEntity.getSalesDeptId());

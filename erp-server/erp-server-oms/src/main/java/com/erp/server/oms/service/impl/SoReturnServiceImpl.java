@@ -196,7 +196,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         //获取销售单信息
         SoInfoEntity soInfoEntity = soInfoService.getById(dto.getSourceId());
         SoReturnEntity soReturnEntity = new SoReturnEntity();
-        soReturnEntity.setType(soInfoEntity.getOrderType().getCode());
+        soReturnEntity.setType(soInfoEntity.getOrderType());
         soReturnEntity.setSalesOrgId(soInfoEntity.getSalesOrgId());
         soReturnEntity.setSalesOrgName(soInfoEntity.getSalesOrgName());
         soReturnEntity.setSalesDeptId(soInfoEntity.getSalesDeptId());
@@ -237,7 +237,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         //获取销售单信息
         SoInfoEntity soInfoEntity = soInfoService.getById(dto.getSourceId());
         SoReturnEntity soReturnEntity = new SoReturnEntity();
-        soReturnEntity.setType(soInfoEntity.getOrderType().getCode());
+        soReturnEntity.setType(soInfoEntity.getOrderType());
         soReturnEntity.setSalesOrgId(soInfoEntity.getSalesOrgId());
         soReturnEntity.setSalesOrgName(soInfoEntity.getSalesOrgName());
         soReturnEntity.setSalesDeptId(soInfoEntity.getSalesDeptId());

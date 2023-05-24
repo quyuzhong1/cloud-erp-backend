@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.constant.BusinessNoConstant;
+import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BillApproveStatusEnum;
@@ -29,6 +30,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -165,19 +167,50 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     }
 
 
-
     /**
      * 获取tab 列表
-     * @author yl
-     * @date 2023-05-24 14:56
+     *
      * @param
      * @return java.util.List<com.erp.model.oms.dto.SoChangeDTO.TabListDTO>
+     * @author yl
+     * @date 2023-05-24 14:56
      */
     @Override
     public List<SoChangeDTO.TabListDTO> tabList() {
         List<SoChangeDTO.TabListDTO> resultList = new ArrayList<>(4);
+        List<SoChangeDTO.ApproveCountDTO> approveCountList = baseMapper.listApproveCount();
+        int allCount = approveCountList.stream().mapToInt(SoChangeDTO.ApproveCountDTO::getCount).sum();
+        SoChangeDTO.TabListDTO all = new SoChangeDTO.TabListDTO();
+        all.setCount(allCount);
+        all.setSearchType(SearchType.ALL);
+        resultList.add(all);
 
-        return null;
+        //待审核
+        String ing = ApproveStatusEnum.APPROVE_ING.getStatus();
+        SoChangeDTO.TabListDTO waitApprove = new SoChangeDTO.TabListDTO();
+        int waitApproveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(ing)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        waitApprove.setCount(waitApproveCount);
+        waitApprove.setSearchType(SearchType.WAIT_APPROVE);
+        resultList.add(waitApprove);
+
+        //已审核
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        SoChangeDTO.TabListDTO approve = new SoChangeDTO.TabListDTO();
+        int approveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(approveStatus)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        approve.setCount(approveCount);
+        approve.setSearchType(approveStatus);
+        resultList.add(approve);
+        //审核不通过
+        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+        SoChangeDTO.TabListDTO reject = new SoChangeDTO.TabListDTO();
+        int rejectCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(rejectStatus)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        reject.setCount(rejectCount);
+        reject.setSearchType(rejectStatus);
+        resultList.add(reject);
+        return resultList;
     }
 
     private Boolean updateApproveStatus(List<SoChangeEntity> list, ApproveStatusEnum statusEnum) {

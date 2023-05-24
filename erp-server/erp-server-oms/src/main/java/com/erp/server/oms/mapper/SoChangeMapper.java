@@ -1,8 +1,11 @@
 package com.erp.server.oms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,4 +18,13 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface SoChangeMapper extends BaseMapper<SoChangeEntity> {
 
+    
+    /**
+     * 获取审核状态数据
+     * @author yl
+     * @date 2023-05-24 15:20
+     * @param
+     * @return java.util.List<com.erp.model.oms.dto.SoChangeDTO.ApproveCountDTO>
+     */
+    List<SoChangeDTO.ApproveCountDTO> listApproveCount();
 }
