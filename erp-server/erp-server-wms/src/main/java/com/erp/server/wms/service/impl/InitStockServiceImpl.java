@@ -584,7 +584,6 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
      */
     public void checkUpdateRepeateSku(InitStockDTO.UpdateDTO mainDTO, List<InitStockDetailDTO.UpdateDTO> details, String mainId) {
         WarehouseDTO.UpdateDTO warehouseDTO = warehouseService.detailWithCache(mainDTO.getWarehouseId());
-        Map<String,List<InitStockDetailDTO.UpdateDTO>> skuMap = details.stream().collect(Collectors.groupingBy(InitStockDetailDTO.UpdateDTO::getSkuId));
         Set<String> skuWareLocationSet = Sets.newHashSet();
         for(InitStockDetailDTO.UpdateDTO updateDTO : details) {
             String skuWareLocation = updateDTO.getSkuId() + "-" + StrUtils.null2EmptyWithTrim(updateDTO.getWarehouseLocation());
