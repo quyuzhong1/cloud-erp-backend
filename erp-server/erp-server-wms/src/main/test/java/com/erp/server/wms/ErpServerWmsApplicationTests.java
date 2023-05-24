@@ -1,7 +1,8 @@
-package com.erp.server.scm;
+package com.erp.server.wms;
 
 import com.erp.model.wms.entity.CfgOperateLogFieldEntity;
 import com.erp.model.wms.entity.OtherInstockEntity;
+import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import com.erp.model.wms.enums.InstockTypeEnum;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
 import com.erp.server.wms.ErpServerWmsApplication;
@@ -38,19 +39,17 @@ public class ErpServerWmsApplicationTests {
 
     @Test
     public void addLogField() {
-
         //用于手动添加字段对应信息，后续可添加界面添加,classPath为比较DTO路径
-        String classPath = String.valueOf(OtherInstockEntity.class);
+        String classPath = String.valueOf(WarehouseReceiveEntity.class);
         List<CfgOperateLogFieldEntity> logFields = Arrays.asList(
-                new CfgOperateLogFieldEntity().setField("billDate").setFieldName("入库日期").setClassPath(classPath).setType(0).setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("inventoryDirection").setFieldName("库存方向").setClassPath(classPath).setType(2).setEnumClass(InventoryDirectionEnum.class.getName()),
-                new CfgOperateLogFieldEntity().setField("warehouseKeeperName").setFieldName("仓管员").setClassPath(classPath).setType(0).setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("warehouseName").setFieldName("收货仓库").setClassPath(classPath).setType(0).setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("receiverName").setFieldName("验收员").setClassPath(classPath).setType(0).setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("type").setFieldName("入库类型").setClassPath(classPath).setType(2).setEnumClass(InstockTypeEnum.class.getName())
-
-
-                );
+                new CfgOperateLogFieldEntity().setField("purchaseOrderCode").setFieldName("采购订单编号").setClassPath(classPath).setType(0).setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("supplierName").setFieldName("供应商名称").setClassPath(classPath).setType(0).setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("receiveUserName").setFieldName("收货人名称").setClassPath(classPath).setType(0).setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("receiveDeptName").setFieldName("收货人部门名称").setClassPath(classPath).setType(0).setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("receiveOrgName").setFieldName("收货人组织名称").setClassPath(classPath).setType(0).setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("billDate").setFieldName("收货日期").setClassPath(classPath).setType(0).setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("deliveryWarehouseName").setFieldName("交货仓库名称").setClassPath(classPath).setType(0).setEnumClass("")
+        );
         logFieldService.saveBatch(logFields);
         System.out.println("sss");
     }
