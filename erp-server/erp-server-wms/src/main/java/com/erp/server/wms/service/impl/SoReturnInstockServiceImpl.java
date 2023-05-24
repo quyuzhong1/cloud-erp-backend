@@ -32,8 +32,11 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -113,6 +116,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Resource
     private WorkflowFeign workflowFeign;
+
+    @Resource
+    private InventoryTransCoreService inventoryTransCoreService;
 
     /**
      * 根据退货单获取销售单已出库数量
@@ -455,21 +461,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     .in(SoReturnInstockEntity::getId, ids)
                     .update();
 
-        /*    for (SoReturnInstockEntity entity : entityList) {
-                InOutStockDTO inOutStockDTO = new InOutStockDTO();
-                inOutStockDTO.setSourceType(InventorySourceTypeEnum.SO_DELIVERY_NOTICE);
-                inOutStockDTO.setSourceId(entity.getId());
-                inOutStockDTO.setSourceCode(entity.getCode());
-                inOutStockDTO.setSourceDetailId(detailEntity.getId());
-                inOutStockDTO.setBillDate(LocalDate.now());
-                inOutStockDTO.setSkuId(addDTO.getSkuId());
-                inOutStockDTO.setSkuNo(addDTO.getSkuNo());
-                inOutStockDTO.setQty(addDTO.getQty());
-                inOutStockDTO.setWarehouseId(entity.getWarehouseId());
-                inOutStockDTO.setWarehouseLocation(addDTO.getWarehouseLocation());
-                inOutStockList.add(inOutStockDTO);
-            }*/
-
+            //更新库存
+            inventoryTransCore(entityList);
         } else {
             //审核不通过
             lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -508,6 +501,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 .in(SoReturnInstockEntity::getId, ids)
                 .update();
 
+        //回滚库存
+        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_RETURN_INSTOCK, ids);
+        inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
         //操作日志
         List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("反审核了一个销售退货通知单【%s】", ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), pairList, "反审核操作");
@@ -686,5 +682,39 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             }
         }
         return flag;
+    }
+
+    /**
+     * 更新库存
+     * @Author Luo_WG
+     * @Date 2023/5/24 11:25
+     * @param entityList
+     * @return void
+     **/
+    private void inventoryTransCore(List<SoReturnInstockEntity> entityList) {
+        for (SoReturnInstockEntity entity : entityList) {
+            List<InOutStockDTO> inOutStockList = new ArrayList<>();
+            List<SoReturnInstockDetailEntity> returnInstockDetailEntities = soReturnInstockDetailService.listDetailByMainId(entity.getId());
+            for (SoReturnInstockDetailEntity detailEntity : returnInstockDetailEntities) {
+                InOutStockDTO inOutStockDTO = new InOutStockDTO();
+                inOutStockDTO.setSourceType(InventorySourceTypeEnum.SO_RETURN_INSTOCK);
+                inOutStockDTO.setSourceId(entity.getId());
+                inOutStockDTO.setSourceCode(entity.getCode());
+                inOutStockDTO.setSourceDetailId(detailEntity.getId());
+                inOutStockDTO.setBillDate(LocalDate.now());
+                inOutStockDTO.setSkuId(detailEntity.getSkuId());
+                inOutStockDTO.setSkuNo(detailEntity.getSkuNo());
+                inOutStockDTO.setQty(detailEntity.getRealQty());
+                inOutStockDTO.setWarehouseId(entity.getWarehouseId());
+                inOutStockDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
+                inOutStockList.add(inOutStockDTO);
+            }
+            //添加冻结库存
+            InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+            inventoryInOutStockDTO.setMembers(inOutStockList);
+            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SALES_RETURN_RECEIPT.getCode());
+            //更新库存
+            inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+        }
     }
 }

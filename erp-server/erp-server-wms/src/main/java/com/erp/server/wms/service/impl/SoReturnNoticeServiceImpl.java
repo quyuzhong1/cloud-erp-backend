@@ -248,6 +248,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 entity.setSalesDeptName(dept.getName());
             }
         }
+
         entity.setSellerId(soInfoEntity.getSellerId());
         entity.setSellerName(soInfoEntity.getSellerName());
         entity.setCustomerId(soInfoEntity.getCustomerId());
@@ -259,13 +260,13 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         if (CollectionUtils.isNotEmpty(warehouseList)) {
             entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
         }
-
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.THTZ, BusinessNoTypeEnum.CODE_THTZ.getCode()));
         entity.setCode(code);
         entity.setSourceId(dto.getSourceId());
         entity.setSourceCode(soReturnEntity.getCode());
         entity.setSourceType(soReturnEntity.getSourceType());
+        entity.setBillDate(soReturnEntity.getBillDate());
         entity.setInventoryOrgId(dto.getInventoryOrgId());
         entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());
         if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
@@ -273,6 +274,11 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
             entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
             entity.setWarehouseKeeperName(userDTO.getUserName());
+        }
+        //获取仓库信息
+        WarehouseEntity warehouseEntity = warehouseService.getById(dto.getWarehouseId());
+        if (ObjectUtil.isNotEmpty(warehouseEntity)) {
+            entity.setWarehouseName(warehouseEntity.getName());
         }
         this.save(entity);
         soReturnNoticeDetailService.add(dto, entity.getId());
@@ -320,10 +326,16 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         entity.setSourceId(dto.getSourceId());
         entity.setSourceCode(soReturnEntity.getCode());
         entity.setSourceType(soReturnEntity.getSourceType());
+        entity.setBillDate(soReturnEntity.getBillDate());
         entity.setInventoryOrgId(dto.getInventoryOrgId());
         entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());
         if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
             entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
+        }
+        //获取仓库信息
+        WarehouseEntity warehouseEntity = warehouseService.getById(dto.getWarehouseId());
+        if (ObjectUtil.isNotEmpty(warehouseEntity)) {
+            entity.setWarehouseName(warehouseEntity.getName());
         }
         boolean flag = this.updateById(entity);
         //操作日志
