@@ -36,6 +36,7 @@ import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDetailDTO;
+import com.erp.model.wms.dto.inventory.InventoryFinishDeliveryDetailDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
@@ -459,7 +460,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         purchaseOrderDetailService.updateArrivalStatusByIds(ArrivalStatusEnum.ARRIVED.getCode(), ids);
 
         // 更新库存
-
+        updateInventoryFinish(list, purchaseOrderDetailList);
         //操作日志
         List<Pair<String, String>> pairList = purchaseOrderDetailList.stream().map(obj -> new Pair<>(obj.getPurchaseOrderId(), obj.getSkuNo())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("SKU【%s】结束交货", ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "结束交货操作");
@@ -1448,7 +1449,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         records.forEach(obj -> {
             obj.setArrivalStatusName(ArrivalStatusEnum.getNameByCode(obj.getArrivalStatus()));
             Integer receiveQty = MathUtil.ZERO;
-            Integer deliveryQty = MathUtil.ZERO;
+            Integer qty = MathUtil.ZERO;
             Integer returnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
 
             if (CollectionUtils.isNotEmpty(receiveDetailList)) {
@@ -1456,12 +1457,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                         .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 //已到货数据待收货数量默认给0
                 if (!ArrivalStatusEnum.ARRIVED.getCode().equals(obj.getArrivalStatus())) {
-                    Integer qty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()))
+                     qty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()))
                             .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-
-                    deliveryQty = obj.getPurchaseQty() + returnQty - qty;
                 }
             }
+            Integer deliveryQty = obj.getPurchaseQty() + returnQty - qty;
             obj.setReceiveQty(receiveQty);
             obj.setDeliveryQty(deliveryQty);
 
@@ -1522,6 +1522,22 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     public void updateInventoryFinish(List<PurchaseOrderEntity> list, List<PurchaseOrderDetailEntity> details) {
         Map<String, PurchaseOrderEntity> poMap = list.stream().collect(Collectors.toMap(PurchaseOrderEntity::getId, Function.identity()));
         Map<String,List<PurchaseOrderDetailEntity>> detailMap = details.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getPurchaseOrderId));
+        poMap.forEach((mainId, po)->{
+            InstockForcastDTO.FinishDeliveryDTO inventoryDTO = new InstockForcastDTO.FinishDeliveryDTO();
+            inventoryDTO.setPurchaseOrderId(mainId);
+            List<PurchaseOrderDetailEntity> detailMembers = detailMap.get(mainId);
+
+            List<InventoryFinishDeliveryDetailDTO.AddDTO> inventoryMembers = Lists.newArrayListWithExpectedSize(detailMembers.size());
+            detailMembers.stream().forEach(member->{
+                InventoryFinishDeliveryDetailDTO.AddDTO inventoryMember = new InventoryFinishDeliveryDetailDTO.AddDTO();
+                inventoryMember.setSkuId(member.getSkuId());
+                inventoryMember.setSkuNo(member.getSkuNo());
+                inventoryMember.setQty(member.getPurchaseQty());// TODO 待交货量计算
+                inventoryMembers.add(inventoryMember);
+            });
+            inventoryDTO.setMembers(inventoryMembers);
+            inventoryFeign.finishDelivery(inventoryDTO);
+        });
     }
 
 

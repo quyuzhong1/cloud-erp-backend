@@ -1,7 +1,6 @@
 package com.erp.server.dmp.push.consumer;
 
 
-import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -47,9 +46,9 @@ public class KingdeeTransferInfoConsumer implements RocketMQListener<Map<String,
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_TRANSFERDIRECT.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "CGRK2645639"));
+        queryFilters.add(String.format("FBillNo = '%s'", "MB20230418-002"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FID,FInStockEntry_FEntryID";
+        String fieldKeys = "FID,FStockOutOrgId.FNumber,FOwnerTypeOutIdHead,FOwnerTypeIdHead,FOwnerTypeOutId,FOwnerTypeId,FKeeperTypeId";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
         System.out.println(queryList);
 
@@ -59,6 +58,9 @@ public class KingdeeTransferInfoConsumer implements RocketMQListener<Map<String,
     public void onMessage(Map<String, Object> map) {
         //模块类型
         Integer type = ApiModuleTypeEnum.STK_TRANSFERDIRECT.getCode();
+
+        log.info("直接调拨单开始推送金蝶 map = {}", JSONUtil.toJsonStr(map));
+
 
         //业务id
         String  businessId = String.valueOf(map.get("id"));
@@ -132,40 +134,7 @@ public class KingdeeTransferInfoConsumer implements RocketMQListener<Map<String,
      * 给修改json对象赋值ID
      */
     private void setQueryJSONObject (String id, KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,JSONObject json) {
-        LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FId = '%s'", id));
-        String filterStr = String.join(" and ", queryFilters);
-        //查询子单据id
-        String fieldKeys = "FInStockEntry_FEntryID,FMaterialId.FNumber";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
-        if (CollectionUtils.isEmpty(queryList)) {
-            //错误日志
-            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),filterStr,"未查询到子单据id",type,ApiSendStatusEnum.FAILURE.getCode());
-            return;
-        }
         //主单据id
         KingdeeUtils.makeFieldJson(json,"FId",".", id);
-        //比较
-        for (Map<String, Object> queryMap: queryList) {
-            JSONArray obj = (JSONArray)json.get("FInStockEntry") ;
-            JSONArray removeObj = new JSONArray();
-            JSONArray addObj = new JSONArray();
-            for (Object o : obj) {
-                JSONObject jsonObject = JSONUtil.parseObj(o);
-                JSONObject newJson = new JSONObject(new LinkedHashMap<>());
-                Object o1 = queryMap.get("FMaterialId.FNumber");
-                JSONObject o2 = (JSONObject)jsonObject.get("FMaterialId");
-                Object fNumber = o2.get("FNumber");
-                if (o1.equals(fNumber)) {
-                    newJson.set("FEntryID",queryMap.get("FInStockEntry_FEntryID"));
-                }
-                newJson.putAll(jsonObject);
-                removeObj.set(o);
-                addObj.set(newJson);
-            }
-            obj.removeAll(removeObj);
-            obj.addAll(addObj);
-        }
-
     }
 }

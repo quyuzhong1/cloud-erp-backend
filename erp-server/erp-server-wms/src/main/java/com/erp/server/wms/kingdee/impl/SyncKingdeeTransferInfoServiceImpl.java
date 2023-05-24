@@ -3,6 +3,7 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
@@ -68,31 +69,24 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         resultMap.put("type", entity.getType());
         //调拨日期
         resultMap.put("billDate", entity.getBillDate());
-
+        //仓库
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(entity.getInWarehouseId(), entity.getOutWarehouseId()));
-        if (CollectionUtils.isNotEmpty(warehouseList)) {
-            //调入仓库编码
-            String inWarehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getInWarehouseId())).map(WarehouseEntity::getKingdeeWarehouseCode).findFirst().orElse(null);
-            //调出仓库编码
-            String outWarehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getOutWarehouseId())).map(WarehouseEntity::getKingdeeWarehouseCode).findFirst().orElse(null);
-            //调入仓库
-            resultMap.put("inWarehouseCode", inWarehouseCode);
-            //调出仓库
-            resultMap.put("outWarehouseCode", outWarehouseCode);
+
+        if (StringUtils.isNotBlank(entity.getWarehouseKeeperId())) {
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getWarehouseKeeperId());
+            if (ObjectUtils.isNotEmpty(findUserDTO)) {
+                //仓管员
+                resultMap.put("warehouseKeeperCode", findUserDTO.getCode());
+            }
         }
 
-        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getWarehouseKeeperId());
-        if (ObjectUtils.isNotEmpty(findUserDTO)) {
-            //调出仓库
-            resultMap.put("warehouseKeeperCode", findUserDTO.getCode());
-        }
         //调拨方向
         resultMap.put("transferDirection", entity.getTransferDirection());
         //备注
         resultMap.put("remark", entity.getRemark());
 
         List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainId(entity.getId());
-        if (CollectionUtils.isNotEmpty(detailList)) {
+        if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
 
@@ -116,6 +110,17 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
             jsonObject.set("qty", detail.getQty());
             //单位
             jsonObject.set("unit", detail.getUnit());
+
+            if (CollectionUtils.isNotEmpty(warehouseList)) {
+                //调入仓库编码
+                String inWarehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getInWarehouseId())).map(WarehouseEntity::getKingdeeWarehouseCode).findFirst().orElse(null);
+                //调出仓库编码
+                String outWarehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getOutWarehouseId())).map(WarehouseEntity::getKingdeeWarehouseCode).findFirst().orElse(null);
+                //调入仓库
+                jsonObject.put("inWarehouseCode", inWarehouseCode);
+                //调出仓库
+                jsonObject.put("outWarehouseCode", outWarehouseCode);
+            }
             //调出仓位
             jsonObject.set("outWarehouseLocation", detail.getOutWarehouseLocation());
             //调入仓位

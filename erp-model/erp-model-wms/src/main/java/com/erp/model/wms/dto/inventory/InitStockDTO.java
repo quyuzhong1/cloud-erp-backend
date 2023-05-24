@@ -100,6 +100,11 @@ public class InitStockDTO implements Serializable {
         private String id;
 
         /**
+         * 单据编号
+         */
+        private String code;
+
+        /**
          * 单据日期
          */
         private LocalDate billDate;
