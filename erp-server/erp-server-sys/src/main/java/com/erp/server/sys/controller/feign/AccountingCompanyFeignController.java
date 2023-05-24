@@ -25,8 +25,8 @@ public class AccountingCompanyFeignController extends BaseController {
     private SysAccountingCompanyService sysAccountingCompanyService;
 
     @PostMapping("/getByIds")
-    public List<BaseIdDTO> getByIds(@RequestBody List<String> ids) {
-        List<BaseIdDTO> list = sysAccountingCompanyService.getByIds(ids);
+    public List<BaseIdDTO.CodeDTO> getByIds(@RequestBody List<String> ids) {
+        List<BaseIdDTO.CodeDTO> list = sysAccountingCompanyService.getByIds(ids);
         return list;
     }
 

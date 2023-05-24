@@ -161,7 +161,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
         //组织列表
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(deliveryOrgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(deliveryOrgId));
         String salesOrgName = orgList.stream().filter(d -> d.getId().equals(deliveryOrgId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         soOutstock.setDeliveryOrgName(salesOrgName);
@@ -778,7 +778,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
         //组织列表
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(deliveryOrgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(deliveryOrgId));
         String salesOrgName = orgList.stream().filter(d -> d.getId().equals(deliveryOrgId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         soOutstock.setDeliveryOrgName(salesOrgName);

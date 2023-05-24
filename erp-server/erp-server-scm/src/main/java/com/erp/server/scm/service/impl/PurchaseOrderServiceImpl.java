@@ -1201,13 +1201,13 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             entity.setPurchaseDeptName(depart.getName());
         }
-        List<BaseIdDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(purchaseOrgId, receiveOrgId));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(purchaseOrgId, receiveOrgId));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
             throw new ServiceException(ApiError.ERROR_9029);
         }
         //采购组织
         if (StringUtils.isNotBlank(purchaseOrgId)) {
-            BaseIdDTO baseIdDTO = accountingCompanyList.stream().filter(obj -> obj.getId().equals(purchaseOrgId)).findFirst().orElse(null);
+            BaseIdDTO.CodeDTO baseIdDTO = accountingCompanyList.stream().filter(obj -> obj.getId().equals(purchaseOrgId)).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(baseIdDTO)) {
                 throw new ServiceException(ApiError.ERROR_9029);
             }
@@ -1215,7 +1215,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         //收料组织
         if (StringUtils.isNotBlank(receiveOrgId)) {
-            BaseIdDTO baseIdDTO = accountingCompanyList.stream().filter(obj -> obj.getId().equals(receiveOrgId)).findFirst().orElse(null);
+            BaseIdDTO.CodeDTO baseIdDTO = accountingCompanyList.stream().filter(obj -> obj.getId().equals(receiveOrgId)).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(baseIdDTO)) {
                 throw new ServiceException(ApiError.ERROR_9029);
             }
