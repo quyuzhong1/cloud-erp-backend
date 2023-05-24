@@ -121,7 +121,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             if (receiveQty <  detailDto.getRealQty() + realQty) {
                 throw new ServiceException(ApiError.ERROR_92026);
             }
-            detailEntity.setMainId(detailDto.getId());
+            detailEntity.setMainId(dto.getId());
             detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
             detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
             detailEntity.setMustQty(detailDto.getMustQty());
