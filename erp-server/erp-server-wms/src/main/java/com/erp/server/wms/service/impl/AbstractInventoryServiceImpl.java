@@ -84,7 +84,7 @@ public abstract class AbstractInventoryServiceImpl {
         }
         this.checkParam(paramList, businessType, transactionRuleParams);
         // 2.业务处理，同一个操作产生的交易流水使用同一个关联交易号
-        String transactionNo = IdUtil.getSnowflake(1, 1).nextIdStr(); // 关联交易号
+        String transactionNo = IdUtil.getSnowflake().nextIdStr(); // 关联交易号
         this.stockHandler(paramList, businessType, transactionRuleParams, transactionNo);
         stopwatch.stop();
         log.info("结束库存交易，耗时【{}】秒", stopwatch.elapsed(TimeUnit.SECONDS));
@@ -131,7 +131,7 @@ public abstract class AbstractInventoryServiceImpl {
         ValidatorUtil.isTrue(CollUtil.isNotEmpty(txnFlows),()->new ServiceException(ApiError.ERROR_99040));
         // 先按交易时间升序排
         txnFlows = txnFlows.stream().sorted(Comparator.comparing(TransactionFlowEntity::getTradeTime).thenComparing(TransactionFlowEntity::getId)).collect(Collectors.toList());
-        String transactionNo = IdUtil.getSnowflake(1, 1).nextIdStr(); // 关联交易号
+        String transactionNo = IdUtil.getSnowflake().nextIdStr(); // 关联交易号
         txnFlows.stream().forEach(txnFlow->{
             // 此处需注意：1.已经反审核过的单据不允许再次反审核，以免库存数据错乱（前面查询条件已过滤）；2.可能会出现负数，如入库后被出库了反审核后仓库数量不够反审核，增加验证不允许反审核
             // 登记反审核的交易流水（有可能一个操作产生多条，从多个库存明细中扣除）
