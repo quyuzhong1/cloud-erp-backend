@@ -161,9 +161,9 @@
             resultType="com.erp.model.workflow.dto.ProcessManagementDTO$ManagementTaskDTO">
         <include refid="Get_Task_Management"/>
         AND approve_status = 'approveIng'AND ptm.task_status = 'approveIng'
-        <if test="null != param.ids and param.ids.size() > 0">
+        <if test="null != ids and ids.size() > 0">
             and ptm.id in
-            <foreach collection="param.ids" item="id" open="(" separator="," close=")">
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
                 #{id}
             </foreach>
         </if>
