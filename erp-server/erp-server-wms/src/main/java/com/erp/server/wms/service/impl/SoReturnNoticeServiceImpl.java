@@ -255,7 +255,6 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         entity.setCustomerName(customerInfoEntity.getName());
-        entity.setWarehouseId(soInfoEntity.getWarehouseId());
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(soInfoEntity.getWarehouseId()));
         if (CollectionUtils.isNotEmpty(warehouseList)) {
             entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
@@ -318,7 +317,6 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         entity.setCustomerName(customerInfoEntity.getName());
-        entity.setWarehouseId(soInfoEntity.getWarehouseId());
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(soInfoEntity.getWarehouseId()));
         if (CollectionUtils.isNotEmpty(warehouseList)) {
             entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
@@ -356,8 +354,6 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         List<SoReturnNoticeDetailDTO.View> detailViewDTOS = new ArrayList<>();
         List<SoReturnNoticeDetailEntity> detailEntityList = soReturnNoticeDetailService.listDetailByMainId(id);
         SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(entity.getSourceId());
-        //获取销售单信息
-        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
         BeanMapperUtils.copy(soReturnEntity, viewDTO);
         BeanMapperUtils.copy(entity, viewDTO);
         //获取sku的id集合
