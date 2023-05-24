@@ -192,8 +192,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     public String add(SoReturnReceiveDTO.Add dto) {
         //获取退货单信息
         SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
-        //获取销售单信息
-        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
         SoReturnReceiveEntity entity = new SoReturnReceiveEntity();
@@ -214,9 +212,10 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soReturnEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         entity.setCustomerName(customerInfoEntity.getName());
         entity.setReturnDate(soReturnEntity.getBillDate());
-        entity.setWarehouseId(soInfoEntity.getWarehouseId());
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(soInfoEntity.getWarehouseId()));
+        //获取仓库信息
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(entity.getWarehouseId()));
         if (CollectionUtils.isNotEmpty(warehouseList)) {
+            entity.setWarehouseId(entity.getWarehouseId());
             entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
         }
         //生成单号
@@ -244,8 +243,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     public Boolean update(SoReturnReceiveDTO.Update dto) {
         //获取退货单信息
         SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
-        //获取销售单信息
-        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
 
@@ -267,9 +264,10 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soReturnEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         entity.setCustomerName(customerInfoEntity.getName());
         entity.setReturnDate(soReturnEntity.getBillDate());
-        entity.setWarehouseId(soInfoEntity.getWarehouseId());
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(soInfoEntity.getWarehouseId()));
+        //获取仓库信息
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(entity.getWarehouseId()));
         if (CollectionUtils.isNotEmpty(warehouseList)) {
+            entity.setWarehouseId(entity.getWarehouseId());
             entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
         }
         entity.setId(dto.getId());
@@ -321,9 +319,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         viewDTO.setCustomerName(customerInfoEntity.getName());
-        viewDTO.setWarehouseId(soInfoEntity.getWarehouseId());
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(soInfoEntity.getWarehouseId()));
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(entity.getWarehouseId()));
         if (CollectionUtils.isNotEmpty(warehouseList)) {
+            viewDTO.setWarehouseId(entity.getWarehouseId());
             viewDTO.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
         }
         viewDTO.setReturnDate(soReturnEntity.getBillDate());
