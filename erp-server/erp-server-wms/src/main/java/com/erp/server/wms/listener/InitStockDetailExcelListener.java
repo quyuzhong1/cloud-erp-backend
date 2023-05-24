@@ -65,13 +65,17 @@ public class InitStockDetailExcelListener extends AnalysisEventListener<ImportIn
                 errorMsgList.add("sku有误");
             }
             if (skuEntity != null) {
-                addDTO.setQty(Integer.valueOf(importInitStockExcelDTO.getQty()));
-                addDTO.setSkuId(skuEntity.getSkuId());
-                addDTO.setSkuNo(skuEntity.getSkuNo());
-                addDTO.setProductName(skuEntity.getSpuName());
-                addDTO.setWarehouseLocation(importInitStockExcelDTO.getWarehouseLocation());
-                addDTO.setRemark(StrUtils.null2EmptyWithTrim(importInitStockExcelDTO.getRemark()));
-                successList.add(addDTO);
+                if(!StrUtils.isInteger(importInitStockExcelDTO.getQty())) {
+                    errorMsgList.add("期初数量只能为正数");
+                } else {
+                    addDTO.setQty(Integer.valueOf(importInitStockExcelDTO.getQty()));
+                    addDTO.setSkuId(skuEntity.getSkuId());
+                    addDTO.setSkuNo(skuEntity.getSkuNo());
+                    addDTO.setProductName(skuEntity.getSpuName());
+                    addDTO.setWarehouseLocation(importInitStockExcelDTO.getWarehouseLocation());
+                    addDTO.setRemark(StrUtils.null2EmptyWithTrim(importInitStockExcelDTO.getRemark()));
+                    successList.add(addDTO);
+                }
             }
         }
 

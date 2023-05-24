@@ -178,4 +178,21 @@ public class StrUtils {
         return sb.toString();
     }
 
+    /**
+     * 是否整型
+     * @param str
+     * @return
+     */
+    public static boolean isInteger(Object str) {
+        if (isEmpty(str)) {
+            return false;
+        }
+        try {
+            Integer.parseInt(null2EmptyWithTrim(str));
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
+    }
+
 }
