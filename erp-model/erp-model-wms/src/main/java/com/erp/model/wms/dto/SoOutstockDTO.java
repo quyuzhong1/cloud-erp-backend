@@ -322,6 +322,12 @@ public class SoOutstockDTO implements Serializable {
          */
         private String sourceId;
 
+
+        /**
+         * 来源id
+         */
+        private String sourceCode;
+
         /**
          * 来源类型
          */

@@ -570,7 +570,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     public List<SoOutstockDTO.TabListDTO> tabList() {
-        List<SoOutstockDTO.TabListDTO> resultList = new ArrayList<>();
+        List<SoOutstockDTO.TabListDTO> resultList = new ArrayList<>(4);
         //全部
         List<SoOutstockEntity> list = this.list();
         SoOutstockDTO.TabListDTO all = new SoOutstockDTO.TabListDTO();
@@ -841,6 +841,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 SoOutstockDTO.AddDTO add = new SoOutstockDTO.AddDTO();
                 add.setSoId(generateInfo.getSoId());
                 add.setSourceId(generateInfo.getSourceId());
+                add.setSourceCode(generateInfo.getSourceCode());
                 add.setSourceType(generateInfo.getSourceType());
                 add.setCarrierId(generateInfo.getCarrierId());
                 add.setDeliveryOrgId(generateInfo.getDeliveryOrgId());

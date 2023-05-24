@@ -1,5 +1,7 @@
 package com.erp.model.oms.dto;
 
+import com.common.core.anno.StateEnumValue;
+import com.erp.model.oms.enums.SoChangeTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -48,7 +50,8 @@ public class SoChangeDetailDTO implements Serializable {
          * 来源 http://172.16.100.11:3002/project/110/interface/api/13480  type=SoChangeType
          */
         @NotNull(message = "变更类型不能为空")
-        private String changeType;
+        @StateEnumValue(clazz = SoChangeTypeEnum.class, message = "变更类型输入值有误")
+        private SoChangeTypeEnum changeType;
 
         /**
          * 销售数量
