@@ -1,6 +1,8 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
 
@@ -54,4 +56,13 @@ public interface SoChangeService extends SuperService<SoChangeEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoChangeDTO.TabListDTO>
      */
     List<SoChangeDTO.TabListDTO> tabList();
+
+    /**
+     * 分页列表
+     * @author yl
+     * @date 2023-05-24 16:44
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.SoChangeDTO.PagingViewDTO>
+     */
+    PagingVO<SoChangeDTO.PagingViewDTO> paging(PagingDTO<SoChangeDTO.PagingParamDTO> dto);
 }

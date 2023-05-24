@@ -435,6 +435,11 @@ public class SoOutstockDTO implements Serializable {
         private String deliveryOrgName;
 
         /**
+         * 订单类型
+         */
+        private String orderType;
+
+        /**
          * 预计发货时间
          */
         private LocalDate planDeliveryDate;

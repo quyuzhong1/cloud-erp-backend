@@ -250,8 +250,9 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         Optional.ofNullable(originInitStock).orElseThrow(()->new ServiceException("期初库存数据不存在"));
         checkUpdateRepeateSku(dto, dto.getDetails(), dto.getId());
         // 判断状态是否允许操作（只有待提交且未作废的的才允许修改）
-        ValidatorUtil.isTrue(Objects.equals(originInitStock.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) && Objects.equals(originInitStock.getInvalidStatus(),Boolean.FALSE),
-                ()->new ServiceException("当前单据状态不允许修改"));
+        ValidatorUtil.isTrue((Objects.equals(originInitStock.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || Objects.equals(originInitStock.getApproveStatus(), ApproveStatusEnum.REJECT.getStatus()) )
+                && Objects.equals(originInitStock.getInvalidStatus(),Boolean.FALSE),
+                ()->new ServiceException("只有待提交或审核不通过并且未作废数据支持提交"));
 
         InitStockEntity nowInitStock =  BeanMapperUtils.map(InitStockEntity.class, originInitStock);
         fillingAddOrUpdate(nowInitStock, dto.getWarehouseId());
@@ -361,7 +362,8 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         IntStream.range(0,ids.size()).forEach(idx->{
             String id = ids.get(idx);
             ValidatorUtil.isTrue(initStockEntityMap.containsKey(id),()->new ServiceException("期初库存数据不存在"));
-            ValidatorUtil.isTrue(Objects.equals(initStockEntityMap.get(id).getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()),()->new ServiceException("只有待提交并且未作废数据支持删除"));
+            InitStockEntity initStockEntity = initStockEntityMap.get(id);
+            ValidatorUtil.isTrue(Objects.equals(initStockEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) && Objects.equals(initStockEntity.getInvalidStatus(), Boolean.FALSE),()->new ServiceException("只有待提交并且未作废数据支持删除"));
         });
         // 删除期初库存日志数据
         log.info("删除 开始删除期初库存日志数据，id集合：【{}】", JSONObject.toJSONString(ids));

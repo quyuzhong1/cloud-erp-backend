@@ -57,9 +57,9 @@ public interface SysAccountingCompanyService extends IService<SysAccountingCompa
      * @author yl
      * @date 2023-03-22 15:29
      * @param ids
-     * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
+     * @return java.util.List<com.common.business.dto.base.BaseIdDTO.CodeDTO>
      */
-    List<BaseIdDTO> getByIds(List<String> ids);
+    List<BaseIdDTO.CodeDTO> getByIds(List<String> ids);
     /**
      * @description: 查询已启用组织
      * @author Will

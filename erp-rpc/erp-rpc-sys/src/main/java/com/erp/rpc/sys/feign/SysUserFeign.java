@@ -204,7 +204,7 @@ public interface SysUserFeign {
       * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
       */
     @PostMapping("feign/accountingCompany/getByIds")
-    List<BaseIdDTO> getAccountingCompanyList(@RequestBody List<String> ids);
+    List<BaseIdDTO.CodeDTO> getAccountingCompanyList(@RequestBody List<String> ids);
 
     /**
      * @description: 查询所有已启用组织

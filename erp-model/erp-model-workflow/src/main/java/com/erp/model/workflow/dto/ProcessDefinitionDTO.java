@@ -15,6 +15,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -89,7 +90,9 @@ public class ProcessDefinitionDTO {
         /**
          * 创建时间
          */
-        private List<LocalDateTime> createTimeList;
+        private List<LocalDate> createTimeList;
+
+        private Boolean isDeploy;
 
     }
 
