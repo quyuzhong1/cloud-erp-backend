@@ -337,6 +337,23 @@ public class SoChangeDTO implements Serializable {
         private String id;
 
         /**
+         * 变更单号
+         */
+        private String code;
+
+
+        /**
+         * 单据状态
+         */
+        private ApproveStatusEnum approveStatus;
+
+
+        /**
+         * 单据状态名
+         */
+        private String approveStatusName;
+
+        /**
          * 销售订单id
          */
         private String soId;
@@ -356,18 +373,34 @@ public class SoChangeDTO implements Serializable {
         /**
          * 变更部门id
          */
-        private String changeDeptId;
+        private String deptId;
 
         /**
          * 变更员id
          */
-        private String changeUserId;
+        private String userId;
+
+
+        /**
+         * 单据类型
+         */
+        private BillTypeEnum orderType;
+
+        /**
+         * 单据类型名
+         */
+        private String orderTypeName;
 
 
         /**
          * 客户id
          */
         private String customerId;
+
+        /**
+         * 客户
+         */
+        private String customerName;
 
 
         /**
@@ -381,14 +414,14 @@ public class SoChangeDTO implements Serializable {
         private String telNumber;
 
         /**
-         * 收货人地址
+         * 收货地址
          */
-        private String receiverAddress;
+        private String receiveAddress;
 
         /**
          * 交货方式
          */
-        private String deliveryMode;
+        private String deliveryModeName;
 
 
         /**
@@ -405,11 +438,11 @@ public class SoChangeDTO implements Serializable {
         /**
          * 地址类型
          */
-        private String addressType;
+        private String addressTypeName;
 
 
         /**
-         * 备注
+         * 变更原因
          */
         private String remark;
 

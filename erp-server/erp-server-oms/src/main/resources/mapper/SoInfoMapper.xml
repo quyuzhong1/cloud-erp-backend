@@ -53,7 +53,7 @@
         <if test="params.invalidStatus !=null ">
             AND si.invalid_status=#{params.invalidStatus}
         </if>
-        <if test="params.deliveryStatus !=null AND params.deliveryStatus!=''">
+        <if test="params.deliveryStatus !=null and params.deliveryStatus!=''">
             AND sod.delivery_status=#{params.deliveryStatus}
         </if>
 
