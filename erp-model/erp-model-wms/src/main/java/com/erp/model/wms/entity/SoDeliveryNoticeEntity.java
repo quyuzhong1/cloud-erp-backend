@@ -138,13 +138,13 @@ public class SoDeliveryNoticeEntity extends BaseEntity<SoDeliveryNoticeEntity> {
      * 仓库id
      */
     @TableField("warehouse_id")
-    private String WarehouseId;
+    private String warehouseId;
 
     /**
      * 仓库名称
      */
     @TableField("warehouse_name")
-    private String WarehouseName;
+    private String warehouseName;
 
     /**
      * 客户表id

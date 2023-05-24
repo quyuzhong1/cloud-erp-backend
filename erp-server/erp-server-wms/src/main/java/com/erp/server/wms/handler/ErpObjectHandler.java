@@ -31,25 +31,20 @@ public class ErpObjectHandler implements MetaObjectHandler {
         Date now = new Date();
         String userId = commonService.getUserInfo().getUid();
         String userName = commonService.getUserInfo().getUserName();
-        if(!BeanUtil.beanToMap(metaObject.getOriginalObject()).keySet().contains("isDeleted")){
+        if (!BeanUtil.beanToMap(metaObject.getOriginalObject()).keySet().contains("isDeleted")) {
             this.setFieldValByName("createTime", now, metaObject);
             this.setFieldValByName("updateTime", now, metaObject);
 
-        }else {
+        } else {
             LocalDateTime localDateTime = LocalDateTime.now();
             this.setFieldValByName("version", MathUtil.ONE, metaObject);
             this.setFieldValByName("createTime", localDateTime, metaObject);
             this.setFieldValByName("updateTime", localDateTime, metaObject);
-            if (StringUtils.isNotBlank(userId)) {
-                this.setFieldValByName("createUserId", userId, metaObject);
-                this.setFieldValByName("updateUserId", userId, metaObject);
-            }
-            if (StringUtils.isNotBlank(userName)) {
-                this.setFieldValByName("createUserName", userName, metaObject);
-                this.setFieldValByName("updateUserName", userName, metaObject);
-            }
+            this.setFieldValByName("createUserId", userId, metaObject);
+            this.setFieldValByName("updateUserId", userId, metaObject);
+            this.setFieldValByName("createUserName", userName, metaObject);
+            this.setFieldValByName("updateUserName", userName, metaObject);
         }
-
 
 
     }
@@ -59,9 +54,9 @@ public class ErpObjectHandler implements MetaObjectHandler {
     public void updateFill(MetaObject metaObject) {
         String userId = commonService.getUserInfo().getUid();
         String userName = commonService.getUserInfo().getUserName();
-        if(!BeanUtil.beanToMap(metaObject.getOriginalObject()).keySet().contains("isDeleted")){
+        if (!BeanUtil.beanToMap(metaObject.getOriginalObject()).keySet().contains("isDeleted")) {
             this.setFieldValByName("updateTime", new Date(), metaObject);
-        }else {
+        } else {
             this.setFieldValByName("updateTime", LocalDateTime.now(), metaObject);
             this.setFieldValByName("updateUserName", userName, metaObject);
             this.setFieldValByName("updateUserId", userId, metaObject);
