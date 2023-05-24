@@ -66,7 +66,7 @@ public class InitStockDetailExcelListener extends AnalysisEventListener<ImportIn
             }
             if (skuEntity != null) {
                 if(!StrUtils.isInteger(importInitStockExcelDTO.getQty())) {
-                    errorMsgList.add("期初数量只能为正数");
+                    errorMsgList.add("期初数量只能为正整数");
                 } else {
                     addDTO.setQty(Integer.valueOf(importInitStockExcelDTO.getQty()));
                     addDTO.setSkuId(skuEntity.getSkuId());
