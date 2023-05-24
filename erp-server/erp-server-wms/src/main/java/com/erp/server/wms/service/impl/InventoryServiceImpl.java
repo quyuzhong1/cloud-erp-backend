@@ -32,6 +32,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.InventoryMapper;
 import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.InventoryService;
+import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -79,6 +80,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Autowired
     private PlmTaskFeign plmTaskFeign;
+
+    @Autowired
+    private WarehouseLocationService warehouseLocationService;
 
     @Override
     public InventoryEntity findInventory(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
@@ -230,6 +234,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             inventory.setVersion(1);
             boolean save = super.save(inventory);
             ValidatorUtil.isTrue(save, () -> new ServiceException("库存数据保存失败"));
+            // 增加关联仓位
         } else {
             log.info("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】在库存实时表中存在数据，修改数据", inventoryStatus, warehouseId, orgId, warehouseLocation, skuId, skuNo);
             originInventoryQty = inventory.getQty();
