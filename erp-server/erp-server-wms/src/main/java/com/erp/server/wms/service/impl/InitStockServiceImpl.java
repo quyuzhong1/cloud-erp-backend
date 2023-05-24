@@ -597,7 +597,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
             List<InitStockDetailEntity> detailEntities = initStockDetailService.findDetail(mainId, skuId);
             if(CollUtil.isNotEmpty(detailEntities)) {
                 for(InitStockDetailEntity initStockDetailEntity : detailEntities) {
-                    if(!Objects.equals(initStockDetailEntity.getId(), updateDTO.getId()) && !Objects.equals(initStockDetailEntity.getWarehouseLocation(), StrUtils.null2EmptyWithTrim(updateDTO.getWarehouseLocation()))) {
+                    if(!Objects.equals(initStockDetailEntity.getId(), updateDTO.getId()) && Objects.equals(initStockDetailEntity.getWarehouseLocation(), StrUtils.null2EmptyWithTrim(updateDTO.getWarehouseLocation()))) {
                         throw new ServiceException(StrUtil.format("sku编码【{}】在仓库中已存在", updateDTO.getSkuNo()));
                     }
                 }
