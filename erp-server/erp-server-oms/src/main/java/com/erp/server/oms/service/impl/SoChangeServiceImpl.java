@@ -1,11 +1,14 @@
 package com.erp.server.oms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
+import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.SoChangeMapper;
@@ -61,6 +64,14 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         }
         soChange.setDeptName(deptName);
         soChange.setUserName(useName);
+        soChange.setId(id);
+        String code= sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSBG, BusinessNoTypeEnum.CODE_XSD.getCode()));
+
+        Boolean addResult = this.save(soChange);
+        if(addResult){
+
+        }
+
 
         return null;
     }

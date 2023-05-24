@@ -37,8 +37,9 @@ public enum BusinessNoTypeEnum {
     CODE_ZZCX(26, "zzcx","加工单"),
     CODE_THQS(27, "thqs","退货签收单"),
     CODE_XSCK(28, "xsck","销售出库单"),
-    CODE_QTRK(28, "qtrk","其他入库单"),
-    CODE_QTCK(28, "qtck","其他出库单"),
+    CODE_QTRK(29, "qtrk","其他入库单"),
+    CODE_QTCK(30, "qtck","其他出库单"),
+    CODE_XSBG(31, "xsbg","销售变更单"),
 
     ;
 
