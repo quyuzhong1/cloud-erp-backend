@@ -34,6 +34,11 @@ public class InventoryFinishDeliveryDetailDTO implements Serializable {
         @NotEmpty(message = "sku不能为空")
         private String skuNo;
 
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
+
 
         /**
          * 数量

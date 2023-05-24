@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ValidatorUtil;
@@ -66,6 +67,15 @@ public class InstockForcastDetailServiceImpl extends SuperServiceImpl<InstockFor
         }
         this.saveBatch(listDetail);
         return listDetail;
+    }
+
+    @Override
+    public InstockForcastDetailEntity find(String mainId, String purchaseOrderDetailId) {
+        LambdaQueryWrapper<InstockForcastDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(InstockForcastDetailEntity::getInfoId, mainId);
+        queryWrapper.eq(InstockForcastDetailEntity::getPurchaseOrderDetailId, purchaseOrderDetailId);
+        queryWrapper.last("LIMIT 1");
+        return baseMapper.selectOne(queryWrapper);
     }
 
 }

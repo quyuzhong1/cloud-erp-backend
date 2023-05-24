@@ -28,6 +28,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * <p>
@@ -178,7 +179,10 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             inOutStockDTO.setSourceId(instockForcastEntity.getId());
             inOutStockDTO.setSourceCode(instockForcastEntity.getCode());
             inOutStockDTO.setBillDate(instockForcastEntity.getBillDate());
-            inOutStockDTO.setSourceDetailId("");
+            // 根据采购明细找入库预报明细
+            InstockForcastDetailEntity instockForcastDetailEntity = instockForcastDetailService.find(instockForcastEntity.getId(), member.getPurchaseOrderDetailId());
+            Optional.ofNullable(instockForcastDetailEntity).orElseThrow(()->new ServiceException("未找到入库预报明细信息"));
+            inOutStockDTO.setSourceDetailId(instockForcastDetailEntity.getId());
             inOutStockDTO.setSkuId(member.getSkuId());
             inOutStockDTO.setSkuNo(member.getSkuNo());
             inOutStockDTO.setQty(member.getQty());
