@@ -51,8 +51,8 @@
         SELECT
         srd.id,
         srd.main_id,
-        sd.sku_id,
-        sd.sku_no,
+        srd.sku_id,
+        srd.sku_no,
         si.warehouse_org_id AS inventoryOrgId,
         sd.qty AS salesQty,
         sd.amount AS salesAmount,
@@ -62,11 +62,11 @@
         si.warehouse_id,
         sd.currency,
         sd.currency_Symbol
-        FROM so_detail sd
-        INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
-        INNER JOIN so_return sr ON sr.source_id = si.id AND si.is_deleted = FALSE
+        FROM so_return sr
         INNER JOIN so_return_detail srd ON srd.main_id = sr.id AND sr.is_deleted = FALSE
-        WHERE srd.is_deleted = FALSE AND sd.is_close = FALSE
+        INNER JOIN so_info si ON sr.source_id = si.id AND srd.is_deleted = FALSE
+        INNER JOIN so_detail sd ON srd.source_detail_id = sd.id AND si.is_deleted = FALSE
+        WHERE sd.is_deleted = FALSE AND sd.is_close = FALSE
         <if test="id != null and id != ''">
             AND sr.id = #{id}
         </if>

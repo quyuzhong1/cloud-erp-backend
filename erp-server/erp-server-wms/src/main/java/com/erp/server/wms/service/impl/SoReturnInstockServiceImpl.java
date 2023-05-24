@@ -31,8 +31,10 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
@@ -51,6 +53,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -451,6 +454,22 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     .set(SoReturnInstockEntity::getApproveTime, LocalDateTime.now())
                     .in(SoReturnInstockEntity::getId, ids)
                     .update();
+
+        /*    for (SoReturnInstockEntity entity : entityList) {
+                InOutStockDTO inOutStockDTO = new InOutStockDTO();
+                inOutStockDTO.setSourceType(InventorySourceTypeEnum.SO_DELIVERY_NOTICE);
+                inOutStockDTO.setSourceId(entity.getId());
+                inOutStockDTO.setSourceCode(entity.getCode());
+                inOutStockDTO.setSourceDetailId(detailEntity.getId());
+                inOutStockDTO.setBillDate(LocalDate.now());
+                inOutStockDTO.setSkuId(addDTO.getSkuId());
+                inOutStockDTO.setSkuNo(addDTO.getSkuNo());
+                inOutStockDTO.setQty(addDTO.getQty());
+                inOutStockDTO.setWarehouseId(entity.getWarehouseId());
+                inOutStockDTO.setWarehouseLocation(addDTO.getWarehouseLocation());
+                inOutStockList.add(inOutStockDTO);
+            }*/
+
         } else {
             //审核不通过
             lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
