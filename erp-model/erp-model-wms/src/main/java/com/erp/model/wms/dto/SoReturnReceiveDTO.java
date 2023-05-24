@@ -105,6 +105,10 @@ public class SoReturnReceiveDTO {
          */
         private String sourceCode;
         /**
+         * 销售单号
+         */
+        private String soCode;
+        /**
          * 客户id
          */
         private String customerId;

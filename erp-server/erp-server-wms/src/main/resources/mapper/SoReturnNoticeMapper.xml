@@ -8,6 +8,7 @@
             srnd.source_detail_id,
             srn.code,
             srn.source_code,
+            srn.so_code,
             srn.approve_status,
             srn.invalid_status,
             srn.customer_id,

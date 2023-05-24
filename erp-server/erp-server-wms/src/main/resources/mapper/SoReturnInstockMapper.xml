@@ -9,6 +9,7 @@
         srid.source_detail_id,
         sri.code,
         sri.source_code,
+        sri.so_code,
         sri.type,
         sri.customer_id,
         sri.customer_name,

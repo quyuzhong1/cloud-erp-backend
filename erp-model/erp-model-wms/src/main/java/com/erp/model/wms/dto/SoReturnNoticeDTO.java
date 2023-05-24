@@ -101,6 +101,10 @@ public class SoReturnNoticeDTO {
          */
         private String sourceCode;
         /**
+         * 销售单号
+         */
+        private String soCode;
+        /**
          * 单据状态
          */
         private String approveStatus;

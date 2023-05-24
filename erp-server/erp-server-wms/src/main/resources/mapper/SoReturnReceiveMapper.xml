@@ -8,6 +8,7 @@
             srrd.source_detail_id,
             srr.code,
             srr.source_code,
+            srr.so_code,
             srr.customer_id,
             srr.customer_name,
             srr.inventory_org_id,

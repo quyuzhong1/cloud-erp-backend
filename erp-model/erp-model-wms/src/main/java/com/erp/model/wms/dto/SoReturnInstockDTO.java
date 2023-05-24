@@ -99,6 +99,10 @@ public class SoReturnInstockDTO {
          */
         private String sourceCode;
         /**
+         * 销售单号
+         */
+        private String soCode;
+        /**
          * 单据类型
          */
         private String type;
