@@ -686,6 +686,11 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     @Override
     public List<SoReturnNoticeDTO.GenerateSoReturnReceiveView> generateSoDeliveryView(List<String> ids) {
         List<SoReturnNoticeDTO.GenerateSoReturnReceiveView> list = baseMapper.generateSoDeliveryView(ids);
+        String approve = ApproveStatusEnum.APPROVE.getStatus();
+        long count = list.stream().filter(s -> !s.getApproveStatus().equals(approve)).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98063);
+        }
         //获取界面传过来的采购单详情表id集合
         List<String> orderDetailIds = list.stream().map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getSourceDetailId).collect(Collectors.toList());
         //获取销售单详情信息

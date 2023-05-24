@@ -433,6 +433,22 @@ public class ProcessManagementDTO {
          */
         private String remark;
     }
+    @Data
+    @NoArgsConstructor
+    public static class TransferBatchDTO {
+        @NotBlank(message = "id不能为空")
+        private List<String> ids;
+        /**
+         * 转办目标人
+         */
+        @NotBlank(message = "转办目标人")
+        private String targetUserId;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
 
     @Data
     @NoArgsConstructor
@@ -579,10 +595,30 @@ public class ProcessManagementDTO {
 
         private Integer processVersion;
 
+        private String processName;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO{
+
+        private List<String> businessNames;
+
+        private List<ProcessStatusEnum> processStatus;
+
+        private Integer processVersion;
+
+        private String processName;
+
+        private List<String> ids;
+
     }
     @Data
     @NoArgsConstructor
     public static class PagingResultDTO {
+
+        private String id;
 
         /**
          * 流程实例ID
@@ -618,6 +654,21 @@ public class ProcessManagementDTO {
         private String businessName;
 
         /**
+         * 当前节点id
+         */
+        private String curActivityId;
+
+        /**
+         * 当前节点名称
+         */
+        private String curActivityName;
+
+        /**
+         * 审批人id
+         */
+        private String curApproveId;
+
+        /**
          * 审批人名称
          */
         private String curApproveName;
@@ -628,19 +679,24 @@ public class ProcessManagementDTO {
         private ProcessStatusEnum processStatus;
 
         /**
+         * 任务id
+         */
+        private String taskId;
+
+        /**
+         * 任务状态
+         */
+        private ApproveStatusEnum taskStatus;
+
+        /**
+         * 任务状态名称
+         */
+        private String taskStatusName;
+
+        /**
          * 流程状态
          */
         private String processStatusName;
-
-        /**
-         * 开始时间
-         */
-        private LocalDateTime startTime;
-
-        /**
-         * 结束时间
-         */
-        private LocalDateTime endTime;
 
         /**
          * 流程引擎流程实例ID

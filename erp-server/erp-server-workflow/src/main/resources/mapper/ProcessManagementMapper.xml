@@ -60,27 +60,48 @@
 
     <sql id="List_Process_Management">
         SELECT
+            ptm.id,
             pm.process_instance_id,
-            max(pm.process_definition_id) as process_definition_id,
-            max(pm.process_version) as process_version,
-            max(pm.process_status) as process_status,
-            max(pm.process_name) as process_name,
-            max(pm.business_id) as business_id,
-            max(pm.business_code) as business_code,
-            max(pm.business_name) as business_name,
-            max(pm.start_time) as  start_time,
-            max(pm.end_time) as end_time,
-            max(pm.act_process_definition_id) as act_process_definition_id,
-            string_agg(ptm.cur_approve_name, ', ') AS cur_approve_name,
-            concat(max(wm.detail_url),
-            max(pm.business_id)) as detail_url,
-            max(pm.create_time) as create_time
-        FROM process_management AS pm
-                 LEFT JOIN process_task_management AS ptm  on pm.process_instance_id = ptm.process_instance_id
+            pm.process_definition_id,
+            pm.process_version ,
+            pm.process_status ,
+            pd.process_name ,
+            pm.business_id ,
+            pm.business_code ,
+            pm.business_name ,
+            pm.act_process_definition_id ,
+            ptm.cur_approve_id ,
+            ptm.cur_activity_id,
+            ptm.cur_activity_name,
+            ptm.task_id,
+            ptm.task_status,
+            ptm.cur_approve_name AS cur_approve_name,
+            concat(wm.detail_url,pm.business_id) as detail_url,
+            pm.create_time as create_time
+        FROM process_task_management AS ptm
+                 LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id
                  LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code
+                 LEFT JOIN process_definition pd on pd.id = pm.process_definition_id
         where ptm.task_status = 'approveIng'
-        GROUP BY pm.process_instance_id,pm.create_time
-        order by pm.create_time desc
+          <if test="null != param.processName and param.processName != ''">
+              and pd.process_name ilike concat('%', #{param.processName},'%')
+          </if>
+          <if test="null != param.businessNames and param.businessNames.size() > 0">
+              and pm.business_name in
+              <foreach collection="param.businessNames" item="businessName" open="(" separator="," close=")">
+                  #{businessName}
+              </foreach>
+          </if>
+          <if test="null != param.processVersion">
+              and pm.process_version = #{param.processVersion}
+          </if>
+          <if test="null != param.processStatus and param.processStatus.size() > 0">
+          and pm.process_status in
+            <foreach collection="param.processStatus" item="processStatus" open="(" separator="," close=")">
+                #{processStatus}
+            </foreach>
+          </if>
+
     </sql>
 
     <select id="getTaskByBusiness"
@@ -123,10 +144,30 @@
 
     <select id="paging" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$PagingResultDTO">
        <include refid="List_Process_Management"/>
+        order by ptm.create_time desc
     </select>
 
     <select id="export" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$PagingResultDTO">
         <include refid="List_Process_Management"/>
+        <if test="null != param.ids and param.ids.size() > 0">
+            and ptm.id in
+            <foreach collection="param.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        order by ptm.create_time desc
+    </select>
+    <select id="listProcessTaskByIds"
+            resultType="com.erp.model.workflow.dto.ProcessManagementDTO$ManagementTaskDTO">
+        <include refid="Get_Task_Management"/>
+        AND approve_status = 'approveIng'AND ptm.task_status = 'approveIng'
+        <if test="null != param.ids and param.ids.size() > 0">
+            and ptm.id in
+            <foreach collection="param.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        ORDER BY ptm.create_time ASC
     </select>
 
 </mapper>

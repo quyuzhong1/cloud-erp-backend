@@ -94,7 +94,7 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * 转办
      * @param dto
      */
-    Boolean transfer(List<ProcessManagementDTO.TransferDTO> dto);
+    Boolean transfer(ProcessManagementDTO.TransferDTO dto);
 
     /**
      * 流程撤销
@@ -127,7 +127,7 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * 导出
      * @param dto
      */
-    void export(ProcessManagementDTO.SearchDTO dto, HttpServletResponse response) throws Exception ;
+    void export(ProcessManagementDTO.ExportDTO dto, HttpServletResponse response) throws Exception ;
 
     /**
      * 流程进度
@@ -151,4 +151,18 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @param task
      */
     void sendTimeoutHandle(ProcessManagementDTO.ManagementTaskDTO task);
+
+    /**
+     * 批量转办
+     * @param dto
+     * @return
+     */
+    Boolean transferBatch(ProcessManagementDTO.TransferBatchDTO dto);
+
+    /**
+     * 根据id查询任务列表
+     * @param ids
+     * @return List<ProcessManagementDTO.ManagementTaskDTO>
+     */
+    List<ProcessManagementDTO.ManagementTaskDTO> listTaskById(List<String> ids);
 }

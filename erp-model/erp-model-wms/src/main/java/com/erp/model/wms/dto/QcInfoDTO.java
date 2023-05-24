@@ -753,5 +753,9 @@ public class QcInfoDTO implements Serializable {
          * 备注
          */
         private String remark;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
     }
 }

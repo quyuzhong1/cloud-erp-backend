@@ -146,6 +146,8 @@ public enum ApiError implements Serializable {
     PROCESS_TASK_NOT_REJECT(94021,"当前任务无法驳回"),
     ERROR_940022(94022,"模块已存在请不要重复操作"),
 
+    TASK_NOT_EXIST(94023,"任务已审核或不存在"),
+
 
 
 
@@ -432,7 +434,7 @@ public enum ApiError implements Serializable {
     ERROR_98060(98060,"只有待质检状态才能分配质检员"),
     ERROR_98061(98061,"存在不一样的作废状态"),
     ERROR_98062(98062,"销售订单【%s】下推备货申请单SKU【%s】数量不能超过【%s】"),
-    ERROR_98063(98063,"只有审核通过才能下推销售出库单"),
+    ERROR_98063(98063,"只有审核通过才能下推单据"),
     ERROR_98064(98064,"备货申请单SKU【%s】数量不能超过【%s】"),
 
 

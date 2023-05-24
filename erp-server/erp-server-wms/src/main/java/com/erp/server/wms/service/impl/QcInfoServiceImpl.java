@@ -1474,7 +1474,14 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      **/
     @Override
     public List<SoReturnInstockDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(List<String> ids) {
+
         List<SoReturnInstockDTO.GenerateSoReturnInstockView> list = baseMapper.generateSoReturnInstockView(ids);
+        String finishQcCode = QcBillStatusEnum.FINISH_QC.getCode();
+
+        long count = list.stream().filter(f -> !f.getQcStatus().equals(finishQcCode)).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98063);
+        }
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         //获取sku的id集合
         List<String> skuIdList = list.stream().map(SoReturnInstockDTO.GenerateSoReturnInstockView::getSkuId).collect(Collectors.toList());
