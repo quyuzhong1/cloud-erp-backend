@@ -728,6 +728,7 @@ public class SoInfoDTO implements Serializable {
         private String addressType;
 
         @Valid
+        @Size(min = 1, message = "销售订单详情不能为空", groups = {AddGroup.class})
         private List<SoDetailDTO.UpdateDTO> detailList;
     }
 

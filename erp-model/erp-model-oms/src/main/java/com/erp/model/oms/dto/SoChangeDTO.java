@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -257,13 +258,15 @@ public class SoChangeDTO implements Serializable {
          * 变更原因
          */
         @NotBlank(message = "变更原因不能为空")
-        @Size(max = 200, message = "变更原因最大50字符")
+        @Size(max = 200, message = "变更原因最大200字符")
         private String remark;
 
 
         /**
          * 产品信息
          */
+        @Valid
+        @Size(min = 1, message = "销售变更订单详情不能为空")
         private List<SoChangeDetailDTO.AddDTO> detailList;
 
 

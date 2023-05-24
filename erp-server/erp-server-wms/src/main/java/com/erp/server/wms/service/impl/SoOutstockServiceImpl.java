@@ -739,8 +739,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException(ApiError.ERROR_99058);
         }
         List<SoOutstockDetailDTO.UpdateDTO> detailList = dto.getDetailList();
+        String sourceType = dto.getSourceType();
+        if (StringUtils.isBlank(sourceType)) {
+            sourceType = SourceTypeEnum.SELF_ADD.getCode();
+        }
         //检查出库数量
-        soOutstockDetailService.checkOutQty(dto.getWarehouseId(), dto.getSoId(), dto.getSourceId(), dto.getSourceType(), detailList);
+        soOutstockDetailService.checkOutQty(dto.getWarehouseId(), dto.getSoId(), dto.getSourceId(), sourceType, detailList);
         String code = soOutstock.getCode();
         //旧的
         SoOutstockEntity old = new SoOutstockEntity();
