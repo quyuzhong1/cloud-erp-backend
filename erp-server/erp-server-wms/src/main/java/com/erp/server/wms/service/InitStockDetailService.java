@@ -35,7 +35,7 @@ public interface InitStockDetailService  extends SuperService<InitStockDetailEnt
      * @param skuId
      * @return
      */
-    InitStockDetailEntity findDetail(String mainId, String skuId);
+    List<InitStockDetailEntity> findDetail(String mainId, String skuId);
 
 
     /**
