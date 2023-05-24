@@ -91,6 +91,8 @@ public class ProcessDefinitionDTO {
          */
         private List<LocalDateTime> createTimeList;
 
+        private Boolean isDeploy;
+
     }
 
     @Data
