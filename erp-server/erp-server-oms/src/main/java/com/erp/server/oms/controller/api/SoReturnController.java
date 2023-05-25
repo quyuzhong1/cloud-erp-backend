@@ -319,7 +319,6 @@ public class SoReturnController extends BaseController {
 
     /**
      * 添加详情按钮-列表查询
-     *
      * @param id id
      * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoDetailDTO.AddDetailView>>
      * @Author Luo_WG
@@ -342,5 +341,18 @@ public class SoReturnController extends BaseController {
     public ApiResult generateSoReturnSave(@RequestBody @Validated ValidList<SoInfoDTO.GenerateSoReturnView> validList) {
         Boolean flag = soReturnService.generateSoReturnSave(validList.getList());
         return flag ? success() : failure();
+    }
+
+    /**
+     * 销售单详情-单据关联-退货订单号列表
+     * @Author Luo_WG
+     * @Date 2023/5/25 16:19
+     * @param id id
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/listSoReturnDetail")
+    public ApiResult<List<SoReturnDTO.PagingView>> listSoReturnDetailBySourceId(@RequestParam("id") String id) {
+        List<SoReturnDTO.PagingView> list = soReturnService.listSoReturnDetailBySourceId(id);
+        return success(list);
     }
 }

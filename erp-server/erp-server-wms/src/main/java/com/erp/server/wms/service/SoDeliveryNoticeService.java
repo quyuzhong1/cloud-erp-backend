@@ -170,4 +170,13 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @return java.lang.Boolean
      **/
     Boolean generateDeliverySave(List<SoInfoDTO.GenerateDeliveryView> list);
+
+    /**
+     * 销售单详情-单据关联-发货通知单
+     * @Author Luo_WG
+     * @Date 2023/5/25 16:36
+     * @param sourceId
+     * @return java.util.List<com.erp.model.wms.dto.SoDeliveryNoticeDTO.PagingView>
+     **/
+    List<SoDeliveryNoticeDTO.PagingView> listSoReturnDetailBySourceId(String sourceId);
 }
