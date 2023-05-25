@@ -40,7 +40,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
             warehouseService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId);
         }
         //调拨申请单
-        if (ApiModuleTypeEnum.STK_TRANSFERDIRECT.getCode().toString().equals(code)) {
+        if (ApiModuleTypeEnum.TRANSFER_INFO.getCode().toString().equals(code)) {
             transferInfoService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
         }
 

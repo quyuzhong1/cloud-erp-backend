@@ -447,6 +447,17 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         return Boolean.TRUE;
     }
 
+    @Override
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId,String operate) {
+        return  this.lambdaUpdate()
+                .eq(OtherOutstockEntity::getId,id)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),OtherOutstockEntity::getSyncKingdeeStatus,syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),OtherOutstockEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId),OtherOutstockEntity::getSyncKingdeeId,syncKingdeeId)
+                .set(StringUtils.isNotBlank(operate),OtherOutstockEntity::getSyncOperate,operate)
+                .update();
+    }
+
     /**
      * @description: 其他出库变更库存
      * @author Will

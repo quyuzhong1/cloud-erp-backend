@@ -5,10 +5,7 @@ import com.erp.model.oms.enums.SoChangeTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.DecimalMax;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -36,8 +33,7 @@ public class SoChangeDetailDTO implements Serializable {
         /**
          * 销售订单详情id
          */
-        @NotBlank(message = "销售订单详情不能为空")
-        private String  soDetailId;
+        private String soDetailId;
 
         /**
          * sku id
@@ -57,13 +53,14 @@ public class SoChangeDetailDTO implements Serializable {
          * 销售数量
          */
         @NotNull(message = "销售数量不能为空")
-        @DecimalMax(value = "999999999",message ="销售数量最大值")
+        @DecimalMax(value = "999999999", message = "销售数量最大值")
         private Integer qty;
 
         /**
          * 单价
          */
         @NotNull(message = "销售单价不能为空")
+        @PositiveOrZero(message = "销售单价不能为负数")
         private BigDecimal price;
 
 
@@ -90,8 +87,6 @@ public class SoChangeDetailDTO implements Serializable {
          */
         @NotNull(message = "是否补发不能为空")
         private Boolean isReissue;
-
-
 
 
         /**
@@ -135,10 +130,10 @@ public class SoChangeDetailDTO implements Serializable {
         /**
          * 变更类型
          */
-        private String type;
+        private SoChangeTypeEnum changeType;
 
         /**
-         * 销售数量
+         * 新销售数量
          */
         private Integer qty;
 
@@ -148,10 +143,32 @@ public class SoChangeDetailDTO implements Serializable {
         private Integer oldQty;
 
 
+        /**
+         * 新币种
+         */
+        private String currency;
 
 
         /**
-         * 单价
+         * 新币种符号
+         */
+        private String currencySymbol;
+
+
+        /**
+         * 原币种
+         */
+        private String oldCurrency;
+
+
+        /**
+         * 原币种符号
+         */
+        private String oldCurrencySymbol;
+
+
+        /**
+         * 新单价
          */
         private BigDecimal price;
 
@@ -169,11 +186,11 @@ public class SoChangeDetailDTO implements Serializable {
         /**
          * 原税率
          */
-        private BigDecimal oldRate;
+        private BigDecimal oldTaxRate;
 
 
         /**
-         * 含税单价
+         * 新含税单价
          */
         private BigDecimal taxPrice;
 
@@ -188,7 +205,7 @@ public class SoChangeDetailDTO implements Serializable {
         private String unit;
 
         /**
-         * 销售金额
+         * 新销售金额
          */
         private BigDecimal amount;
 
@@ -210,6 +227,12 @@ public class SoChangeDetailDTO implements Serializable {
 
 
         /**
+         * 销售订单详情id
+         */
+        private String soDetailId;
+
+
+        /**
          * 备注
          */
         private String remark;
@@ -223,53 +246,10 @@ public class SoChangeDetailDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public class UpdateDTO {
-
+    public class UpdateDTO extends AddDTO {
 
         private String id;
 
-
-        /**
-         * sku id
-         */
-        private String skuId;
-
-        /**
-         * 销售数量
-         */
-        private Integer qty;
-
-        /**
-         * 单价
-         */
-        private BigDecimal price;
-
-
-        /**
-         * 税率
-         */
-        private BigDecimal taxRate;
-
-        /**
-         * 是否赠品
-         */
-        private Boolean isGift;
-
-        /**
-         * 是否补发
-         */
-        private Boolean isReissue;
-
-        /**
-         * 是否关闭
-         */
-        private Boolean isClose;
-
-
-        /**
-         * 备注
-         */
-        private String remark;
     }
 
 

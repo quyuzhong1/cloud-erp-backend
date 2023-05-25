@@ -31,6 +31,13 @@ public class SoChangeDetailEntity extends BaseEntity<SoChangeDetailEntity> {
     @TableField("main_id")
     private String mainId;
 
+
+    /**
+     * 销售订单详情id
+     */
+    @TableField("so_detail_id")
+    private String soDetailId;
+
     /**
      * 类型
      */

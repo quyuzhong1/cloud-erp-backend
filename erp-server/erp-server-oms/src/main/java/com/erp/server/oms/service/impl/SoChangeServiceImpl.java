@@ -4,14 +4,17 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -19,6 +22,8 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoChangeDTO;
+import com.erp.model.oms.dto.SoChangeDetailDTO;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -36,6 +41,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -76,6 +82,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     @Resource
     private CustomerInfoService customerInfoService;
 
+    @Resource
+    private CommonService commonService;
+
     /**
      * 添加销售订单
      *
@@ -85,20 +94,23 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      * @date 2023-05-18 11:54
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String add(SoChangeDTO.AddDTO dto) {
         //销售订单
         String soId = dto.getSoId();
         //检查能否变更
         checkIsChange(soId);
+        //检查对应详情的变更类型
+        soChangeDetailService.checkChange(dto.getDetailList());
         String id = IdWorker.getIdStr();
         SoChangeEntity soChange = new SoChangeEntity();
         BeanMapper.copy(dto, soChange);
-        String useId = dto.getUseId();
+        String userId = dto.getUserId();
         String deptId = dto.getDeptId();
         String useName = "";
         String deptName = "";
-        if (StringUtils.isEmpty(useId)) {
-            FindUserDTO userInfo = sysUserFeign.getUserByUserId(useId);
+        if (StringUtils.isEmpty(userId)) {
+            FindUserDTO userInfo = sysUserFeign.getUserByUserId(userId);
             if (userInfo != null) {
                 useName = userInfo.getUserName();
             }
@@ -127,9 +139,77 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
 
     /**
+     * 更改销售变更单
+     *
+     * @param dto
+     * @return java.lang.String
+     * @author yl
+     * @date 2023-05-25 11:39
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String updateSoChange(SoChangeDTO.UpdateDTO dto) {
+        String id = dto.getId();
+        SoChangeEntity soChange = this.getById(id);
+        if (Objects.isNull(soChange)) {
+            throw new ServiceException(ApiError.ERROR_92034);
+        }
+        List<SoChangeDetailDTO.UpdateDTO> detailList = dto.getDetailList();
+        //检查对应详情的变更类型
+        soChangeDetailService.checkChange(BeanMapper.copyList(detailList, SoChangeDetailDTO.AddDTO.class));
+        String code = soChange.getCode();
+        //旧的
+        SoChangeEntity old = new SoChangeEntity();
+        BeanMapper.copy(soChange, old);
+        BeanMapper.copy(dto, soChange);
+        soChange.setCode(code);
+        String userId = dto.getUserId();
+        String deptId = dto.getDeptId();
+        String useName = "";
+        String deptName = "";
+        if (StringUtils.isEmpty(userId)) {
+            FindUserDTO userInfo = sysUserFeign.getUserByUserId(userId);
+            if (userInfo != null) {
+                useName = userInfo.getUserName();
+            }
+        }
+        if (StringUtils.isNotBlank(deptId)) {
+            SysDepartmentDTO dept = sysUserFeign.getUserDeptById(deptId);
+            if (dept != null) {
+                deptName = dept.getName();
+            }
+        }
+        soChange.setDeptName(deptName);
+        soChange.setUserName(useName);
+        Boolean updateResult = this.updateById(soChange);
+        if(updateResult){
+            operateLogService.addModuleOperateLogByObj(old, soChange, ModuleTypeEnum.SO_CHANGE.getCode(), id, "", "");
+            soChangeDetailService.updateDetailList(id, dto.getDetailList());
+            return id;
+        }
+        return "";
+    }
+
+
+    /**
+     * 修改并提交
+     * @author yl
+     * @date 2023-05-25 12:23
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    @Override
+    public Boolean updateAndSubmit(SoChangeDTO.UpdateDTO dto) {
+        String id = this.updateSoChange(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1020);
+        }
+        return this.submit(Arrays.asList(id));
+    }
+
+    /**
      * 检查能否变更
      * 单据状态为已审核并且不在“变更中”才可变更
-     *
      * @param soId
      * @return void
      * @author yl
@@ -221,6 +301,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      * @date 2023-05-24 14:53
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean addAndSubmit(SoChangeDTO.AddDTO dto) {
         String id = this.add(dto);
         if (StringUtils.isBlank(id)) {
@@ -362,7 +443,6 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
         List<String> skuIdList = list.stream().map(SoChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-
         //客户id
         List<String> customerIdList = list.stream().map(SoChangeDTO.PagingViewDTO::getCustomerId).collect(Collectors.toList());
         List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIdList) ? customerInfoService.listByIds(customerIdList) : Collections.emptyList();
@@ -421,10 +501,200 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     @Override
     public SoChangeDTO.ViewDTO view(String id) {
         SoChangeEntity soChange = this.getById(id);
-        if(Objects.isNull(soChange)){
+        if (Objects.isNull(soChange)) {
             throw new ServiceException(ApiError.ERROR_92034);
         }
-        return null;
+        SoChangeDTO.ViewDTO view = new SoChangeDTO.ViewDTO();
+        BeanMapper.copy(soChange, view);
+        String soId = soChange.getSoId();
+        SoInfoDTO.CustomerDTO soInfo = soInfoService.getSoCustomer(soId);
+        view.setAddressTypeName(soInfo.getAddressTypeName());
+        ApproveStatusEnum approveStatus = soChange.getApproveStatus();
+        view.setApproveStatusName(approveStatus.getName());
+        view.setCurrency(soInfo.getCurrency());
+        view.setCustomerId(soInfo.getCustomerId());
+        view.setCustomerName(soInfo.getCustomerName());
+        view.setIsTax(soInfo.getIsTax());
+        view.setDeliveryModeName(soInfo.getDeliveryModeName());
+        view.setOrderTypeName(soInfo.getOrderTypeName());
+        view.setOrderType(soInfo.getOrderType());
+        view.setReceiveAddress(soInfo.getReceiveAddress());
+        view.setReceiverName(soInfo.getReceiverName());
+        view.setSoCode(soInfo.getCode());
+        view.setSoId(soInfo.getId());
+        view.setTelNumber(soInfo.getTelNumber());
+        //根据主表id 获取详情
+        List<SoChangeDetailDTO.ViewDTO> detailList = soChangeDetailService.listDetailByMainId(id);
+        view.setDetailList(detailList);
+        return view;
+    }
+
+
+    /**
+     * 审核
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-25 10:46
+     */
+    @Override
+    public Boolean approve(BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<SoChangeEntity> list = this.listByIds(ids);
+        String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+        long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
+        String ingStatusName = ApproveStatusEnum.APPROVE_ING.getName();
+        //意见
+        String comment = dto.getComment();
+        Boolean result = true;
+        String content = "";
+        LoginUser user = commonService.getUserInfo();
+        if (dto.getType().equals(ApproveType.PASS)) {
+            //审核通过
+            result = this.updateApproveInfo(list, ApproveStatusEnum.APPROVE, user.getUid(), user.getUserName());
+            content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
+        } else {
+            //审核不通过
+            result = this.updateApproveInfo(list, ApproveStatusEnum.REJECT, user.getUid(), user.getUserName());
+            content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
+        }
+        if (result) {
+            //添加日志
+            List<Pair<String, String>> pairList = list.stream().
+                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_CHANGE.getCode(), pairList, "状态变更");
+        }
+        return result;
+    }
+
+    /**
+     * 撤销流程
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-25 11:02
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean cancelProcess(List<String> ids) {
+        List<SoChangeEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_92034);
+        }
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        //TODO 撤销流程
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.WAIT_SUBMIT);
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("销售变更单【%s】取消流程", ModuleTypeEnum.SO_CHANGE.getCode(), pairList, "取消流程操作");
+        return result;
+    }
+
+
+    /**
+     * 删除销售变更单
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-25 11:05
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean deleteByIds(List<String> ids) {
+        List<SoChangeEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_92034);
+        }
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        long invalidCount = list.stream().filter(s -> s.getInvalidStatus()).count();
+        if (invalidCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        Boolean result = this.removeByIds(ids);
+        if (result) {
+            //添加日志
+            String content = "删除销售变更单[%s]";
+            List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_CHANGE.getCode(), pairList, "删除");
+            //删除明细
+            soChangeDetailService.removeByMainIdList(ids);
+
+        }
+        return result;
+    }
+
+
+    /**
+     * 作废单据
+     *
+     * @param ids
+     * @param remark
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-25 11:14
+     */
+    @Override
+    public Boolean invalid(List<String> ids, String remark) {
+        List<SoChangeEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_92034);
+        }
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(waitSubmitStatus);
+        statusList.add(rejectStatus);
+        long invalidCount = list.stream().filter(d -> !d.getInvalidStatus()).count();
+        if (invalidCount != list.size()) {
+            throw new ServiceException(ApiError.ERROR_98061);
+        }
+        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98005);
+        }
+        lambdaUpdate().in(SoChangeEntity::getId, ids).
+                set(SoChangeEntity::getInvalidStatus, Boolean.TRUE).
+                set(SoChangeEntity::getInvalidRemark, remark).update();
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        String content = "作废了一个销售变更单【%s】,作废原因: ".concat(remark);
+        operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_CHANGE.getCode(), pairList, "作废");
+        return Boolean.TRUE;
+    }
+
+
+    /**
+     * 更改审核信息
+     *
+     * @param list
+     * @param approveStatus
+     * @param approveUserId
+     * @param approveUserName
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-25 10:52
+     */
+    private Boolean updateApproveInfo(List<SoChangeEntity> list, ApproveStatusEnum approveStatus, String approveUserId, String approveUserName) {
+        if (CollectionUtils.isNotEmpty(list)) {
+            for (SoChangeEntity item : list) {
+                item.setApproveStatus(approveStatus);
+                item.setApproveUserId(approveUserId);
+                item.setApproveUserName(approveUserName);
+            }
+            return this.updateBatchById(list);
+        }
+        return Boolean.TRUE;
     }
 
     private List<String> listBySearchType(String searchType) {

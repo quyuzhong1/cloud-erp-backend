@@ -2,8 +2,10 @@ package com.erp.rpc.wms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.dto.PoInstockDTO;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
@@ -135,4 +137,14 @@ public interface WmsTaskFeign {
      **/
     @PostMapping("feign/wmsWorkOption/purchaseReturnOrderApprove")
     Boolean purchaseReturnOrderApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 根据销售 销售订单ids 获取是否有下推的单据
+     * @author yl
+     * @date 2023-05-25 10:27
+     * @param soDetailIdList
+     * @return java.lang.Integer
+     */
+    @PostMapping("feign/soDeliveryNotice/getPushDownBySoDetailIds")
+    Integer getPushDownBySoDetailIds(@RequestBody List<String> soDetailIdList);
 }

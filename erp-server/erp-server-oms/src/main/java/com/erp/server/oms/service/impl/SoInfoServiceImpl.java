@@ -437,6 +437,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * @date 2023-05-17 15:00
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String draft(SoInfoDTO.AddDTO dto) {
         //id
         String id = dto.getId();
@@ -693,6 +694,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * @date 2023-05-17 16:51
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean cancelProcess(List<String> ids) {
         List<SoInfoEntity> list = this.listByIds(ids);
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus().getStatus())).count();

@@ -17,6 +17,7 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.server.wms.mapper.SoDeliveryNoticeDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SoDeliveryNoticeDetailService;
+import com.erp.server.wms.service.SoOutstockDetailService;
 import com.erp.server.wms.service.WmsAttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -47,6 +48,10 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
 
     @Resource
     private OperateLogService operateLogService;
+
+
+    @Resource
+    private SoOutstockDetailService soOutstockDetailService;
 
     @Override
     public Boolean add(SoDeliveryNoticeDTO.Add dto, String id) {
@@ -219,5 +224,25 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         }
 
 
+    }
+
+    /**
+     * 根据销售订单详情id 获取对应 下推的数据
+     *
+     * @param soDetailIds
+     * @return java.lang.Integer
+     * @author yl
+     * @date 2023-05-25 10:30
+     */
+    @Override
+    public Integer getPushDownBySoDetailIds(List<String> soDetailIds) {
+        if (CollectionUtils.isEmpty(soDetailIds)) {
+            return 0;
+        }
+        //发货通知的
+        Integer deliveryNoticeCount = this.lambdaQuery().in(SoDeliveryNoticeDetailEntity::getSourceDetailId, soDetailIds).count();
+
+        Integer soOutstockCount = soOutstockDetailService.getPushDownCountBySoDetailIds(soDetailIds);
+        return deliveryNoticeCount+soOutstockCount;
     }
 }

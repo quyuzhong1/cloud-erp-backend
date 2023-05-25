@@ -87,4 +87,13 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @return java.util.List<com.erp.model.wms.entity.SoOutstockDetailEntity>
      */
     List<SoOutstockDetailEntity> listByMainIds(List<String> noticeSoOutstockIds);
+
+    /**
+     * 根据销售订单详情id获取到对应的下推数量
+     * @author yl
+     * @date 2023-05-25 10:33
+     * @param soDetailIds
+     * @return java.lang.Integer
+     */
+    Integer getPushDownCountBySoDetailIds(List<String> soDetailIds);
 }
