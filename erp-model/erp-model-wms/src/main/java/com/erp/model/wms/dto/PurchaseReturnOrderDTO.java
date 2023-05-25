@@ -482,6 +482,11 @@ public class PurchaseReturnOrderDTO {
          * 备注
          */
         private String remark;
+
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
     }
 
 

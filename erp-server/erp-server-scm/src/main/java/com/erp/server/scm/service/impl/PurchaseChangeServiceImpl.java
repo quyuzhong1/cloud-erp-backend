@@ -605,4 +605,14 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             purchaseOrderDetailService.updateCreatePoType(purchaseOrderId);
         }
     }
+
+    /**
+     * 采购变更单库存变更（需要计算差额，因为原采购订单已经增加了在途）
+     * @param list 变更单主单
+     * @param purchaseChangeDetailList 变更单明细
+     */
+    public void updateInventoryTransCore(List<PurchaseChangeEntity> list, List<PurchaseChangeDetailEntity> purchaseChangeDetailList) {
+        // 1.由于采购订单必须审核通过才能生成采购申请单，采购订单审核通过时生成了入库预报，需同步修改入库预报
+    }
+
 }

@@ -146,6 +146,11 @@ public class PoInstockDTO implements Serializable {
          */
         private LocalDateTime createTime;
 
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+
     }
 
     @Data

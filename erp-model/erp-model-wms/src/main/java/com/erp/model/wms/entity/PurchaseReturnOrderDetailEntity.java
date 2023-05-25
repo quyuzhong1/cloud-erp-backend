@@ -96,6 +96,12 @@ public class PurchaseReturnOrderDetailEntity extends BaseEntity<PurchaseReturnOr
     @TableField("purchase_order_detail_id")
     private String purchaseOrderDetailId;
 
+    /**
+     * 仓位
+     */
+    @TableField("warehouse_location")
+    private String warehouseLocation;
+
     @TableField(exist = false)
     private String approveStatus;
 

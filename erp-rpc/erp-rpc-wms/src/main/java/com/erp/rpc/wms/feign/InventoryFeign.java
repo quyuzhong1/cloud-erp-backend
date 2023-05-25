@@ -47,6 +47,13 @@ public interface InventoryFeign {
     @PostMapping("/feign/inventory/approveByRule")
     void approveByRule(@RequestBody @Validated InventoryTransferRuleDTO dto);
 
+    /**
+     * 出入库业务，自定义规则
+     *
+     * @param dto
+     */
+    @PostMapping("/feign/inventory/approveInOutStockByRule")
+    void approveInOutStockByRule(@RequestBody @Validated InventoryInOutStockRuleDTO dto);
 
     /**
      * 反审核

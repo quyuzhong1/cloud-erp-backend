@@ -23,7 +23,8 @@
         pro.approve_user_name,
         pro.create_user_name,
         pro.create_time,
-        prod.remark
+        prod.remark,
+        prod.warehouse_location
         FROM po_return_detail prod
         LEFT JOIN po_return pro ON prod.main_id = pro.id AND prod.is_deleted = FALSE
         WHERE pro.is_deleted = FALSE
