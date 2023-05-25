@@ -603,7 +603,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                 throw new ServiceException(ApiError.ERROR_99051.code, String.format(ApiError.ERROR_99051.msg,dto.getSourceCode(), skuNo));
             }
             if (dto.getQty().intValue() > pickingQty.intValue() - totalQty.intValue()) {
-                throw new ServiceException(ApiError.ERROR_99050.code, String.format(ApiError.ERROR_99050.msg, pickingQty - totalQty));
+                throw new ServiceException(ApiError.ERROR_99050.code, String.format(ApiError.ERROR_99050.msg,dto.getSourceCode(), skuNo, pickingQty - totalQty));
             }
         }
         if (CollectionUtils.isNotEmpty(transferOutDetailList)) {
