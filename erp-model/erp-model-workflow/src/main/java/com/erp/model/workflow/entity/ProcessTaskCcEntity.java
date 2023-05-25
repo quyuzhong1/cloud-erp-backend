@@ -54,6 +54,11 @@ public class ProcessTaskCcEntity extends BaseEntity<ProcessTaskCcEntity> {
     @TableField("status")
     private CcStatusEnum status;
 
+    /**
+     * 任务管理ID
+     */
+    private String taskManagementId;
+
 
     public static final String TASK_ID = "task_id";
 
@@ -64,6 +69,8 @@ public class ProcessTaskCcEntity extends BaseEntity<ProcessTaskCcEntity> {
     public static final String CC_USER_NAME = "cc_user_name";
 
     public static final String STATUS = "status";
+
+    public static final String TASK_MANAGEMENT_ID = "task_management_id";
 
     @Override
     public Serializable pkVal() {

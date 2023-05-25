@@ -193,10 +193,12 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .getElementsQuery().filterByType(CamundaProperties.class)
                 .singleResult()
                 .getCamundaProperties();
+        if (CollectionUtil.isEmpty(camundaProperties)) {
+            return null;
+        }
         Map<String, String> propertiesMap = camundaProperties.stream()
                 .collect(Collectors.toMap(CamundaProperty::getCamundaName, CamundaProperty::getCamundaValue));
-        CamundaDTO.PropertiesDTO propertiesDTO = BeanUtil.toBean(propertiesMap, CamundaDTO.PropertiesDTO.class);
-        return propertiesDTO;
+        return BeanUtil.toBean(propertiesMap, CamundaDTO.PropertiesDTO.class);
     }
 
     @Override
@@ -271,7 +273,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .eq(ProcessManagementEntity::getId, managementId)
                 .update();
         // 更新流程任务数据
-        processTaskManagementService.updateApprove(taskId, approveType, comment, "");
+        ProcessManagementEntity managementEntity = getById(managementId);
+        processTaskManagementService.updateApprove(taskId, approveType, comment, "", managementEntity);
         return Boolean.TRUE;
     }
 
@@ -282,7 +285,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         FlowElement flowElement = executionDelegate.getBpmnModelElementInstance();
         ExtensionElements extensionElements = flowElement.getExtensionElements();
         if(null == extensionElements){
-            executionDelegate.setVariableLocal("userList", Collections.singletonList("admin"));
+            log.warn("流程设计未配置扩展属性, processDefinitionId: {}, taskDefinitionKey: {}", executionDelegate.getProcessDefinitionId(), executionDelegate.getProcessInstanceId());
             return;
         }
         Collection<CamundaProperty> camundaProperties = extensionElements.getElementsQuery().filterByType(CamundaProperties.class).singleResult().getCamundaProperties();
@@ -299,7 +302,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
         // 填充用户变量
         executionDelegate.setVariableLocal("userList", candidateUsers);
-//        executionDelegate.setVariable("userList", candidateUsers);
     }
 
     @Override
@@ -371,7 +373,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .eq(ProcessManagementEntity::getId, managementId)
                 .update();
         // 更新流程任务数据
-        processTaskManagementService.updateApprove(taskId, approveType, comment, activityId);
+        ProcessManagementEntity managementEntity = getById(managementId);
+        processTaskManagementService.updateApprove(taskId, approveType, comment, activityId, managementEntity);
         return Boolean.TRUE;
     }
 
@@ -528,7 +531,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         String processDefinitionId = task.getExecution().getProcessDefinitionId();
         String taskDefinitionKey = task.getTaskDefinitionKey();
         CamundaDTO.PropertiesDTO propertiesDTO = getProperties(taskDefinitionKey, processDefinitionId);
-
+        if(null == propertiesDTO){
+            log.warn("流程设计未配置扩展属性, processDefinitionId: {}, taskDefinitionKey: {}", processDefinitionId, taskDefinitionKey);
+            return;
+        }
         // 保存流程任务数据
         DelegateExecution processInstance = task.getExecution().getProcessInstance();
         String processInstanceId = processInstance.getId();
@@ -548,11 +554,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
         Map<String, FindUserDTO> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, e -> e ));
         String copyUser = propertiesDTO.getCopyUser();
-        if (StrUtil.isNotBlank(copyUser)){
-            List<String> ccUserIds = Arrays.asList(copyUser.split(","));
-            List<FindUserDTO> ccUserList = sysUserFeign.getUserListByUserIds(ccUserIds);
-            processTaskCcService.saveCcUser(task.getId(), ccUserList);
-        }
         candidateUsers.forEach(userId -> {
             // 对去重类型做处理，自动审核通过
             FindUserDTO findUserDTO = userMap.get(userId);
@@ -562,7 +563,14 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             DictBasicEnum reviewSetting = processDefinition.getReviewSetting();
             Optional<ProcessTaskManagementEntity> processTaskManagement = Optional.empty();
             ProcessTaskManagementEntity insertTask = new ProcessTaskManagementEntity(processInstanceId, activityId, task.getId(), processStartTime, ApproveStatusEnum.APPROVE_ING, propertiesDTO, findUserDTO, executionId, activityName);
-            processTaskManagementService.saveProcessTask(insertTask);
+            ProcessTaskManagementEntity taskManagementEntity = processTaskManagementService.saveProcessTask(insertTask);
+
+            if (StrUtil.isNotBlank(copyUser)){
+                List<String> ccUserIds = Arrays.asList(copyUser.split(","));
+                List<FindUserDTO> ccUserList = sysUserFeign.getUserListByUserIds(ccUserIds);
+                processTaskCcService.saveCcUser(task.getId(), ccUserList, taskManagementEntity.getId());
+            }
+
             // 审核人配置
             if (DictBasicEnum.ADJACENT_DEDUPE.equals(reviewSetting)) {
                 // 相邻节点去重

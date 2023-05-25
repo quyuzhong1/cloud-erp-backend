@@ -6,8 +6,10 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
+import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.TimeoutStatusEnum;
 import com.erp.server.workflow.mapper.ProcessTaskManagementMapper;
@@ -39,9 +41,11 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
 
     @Resource
     private ProcessTaskCcService processTaskCcService;
+    @Resource
+    private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
 
     @Override
-    public Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String comment, String activityId) {
+    public Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String comment, String activityId, ProcessManagementEntity managementEntity) {
         ProcessTaskManagementEntity entity = getById(taskId);
         boolean update;
         if(ApproveTypeEnum.REJECT_APPOINT.equals(approveType)) {
@@ -73,17 +77,15 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
             throw new RuntimeException("更新任务审批状态失败");
         }
         // 发送抄送消息
-
-//        NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
-//        noticeMsgInfoDTO.setReceiverUserIds(new ArrayList<>(Arrays.asList("1645710077245652993")));
-//        noticeMsgInfoDTO.setTitle("产品提醒: 张三 新建产品名称【iphone14】");
-//        // 请注意：飞书中的**和**中间的数据表示加粗
-//        noticeMsgInfoDTO.setContent("**产品名称: **iphone14\n**产品日期：**2023-04-20");
-//        noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.SCM_TASK);
-//        // 默认tag请指定为msg_notice_default_tag，可以根据不同业务自行指定
-//        SendResult sendResult = mqProducerService.sendNoticeMsg(noticeMsgInfoDTO, null);
-//        // 审批完成后发送抄送消息更新抄送状态
-//        processTaskCcService.updateCcStatus(entity.getProcessInstanceId(), entity.getTaskId());
+        NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
+        noticeMsgInfoDTO.setReceiverUserIds(new ArrayList<>(Arrays.asList("1645710077245652993")));
+        noticeMsgInfoDTO.setTitle(StrUtil.format("【流程管理中心】审批结果抄送"));
+        noticeMsgInfoDTO.setContent(StrUtil.format("**单据名称: **{}\n **审批人：** {} \n 审批结果：{}！", managementEntity.getProcessName(), entity.getCurApproveName(), approveType.getName()));
+        noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.FLW_TASK);
+        // 默认tag请指定为msg_notice_default_tag，可以根据不同业务自行指定
+        SendResult sendResult = mqProducerService.sendNoticeMsg(noticeMsgInfoDTO, Boolean.TRUE);
+        // 审批完成后发送抄送消息更新抄送状态
+        processTaskCcService.updateCcStatus(entity.getProcessInstanceId(), entity.getTaskId(), entity.getId());
         return Boolean.TRUE;
     }
 
@@ -98,14 +100,13 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
         if(CollectionUtil.isEmpty(list)){
             return new LinkedHashMap<>();
         }
-        LinkedHashMap<String, List<ProcessTaskManagementEntity>> nodeMap = list.stream()
+        return list.stream()
                 .collect(Collectors.groupingBy(ProcessTaskManagementEntity::getCurActivityId, LinkedHashMap::new, Collectors.toList()));
-        return nodeMap;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void saveProcessTask(ProcessTaskManagementEntity insertTask) {
+    public ProcessTaskManagementEntity saveProcessTask(ProcessTaskManagementEntity insertTask) {
         // 赋值上级节点id
         ProcessTaskManagementEntity entity = lambdaQuery()
                 .eq(ProcessTaskManagementEntity::getProcessInstanceId, insertTask.getProcessInstanceId())
@@ -121,6 +122,7 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
         if (!save) {
             throw new RuntimeException("保存流程任务失败");
         }
+        return insertTask;
     }
 
     @Override
@@ -145,10 +147,13 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
                     .update();
         }
         // 新增审批记录
-        boolean save = save(ProcessTaskManagementEntity.getByEntity(entityList.get(0), targetUserId, targetUserName));
+        ProcessTaskManagementEntity insertEntity = ProcessTaskManagementEntity.getByEntity(entityList.get(0), targetUserId, targetUserName);
+        boolean save = save(insertEntity);
         if (!save) {
             throw new RuntimeException(" updateTransfer 任务转办 保存流程任务失败");
         }
+        // 转移抄送关联数据
+        processTaskCcService.updateCcTransfer(entityList, insertEntity);
     }
 
     @Override
