@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.entity.TransferOutEntity;
 
 import java.util.List;
@@ -22,4 +23,10 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
      * @return List<TransferOutEntity>
      */
     List<TransferOutEntity> listBySourceIds(List<String> ids);
+
+    /**
+     * 新增
+     * @param addDTO
+     */
+    void add(TransferOutDTO.AddDTO addDTO);
 }

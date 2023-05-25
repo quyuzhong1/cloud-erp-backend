@@ -2,10 +2,16 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -224,21 +230,26 @@ public class TransferOutDTO implements Serializable {
         /**
          * 调出日期
          */
+        @NotNull(message = "调出日期不能为空")
         private LocalDate billDate;
 
         /**
          * 调出仓库id
          */
+        @NotEmpty(message = "调出仓库不能为空")
         private String outWarehouseId;
 
         /**
          * 调入仓库id
          */
+        @NotEmpty(message = "调入仓库不能为空")
         private String inWarehouseId;
 
         /**
          * 调拨方向
          */
+        @StateEnumValue(clazz = TransferDirectionEnum.class, message = "调拨方向有误")
+        @NotEmpty(message = "调拨方向不能为空")
         private String transferDirection;
 
 
@@ -250,6 +261,8 @@ public class TransferOutDTO implements Serializable {
         /**
          * 详情
          */
+        @Valid
+        @Size(min = 1, message = "分步式调出单明细不能为空")
         private List<TransferOutDetailDTO.AddDTO> detailList;
     }
 
@@ -339,6 +352,8 @@ public class TransferOutDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+
 
         /**
          * 详情

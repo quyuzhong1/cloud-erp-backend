@@ -40,7 +40,7 @@ public enum BusinessNoTypeEnum {
     CODE_QTCK(30, "qtck","其他出库单"),
     CODE_XSBG(31, "xsbg","销售变更单"),
     CODE_FHTZ(32, "fhtz","发货通知单"),
-
+    CODE_FBDC(33, "fbdc","分步式调拨调出"),
     ;
 
 

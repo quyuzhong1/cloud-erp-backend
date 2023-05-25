@@ -114,6 +114,31 @@ public class TransferOutEntity extends BaseEntity<TransferOutEntity> {
     @TableField("source_type")
     private String sourceType;
 
+    /**
+     * 调入组织id
+     */
+    @TableField("in_org_id")
+    private String inOrgId;
+
+    /**
+     * 调入组织名称
+     */
+    @TableField("in_org_name")
+    private String inOrgName;
+
+
+    /**
+     * 调出组织id
+     */
+    @TableField("out_org_id")
+    private String outOrgId;
+
+    /**
+     * 调出组织名称
+     */
+    @TableField("out_org_name")
+    private String outOrgName;
+
 
     public static final String CODE = "code";
 
@@ -140,6 +165,14 @@ public class TransferOutEntity extends BaseEntity<TransferOutEntity> {
     public static final String REMARK = "remark";
 
     public static final String INVALID_STATUS = "invalid_status";
+
+    public static final String IN_ORG_ID = "in_org_id";
+
+    public static final String IN_ORG_NAME = "in_org_name";
+
+    public static final String OUT_ORG_ID = "out_org_id";
+
+    public static final String OUT_ORG_NAME = "out_org_name";
 
     @Override
     public Serializable pkVal() {

@@ -147,8 +147,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     @Override
     public String updateWarehouse(WarehouseDTO.UpdateDTO dto) {
-        String redisKey = WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(dto.getId());
-        redisService.deleteObject(redisKey);
+        // 删除缓存
+        removeCache(Collections.singletonList(dto.getId()));
         //仓库id
         String warehouseId = dto.getId();
         WarehouseEntity warehouse = this.getById(warehouseId);
@@ -200,6 +200,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (CollectionUtils.isEmpty(ids)) {
             return false;
         }
+        // 删除缓存
+        removeCache(ids);
         List<WarehouseEntity> list = this.listByIds(ids);
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -233,8 +235,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Override
     public Boolean updateStatus(UpdateStateDTO dto) {
         // 删除缓存
-        String redisKey = WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(dto.getId());
-        redisService.deleteObject(redisKey);
+        removeCache(Collections.singletonList(dto.getId()));
         //仓库id
         String warehouseId = dto.getId();
         WarehouseEntity warehouse = this.getById(warehouseId);
@@ -265,9 +266,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     public Boolean approve(BaseApproveParamDTO dto) {
         List<String> warehouseIds = dto.getIds();
         // 删除缓存
-        Collection<String> redisKeys = Lists.newArrayList();
-        warehouseIds.stream().forEach(warehouseId->redisKeys.add(WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(warehouseId)));
-        redisService.deleteObject(redisKeys);
+        removeCache(warehouseIds);
 
         List<WarehouseEntity> list = this.listByIds(warehouseIds);
         if (CollectionUtils.isEmpty(list)) {
@@ -308,9 +307,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Override
     public Boolean disApprove(List<String> warehouseIds) {
         // 删除缓存
-        Collection<String> redisKeys = Lists.newArrayList();
-        warehouseIds.stream().forEach(warehouseId->redisKeys.add(WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(warehouseId)));
-        redisService.deleteObject(redisKeys);
+        removeCache(warehouseIds);
 
         List<WarehouseEntity> list = this.listByIds(warehouseIds);
 
@@ -347,9 +344,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Transactional(rollbackFor = Exception.class)
     public Boolean deleteByIds(List<String> ids) {
         // 删除缓存
-        Collection<String> redisKeys = Lists.newArrayList();
-        ids.stream().forEach(warehouseId->redisKeys.add(WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(warehouseId)));
-        redisService.deleteObject(redisKeys);
+        removeCache(ids);
 
         List<WarehouseEntity> list = this.listByIds(ids);
         //待提交
@@ -576,10 +571,6 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        // 删除缓存
-        String redisKey = WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(dto.getId());
-        redisService.deleteObject(redisKey);
-
         return this.submit(Arrays.asList(id));
 
     }
@@ -686,5 +677,15 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_DUPLICATION_NAME);
         }
+    }
+
+    private void removeCache(List<String> ids) {
+        List<String> redisKeys = Lists.newArrayList();
+        ids.stream().forEach(id->{
+            String redisKey = WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(id);
+            redisKeys.add(redisKey);
+        });
+
+        redisService.deleteObject(redisKeys);
     }
 }

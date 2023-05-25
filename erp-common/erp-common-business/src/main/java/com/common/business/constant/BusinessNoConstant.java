@@ -69,4 +69,7 @@ public interface BusinessNoConstant {
 
     //销售出库
     String XSCK = "XSCK";
+
+    //分布式调拨调出
+    String FBDC = "FBDC";
 }

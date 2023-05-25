@@ -3,6 +3,10 @@ package com.erp.model.wms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
@@ -22,15 +26,18 @@ public class TransferOutDetailDTO implements Serializable {
     public static class AddDTO {
 
 
-
         /**
          * sku id
          */
+        @NotEmpty(message = "sku不能为空")
         private String skuId;
 
         /**
          * 调出数量
          */
+        @NotNull(message = "调出数量不能为空")
+        @Min(value = 1, message = "调出数量不能小于1")
+        @Max(value = 999999999,message = "出数量最大值为999999999")
         private Integer qty;
 
         /**
@@ -39,11 +46,21 @@ public class TransferOutDetailDTO implements Serializable {
         private String remark;
 
 
-
         /**
          * 来源明细id
          */
         private String sourceDetailId;
+
+
+        /**
+         * 调出仓位
+         */
+        private String warehouseLocation;
+
+        /**
+         * 单位
+         */
+        private String unit;
 
 
     }
@@ -87,24 +104,23 @@ public class TransferOutDetailDTO implements Serializable {
         private String remark;
 
 
-
-        /**
-         * 调出仓位
-         */
-        private String outWarehouseLocation;
-
         /**
          * 即时库存
          */
         private Integer curInventoryQty;
 
 
-
-
         /**
          * 来源明细id
          */
         private String sourceDetailId;
+
+
+        /**
+         * 调出仓位
+         */
+        private String warehouseLocation;
+
     }
 
 
@@ -134,14 +150,19 @@ public class TransferOutDetailDTO implements Serializable {
 
 
         /**
-         * 调出仓位
-         */
-        private String outWarehouseLocation;
-
-
-        /**
          * 来源明细id
          */
         private String sourceDetailId;
+
+
+        /**
+         * 调出仓位
+         */
+        private String warehouseLocation;
+
+        /**
+         * 单位
+         */
+        private String unit;
     }
 }
