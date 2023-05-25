@@ -2,12 +2,14 @@ package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.entity.OtherInstockDetailEntity;
 import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -70,10 +72,12 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
 
         if (CollectionUtils.isNotEmpty(userList)) {
             //仓管员
-            String warehouseKeeperCode = userList.stream().filter(obj -> obj.getUserId().equals(entity.getWarehouseKeeperId())).map(FindUserDTO::getCode).findFirst().orElse(null);
+            String warehouseKeeperCode = userList.stream().filter(obj -> obj.getUserId().equals(entity.getWarehouseKeeperId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
             resultMap.put("warehouseKeeperCode", warehouseKeeperCode);
             //领料人
-            String receiverCode = userList.stream().filter(obj -> obj.getUserId().equals(entity.getReceiverId())).map(FindUserDTO::getCode).findFirst().orElse(null);
+            String receiverCode = userList.stream().filter(obj -> obj.getUserId().equals(entity.getReceiverId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
             resultMap.put("receiverCode", receiverCode);
         }
 
@@ -84,9 +88,16 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getOrgId()));
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
             //库存组织编码
-            String orgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            String orgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOrgId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
             resultMap.put("orgCode", orgCode);
         }
+        //部门
+        SysDepartmentDTO sysDepartmentDTO = sysUserFeign.getUserDeptById(entity.getDeptId());
+        if (ObjectUtils.isNotEmpty(sysDepartmentDTO)) {
+            resultMap.put("deptCode", sysDepartmentDTO.getCode());
+        }
+
 
         List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
@@ -105,13 +116,13 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
 
             if (CollectionUtils.isNotEmpty(warehouseList)) {
                 //仓库编码
-                String warehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getWarehouseId())).map(WarehouseEntity::getKingdeeWarehouseCode).findFirst().orElse(null);
-
+                String warehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getWarehouseId()))
+                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse(null);
                 //调出仓库
                 jsonObject.set("warehouseCode", warehouseCode);
             }
             //仓位
-            jsonObject.set("outWarehouseLocation", detail.getWarehouseLocation());
+            jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
             //备注
             jsonObject.set("remark", detail.getRemark());
 

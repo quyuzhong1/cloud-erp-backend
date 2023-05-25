@@ -37,4 +37,13 @@ public interface SoDeliveryNoticeMapper extends BaseMapper<SoDeliveryNoticeEntit
      * @return java.util.List<com.erp.model.wms.dto.SoOutstockDTO.GenerateSoOutstockViewDTO>
      */
     List<SoOutstockDTO.GenerateSoOutstockViewDTO> listGenerateSoOutstockView(@Param("idList") List<String> idList);
+
+    /**
+     * 销售单详情-单据关联-发货通知单
+     * @Author Luo_WG
+     * @Date 2023/5/25 16:37
+     * @param sourceId sourceId
+     * @return java.util.List<com.erp.model.wms.dto.SoDeliveryNoticeDTO.PagingView>
+     **/
+    List<SoDeliveryNoticeDTO.PagingView> listSoReturnDetailBySourceId(@Param("sourceId") String sourceId);
 }

@@ -499,7 +499,130 @@ public class SoChangeDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO {
-
         private List<String> ids;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SoRefDTO {
+
+        /**
+         * 变更单号
+         */
+        private String code;
+
+        /**
+         * 单据状态
+         */
+        private ApproveStatusEnum approveStatus;
+
+        /**
+         * 单据状态名
+         */
+        private String approveStatusName;
+
+
+        /**
+         * 单据类型
+         */
+        private String orderType;
+
+        /**
+         * 单据类型名
+         */
+        private String orderTypeName;
+
+        /**
+         * 客户id
+         */
+        private String customerId;
+
+        /**
+         * 客户名
+         */
+        private String customerName;
+
+
+        /**
+         * 单位
+         */
+        private String unit;
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku no
+         */
+        private String skuNo;
+
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 新销售数量
+         */
+        private Integer qty;
+
+        /**
+         * 原销售数量
+         */
+        private Integer oldQty;
+
+        /**
+         * 新销售金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 销售金额 字符串 导出用到
+         */
+        private String amountStr;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 原销售金额
+         */
+        private BigDecimal oldAmount;
+
+
+        /**
+         * 原销售金额 字符串 导出用到
+         */
+        private String oldAmountStr;
+
+        /**
+         * 原币种符号
+         */
+        private String oldCurrencySymbol;
+
+        /**
+         * 最新审核人
+         */
+        private String approveUserName;
+
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime createTime;
+
+
+
+
     }
 }

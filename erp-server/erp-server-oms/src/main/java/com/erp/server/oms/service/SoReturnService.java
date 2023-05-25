@@ -187,4 +187,13 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @return java.lang.Boolean
      **/
     Boolean generateSoReturnSave(List<SoInfoDTO.GenerateSoReturnView> list);
+
+    /**
+     * 销售单详情-单据关联-退货订单号列表
+     * @Author Luo_WG
+     * @Date 2023/5/25 16:21
+     * @param sourceId sourceId
+     * @return java.util.List<com.erp.model.oms.dto.SoReturnDTO.PagingView>
+     **/
+    List<SoReturnDTO.PagingView> listSoReturnDetailBySourceId(String sourceId);
 }

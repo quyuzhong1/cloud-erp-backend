@@ -227,4 +227,34 @@
         WHERE sr.is_deleted = FALSE
     </select>
 
+    <select id="listSoReturnDetailBySourceId" resultType="com.erp.model.oms.dto.SoReturnDTO$PagingView">
+        SELECT
+            sr.id,
+            sr.source_id,
+            srd.source_detail_id,
+            sr.create_time,
+            sr.code,
+            sr.source_code,
+            sr.type,
+            sr.approve_status,
+            sr.invalid_status,
+            sr.customer_id,
+            sr.sales_org_id,
+            sr.sales_org_name,
+            sr.seller_id,
+            sr.seller_name,
+            srd.sku_id,
+            srd.sku_no,
+            srd.sales_qty,
+            srd.return_qty,
+            sr.bill_date,
+            sr.approve_user_name,
+            sr.create_user_name
+        FROM so_return_detail srd
+        INNER JOIN so_return sr ON srd.main_id = sr.id AND srd.is_deleted = FALSE
+        WHERE sr.is_deleted = FALSE
+        <if test="sourceId != '' and sourceId != null ">
+            AND sr.source_id = #{sourceId}
+        </if>
+    </select>
 </mapper>

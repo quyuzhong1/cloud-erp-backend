@@ -179,6 +179,14 @@ public class SoReturnDTO {
          */
         private BigDecimal salesAmount;
         /**
+         * 币种
+         */
+        private String currency;
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+        /**
          * 退货日期
          */
         private LocalDate billDate;
