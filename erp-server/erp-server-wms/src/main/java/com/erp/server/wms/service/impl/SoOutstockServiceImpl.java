@@ -904,6 +904,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             String skuId = item.getSkuId();
             LocalDate actualDeliveryDate = item.getActualDeliveryDate();
             item.setOutStockDate(actualDeliveryDate);
+            ApproveStatusEnum approveStatus = item.getApproveStatus();
+            item.setApproveStatusName(approveStatus.getName());
             item.setOrderType(soCustomer.getOrderType());
             item.setOrderTypeName(soCustomer.getOrderTypeName());
             item.setCustomerId(soCustomer.getCustomerId());

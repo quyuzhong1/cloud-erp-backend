@@ -271,7 +271,20 @@ public class SoChangeController extends BaseController {
     public ApiResult exportWarehouse(@RequestBody @Valid SoChangeDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = soChangeService.exportExcel(dto, response);
         return result ? success() : failure();
+    }
 
+    /**
+     * 销售订单关联的销售变更单
+     *
+     * @param soId
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-05-23 18:01
+     */
+    @GetMapping("/listSoRefSoChange")
+    public ApiResult<List<SoChangeDTO.SoRefDTO>> listSoRefSoChange(@RequestParam("soId") String soId) {
+        List<SoChangeDTO.SoRefDTO> list = soChangeService.listSoRefSoChangeBySoId(soId);
+        return success(list);
     }
 
 

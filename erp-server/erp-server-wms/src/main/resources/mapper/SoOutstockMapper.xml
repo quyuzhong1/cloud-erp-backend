@@ -231,6 +231,7 @@
     <select id="listSoRefSoOutstockBySoId" resultType="com.erp.model.wms.dto.SoOutstockDTO$SoRefDTO">
             SELECT
               so.code,
+              so.approve_status,
               so.order_type,
               so.delivery_org_id,
               so.delivery_org_name,
