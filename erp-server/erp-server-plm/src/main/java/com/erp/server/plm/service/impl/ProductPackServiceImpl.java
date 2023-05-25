@@ -155,7 +155,7 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
 
             //外箱大小
             String boxSize = item.getBoxSize();
-            if (StringUtils.isNotBlank(productSize)) {
+            if (StringUtils.isNotBlank(boxSize)) {
                 String[] boxSizes = boxSize.split("X");
                 //长
                 packVO.setBoxLength(new BigDecimal(boxSizes[0]));
