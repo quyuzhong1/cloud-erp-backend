@@ -49,7 +49,4 @@ public interface InstockForcastService extends SuperService<InstockForcastEntity
      */
     void finishDelivery(InstockForcastDTO.FinishDeliveryDTO dto);
 
-
-
-
 }

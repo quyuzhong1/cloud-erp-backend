@@ -78,4 +78,12 @@ public class InstockForcastDetailServiceImpl extends SuperServiceImpl<InstockFor
         return baseMapper.selectOne(queryWrapper);
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean updateQtyByPoChange(String id, Integer qty) {
+        return lambdaUpdate().set(InstockForcastDetailEntity::getQty, qty)
+                .in(InstockForcastDetailEntity::getId, id)
+                .update();
+    }
+
 }

@@ -32,5 +32,11 @@ public interface InstockForcastDetailService extends SuperService<InstockForcast
      */
     InstockForcastDetailEntity find(String mainId, String purchaseOrderDetailId);
 
+    /**
+     * 采购订单变更同步更新数量
+     * @param id
+     * @return
+     */
+    Boolean updateQtyByPoChange(String id, Integer qty);
 
 }

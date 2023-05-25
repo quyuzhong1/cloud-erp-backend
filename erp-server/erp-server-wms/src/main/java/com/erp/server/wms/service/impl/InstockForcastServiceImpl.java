@@ -185,6 +185,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             inOutStockDTO.setSourceDetailId(instockForcastDetailEntity.getId());
             inOutStockDTO.setSkuId(member.getSkuId());
             inOutStockDTO.setSkuNo(member.getSkuNo());
+            // 结束交货相当于把剩余在途的数量全部清0
             inOutStockDTO.setQty(member.getQty());
             inventorySkus.add(inOutStockDTO);
         });

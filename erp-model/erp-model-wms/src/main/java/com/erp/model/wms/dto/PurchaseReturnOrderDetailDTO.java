@@ -172,6 +172,11 @@ public class PurchaseReturnOrderDetailDTO {
          * 币种符号
          */
         private String currencySymbol;
+
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
     }
 
     /**
