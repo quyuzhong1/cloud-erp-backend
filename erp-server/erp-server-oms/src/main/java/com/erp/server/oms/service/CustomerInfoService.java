@@ -203,4 +203,15 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @return java.lang.Boolean
      */
     Boolean quoteCustomer(List<String> ids);
+
+    /**
+     * 修改金蝶同步信息
+     * @Author Luo_WG
+     * @Date 2023/5/25 10:43
+     * @param id
+     * @param syncKingdeeStatus
+     * @param syncKingdeeId
+     * @return java.lang.Boolean
+     **/
+    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId);
 }
