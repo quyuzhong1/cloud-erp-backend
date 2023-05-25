@@ -1129,4 +1129,72 @@ public class SoInfoDTO implements Serializable {
          */
         private String  remark;
     }
+
+    /**
+     * 下推退货订单-列表查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateSoReturnView {
+        /**
+         * 明细id
+         */
+        private String detailId;
+
+        /**
+         * 主表id
+         */
+        private String soId;
+
+        /**
+         * 销售单号
+         */
+        private String soCode;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 销售数量
+         */
+        private Integer salesQty;
+
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
+
+        /**
+         * 已出库数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 退货类型 wms/common/enumDropDown?type=ReturnType
+         * 描述：refund 退货扣款 replenishment 退货补货
+         */
+        private String returnTypeDict;
+
+        /**
+         * 退货原因 wms/common/enumDropDown?type=ReturnReason
+         */
+        private String returnReasonDict;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
 }

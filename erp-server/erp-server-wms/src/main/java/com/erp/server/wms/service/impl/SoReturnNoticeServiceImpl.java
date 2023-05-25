@@ -232,6 +232,8 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
         SoReturnNoticeEntity entity = new SoReturnNoticeEntity();
+        entity.setSoId(soInfoEntity.getId());
+        entity.setSoCode(soInfoEntity.getCode());
         //获取用户信息
         if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());

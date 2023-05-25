@@ -766,7 +766,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         for (String soId : soIdList) {
             SoDeliveryNoticeDTO.Add add = new SoDeliveryNoticeDTO.Add();
             add.setSourceId(soId);
-            add.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+            add.setSourceType(SourceTypeEnum.SO_INFO.getCode());
             List<SoInfoDTO.GenerateDeliveryView> viewList = list.stream().filter(req -> req.getMainId().equals(soId)).collect(Collectors.toList());
             List<SoDeliveryNoticeDetailDTO.Add> detailList = new ArrayList<>();
             for (SoInfoDTO.GenerateDeliveryView view : viewList) {
