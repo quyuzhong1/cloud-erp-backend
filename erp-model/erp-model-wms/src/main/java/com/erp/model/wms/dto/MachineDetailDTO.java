@@ -89,7 +89,11 @@ public class MachineDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ViewDTO extends UpdateDTO {
+    public static class ViewDTO extends CommonDTO {
+        /**
+         * 主键id
+         */
+        private String id;
 
         /**
          * 产品名称
@@ -106,5 +110,9 @@ public class MachineDetailDTO implements Serializable {
          */
         private Integer curInventoryQty;
 
+        /**
+         * 明细子件
+         */
+        private List<MachineSubComponentsDTO.ViewDTO> subComponentsList;
     }
 }

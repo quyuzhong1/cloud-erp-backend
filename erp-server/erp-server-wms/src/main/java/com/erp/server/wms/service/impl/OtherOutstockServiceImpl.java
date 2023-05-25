@@ -14,6 +14,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -45,6 +46,7 @@ import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.wms.kingdee.SyncKingdeeOtherOutstockService;
 import com.erp.server.wms.mapper.OtherOutstockMapper;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -98,6 +100,10 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
     @Resource
     private OtherOutstockCustomerService otherOutstockCustomerService;
+
+    @Resource
+    private SyncKingdeeOtherOutstockService syncKingdeeOtherOutstockService;
+
 
     @Override
     public PagingVO<OtherOutstockDTO.ListDTO> paging(PagingDTO<OtherOutstockDTO.SearchParamDTO> pagingDTO) {
@@ -336,6 +342,10 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 .set(OtherOutstockEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
                 .set(OtherOutstockEntity::getInvalidRemark, reason)
                 .update();
+
+        //发送金蝶
+        list.forEach(obj -> syncKingdeeOtherOutstockService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
+
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个其他出库单【%s】，作废原因：".concat(reason), ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), pairList, "作废操作");
@@ -366,6 +376,8 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
             //更新库存
             updateInventoryTransCore(list);
+            //发送金蝶
+            list.forEach(obj -> syncKingdeeOtherOutstockService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("其他出库单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
             //中止当前审核流程
@@ -398,6 +410,10 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //回扣库存
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.OTHER_OUTSTOCK,ids);
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+
+        //发送金蝶
+        list.forEach(obj -> syncKingdeeOtherOutstockService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("反审核了一个其他出库单【%s】", ModuleTypeEnum.OTHER_OUTSTOCK.getCode(), pairList, "反审核操作");
