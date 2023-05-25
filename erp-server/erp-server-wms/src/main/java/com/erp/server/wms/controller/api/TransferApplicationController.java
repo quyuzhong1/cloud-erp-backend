@@ -361,8 +361,8 @@ public class TransferApplicationController extends BaseController {
      * @return ApiResult<List<CommonDTO>>
      */
     @PostMapping("/listPickingDetail")
-    public ApiResult<List<PickingDetailDTO.CommonDTO>> listPickingDetail(@RequestBody @Valid PickingDetailDTO.SearchParamDTO dto) {
-        List<PickingDetailDTO.CommonDTO> list = transferApplicationService.listPickingDetail(dto);
+    public ApiResult<List<PickingDetailDTO.ListDTO>> listPickingDetail(@RequestBody @Valid PickingDetailDTO.SearchParamDTO dto) {
+        List<PickingDetailDTO.ListDTO> list = transferApplicationService.listPickingDetail(dto);
         return success(list);
     }
 }

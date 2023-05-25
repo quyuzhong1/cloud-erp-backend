@@ -242,6 +242,15 @@ public class TransferInfoEntity extends BaseEntity<TransferInfoEntity> {
 
     public static final String SOURCE_CODE = "source_code";
 
+    public static final String SYNC_KINGDEE_STATUS = "sync_kingdee_status";
+
+    public static final String SYNC_KINGDEE_TIME = "sync_kingdee_time";
+
+    public static final String SYNC_KINGDEE_ID = "sync_kingdee_id";
+
+    public static final String SYNC_OPERATE = "sync_operate";
+
+
     @Override
     public Serializable pkVal() {
         return null;

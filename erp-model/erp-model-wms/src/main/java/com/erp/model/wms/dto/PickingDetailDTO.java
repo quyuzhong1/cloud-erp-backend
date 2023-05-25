@@ -40,6 +40,7 @@ public class PickingDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class CommonDTO {
 
+
         /**
          * skuId
          */
@@ -49,6 +50,11 @@ public class PickingDetailDTO implements Serializable {
          * sku编码
          */
         private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
 
         /**
          * 数量

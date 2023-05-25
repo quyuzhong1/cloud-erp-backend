@@ -172,7 +172,7 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      * @author Will
      * @date: 2023/5/16 12:09
      * @param dto
-     * @return List<CommonDTO>
+     * @return List<ListDTO>
      */
-    List<PickingDetailDTO.CommonDTO> listPickingDetail(PickingDetailDTO.SearchParamDTO dto);
+    List<PickingDetailDTO.ListDTO> listPickingDetail(PickingDetailDTO.SearchParamDTO dto);
 }

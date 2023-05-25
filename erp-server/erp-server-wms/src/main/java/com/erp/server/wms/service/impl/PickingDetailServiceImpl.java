@@ -3,15 +3,19 @@ package com.erp.server.wms.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.entity.PickingDetailEntity;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.PickingDetailMapper;
 import com.erp.server.wms.service.PickingDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -23,6 +27,9 @@ import java.util.List;
  */
 @Service
 public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapper, PickingDetailEntity> implements PickingDetailService {
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -41,7 +48,7 @@ public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapp
     }
 
     @Override
-    public List<PickingDetailDTO.CommonDTO> listPickingDetailBySourceId(PickingDetailDTO.SearchParamDTO dto) {
+    public List<PickingDetailDTO.ListDTO> listPickingDetailBySourceId(PickingDetailDTO.SearchParamDTO dto) {
         List<PickingDetailEntity> list = lambdaQuery()
                 .eq(PickingDetailEntity::getSourceId, dto.getSourceId())
                 .in(CollectionUtils.isNotEmpty(dto.getSkuNoList()),PickingDetailEntity::getSkuNo,dto.getSkuNoList())
@@ -49,6 +56,17 @@ public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapp
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
-        return BeanMapperUtils.copyList(PickingDetailDTO.CommonDTO.class, list);
+        List<PickingDetailDTO.ListDTO> resultList = BeanMapperUtils.copyList(PickingDetailDTO.ListDTO.class, list);
+        List<String> skuIds = resultList.stream().map(PickingDetailDTO.ListDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
+        for (PickingDetailDTO.ListDTO listDTO : resultList) {
+            //产品名称
+            if (CollectionUtils.isNotEmpty(skuList)) {
+                String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(listDTO.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
+                listDTO.setProductName(productName);
+            }
+        }
+        return resultList;
     }
 }

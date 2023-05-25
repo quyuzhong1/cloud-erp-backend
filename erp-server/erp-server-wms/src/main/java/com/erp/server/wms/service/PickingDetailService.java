@@ -36,7 +36,7 @@ public interface PickingDetailService extends SuperService<PickingDetailEntity> 
       * @author Will
       * @date: 2023/5/16 12:20
       * @param dto
-      * @return List<CommonDTO>
+      * @return List<ListDTO>
       */
-     List<PickingDetailDTO.CommonDTO> listPickingDetailBySourceId(PickingDetailDTO.SearchParamDTO dto);
+     List<PickingDetailDTO.ListDTO> listPickingDetailBySourceId(PickingDetailDTO.SearchParamDTO dto);
 }

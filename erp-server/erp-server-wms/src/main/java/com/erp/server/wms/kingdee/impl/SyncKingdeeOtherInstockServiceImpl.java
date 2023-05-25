@@ -11,12 +11,12 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.model.wms.entity.TransferInfoDetailEntity;
-import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.wms.kingdee.SyncKingdeeTransferInfoService;
+import com.erp.server.wms.kingdee.SyncKingdeeOtherInstockService;
 import com.erp.server.wms.service.TransferInfoDetailService;
 import com.erp.server.wms.service.TransferInfoService;
 import com.erp.server.wms.service.WarehouseService;
@@ -31,13 +31,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
- * @description: 同步直接调拨单
+ * @description: 同步其他入库单
  * @author Will
  * @date: 2023/5/24 18:56
  */
 @Slf4j
 @Service
-public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferInfoService {
+public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInstockService {
     @Resource
     private SysUserFeign sysUserFeign;
 
@@ -50,6 +50,7 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
     @Resource
     private TransferInfoDetailService transferInfoDetailService;
 
+
     @Resource
     private MQProducerService mQProducerService;
 
@@ -58,7 +59,7 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
 
 
     @Override
-    public void syncDataToKingdee(TransferInfoEntity entity, String operate) {
+    public void syncDataToKingdee(OtherInstockEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -71,7 +72,7 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         //调拨日期
         resultMap.put("billDate", entity.getBillDate());
         //仓库
-        List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(entity.getInWarehouseId(), entity.getOutWarehouseId()));
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(entity.getWarehouseId()));
 
         if (StringUtils.isNotBlank(entity.getWarehouseKeeperId())) {
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getWarehouseKeeperId());
@@ -82,20 +83,14 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         }
 
         //调拨方向
-        resultMap.put("transferDirection", entity.getTransferDirection());
-        //备注
-        resultMap.put("remark", entity.getRemark());
+        resultMap.put("inventoryDirection", entity.getInventoryDirection());
 
         //组织机构编码
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getInOrgId(), entity.getOutOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getOrgId()));
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
-            //调入组织机构编码
-            String inOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
-            resultMap.put("inOrgCode", inOrgCode);
-
-            //调出组织机构编码
-            String outOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOutOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
-            resultMap.put("outOrgCode", outOrgCode);
+            //组织机构编码
+            String orgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            resultMap.put("orgCode", orgCode);
         }
 
         List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainId(entity.getId());
@@ -125,14 +120,11 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
             jsonObject.set("unit", detail.getUnit());
 
             if (CollectionUtils.isNotEmpty(warehouseList)) {
-                //调入仓库编码
-                String inWarehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getInWarehouseId())).map(WarehouseEntity::getKingdeeWarehouseCode).findFirst().orElse(null);
-                //调出仓库编码
-                String outWarehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getOutWarehouseId())).map(WarehouseEntity::getKingdeeWarehouseCode).findFirst().orElse(null);
-                //调入仓库
-                jsonObject.put("inWarehouseCode", inWarehouseCode);
+                //仓库编码
+                String warehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getWarehouseId())).map(WarehouseEntity::getKingdeeWarehouseCode).findFirst().orElse(null);
+
                 //调出仓库
-                jsonObject.put("outWarehouseCode", outWarehouseCode);
+                jsonObject.set("warehouseCode", warehouseCode);
             }
             //调出仓位
             jsonObject.set("outWarehouseLocation", detail.getOutWarehouseLocation());
