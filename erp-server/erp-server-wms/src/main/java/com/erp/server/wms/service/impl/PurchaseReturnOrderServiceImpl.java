@@ -37,6 +37,7 @@ import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
 import com.erp.model.wms.dto.ReturnOrderExcelDTO;
 import com.erp.model.wms.dto.excel.ReturnOrderExportExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnModeEnum;
@@ -52,6 +53,7 @@ import com.erp.server.wms.mapper.PurchaseReturnOrderMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -497,6 +499,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             }
 
             // 更新库存信息
+            updateInventoryTransCore(purchaseReturnOrderEntityList);
         } else {
             //审核不通过
             lambdaUpdate().set(PurchaseReturnOrderEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -520,6 +523,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
      * @Date 2023/4/6 19:29
      **/
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean disApprove(List<String> ids) {
         List<PurchaseReturnOrderEntity> purchaseReturnOrderEntityList = this.listByIds(ids);
@@ -559,6 +563,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             }
 
         }
+
+        unApproveInventory(purchaseReturnOrderEntityList); // 库存反审核操作
 
         //操作日志
         List<Pair<String, String>> pairList = purchaseReturnOrderEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -1096,6 +1102,24 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             receiveInventoryInOutStockDTO.setMembers(receiveMembers);
             inventoryTransCoreService.approveByType(receiveInventoryInOutStockDTO);
         }
+    }
+
+    public void unApproveInventory(List<PurchaseReturnOrderEntity> purchaseReturnOrderEntityList) {
+        // 只有库存退货、质检退货（退货补货）才需要反审核
+        List<String> unApproveIds = Lists.newArrayList();
+        for (PurchaseReturnOrderEntity purchaseReturnOrder : purchaseReturnOrderEntityList) {
+            String sourceType = purchaseReturnOrder.getSourceType();
+            if(!Objects.equals(sourceType, SourceTypeEnum.QC_BILL.getCode())) { // 库存退货
+                unApproveIds.add(purchaseReturnOrder.getId());
+            } else { // 质检退货
+                String returnMode = purchaseReturnOrder.getReturnMode(); // 退货方式
+                if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())) { // 退货补货
+                    unApproveIds.add(purchaseReturnOrder.getId());
+                }
+            }
+        }
+        InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.PURCHASE_RETURN_ORDER, unApproveIds);
+        inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
     }
 
 }

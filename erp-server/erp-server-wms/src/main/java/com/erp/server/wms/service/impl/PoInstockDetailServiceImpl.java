@@ -205,6 +205,8 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
             throw new ServiceException(ApiError.ERROR_98050);
         }
         //验证SKU是否重复
+        // 可以增加仓位，允许重复
+        /*
         Map<String, List<PoInstockDetailEntity>> map = list.stream().collect(Collectors.groupingBy(PoInstockDetailEntity::getSkuId));
         for (Map.Entry<String, List<PoInstockDetailEntity>> entry: map.entrySet()) {
             List<PoInstockDetailEntity> value = entry.getValue();
@@ -212,6 +214,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
                 throw new ServiceException(new ApiResult(1,"sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复")));
             }
         }
+         */
 
         //采购订单
         List<PurchaseOrderDetailEntity> details = scmTaskFeign.listPurchaseOrderDetailById(podIds);

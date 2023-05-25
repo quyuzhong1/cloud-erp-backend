@@ -95,7 +95,8 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
             List<String> orderDetailIds = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.AddDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
             //根据ids查询采购单详情
             List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
-            checkAddDetailsRepeatSku(purchaseOrderDetailEntities);
+            // 关闭SKU重复检查
+            // checkAddDetailsRepeatSku(purchaseOrderDetailEntities);
             //遍历需要保存的采购收货单详情信息，并赋值采购单信息
             List<PurchaseReturnOrderDetailDTO.AddDTO> detailList = dto.getPurchasePriceDetailList();
             List<PoInstockDetailEntity> stockInDetailEntityList = poInstockDetailService.listDetailByPodIds(orderDetailIds);
@@ -157,7 +158,8 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
     private List<PurchaseReturnOrderDetailEntity> notProductOrderAdd(PurchaseReturnOrderDTO.AddDTO dto, String id, List<PurchaseReturnOrderDetailEntity> listDetail) {
         //遍历需要保存的采购收货单详情信息，并赋值采购单信息
         List<PurchaseReturnOrderDetailDTO.AddDTO> detailList = dto.getPurchasePriceDetailList();
-        checkAddDetailsRepeat(detailList);
+        // 关闭SKU重复检查
+        // checkAddDetailsRepeat(detailList);
 
         List<String> skuIdList = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
