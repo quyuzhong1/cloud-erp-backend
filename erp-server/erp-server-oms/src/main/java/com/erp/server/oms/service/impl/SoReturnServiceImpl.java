@@ -156,6 +156,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 obj.setSalesAmount(soDetailEntity.getAmount());
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
                 obj.setCustomerName(customerInfoEntity.getName());
+                obj.setCurrency(soDetailEntity.getCurrency());
+                obj.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
                 list.add(obj.getId());
             });
         }
