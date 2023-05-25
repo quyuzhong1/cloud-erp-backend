@@ -64,6 +64,12 @@ public class InitStockEntity extends BaseEntity<InitStockEntity> {
     private String warehouseId;
 
     /**
+     * 仓库名称
+     */
+    @TableField("warehouse_name")
+    private String warehouseName;
+
+    /**
      * 库存状态
      */
     @TableField("inventory_status")
@@ -123,6 +129,8 @@ public class InitStockEntity extends BaseEntity<InitStockEntity> {
     public static final String INVALID_REMARK = "invalid_remark";
 
     public static final String INVALID_STATUS = "invalid_status";
+
+    public static final String WAREHOUSE_NAME = "warehouse_name";
 
     @Override
     public Serializable pkVal() {

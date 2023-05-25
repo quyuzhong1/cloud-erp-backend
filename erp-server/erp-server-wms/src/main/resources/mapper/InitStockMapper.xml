@@ -37,6 +37,7 @@
             ism.invalid_status,
             ism.org_id,
             ism.warehouse_id,
+            ism.warehouse_name,
             isd.warehouse_location,
             isd.qty,
             pi.spu_no,

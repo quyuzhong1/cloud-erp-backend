@@ -145,9 +145,11 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         // 其他字段赋值
         InitStockDTO.ViewDTO viewDTO = BeanMapperUtils.map(InitStockDTO.ViewDTO.class, entity);
         // 仓库
-        WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(viewDTO.getWarehouseId());
-        if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
-            viewDTO.setWarehouseName(warehouseDetail.getName());
+        if(StrUtils.isEmpty(viewDTO.getWarehouseName())) {
+            WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(viewDTO.getWarehouseId());
+            if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+                viewDTO.setWarehouseName(warehouseDetail.getName());
+            }
         }
         // 仓库组织
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(viewDTO.getOrgId());
@@ -623,6 +625,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
                     ()->new ServiceException(ApiError.ERROR_99002));
             initStockEntity.setWarehouseId(warehouseId);
             initStockEntity.setOrgId(warehouseDetail.getOrgId());
+            initStockEntity.setWarehouseName(warehouseDetail.getName());
         }
     }
 
@@ -644,9 +647,11 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
             // 作废状态
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             // 仓库名称赋值
-            WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(data.getWarehouseId(),(v)->warehouseService.detailWithCache(v));
-            if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
-                data.setWarehouseName(warehouseDetail.getName());
+            if(StrUtils.isEmpty(data.getWarehouseName())) {
+                WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(data.getWarehouseId(),(v)->warehouseService.detailWithCache(v));
+                if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+                    data.setWarehouseName(warehouseDetail.getName());
+                }
             }
             // 仓库组织
             SysAccountingCompanyEntity sysAccountingCompanyEntity = accountingCompanyMap.computeIfAbsent(data.getOrgId(),(v)->sysUserFeign.getCompanyById(v));
