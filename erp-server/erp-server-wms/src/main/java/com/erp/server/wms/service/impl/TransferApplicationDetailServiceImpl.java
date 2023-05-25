@@ -89,7 +89,10 @@ public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<Trans
 
     @Override
     public List<TransferApplicationDetailEntity> listByMainId(String mainId) {
-        return lambdaQuery().eq(TransferApplicationDetailEntity::getMainId,mainId).list();
+        return lambdaQuery()
+                .eq(TransferApplicationDetailEntity::getMainId,mainId)
+                .orderByDesc(TransferApplicationDetailEntity::getId)
+                .list();
     }
 
     @Override

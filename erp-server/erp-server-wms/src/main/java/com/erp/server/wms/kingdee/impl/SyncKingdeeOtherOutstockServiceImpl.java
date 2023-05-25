@@ -77,7 +77,7 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
             resultMap.put("receiverCode", receiverCode);
         }
 
-        //调拨方向
+        //库存方向
         resultMap.put("inventoryDirection", entity.getInventoryDirection());
 
         //组织机构编码

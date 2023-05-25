@@ -100,7 +100,10 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
 
     @Override
     public List<TransferInfoDetailEntity> listByMainId(String mainId) {
-        return lambdaQuery().eq(TransferInfoDetailEntity::getMainId,mainId).list();
+        return lambdaQuery()
+                .eq(TransferInfoDetailEntity::getMainId,mainId)
+                .orderByDesc(TransferInfoDetailEntity::getId)
+                .list();
     }
 
     @Override
