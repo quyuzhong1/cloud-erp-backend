@@ -196,6 +196,16 @@ public enum RocketMqTagEnum {
      * 客户信息同步金蝶
      */
     KINGDEE_CUSTOMER_TAG(40, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_customer_tag"),
+
+    /**
+     * 其他出库单同步金蝶
+     */
+    KINGDEE_OTHER_OUTSTOCK_TAG(41, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_other_outstock_tag"),
+
+    /**
+     * 其他入库单同步金蝶
+     */
+    KINGDEE_OTHER_INSTOCK_TAG(42, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_other_instock_tag"),
     //-----------------------------消息通知--------------------------------------------
 
     /**

@@ -8,13 +8,13 @@ import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.wms.entity.OtherInstockDetailEntity;
-import com.erp.model.wms.entity.OtherInstockEntity;
+import com.erp.model.wms.entity.OtherOutstockDetailEntity;
+import com.erp.model.wms.entity.OtherOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.wms.kingdee.SyncKingdeeOtherInstockService;
-import com.erp.server.wms.service.OtherInstockDetailService;
-import com.erp.server.wms.service.OtherInstockService;
+import com.erp.server.wms.kingdee.SyncKingdeeOtherOutstockService;
+import com.erp.server.wms.service.OtherOutstockDetailService;
+import com.erp.server.wms.service.OtherOutstockService;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -32,15 +32,15 @@ import java.util.concurrent.CompletableFuture;
  */
 @Slf4j
 @Service
-public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInstockService {
+public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOutstockService {
     @Resource
     private SysUserFeign sysUserFeign;
 
     @Resource
-    private OtherInstockService otherInstockService;
+    private OtherOutstockService otherOutstockService;
 
     @Resource
-    private OtherInstockDetailService otherInstockDetailService;
+    private OtherOutstockDetailService otherOutstockDetailService;
 
     @Resource
     private MQProducerService mQProducerService;
@@ -50,7 +50,7 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
 
 
     @Override
-    public void syncDataToKingdee(OtherInstockEntity entity, String operate) {
+    public void syncDataToKingdee(OtherOutstockEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -81,20 +81,23 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
         resultMap.put("inventoryDirection", entity.getInventoryDirection());
 
         //组织机构编码
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getInventoryOrgId(),entity.getReceiveOrgId()));
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
             //库存组织编码
-            String orgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
-            resultMap.put("orgCode", orgCode);
+            String inventoryOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInventoryOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            resultMap.put("inventoryOrgCode", inventoryOrgCode);
+            //收料组织编码
+            String receiveOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            resultMap.put("receiveOrgCode", receiveOrgCode);
         }
 
-        List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainId(entity.getId());
+        List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
 
         List<JSONObject> list = new ArrayList<>();
-        for (OtherInstockDetailEntity detail : detailList) {
+        for (OtherOutstockDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
             //SKU
             jsonObject.set("skuNo", detail.getSkuNo());
@@ -124,10 +127,10 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
 
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_OTHER_INSTOCK_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
+            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_OTHER_OUTSTOCK_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return otherInstockService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "",operate);
+                return otherOutstockService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "",operate);
             }
             return Boolean.TRUE;
         });

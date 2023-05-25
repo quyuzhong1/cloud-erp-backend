@@ -36,10 +36,11 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_transfer_info_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_TRANSFER_INFO)
-public class KingdeeTransferInfoConsumer implements RocketMQListener<Map<String, Object>> {
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_other_instock_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_OTHER_INSTOCK)
+public class KingdeeOtherInstockConsumer implements RocketMQListener<Map<String, Object>> {
     @Resource
     private KingdeeCommonService kingdeeCommonService;
+
 
     public static void main(String[] args) {
 
@@ -58,7 +59,7 @@ public class KingdeeTransferInfoConsumer implements RocketMQListener<Map<String,
     @Override
     public void onMessage(Map<String, Object> map) {
         //模块类型
-        Integer type = ApiModuleTypeEnum.TRANSFER_INFO.getCode();
+        Integer type = ApiModuleTypeEnum.OTHER_OUTSTOCK.getCode();
 
         log.info("直接调拨单开始推送金蝶 map = {}", JSONUtil.toJsonStr(map));
 
@@ -70,7 +71,7 @@ public class KingdeeTransferInfoConsumer implements RocketMQListener<Map<String,
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_TRANSFERDIRECT.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_MISCELLANEOUS.getCode());
 
         //操作项
         String operate = (String) map.get("operate");

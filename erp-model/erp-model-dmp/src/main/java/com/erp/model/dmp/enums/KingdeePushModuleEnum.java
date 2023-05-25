@@ -24,6 +24,8 @@ public enum KingdeePushModuleEnum {
     BD_DEPARTMENT("BD_Department","部门"),
     STK_TRANSFERDIRECT("STK_TransferDirect","直接调拨单"),
     BD_CUSTOMER("BD_Customer","客户"),
+    STK_MISDELIVERY("STK_MisDelivery","其他出库单"),
+    STK_MISCELLANEOUS("STK_MISCELLANEOUS","其他入库单"),
 
     ;
     private String code;
