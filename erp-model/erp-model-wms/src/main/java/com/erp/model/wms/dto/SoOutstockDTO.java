@@ -902,4 +902,18 @@ public class SoOutstockDTO implements Serializable {
 
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ApproveCountDTO {
+        /**
+         * 类型
+         */
+        private String approveStatus;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
 }

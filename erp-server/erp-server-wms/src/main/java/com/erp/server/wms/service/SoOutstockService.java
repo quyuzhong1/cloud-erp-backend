@@ -4,7 +4,9 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 
@@ -182,4 +184,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return java.util.List<com.erp.model.wms.dto.SoOutstockDTO.SoRefDTO>
      */
     List<SoOutstockDTO.SoRefDTO> listSoRefSoOutstockBySoId(String soId);
+
+    /**
+     * 保存销售订单下推销售出库单
+     * @author yl
+     * @date 2023-05-25 15:02
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean generateSoSave(ValidList<SoInfoDTO.GenerateDeliveryView> dto);
 }

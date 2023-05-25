@@ -29,4 +29,6 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
     List<InOutStockDTO> listInventoryInOut(@Param("ids") List<String> idList);
 
     List<SoOutstockDTO.SoRefDTO> listSoRefSoOutstockBySoId(@Param("soId") String soId);
+
+    List<SoOutstockDTO.ApproveCountDTO> listApproveCount();
 }

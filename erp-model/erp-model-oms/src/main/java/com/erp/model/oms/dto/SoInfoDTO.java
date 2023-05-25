@@ -1072,6 +1072,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 仓库Id
          */
+        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
 
         /**

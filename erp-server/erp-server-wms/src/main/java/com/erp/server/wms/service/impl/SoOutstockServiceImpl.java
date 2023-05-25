@@ -15,6 +15,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -197,8 +198,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             return false;
         }
         List<SoOutstockEntity> list = this.listByIds(ids);
-        long invalidCount= list.stream().filter(s -> s.getInvalidStatus()).count();
-        if(invalidCount>0){
+        long invalidCount = list.stream().filter(s -> s.getInvalidStatus()).count();
+        if (invalidCount > 0) {
             throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
         }
 
@@ -577,32 +578,38 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     public List<SoOutstockDTO.TabListDTO> tabList() {
         List<SoOutstockDTO.TabListDTO> resultList = new ArrayList<>(4);
-        //全部
-        List<SoOutstockEntity> list = this.list();
+        List<SoOutstockDTO.ApproveCountDTO> approveCountList = baseMapper.listApproveCount();
+        int allCount = approveCountList.stream().mapToInt(SoOutstockDTO.ApproveCountDTO::getCount).sum();
         SoOutstockDTO.TabListDTO all = new SoOutstockDTO.TabListDTO();
-        all.setCount(list.size());
+        all.setCount(allCount);
         all.setSearchType(SearchType.ALL);
         resultList.add(all);
 
+
         //待审核
-        ApproveStatusEnum ing = ApproveStatusEnum.getByStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
+        String ing = ApproveStatusEnum.APPROVE_ING.getStatus();
         SoOutstockDTO.TabListDTO waitApprove = new SoOutstockDTO.TabListDTO();
-        waitApprove.setCount((int) list.stream().filter(l -> ing.equals(l.getApproveStatus())).count());
+        int waitApproveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(ing)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        waitApprove.setCount(waitApproveCount);
         waitApprove.setSearchType(SearchType.WAIT_APPROVE);
         resultList.add(waitApprove);
 
         //已审核
-        ApproveStatusEnum approveStatus = ApproveStatusEnum.getByStatus(ApproveStatusEnum.APPROVE.getStatus());
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         SoOutstockDTO.TabListDTO approve = new SoOutstockDTO.TabListDTO();
-        approve.setCount((int) list.stream().filter(l -> approveStatus.equals(l.getApproveStatus())).count());
-        approve.setSearchType(ApproveStatusEnum.APPROVE.getStatus());
+        int approveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(approveStatus)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        approve.setCount(approveCount);
+        approve.setSearchType(approveStatus);
         resultList.add(approve);
-
         //审核不通过
-        ApproveStatusEnum rejectStatus = ApproveStatusEnum.getByStatus(ApproveStatusEnum.REJECT.getStatus());
+        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
         SoOutstockDTO.TabListDTO reject = new SoOutstockDTO.TabListDTO();
-        reject.setCount((int) list.stream().filter(l -> rejectStatus.equals(l.getApproveStatus())).count());
-        reject.setSearchType(ApproveStatusEnum.REJECT.getStatus());
+        int rejectCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(rejectStatus)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        reject.setCount(rejectCount);
+        reject.setSearchType(rejectStatus);
         resultList.add(reject);
         return resultList;
 
@@ -890,7 +897,78 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public List<SoOutstockDTO.SoRefDTO> listSoRefSoOutstockBySoId(String soId) {
         SoInfoDTO.CustomerDTO soCustomer = soInfoFeign.getSoBaseById(soId);
         List<SoOutstockDTO.SoRefDTO> resultList = baseMapper.listSoRefSoOutstockBySoId(soId);
+        List<String> skuIdList = resultList.stream().map(SoOutstockDTO.SoRefDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+
+        for (SoOutstockDTO.SoRefDTO item : resultList) {
+            String skuId = item.getSkuId();
+            LocalDate actualDeliveryDate = item.getActualDeliveryDate();
+            item.setOutStockDate(actualDeliveryDate);
+            item.setOrderType(soCustomer.getOrderType());
+            item.setOrderTypeName(soCustomer.getOrderTypeName());
+            item.setCustomerId(soCustomer.getCustomerId());
+            item.setCustomerName(soCustomer.getCustomerName());
+            SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+            String productName = "";
+            String unit = "";
+            if (sku != null) {
+                productName = sku.getSkuName();
+                unit = sku.getUnitName();
+            }
+            item.setProductName(productName);
+            item.setUnit(unit);
+        }
         return resultList;
+    }
+
+
+    /**
+     * 保存销售订单下推销售出库单
+     *
+     * @param list
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-25 15:02
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean generateSoSave(ValidList<SoInfoDTO.GenerateDeliveryView> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.FALSE;
+        }
+        Map<String, List<SoInfoDTO.GenerateDeliveryView>> map = list.stream().collect(Collectors.groupingBy(SoInfoDTO.GenerateDeliveryView::getSoId));
+        List<SoOutstockDTO.AddDTO> addList = new ArrayList<>(map.size());
+        String sourceType = SourceTypeEnum.SO_INFO.getCode();
+        for (Map.Entry<String, List<SoInfoDTO.GenerateDeliveryView>> entry : map.entrySet()) {
+            //来源id
+            String soId = entry.getKey();
+            List<SoInfoDTO.GenerateDeliveryView> generateInfoList = entry.getValue();
+            SoInfoDTO.GenerateDeliveryView generateInfo = generateInfoList.stream().filter(g -> StringUtils.isNotBlank(g.getSoId())).findFirst().orElse(null);
+            if (generateInfo != null) {
+                SoOutstockDTO.AddDTO add = new SoOutstockDTO.AddDTO();
+                add.setSoId(soId);
+                add.setSourceId(soId);
+                add.setSourceCode(generateInfo.getSoCode());
+                add.setSourceType(sourceType);
+                add.setPlanDeliveryDate(generateInfo.getPlanDeliveryDate());
+                add.setWarehouseId(generateInfo.getWarehouseId());
+                List<SoOutstockDetailDTO.AddDTO> detailList = new ArrayList<>(generateInfoList.size());
+                for (SoInfoDTO.GenerateDeliveryView item : generateInfoList) {
+                    SoOutstockDetailDTO.AddDTO detail = new SoOutstockDetailDTO.AddDTO();
+                    detail.setSourceDetailId(item.getDetailId());
+                    detail.setSkuId(item.getSkuId());
+                    detail.setRemark(item.getRemark());
+                    detail.setActualQty(item.getDeliveryQty());
+                    detail.setPlanQty(item.getDeliveryQty());
+                    detail.setAttachNameList(item.getAttachmentNameList());
+                    detail.setAttachUrlList(item.getAttachmentUrlList());
+                    detailList.add(detail);
+                }
+                add.setDetailList(detailList);
+                addList.add(add);
+            }
+        }
+        return this.batchAdd(addList);
     }
 
     @Transactional(rollbackFor = Exception.class)

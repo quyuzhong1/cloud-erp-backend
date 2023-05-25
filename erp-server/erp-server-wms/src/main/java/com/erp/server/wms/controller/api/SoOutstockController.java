@@ -289,9 +289,9 @@ public class SoOutstockController extends BaseController {
      */
     @PostMapping("/generateSoOutstock")
     public ApiResult generateSoOutstock(@RequestBody @Valid ValidList<SoInfoDTO.GenerateDeliveryView> dto) {
-        //Boolean result = soOutstockService.addPushDownNo(dto);
-        //return result ? success() : failure();
-        return null;
+        Boolean result = soOutstockService.generateSoSave(dto);
+        return result ? success() : failure();
+
     }
 
 

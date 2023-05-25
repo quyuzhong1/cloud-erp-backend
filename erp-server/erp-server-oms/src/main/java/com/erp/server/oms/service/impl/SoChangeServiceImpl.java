@@ -332,7 +332,6 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         all.setCount(allCount);
         all.setSearchType(SearchType.ALL);
         resultList.add(all);
-
         //待审核
         String ing = ApproveStatusEnum.APPROVE_ING.getStatus();
         SoChangeDTO.TabListDTO waitApprove = new SoChangeDTO.TabListDTO();

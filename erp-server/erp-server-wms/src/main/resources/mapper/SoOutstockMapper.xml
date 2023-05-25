@@ -228,7 +228,6 @@
             </foreach>
         </if>
     </select>
-
     <select id="listSoRefSoOutstockBySoId" resultType="com.erp.model.wms.dto.SoOutstockDTO$SoRefDTO">
             SELECT
               so.code,
@@ -242,6 +241,7 @@
               so.actual_delivery_date,
               so.create_time,
               so.create_user_name,
+              so.customer_id,
               sod.sku_id,
               sod.sku_no,
               sod.plan_qty,
@@ -251,8 +251,13 @@
             AND  sod.is_deleted=FALSE
             WHERE so.is_deleted=FALSE
             AND so.so_id=#{soId}
-
-
-
+    </select>
+    <select id="listApproveCount" resultType="com.erp.model.wms.dto.SoOutstockDTO$ApproveCountDTO">
+          SELECT
+            approve_status,
+	        count(*)
+	     FROM   so_outstock
+	     WHERE is_deleted=FALSE
+         GROUP BY approve_status
     </select>
 </mapper>
