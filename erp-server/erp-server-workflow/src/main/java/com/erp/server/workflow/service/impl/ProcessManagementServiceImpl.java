@@ -189,7 +189,11 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         BpmnModelInstance modelInstance = repositoryService.getBpmnModelInstance(processDefinitionId);
         // 获取审批节点的扩展属性
         UserTask userTask = modelInstance.getModelElementById(taskDefinitionKey);
-        Collection<CamundaProperty> camundaProperties = userTask.getExtensionElements()
+        ExtensionElements extensionElements = userTask.getExtensionElements();
+        if (null == extensionElements) {
+            return null;
+        }
+        Collection<CamundaProperty> camundaProperties = extensionElements
                 .getElementsQuery().filterByType(CamundaProperties.class)
                 .singleResult()
                 .getCamundaProperties();
