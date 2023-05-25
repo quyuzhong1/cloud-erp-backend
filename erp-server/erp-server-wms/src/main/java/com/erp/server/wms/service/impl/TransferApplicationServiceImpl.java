@@ -600,7 +600,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             //已调拨数量
             Integer totalQty = transferInfoDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(sourceDetailId)).map(TransferInfoDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
             if (pickingQty.intValue() == totalQty.intValue()) {
-                throw new ServiceException(ApiError.ERROR_99051.code, String.format(ApiError.ERROR_99051.msg, skuNo));
+                throw new ServiceException(ApiError.ERROR_99051.code, String.format(ApiError.ERROR_99051.msg,dto.getSourceCode(), skuNo));
             }
             if (dto.getQty().intValue() > pickingQty.intValue() - totalQty.intValue()) {
                 throw new ServiceException(ApiError.ERROR_99050.code, String.format(ApiError.ERROR_99050.msg, pickingQty - totalQty));
