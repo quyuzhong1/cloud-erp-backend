@@ -18,11 +18,11 @@ import com.common.core.utils.*;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.ExportInventoryExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.inventory.InventorySaveDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -388,15 +388,26 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             throw new ServiceException(new ApiResult(1, String.format("组织【%s】、仓库【%s】、SKU【%s】可用库存不足", dto.getOrgName(), dto.getWarehouseName(), dto.getSkuNo())));
         }
         for (InventoryEntity inventory : sortList) {
-            //如果拣货数量为0则跳出循环
+
+            //如果拣货数量等于0则跳出循环
             if (MathUtil.compareTo(qty, MathUtil.ZERO) == MathUtil.ZERO) {
                 break;
             }
-            //剩余拣货数量
-            qty = qty - inventory.getQty();
 
+            //本次拣货数量
+            Integer thisQty;
+            if (qty.intValue() >  inventory.getQty().intValue()) {
+                thisQty = inventory.getQty();
+            } else {
+                thisQty = qty;
+            }
+
+            inventory.setQty(thisQty);
             //添加拣货明细
             resultList.add(inventory);
+
+            //剩余拣货数量
+            qty = qty - inventory.getQty();
 
             //判断剩余数量是否存在相同库存数量，如果存在则直接匹配
             Integer finalQty = qty;
