@@ -192,6 +192,10 @@ public enum RocketMqTagEnum {
      */
     KINGDEE_TRANSFER_INFO_TAG(39, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_transfer_info_tag"),
 
+    /**
+     * 客户信息同步金蝶
+     */
+    KINGDEE_CUSTOMER_TAG(40, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_customer_tag"),
     //-----------------------------消息通知--------------------------------------------
 
     /**
