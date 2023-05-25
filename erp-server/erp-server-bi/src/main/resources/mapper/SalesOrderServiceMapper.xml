@@ -527,7 +527,7 @@
         </if>
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o
-        ON o.order_id = o.id
+        ON i.order_id = o.id
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">

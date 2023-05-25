@@ -119,7 +119,14 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-
         ORDER BY ci.create_time DESC
+    </select>
+    <select id="listApproveCount" resultType="com.erp.model.oms.dto.CustomerDTO$ApproveCountDTO">
+         SELECT
+            approve_status,
+	        count(*)
+	     FROM   customer_info
+	     WHERE is_deleted=FALSE
+         GROUP BY approve_status
     </select>
 </mapper>

@@ -24,7 +24,6 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.CustomerGroupEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -236,7 +235,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(rejectStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus),"");
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus), "");
         if (result) {
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
@@ -261,32 +260,36 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Override
     public List<CustomerDTO.TabListDTO> tabList() {
         List<CustomerDTO.TabListDTO> resultList = new ArrayList<>(4);
-        //全部
-        List<CustomerInfoEntity> list = this.list();
+        List<CustomerDTO.ApproveCountDTO> approveCountList = baseMapper.listApproveCount();
+        int allCount = approveCountList.stream().mapToInt(CustomerDTO.ApproveCountDTO::getCount).sum();
         CustomerDTO.TabListDTO all = new CustomerDTO.TabListDTO();
-        all.setCount(list.size());
+        all.setCount(allCount);
         all.setSearchType(SearchType.ALL);
         resultList.add(all);
-
         //待审核
-        ApproveStatusEnum ing = ApproveStatusEnum.getByStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
+        String ing = ApproveStatusEnum.APPROVE_ING.getStatus();
         CustomerDTO.TabListDTO waitApprove = new CustomerDTO.TabListDTO();
-        waitApprove.setCount((int) list.stream().filter(l -> ing.equals(l.getApproveStatus())).count());
+        int waitApproveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(ing)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        waitApprove.setCount(waitApproveCount);
         waitApprove.setSearchType(SearchType.WAIT_APPROVE);
         resultList.add(waitApprove);
 
         //已审核
-        ApproveStatusEnum approveStatus = ApproveStatusEnum.getByStatus(ApproveStatusEnum.APPROVE.getStatus());
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         CustomerDTO.TabListDTO approve = new CustomerDTO.TabListDTO();
-        approve.setCount((int) list.stream().filter(l -> approveStatus.equals(l.getApproveStatus())).count());
-        approve.setSearchType(ApproveStatusEnum.APPROVE.getStatus());
+        int approveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(approveStatus)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        approve.setCount(approveCount);
+        approve.setSearchType(approveStatus);
         resultList.add(approve);
-
         //审核不通过
-        ApproveStatusEnum rejectStatus = ApproveStatusEnum.getByStatus(ApproveStatusEnum.REJECT.getStatus());
+        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
         CustomerDTO.TabListDTO reject = new CustomerDTO.TabListDTO();
-        reject.setCount((int) list.stream().filter(l -> rejectStatus.equals(l.getApproveStatus())).count());
-        reject.setSearchType(ApproveStatusEnum.REJECT.getStatus());
+        int rejectCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(rejectStatus)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        reject.setCount(rejectCount);
+        reject.setSearchType(rejectStatus);
         resultList.add(reject);
         return resultList;
     }
@@ -567,12 +570,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus),userName);
+            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus), userName);
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
         } else {
             //审核不通过
             String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
-            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(rejectStatus),userName);
+            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(rejectStatus), userName);
             content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
         }
         if (result) {
@@ -617,7 +620,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus),"");
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus), "");
         //反审核
         if (result) {
             //添加日志
@@ -785,7 +788,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         //TODO 撤销流程
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus),"");
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus), "");
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("客户【%s】取消流程", ModuleTypeEnum.CUSTOMER.getCode(), pairList, "取消流程操作");
         return result;

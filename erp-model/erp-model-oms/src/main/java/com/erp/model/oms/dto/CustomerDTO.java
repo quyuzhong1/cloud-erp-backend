@@ -751,4 +751,18 @@ public class CustomerDTO implements Serializable {
         private String addressId;
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ApproveCountDTO {
+        /**
+         * 类型
+         */
+        private String approveStatus;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
 }
