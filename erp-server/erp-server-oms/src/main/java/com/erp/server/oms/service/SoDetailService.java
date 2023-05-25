@@ -21,159 +21,186 @@ import java.util.List;
 public interface SoDetailService extends SuperService<SoDetailEntity> {
     /**
      * 根据退货单详情表id查询退货单
-     * @Author Luo_WG
-     * @Date 2023/5/11 18:16
+     *
      * @param detailIds
      * @return java.util.List<com.erp.model.oms.entity.SoInfoEntity>
+     * @Author Luo_WG
+     * @Date 2023/5/11 18:16
      **/
     List<SoDetailEntity> listSoDetailByIds(List<String> detailIds);
 
 
     /**
      * 获取tab列表数据
-     * @author yl
-     * @date 2023-05-17 14:03
+     *
      * @param
      * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.TabListDTO>
+     * @author yl
+     * @date 2023-05-17 14:03
      */
     List<SoInfoDTO.TabListDTO> tabList();
 
 
     /**
      * 添加销售订单明细
-     * @author yl
-     * @date 2023-05-16 9:32
+     *
      * @param mainId detailList
      * @return
+     * @author yl
+     * @date 2023-05-16 9:32
      */
     void addSoDetail(String mainId, List<SoDetailDTO.AddDTO> detailList);
 
     /**
      * 添加详情按钮-列表查询
-     * @Author Luo_WG
-     * @Date 2023/5/15 16:04
+     *
      * @param dto dto
      * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.AddDetailView>
+     * @Author Luo_WG
+     * @Date 2023/5/15 16:04
      **/
     List<SoDetailDTO.AddDetailView> listAddDetailView(listAddDetailViewDTO dto);
 
-    
+
     /**
      * 获取订单详情数据
-     * @author yl
-     * @date 2023-05-16 16:30
+     *
      * @param mainId
      * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.ViewDTO>
+     * @author yl
+     * @date 2023-05-16 16:30
      */
-    List<SoDetailDTO.ViewDTO> listByMainId(String mainId,String warehouseId);
+    List<SoDetailDTO.ViewDTO> listByMainId(String mainId, String warehouseId);
 
 
     /**
      * 根据销售单主表id查询详情表信息
-     * @Author Luo_WG
-     * @Date 2023/5/17 15:29
+     *
      * @param ids ids
      * @return java.util.List<com.erp.model.oms.entity.SoDetailEntity>
+     * @Author Luo_WG
+     * @Date 2023/5/17 15:29
      **/
     List<SoDetailEntity> listSoDetailByMainIds(List<String> ids);
 
-   /**
-    * 根据搜索类型 获取到对应的明细id
-    * @author yl
-    * @date 2023-05-17 14:37
-    * @param searchType
-    * @return java.util.List<java.lang.String>
-    */
+
+    /**
+     * 根据 主表id 获取到明细
+     *
+     * @param mainId
+     * @return java.util.List<com.erp.model.oms.entity.SoDetailEntity>
+     * @author yl
+     * @date 2023-05-25 14:17
+     */
+    List<SoDetailEntity> listBaseByMainId(String mainId);
+
+    /**
+     * 根据搜索类型 获取到对应的明细id
+     *
+     * @param searchType
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-05-17 14:37
+     */
     List<String> listParamDetailIdsBySearchType(String searchType);
 
     /**
      * 修改订单详情
-     * @author yl
-     * @date 2023-05-17 16:00
+     *
      * @param mainId
      * @param detailList
      * @return void
+     * @author yl
+     * @date 2023-05-17 16:00
      */
     void updateSoDetail(String mainId, List<SoDetailDTO.UpdateDTO> detailList);
 
     /**
      * 根据主表ids 删除数据
-     * @author yl
-     * @date 2023-05-17 17:09
+     *
      * @param mainIdList
      * @return void
+     * @author yl
+     * @date 2023-05-17 17:09
      */
     void removeByMainIdList(List<String> mainIdList);
 
-    
+
     /**
      * 下载模板
-     * @author yl
-     * @date 2023-05-17 19:25
+     *
      * @param response
      * @return void
+     * @author yl
+     * @date 2023-05-17 19:25
      */
     void downloadTemplate(HttpServletResponse response);
 
-    
+
     /**
      * 导入sku
-     * @author yl
-     * @date 2023-05-17 19:43
+     *
      * @param excelFile
      * @param response
      * @return com.erp.model.oms.dto.SoDetailDTO.ImportDTO
+     * @author yl
+     * @date 2023-05-17 19:43
      */
-    SoDetailDTO.ImportDTO importSku(MultipartFile excelFile, HttpServletResponse response,String warehouseId);
+    SoDetailDTO.ImportDTO importSku(MultipartFile excelFile, HttpServletResponse response, String warehouseId);
 
-    
+
     /**
      * 获取sku 详情
-     * @author yl
-     * @date 2023-05-18 14:43
+     *
      * @param skuNo
      * @return com.erp.model.oms.dto.SoDetailDTO.SkuDTO
+     * @author yl
+     * @date 2023-05-18 14:43
      */
-    SoDetailDTO.SkuDTO getSkuInfoBySkuNo(String skuNo,String warehouseId);
+    SoDetailDTO.SkuDTO getSkuInfoBySkuNo(String skuNo, String warehouseId);
 
-    
+
     /**
      * 根据主表id 获取合同信息
-     * @author yl
-     * @date 2023-05-18 15:53
+     *
      * @param mainId
      * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.ExportPdfDTO>
+     * @author yl
+     * @date 2023-05-18 15:53
      */
     List<SoDetailDTO.ExportPdfDTO> listExportPdf(String mainId);
 
-    
+
     /**
      * 根据销售订单id 获取到对应的对应产品信息
-     * @author yl
-     * @date 2023-05-22 14:18
+     *
      * @param soId
      * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.SkuDTO>
+     * @author yl
+     * @date 2023-05-22 14:18
      */
     List<SoDetailDTO.ViewDTO> listBySoId(String soId);
 
-    
+
     /**
      * 更改发货状态
-     * @author yl
-     * @date 2023-05-23 10:26
+     *
      * @param paramList
      * @return void
+     * @author yl
+     * @date 2023-05-23 10:26
      */
     void updateDeliveryStatus(List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList);
 
-    
+
     /**
      * 检查sku 数量是否够用
-     * @author yl
-     * @date 2023-05-24 18:42
+     *
      * @param warehouseId
      * @param detailList
      * @return void
+     * @author yl
+     * @date 2023-05-24 18:42
      */
     void checkSkuQty(String warehouseId, List<SoDetailDTO.AddDTO> detailList);
 }

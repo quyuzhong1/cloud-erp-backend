@@ -143,4 +143,13 @@ public interface SoChangeService extends SuperService<SoChangeEntity> {
      * @return java.lang.Boolean
      */
     Boolean updateAndSubmit(SoChangeDTO.UpdateDTO dto);
+
+    /**
+     * 根据销售订单id 获取到对应详情
+     * @author yl
+     * @date 2023-05-25 14:04
+     * @param soId
+     * @return com.erp.model.oms.dto.SoChangeDTO.ViewDTO
+     */
+    SoChangeDTO.ViewDTO getViewBySoId(String soId);
 }

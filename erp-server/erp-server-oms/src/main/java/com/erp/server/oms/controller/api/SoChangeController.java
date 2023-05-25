@@ -64,6 +64,20 @@ public class SoChangeController extends BaseController {
     }
 
     /**
+     * 根据销售订单id
+     * 获取到对应的详情
+     *
+     * @param soId
+     * @return
+     */
+    @GetMapping("/getViewBySoId")
+    public ApiResult<SoChangeDTO.ViewDTO> view(@RequestParam("soId") String soId) {
+        SoChangeDTO.ViewDTO view = soChangeService.getViewBySoId(soId);
+        return success(view);
+    }
+
+
+    /**
      * 创建
      *
      * @param dto

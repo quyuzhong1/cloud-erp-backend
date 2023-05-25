@@ -933,7 +933,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     }
 
 
-    private List<SoDetailEntity> listBaseByMainId(String mainId) {
+    @Override
+    public List<SoDetailEntity> listBaseByMainId(String mainId) {
         return this.lambdaQuery().eq(SoDetailEntity::getMainId, mainId).list();
 
     }

@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.validator.AddGroup;
@@ -1049,17 +1048,21 @@ public class SoInfoDTO implements Serializable {
         /**
          * 明细id
          */
-        private String id;
+        @NotBlank(message = "明细不能为空")
+        private String detailId;
 
         /**
          * 主表id
+         * 销售订单id
          */
-        private String mainId;
+        @NotBlank(message = "销售订单不能为空")
+        private String soId;
 
         /**
          * 销售单号
          */
-        private String code;
+        @NotBlank(message = "销售订单编号不能为空")
+        private String soCode;
 
         /**
          * 库存组织id

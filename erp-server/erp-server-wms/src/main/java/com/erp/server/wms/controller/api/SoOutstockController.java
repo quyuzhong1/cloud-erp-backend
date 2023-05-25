@@ -11,6 +11,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.server.wms.service.SoOutstockService;
 import org.apache.commons.lang3.StringUtils;
@@ -279,7 +280,7 @@ public class SoOutstockController extends BaseController {
 
 
     /**
-     * 下推销售出库单
+     * 销售订单下推 销售出库单
      *
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
@@ -287,9 +288,10 @@ public class SoOutstockController extends BaseController {
      * @date 2023-05-23 15:15
      */
     @PostMapping("/generateSoOutstock")
-    public ApiResult generateSoOutstock(@RequestBody @Valid ValidList<SoOutstockDTO.GenerateSoOutstockViewDTO> dto) {
-        Boolean result = soOutstockService.addPushDownNo(dto);
-        return result ? success() : failure();
+    public ApiResult generateSoOutstock(@RequestBody @Valid ValidList<SoInfoDTO.GenerateDeliveryView> dto) {
+        //Boolean result = soOutstockService.addPushDownNo(dto);
+        //return result ? success() : failure();
+        return null;
     }
 
 

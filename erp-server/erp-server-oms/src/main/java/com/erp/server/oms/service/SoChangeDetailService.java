@@ -65,4 +65,14 @@ public interface SoChangeDetailService extends SuperService<SoChangeDetailEntity
      * @return void
      */
     void updateDetailList(String mainId, List<SoChangeDetailDTO.UpdateDTO> detailList);
+
+    
+    /**
+     * 根据销售单id 获取到对应详情数据
+     * @author yl
+     * @date 2023-05-25 14:11
+     * @param soId
+     * @return java.util.List<com.erp.model.oms.dto.SoChangeDetailDTO.ViewDTO>
+     */
+    List<SoChangeDetailDTO.ViewDTO> listDetailBySoId(String soId);
 }

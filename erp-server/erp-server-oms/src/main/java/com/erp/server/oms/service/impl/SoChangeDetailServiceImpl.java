@@ -166,8 +166,6 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             item.setTaxPrice(taxPrice);
-
-
             BigDecimal oldPrice = item.getOldPrice();
             BigDecimal oldTaxRate = item.getOldTaxRate();
             //含税单价=销售单价*（税率+1）
@@ -178,6 +176,61 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         return viewList;
     }
 
+
+    /**
+     * 根据销售单id 获取到对应详情数据
+     *
+     * @param soId
+     * @return java.util.List<com.erp.model.oms.dto.SoChangeDetailDTO.ViewDTO>
+     * @author yl
+     * @date 2023-05-25 14:11
+     */
+    @Override
+    public List<SoChangeDetailDTO.ViewDTO> listDetailBySoId(String soId) {
+        List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainId(soId);
+        List<SoChangeDetailDTO.ViewDTO> viewList = new ArrayList<>(soDetailList.size());
+        if (CollectionUtils.isNotEmpty(soDetailList)) {
+            BigDecimal zero = BigDecimal.ZERO;
+            SoChangeTypeEnum update = SoChangeTypeEnum.UPDATE;
+            List<String> skuIdList = soDetailList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
+            List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+            for (SoDetailEntity item : soDetailList) {
+                SoChangeDetailDTO.ViewDTO view = new SoChangeDetailDTO.ViewDTO();
+                view.setOldAmount(item.getPrice());
+                view.setOldCurrency(item.getCurrency());
+                view.setOldCurrencySymbol(item.getCurrencySymbol());
+                view.setOldQty(item.getQty());
+                BigDecimal oldPrice = item.getPrice();
+                view.setOldPrice(oldPrice);
+                BigDecimal oldTaxRate = item.getTaxRate();
+                view.setOldTaxRate(oldTaxRate);
+                //含税单价=销售单价*（税率+1）
+                BigDecimal oldMultiplyTax = MathUtil.add(oldTaxRate, MathUtil.BigDecimal_1);
+                BigDecimal oldTaxPrice = MathUtil.multiply(oldPrice, oldMultiplyTax);
+                view.setOldTaxPrice(oldTaxPrice);
+                view.setQty(0);
+                view.setTaxPrice(zero);
+                view.setAmount(zero);
+                view.setChangeType(update);
+                view.setIsGift(Boolean.FALSE);
+                view.setIsReissue(Boolean.FALSE);
+                view.setPrice(zero);
+                view.setTaxRate(zero);
+                view.setCurrency("CNY");
+                view.setCurrencySymbol("¥");
+                String skuId = item.getSkuId();
+                view.setSkuId(skuId);
+                view.setSkuNo(item.getSkuNo());
+                view.setSoDetailId(item.getId());
+                String productName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+                        flatMap(obj->Optional.ofNullable(obj.getSkuName())).orElse("");
+                view.setProductName(productName);
+                viewList.add(view);
+            }
+        }
+
+        return viewList;
+    }
 
     /**
      * 检查对应的变更类型

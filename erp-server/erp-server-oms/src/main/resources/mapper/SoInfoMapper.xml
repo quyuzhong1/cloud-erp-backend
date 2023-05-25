@@ -205,13 +205,13 @@
 
     <select id="generateDeliveryView" resultType="com.erp.model.oms.dto.SoInfoDTO$GenerateDeliveryView">
         SELECT
-            si.code,
+            si.code AS soCode,
             si.warehouse_org_id AS inventoryOrgId,
             si.customer_id,
             si.require_date,
             si.warehouse_id,
-            sd.id,
-            sd.main_id,
+            sd.id AS detailId,
+            sd.main_id AS soId,
             sd.sku_id,
             sd.sku_no,
             sd.qty AS salseQty

@@ -207,6 +207,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         return this.submit(Arrays.asList(id));
     }
 
+
+
+
     /**
      * 检查能否变更
      * 单据状态为已审核并且不在“变更中”才可变更
@@ -525,6 +528,41 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         view.setTelNumber(soInfo.getTelNumber());
         //根据主表id 获取详情
         List<SoChangeDetailDTO.ViewDTO> detailList = soChangeDetailService.listDetailByMainId(id);
+        view.setDetailList(detailList);
+        return view;
+    }
+
+
+
+    /**
+     * 根据销售订单id 获取到对应详情
+     * @author yl
+     * @date 2023-05-25 14:04
+     * @param soId
+     * @return com.erp.model.oms.dto.SoChangeDTO.ViewDTO
+     */
+    @Override
+    public SoChangeDTO.ViewDTO getViewBySoId(String soId) {
+        SoChangeDTO.ViewDTO view = new SoChangeDTO.ViewDTO();
+        SoInfoDTO.CustomerDTO soInfo = soInfoService.getSoCustomer(soId);
+        view.setAddressTypeName(soInfo.getAddressTypeName());
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.WAIT_SUBMIT;
+        view.setApproveStatusName(approveStatus.getName());
+        view.setApproveStatus(approveStatus);
+        view.setCurrency(soInfo.getCurrency());
+        view.setCustomerId(soInfo.getCustomerId());
+        view.setCustomerName(soInfo.getCustomerName());
+        view.setIsTax(soInfo.getIsTax());
+        view.setDeliveryModeName(soInfo.getDeliveryModeName());
+        view.setOrderTypeName(soInfo.getOrderTypeName());
+        view.setOrderType(soInfo.getOrderType());
+        view.setReceiveAddress(soInfo.getReceiveAddress());
+        view.setReceiverName(soInfo.getReceiverName());
+        view.setSoCode(soInfo.getCode());
+        view.setSoId(soInfo.getId());
+        view.setTelNumber(soInfo.getTelNumber());
+        //根据主表id 获取详情
+        List<SoChangeDetailDTO.ViewDTO> detailList = soChangeDetailService.listDetailBySoId(soId);
         view.setDetailList(detailList);
         return view;
     }
