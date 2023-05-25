@@ -30,6 +30,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.OtherInstockDTO;
 import com.erp.model.wms.dto.OtherInstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -172,7 +173,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         OtherInstockEntity entity = new OtherInstockEntity();
         BeanMapperUtils.copy(dto, entity);
         //处理数据id
-        doOpHandleDataId(dto.getWarehouseId(),dto.getReceiverId(), dto.getWarehouseKeeperId(), entity);
+        doOpHandleDataId(dto.getWarehouseId(),dto.getReceiverId(), dto.getWarehouseKeeperId(),dto.getDeptId(), entity);
         log.info("其他入库单新增");
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QTRK, BusinessNoTypeEnum.CODE_QTRK.getCode()));
@@ -208,7 +209,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         BeanMapperUtils.copy(dto, entity);
         List<OtherInstockDetailDTO.UpdateDTO> detailList = dto.getDetailList();
         //处理数据id
-        doOpHandleDataId(dto.getWarehouseId(),dto.getReceiverId(), dto.getWarehouseKeeperId(), entity);
+        doOpHandleDataId(dto.getWarehouseId(),dto.getReceiverId(), dto.getWarehouseKeeperId(),dto.getDeptId(), entity);
 
         log.info("其他入库单修改，id=【{}】", dto.getId());
 
@@ -538,7 +539,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     /**
      * 处理数据id
      */
-    private void doOpHandleDataId(String warehouseId, String receiverId, String warehouseKeeperId, OtherInstockEntity entity) {
+    private void doOpHandleDataId(String warehouseId, String receiverId, String warehouseKeeperId,String deptId, OtherInstockEntity entity) {
 
         //用户信息
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(warehouseId,receiverId));
@@ -575,6 +576,11 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         entity.setOrgId(warehouse.getOrgId());
         entity.setOrgName(orgName);
 
+        //部门信息
+        SysDepartmentDTO sysDepartmentDTO = sysUserFeign.getUserDeptById(deptId);
+        if (ObjectUtils.isNotEmpty(sysDepartmentDTO)) {
+            entity.setDeptName(sysDepartmentDTO.getName());
+        }
     }
 
     /**

@@ -2,12 +2,14 @@ package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.entity.OtherInstockDetailEntity;
 import com.erp.model.wms.entity.OtherInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -74,8 +76,8 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
             resultMap.put("warehouseKeeperCode", warehouseKeeperCode);
             //领料人
-            String receiverCode = userList.stream().filter(obj -> obj.getUserId().equals(entity.getReceiverId())).
-                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+            String receiverCode = userList.stream().filter(obj -> obj.getUserId().equals(entity.getReceiverId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
             resultMap.put("receiverCode", receiverCode);
         }
 
@@ -90,6 +92,12 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
             resultMap.put("orgCode", orgCode);
         }
+        //部门
+        SysDepartmentDTO sysDepartmentDTO = sysUserFeign.getUserDeptById(entity.getDeptId());
+        if (ObjectUtils.isNotEmpty(sysDepartmentDTO)) {
+            resultMap.put("deptCode", sysDepartmentDTO.getCode());
+        }
+
 
         List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
