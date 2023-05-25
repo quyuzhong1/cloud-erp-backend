@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.validator.AddGroup;
@@ -1039,5 +1040,90 @@ public class SoInfoDTO implements Serializable {
         private String remark;
     }
 
+    /**
+     * 下推发货通知单\销售出库单 列表查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateDeliveryView {
+        /**
+         * 明细id
+         */
+        private String id;
 
+        /**
+         * 主表id
+         */
+        private String mainId;
+
+        /**
+         * 销售单号
+         */
+        private String code;
+
+        /**
+         * 库存组织id
+         */
+        private String inventoryOrgId;
+
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+
+        /**
+         * 客户id
+         */
+        private String  customerId;
+
+        /**
+         * skuId
+         */
+        private String  skuId;
+
+        /**
+         * sku编号
+         */
+        private String  skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String  productName;
+
+        /**
+         * 销售数量
+         */
+        private Integer  salesQty;
+
+        /**
+         * 发货数量
+         */
+        private Integer  deliveryQty;
+
+        /**
+         * 要货日期
+         */
+        private LocalDate  requireDate;
+
+        /**
+         * 预计发货日期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 附件地址
+         */
+        private List<String> attachmentUrlList;
+
+        /**
+         * 附件名
+         */
+        private List<String> attachmentNameList;
+
+        /**
+         * 备注
+         */
+        private String  remark;
+    }
 }

@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -160,4 +161,13 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @return void
      **/
     Boolean generateSoDeliverySave(List<String> idList);
+
+    /**
+     * 下推发货通知单-保存
+     * @Author Luo_WG
+     * @Date 2023/5/25 12:30
+     * @param list list
+     * @return java.lang.Boolean
+     **/
+    Boolean generateDeliverySave(List<SoInfoDTO.GenerateDeliveryView> list);
 }

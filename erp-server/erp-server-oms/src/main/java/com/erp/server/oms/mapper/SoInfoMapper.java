@@ -32,4 +32,13 @@ public interface SoInfoMapper extends BaseMapper<SoInfoEntity> {
      * @return List<ViewGenerateSalesDemandDTO>
      */
     List<SoInfoDTO.ViewGenerateSalesDemandDTO> viewGenerateSalesDemand(@Param("ids") List<String> ids);
+
+    /**
+     * 下推发货通知单\销售出库单-列表查询
+     * @Author Luo_WG
+     * @Date 2023/5/25 12:03
+     * @param ids ids
+     * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.GenerateDeliveryView>
+     **/
+    List<SoInfoDTO.GenerateDeliveryView> generateDeliveryView(List<String> ids);
 }

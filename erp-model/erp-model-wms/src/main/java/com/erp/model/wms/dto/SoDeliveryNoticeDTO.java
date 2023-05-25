@@ -232,6 +232,10 @@ public class SoDeliveryNoticeDTO {
          */
         private String carrierId;
         /**
+         * 预计发货日期
+         */
+        private LocalDate planDeliveryDate;
+        /**
          * 运输单号
          */
         private String trackNo;

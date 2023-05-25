@@ -6,9 +6,11 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.server.wms.service.SoDeliveryNoticeService;
 import org.apache.commons.lang3.StringUtils;
@@ -282,8 +284,6 @@ public class SoDeliveryNoticeController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-
-
     /**
      * 下推销售出库单-保存
      *
@@ -297,5 +297,17 @@ public class SoDeliveryNoticeController extends BaseController {
         return flag ? success() : failure();
     }
 
+    /**
+     * 下推发货通知单-保存
+     * @Author Luo_WG
+     * @Date 2023/5/25 12:30
+     * @param validList validList
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/generateDeliverySave")
+    public ApiResult generateDeliverySave(@RequestBody @Validated ValidList<SoInfoDTO.GenerateDeliveryView> validList) {
+        Boolean flag = soDeliveryNoticeService.generateDeliverySave(validList.getList());
+        return flag ? success() : failure();
+    }
 }
 

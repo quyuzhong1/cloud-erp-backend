@@ -203,4 +203,21 @@
         </where>
     </select>
 
+    <select id="generateDeliveryView" resultType="com.erp.model.oms.dto.SoInfoDTO$GenerateDeliveryView">
+        SELECT
+            si.code,
+            si.warehouse_org_id AS inventoryOrgId,
+            si.customer_id,
+            si.require_date,
+            si.warehouse_id,
+            sd.id,
+            sd.main_id,
+            sd.sku_id,
+            sd.sku_no,
+            sd.qty AS salseQty
+        FROM so_info si
+        LEFT JOIN so_detail sd ON si.id = sd.main_id AND si.is_deleted = FALSE
+        WHERE sd.is_deleted = FALSE
+    </select>
+
 </mapper>

@@ -21,6 +21,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -256,6 +257,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeEntity.setSourceCode(soInfoEntity.getCode());
         soDeliveryNoticeEntity.setSourceType(dto.getSourceType());
         soDeliveryNoticeEntity.setDeliveryOrgId(dto.getDeliveryOrgId());
+        if (dto.getPlanDeliveryDate() != null) {
+            soDeliveryNoticeEntity.setPlanDeliveryDate(dto.getPlanDeliveryDate());
+        }
         soDeliveryNoticeEntity.setTrackNo(dto.getTrackNo());
         soDeliveryNoticeEntity.setDeliveryOrgName(sysAccountingCompanyEntity.getCompanyName());
         if (StringUtils.isNotBlank(dto.getCarrierId())) {
@@ -754,5 +758,31 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         //添加拣货明细数据
         pickingDetailService.add(addList);
+    }
+
+    @Override
+    public Boolean generateDeliverySave(List<SoInfoDTO.GenerateDeliveryView> list) {
+        List<String> soIdList = list.stream().map(SoInfoDTO.GenerateDeliveryView::getMainId).distinct().collect(Collectors.toList());
+        for (String soId : soIdList) {
+            SoDeliveryNoticeDTO.Add add = new SoDeliveryNoticeDTO.Add();
+            add.setSourceId(soId);
+            add.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+            List<SoInfoDTO.GenerateDeliveryView> viewList = list.stream().filter(req -> req.getMainId().equals(soId)).collect(Collectors.toList());
+            List<SoDeliveryNoticeDetailDTO.Add> detailList = new ArrayList<>();
+            for (SoInfoDTO.GenerateDeliveryView view : viewList) {
+                add.setDeliveryOrgId(view.getInventoryOrgId());
+                add.setWarehouseId(view.getWarehouseId());
+                add.setPlanDeliveryDate(view.getPlanDeliveryDate());
+                SoDeliveryNoticeDetailDTO.Add detailAdd = new SoDeliveryNoticeDetailDTO.Add();
+                detailAdd.setDeliveryQty(view.getDeliveryQty());
+                detailAdd.setRemark(view.getRemark());
+                detailAdd.setSourceDetailId(view.getId());
+                detailAdd.setAttachNameList(view.getAttachmentNameList());
+                detailAdd.setAttachUrlList(view.getAttachmentUrlList());
+                detailList.add(detailAdd);
+            }
+            this.add(add);
+        }
+        return Boolean.TRUE;
     }
 }

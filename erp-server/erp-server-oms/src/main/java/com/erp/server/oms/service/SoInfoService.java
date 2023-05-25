@@ -6,8 +6,12 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -195,4 +199,13 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return com.erp.model.oms.dto.SoInfoDTO.CustomerDTO
      */
     List<SoInfoDTO.CustomerDTO> listSoCustomerByIds(List<String> soIdList);
+
+    /**
+     * 下推发货通知单\销售出库单-列表查询
+     * @Author Luo_WG
+     * @Date 2023/5/25 12:02
+     * @param ids ids
+     * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.GenerateDeliveryView>
+     **/
+    List<SoInfoDTO.GenerateDeliveryView> generateDeliveryView(List<String> ids);
 }

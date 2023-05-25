@@ -24,10 +24,6 @@ public class SoDeliveryNoticeDetailDTO {
         @Max(value = 999999999, message = "发货数量最大值为999999999")
         private Integer deliveryQty;
         /**
-         * 出货仓库
-         */
-        private String warehouseId;
-        /**
          * 是否关闭
          */
         private Boolean isClose;
