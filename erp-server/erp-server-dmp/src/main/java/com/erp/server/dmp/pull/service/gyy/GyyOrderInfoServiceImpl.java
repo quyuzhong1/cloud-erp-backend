@@ -14,6 +14,8 @@ import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.common.message.enums.RocketMqTagEnum;
@@ -23,6 +25,7 @@ import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +57,8 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
     private MongoService mongoService;
     @Autowired
     private MQProducerService<DmpOrderInfoEntity> mqProducerService;
+    @Resource
+    private DmpShopInfoService dmpShopInfoService;
 
     /**
      * 拉取订单数据
@@ -137,14 +142,11 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
      **/
 
     public DmpOrderInfoEntity initOrderInfoEntity(GyyOrderEntity gyyOrderEntity){
-//        if (StringUtils.isEmpty(gyyOrderEntity.getOrderTypeName()) || !"销售订单".equals(gyyOrderEntity.getOrderTypeName())) {
-//            return null;
-//        }
-//        if (StringUtils.isNotBlank(gyyOrderEntity.getPlatformTradingState())) {
-//            if (gyyOrderEntity.getPlatformTradingState().contains("取消")) {
-//                return null;
-//            }
-//        }
+        // 查询店铺信息
+        String shopCode = gyyOrderEntity.getShopCode();
+        DmpShopInfoEntity shopInfo = dmpShopInfoService.getShopByShopNo(shopCode, PlatformEnum.GYY.getDesc());
+        boolean isNotVijim = null != shopInfo && (ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(shopInfo.getUseOrgId().toString()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(shopInfo.getUseOrgId().toString()));
+        if(isNotVijim){ return null; }
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
         //平台订单id
         dmpOrderInfoEntity.setPlatformOrderId(gyyOrderEntity.getCode());
