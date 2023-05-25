@@ -23,6 +23,7 @@
 
     <select id="listSourceDetailIds" resultType="com.erp.model.wms.entity.TransferInfoDetailEntity">
         select
+            tid.id,
             tid.main_id,
             tid.sku_id,
             tid.sku_no,

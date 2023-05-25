@@ -2,18 +2,24 @@ package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
+import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.model.wms.entity.TransferInfoDetailEntity;
+import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.TransferInfoDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.PickingDetailService;
 import com.erp.server.wms.service.TransferInfoDetailService;
+import com.erp.server.wms.service.TransferInfoService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
@@ -39,7 +45,11 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
     @Resource
     private OperateLogService operateLogService;
 
+    @Resource
+    private TransferInfoService transferInfoService;
 
+    @Resource
+    private PickingDetailService pickingDetailService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -73,6 +83,9 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
         }
         List<TransferInfoDetailEntity> newList = BeanMapperUtils.copyList(TransferInfoDetailEntity.class, detailList);
 
+        //验证上级单据数量
+        checkTransferInfoQty(newList,mainId);
+
         //处理明细id及操作日志
         doOpHandleDetails(newList,mainId,Boolean.TRUE);
 
@@ -98,6 +111,52 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
     @Override
     public List<TransferInfoDetailEntity> listSourceDetailIds(List<String> sourceDetailIds) {
         return baseMapper.listSourceDetailIds(sourceDetailIds);
+    }
+
+    /**
+     * @description: 修改时数量验证
+     * @author Will
+     * @date: 2023/5/25 10:28
+     * @param newList
+     * @param mainId
+     */
+    private void checkTransferInfoQty (List<TransferInfoDetailEntity> newList ,String mainId) {
+        TransferInfoEntity transferInfoEntity = transferInfoService.getById(mainId);
+        if (ObjectUtils.isEmpty(transferInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_99047);
+        }
+
+        if (SourceTypeEnum.SELF_ADD.getCode().equals(transferInfoEntity.getSourceType())) {
+            return;
+        }
+
+        List<String> sourceDetailIds = newList.stream().map(TransferInfoDetailEntity::getSourceDetailId).collect(Collectors.toList());
+
+        //拣货明细
+        List<PickingDetailEntity> pickingDetailList = pickingDetailService.listByIds(sourceDetailIds);
+
+        //已下推明细
+        List<TransferInfoDetailEntity> transferInfoDetailList = this.listSourceDetailIds(sourceDetailIds);
+
+        for (TransferInfoDetailEntity detailEntity : newList) {
+            //拣货数量
+            Integer pickingQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(pickingDetailList)) {
+                pickingQty = pickingDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId()))
+                        .map(PickingDetailEntity::getQty).findFirst().orElse(MathUtil.ZERO);
+            }
+            //已下推数量（不包括本明细数量）
+            Integer hasPickingQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(transferInfoDetailList)) {
+                hasPickingQty = transferInfoDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId()) && !obj.getId().equals(detailEntity.getId()))
+                        .map(TransferInfoDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //数量检验
+            if (detailEntity.getQty().intValue() > pickingQty.intValue() - hasPickingQty.intValue()) {
+                throw new ServiceException(ApiError.ERROR_99051.code, String.format(ApiError.ERROR_99051.msg, detailEntity.getSkuNo()));
+            }
+        }
+
     }
 
     /**

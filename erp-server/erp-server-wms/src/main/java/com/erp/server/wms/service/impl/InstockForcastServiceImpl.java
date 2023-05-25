@@ -165,7 +165,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         if(Objects.isNull(instockForcastEntity)) {
             log.error("采购订单id：【{}】未找到未删除的入库预报，", purchaseOrderId);
             // 此处报错
-            throw new ServiceException("采购订单还未下推生成入库预报");
+            throw new ServiceException("采购订单未下推生成入库预报");
         }
         // 调用库存组件，更新库存信息
         InventoryInOutStockDTO inventoryDto = new InventoryInOutStockDTO();

@@ -521,6 +521,9 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         }
 
         List<String> sourceDetailIds = list.stream().map(TransferApplicationDTO.GenerateTransferInfoDTO::getSourceDetailId).distinct().collect(Collectors.toList());
+        //拣货明细信息
+        List<PickingDetailEntity> detailList = pickingDetailService.listByIds(sourceDetailIds);
+
         //直接调拨明细
         List<TransferInfoDetailEntity> transferInfoDetailList = transferInfoDetailService.listSourceDetailIds(sourceDetailIds);
         //分步式调出明细
@@ -544,7 +547,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                 List<TransferInfoDetailDTO.AddDTO> addDetailList = new ArrayList<>();
                 for (TransferApplicationDTO.GenerateTransferInfoDTO dto : value) {
                     //验证明细是否已经被调拨
-                    checkGenerateTransfer(transferInfoDetailList,transferOutDetailList,dto.getSourceDetailId(),dto.getSkuNo());
+                    checkGenerateTransfer(transferInfoDetailList,transferOutDetailList,detailList,dto);
                     TransferInfoDetailDTO.AddDTO addDetailDTO = new TransferInfoDetailDTO.AddDTO();
                     BeanMapperUtils.copy(dto,addDetailDTO);
                     addDetailList.add(addDetailDTO);
@@ -563,7 +566,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                 List<TransferOutDetailDTO.AddDTO> addDetailList = new ArrayList<>();
                 for (TransferApplicationDTO.GenerateTransferInfoDTO dto : value) {
                     //验证明细是否已经被调拨
-                    checkGenerateTransfer(transferInfoDetailList,transferOutDetailList,dto.getSourceDetailId(),dto.getSkuNo());
+                    checkGenerateTransfer(transferInfoDetailList,transferOutDetailList,detailList,dto);
                     TransferOutDetailDTO.AddDTO addDetailDTO = new TransferOutDetailDTO.AddDTO();
                     BeanMapperUtils.copy(dto,addDetailDTO);
                     addDetailList.add(addDetailDTO);
@@ -582,15 +585,25 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
      * @date: 2023/5/18 10:10
      * @param transferInfoDetailList
      * @param transferOutDetailList
-     * @param sourceDetailId
-     * @param skuNo
+     * @param dto
      */
-    private void checkGenerateTransfer (List<TransferInfoDetailEntity> transferInfoDetailList,List<TransferOutDetailEntity> transferOutDetailList,String sourceDetailId,String skuNo) {
+    private void checkGenerateTransfer (List<TransferInfoDetailEntity> transferInfoDetailList,List<TransferOutDetailEntity> transferOutDetailList,List<PickingDetailEntity> detailList,TransferApplicationDTO.GenerateTransferInfoDTO dto) {
+        //来源明细id
+        String sourceDetailId = dto.getSourceDetailId();
+        //sku编码
+        String skuNo = dto.getSkuNo();
+
         if (CollectionUtils.isNotEmpty(transferInfoDetailList)) {
-            //直接调拨单调拨
-            long infoCount = transferInfoDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(sourceDetailId)).count();
-            if (infoCount > 0 ) {
-                throw new ServiceException(ApiError.ERROR_99051.code, String.format(ApiError.ERROR_99051.msg, skuNo));
+            //拣货数量
+            Integer pickingQty = detailList.stream().filter(obj -> obj.getId().equals(sourceDetailId)).map(PickingDetailEntity::getQty).findFirst().orElse(MathUtil.ZERO);
+
+            //已调拨数量
+            Integer totalQty = transferInfoDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(sourceDetailId)).map(TransferInfoDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (pickingQty.intValue() == totalQty.intValue()) {
+                throw new ServiceException(ApiError.ERROR_99051.code, String.format(ApiError.ERROR_99051.msg,dto.getSourceCode(), skuNo));
+            }
+            if (dto.getQty().intValue() > pickingQty.intValue() - totalQty.intValue()) {
+                throw new ServiceException(ApiError.ERROR_99050.code, String.format(ApiError.ERROR_99050.msg,dto.getSourceCode(), skuNo, pickingQty - totalQty));
             }
         }
         if (CollectionUtils.isNotEmpty(transferOutDetailList)) {

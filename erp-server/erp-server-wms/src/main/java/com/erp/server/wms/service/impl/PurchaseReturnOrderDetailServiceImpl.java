@@ -133,6 +133,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
                     purchaseReturnOrderDetailEntity.setPurchaseOrderDetailId(addDTO.getPurchaseOrderDetailId());
                     purchaseReturnOrderDetailEntity.setCurrency(addDTO.getCurrency());
                     purchaseReturnOrderDetailEntity.setSourceDetailId(addDTO.getSourceDetailId());
+                    purchaseReturnOrderDetailEntity.setWarehouseLocation(addDTO.getWarehouseLocation());
                 } else {
                     throw new ServiceException(ApiError.ERROR_99006);
                 }

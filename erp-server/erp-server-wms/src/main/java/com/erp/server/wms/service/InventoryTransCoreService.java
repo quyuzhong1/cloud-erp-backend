@@ -29,6 +29,12 @@ public interface InventoryTransCoreService {
     void approveByRule(InventoryTransferRuleDTO dto);
 
     /**
+     * 出入库业务，自定义规则，，操作引起当前仓的库存变化，数据库配置的规则满足不了，手工传输交易规则
+     * @param dto
+     */
+    void approveByRule(InventoryInOutStockRuleDTO dto);
+
+    /**
      * 反审核
      * @param dto
      */

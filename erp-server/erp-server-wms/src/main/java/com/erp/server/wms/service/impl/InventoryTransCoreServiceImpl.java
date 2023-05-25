@@ -61,6 +61,18 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     }
 
     /**
+     * 出入库业务，自定义规则
+     * @param dto
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void approveByRule(InventoryInOutStockRuleDTO dto) {
+        ValidatorUtil.validateEntity(dto);
+        AbstractInventoryServiceImpl abstractInventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK);
+        abstractInventoryService.approve(dto.getMembers(), dto.getRules(), InventoryBusinessTypeEnum.of(dto.getBusinessType()), false);
+    }
+
+    /**
      * 反审核
      * @param dto
      */

@@ -112,5 +112,10 @@ public class PoInstockDetailDTO implements Serializable {
          * 未入库数量
          */
        private Integer unStockInQty;
+
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
     }
 }

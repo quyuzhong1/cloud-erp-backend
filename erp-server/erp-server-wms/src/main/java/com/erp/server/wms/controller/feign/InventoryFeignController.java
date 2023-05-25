@@ -59,6 +59,16 @@ public class InventoryFeignController extends BaseController {
     }
 
     /**
+     * 出入库业务，自定义规则
+     *
+     * @param dto
+     */
+    @PostMapping("/approveInOutStockByRule")
+    public void approveInOutStockByRule(@RequestBody @Validated InventoryInOutStockRuleDTO dto) {
+        inventoryTransCoreService.approveByRule(dto);
+    }
+
+    /**
      * 反审核
      *
      * @param dto
