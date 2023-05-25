@@ -79,7 +79,21 @@ public class SoChangeEntity extends BaseEntity<SoChangeEntity> {
     private Boolean invalidStatus;
 
     @TableField("invalid_remark")
-    private Boolean invalidRemark;
+    private String invalidRemark;
+
+
+    /**
+     * 审核人id
+     */
+    @TableField("approve_user_id")
+    private String approveUserId;
+
+
+    /**
+     * 审核人
+     */
+    @TableField("approve_user_name")
+    private String approveUserName;
 
     /**
      * 变更原因

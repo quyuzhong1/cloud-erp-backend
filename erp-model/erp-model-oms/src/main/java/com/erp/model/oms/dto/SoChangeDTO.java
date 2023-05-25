@@ -303,7 +303,7 @@ public class SoChangeDTO implements Serializable {
          * 变更人
          */
         @NotBlank(message = "变更人不能为空")
-        private String useId;
+        private String userId;
 
 
         /**
@@ -384,7 +384,7 @@ public class SoChangeDTO implements Serializable {
         /**
          * 单据类型
          */
-        private BillTypeEnum orderType;
+        private String orderType;
 
         /**
          * 单据类型名
@@ -435,6 +435,8 @@ public class SoChangeDTO implements Serializable {
          */
         private Boolean isTax;
 
+
+
         /**
          * 地址类型
          */
@@ -465,85 +467,27 @@ public class SoChangeDTO implements Serializable {
         /**
          * id
          */
+        @NotBlank(message = "销售变更单不能为空")
         private String id;
-
-        /**
-         * 销售订单id
-         */
-        private String soId;
-
-        /**
-         * 销售订单code
-         */
-        private String soCode;
 
 
         /**
          * 变更日期
          */
+        @NotNull(message = "变更日期不能为空")
         private LocalDate billDate;
 
 
         /**
          * 变更部门id
          */
-        private String changeDeptId;
+        private String deptId;
 
         /**
          * 变更员id
          */
-        private String changeUserId;
-
-
-        /**
-         * 客户id
-         */
-        private String customerId;
-
-
-        /**
-         * 收货人
-         */
-        private String receiverName;
-
-        /**
-         * 电话
-         */
-        private String telNumber;
-
-        /**
-         * 收货人地址
-         */
-        private String receiverAddress;
-
-        /**
-         * 交货方式
-         */
-        private String deliveryMode;
-
-
-        /**
-         * 币种
-         */
-        private String currency;
-
-        /**
-         * 是否含税
-         * true 是
-         */
-        private Boolean isTax;
-
-        /**
-         * 地址类型
-         */
-        private String addressType;
-
-
-        /**
-         * 备注
-         */
-        private String remark;
-
+        @NotBlank(message = "变更人不能为空")
+        private String userId;
 
         /**
          * 产品信息

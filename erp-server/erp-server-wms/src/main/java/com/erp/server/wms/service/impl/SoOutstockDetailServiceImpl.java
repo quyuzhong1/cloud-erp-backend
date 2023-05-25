@@ -407,6 +407,23 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         return this.lambdaQuery().in(SoOutstockDetailEntity::getMainId, mainIds).list();
     }
 
+
+    /**
+     * 根据销售订单详情id获取到对应的下推数量
+     *
+     * @param soDetailIds
+     * @return java.lang.Integer
+     * @author yl
+     * @date 2023-05-25 10:33
+     */
+    @Override
+    public Integer getPushDownCountBySoDetailIds(List<String> soDetailIds) {
+        if (CollectionUtils.isEmpty(soDetailIds)) {
+            return 0;
+        }
+        return this.lambdaQuery().in(SoOutstockDetailEntity::getSourceDetailId,soDetailIds).count();
+    }
+
     private List<String> getDeleteIds(List<Pair<String, String>> pairList, List<SoOutstockDetailEntity> dbList) {
         List<String> ids = pairList.stream().filter(g -> StringUtils.isNotBlank(g.getKey())).
                 map(obj -> obj.getKey()).collect(Collectors.toList());

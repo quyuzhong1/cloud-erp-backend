@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -86,4 +87,60 @@ public interface SoChangeService extends SuperService<SoChangeEntity> {
      * @return com.erp.model.oms.dto.SoChangeDTO.ViewDTO
      */
     SoChangeDTO.ViewDTO view(String id);
+
+    /**
+     * 审核
+     * @author yl
+     * @date 2023-05-25 10:40
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean approve(BaseApproveParamDTO dto);
+
+    /**
+     * 撤销流程
+     * @author yl
+     * @date 2023-05-25 11:01
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean cancelProcess(List<String> ids);
+
+    /**
+     * 删除销售变更单
+     * @author yl
+     * @date 2023-05-25 11:05
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean deleteByIds(List<String> ids);
+
+    
+    /**
+     * 作废单据
+     * @author yl
+     * @date 2023-05-25 11:14
+     * @param ids
+     * @param remark
+     * @return java.lang.Boolean
+     */
+    Boolean invalid(List<String> ids, String remark);
+
+    /**
+     * 更改销售变更单
+     * @author yl
+     * @date 2023-05-25 11:39
+     * @param dto
+     * @return java.lang.String
+     */
+    String updateSoChange(SoChangeDTO.UpdateDTO dto);
+
+    /**
+     * 修改并提交
+     * @author yl
+     * @date 2023-05-25 12:23
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateAndSubmit(SoChangeDTO.UpdateDTO dto);
 }

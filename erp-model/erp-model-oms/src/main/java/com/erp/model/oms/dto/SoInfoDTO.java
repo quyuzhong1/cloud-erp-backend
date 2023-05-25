@@ -677,11 +677,13 @@ public class SoInfoDTO implements Serializable {
         /**
          * 银行手续费
          */
+        @PositiveOrZero(message = "银行手续费不能为负数", groups = {AddGroup.class})
         private BigDecimal bankServiceFee;
 
         /**
          * 运费
          */
+        @PositiveOrZero(message = "银行手续费不能为负数", groups = {AddGroup.class})
         private BigDecimal shippingFee;
 
         /**

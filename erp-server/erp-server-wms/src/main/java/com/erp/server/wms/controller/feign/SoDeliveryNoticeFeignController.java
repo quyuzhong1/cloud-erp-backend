@@ -1,7 +1,6 @@
 package com.erp.server.wms.controller.feign;
 
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.server.wms.service.SoDeliveryNoticeDetailService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,5 +25,11 @@ public class SoDeliveryNoticeFeignController {
     @PostMapping("/listDetailBySourceDetailId")
     public List<SoDeliveryNoticeDetailEntity> listDetailBySourceDetailIds(@RequestBody List<String> sourceDetailId) {
         return soDeliveryNoticeDetailService.listDetailBySourceDetailIds(sourceDetailId);
+    }
+
+
+    @PostMapping("/getPushDownBySoDetailIds")
+    public Integer getPushDownBySoDetailIds(@RequestBody List<String> soDetailIds) {
+        return soDeliveryNoticeDetailService.getPushDownBySoDetailIds(soDetailIds);
     }
 }

@@ -88,4 +88,13 @@ public interface SoDeliveryNoticeDetailService extends SuperService<SoDeliveryNo
      * @return void
      */
     void handleData(List<String> sourceDetailIdList);
+
+    /**
+     * 根据销售订单详情id 获取对应 下推的数据
+     * @author yl
+     * @date 2023-05-25 10:30
+     * @param soDetailIds
+     * @return java.lang.Integer
+     */
+    Integer getPushDownBySoDetailIds(List<String> soDetailIds);
 }

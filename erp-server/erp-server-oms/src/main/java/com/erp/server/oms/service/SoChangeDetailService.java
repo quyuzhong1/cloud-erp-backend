@@ -26,4 +26,43 @@ public interface SoChangeDetailService extends SuperService<SoChangeDetailEntity
      * @return void
      */
     void addDetailList(String mainId, List<SoChangeDetailDTO.AddDTO> detailList);
+
+    /**
+     * 根据主表id 获取详情信息
+     * @author yl
+     * @date 2023-05-25 9:00
+     * @param mainId
+     * @return java.util.List<com.erp.model.oms.dto.SoChangeDetailDTO.ViewDTO>
+     */
+    List<SoChangeDetailDTO.ViewDTO> listDetailByMainId(String mainId);
+
+    
+    /**
+     * 检查对应的变更类型
+     * @author yl
+     * @date 2023-05-25 10:14
+     * @param detailList
+     * @return void
+     */
+    void checkChange(List<SoChangeDetailDTO.AddDTO> detailList);
+
+    /**
+     * 根据主表删除明细
+     * @author yl
+     * @date 2023-05-25 11:11
+     * @param mainIds
+     * @return void
+     */
+    void removeByMainIdList(List<String> mainIds);
+
+    
+    /**
+     * 更改销售变更详情
+     * @author yl
+     * @date 2023-05-25 12:03
+     * @param mainId
+     * @param detailList
+     * @return void
+     */
+    void updateDetailList(String mainId, List<SoChangeDetailDTO.UpdateDTO> detailList);
 }

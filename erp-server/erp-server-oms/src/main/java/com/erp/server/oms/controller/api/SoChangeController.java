@@ -11,7 +11,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoChangeDTO;
-import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.server.oms.service.SoChangeService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -144,8 +143,16 @@ public class SoChangeController extends BaseController {
      * @return
      */
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "user_id",
+            menuCode = "oms:soChange:update",
+            serviceClass = SoChangeService.class,
+            keyIdName = "id"
+    )
     public ApiResult update(@RequestBody @Validated SoChangeDTO.UpdateDTO dto) {
-        return success(null);
+        String id = soChangeService.updateSoChange(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
+
     }
 
     /**
@@ -155,8 +162,15 @@ public class SoChangeController extends BaseController {
      * @return
      */
     @PostMapping("/updateAndSubmit")
-    public ApiResult updateAndSubmit(@RequestBody @Validated SoInfoDTO.UpdateDTO dto) {
-        return success(null);
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "user_id",
+            menuCode = "oms:soChange:updateAndSubmit",
+            serviceClass = SoChangeService.class,
+            keyIdName = "id"
+    )
+    public ApiResult updateAndSubmit(@RequestBody @Validated SoChangeDTO.UpdateDTO dto) {
+        Boolean result = soChangeService.updateAndSubmit(dto);
+        return result ? success() : failure();
     }
 
     /**
@@ -166,27 +180,53 @@ public class SoChangeController extends BaseController {
      * @return
      */
     @PostMapping("/approve")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "user_id",
+            menuCode = "oms:soChange:approve",
+            serviceClass = SoChangeService.class,
+            keyIdName = "id"
+    )
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
-        return success();
+        Boolean result = soChangeService.approve(dto);
+        return result ? success() : failure();
     }
 
+
     /**
-     * 反审核
+     * 撤销流程
+     *
+     * @param dto
+     * @return
      */
-    @PostMapping("/disApprove")
-    public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        return success();
+    @PostMapping("/cancelProcess")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "user_id",
+            menuCode = "oms:soChange:cancelProcess",
+            serviceClass = SoChangeService.class,
+            keyIdName = "id"
+    )
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = soChangeService.cancelProcess(dto.getIds());
+        return result ? success() : failure();
     }
 
+
     /**
-     * 删除仓库
+     * 删除销售变更单
      *
      * @param dto
      * @return
      */
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "user_id",
+            menuCode = "oms:soChange:delete",
+            serviceClass = SoChangeService.class,
+            keyIdName = "id"
+    )
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        return success();
+        Boolean result = soChangeService.deleteByIds(dto.getIds());
+        return result ? success() : failure();
     }
 
     /**
@@ -198,8 +238,15 @@ public class SoChangeController extends BaseController {
      * @date: 2023/5/10 20:11
      */
     @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "user_id",
+            menuCode = "oms:soChange:invalid",
+            serviceClass = SoChangeService.class,
+            keyIdName = "id"
+    )
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        return success();
+        Boolean result = soChangeService.invalid(dto.getIds(), dto.getRemark());
+        return result ? success() : failure();
     }
 
     /**
