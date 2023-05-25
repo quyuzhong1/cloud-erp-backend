@@ -2,6 +2,7 @@ package com.erp.rpc.plm.feign;
 
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
@@ -202,4 +203,11 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/bom/listBomChildBySkuIds")
     List<BomChildrenSkuDTO> listBomChildBySkuIds(@RequestBody List<String> skuIds);
+
+    /**
+     * 根据任务id获取产品id
+     * @return
+     */
+    @PostMapping("feign/plmWorkOption/getProductIdByTaskId")
+    ProjectTaskEntity getProductIdByTaskId(@RequestBody String taskId);
 }

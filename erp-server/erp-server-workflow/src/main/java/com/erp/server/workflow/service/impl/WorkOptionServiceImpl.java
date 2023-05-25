@@ -17,8 +17,12 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.AuditParamDTO;
 import com.erp.model.plm.dto.ProductDetailOperateDTO;
+import com.erp.model.plm.dto.TaskHandleDataDTO;
+import com.erp.model.plm.dto.TaskOperateDTO;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.model.workflow.dto.ApproveParamDTO;
+import com.erp.model.workflow.dto.TaskShowDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.model.workflow.entity.WorkOptionEntity;
@@ -491,7 +495,21 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 }
                 break;
             case PROJECT_TASK:
-
+                LoginUser userInfo = commonService.getUserInfo();
+                ProjectTaskEntity taskEntity = plmTaskFeign.getProductIdByTaskId(dto.getId());
+                List<TaskShowDTO> workflowList = workflowFeign.queryMyToDo(userInfo.getUid());
+                TaskOperateDTO taskOperateDTO = new TaskOperateDTO();
+                TaskHandleDataDTO taskHandleDataDTO = new TaskHandleDataDTO();
+                taskHandleDataDTO.setTaskId(dto.getId());
+                taskHandleDataDTO.setProcessId(taskEntity.getProcessId());
+                TaskShowDTO workflowTask = workflowList.stream().filter(w -> w.getProcessInstanceId().equals(taskEntity.getProcessId())).findFirst().orElse(null);
+                if (workflowTask != null) {
+                    taskHandleDataDTO.setProcessTaskId(workflowTask.getTaskId());
+                }
+                taskOperateDTO.setTaskDataList(Arrays.asList(taskHandleDataDTO));
+                taskOperateDTO.setProductId(taskEntity.getProductId());
+                taskOperateDTO.setComment(dto.getComment());
+                plmTaskFeign.projectTaskApprovalPass(taskOperateDTO);
                 break;
             case PRODUCT_CHANGE:
                 AuditParamDTO approveDTO = new AuditParamDTO();

@@ -132,7 +132,8 @@
             pm.create_user_id,
             EXTRACT(EPOCH FROM (pm.end_time - pm.start_time)) AS approveDuration,
             pm.create_time,
-            pm.approve_status
+            pm.approve_status,
+            concat(wm.detail_url,pm.business_id) as detail_url
         FROM process_management pm
         LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
         LEFT JOIN work_menu wm ON pm.business_key = wm.module_code

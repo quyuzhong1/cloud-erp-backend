@@ -344,6 +344,10 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          * 审核状态名称
          */
         private String approveStatusName;
+        /**
+         * 详情地址
+         */
+        private String detailUrl;
     }
 
     /**

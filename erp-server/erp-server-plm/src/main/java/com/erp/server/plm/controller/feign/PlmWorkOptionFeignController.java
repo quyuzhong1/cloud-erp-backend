@@ -6,6 +6,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.AuditParamDTO;
 import com.erp.model.plm.dto.ProductDetailOperateDTO;
 import com.erp.model.plm.dto.TaskOperateDTO;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.plm.service.*;
 import org.springframework.validation.annotation.Validated;
@@ -104,6 +105,16 @@ public class PlmWorkOptionFeignController {
     public Boolean projectTaskApprovalNoPass(@RequestBody @Validated TaskOperateDTO dto) {
         Boolean result = taskService.approvalReject(dto);
         return result;
+    }
+
+    /**
+     * 根据任务id获取产品id
+     * @return
+     */
+    @PostMapping("/getProductIdByTaskId")
+    public ProjectTaskEntity getProductIdByTaskId(@RequestBody String taskId) {
+        ProjectTaskEntity entity = taskService.getById(taskId);
+        return entity;
     }
 
     /**
