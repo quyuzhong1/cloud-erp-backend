@@ -104,9 +104,9 @@ public class PoInstockDetailDTO implements Serializable {
         private Integer receiveQty;
 
         /**
-         * 入库数量
+         * 有效入库数量
          */
-        private Integer hasStockInQty;
+        private Integer effectiveStockInQty;
 
         /**
          * 未入库数量
