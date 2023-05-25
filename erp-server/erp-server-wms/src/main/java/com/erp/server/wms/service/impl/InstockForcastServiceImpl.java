@@ -7,13 +7,13 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.InstockForcastDetailEntity;
 import com.erp.model.wms.entity.InstockForcastEntity;
-import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
-import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.InstockForcastMapper;
 import com.erp.server.wms.service.*;
@@ -192,6 +192,72 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         inventoryDto.setMembers(inventorySkus);
         inventoryTransCoreService.approveByType(inventoryDto);
 
+    }
+
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void poChange(InstockForcastDTO.PoChangeDTO dto) {
+        String purchaseOrderId = dto.getPurchaseOrderId();
+        InstockForcastEntity instockForcastEntity = findByPurchaseOrderId(purchaseOrderId);
+        if(Objects.isNull(instockForcastEntity)) {
+            log.error("采购订单id：【{}】未找到未删除的入库预报，", purchaseOrderId);
+            // 此处报错
+            throw new ServiceException("采购订单未下推生成入库预报");
+        }
+        // 调用库存组件，更新库存信息，此处注意：不同的SKU规则不一样
+        List<InstockForcastPoChangeDetailDTO.AddDTO> members = dto.getMembers();
+        for(InstockForcastPoChangeDetailDTO.AddDTO member : members) {
+            InventoryInOutStockRuleDTO inventoryDto = new InventoryInOutStockRuleDTO();
+            inventoryDto.setBusinessType(InventoryBusinessTypeEnum.PURCHASE_ORDER_CHANGE.getCode());
+
+            List<InOutStockDTO> inventorySkus = Lists.newArrayList();
+            InOutStockDTO inOutStockDTO = new InOutStockDTO();
+            inOutStockDTO.setWarehouseId(instockForcastEntity.getWarehouseId());
+            inOutStockDTO.setSourceType(InventorySourceTypeEnum.INSTOCK_FORCAST);
+            inOutStockDTO.setSourceId(instockForcastEntity.getId());
+            inOutStockDTO.setSourceCode(instockForcastEntity.getCode());
+            inOutStockDTO.setBillDate(instockForcastEntity.getBillDate());
+            // 根据采购明细找入库预报明细
+            InstockForcastDetailEntity instockForcastDetailEntity = instockForcastDetailService.find(instockForcastEntity.getId(), member.getPurchaseOrderDetailId());
+            Optional.ofNullable(instockForcastDetailEntity).orElseThrow(()->new ServiceException("未找到入库预报明细信息"));
+            // 更新入库预报明细数量
+            instockForcastDetailService.updateQtyByPoChange(instockForcastEntity.getId(), member.getQty());
+
+            inOutStockDTO.setSourceDetailId(instockForcastDetailEntity.getId());
+            inOutStockDTO.setSkuId(member.getSkuId());
+            inOutStockDTO.setSkuNo(member.getSkuNo());
+            inOutStockDTO.setQty(member.getQty());
+
+            Integer inventoryQty = member.getQty() - member.getOriginQty();// 变更的数量
+            if(inventoryQty == 0) {
+                log.info("SKU【{}】采购订单变更单没有发生数量改变，不处理", member.getSkuNo());
+                continue;
+            }
+            String arriveStatus = member.getArriveStatus();
+            Integer changeQty = 0;
+            InventoryModeEnum inventoryModeEnum;
+            if(Objects.equals(ArrivalStatusEnum.ARRIVED.getCode(), arriveStatus)) { // 已到货，直接为新数量
+                changeQty = member.getQty();
+                inventoryModeEnum = InventoryModeEnum.IN_STOCK;
+            } else {
+                changeQty = Math.abs(inventoryQty);
+                inventoryModeEnum = inventoryQty > 0 ? InventoryModeEnum.IN_STOCK : InventoryModeEnum.OUT_STOCK;
+            }
+            inOutStockDTO.setQty(changeQty);
+            inventorySkus.add(inOutStockDTO);
+            inventoryDto.setMembers(inventorySkus);
+
+            List<TransactionRuleDTO> rules = Lists.newArrayList();
+            TransactionRuleDTO transactionRuleDTO = new TransactionRuleDTO();
+            transactionRuleDTO.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT);
+            transactionRuleDTO.setInventoryStatus(InventoryStatusEnum.IN_TRANSIT);
+            transactionRuleDTO.setTransactionMode(inventoryModeEnum);
+            rules.add(transactionRuleDTO);
+            inventoryDto.setRules(rules);
+
+            inventoryTransCoreService.approveByRule(inventoryDto);
+        }
     }
 
 

@@ -34,18 +34,23 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.dto.inventory.InstockForcastDTO;
+import com.erp.model.wms.dto.inventory.InstockForcastPoChangeDetailDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.mapper.PurchaseChangeMapper;
 import com.erp.server.scm.service.*;
+import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,6 +60,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -98,6 +105,9 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+
+    @Autowired
+    private InventoryFeign inventoryFeign;
 
 
     @Override
@@ -221,6 +231,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
@@ -237,6 +248,11 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         //审核通过
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
             //审核通过 TODO
+
+            //查询原采购订单明细信息
+            List<PurchaseChangeDetailEntity> originPurchaseChangeDetailList = purchaseChangeDetailService.listByPurchaseChangeIds(ids);
+            List<String> purchaseOrderDetailIds = originPurchaseChangeDetailList.stream().map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+            List<PurchaseOrderDetailEntity> originPurchaseOrderDetailEntityList =  purchaseOrderDetailService.listByIds(purchaseOrderDetailIds);
 
             //更新单据状态(后面有流程了可删)
             updateApproveStatusForApprove(ids,ApproveStatusEnum.APPROVE.getStatus());
@@ -263,6 +279,9 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
                 }
                 approveArrivalState(returnQty, receiveQty, purchaseQty, req.getPurchaseOrderDetailId());
             });
+
+            // 更新库存信息
+            updateInventoryTransCore(purchaseChangeDetailList, originPurchaseOrderDetailEntityList);
         }
         //审核不通过
         if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
@@ -608,11 +627,28 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
     /**
      * 采购变更单库存变更（需要计算差额，因为原采购订单已经增加了在途）
-     * @param list 变更单主单
      * @param purchaseChangeDetailList 变更单明细
      */
-    public void updateInventoryTransCore(List<PurchaseChangeEntity> list, List<PurchaseChangeDetailEntity> purchaseChangeDetailList) {
-        // 1.由于采购订单必须审核通过才能生成采购申请单，采购订单审核通过时生成了入库预报，需同步修改入库预报
+    public void updateInventoryTransCore(List<PurchaseChangeDetailEntity> purchaseChangeDetailList, List<PurchaseOrderDetailEntity> originPurchaseOrderDetailEntityList) {
+        Map<String,PurchaseOrderDetailEntity> detailOrderMap = originPurchaseOrderDetailEntityList.stream().collect(Collectors.toMap(PurchaseOrderDetailEntity::getId, Function.identity()));
+        for(PurchaseChangeDetailEntity purchaseChangeDetailEntity : purchaseChangeDetailList) {
+            InstockForcastDTO.PoChangeDTO dto = new InstockForcastDTO.PoChangeDTO();
+
+            String detailOrderId = purchaseChangeDetailEntity.getPurchaseOrderDetailId();
+            PurchaseOrderDetailEntity purchaseOrderDetailEntity = detailOrderMap.get(detailOrderId);
+            dto.setPurchaseOrderId(purchaseOrderDetailEntity.getPurchaseOrderId());
+            List<InstockForcastPoChangeDetailDTO.AddDTO> members = Lists.newArrayList();
+            InstockForcastPoChangeDetailDTO.AddDTO addDTO = new InstockForcastPoChangeDetailDTO.AddDTO();
+            addDTO.setPurchaseOrderDetailId(detailOrderId);
+            addDTO.setSkuId(purchaseChangeDetailEntity.getSkuId());
+            addDTO.setSkuNo(purchaseChangeDetailEntity.getSkuNo());
+            addDTO.setOriginQty(purchaseOrderDetailEntity.getPurchaseQty());
+            addDTO.setQty(purchaseChangeDetailEntity.getQty());
+            addDTO.setArriveStatus(purchaseOrderDetailEntity.getArrivalStatus());
+            members.add(addDTO);
+            dto.setMembers(members);
+            inventoryFeign.poChange(dto);
+        }
     }
 
 }

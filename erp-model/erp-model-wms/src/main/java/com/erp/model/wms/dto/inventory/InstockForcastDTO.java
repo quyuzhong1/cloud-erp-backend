@@ -83,5 +83,28 @@ public class InstockForcastDTO implements Serializable {
 
     }
 
+    /**
+     * 采购订单变更
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PoChangeDTO {
+
+        /**
+         * 采购订单id
+         */
+        @NotEmpty(message = "采购订单id不能为空")
+        private String purchaseOrderId;
+
+
+        /**
+         * 采购订单变更产品明细
+         */
+        @Valid
+        @NotNull(message = "产品明细不能为空")
+        @Size(min = 1, message = "请至少录入一条产品明细")
+        private List<InstockForcastPoChangeDetailDTO.AddDTO> members;
+
+    }
 
 }

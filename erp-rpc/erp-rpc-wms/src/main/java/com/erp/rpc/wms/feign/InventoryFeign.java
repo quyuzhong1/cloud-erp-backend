@@ -92,6 +92,13 @@ public interface InventoryFeign {
     void finishDelivery(@RequestBody @Valid InstockForcastDTO.FinishDeliveryDTO dto);
 
     /**
+     * 采购订单变更单审核通过
+     * @param dto
+     */
+    @PostMapping(value = "/feign/instockForcast/poChange")
+    void poChange(@RequestBody @Valid InstockForcastDTO.PoChangeDTO dto);
+
+    /**
      * 批量反审核
      * @param dto
      */

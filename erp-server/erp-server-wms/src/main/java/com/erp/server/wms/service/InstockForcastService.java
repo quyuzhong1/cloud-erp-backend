@@ -49,4 +49,10 @@ public interface InstockForcastService extends SuperService<InstockForcastEntity
      */
     void finishDelivery(InstockForcastDTO.FinishDeliveryDTO dto);
 
+    /**
+     * 采购订单变更
+     * @param dto
+     */
+    void poChange(InstockForcastDTO.PoChangeDTO dto);
+
 }

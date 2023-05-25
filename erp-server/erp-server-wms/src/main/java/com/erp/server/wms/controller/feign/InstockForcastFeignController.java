@@ -63,4 +63,13 @@ public class InstockForcastFeignController extends BaseController {
         instockForcastService.finishDelivery(dto);
     }
 
+    /**
+     * 采购订单变更单审核通过
+     * @param dto
+     */
+    @PostMapping(value = "/poChange")
+    public void poChange(@RequestBody @Valid InstockForcastDTO.PoChangeDTO dto) {
+        instockForcastService.poChange(dto);
+    }
+
 }
