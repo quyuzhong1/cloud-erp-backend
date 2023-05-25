@@ -208,4 +208,13 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.GenerateDeliveryView>
      **/
     List<SoInfoDTO.GenerateDeliveryView> generateDeliveryView(List<String> ids);
+
+    /**
+     * 下推销售退货订单-列表查询
+     * @Author Luo_WG
+     * @Date 2023/5/25 15:17
+     * @param ids ids
+     * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.GenerateSoReturnView>
+     **/
+    List<SoInfoDTO.GenerateSoReturnView> generateSoReturnView(List<String> ids);
 }

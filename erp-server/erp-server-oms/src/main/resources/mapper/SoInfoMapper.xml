@@ -214,10 +214,35 @@
             sd.main_id AS soId,
             sd.sku_id,
             sd.sku_no,
-            sd.qty AS salseQty
+            sd.qty AS salesQty
         FROM so_info si
         LEFT JOIN so_detail sd ON si.id = sd.main_id AND si.is_deleted = FALSE
         WHERE sd.is_deleted = FALSE
+        <if test="ids!=null and ids.size>0">
+            AND si.id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="generateSoReturnView" resultType="com.erp.model.oms.dto.SoInfoDTO$GenerateSoReturnView">
+        SELECT
+            si.code AS soCode,
+            sd.id AS detailId,
+            sd.main_id AS soId,
+            sd.sku_id,
+            sd.sku_no,
+            sd.qty AS salesQty
+        FROM so_info si
+        LEFT JOIN so_detail sd ON si.id = sd.main_id AND si.is_deleted = FALSE
+        WHERE sd.is_deleted = FALSE
+        <if test="ids!=null and ids.size>0">
+            AND si.id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
     </select>
 
 </mapper>

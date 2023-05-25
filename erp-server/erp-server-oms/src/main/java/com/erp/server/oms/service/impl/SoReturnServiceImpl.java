@@ -10,6 +10,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -19,6 +20,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.dto.SoReturnDetailDTO;
 import com.erp.model.oms.entity.*;
@@ -29,6 +31,8 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
+import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
@@ -597,5 +601,28 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Override
     public List<SoReturnEntity> listSoReturnByApproveStatus() {
         return lambdaQuery().eq(SoReturnEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus()).list();
+    }
+
+    @Override
+    public Boolean generateSoReturnSave(List<SoInfoDTO.GenerateSoReturnView> list) {
+        List<String> soIdList = list.stream().map(SoInfoDTO.GenerateSoReturnView::getSoId).distinct().collect(Collectors.toList());
+        for (String soId : soIdList) {
+            SoReturnDTO.Add add = new SoReturnDTO.Add();
+            add.setSourceId(soId);
+            add.setSourceType(SourceTypeEnum.SO_INFO.getCode());
+            List<SoInfoDTO.GenerateSoReturnView> viewList = list.stream().filter(req -> req.getSoId().equals(soId)).collect(Collectors.toList());
+            List<SoReturnDetailDTO.Add> detailList = new ArrayList<>();
+            for (SoInfoDTO.GenerateSoReturnView view : viewList) {
+                SoReturnDetailDTO.Add detailAdd = new SoReturnDetailDTO.Add();
+                detailAdd.setReturnQty(view.getReturnQty());
+                detailAdd.setReturnTypeDict(view.getReturnTypeDict());
+                detailAdd.setReturnReasonDict(view.getReturnReasonDict());
+                detailAdd.setSourceDetailId(view.getDetailId());
+                detailAdd.setRemark(view.getRemark());
+                detailList.add(detailAdd);
+            }
+            this.add(add);
+        }
+        return Boolean.TRUE;
     }
 }

@@ -380,4 +380,17 @@ public class SoInfoController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 下推销售退货订单-列表查询
+     * @Author Luo_WG
+     * @Date 2023/5/25 15:16
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.oms.dto.SoInfoDTO.GenerateSoReturnView>>
+     **/
+    @PostMapping("/generateSoReturnView")
+    public ApiResult<List<SoInfoDTO.GenerateSoReturnView>> generateSoReturnView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<SoInfoDTO.GenerateSoReturnView> list = soInfoService.generateSoReturnView(dto.getIds());
+        return success(list);
+    }
+
 }

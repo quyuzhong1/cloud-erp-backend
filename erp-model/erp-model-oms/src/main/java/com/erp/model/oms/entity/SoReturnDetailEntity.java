@@ -55,6 +55,12 @@ public class SoReturnDetailEntity extends BaseEntity<SoReturnDetailEntity> {
     private String returnTypeDict;
 
     /**
+     * 退货原因 wms/common/enumDropDown?type=ReturnReason
+     */
+    @TableField("return_reason_dict")
+    private String returnReasonDict;
+
+    /**
      * 备注
      */
     @TableField("remark")

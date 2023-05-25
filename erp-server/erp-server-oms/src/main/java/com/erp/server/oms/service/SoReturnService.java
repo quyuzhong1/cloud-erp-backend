@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.common.business.service.SuperService;
@@ -177,4 +178,13 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @return com.common.core.controller.vo.ApiResult
      **/
     SoReturnEntity getSoReturnById(String id);
+
+    /**
+     * 下推销售退货订单-保存
+     * @Author Luo_WG
+     * @Date 2023/5/25 15:56
+     * @param list
+     * @return java.lang.Boolean
+     **/
+    Boolean generateSoReturnSave(List<SoInfoDTO.GenerateSoReturnView> list);
 }

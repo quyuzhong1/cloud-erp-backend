@@ -424,6 +424,12 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         return this.lambdaQuery().in(SoOutstockDetailEntity::getSourceDetailId,soDetailIds).count();
     }
 
+    @Override
+    public List<SoOutstockDetailEntity> listDetailBySoIds(List<String> soIds) {
+        List<SoOutstockDetailEntity> resultList = baseMapper.listDetailBySoIds(soIds);
+        return resultList;
+    }
+
     private List<String> getDeleteIds(List<Pair<String, String>> pairList, List<SoOutstockDetailEntity> dbList) {
         List<String> ids = pairList.stream().filter(g -> StringUtils.isNotBlank(g.getKey())).
                 map(obj -> obj.getKey()).collect(Collectors.toList());
