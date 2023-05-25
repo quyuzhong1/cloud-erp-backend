@@ -284,6 +284,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             //根据组织、仓库、sku查询可用库存
             Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDTO.getWarehouseId(), viewDetailDTO.getSkuId());
             viewDetailDTO.setCurInventoryQty(curInventoryQty);
+            //明细子件
+            List<MachineSubComponentsDTO.ViewDTO> subComponentsList = this.viewSubComponents(viewDetailDTO.getSkuId());
+            viewDetailDTO.setSubComponentsList(subComponentsList);
         }
         viewDTO.setDetailList(viewDetailList);
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));

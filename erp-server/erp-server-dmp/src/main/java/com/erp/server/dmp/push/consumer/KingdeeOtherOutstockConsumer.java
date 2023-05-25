@@ -45,11 +45,11 @@ public class KingdeeOtherOutstockConsumer implements RocketMQListener<Map<String
 
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_TRANSFERDIRECT.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_MISDELIVERY.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "ZJDB23052400004"));
+        queryFilters.add(String.format("FBillNo = '%s'", "QTCK000527"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FID,FStockOutOrgId.FNumber,FOwnerTypeOutIdHead,FOwnerTypeIdHead,FOwnerTypeOutId,FOwnerTypeId,FBillEntry_FEntryID";
+        String fieldKeys = "FID,FStockDirect";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,0);
         System.out.println(queryList);
 
@@ -179,8 +179,6 @@ public class KingdeeOtherOutstockConsumer implements RocketMQListener<Map<String
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
             //给修改json对象赋值ID
             KingdeeUtils.makeFieldJson(json,"FId",".", id);
-            //更新数据不能传入库组织
-            json.remove("FStockOrgId");
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);

@@ -494,6 +494,10 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean generateTransferInfo(ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList) {
         List<TransferApplicationDTO.GenerateTransferInfoDTO> list = validList.getList();
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+
         //生成下推单据
         generateTransferData(list,MathUtil.ZERO);
         return Boolean.TRUE;
@@ -503,6 +507,9 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean generateTransferOut(ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList) {
         List<TransferApplicationDTO.GenerateTransferInfoDTO> list = validList.getList();
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
         //生成下推单据
         generateTransferData(list,MathUtil.ONE);
         return Boolean.TRUE;

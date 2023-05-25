@@ -223,9 +223,7 @@
         sdn.create_time desc
     </select>
 
-    <select id="listGenerateSoOutstockView"
-            resultType="com.erp.model.wms.dto.SoOutstockDTO$GenerateSoOutstockViewDTO">
-
+    <select id="listGenerateSoOutstockView" resultType="com.erp.model.wms.dto.SoOutstockDTO$GenerateSoOutstockViewDTO">
       SELECT
         sdn.id AS sourceId,
         sdn.source_id AS soId,
@@ -252,15 +250,37 @@
               #{id}
           </foreach>
       </if>
-
-
-
-
-
-
-
-
     </select>
 
+    <select id="listSoReturnDetailBySourceId" resultType="com.erp.model.wms.dto.SoDeliveryNoticeDTO$PagingView">
+        SELECT
+            sdn.id,
+            sdn.source_id,
+            sdnd.source_detail_id,
+            sdn.code,
+            sdn.source_code,
+            sdn.customer_id,
+            sdn.customer_name,
+            sdn.delivery_org_name,
+            sdn.approve_status,
+            sdn.invalid_status,
+            sdn.delivery_status,
+            sdnd.sku_id,
+            sdnd.sku_no,
+            sdnd.delivery_qty,
+            sdn.seller_name,
+            sdn.require_date,
+            sdn.plan_delivery_date,
+            sdn.actual_delivery_date,
+            sdn.approve_user_name,
+            sdn.create_user_name,
+            sdn.create_time
+        FROM so_delivery_notice sdn
+        INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
+        WHERE sdnd.is_deleted = FALSE
+        <if test="sourceId !='' and sourceId != null">
+            AND sdn.source_id = #{sourceId}
+        </if>
+    </select>
 
 </mapper>

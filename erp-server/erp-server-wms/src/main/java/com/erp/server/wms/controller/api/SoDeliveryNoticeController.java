@@ -11,6 +11,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.server.wms.service.SoDeliveryNoticeService;
 import org.apache.commons.lang3.StringUtils;
@@ -308,6 +309,19 @@ public class SoDeliveryNoticeController extends BaseController {
     public ApiResult generateDeliverySave(@RequestBody @Validated ValidList<SoInfoDTO.GenerateDeliveryView> validList) {
         Boolean flag = soDeliveryNoticeService.generateDeliverySave(validList.getList());
         return flag ? success() : failure();
+    }
+
+    /**
+     * 销售单详情-单据关联-发货通知单
+     * @Author Luo_WG
+     * @Date 2023/5/25 16:36
+     * @param id
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.SoDeliveryNoticeDTO.PagingView>>
+     **/
+    @PostMapping("/listSoDeliveryNoticeBySourceId")
+    public ApiResult<List<SoDeliveryNoticeDTO.PagingView>> listSoDeliveryNoticeBySourceId(@RequestParam("id") String id) {
+        List<SoDeliveryNoticeDTO.PagingView> list = soDeliveryNoticeService.listSoReturnDetailBySourceId(id);
+        return success(list);
     }
 }
 

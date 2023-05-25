@@ -121,10 +121,11 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<String> skuIdList = records.stream().map(SoReturnDTO.PagingView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        List<String> detailIds = records.stream().map(SoReturnDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
+        List<String> soIds = records.stream().map(SoReturnDTO.PagingView::getSourceId).distinct().collect(Collectors.toList());
         List<CustomerInfoEntity> customerInfoEntities = customerInfoService.list();
-        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySourceDetailId(detailIds);
-        List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(detailIds);
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
+        List<String> soDetailIds = records.stream().map(SoReturnDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(soDetailIds);
         if (CollectionUtils.isNotEmpty(records)) {
             List<String> list = new ArrayList<>();
             records.forEach(obj -> {
@@ -144,14 +145,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 obj.setTypeName(BillTypeEnum.getName(obj.getType()));
-                ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(null);
-                if (ObjectUtil.isEmpty(productDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_95107);
-                }
-                SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(obj.getSourceDetailId())).findFirst().orElse(null);
-                if (ObjectUtil.isEmpty(soDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_99006);
-                }
+                ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+                SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(obj.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
                 obj.setProductName(productDetailEntity.getName());
                 obj.setSalesQty(soDetailEntity.getQty());
                 Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSourceDetailId().equals(obj.getSourceDetailId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -161,6 +156,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 obj.setSalesAmount(soDetailEntity.getAmount());
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
                 obj.setCustomerName(customerInfoEntity.getName());
+                obj.setCurrency(soDetailEntity.getCurrency());
+                obj.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
                 list.add(obj.getId());
             });
         }
@@ -624,5 +621,36 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             this.add(add);
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<SoReturnDTO.PagingView> listSoReturnDetailBySourceId(String sourceId) {
+        List<SoReturnDTO.PagingView> list = this.baseMapper.listSoReturnDetailBySourceId(sourceId);
+        //获取sku的id集合
+        List<String> skuIdList = list.stream().map(SoReturnDTO.PagingView::getSkuId).collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        List<String> soIds = list.stream().map(SoReturnDTO.PagingView::getSourceId).distinct().collect(Collectors.toList());
+        List<CustomerInfoEntity> customerInfoEntities = customerInfoService.list();
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
+        List<String> soDetailIds = list.stream().map(SoReturnDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(soDetailIds);
+        for (SoReturnDTO.PagingView obj : list) {
+            obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
+            obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
+            obj.setTypeName(BillTypeEnum.getName(obj.getType()));
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(obj.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            obj.setProductName(productDetailEntity.getName());
+            obj.setSalesQty(soDetailEntity.getQty());
+            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSourceDetailId().equals(obj.getSourceDetailId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            obj.setDeliveryQty(actualQty);
+            obj.setUnDeliveryQty(soDetailEntity.getQty() - actualQty);
+            obj.setUnit(productDetailEntity.getUnitName());
+            obj.setSalesAmount(soDetailEntity.getAmount());
+            CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+            obj.setCustomerName(customerInfoEntity.getName());
+        }
+        return list;
     }
 }

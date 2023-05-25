@@ -182,7 +182,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         soChange.setDeptName(deptName);
         soChange.setUserName(useName);
         Boolean updateResult = this.updateById(soChange);
-        if(updateResult){
+        if (updateResult) {
             operateLogService.addModuleOperateLogByObj(old, soChange, ModuleTypeEnum.SO_CHANGE.getCode(), id, "", "");
             soChangeDetailService.updateDetailList(id, dto.getDetailList());
             return id;
@@ -193,10 +193,11 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
     /**
      * 修改并提交
-     * @author yl
-     * @date 2023-05-25 12:23
+     *
      * @param dto
      * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-25 12:23
      */
     @Override
     public Boolean updateAndSubmit(SoChangeDTO.UpdateDTO dto) {
@@ -208,11 +209,10 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     }
 
 
-
-
     /**
      * 检查能否变更
      * 单据状态为已审核并且不在“变更中”才可变更
+     *
      * @param soId
      * @return void
      * @author yl
@@ -532,13 +532,13 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     }
 
 
-
     /**
      * 根据销售订单id 获取到对应详情
-     * @author yl
-     * @date 2023-05-25 14:04
+     *
      * @param soId
      * @return com.erp.model.oms.dto.SoChangeDTO.ViewDTO
+     * @author yl
+     * @date 2023-05-25 14:04
      */
     @Override
     public SoChangeDTO.ViewDTO getViewBySoId(String soId) {
@@ -564,6 +564,48 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         List<SoChangeDetailDTO.ViewDTO> detailList = soChangeDetailService.listDetailBySoId(soId);
         view.setDetailList(detailList);
         return view;
+    }
+
+    /**
+     * 销售订单 关联的销售变更单
+     *
+     * @param soId
+     * @return java.util.List<com.erp.model.oms.dto.SoChangeDTO.SoRefDTO>
+     * @author yl
+     * @date 2023-05-25 16:06
+     */
+    @Override
+    public List<SoChangeDTO.SoRefDTO> listSoRefSoChangeBySoId(String soId) {
+        SoInfoDTO.CustomerDTO soCustomer = soInfoService.getSoCustomer(soId);
+        List<SoChangeDTO.SoRefDTO> resultList = baseMapper.listSoRefSoChangeBySoId(soId);
+        List<String> skuIdList = resultList.stream().map(SoChangeDTO.SoRefDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        for (SoChangeDTO.SoRefDTO item : resultList) {
+            String skuId = item.getSkuId();
+            ApproveStatusEnum approveStatus = item.getApproveStatus();
+            item.setApproveStatusName(approveStatus.getName());
+            item.setOrderType(soCustomer.getOrderType());
+            item.setCustomerId(soCustomer.getCustomerId());
+            item.setCustomerName(soCustomer.getCustomerName());
+            SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+            String productName = "";
+            String unit = "";
+            if (sku != null) {
+                productName = sku.getSkuName();
+                unit = sku.getUnitName();
+            }
+            item.setProductName(productName);
+            item.setUnit(unit);
+            BigDecimal amount = item.getAmount();
+            String currencySymbol = item.getCurrencySymbol();
+            item.setAmountStr(currencySymbol + amount);
+
+            BigDecimal oldAmount = item.getOldAmount();
+            String oldCurrencySymbol = item.getOldCurrencySymbol();
+            item.setOldAmountStr(oldCurrencySymbol + oldAmount);
+        }
+
+        return resultList;
     }
 
 

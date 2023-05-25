@@ -226,6 +226,11 @@ public class OtherInstockDTO implements Serializable {
         private String warehouseId;
 
         /**
+         * 部门id
+         */
+        private String deptId;
+
+        /**
          * 入库类型
          */
         @NotBlank(message= "入库类型不能为空")

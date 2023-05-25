@@ -785,4 +785,35 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         return Boolean.TRUE;
     }
+
+    @Override
+    public List<SoDeliveryNoticeDTO.PagingView> listSoReturnDetailBySourceId(String sourceId) {
+        List<SoDeliveryNoticeDTO.PagingView> pagingViews = baseMapper.listSoReturnDetailBySourceId(sourceId);
+        //获取sku的id集合
+        List<String> skuIdList = pagingViews.stream().map(SoDeliveryNoticeDTO.PagingView::getSkuId).collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        //获取界面传过来的采购单详情表id集合
+        List<String> orderDetailIds = pagingViews.stream().map(SoDeliveryNoticeDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
+        //获取销售单详情信息
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
+        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        for (SoDeliveryNoticeDTO.PagingView obj : pagingViews) {
+            obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
+            obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
+            if (obj.getDeliveryStatus() != null && obj.getDeliveryStatus()) {
+                obj.setDeliveryStatusName(DeliveryStatusEnum.COMPLETE_SHIPMENT.getName());
+            } else {
+                obj.setDeliveryStatusName(DeliveryStatusEnum.UN_SHIPPED.getName());
+            }
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(obj.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            obj.setProductName(productDetailEntity.getName());
+            obj.setSalesQty(soDetailEntity.getQty());
+            obj.setUnit(productDetailEntity.getUnitName());
+            CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+            obj.setCustomerName(customerInfoEntity.getName());
+        }
+        return pagingViews;
+    }
 }

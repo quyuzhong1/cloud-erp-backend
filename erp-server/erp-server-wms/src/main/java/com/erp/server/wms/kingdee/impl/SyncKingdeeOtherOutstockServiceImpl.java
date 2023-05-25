@@ -114,7 +114,7 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
                 jsonObject.set("warehouseCode", warehouseCode);
             }
             //仓位
-            jsonObject.set("outWarehouseLocation", detail.getWarehouseLocation());
+            jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
             //备注
             jsonObject.set("remark", detail.getRemark());
 

@@ -81,7 +81,6 @@ public class SoOutstockDTO implements Serializable {
 
         /**
          * 来源id
-         *
          */
         private String sourceId;
 
@@ -569,7 +568,6 @@ public class SoOutstockDTO implements Serializable {
         private String sellerName;
 
 
-
         /**
          * 销售部门id
          */
@@ -696,8 +694,6 @@ public class SoOutstockDTO implements Serializable {
         private String orderType;
 
 
-
-
         /**
          * 仓库id
          */
@@ -791,6 +787,16 @@ public class SoOutstockDTO implements Serializable {
          * 出库单号
          */
         private String code;
+
+        /**
+         * 单据状态
+         */
+        private ApproveStatusEnum approveStatus;
+
+        /**
+         * 单据状态名
+         */
+        private String approveStatusName;
 
         /**
          * 单据类型

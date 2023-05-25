@@ -90,11 +90,13 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getInOrgId(), entity.getOutOrgId()));
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
             //调入组织机构编码
-            String inOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            String inOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInOrgId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
             resultMap.put("inOrgCode", inOrgCode);
 
             //调出组织机构编码
-            String outOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOutOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            String outOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOutOrgId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
             resultMap.put("outOrgCode", outOrgCode);
         }
 
@@ -126,9 +128,11 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
 
             if (CollectionUtils.isNotEmpty(warehouseList)) {
                 //调入仓库编码
-                String inWarehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getInWarehouseId())).map(WarehouseEntity::getKingdeeWarehouseCode).findFirst().orElse(null);
+                String inWarehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getInWarehouseId()))
+                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse(null);
                 //调出仓库编码
-                String outWarehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getOutWarehouseId())).map(WarehouseEntity::getKingdeeWarehouseCode).findFirst().orElse(null);
+                String outWarehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getOutWarehouseId()))
+                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse(null);
                 //调入仓库
                 jsonObject.put("inWarehouseCode", inWarehouseCode);
                 //调出仓库

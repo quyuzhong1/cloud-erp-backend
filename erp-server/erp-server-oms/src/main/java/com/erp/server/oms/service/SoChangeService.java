@@ -152,4 +152,13 @@ public interface SoChangeService extends SuperService<SoChangeEntity> {
      * @return com.erp.model.oms.dto.SoChangeDTO.ViewDTO
      */
     SoChangeDTO.ViewDTO getViewBySoId(String soId);
+
+    /**
+     * 销售订单 关联的销售变更单
+     * @author yl
+     * @date 2023-05-25 16:06
+     * @param soId
+     * @return java.util.List<com.erp.model.oms.dto.SoChangeDTO.SoRefDTO>
+     */
+    List<SoChangeDTO.SoRefDTO> listSoRefSoChangeBySoId(String soId);
 }
