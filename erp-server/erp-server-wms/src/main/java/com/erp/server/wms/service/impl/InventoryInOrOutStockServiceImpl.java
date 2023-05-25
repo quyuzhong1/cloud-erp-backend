@@ -47,16 +47,16 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
         Map<String, WarehouseLocationEntity> warehouseLocationMap = Maps.newHashMap();
         for(InventoryStockBaseDTO baseParam : paramList) {
             if(baseParam instanceof InOutStockDTO) { // 出入库业务-走交易规则
-                InOutStockDTO param = (InOutStockDTO)baseParam;
+                InOutStockDTO param = (InOutStockDTO) baseParam;
                 ValidatorUtil.validateEntity(param);
 
-                WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(param.getWarehouseId(),(v)->warehouseService.detailWithCache(v));
-                if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
+                WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(param.getWarehouseId(), (v) -> warehouseService.detailWithCache(v));
+                if (Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
                     throw new ServiceException(ApiError.ERROR_99002);
                 }
-                if(StrUtils.isNotEmpty(param.getWarehouseLocation())) {
-                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getWarehouseLocation(),(v)->warehouseLocationService.findByWarehouseIdAndCode(param.getWarehouseId(), v));
-                    if(Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
+                if (StrUtils.isNotEmpty(param.getWarehouseLocation())) {
+                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getWarehouseLocation(), (v) -> warehouseLocationService.findByWarehouseIdAndCode(param.getWarehouseId(), v));
+                    if (Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
                         throw new ServiceException("仓位信息不存在");
                     }
                 }
@@ -72,37 +72,6 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
                 inventoryBaseInfoDTO.setSkuId(param.getSkuId());
                 inventoryBaseInfoDTO.setSkuNo(param.getSkuNo());
                 inventoryBaseInfoDTO.setQty(param.getQty());
-                inventoryBaseInfoDTO.setWarehouseLocation(param.getWarehouseLocation());
-
-                inventoryHelper.checkStockByRule(inventoryBaseInfoDTO, businessType, transactionRules);// 出库库存数量检查
-            } else if (baseParam instanceof InOutStockCustomDTO) { // 出入库业务，自定义规则
-                InOutStockCustomDTO param = (InOutStockCustomDTO)baseParam;
-                ValidatorUtil.validateEntity(param);
-
-                WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(param.getWarehouseId(),(v)->warehouseService.detailWithCache(v));
-                if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
-                    throw new ServiceException(ApiError.ERROR_99002);
-                }
-                if(StrUtils.isNotEmpty(param.getWarehouseLocation())) {
-                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getWarehouseLocation(),(v)->warehouseLocationService.findByWarehouseIdAndCode(param.getWarehouseId(), v));
-                    if(Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
-                        throw new ServiceException("仓位信息不存在");
-                    }
-                }
-
-                inventoryHelper.checkCommonBiz(param.getSourceType(), param.getSourceId(), param.getBillDate());// 通用检查
-                inventoryHelper.checkAllowTrade(param.getSourceType(), param.getWarehouseId(), param.getSkuNo());// 关账检查
-
-                InventoryBaseInfoDTO inventoryBaseInfoDTO = new InventoryBaseInfoDTO();
-                inventoryBaseInfoDTO.setSourceType(param.getSourceType());
-                inventoryBaseInfoDTO.setBillDate(param.getBillDate());
-                inventoryBaseInfoDTO.setSourceId(param.getSourceId());
-                inventoryBaseInfoDTO.setWarehouseId(param.getWarehouseId());
-                inventoryBaseInfoDTO.setSkuId(param.getSkuId());
-                inventoryBaseInfoDTO.setSkuNo(param.getSkuNo());
-                inventoryBaseInfoDTO.setQty(param.getQty());
-                inventoryBaseInfoDTO.setInventoryStatus(param.getInventoryStatus()); // 自定义需手动传输库存状态
-                inventoryBaseInfoDTO.setInventoryMode(param.getInventoryMode()); // 自定义需手动传输库存交易方向
                 inventoryBaseInfoDTO.setWarehouseLocation(param.getWarehouseLocation());
 
                 inventoryHelper.checkStockByRule(inventoryBaseInfoDTO, businessType, transactionRules);// 出库库存数量检查

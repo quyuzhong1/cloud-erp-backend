@@ -12,7 +12,7 @@ import java.time.LocalDate;
 
 /**
  * @Classname: InventoryTransferDTO
- * @Description: 调拨操作请求实体，一个操作会导致2个仓库的库存状态变化适合使用；暂只考虑一个仓只能有一种状态变更
+ * @Description: 调拨操作请求实体，一个操作会导致2个仓库的库存状态变化适合使用；只考虑一个仓只能有一种状态变更
  * @CreateTime: 2023-04-26  14:34
  * @Author: zhangchunlin
  */

@@ -106,69 +106,6 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
                 targetInventoryBaseInfoDTO.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET);//目的仓
 
                 inventoryHelper.checkStockByRule(targetInventoryBaseInfoDTO, businessType, transactionRules);// 目的仓出库库存数量检查（因为有可能是目的仓出库）
-            } else if (baseParam instanceof TransferCustomDTO) { //调拨自定义规则
-                TransferCustomDTO param = (TransferCustomDTO)baseParam;
-                ValidatorUtil.validateEntity(param);
-
-                //当前仓和目的仓不能一样
-                ValidatorUtil.isTrue(!Objects.equals(param.getCurWarehouseId(), param.getTargetWarehouseId()),()->new ServiceException(ApiError.ERROR_99039));
-
-                // 当前仓仓库和仓位信息
-                WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(param.getCurWarehouseId(),(v)->warehouseService.detailWithCache(v));
-                if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
-                    throw new ServiceException(ApiError.ERROR_99002);
-                }
-                if(StrUtils.isNotEmpty(param.getCurWarehouseLocation())) {
-                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getCurWarehouseLocation(),(v)->warehouseLocationService.findByWarehouseIdAndCode(param.getCurWarehouseId(), v));
-                    if(Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
-                        throw new ServiceException("仓位信息不存在");
-                    }
-                }
-                // 目的仓仓库和仓位信息
-                warehouseDetail = warehouseMap.computeIfAbsent(param.getTargetWarehouseId(),(v)->warehouseService.detailWithCache(v));
-                if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
-                    throw new ServiceException(ApiError.ERROR_99002);
-                }
-                if(StrUtils.isNotEmpty(param.getTargetWarehouseLocation())) {
-                    WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getTargetWarehouseLocation(),(v)->warehouseLocationService.findByWarehouseIdAndCode(param.getTargetWarehouseId(), v));
-                    if(Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
-                        throw new ServiceException("仓位信息不存在");
-                    }
-                }
-
-                inventoryHelper.checkCommonBiz(param.getSourceType(), param.getSourceId(), param.getBillDate());// 通用检查
-                inventoryHelper.checkAllowTrade(param.getSourceType(), param.getCurWarehouseId(), param.getSkuNo());// 当前仓关账检查
-                inventoryHelper.checkAllowTrade(param.getSourceType(), param.getTargetWarehouseId(), param.getSkuNo());// 目的仓关账检查
-
-                InventoryBaseInfoDTO currInventoryBaseInfoDTO = new InventoryBaseInfoDTO();
-                currInventoryBaseInfoDTO.setSourceType(param.getSourceType());
-                currInventoryBaseInfoDTO.setBillDate(param.getBillDate());
-                currInventoryBaseInfoDTO.setSourceId(param.getSourceId());
-                currInventoryBaseInfoDTO.setWarehouseId(param.getCurWarehouseId());
-                currInventoryBaseInfoDTO.setWarehouseLocation(param.getCurWarehouseLocation());
-                currInventoryBaseInfoDTO.setSkuId(param.getSkuId());
-                currInventoryBaseInfoDTO.setSkuNo(param.getSkuNo());
-                currInventoryBaseInfoDTO.setQty(param.getQty());
-                currInventoryBaseInfoDTO.setInventoryStatus(param.getCurInventoryStatus()); // 自定义调拨需手动传输库存状态
-                currInventoryBaseInfoDTO.setInventoryMode(param.getCurInventoryMode()); // 自定义调拨需手动传输库存交易方向
-                currInventoryBaseInfoDTO.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT);//当前仓
-
-                inventoryHelper.checkStockByStatus(currInventoryBaseInfoDTO, businessType, transactionRules);// 当前仓出库库存数量检查（因为有可能是当前仓入库）
-
-                InventoryBaseInfoDTO targetInventoryBaseInfoDTO = new InventoryBaseInfoDTO();
-                targetInventoryBaseInfoDTO.setSourceType(param.getSourceType());
-                targetInventoryBaseInfoDTO.setBillDate(param.getBillDate());
-                targetInventoryBaseInfoDTO.setSourceId(param.getSourceId());
-                targetInventoryBaseInfoDTO.setWarehouseId(param.getTargetWarehouseId());
-                targetInventoryBaseInfoDTO.setWarehouseLocation(param.getTargetWarehouseLocation());
-                targetInventoryBaseInfoDTO.setSkuId(param.getSkuId());
-                targetInventoryBaseInfoDTO.setSkuNo(param.getSkuNo());
-                targetInventoryBaseInfoDTO.setQty(param.getQty());
-                targetInventoryBaseInfoDTO.setInventoryStatus(param.getTargetCurInventoryStatus()); // 自定义调拨需手动传输库存状态
-                targetInventoryBaseInfoDTO.setInventoryMode(param.getTargetInventoryMode()); // 自定义调拨需手动传输库存交易方向
-                targetInventoryBaseInfoDTO.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET);//目的仓
-
-                inventoryHelper.checkStockByStatus(targetInventoryBaseInfoDTO, businessType, transactionRules);// 目的仓出库库存数量检查（因为有可能是目的仓出库）
             }
         }
     }
