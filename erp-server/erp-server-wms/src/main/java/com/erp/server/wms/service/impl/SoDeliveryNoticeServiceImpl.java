@@ -762,12 +762,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Override
     public Boolean generateDeliverySave(List<SoInfoDTO.GenerateDeliveryView> list) {
-        List<String> soIdList = list.stream().map(SoInfoDTO.GenerateDeliveryView::getMainId).distinct().collect(Collectors.toList());
+        List<String> soIdList = list.stream().map(SoInfoDTO.GenerateDeliveryView::getSoId).distinct().collect(Collectors.toList());
         for (String soId : soIdList) {
             SoDeliveryNoticeDTO.Add add = new SoDeliveryNoticeDTO.Add();
             add.setSourceId(soId);
             add.setSourceType(SourceTypeEnum.SO_INFO.getCode());
-            List<SoInfoDTO.GenerateDeliveryView> viewList = list.stream().filter(req -> req.getMainId().equals(soId)).collect(Collectors.toList());
+            List<SoInfoDTO.GenerateDeliveryView> viewList = list.stream().filter(req -> req.getSoId().equals(soId)).collect(Collectors.toList());
             List<SoDeliveryNoticeDetailDTO.Add> detailList = new ArrayList<>();
             for (SoInfoDTO.GenerateDeliveryView view : viewList) {
                 add.setDeliveryOrgId(view.getInventoryOrgId());
@@ -776,7 +776,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 SoDeliveryNoticeDetailDTO.Add detailAdd = new SoDeliveryNoticeDetailDTO.Add();
                 detailAdd.setDeliveryQty(view.getDeliveryQty());
                 detailAdd.setRemark(view.getRemark());
-                detailAdd.setSourceDetailId(view.getId());
+                detailAdd.setSourceDetailId(view.getDetailId());
                 detailAdd.setAttachNameList(view.getAttachmentNameList());
                 detailAdd.setAttachUrlList(view.getAttachmentUrlList());
                 detailList.add(detailAdd);
