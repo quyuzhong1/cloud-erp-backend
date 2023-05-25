@@ -30,6 +30,7 @@ import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.CustomerAddressTypeEnum;
 import com.erp.model.oms.enums.DeliveryModeEnum;
@@ -40,12 +41,14 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.mapper.SoInfoMapper;
@@ -105,6 +108,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private CommonService commonService;
+
+    @Resource
+    private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
 
     @Value("${so.contract.company}")
     private String company;
@@ -1177,6 +1183,26 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             view.setProductName(productDetailEntity.getName());
             view.setDeliveryQty(view.getSalesQty());
             view.setPlanDeliveryDate(view.getRequireDate());
+        }
+        return viewList;
+    }
+
+    @Override
+    public List<SoInfoDTO.GenerateSoReturnView> generateSoReturnView(List<String> ids) {
+        List<SoInfoDTO.GenerateSoReturnView> viewList = baseMapper.generateSoReturnView(ids);
+        //获取sku的id集合
+        List<String> skuIdList = viewList.stream().map(SoInfoDTO.GenerateSoReturnView::getSkuId).collect(Collectors.toList());
+        //根据ids查询sku信息
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        //获取出库详情
+        List<String> soIds = viewList.stream().map(SoInfoDTO.GenerateSoReturnView::getSoId).distinct().collect(Collectors.toList());
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
+        for (SoInfoDTO.GenerateSoReturnView view : viewList) {
+            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            view.setProductName(productDetailEntity.getName());
+            view.setReturnQty(view.getSalesQty());
+            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSkuId().equals(view.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            view.setDeliveryQty(actualQty);
         }
         return viewList;
     }

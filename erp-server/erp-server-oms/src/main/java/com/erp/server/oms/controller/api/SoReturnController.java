@@ -7,9 +7,11 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoDetailDTO;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.server.oms.service.SoDetailService;
@@ -327,5 +329,18 @@ public class SoReturnController extends BaseController {
     public ApiResult<List<SoDetailDTO.AddDetailView>> listAddDetailView(@RequestParam("id") String id) {
         List<SoDetailDTO.AddDetailView> addDetailViews = soReturnDetailService.listAddDetailView(id);
         return success(addDetailViews);
+    }
+
+    /**
+     * 下推销售退货订单-保存
+     * @Author Luo_WG
+     * @Date 2023/5/25 12:30
+     * @param validList validList
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/generateSoReturnSave")
+    public ApiResult generateSoReturnSave(@RequestBody @Validated ValidList<SoInfoDTO.GenerateSoReturnView> validList) {
+        Boolean flag = soReturnService.generateSoReturnSave(validList.getList());
+        return flag ? success() : failure();
     }
 }

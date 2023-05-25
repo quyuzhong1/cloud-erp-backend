@@ -29,6 +29,10 @@ public class SoReturnDetailDTO {
          */
         private String returnTypeDict;
         /**
+         * 退货原因 wms/common/enumDropDown?type=ReturnReason
+         */
+        private String returnReasonDict;
+        /**
          * 备注
          */
         private String remark;
@@ -67,6 +71,10 @@ public class SoReturnDetailDTO {
          * 描述：refund 退货扣款 replenishment 退货补货
          */
         private String returnTypeDict;
+        /**
+         * 退货原因 wms/common/enumDropDown?type=ReturnReason
+         */
+        private String returnReasonDict;
         /**
          * 备注
          */
