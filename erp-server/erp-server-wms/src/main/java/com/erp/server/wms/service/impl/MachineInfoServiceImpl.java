@@ -339,8 +339,6 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             }
             viewDTO.setSkuNo(skuVO.getSkuNo());
             viewDTO.setProductName(skuVO.getSkuName());
-            //库存组织
-            String orgId = warehouseList.stream().filter(obj -> obj.getId().equals(viewDTO.getWarehouseId())).map(WarehouseEntity::getOrgId).findFirst().orElse(null);
             //根据组织、仓库、sku查询可用库存
             Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDTO.getWarehouseId(), viewDTO.getSkuId(), viewDTO.getWarehouseLocation());
             viewDTO.setCurInventoryQty(curInventoryQty);
