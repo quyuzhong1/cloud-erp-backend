@@ -491,6 +491,7 @@ public class TransferApplicationDTO implements Serializable {
         /**
          * 调拨日期
          */
+        @NotNull(message = "调拨日期不能为空")
         private LocalDate billDate;
 
         /**

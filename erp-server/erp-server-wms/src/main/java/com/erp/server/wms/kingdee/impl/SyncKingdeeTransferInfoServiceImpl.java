@@ -134,9 +134,9 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
                 String outWarehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getOutWarehouseId()))
                         .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse(null);
                 //调入仓库
-                jsonObject.put("inWarehouseCode", inWarehouseCode);
+                jsonObject.set("inWarehouseCode", inWarehouseCode);
                 //调出仓库
-                jsonObject.put("outWarehouseCode", outWarehouseCode);
+                jsonObject.set("outWarehouseCode", outWarehouseCode);
             }
             //调出仓位
             jsonObject.set("outWarehouseLocation", detail.getOutWarehouseLocation());

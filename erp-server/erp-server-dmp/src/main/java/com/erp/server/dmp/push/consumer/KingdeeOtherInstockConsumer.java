@@ -59,7 +59,7 @@ public class KingdeeOtherInstockConsumer implements RocketMQListener<Map<String,
     @Override
     public void onMessage(Map<String, Object> map) {
         //模块类型
-        Integer type = ApiModuleTypeEnum.OTHER_OUTSTOCK.getCode();
+        Integer type = ApiModuleTypeEnum.OTHER_INSTOCK.getCode();
 
         log.info("直接调拨单开始推送金蝶 map = {}", JSONUtil.toJsonStr(map));
 
