@@ -1,17 +1,27 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.model.wms.dto.TransferInDetailDTO;
 import com.erp.model.wms.entity.TransferInEntity;
 import com.erp.model.wms.entity.TransferOutDetailEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.TransferInMapper;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.TransferInDetailService;
 import com.erp.server.wms.service.TransferInService;
 import com.erp.server.wms.service.TransferOutDetailService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -38,6 +48,15 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
 
     @Resource
     private TransferOutDetailService transferOutDetailService;
+
+    @Resource
+    private TransferInDetailService transferInDetailService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Resource
+    private OperateLogService operateLogService;
 
     @Override
     public List<TransferInDTO.TabListDTO> tabList() {
@@ -119,6 +138,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
                     detail.setOutWarehouseLocation(item.getOutWarehouseLocation());
                     detail.setSkuId(item.getSkuId());
                     detail.setSourceDetailId(item.getSourceDetailId());
+                    detail.setSkuNo(item.getSkuNo());
                     Integer planQty = item.getPlanQty();
                     String sourceDetailId = item.getSourceDetailId();
                     Integer outQty = outDetailList.stream().filter(o -> o.getId().equals(sourceDetailId)).findFirst().
@@ -151,7 +171,43 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         if (CollectionUtils.isEmpty(addList)) {
             return Boolean.FALSE;
         }
-
+        addList.forEach(obj -> add(obj));
         return Boolean.TRUE;
     }
+
+    @Transactional(rollbackFor = Exception.class)
+    public String add(TransferInDTO.AddDTO dto) {
+        String id = IdWorker.getIdStr();
+        TransferInEntity transferIn = new TransferInEntity();
+        BeanMapper.copy(dto, transferIn);
+        String warehouseKeeperId = dto.getWarehouseKeeperId();
+        if (StringUtils.isNotBlank(warehouseKeeperId)) {
+            //用户信息
+            FindUserDTO userInfo = sysUserFeign.getUserByUserId(warehouseKeeperId);
+            if (userInfo != null) {
+                transferIn.setWarehouseKeeperName(userInfo.getUserName());
+            }
+        }
+        transferIn.setId(id);
+        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.FBDR, BusinessNoTypeEnum.CODE_FBDR.getCode()));
+        transferIn.setCode(code);
+        Boolean addResult = this.save(transferIn);
+        //添加成功
+        if (addResult) {
+            transferInDetailService.add(id, dto.getDetailList());
+            //添加日志
+            String content = String.format("新增了一个{%s}-分布式调入单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
+            addModuleOperateLog(content, ModuleTypeEnum.TRANSFER_IN.getCode(), id, "新增操作");
+            return id;
+        }
+        return "";
+    }
+
+    /**
+     * 添加日志
+     */
+    private void addModuleOperateLog(String content, String code, String businessId, String operation) {
+        operateLogService.addModuleOperateLog(content, code, businessId, operation);
+    }
+
 }

@@ -53,6 +53,12 @@ public class DictGlobalAreaEntity extends BaseEntity<DictGlobalAreaEntity> {
     @TableField("disabled")
     private Boolean disabled;
 
+    /**
+     * 金蝶编码
+     */
+    @TableField("kingdee_code")
+    private Boolean kingdeeCode;
+
 
     public static final String SUBREGION_NAME = "subregion_name";
 

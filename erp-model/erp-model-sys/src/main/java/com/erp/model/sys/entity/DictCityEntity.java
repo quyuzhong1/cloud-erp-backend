@@ -90,6 +90,12 @@ public class DictCityEntity extends BaseEntity<DictCityEntity> {
     @TableField("disabled")
     private Boolean disabled;
 
+    /**
+     * 金蝶编码
+     */
+    @TableField("kingdee_code")
+    private Boolean kingdeeCode;
+
 
     public static final String NAME = "name";
 

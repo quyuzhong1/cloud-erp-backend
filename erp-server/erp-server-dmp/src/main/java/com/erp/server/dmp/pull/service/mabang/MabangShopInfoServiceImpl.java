@@ -89,7 +89,7 @@ public class MabangShopInfoServiceImpl implements IReportSaveService<ShopEntity>
         // 异步推送到MQ
         entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_SHOP_INFO_TAG.getName(),
-                    msg, StrUtil.format("{}_{}", msg.getPlarformShopNo(), msg.getFinanceCode()));
+                    msg, StrUtil.format("{}_{}", msg.getPlatformShopNo(), msg.getFinanceCode()));
             if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
@@ -109,7 +109,7 @@ public class MabangShopInfoServiceImpl implements IReportSaveService<ShopEntity>
     private DmpShopInfoEntity initOrderInfoEntity(ShopEntity shopEntity) {
         DmpShopInfoEntity dmpShopInfoEntity = new DmpShopInfoEntity();
         //平台店铺编号
-        dmpShopInfoEntity.setPlarformShopNo(shopEntity.getId());
+        dmpShopInfoEntity.setPlatformShopNo(shopEntity.getId());
         //平台店铺账户
         dmpShopInfoEntity.setAccountUserName(shopEntity.getAccountUsername());
         //平台店铺标识

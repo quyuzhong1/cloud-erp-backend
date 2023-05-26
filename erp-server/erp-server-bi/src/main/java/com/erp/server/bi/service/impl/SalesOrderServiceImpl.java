@@ -480,7 +480,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         for (Map<String, Object> item : resultList) {
             if (item.containsKey(shopNo)) {
                 String shopNoFlag = item.get(shopNo).toString();
-                String shopName = shopList.stream().filter(s -> s.getPlarformShopNo().equals(shopNoFlag)).
+                String shopName = shopList.stream().filter(s -> s.getPlatformShopNo().equals(shopNoFlag)).
                         findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 item.put("shopName", shopName);
             } else {
@@ -924,7 +924,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 vo.setOldSales(oldItem.getSales());
                 vo.setOldSalesQuantity(oldItem.getSalesQuantity());
             }
-            String shopName = shopList.stream().filter(s -> s.getPlarformShopNo().equals(item.getKey())).
+            String shopName = shopList.stream().filter(s -> s.getPlatformShopNo().equals(item.getKey())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             vo.setShopName(shopName);
             resultList.add(vo);
