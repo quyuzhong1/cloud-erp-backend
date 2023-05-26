@@ -106,7 +106,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean generateTransferIn(ValidList<TransferInDTO.ViewGenerateTransferInDTO> list) {
-        if (CollectionUtils.isNotEmpty(list)) {
+        if (CollectionUtils.isEmpty(list)) {
             return Boolean.FALSE;
         }
         Map<String, List<TransferInDTO.ViewGenerateTransferInDTO>> map = list.stream().collect(Collectors.groupingBy(TransferInDTO.ViewGenerateTransferInDTO::getSourceId));

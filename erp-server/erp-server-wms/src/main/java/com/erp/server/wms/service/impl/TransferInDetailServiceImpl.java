@@ -10,7 +10,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -43,6 +42,5 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
         List<TransferInDetailEntity> addDetailList = BeanMapper.copyList(detailList, TransferInDetailEntity.class);
         addDetailList.stream().forEach(a -> a.setMainId(mainId));
         this.saveBatch(addDetailList);
-        
     }
 }

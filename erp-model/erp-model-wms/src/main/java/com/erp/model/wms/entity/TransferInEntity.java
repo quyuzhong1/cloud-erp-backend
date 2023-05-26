@@ -8,7 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -40,13 +40,13 @@ public class TransferInEntity extends BaseEntity<TransferInEntity> {
      * 调拨类型
      */
     @TableField("type")
-    private String type;
+    private String transferType;
 
     /**
      * 调入日期
      */
     @TableField("bill_date")
-    private Date billDate;
+    private LocalDate billDate;
 
     /**
      * 调出仓库id

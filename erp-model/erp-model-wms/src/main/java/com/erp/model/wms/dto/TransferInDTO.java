@@ -290,7 +290,6 @@ public class TransferInDTO implements Serializable {
         /**
          * 调出仓位
          */
-        @NotBlank(message = "调出仓位不能为空")
         private String outWarehouseLocation;
 
 
