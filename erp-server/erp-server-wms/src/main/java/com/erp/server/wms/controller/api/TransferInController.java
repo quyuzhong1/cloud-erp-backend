@@ -5,6 +5,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -52,6 +53,22 @@ public class TransferInController extends BaseController {
     @PostMapping("/paging")
     public ApiResult<PagingVO<TransferInDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<TransferInDTO.PagingParamDTO> dto) {
         return success(null);
+    }
+
+
+    /**
+     * 分布式调出单下推 分布式调入
+     *
+     * @param list
+     * @return com.common.core.controller.vo.ApiResult
+     * @author yl
+     * @date 2023-05-23 15:15
+     */
+    @PostMapping("/generateTransferIn")
+    public ApiResult generateTransferIn(@RequestBody @Valid ValidList<TransferInDTO.ViewGenerateTransferInDTO> list) {
+        Boolean result = transferInService.generateTransferIn(list);
+        return result ? success() : failure();
+
     }
 
 

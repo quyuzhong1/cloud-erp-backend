@@ -2,12 +2,14 @@ package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.entity.OtherOutstockDetailEntity;
 import com.erp.model.wms.entity.OtherOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -70,10 +72,12 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
 
         if (CollectionUtils.isNotEmpty(userList)) {
             //仓管员
-            String warehouseKeeperCode = userList.stream().filter(obj -> obj.getUserId().equals(entity.getWarehouseKeeperId())).map(FindUserDTO::getCode).findFirst().orElse(null);
+            String warehouseKeeperCode = userList.stream().filter(obj -> obj.getUserId().equals(entity.getWarehouseKeeperId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
             resultMap.put("warehouseKeeperCode", warehouseKeeperCode);
             //领料人
-            String receiverCode = userList.stream().filter(obj -> obj.getUserId().equals(entity.getReceiverId())).map(FindUserDTO::getCode).findFirst().orElse(null);
+            String receiverCode = userList.stream().filter(obj -> obj.getUserId().equals(entity.getReceiverId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
             resultMap.put("receiverCode", receiverCode);
         }
 
@@ -84,11 +88,19 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getInventoryOrgId(),entity.getReceiveOrgId()));
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
             //库存组织编码
-            String inventoryOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInventoryOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            String inventoryOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInventoryOrgId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
             resultMap.put("inventoryOrgCode", inventoryOrgCode);
             //收料组织编码
-            String receiveOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            String receiveOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
             resultMap.put("receiveOrgCode", receiveOrgCode);
+        }
+
+        //部门
+        SysDepartmentDTO sysDepartmentDTO = sysUserFeign.getUserDeptById(entity.getDeptId());
+        if (ObjectUtils.isNotEmpty(sysDepartmentDTO)) {
+            resultMap.put("deptCode", sysDepartmentDTO.getCode());
         }
 
         List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(entity.getId());
@@ -108,7 +120,8 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
 
             if (CollectionUtils.isNotEmpty(warehouseList)) {
                 //仓库编码
-                String warehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getWarehouseId())).map(WarehouseEntity::getKingdeeWarehouseCode).findFirst().orElse(null);
+                String warehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getWarehouseId()))
+                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse(null);
 
                 //调出仓库
                 jsonObject.set("warehouseCode", warehouseCode);

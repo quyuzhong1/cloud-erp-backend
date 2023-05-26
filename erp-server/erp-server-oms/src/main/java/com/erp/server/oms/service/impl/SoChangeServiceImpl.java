@@ -647,6 +647,37 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
 
     /**
+     * 检测能否变更根据so 详情id
+     * @author yl
+     * @date 2023-05-26 14:42
+     * @param soDetailIds
+     * @return java.util.List<java.lang.String>
+     */
+    @Override
+    public List<String> checkBySoDetailIds(List<String> soDetailIds) {
+        if (CollectionUtils.isEmpty(soDetailIds)) {
+            throw new ServiceException(ApiError.ERROR_92015);
+        }
+        List<SoDetailEntity> soDetailList = soDetailService.listByIds(soDetailIds);
+        if (CollectionUtils.isEmpty(soDetailList)) {
+            throw new ServiceException(ApiError.ERROR_92015);
+        }
+        List<String> soIdList = soDetailList.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        if (soIdList.size()>1) {
+            throw new ServiceException(ApiError.ERROR_92039);
+        }
+        String soId = soDetailList.get(0).getMainId();
+        SoInfoDTO.CustomerDTO soInfo = soInfoService.getSoCustomer(soId);
+        String soInfoApproveStatus = soInfo.getApproveStatus().getStatus();
+        String soApproveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        if (!soInfoApproveStatus.equals(soApproveStatus)) {
+            throw new ServiceException(ApiError.ERROR_92033);
+        }
+        return soDetailIds;
+    }
+
+
+    /**
      * 审核
      *
      * @param dto

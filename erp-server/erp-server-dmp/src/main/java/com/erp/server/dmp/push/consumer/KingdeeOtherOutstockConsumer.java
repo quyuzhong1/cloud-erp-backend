@@ -47,7 +47,7 @@ public class KingdeeOtherOutstockConsumer implements RocketMQListener<Map<String
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_MISDELIVERY.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "QTCK000527"));
+        queryFilters.add(String.format("FBillNo = '%s'", "QTCK23052200001"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FID,FStockDirect";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,0);
@@ -58,7 +58,7 @@ public class KingdeeOtherOutstockConsumer implements RocketMQListener<Map<String
     @Override
     public void onMessage(Map<String, Object> map) {
         //模块类型
-        Integer type = ApiModuleTypeEnum.OTHER_INSTOCK.getCode();
+        Integer type = ApiModuleTypeEnum.OTHER_OUTSTOCK.getCode();
 
         log.info("直接调拨单开始推送金蝶 map = {}", JSONUtil.toJsonStr(map));
 
@@ -66,6 +66,7 @@ public class KingdeeOtherOutstockConsumer implements RocketMQListener<Map<String
         String code = (String) map.get("code");
 
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
+
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }

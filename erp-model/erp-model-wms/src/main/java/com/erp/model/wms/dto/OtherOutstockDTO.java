@@ -239,6 +239,11 @@ public class OtherOutstockDTO implements Serializable {
         @StateEnumValue(clazz = OutstockTypeEnum.class, message = "出库类型输入值有误")
         private String type;
 
+        /**
+         * 领料部门id
+         */
+        private String deptId;
+
     }
 
     @Data
