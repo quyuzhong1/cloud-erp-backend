@@ -174,15 +174,11 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         ){
             return null;
         }
-//        if (StrUtil.isBlank(returnOrderEntity.getFOrderNo())){
-//            return null;
-//        }
         DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = new DmpReturnOrderInfoEntity();
         //平台订单编号
         dmpReturnOrderInfoEntity.setPlatformOrderId(returnOrderEntity.getFBillNo());
-        dmpReturnOrderInfoEntity.setReturnOrderId(returnOrderEntity.getFBillNo());
-        //退货单号
-//        dmpReturnOrderInfoEntity.setReturnOrderId(returnOrderEntity.getFOrderNo());
+        dmpReturnOrderInfoEntity.setReturnCode(returnOrderEntity.getFBillNo());
+        dmpReturnOrderInfoEntity.setPlatformReturnCode(returnOrderEntity.getFBillNo());
         //店铺编号
         dmpReturnOrderInfoEntity.setShopNo("B2B");
         //店铺名称

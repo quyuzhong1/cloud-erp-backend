@@ -22,7 +22,7 @@ public class DmpShopInfoDTO implements Serializable {
     /**
      * 平台店铺编号
      */
-    private String plarformShopNo;
+    private String platformShopNo;
 
     /**
      * 平台店铺账户
@@ -108,7 +108,7 @@ public class DmpShopInfoDTO implements Serializable {
     @Override
     public String toString() {
         return "DmpShopInfoEntity{" +
-                "plarformShopNo='" + plarformShopNo + '\'' +
+                "platformShopNo='" + platformShopNo + '\'' +
                 ", accountUserName='" + accountUserName + '\'' +
                 ", accountStoreName='" + accountStoreName + '\'' +
                 ", name='" + name + '\'' +
