@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.wms.dto.TransferInDetailDTO;
 import com.erp.model.wms.entity.TransferInDetailEntity;
 import com.erp.server.wms.mapper.TransferInDetailMapper;
@@ -9,6 +10,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,7 +28,7 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
     /**
      * 添加明细
      *
-     * @param id
+     * @param mainId
      * @param detailList
      * @return void
      * @author yl
@@ -34,10 +36,13 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void add(String id, List<TransferInDetailDTO.AddDTO> detailList) {
+    public void add(String mainId, List<TransferInDetailDTO.AddDTO> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
-
+        List<TransferInDetailEntity> addDetailList = BeanMapper.copyList(detailList, TransferInDetailEntity.class);
+        addDetailList.stream().forEach(a -> a.setMainId(mainId));
+        this.saveBatch(addDetailList);
+        
     }
 }
