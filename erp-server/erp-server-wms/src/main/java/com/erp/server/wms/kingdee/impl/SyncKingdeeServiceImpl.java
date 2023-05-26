@@ -56,7 +56,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
             otherInstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
         }
         //其他出库单
-        if (ApiModuleTypeEnum.OTHER_INSTOCK.getCode().toString().equals(code)) {
+        if (ApiModuleTypeEnum.OTHER_OUTSTOCK.getCode().toString().equals(code)) {
             otherOutstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
         }
     }
