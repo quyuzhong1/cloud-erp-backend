@@ -1,7 +1,12 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.common.core.enums.ApiError;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.wms.entity.PickingDetailEntity;
+import com.erp.model.wms.entity.TransferOutEntity;
+import com.erp.server.wms.service.PickingDetailService;
+import com.erp.server.wms.service.TransferOutService;
 import org.apache.commons.math3.util.Pair;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.service.SuperServiceImpl;
@@ -46,6 +51,12 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
     @Autowired
     private OperateLogService operateLogService;
 
+    @Autowired
+    private PickingDetailService pickingDetailService;
+
+    @Autowired
+    private TransferOutService transferOutService;
+
     @Override
     public List<TransferOutDetailEntity> listSourceDetailIds(List<String> sourceDetailIds) {
         return baseMapper.listSourceDetailIds(sourceDetailIds);
@@ -85,7 +96,8 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
         }
         // 新增或修改的明细数据
         List<TransferOutDetailEntity> newList = BeanMapperUtils.copyList(TransferOutDetailEntity.class, detailList);
-        // TODO 下推数量验证
+        // 下推数量验证
+        checkTransferOutQty(newList, mainId);
         // 记录新增或修改日志
         handleDetails(newList, mainId, Boolean.TRUE);
         //新增或修改明细
@@ -139,6 +151,43 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.TRANSFER_OUT.getCode(), addPairList, "编辑操作");
         }
+    }
+
+    /**
+     * 验证修改时是否还有数量
+     * @param newList
+     * @param mainId
+     */
+    private void checkTransferOutQty (List<TransferOutDetailEntity> newList ,String mainId) {
+        TransferOutEntity transferOutEntity = transferOutService.getById(mainId);
+        // 分步式调出单都是下推
+        List<String> sourceDetailIds = newList.stream().map(TransferOutDetailEntity::getSourceDetailId).collect(Collectors.toList());
+
+        //拣货明细
+        List<PickingDetailEntity> pickingDetailList = pickingDetailService.listByIds(sourceDetailIds);
+
+        //已下推明细
+        List<TransferOutDetailEntity> transferInfoDetailList = this.listSourceDetailIds(sourceDetailIds);
+
+        for (TransferOutDetailEntity detailEntity : newList) {
+            // 拣货数量
+            Integer pickingQty = 0;
+            if (CollUtil.isNotEmpty(pickingDetailList)) {
+                pickingQty = pickingDetailList.stream().filter(obj -> Objects.equals(obj.getId(), detailEntity.getSourceDetailId()))
+                        .map(PickingDetailEntity::getQty).findFirst().orElse(0);
+            }
+            //已下推数量（不包括本明细数量）
+            Integer hasPickingQty = 0;
+            if (CollUtil.isNotEmpty(transferInfoDetailList)) {
+                hasPickingQty = transferInfoDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId()) && !obj.getId().equals(detailEntity.getId()))
+                        .map(TransferOutDetailEntity::getQty).reduce(0, Integer::sum);
+            }
+            //数量检验
+            if (detailEntity.getQty().intValue() > pickingQty.intValue() - hasPickingQty.intValue()) {
+                throw new ServiceException(StrUtil.format("调拨申请单【{}】SKU【{}】已完成分步式调拨调出", transferOutEntity.getSourceCode(), detailEntity.getSkuNo()));
+            }
+        }
+
     }
 
 }

@@ -221,6 +221,7 @@ public class TransferOutDTO implements Serializable {
         /**
          * 来源id
          */
+        @NotEmpty(message = "来源id不能为空")
         private String sourceId;
 
 
@@ -233,6 +234,7 @@ public class TransferOutDTO implements Serializable {
         /**
          * 来源单号
          */
+        @NotEmpty(message = "来源单号不能为空")
         private String sourceCode;
 
 
@@ -294,32 +296,37 @@ public class TransferOutDTO implements Serializable {
 
 
         /**
-         * code
+         * 单据编号
          */
         private String code;
 
 
         /**
-         * 审核状态code
+         * 审核状态编码
          */
-        private ApproveStatusEnum approveStatus;
+        private String approveStatus;
 
         /**
-         * 来源id
+         * 审核状态名称
          */
-        private String sourceId;
-
-
-        /**
-         * 来源类型
-         */
-        private String sourceType;
+        private String approveStatusName;
 
 
         /**
-         * 调拨类型
+         * 调拨申请单号
+         */
+        private String sourceCode;
+
+
+        /**
+         * 调拨类型编码
          */
         private String type;
+
+        /**
+         * 调拨类型名称
+         */
+        private String typeName;
 
         /**
          * 调出日期
@@ -330,6 +337,11 @@ public class TransferOutDTO implements Serializable {
          * 调出仓库id
          */
         private String outWarehouseId;
+
+        /**
+         * 调出仓库名称
+         */
+        private String outWarehouseName;
 
         /**
          * 调出组织d
@@ -346,6 +358,10 @@ public class TransferOutDTO implements Serializable {
          */
         private String warehouseKeeperId;
 
+        /**
+         * 仓管员名称
+         */
+        private String warehouseKeeperName;
 
         /**
          * 调入组织d
@@ -363,17 +379,34 @@ public class TransferOutDTO implements Serializable {
         private String inWarehouseId;
 
         /**
-         * 调拨方向
+         * 调入仓库名称
+         */
+        private String inWarehouseName;
+
+        /**
+         * 调拨方向编码
          */
         private String transferDirection;
 
+        /**
+         * 在途归属编码
+         */
+        private String transitOwner;
+
+        /**
+         * 在途归属名称
+         */
+        private String transitOwnerName;
+
+        /**
+         * 调拨方向名称
+         */
+        private String transferDirectionName;
 
         /**
          * 备注
          */
         private String remark;
-
-
 
         /**
          * 详情

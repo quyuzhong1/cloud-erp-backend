@@ -46,6 +46,7 @@ public class TransferOutDetailDTO implements Serializable {
         /**
          * 来源明细id
          */
+        @NotEmpty(message = "来源明细id不能为空")
         private String sourceDetailId;
 
 
@@ -105,12 +106,6 @@ public class TransferOutDetailDTO implements Serializable {
          * 即时库存
          */
         private Integer curInventoryQty;
-
-
-        /**
-         * 来源明细id
-         */
-        private String sourceDetailId;
 
 
         /**

@@ -60,4 +60,11 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
      * @param updateDTO
      */
     void update(TransferOutDTO.UpdateDTO updateDTO);
+
+    /**
+     * 详情
+     * @param id
+     * @return
+     */
+    TransferOutDTO.ViewDTO view(String id);
 }
