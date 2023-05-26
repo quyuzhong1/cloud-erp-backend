@@ -1,31 +1,34 @@
 package com.erp.server.oms.kingdee.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.oms.dto.InvoiceDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.service.CustomerInfoService;
+import com.erp.server.oms.service.CustomerInvoiceService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * 同步客户到金蝶
@@ -40,6 +43,9 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 
     @Resource
     private CustomerInfoService customerInfoService;
+
+    @Resource
+    private CustomerInvoiceService customerInvoiceService;
 
     @Resource
     private MQProducerService mQProducerService;
@@ -65,7 +71,24 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         resultMap.put("shortName", entity.getShortName());
         DictCountryEntity countryEntity = sysUserFeign.getCountryById(entity.getCountryId());
         //国家
-        resultMap.put("countryName", countryEntity.getNameCn());
+        resultMap.put("nameCn", countryEntity.getNameCn());
+
+        List<InvoiceDTO.ViewDTO> viewDTOS = customerInvoiceService.listByMainId(entity.getId());
+        if (CollectionUtils.isNotEmpty(viewDTOS)) {
+            InvoiceDTO.ViewDTO viewDTO = viewDTOS.get(MathUtil.ZERO);
+            //发票抬头
+            resultMap.put("head", viewDTO.getHead());
+            resultMap.put("bankName", viewDTO.getBankName());
+            resultMap.put("bankAccount", viewDTO.getBankAccount());
+        }
+
+        /*
+        //部门
+        SysDepartmentDTO sysDepartmentDTO = sysUserFeign.getUserDeptById(entity.getDeptId());
+        if (ObjectUtils.isNotEmpty(sysDepartmentDTO)) {
+            resultMap.put("deptCode", sysDepartmentDTO.getCode());
+        }*/
+
 
      /*       //仓库组织
         resultMap.put("orgId",entity.getOrgId());

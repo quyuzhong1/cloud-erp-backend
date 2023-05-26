@@ -95,6 +95,12 @@ public class DictCountryEntity extends BaseEntity<DictCountryEntity> {
     @TableField("currency_code")
     private String currencyCode;
 
+    /**
+     * 金蝶编码
+     */
+    @TableField("kingdee_code")
+    private Boolean kingdeeCode;
+
 
     public static final String NAME_CN = "name_cn";
 
