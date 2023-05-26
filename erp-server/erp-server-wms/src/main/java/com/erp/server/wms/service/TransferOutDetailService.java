@@ -30,4 +30,18 @@ public interface TransferOutDetailService extends SuperService<TransferOutDetail
      * @param mainId
      */
     void add(List<TransferOutDetailDTO.AddDTO> detailList, String mainId);
+
+    /**
+     * 分步式调出单明细修改
+     * @param detailList
+     * @param mainId
+     */
+    void update(List<TransferOutDetailDTO.UpdateDTO> detailList, String mainId);
+
+    /**
+     * 根据主表id查询
+     * @param mainId
+     * @return
+     */
+    List<TransferOutDetailEntity> listByMainId(String mainId);
 }

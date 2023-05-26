@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.common.core.utils.ValidatorUtil;
 import org.apache.commons.math3.util.Pair;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.service.SuperServiceImpl;
@@ -61,6 +62,43 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
         handleDetails(list, mainId, Boolean.FALSE);
         log.info("开始保存分步式调出单明细信息");
         super.saveBatch(list);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void update(List<TransferOutDetailDTO.UpdateDTO> detailList, String mainId) {
+        // 查询原明细数据
+        List<TransferOutDetailEntity> originMembers = this.listByMainId(mainId);
+        // 查询被删除的明细id（即新上传的id集合没有包含原始id的）
+        List<String> originIds = originMembers.stream().map(TransferOutDetailEntity::getId).collect(Collectors.toList());
+        // 新上送的明细id集合（不包括空的）
+        List<String> nowIds = detailList.stream().filter(r->StrUtils.isNotEmpty(r.getId())).map(TransferOutDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        // 需要删除的id集合
+        List<String> deleteIds = originIds.stream().filter(id->!nowIds.contains(id)).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(deleteIds)) {
+            // 记录删除日志
+            List<TransferOutDetailEntity> deleteMembers = originMembers.stream().filter(r->deleteIds.contains(r.getId())).collect(Collectors.toList());
+            List<Pair<String, String>> pairList = deleteMembers.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.TRANSFER_OUT.getCode(),pairList,"编辑操作");
+            // 删除明细数据
+            super.removeByIds(deleteIds);
+        }
+        // 新增或修改的明细数据
+        List<TransferOutDetailEntity> newList = BeanMapperUtils.copyList(TransferOutDetailEntity.class, detailList);
+        // TODO 下推数量验证
+        // 记录新增或修改日志
+        handleDetails(newList, mainId, Boolean.TRUE);
+        //新增或修改明细
+        boolean save = this.saveOrUpdateBatch(newList);
+        ValidatorUtil.isTrue(save, ()->new ServiceException("分步式调出单明细保存失败"));
+    }
+
+    @Override
+    public List<TransferOutDetailEntity> listByMainId(String mainId) {
+        return lambdaQuery()
+                .eq(TransferOutDetailEntity::getMainId,mainId)
+                .orderByDesc(TransferOutDetailEntity::getId)
+                .list();
     }
 
     private void handleDetails(List<TransferOutDetailEntity> newList, String mainId, Boolean isUpdate) {

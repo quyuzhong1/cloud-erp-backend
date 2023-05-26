@@ -386,23 +386,26 @@ public class TransferOutDTO implements Serializable {
     @NoArgsConstructor
     public static class UpdateDTO {
 
-        /**
-         * 来源id
-         */
-        private String sourceId;
-
+        @NotEmpty(message = "id不能为空")
+        private String id;
 
         /**
-         * 来源类型
+         * 调出日期
          */
-        private String sourceType;
-
+        @NotNull(message = "调出日期不能为空")
+        private LocalDate billDate;
 
         /**
-         * 类型
+         * 调出仓库id
          */
-        private String type;
+        @NotEmpty(message = "调出仓库不能为空")
+        private String outWarehouseId;
 
+        /**
+         * 调入仓库id
+         */
+        @NotEmpty(message = "调出仓库不能为空")
+        private String inWarehouseId;
 
         /**
          * 仓管员id
@@ -410,34 +413,22 @@ public class TransferOutDTO implements Serializable {
         private String warehouseKeeperId;
 
         /**
-         * 调出日期
-         */
-        private LocalDate billDate;
-
-        /**
-         * 调出仓库id
-         */
-        private String outWarehouseId;
-
-        /**
-         * 调入仓库id
-         */
-        private String inWarehouseId;
-
-        /**
          * 调拨方向
          */
+        @NotEmpty(message = "调拨方向不能为空")
         private String transferDirection;
-
 
         /**
          * 备注
          */
+        @Size(max = 200, message = "备注最大长度只能为200位")
         private String remark;
 
         /**
          * 详情
          */
+        @Size(min = 1, message = "产品明细不能为空")
+        @Valid
         private List<TransferOutDetailDTO.UpdateDTO> detailList;
     }
 
