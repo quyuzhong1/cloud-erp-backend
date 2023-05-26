@@ -2432,6 +2432,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     /**
      * 在排期任务审核通过后就要 改变
      * 任务排期状态 如果满足自动发布就要自动 发布
+     * 要是待发布的任务
      *
      * @param productId
      * @param taskIdList
@@ -2444,9 +2445,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Transactional(rollbackFor = Exception.class)
     public void initialScheduleTaskPass(LoginUser loginUser, String productId, List<String> taskIdList, String scheduleStatus) {
         List<ProjectTaskEntity> taskList = this.getByTaskIds(taskIdList);
+        //待发布
+        Integer releasedCode = TaskStateEnum.TO_BE_RELEASED.getCode();
+        List<ProjectTaskEntity> releasedTaskList =taskList.stream().filter(f -> f.getStatus().equals(releasedCode)).collect(Collectors.toList());
         String userId = commonService.getUserInfo().getUid();
 
-        for (ProjectTaskEntity task : taskList) {
+        for (ProjectTaskEntity task : releasedTaskList) {
             Integer taskType = task.getType();
             task.setScheduleStatus(scheduleStatus);
             List<String> chargeIdList = new ArrayList<>();
