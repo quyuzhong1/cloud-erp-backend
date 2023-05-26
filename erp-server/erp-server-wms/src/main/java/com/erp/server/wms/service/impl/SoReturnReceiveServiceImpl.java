@@ -600,14 +600,14 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     public Boolean generateSoReturnReceiveSave(List<SoReturnNoticeDTO.GenerateSoReturnReceiveView> list) {
         Boolean flag = Boolean.TRUE;
         List<String> soReturnNoticeIdList = list.stream().map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getMainId).distinct().collect(Collectors.toList());
-        List<String> soDetailIdList = list.stream().map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<String> returnDetailIdList = list.stream().map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getSourceDetailId).distinct().collect(Collectors.toList());
         long count = soReturnNoticeService.listByIds(soReturnNoticeIdList).stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_92021);
         }
-        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(soDetailIdList);
-        if (CollectionUtils.isEmpty(soDetailEntities)) {
-            throw new ServiceException(ApiError.ERROR_92015);
+        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByIds(returnDetailIdList);
+        if (CollectionUtils.isEmpty(returnDetailEntityList)) {
+            throw new ServiceException(ApiError.ERROR_92023);
         }
         for (String id : soReturnNoticeIdList) {
             List<SoReturnNoticeDTO.GenerateSoReturnReceiveView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());

@@ -42,7 +42,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 
     @Resource
     private MQProducerService mQProducerService;
-    
+
     @Override
     public void syncDataToKingdee(CustomerInfoEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
@@ -62,6 +62,8 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         resultMap.put("name", entity.getName());
         //简称
         resultMap.put("shortName", entity.getShortName());
+        //国家
+        resultMap.put("shortName", entity.getCountryId());
 
      /*       //仓库组织
         resultMap.put("orgId",entity.getOrgId());
