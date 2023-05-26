@@ -1,6 +1,8 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.entity.TransferOutEntity;
 
@@ -29,4 +31,11 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
      * @param addDTO
      */
     void add(TransferOutDTO.AddDTO addDTO);
+
+    /**
+     * 分页列表
+     * @param pagingParamDTO
+     * @return
+     */
+    PagingVO<TransferOutDTO.PagingViewDTO> paging(PagingDTO<TransferOutDTO.PagingParamDTO> pagingParamDTO);
 }

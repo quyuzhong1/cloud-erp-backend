@@ -116,20 +116,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         }
         filling(pageData.getRecords());
         // 明细数据主单字段只有第一条明细数据显示，其他主单数据字段置位空
-        Set<String> mainIds = Sets.newHashSet();
-        for(InitStockDTO.ListDTO data: pageData.getRecords()) {
-            if(mainIds.contains(data.getId())) {
-                data.setCode(null);
-                data.setApproveStatus(null);
-                data.setApproveStatusName(null);
-                data.setInvalidStatus(null);
-                data.setInvalidStatusName(null);
-                data.setOrgName(null);
-                data.setWarehouseName(null);
-                continue;
-            }
-            mainIds.add(data.getId());
-        }
+        listHideMainData(pageData.getRecords());
         return new PagingVO(pageData);
     }
 
@@ -671,6 +658,28 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
                 data.setSaleStateName(SaleStateEnum.getNameByCode(skuVO.getSaleState()));
             }
         });
+    }
+
+    /**
+     * 分页列表多行明细只显示第一行数据，其他行赋空值
+     * @param records
+     */
+    private void listHideMainData(List<InitStockDTO.ListDTO> records) {
+        // 同一个主单的其他行明细数据，只保留第一行
+        Set<String> mainIds = Sets.newHashSet();
+        for(InitStockDTO.ListDTO data: records) {
+            if(mainIds.contains(data.getId())) {
+                data.setCode(null);
+                data.setApproveStatus(null);
+                data.setApproveStatusName(null);
+                data.setInvalidStatus(null);
+                data.setInvalidStatusName(null);
+                data.setOrgName(null);
+                data.setWarehouseName(null);
+                continue;
+            }
+            mainIds.add(data.getId());
+        }
     }
 
 }

@@ -9,6 +9,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -152,6 +153,24 @@ public class TransferOutEntity extends BaseEntity<TransferOutEntity> {
     @TableField("transit_owner")
     private String transitOwner;
 
+    /**
+     * 审核时间
+     */
+    @TableField("approve_time")
+    private LocalDateTime approveTime;
+
+    /**
+     * 审核人名称
+     */
+    @TableField("approve_user_name")
+    private String approveUserName;
+
+    /**
+     * 审核人id
+     */
+    @TableField("approve_user_id")
+    private String approveUserId;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
@@ -189,6 +208,8 @@ public class TransferOutEntity extends BaseEntity<TransferOutEntity> {
     public static final String SOURCE_CODE = "source_code";
 
     public static final String TRANSIT_OWNER = "transit_owner";
+
+
 
     @Override
     public Serializable pkVal() {
