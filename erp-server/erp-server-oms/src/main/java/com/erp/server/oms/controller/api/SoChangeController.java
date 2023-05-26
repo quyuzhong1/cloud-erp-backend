@@ -11,6 +11,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoChangeDTO;
+import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.server.oms.service.SoChangeService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -71,9 +72,23 @@ public class SoChangeController extends BaseController {
      * @return
      */
     @GetMapping("/getViewBySoId")
-    public ApiResult<SoChangeDTO.ViewDTO> view(@RequestParam("soId") String soId) {
+    public ApiResult<SoChangeDTO.ViewDTO> getViewBySoId(@RequestParam("soId") String soId) {
         SoChangeDTO.ViewDTO view = soChangeService.getViewBySoId(soId);
         return success(view);
+    }
+
+
+    /**
+     * 根据销售订单id
+     * 获取到对应的产品信息
+     *
+     * @param soId
+     * @return
+     */
+    @GetMapping("/listSoSkuBySoId")
+    public ApiResult<List<SoChangeDetailDTO.ViewDTO>> listSoSkuBySoId(@RequestParam("soId") String soId) {
+        List<SoChangeDetailDTO.ViewDTO> resultList = soChangeService.listSoSkuBySoId(soId);
+        return success(resultList);
     }
 
 

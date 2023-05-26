@@ -608,6 +608,20 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         return resultList;
     }
 
+    /**
+     * 根据选择销售订单id 获取到对应的sku 信息
+     * @author yl
+     * @date 2023-05-26 9:26
+     * @param soId
+     * @return java.util.List<com.erp.model.oms.dto.SoChangeDetailDTO.ViewDTO>
+     */
+    @Override
+    public List<SoChangeDetailDTO.ViewDTO> listSoSkuBySoId(String soId) {
+        //根据主表id 获取详情
+        List<SoChangeDetailDTO.ViewDTO> detailList = soChangeDetailService.listDetailBySoId(soId);
+        return detailList;
+    }
+
 
     /**
      * 审核

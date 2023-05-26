@@ -560,6 +560,7 @@ public enum ApiError implements Serializable {
     ERROR_92035(92035,"以下产品缺货【%s】"),
     ERROR_92036(92036,"销售变更单详情不存在"),
     ERROR_92037(92037,"变更类型为删除的产品有下游单据不可删除"),
+    ERROR_92038(92038,"销售订单详情sku 只能进行一种类型的变更"),
 
     ERROR_end(1000000, "系统错误");
 
