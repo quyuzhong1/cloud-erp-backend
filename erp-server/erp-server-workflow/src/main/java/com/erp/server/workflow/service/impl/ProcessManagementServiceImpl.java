@@ -55,6 +55,7 @@ import org.camunda.bpm.engine.task.IdentityLink;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.model.bpmn.Bpmn;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
+import org.camunda.bpm.model.bpmn.Query;
 import org.camunda.bpm.model.bpmn.instance.ExtensionElements;
 import org.camunda.bpm.model.bpmn.instance.FlowElement;
 import org.camunda.bpm.model.bpmn.instance.StartEvent;
@@ -292,7 +293,12 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             log.warn("流程设计未配置扩展属性, processDefinitionId: {}, taskDefinitionKey: {}", executionDelegate.getProcessDefinitionId(), executionDelegate.getProcessInstanceId());
             return;
         }
-        Collection<CamundaProperty> camundaProperties = extensionElements.getElementsQuery().filterByType(CamundaProperties.class).singleResult().getCamundaProperties();
+        Query<CamundaProperties> camundaPropertiesQuery = extensionElements.getElementsQuery().filterByType(CamundaProperties.class);
+        if (camundaPropertiesQuery.count() <= 0) {
+            log.warn("流程设计未配置扩展属性, processDefinitionId: {}, taskDefinitionKey: {}", executionDelegate.getProcessDefinitionId(), executionDelegate.getProcessInstanceId());
+            return;
+        }
+        Collection<CamundaProperty> camundaProperties = camundaPropertiesQuery.singleResult().getCamundaProperties();
         Map<String, String> propertiesMap = camundaProperties.stream()
                 .collect(Collectors.toMap(CamundaProperty::getCamundaName, CamundaProperty::getCamundaValue));
         CamundaDTO.PropertiesDTO propertiesDTO = BeanUtil.toBean(propertiesMap, CamundaDTO.PropertiesDTO.class);
