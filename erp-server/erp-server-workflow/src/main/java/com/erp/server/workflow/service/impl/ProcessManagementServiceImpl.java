@@ -194,8 +194,11 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if (null == extensionElements) {
             return null;
         }
-        Collection<CamundaProperty> camundaProperties = extensionElements
-                .getElementsQuery().filterByType(CamundaProperties.class)
+        Query<CamundaProperties> camundaPropertiesQuery = extensionElements.getElementsQuery().filterByType(CamundaProperties.class);
+        if (camundaPropertiesQuery.count() <= 0) {
+            return null;
+        }
+        Collection<CamundaProperty> camundaProperties = camundaPropertiesQuery
                 .singleResult()
                 .getCamundaProperties();
         if (CollectionUtil.isEmpty(camundaProperties)) {
