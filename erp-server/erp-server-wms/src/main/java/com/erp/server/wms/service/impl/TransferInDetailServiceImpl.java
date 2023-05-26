@@ -1,10 +1,15 @@
 package com.erp.server.wms.service.impl;
 
 import com.common.business.service.SuperServiceImpl;
+import com.erp.model.wms.dto.TransferInDetailDTO;
 import com.erp.model.wms.entity.TransferInDetailEntity;
 import com.erp.server.wms.mapper.TransferInDetailMapper;
 import com.erp.server.wms.service.TransferInDetailService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * <p>
@@ -17,4 +22,22 @@ import org.springframework.stereotype.Service;
 @Service
 public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDetailMapper, TransferInDetailEntity> implements TransferInDetailService {
 
+
+    /**
+     * 添加明细
+     *
+     * @param id
+     * @param detailList
+     * @return void
+     * @author yl
+     * @date 2023-05-26 15:01
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void add(String id, List<TransferInDetailDTO.AddDTO> detailList) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+
+    }
 }

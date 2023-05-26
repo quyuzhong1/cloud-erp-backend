@@ -1,7 +1,10 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.TransferInDetailDTO;
 import com.erp.model.wms.entity.TransferInDetailEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -13,4 +16,13 @@ import com.erp.model.wms.entity.TransferInDetailEntity;
  */
 public interface TransferInDetailService extends SuperService<TransferInDetailEntity> {
 
+    /**
+     * 添加明细
+     * @author yl
+     * @date 2023-05-26 15:01
+     * @param id
+     * @param detailList
+     * @return void
+     */
+    void add(String id, List<TransferInDetailDTO.AddDTO> detailList);
 }
