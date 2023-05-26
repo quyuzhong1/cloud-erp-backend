@@ -50,21 +50,24 @@ public class TransferOutDTO implements Serializable {
         private String id;
 
         /**
-         * code
+         * 调拨单号
          */
         private String code;
 
+        /**
+         * 调拨方向
+         */
+        private String transferDirection;
 
         /**
-         * 调出日期
+         * 调拨方向
          */
-        private Date billDate;
-
+        private String transferDirectionName;
 
         /**
          * 审核状态code
          */
-        private ApproveStatusEnum approveStatus;
+        private String approveStatus;
 
 
         /**
@@ -80,27 +83,7 @@ public class TransferOutDTO implements Serializable {
         /**
          * 作废状态名
          */
-        private Boolean invalidStatusName;
-
-        /**
-         * 调拨方向
-         */
-        private String transferDirection;
-
-        /**
-         * 调拨方向
-         */
-        private String transferDirectionName;
-
-        /**
-         * 调出仓库
-         */
-        private String outWarehouseId;
-
-        /**
-         * 调出仓库
-         */
-        private String outWarehouseName;
+        private String invalidStatusName;
 
         /**
          * sku id
@@ -117,15 +100,39 @@ public class TransferOutDTO implements Serializable {
          */
         private String productName;
 
+
+        /**
+         * 调出日期
+         */
+        private Date billDate;
+
+
         /**
          * 调出数量
          */
         private Integer qty;
 
+
         /**
          * 单位
          */
         private String unit;
+
+
+        /**
+         * 调出仓库
+         */
+        private String outWarehouseId;
+
+        /**
+         * 调出仓库
+         */
+        private String outWarehouseName;
+
+        /**
+         * 调出仓位
+         */
+        private String outWarehouseLocation;
 
 
         /**
@@ -157,7 +164,7 @@ public class TransferOutDTO implements Serializable {
         private List<String> skuNoList;
 
         /**
-         * code
+         * 调拨单号
          */
         private String code;
 
@@ -167,12 +174,12 @@ public class TransferOutDTO implements Serializable {
         private List<String> approveStatusList;
 
         /**
-         * 调拨方向
+         * 调拨方向  接口地址：/wms/dict/drop/down?type=transferDirection
          */
         private String transferDirection;
 
         /**
-         * 作废状态
+         * 作废状态  /scm/drop/down/invalidStatus/list
          * true 已作废
          * false 未作废
          */
@@ -181,7 +188,7 @@ public class TransferOutDTO implements Serializable {
         /**
          * 调出日期
          */
-        private List<LocalDateTime> billDateList;
+        private List<LocalDate> billDateList;
 
         /**
          * 创建人 id 集合
@@ -191,7 +198,7 @@ public class TransferOutDTO implements Serializable {
         /**
          * 创建时间
          */
-        private List<LocalDateTime> createTimeList;
+        private List<LocalDate> createTimeList;
 
         /**
          * 调出仓库集合

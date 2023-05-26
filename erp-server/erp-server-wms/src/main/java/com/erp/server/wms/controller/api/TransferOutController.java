@@ -1,14 +1,18 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.TransferOutDTO;
+import com.erp.server.wms.service.TransferOutService;
+import lombok.AllArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,9 +26,12 @@ import java.util.List;
  * @author lambda
  * @since 2023-05-10
  */
+@AllArgsConstructor
 @RestController
 @RequestMapping("/transfer/out")
 public class TransferOutController extends BaseController {
+
+    private final TransferOutService transferOutService;
 
     /**
      * 获取 tab列表
@@ -43,8 +50,13 @@ public class TransferOutController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "warehouse_keeper_id",
+            menuCode = "wms:transferOut:paging",
+            tableAlias = "tfo"
+    )
     public ApiResult<PagingVO<TransferOutDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<TransferOutDTO.PagingParamDTO> dto) {
-        return success(null);
+        return success(transferOutService.paging(dto));
     }
 
     /**

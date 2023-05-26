@@ -1,31 +1,40 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.TransferOutEntity;
+import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.TransferTypeEnum;
 import com.erp.model.wms.enums.TransitOwnerEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.TransferOutMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.TransferOutDetailService;
-import com.erp.server.wms.service.TransferOutService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -34,10 +43,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -63,7 +69,13 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     private WarehouseService warehouseService;
 
     @Autowired
+    private PlmTaskFeign plmTaskFeign;
+
+    @Autowired
     private TransferOutDetailService transferOutDetailService;
+
+    @Autowired
+    private DictBasicService dictBasicService;
 
     @Override
     public List<TransferOutEntity> listBySourceIds(List<String> ids) {
@@ -87,7 +99,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.FBDC, BusinessNoTypeEnum.CODE_FBDC.getCode()));
         transferOutEntity.setCode(code);
         boolean save = super.save(transferOutEntity);
-        ValidatorUtil.isTrue(save,()->new ServiceException("分布式调出单保存失败"));
+        ValidatorUtil.isTrue(save,()->new ServiceException("分步式调出单保存失败"));
         if (save) {
             //操作日志
             operateLogService.addModuleOperateLog(String.format("新增了一个分步式调出单【%s】", code), ModuleTypeEnum.TRANSFER_OUT.getCode(), transferOutEntity.getId(), "新增操作");
@@ -96,7 +108,24 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         }
     }
 
+    @Override
+    public PagingVO<TransferOutDTO.PagingViewDTO> paging(PagingDTO<TransferOutDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<TransferOutDTO.PagingViewDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        List<TransferOutDTO.PagingViewDTO> records = pageData.getRecords();
+        if (CollectionUtils.isEmpty(records)) {
+            return new PagingVO(pageData);
+        }
+        handleView(records);
+        listHideMainData(records);
+        return new PagingVO<>(pageData);
+    }
 
+    /**
+     * 新增修改数据处理
+     * @param transferOutEntity
+     */
     private void handleData(TransferOutEntity transferOutEntity) {
         // 验证仓库信息
         WarehouseDTO.UpdateDTO warehouseIn = warehouseService.detailWithCache(transferOutEntity.getInWarehouseId());
@@ -135,5 +164,63 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         // 在途归属（默认调入方）
         transferOutEntity.setTransitOwner(TransitOwnerEnum.TRANSFER_IN.getCode());
     }
+
+    /**
+     * 分页查询、导出数据处理
+     * @param list
+     */
+    private void handleView(List<TransferOutDTO.PagingViewDTO> list) {
+        if(CollUtil.isEmpty(list)) {
+            return;
+        }
+        List<String> ids = list.stream().map(TransferOutDTO.PagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        //产品信息
+        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(ids);
+        Map<String,ProductDetailEntity> skuMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, Function.identity()));
+        if (CollectionUtils.isEmpty(productDetailList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        //调拨方向
+        List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
+        for (TransferOutDTO.PagingViewDTO data : list) {
+            //产品名称
+            String productName = skuMap.getOrDefault(data.getSkuId(),new ProductDetailEntity()).getName();
+            data.setProductName(productName);
+
+            //调拨方向名称
+            String transferDirectionName = transferDirectionList.stream().filter(e -> Objects.equals(e.getValue(), data.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
+            data.setTransferDirectionName(transferDirectionName);
+
+            data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+            data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+        }
+    }
+
+    /**
+     * 分页列表多行明细只显示第一行数据，其他行赋空值
+     * @param records
+     */
+    private void listHideMainData(List<TransferOutDTO.PagingViewDTO> records) {
+        Set<String> mainIds = Sets.newHashSet();
+        // 同一个主单的其他行明细数据，只保留第一行
+        for(TransferOutDTO.PagingViewDTO data : records) {
+            if (mainIds.contains(data.getId())) {
+                data.setCode(null);
+                data.setTransferDirection(null);
+                data.setTransferDirectionName(null);
+                data.setApproveStatus(null);
+                data.setApproveStatusName(null);
+                data.setInvalidStatus(null);
+                data.setInvalidStatusName(null);
+                data.setApproveUserName(null);
+                data.setCreateUserName(null);
+                data.setCreateTime(null);
+                continue;
+            }
+            mainIds.add(data.getId());
+        }
+    }
+
+
 
 }

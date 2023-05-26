@@ -1,7 +1,81 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.wms.mapper.DistributionOutMapper">
+<mapper namespace="com.erp.server.wms.mapper.TransferOutMapper">
 
 
+    <select id="paging" resultType="com.erp.model.wms.dto.TransferOutDTO$PagingViewDTO">
+           select
+            tfo.id,
+            tfo.code,
+            tfo.transfer_direction,
+            tfo.approve_status,
+            tfo.invalid_status,
+            tod.sku_id,
+            tod.sku_no,
+            tfo.bill_date,
+            tod.qty,
+            tod.unit,
+            tfo.out_warehouse_id,
+            tfo.out_warehouse_name,
+            tod.remark,
+            tfo.approve_user_name,
+            tfo.create_user_name,
+            tfo.create_time,
+            tod.out_warehouse_location
+        from transfer_out tfo
+        inner join transfer_out_detail tod on tfo.id = tod.main_id and tod.is_deleted = false
+        <where>
+            tfo.is_deleted = false
+            <if test="params.code != null and params.code != ''">
+                and tfo.code ilike concat('%',#{params.code},'%')
+            </if>
+            <if test="params.invalidStatus != null ">
+                and tfo.invalid_status = #{params.invalidStatus}
+            </if>
+            <if test="params.transferDirection != null ">
+                and tfo.transfer_direction = #{params.transferDirection}
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                and tod.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and tfo.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.outWarehouseIdList != null and params.outWarehouseIdList.size > 0">
+                and tfo.out_warehouse_id in
+                <foreach collection="params.outWarehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+                and tfo.create_user_id in
+                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                and tfo.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > tfo.create_time
+            </if>
+            <if test="params.billDateList != null and params.billDateList.size > 0">
+                and tfo.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > tfo.bill_date
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        tfo.id desc,tod.id desc
+    </select>
 
 </mapper>
