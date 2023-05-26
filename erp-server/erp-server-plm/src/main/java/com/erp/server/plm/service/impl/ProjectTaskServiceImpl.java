@@ -2445,20 +2445,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Transactional(rollbackFor = Exception.class)
     public void initialScheduleTaskPass(LoginUser loginUser, String productId, List<String> taskIdList, String scheduleStatus) {
         List<ProjectTaskEntity> taskList = this.getByTaskIds(taskIdList);
+        taskList.stream().forEach(t->t.setScheduleStatus(scheduleStatus));
         //待发布
         Integer releasedCode = TaskStateEnum.TO_BE_RELEASED.getCode();
         List<ProjectTaskEntity> releasedTaskList =taskList.stream().filter(f -> f.getStatus().equals(releasedCode)).collect(Collectors.toList());
         String userId = commonService.getUserInfo().getUid();
-
         for (ProjectTaskEntity task : releasedTaskList) {
             Integer taskType = task.getType();
-            task.setScheduleStatus(scheduleStatus);
             List<String> chargeIdList = new ArrayList<>();
             String chargeId = task.getChargeId();
             if (StringUtils.isNotBlank(chargeId)) {
                 chargeIdList = Arrays.asList(chargeId.split(","));
             }
-
             task = automationTask(task, taskType, chargeIdList, userId);
             Integer afterState = TaskStateEnum.NOT_START.getCode();
             //一般任务
@@ -2470,8 +2468,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 afterState = TaskStateEnum.WAIT_CONFIRM.getCode();
             }
             task.setStatus(afterState);
-
-
             //保存任务记录
             taskOperatorRecordService.addTaskOperator(task.getId(), TaskStateEnum.TO_BE_RELEASED.getCode(), afterState, loginUser.getUid(), loginUser.getUserName());
             //发布任务通知
@@ -2482,7 +2478,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             } else {
                 noticeMessageService.releaseTaskNotice(loginUser.getUserName(), noticeTaskList, productId);
             }
-
         }
         if (CollectionUtils.isNotEmpty(taskList)) {
             this.updateBatchById(taskList);
