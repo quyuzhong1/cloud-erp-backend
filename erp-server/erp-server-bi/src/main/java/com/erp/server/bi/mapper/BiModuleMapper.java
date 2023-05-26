@@ -22,7 +22,7 @@ import java.util.List;
 public interface BiModuleMapper extends BaseMapper<BiModuleEntity> {
 
 
-    IPage<ModulePagingDTO> paging(Page query, BaseSearchDTO params);
+    IPage<ModulePagingDTO> paging(Page query, @Param("params") BaseSearchDTO params);
 
     List<String> getUserVisibleModuleIds(@Param("userId") String userId);
 

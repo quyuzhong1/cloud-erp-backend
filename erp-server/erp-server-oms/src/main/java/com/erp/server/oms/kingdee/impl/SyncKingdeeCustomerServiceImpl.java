@@ -2,6 +2,7 @@ package com.erp.server.oms.kingdee.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
@@ -19,7 +20,9 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -39,19 +42,28 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 
     @Resource
     private MQProducerService mQProducerService;
-
+    
     @Override
     public void syncDataToKingdee(CustomerInfoEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
-        resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
+        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         //业务id
-        resultMap.put("id",entity.getId());
+        resultMap.put("id", entity.getId());
         //仓库名称
-        resultMap.put("name",entity.getName());
-     /*   //金蝶编号
-        resultMap.put("code",entity.getKingdeeWarehouseCode());
-        //仓库组织
+        resultMap.put("name", entity.getName());
+        //客户编号
+        resultMap.put("code", entity.getCode());
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getUseOrgId()));
+        String useOrgCode = accountingCompanyList.stream().filter(req -> req.getId().equals(entity.getUseOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
+        //使用组织
+        resultMap.put("useOrgCode", useOrgCode);
+        //客户名称
+        resultMap.put("name", entity.getName());
+        //简称
+        resultMap.put("shortName", entity.getShortName());
+
+     /*       //仓库组织
         resultMap.put("orgId",entity.getOrgId());
         //仓库地址
         resultMap.put("address",entity.getAddress());

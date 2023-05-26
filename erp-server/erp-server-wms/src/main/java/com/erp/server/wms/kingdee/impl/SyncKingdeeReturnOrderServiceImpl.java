@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
@@ -31,10 +32,7 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -84,8 +82,11 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         resultMap.put("id",entity.getId());
         //退货单号
         resultMap.put("code",entity.getCode());
+
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getReturnOrgId()));
+        String returnOrgCode = accountingCompanyList.stream().filter(req -> req.getId().equals(entity.getReturnOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
         //退料组织
-        resultMap.put("returnOrgName",entity.getReturnOrgName());
+        resultMap.put("returnOrgName", returnOrgCode);
 
         //获取用户部门id
         SysDepartmentUserNumberDTO departmentDTO = sysUserFeign.getDeptByUserId(entity.getPurchaseUserId());
