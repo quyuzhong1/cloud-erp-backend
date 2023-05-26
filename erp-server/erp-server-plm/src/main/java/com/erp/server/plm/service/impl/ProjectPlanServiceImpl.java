@@ -709,7 +709,6 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         BusinessTableDTO tableDTO = new BusinessTableDTO();
         tableDTO.setBusinessTableId(id);
         tableDTO.setUserId(userId);
-        tableDTO.setUserId("1649238631061258242");
         //获取到用户该业务表的待办任务
         MyToDoTaskVO processTask = workflowFeign.getByBusinessTableId(tableDTO);
         if (Objects.isNull(processTask)) {
@@ -721,7 +720,6 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         approveProcess.setTaskId(processTask.getTaskId());
         approveProcess.setProcessInstanceId(processTask.getProcessInstanceId());
         approveProcess.setUserId(userId);
-        approveProcess.setUserId("1649238631061258242");
         approveProcess.setComment(comment);
 
         Map<String, Object> parameterMap = new HashMap<>();
