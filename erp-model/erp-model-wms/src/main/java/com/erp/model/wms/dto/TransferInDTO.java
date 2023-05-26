@@ -2,10 +2,17 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.enums.TransferDirectionEnum;
+import com.erp.model.wms.enums.TransferTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -222,6 +229,122 @@ public class TransferInDTO implements Serializable {
     }
 
 
+    /**
+     * 下推单据数据展示
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewGenerateTransferInDTO {
+
+
+        /**
+         * 来源id
+         */
+        @NotBlank(message = "来源不能为空")
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        @NotBlank(message = "来源单号为空")
+        private String sourceCode;
+
+        /**
+         * 来源明细id
+         */
+        @NotBlank(message = "来源明细不能为空")
+        private String sourceDetailId;
+
+        /**
+         * 调入日期
+         */
+        private LocalDate billDate;
+
+        /**
+         * 调出日期
+         */
+        private LocalDate outDate;
+
+        /**
+         * 调拨类型
+         */
+        @NotNull(message = "调拨类型不能为空")
+        @StateEnumValue(clazz = TransferTypeEnum.class, message = "调拨类型输入值有误")
+        private TransferTypeEnum transferType;
+
+        /**
+         * 调拨方向
+         */
+        @NotNull(message = "调拨方向不能为空")
+        @StateEnumValue(clazz = TransferDirectionEnum.class, message = "调拨方向输入值有误")
+        private TransferDirectionEnum transferDirection;
+
+
+
+        /**
+         * 调出仓库
+         */
+        @NotBlank(message = "调出仓库不能为空")
+        private String outWarehouseId;
+
+        /**
+         * 调出仓位
+         */
+        @NotBlank(message = "调出仓位不能为空")
+        private String outWarehouseLocation;
+
+
+        /**
+         * 调入仓库
+         */
+        @NotBlank(message = "调入仓库不能为空")
+        private String inWarehouseId;
+
+        /**
+         * skuId
+         */
+        @NotBlank(message = "sku 不能为空")
+        private String skuId;
+
+        /**
+         * sku编号
+         */
+        @NotBlank(message = "sku no不能为空")
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+
+
+        /**
+         * 调出数量
+         */
+        private Integer outQty;
+
+        /**
+         * 调入数量
+         */
+        private Integer qty;
+
+        /**
+         * 计划调入数量
+         */
+        @NotNull(message ="计划调入数量不能为空" )
+        @DecimalMin(value = "1",message = "计划调入数量最小值为1")
+        @DecimalMax(value = "999999999",message = "计划调入数量最大值为999999999")
+        private Integer planQty;
+
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
+
+
     @Data
     @NoArgsConstructor
     public static class AddDTO {
@@ -237,6 +360,11 @@ public class TransferInDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
+
+        /**
+         * 来源code
+         */
+        private String sourceCode;
 
 
         /**
