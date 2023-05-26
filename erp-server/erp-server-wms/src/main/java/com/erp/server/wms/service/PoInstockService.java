@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -242,9 +243,10 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
      * @param id
      * @param syncKingdeeStatus
      * @param syncKingdeeId
+     * @param syncOperate
      * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/4/24 15:29
      **/
-    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId);
+    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate);
 }

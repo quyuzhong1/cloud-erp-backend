@@ -10,6 +10,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
@@ -62,10 +63,9 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         resultMap.put("name", entity.getName());
         //简称
         resultMap.put("shortName", entity.getShortName());
+        DictCountryEntity countryEntity = sysUserFeign.getCountryById(entity.getCountryId());
         //国家
-        resultMap.put("shortName", entity.getCountryId());
-
-
+        resultMap.put("countryName", countryEntity.getNameCn());
 
      /*       //仓库组织
         resultMap.put("orgId",entity.getOrgId());
@@ -99,7 +99,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_CUSTOMER_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return customerInfoService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"");
+                return customerInfoService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"", operate);
             }
             return Boolean.TRUE;
         });
