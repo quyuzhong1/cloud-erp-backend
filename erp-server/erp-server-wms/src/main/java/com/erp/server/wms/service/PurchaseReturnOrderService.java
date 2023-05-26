@@ -186,7 +186,7 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * @param syncKingdeeId
      * @return java.lang.Boolean
      **/
-    Boolean updateSyncKingdeeStatus(String id ,String syncKingdeeStatus,String syncKingdeeId);
+    Boolean updateSyncKingdeeStatus(String id ,String syncKingdeeStatus,String syncKingdeeId, String syncOperate);
 
     
     /**

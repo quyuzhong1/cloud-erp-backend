@@ -209,6 +209,12 @@ public class PurchaseReturnOrderEntity extends BaseEntity<PurchaseReturnOrderEnt
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
 
+    /**
+     * 同步操作
+     */
+    @TableField("sync_operate")
+    private String syncOperate;
+
 
     public static final String APPROVE_STATUS = "approve_status";
 

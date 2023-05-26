@@ -711,17 +711,19 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
      * @param id
      * @param syncKingdeeStatus
      * @param syncKingdeeId
+     * @param syncOperate
      * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/4/24 15:29
      **/
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId) {
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
         return this.lambdaUpdate()
                 .eq(PoInstockEntity::getId, id)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), PoInstockEntity::getSyncKingdeeStatus, syncKingdeeStatus)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), PoInstockEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId), PoInstockEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncKingdeeId), PoInstockEntity::getSyncOperate, syncOperate)
                 .update();
     }
 

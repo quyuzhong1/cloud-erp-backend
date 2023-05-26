@@ -7,6 +7,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.*;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.vo.*;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -307,4 +308,14 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/dict/listGlobalAreaByCountryIds")
     List<DictGlobalAreaDTO.InfoDTO> listGlobalAreaByCountryIds(@RequestBody List<String> countryIds);
+
+    /**
+     * 根据id获取国家信息
+     * @Author Luo_WG
+     * @Date 2023/5/26 10:45
+     * @param id
+     * @return java.util.List<com.erp.model.sys.entity.DictCountryEntity>
+     **/
+    @PostMapping("feign/dictCountry/getCountryById")
+    DictCountryEntity getCountryById(String id);
 }

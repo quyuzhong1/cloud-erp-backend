@@ -51,6 +51,7 @@
         SELECT
         srd.id,
         srd.main_id,
+        sr.source_id,
         srd.sku_id,
         srd.sku_no,
         si.warehouse_org_id AS inventoryOrgId,

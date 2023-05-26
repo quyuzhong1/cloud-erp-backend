@@ -9,6 +9,7 @@ import com.erp.server.wms.mapper.OtherOutstockCustomerMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.OtherOutstockCustomerService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -28,6 +29,7 @@ public class OtherOutstockCustomerServiceImpl extends SuperServiceImpl<OtherOuts
     private OperateLogService operateLogService;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void add(OtherOutstockCustomerDTO.AddDTO otherOutstockCustomer, String mainId) {
         OtherOutstockCustomerEntity entity = new OtherOutstockCustomerEntity();
         BeanMapperUtils.copy(otherOutstockCustomer,entity);
@@ -36,6 +38,7 @@ public class OtherOutstockCustomerServiceImpl extends SuperServiceImpl<OtherOuts
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void update(OtherOutstockCustomerDTO.UpdateDTO otherOutstockCustomer,String mainId) {
         OtherOutstockCustomerEntity entity = new OtherOutstockCustomerEntity();
         BeanMapperUtils.copy(otherOutstockCustomer,entity);

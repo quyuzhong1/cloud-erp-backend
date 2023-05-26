@@ -50,6 +50,11 @@ public class TransferInDetailDTO implements Serializable {
         private String inWarehouseLocation;
 
         /**
+         * 调出仓位
+         */
+        private String outWarehouseLocation;
+
+        /**
          * 途损数
          */
         private Integer transitDamageQty;

@@ -17,6 +17,7 @@ import com.erp.server.wms.service.OtherOutstockDetailService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -42,6 +43,7 @@ public class OtherOutstockDetailServiceImpl extends SuperServiceImpl<OtherOutsto
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void add(List<OtherOutstockDetailDTO.AddDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
@@ -55,6 +57,7 @@ public class OtherOutstockDetailServiceImpl extends SuperServiceImpl<OtherOutsto
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void update(List<OtherOutstockDetailDTO.UpdateDTO> detailList, String mainId) {
         if (detailList == null) {
             detailList = new ArrayList<>();

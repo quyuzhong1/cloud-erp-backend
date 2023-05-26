@@ -3,10 +3,12 @@ package com.erp.server.wms.service.impl;
 import com.common.business.constant.SearchType;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.validator.ValidList;
 import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.model.wms.entity.TransferInEntity;
 import com.erp.server.wms.mapper.TransferInMapper;
 import com.erp.server.wms.service.TransferInService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -59,5 +61,23 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         reject.setSearchType(rejectStatus);
         resultList.add(reject);
         return resultList;
+    }
+
+    /**
+     * 下推单据保存
+     *
+     * @param list
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-26 11:33
+     */
+    @Override
+    public Boolean generateTransferIn(ValidList<TransferInDTO.ViewGenerateTransferInDTO> list) {
+        if (CollectionUtils.isNotEmpty(list)) {
+
+        }
+
+
+        return null;
     }
 }

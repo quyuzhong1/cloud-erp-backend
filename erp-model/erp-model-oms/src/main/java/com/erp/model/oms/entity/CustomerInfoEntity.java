@@ -190,6 +190,12 @@ public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
 
+    /**
+     * 同步操作
+     */
+    @TableField("sync_operate")
+    private String syncOperate;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
