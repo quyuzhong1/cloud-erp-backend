@@ -35,6 +35,7 @@ public enum ApiError implements Serializable {
     ERROR_600(600, "缺少参数"),
     ERROR_400(400, "参数错误"),
     ERROR_DUPLICATION_NAME(501,"名称不能重复"),
+    ERROR_COPY_ERROR(505,"对象复制时类型错误"),
     ERROR_1000(1000, "参数不全或类型错误！"),
     ERROR_1001(1001, "两次密码不一致"),
     ERROR_1002(1002, "保存失败"),

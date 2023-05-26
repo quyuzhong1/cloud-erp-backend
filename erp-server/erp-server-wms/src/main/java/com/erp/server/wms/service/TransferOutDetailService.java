@@ -1,13 +1,14 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.TransferOutDetailDTO;
 import com.erp.model.wms.entity.TransferOutDetailEntity;
 
 import java.util.List;
 
 /**
  * <p>
- * 分布式调出单明细 服务类
+ * 分步式调出单明细 服务类
  * </p>
  *
  * @author lambda
@@ -22,4 +23,11 @@ public interface TransferOutDetailService extends SuperService<TransferOutDetail
      * @return List<TransferOutDetailEntity>
      */
     List<TransferOutDetailEntity> listSourceDetailIds(List<String> sourceDetailIds);
+
+    /**
+     * 分步式调出单明细新增
+     * @param detailList
+     * @param mainId
+     */
+    void add(List<TransferOutDetailDTO.AddDTO> detailList, String mainId);
 }

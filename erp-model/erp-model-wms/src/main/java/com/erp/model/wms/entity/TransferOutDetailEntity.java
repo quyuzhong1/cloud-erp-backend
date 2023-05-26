@@ -50,8 +50,8 @@ public class TransferOutDetailEntity extends BaseEntity<TransferOutDetailEntity>
     /**
      * 调出仓位
      */
-    @TableField("warehouse_location")
-    private String warehouseLocation;
+    @TableField("out_warehouse_location")
+    private String outWarehouseLocation;
 
     /**
      * 来源明细id
@@ -65,6 +65,12 @@ public class TransferOutDetailEntity extends BaseEntity<TransferOutDetailEntity>
     @TableField("remark")
     private String remark;
 
+    /**
+     * 单位
+     */
+    @TableField("unit")
+    private String unit;
+
 
     public static final String MAIN_ID = "main_id";
 
@@ -74,9 +80,11 @@ public class TransferOutDetailEntity extends BaseEntity<TransferOutDetailEntity>
 
     public static final String QTY = "qty";
 
-    public static final String WAREHOUSE_LOCATION = "warehouse_location";
+    public static final String OUT_WAREHOUSE_LOCATION = "out_warehouse_location";
 
     public static final String REMARK = "remark";
+
+    public static final String UNIT = "unit";
 
     @Override
     public Serializable pkVal() {
