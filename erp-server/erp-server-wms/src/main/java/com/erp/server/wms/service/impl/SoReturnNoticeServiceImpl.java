@@ -700,17 +700,21 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98063);
         }
-        //获取界面传过来的采购单详情表id集合
-        List<String> orderDetailIds = list.stream().map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getSourceDetailId).collect(Collectors.toList());
+        //获取退货单id
+        List<String> returnIds = list.stream().map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getSourceId).collect(Collectors.toList());
+        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(returnIds);
+        List<String> soDetailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
         //获取销售单详情信息
-        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
+        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(soDetailIds);
         //获取sku的id集合
         List<String> skuIdList = list.stream().map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(skuIdList);
         for (SoReturnNoticeDTO.GenerateSoReturnReceiveView view : list) {
+            //销售退货单
+            SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(view.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
             //销售单信息
-            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(view.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             view.setSalesQty(soDetailEntity.getQty());
             //产品sku信息
             ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());

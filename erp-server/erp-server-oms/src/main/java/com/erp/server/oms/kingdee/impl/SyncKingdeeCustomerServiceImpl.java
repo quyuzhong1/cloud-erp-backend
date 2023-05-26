@@ -65,6 +65,8 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         //国家
         resultMap.put("shortName", entity.getCountryId());
 
+
+
      /*       //仓库组织
         resultMap.put("orgId",entity.getOrgId());
         //仓库地址

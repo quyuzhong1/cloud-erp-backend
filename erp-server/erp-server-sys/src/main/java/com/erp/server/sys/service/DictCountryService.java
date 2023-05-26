@@ -25,4 +25,13 @@ public interface DictCountryService extends SuperService<DictCountryEntity> {
      * @return java.util.List<com.erp.model.sys.dto.DictCountryDTO.ListDTO>
      */
     List<DictCountryDTO.ListDTO> listCountry();
+
+    /**
+     * 获取国家列表
+     * @author yl
+     * @date 2023-05-11 16:18
+     * @param
+     * @return java.util.List<com.erp.model.sys.dto.DictCountryDTO.ListDTO>
+     */
+    List<DictCountryDTO.ListDTO> getCountryBy();
 }
