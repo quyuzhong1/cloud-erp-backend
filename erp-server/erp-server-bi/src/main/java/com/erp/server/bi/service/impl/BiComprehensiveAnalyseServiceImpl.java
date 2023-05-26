@@ -1,7 +1,6 @@
 package com.erp.server.bi.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.date.DateUtil;
@@ -100,7 +99,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         String lastYearKey = String.valueOf(LocalDate.now().minusYears(1L).getYear());
         String thisYearKey = String.valueOf(LocalDate.now().minusYears(1L).getYear());
         for (DmpShopInfoEntity dmpShopInfoEntity : dmpShopInfoEntities) {
-            Map<String, BigDecimal> yearMap = shopNoMap.get(dmpShopInfoEntity.getPlarformShopNo());
+            Map<String, BigDecimal> yearMap = shopNoMap.get(dmpShopInfoEntity.getPlatformShopNo());
             if(CollectionUtil.isEmpty(yearMap)){
                 continue;
             }

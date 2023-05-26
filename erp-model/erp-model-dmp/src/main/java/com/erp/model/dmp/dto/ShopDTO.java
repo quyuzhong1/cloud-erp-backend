@@ -16,7 +16,7 @@ public class ShopDTO {
     /**
      * 平台店铺编号
      */
-    private String plarformShopNo;
+    private String platformShopNo;
 
     /**
      * 平台店铺账户

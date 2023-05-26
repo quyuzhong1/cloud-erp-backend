@@ -168,7 +168,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
                 sysUserDeptDTO = userDeptList.stream().filter(obj -> dto.getChargeId().equals(obj.getUid())).findFirst().orElse(null);
             }
             //更新启用日期后的店铺业务负责人
-            updateCharge(dmpShopInfoEntity.getId(),dmpShopInfoEntity.getPlarformShopNo(), dto.getEnableTime(), findUserDTO.getUserId(), findUserDTO.getUserName(), sysUserDeptDTO);
+            updateCharge(dmpShopInfoEntity.getId(),dmpShopInfoEntity.getPlatformShopNo(), dto.getEnableTime(), findUserDTO.getUserId(), findUserDTO.getUserName(), sysUserDeptDTO);
 
         }
         return this.updateById(dmpShopInfoEntity);
@@ -246,7 +246,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
             List<DmpShopInfoEntity> shopInfoList = item.getValue();
             String site = item.getKey();
             vo.setSite(site);
-            vo.setShopNo(shopInfoList.stream().map(DmpShopInfoEntity::getPlarformShopNo).collect(Collectors.toList()));
+            vo.setShopNo(shopInfoList.stream().map(DmpShopInfoEntity::getPlatformShopNo).collect(Collectors.toList()));
             resultList.add(vo);
         }
         return resultList;
@@ -266,7 +266,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         if (CollectionUtils.isEmpty(shopNoList)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(DmpShopInfoEntity::getPlarformShopNo,shopNoList).list();
+        return lambdaQuery().in(DmpShopInfoEntity::getPlatformShopNo,shopNoList).list();
     }
 
     private List<DmpShopInfoEntity> getSiteShopList() {

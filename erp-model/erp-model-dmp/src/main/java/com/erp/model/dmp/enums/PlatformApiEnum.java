@@ -21,8 +21,15 @@ public enum PlatformApiEnum {
 
     //获取退货订单数据
     ORDER_GET_RETURN_ORDER_LIST(5,"order-get-return-order-list"),
-    //商品出库详情
+    /**
+     * 获取出库单列表
+     */
     ORDER_GET_DELIVERY_LIST(16,"order-get-delivery-list"),
+
+    /**
+     * 获取历史商品出库详情
+     */
+    ORDER_GET_HISTORY_DELIVERY_LIST(24,"order-get-history-delivery-list"),
 
     /**
      * 管易云api

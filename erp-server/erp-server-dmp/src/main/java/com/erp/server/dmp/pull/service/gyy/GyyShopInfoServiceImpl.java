@@ -116,7 +116,7 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
         // 异步推送到MQ
         entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_SHOP_INFO_TAG.getName(),
-                    msg, StrUtil.format("{}_{}", msg.getPlarformShopNo(), msg.getFinanceCode()));
+                    msg, StrUtil.format("{}_{}", msg.getPlatformShopNo(), msg.getFinanceCode()));
             if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
@@ -147,7 +147,7 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
     private DmpShopInfoEntity initOrderInfoEntity(GyyShopInfoEntity shopInfoEntity) {
         DmpShopInfoEntity dmpShopInfoEntity = new DmpShopInfoEntity();
         //平台店铺编号
-        dmpShopInfoEntity.setPlarformShopNo(shopInfoEntity.getCode());
+        dmpShopInfoEntity.setPlatformShopNo(shopInfoEntity.getCode());
         //平台店铺账户
         dmpShopInfoEntity.setAccountUserName("");
         //平台店铺标识

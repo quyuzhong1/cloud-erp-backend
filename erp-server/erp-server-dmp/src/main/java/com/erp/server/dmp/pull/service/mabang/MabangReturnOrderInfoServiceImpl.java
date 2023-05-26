@@ -169,7 +169,11 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
         // 平台名称
         dmpReturnOrderInfoEntity.setPlatformName(returnOrderEntity.getPlatformId());
         //退货单号
-        dmpReturnOrderInfoEntity.setReturnOrderId(returnOrderEntity.getPlatformOrderId());
+        dmpReturnOrderInfoEntity.setPlatformOrderId(returnOrderEntity.getPlatformOrderId());
+        // 平台退款单号
+        dmpReturnOrderInfoEntity.setPlatformReturnCode(returnOrderEntity.getPlatformReturnOrder());
+        // 马帮退款单号
+        dmpReturnOrderInfoEntity.setReturnCode(returnOrderEntity.getReturnOrderId());
         //店铺编号
         dmpReturnOrderInfoEntity.setShopNo(returnOrderEntity.getShopId());
         //平台标识
