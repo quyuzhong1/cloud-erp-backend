@@ -116,6 +116,18 @@ public class OtherOutstockEntity extends BaseEntity<OtherOutstockEntity> {
     private String inventoryDirection;
 
     /**
+     * 领料部门id
+     */
+    @TableField("dept_id")
+    private String deptId;
+
+    /**
+     * 领料部门名称
+     */
+    @TableField("dept_name")
+    private String deptName;
+
+    /**
      * 作废状态（false未作废，true已作废）
      */
     @TableField("invalid_status")

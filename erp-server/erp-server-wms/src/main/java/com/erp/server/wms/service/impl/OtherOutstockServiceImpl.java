@@ -30,6 +30,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.OtherOutstockCustomerDTO;
 import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.dto.OtherOutstockDetailDTO;
@@ -173,7 +174,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         OtherOutstockEntity entity = new OtherOutstockEntity();
         BeanMapperUtils.copy(dto, entity);
         //处理数据id
-        doOpHandleDataId(dto.getWarehouseId(), dto.getReceiveOrgId(), dto.getWarehouseKeeperId(),dto.getReceiverId(), entity);
+        doOpHandleDataId(dto.getWarehouseId(), dto.getReceiveOrgId(), dto.getWarehouseKeeperId(),dto.getReceiverId(),dto.getDeptId(), entity);
         log.info("其他出库单新增");
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.QTCK, BusinessNoTypeEnum.CODE_QTCK.getCode()));
@@ -219,7 +220,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         BeanMapperUtils.copy(dto, entity);
         List<OtherOutstockDetailDTO.UpdateDTO> detailList = dto.getDetailList();
         //处理数据id
-        doOpHandleDataId(dto.getWarehouseId(), dto.getReceiveOrgId(), dto.getWarehouseKeeperId(),dto.getReceiverId(), entity);
+        doOpHandleDataId(dto.getWarehouseId(), dto.getReceiveOrgId(), dto.getWarehouseKeeperId(),dto.getReceiverId(),entity.getDeptId(), entity);
 
         log.info("其他出库单修改，id=【{}】", dto.getId());
 
@@ -560,7 +561,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         }
     }
 
-    private void doOpHandleDataId (String warehouseId, String receiveOrgId, String warehouseKeeperId,String receiverId, OtherOutstockEntity entity) {
+    private void doOpHandleDataId (String warehouseId, String receiveOrgId, String warehouseKeeperId,String receiverId,String deptId, OtherOutstockEntity entity) {
         //用户信息
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(warehouseKeeperId,receiverId));
         if (CollectionUtils.isNotEmpty(userList)) {
@@ -591,6 +592,12 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         //收料组织名称
         String receiveOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(receiveOrgId)).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
         entity.setReceiveOrgName(receiveOrgName);
+
+        //部门信息
+        SysDepartmentDTO sysDepartmentDTO = sysUserFeign.getUserDeptById(deptId);
+        if (ObjectUtils.isNotEmpty(sysDepartmentDTO)) {
+            entity.setDeptName(sysDepartmentDTO.getName());
+        }
     }
 
     /**

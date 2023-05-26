@@ -2,18 +2,27 @@ package com.erp.server.wms.service.impl;
 
 import com.common.business.constant.SearchType;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.validator.ValidList;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.TransferInDTO;
+import com.erp.model.wms.dto.TransferInDetailDTO;
 import com.erp.model.wms.entity.TransferInEntity;
+import com.erp.model.wms.entity.TransferOutDetailEntity;
 import com.erp.server.wms.mapper.TransferInMapper;
 import com.erp.server.wms.service.TransferInService;
+import com.erp.server.wms.service.TransferOutDetailService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -25,6 +34,10 @@ import java.util.Optional;
  */
 @Service
 public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, TransferInEntity> implements TransferInService {
+
+
+    @Resource
+    private TransferOutDetailService transferOutDetailService;
 
     @Override
     public List<TransferInDTO.TabListDTO> tabList() {
@@ -72,12 +85,73 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
      * @date 2023-05-26 11:33
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean generateTransferIn(ValidList<TransferInDTO.ViewGenerateTransferInDTO> list) {
         if (CollectionUtils.isNotEmpty(list)) {
+            return Boolean.FALSE;
+        }
+        Map<String, List<TransferInDTO.ViewGenerateTransferInDTO>> map = list.stream().collect(Collectors.groupingBy(TransferInDTO.ViewGenerateTransferInDTO::getSourceId));
+        List<TransferInDTO.AddDTO> addList = new ArrayList<>(map.size());
 
+        //这个是调出详情id
+        List<String> outDetailIds = list.stream().map(TransferInDTO.ViewGenerateTransferInDTO::getSourceDetailId).collect(Collectors.toList());
+        //调出单详情
+        List<TransferOutDetailEntity> outDetailList = CollectionUtils.isNotEmpty(outDetailIds) ? transferOutDetailService.listByIds(outDetailIds) : Collections.emptyList();
+        String sourceType = SourceTypeEnum.TRANSFER_OUT.getCode();
+        for (Map.Entry<String, List<TransferInDTO.ViewGenerateTransferInDTO>> entry : map.entrySet()) {
+            //来源id
+            String sourceId = entry.getKey();
+            List<TransferInDTO.ViewGenerateTransferInDTO> generateInfoList = entry.getValue();
+            TransferInDTO.ViewGenerateTransferInDTO viewGenerate = generateInfoList.stream().filter(g -> StringUtils.isNotBlank(g.getSourceCode())).findFirst().orElse(null);
+            if (viewGenerate != null) {
+                TransferInDTO.AddDTO addDTO = new TransferInDTO.AddDTO();
+                addDTO.setInWarehouseId(viewGenerate.getInWarehouseId());
+                addDTO.setOutWarehouseId(viewGenerate.getOutWarehouseId());
+                addDTO.setSourceCode(viewGenerate.getSourceCode());
+                addDTO.setSourceId(sourceId);
+                addDTO.setSourceType(sourceType);
+                addDTO.setTransferDirection(viewGenerate.getTransferDirection());
+                addDTO.setTransferType(viewGenerate.getTransferType());
+                addDTO.setBillDate(LocalDate.now());
+                List<TransferInDetailDTO.AddDTO> detailList = new ArrayList<>(generateInfoList.size());
+                for (TransferInDTO.ViewGenerateTransferInDTO item : generateInfoList) {
+                    TransferInDetailDTO.AddDTO detail = new TransferInDetailDTO.AddDTO();
+                    detail.setOutWarehouseLocation(item.getOutWarehouseLocation());
+                    detail.setSkuId(item.getSkuId());
+                    detail.setSourceDetailId(item.getSourceDetailId());
+                    Integer planQty = item.getPlanQty();
+                    String sourceDetailId = item.getSourceDetailId();
+                    Integer outQty = outDetailList.stream().filter(o -> o.getId().equals(sourceDetailId)).findFirst().
+                            flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(0);
+                    if (planQty > outQty) {
+                        throw new ServiceException(ApiError.ERROR_99065);
+                    }
+                    detail.setQty(planQty);
+                    detail.setPlanQty(planQty);
+                    detail.setRemark(item.getRemark());
+                    detail.setTransitDamageQty(0);
+                    detailList.add(detail);
+                }
+                addDTO.setDetailList(detailList);
+                addList.add(addDTO);
+            }
         }
 
+        return this.batchAdd(addList);
+    }
 
-        return null;
+    /**
+     * 批量添加数据
+     *
+     * @param addList
+     * @return
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean batchAdd(List<TransferInDTO.AddDTO> addList) {
+        if (CollectionUtils.isEmpty(addList)) {
+            return Boolean.FALSE;
+        }
+
+        return Boolean.TRUE;
     }
 }
