@@ -6,6 +6,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -32,6 +33,7 @@ public class TransferOutDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class TabListDTO {
         //类型
         private String searchType;

@@ -83,7 +83,7 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
                 throw new ServiceException(StrUtil.format("SKU【{}】错误", data.getSkuNo()));
             }
             // 单位
-            String unit = skuVO.getUnitName();
+            String unit = StrUtils.null2EmptyWithTrim(skuVO.getUnitName());
             data.setUnit(unit);
             data.setMainId(mainId);
             data.setSkuNo(skuMap.get(data.getSkuId()).getSkuNo());// 填充sku编号

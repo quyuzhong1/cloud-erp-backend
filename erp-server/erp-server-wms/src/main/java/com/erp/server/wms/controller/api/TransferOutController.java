@@ -2,10 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -34,13 +31,17 @@ public class TransferOutController extends BaseController {
     private final TransferOutService transferOutService;
 
     /**
-     * 获取 tab列表
-     *
+     * 获取 状态统计
      * @return
      */
-    @GetMapping("/tabList")
-    public ApiResult<List<TransferOutDTO.TabListDTO>> tabList() {
-        return success(null);
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "warehouse_keeper_id",
+            menuCode = "wms:transferOut:paging",
+            tableAlias = "tfo"
+    )
+    @PostMapping("/tabList")
+    public ApiResult<List<TransferOutDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        return success(transferOutService.listCount(dto));
     }
 
 
@@ -59,15 +60,6 @@ public class TransferOutController extends BaseController {
         return success(transferOutService.paging(dto));
     }
 
-    /**
-     * 新增
-     * @param dto
-     * @return
-     */
-    @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated TransferOutDTO.AddDTO dto) {
-        return  success();
-    }
 
     /**
      * 提交

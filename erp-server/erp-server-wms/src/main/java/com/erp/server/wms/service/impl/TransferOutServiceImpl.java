@@ -7,8 +7,10 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.ApproveStatusQtyDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
@@ -22,6 +24,7 @@ import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.TransferOutDTO;
@@ -141,6 +144,28 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
+    }
+
+    @Override
+    public List<TransferOutDTO.TabListDTO> listCount(PermissionsDTO param) {
+        TransferOutDTO.PagingParamDTO searchParam = new TransferOutDTO.PagingParamDTO();
+        searchParam.setPermissionSql(param.getPermissionSql());
+        List<ApproveStatusQtyDTO> statusList = this.baseMapper.listCount(searchParam);
+        // 根据状态转换成map
+        Map<String,ApproveStatusQtyDTO> statusMap = statusList.stream().collect(Collectors.toMap(ApproveStatusQtyDTO::getApproveStatus, Function.identity()));
+        // 只返回待审核、已审核、审核不通过的数据
+        List<TransferOutDTO.TabListDTO> resultList = Lists.newArrayListWithExpectedSize(3);
+        Map<PurchaseChangeListTypeEnum, ApproveStatusEnum> statusMapping = new LinkedHashMap<>();
+        statusMapping.put(PurchaseChangeListTypeEnum.TO_BE_APPROVE, ApproveStatusEnum.APPROVE_ING);
+        statusMapping.put(PurchaseChangeListTypeEnum.APPROVE, ApproveStatusEnum.APPROVE);
+        statusMapping.put(PurchaseChangeListTypeEnum.REJECT, ApproveStatusEnum.REJECT);
+
+        statusMapping.forEach((purchaseChangeType, approveStatus)->{
+            Integer qty = statusMap.getOrDefault(approveStatus, new ApproveStatusQtyDTO()).getCount();
+            TransferOutDTO.TabListDTO tab = new TransferOutDTO.TabListDTO(purchaseChangeType.getCode(), qty);
+            resultList.add(tab);
+        });
+        return resultList;
     }
 
     /**

@@ -158,4 +158,19 @@
         tfo.id desc,tod.id desc
     </select>
 
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select
+        tfo.approve_status,
+        count(distinct tfo.id)
+        from transfer_out tfo
+        left join transfer_out_detail tod on tfo.id = tod.main_id and tod.is_deleted = false
+        <where>
+            tfo.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+            group by tfo.approve_status
+        </where>
+    </select>
+
 </mapper>

@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.TransferOutDTO;
@@ -46,4 +47,11 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
      * @param response
      */
     void exportList(TransferOutDTO.ExportDTO param, HttpServletResponse response);
+
+    /**
+     * 状态统计
+     * @param param
+     * @return
+     */
+    List<TransferOutDTO.TabListDTO> listCount(PermissionsDTO param);
 }
