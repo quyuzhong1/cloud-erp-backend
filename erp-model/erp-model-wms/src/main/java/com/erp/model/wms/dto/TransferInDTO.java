@@ -16,7 +16,6 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -56,29 +55,21 @@ public class TransferInDTO implements Serializable {
          */
         private String code;
 
-
         /**
          * 关联code
          */
         private String sourceCode;
 
         /**
-         * 来源类型
-         */
-        private String sourceType;
-
-
-        /**
          * 调入日期
          */
-        private Date billDate;
-
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        private LocalDate billDate;
 
         /**
          * 审核状态code
          */
         private ApproveStatusEnum approveStatus;
-
 
         /**
          * 审核状态名
@@ -98,7 +89,12 @@ public class TransferInDTO implements Serializable {
         /**
          * 调拨方向
          */
-        private String transferDirection;
+        private TransferDirectionEnum transferDirection;
+
+        /**
+         * 调拨方向
+         */
+        private String transferDirectionName;
 
         /**
          * 调出仓库id
@@ -120,10 +116,7 @@ public class TransferInDTO implements Serializable {
          */
         private String inWarehouseName;
 
-        /**
-         * 调拨方向
-         */
-        private String transferDirectionName;
+
 
         /**
          * sku id
@@ -174,6 +167,16 @@ public class TransferInDTO implements Serializable {
     public static class PagingParamDTO extends SortDTO {
 
         /**
+         * all 全部
+         * waitApprove 待审核
+         * approve 已审核
+         * reject 审核不通过
+         */
+        @StateEnumValue(strValues = {"all", "waitApprove", "approve", "reject"}, message = "搜索类型有误")
+        @NotBlank(message = "搜索类型不能为空")
+        private String searchType;
+
+        /**
          * sku no 集合
          */
         private List<String> skuNoList;
@@ -213,7 +216,7 @@ public class TransferInDTO implements Serializable {
         /**
          * 创建时间
          */
-        private List<LocalDateTime> createTimeList;
+        private List<LocalDate> createTimeList;
 
         /**
          * 调出仓库集合

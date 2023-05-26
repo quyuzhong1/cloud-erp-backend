@@ -11,4 +11,32 @@
 	     WHERE is_deleted=FALSE
          GROUP BY approve_status
     </select>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.TransferInDTO$PagingViewDTO">
+        SELECT
+          ti.id,
+          ti.code,
+          ti.source_code,
+          ti.transfer_direction,
+          ti.approve_status,
+          ti.invalid_status,
+          ti.bill_date,
+          ti.out_warehouse_id,
+          ti.out_warehouse_name,
+          ti.in_warehouse_id,
+          ti.in_warehouse_name,
+          tid.sku_id,
+          tid.sku_no,
+          tid.qty,
+          tid.out_warehouse_location,
+          tid.remark,
+          tid.plan_qty,
+          tid.source_detail_id
+        FROM transfer_in ti
+        INNER JOIN transfer_in_detail tid
+        ON ti.id=tid.main_id AND tid.is_deleted=FALSE
+        WHERE ti.is_deleted=FALSE
+
+
+    </select>
 </mapper>

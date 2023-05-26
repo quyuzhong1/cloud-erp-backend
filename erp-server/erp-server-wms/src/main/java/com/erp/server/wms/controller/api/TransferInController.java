@@ -1,14 +1,17 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.server.wms.service.TransferInService;
 import org.springframework.validation.annotation.Validated;
@@ -51,8 +54,15 @@ public class TransferInController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:transfer:in:paging",
+            serviceClass = TransferInService.class,
+            keyIdName = "so"
+    )
     public ApiResult<PagingVO<TransferInDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<TransferInDTO.PagingParamDTO> dto) {
-        return success(null);
+        PagingVO<TransferInDTO.PagingViewDTO> pagingVO = transferInService.paging(dto);
+        return success(pagingVO);
     }
 
 

@@ -3,6 +3,8 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.wms.enums.TransferDirectionEnum;
+import com.erp.model.wms.enums.TransferTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -40,7 +42,7 @@ public class TransferInEntity extends BaseEntity<TransferInEntity> {
      * 调拨类型
      */
     @TableField("type")
-    private String transferType;
+    private TransferTypeEnum transferType;
 
     /**
      * 调入日期
@@ -88,7 +90,7 @@ public class TransferInEntity extends BaseEntity<TransferInEntity> {
      * 调拨方向
      */
     @TableField("transfer_direction")
-    private String transferDirection;
+    private TransferDirectionEnum transferDirection;
 
     /**
      * 备注
