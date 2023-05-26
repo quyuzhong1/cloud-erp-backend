@@ -147,4 +147,14 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/soDeliveryNotice/getPushDownBySoDetailIds")
     Integer getPushDownBySoDetailIds(@RequestBody List<String> soDetailIdList);
+
+    /**
+     * 关闭关联单据的关闭状态
+     * @author yl
+     * @date 2023-05-25 19:25
+     * @param terminateSoDetailIds
+     * @return void
+     */
+    @PostMapping("feign/soDeliveryNotice/closeBySoDetailIds")
+    void closeBySoDetailIds(@RequestBody List<String> terminateSoDetailIds);
 }

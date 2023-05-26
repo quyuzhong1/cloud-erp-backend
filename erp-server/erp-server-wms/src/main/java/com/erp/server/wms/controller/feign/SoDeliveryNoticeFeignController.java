@@ -28,8 +28,29 @@ public class SoDeliveryNoticeFeignController {
     }
 
 
+    /**
+     * 根据销售 销售订单ids 获取是否有下推的单据
+     * @author yl
+     * @date 2023-05-25 10:27
+     * @param soDetailIds
+     * @return java.lang.Integer
+     */
     @PostMapping("/getPushDownBySoDetailIds")
     public Integer getPushDownBySoDetailIds(@RequestBody List<String> soDetailIds) {
         return soDeliveryNoticeDetailService.getPushDownBySoDetailIds(soDetailIds);
+    }
+
+
+
+    /**
+     * 关闭关联单据的关闭状态
+     * @author yl
+     * @date 2023-05-25 19:25
+     * @param soDetailIds
+     * @return void
+     */
+    @PostMapping("/closeBySoDetailIds")
+    public void closeBySoDetailIds(@RequestBody List<String> soDetailIds) {
+         soDeliveryNoticeDetailService.closeBySoDetailIds(soDetailIds);
     }
 }

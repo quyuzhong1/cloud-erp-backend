@@ -8,6 +8,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.entity.SoChangeDetailEntity;
+import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -18,6 +19,7 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.mapper.SoChangeDetailMapper;
 import com.erp.server.oms.service.SoChangeDetailService;
 import com.erp.server.oms.service.SoDetailService;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -223,13 +225,89 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 view.setSkuNo(item.getSkuNo());
                 view.setSoDetailId(item.getId());
                 String productName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
-                        flatMap(obj->Optional.ofNullable(obj.getSkuName())).orElse("");
+                        flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
                 view.setProductName(productName);
                 viewList.add(view);
             }
         }
 
         return viewList;
+    }
+
+
+    /**
+     * 审核通过处理数据
+     *
+     * @param list
+     * @return void
+     * @author yl
+     * @date 2023-05-25 17:44
+     */
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void handleDb(List<SoChangeEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<String> mainIds = list.stream().map(SoChangeEntity::getId).collect(Collectors.toList());
+        List<SoChangeDetailEntity> soChangeDetailList = this.listDetailByMainIds(mainIds);
+        if (CollectionUtils.isNotEmpty(soChangeDetailList)) {
+            SoChangeTypeEnum deleteType = SoChangeTypeEnum.DELETE;
+            List<String> deleteSoDetailIdList = soChangeDetailList.stream().filter(s -> s.getChangeType().equals(deleteType)).
+                    map(SoChangeDetailEntity::getSoDetailId).collect(Collectors.toList());
+            soDetailService.removeByIds(deleteSoDetailIdList);
+            List<SoChangeDetailEntity> otherList = soChangeDetailList.stream().filter(s -> !s.getChangeType().equals(deleteType)).
+                    collect(Collectors.toList());
+            List<SoDetailEntity> saveOrUpdateList = new ArrayList<>(otherList.size());
+            //终止
+            String terminate = SoChangeTypeEnum.TERMINATE.getCode();
+            Boolean close = Boolean.TRUE;
+            List<String> terminateSoDetailIds = new ArrayList<>(10);
+            for (SoChangeDetailEntity item : otherList) {
+                //变更类型
+                String changeType = item.getChangeType().getCode();
+                String soChangeId = item.getMainId();
+                String soId = list.stream().filter(l -> l.getId().equals(soChangeId)).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getSoId())).orElse("");
+                if (StringUtils.isEmpty(soId)) {
+                    continue;
+                }
+                SoDetailEntity soDetail = new SoDetailEntity();
+                soDetail.setPrice(item.getPrice());
+                soDetail.setCurrency(item.getCurrency());
+                soDetail.setCurrencySymbol(item.getCurrencySymbol());
+                soDetail.setSkuNo(item.getSkuNo());
+                soDetail.setSkuId(item.getSkuId());
+                soDetail.setAmount(item.getAmount());
+                soDetail.setTaxRate(item.getTaxRate());
+                soDetail.setQty(item.getQty());
+                soDetail.setIsGift(item.getIsGift());
+                soDetail.setIsReissue(item.getIsReissue());
+                soDetail.setRemark(item.getRemark());
+                String soDetailId = item.getSoDetailId();
+                soDetail.setId(soDetailId);
+                soDetail.setMainId(soId);
+                if (changeType.equals(terminate)) {
+                    soDetail.setIsClose(close);
+                    terminateSoDetailIds.add(soDetailId);
+                } else {
+                    soDetail.setIsClose(false);
+
+                }
+                saveOrUpdateList.add(soDetail);
+            }
+            soDetailService.saveOrUpdateBatch(saveOrUpdateList);
+            //关闭关联单据的关闭状态
+            wmsTaskFeign.closeBySoDetailIds(terminateSoDetailIds);
+        }
+
+    }
+
+    private List<SoChangeDetailEntity> listDetailByMainIds(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(SoChangeDetailEntity::getMainId, mainIds).list();
     }
 
     /**

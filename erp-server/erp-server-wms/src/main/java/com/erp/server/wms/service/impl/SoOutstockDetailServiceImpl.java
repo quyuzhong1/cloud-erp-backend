@@ -430,6 +430,23 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         return resultList;
     }
 
+
+    /**
+     * 关闭关联单据的关闭状态
+     *
+     * @param soDetailIds
+     * @return void
+     * @author yl
+     * @date 2023-05-25 19:25
+     */
+    @Override
+    public void closeBySoDetailIds(List<String> soDetailIds) {
+        if(CollectionUtils.isNotEmpty(soDetailIds)){
+
+        }
+
+    }
+
     private List<String> getDeleteIds(List<Pair<String, String>> pairList, List<SoOutstockDetailEntity> dbList) {
         List<String> ids = pairList.stream().filter(g -> StringUtils.isNotBlank(g.getKey())).
                 map(obj -> obj.getKey()).collect(Collectors.toList());

@@ -53,7 +53,7 @@
             AND sc.code ILIKE concat('%', #{params.code} ,'%')
         </if>
         <if test="params.soCode !=null and params.soCode!=''">
-            AND si.so_code ILIKE concat('%', #{params.soCode} ,'%')
+            AND si.code ILIKE concat('%', #{params.soCode} ,'%')
         </if>
         <if test="params.orderType !=null and params.orderType!=''">
             AND si.order_type =#{params.orderType}
@@ -139,7 +139,7 @@
                     AND sc.code ILIKE concat('%', #{params.code} ,'%')
                 </if>
                 <if test="params.soCode !=null and params.soCode!=''">
-                    AND si.so_code ILIKE concat('%', #{params.soCode} ,'%')
+                    AND si.code ILIKE concat('%', #{params.soCode} ,'%')
                 </if>
                 <if test="params.orderType !=null and params.orderType!=''">
                     AND si.order_type =#{params.orderType}

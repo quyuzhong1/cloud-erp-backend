@@ -97,4 +97,13 @@ public interface SoDeliveryNoticeDetailService extends SuperService<SoDeliveryNo
      * @return java.lang.Integer
      */
     Integer getPushDownBySoDetailIds(List<String> soDetailIds);
+
+    /**
+     * 关闭关联单据的关闭状态
+     * @author yl
+     * @date 2023-05-25 19:25
+     * @param soDetailIds
+     * @return void
+     */
+    void closeBySoDetailIds(List<String> soDetailIds);
 }

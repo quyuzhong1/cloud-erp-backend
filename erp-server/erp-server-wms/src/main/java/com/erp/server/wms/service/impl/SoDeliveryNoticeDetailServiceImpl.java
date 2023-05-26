@@ -19,6 +19,7 @@ import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SoDeliveryNoticeDetailService;
 import com.erp.server.wms.service.SoOutstockDetailService;
 import com.erp.server.wms.service.WmsAttachmentService;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -243,6 +244,27 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         Integer deliveryNoticeCount = this.lambdaQuery().in(SoDeliveryNoticeDetailEntity::getSourceDetailId, soDetailIds).count();
 
         Integer soOutstockCount = soOutstockDetailService.getPushDownCountBySoDetailIds(soDetailIds);
-        return deliveryNoticeCount+soOutstockCount;
+        return deliveryNoticeCount + soOutstockCount;
+    }
+
+
+    /**
+     * 关闭关联单据的关闭状态
+     *
+     * @param soDetailIds
+     * @return void
+     * @author yl
+     * @date 2023-05-25 19:25
+     */
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void closeBySoDetailIds(List<String> soDetailIds) {
+        if (CollectionUtils.isNotEmpty(soDetailIds)) {
+            this.lambdaUpdate().set(SoDeliveryNoticeDetailEntity::getIsClose, Boolean.TRUE).
+                    in(SoDeliveryNoticeDetailEntity::getSourceDetailId, soDetailIds).update();
+
+            soOutstockDetailService.closeBySoDetailIds(soDetailIds);
+        }
+
     }
 }

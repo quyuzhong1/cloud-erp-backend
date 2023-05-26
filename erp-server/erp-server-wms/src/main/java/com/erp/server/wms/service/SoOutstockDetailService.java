@@ -105,4 +105,14 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @return java.util.List<com.erp.model.wms.dto.SoOutstockDTO.SoRefDTO>
      **/
     List<SoOutstockDetailEntity> listDetailBySoIds(List<String> soIds);
+
+    /**
+     * 关闭关联单据的关闭状态
+     *
+     * @param soDetailIds
+     * @return void
+     * @author yl
+     * @date 2023-05-25 19:25
+     */
+    void closeBySoDetailIds(List<String> soDetailIds);
 }

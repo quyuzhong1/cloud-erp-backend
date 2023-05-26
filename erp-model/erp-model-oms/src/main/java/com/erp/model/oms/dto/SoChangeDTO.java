@@ -83,6 +83,12 @@ public class SoChangeDTO implements Serializable {
 
 
         /**
+         * 销售订单id
+         */
+        private String soId;
+
+
+        /**
          * 审核状态code
          */
         private ApproveStatusEnum approveStatus;

@@ -3,6 +3,7 @@ package com.erp.server.oms.service;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.entity.SoChangeDetailEntity;
+import com.erp.model.oms.entity.SoChangeEntity;
 
 import java.util.List;
 
@@ -75,4 +76,14 @@ public interface SoChangeDetailService extends SuperService<SoChangeDetailEntity
      * @return java.util.List<com.erp.model.oms.dto.SoChangeDetailDTO.ViewDTO>
      */
     List<SoChangeDetailDTO.ViewDTO> listDetailBySoId(String soId);
+
+
+    /**
+     * 审核通过处理数据
+     * @author yl
+     * @date 2023-05-25 17:44
+     * @param list
+     * @return void
+     */
+    void handleDb(List<SoChangeEntity> list);
 }

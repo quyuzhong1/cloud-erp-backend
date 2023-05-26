@@ -633,6 +633,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         String content = "";
         LoginUser user = commonService.getUserInfo();
         if (dto.getType().equals(ApproveType.PASS)) {
+            soChangeDetailService.handleDb(list);
             //审核通过
             result = this.updateApproveInfo(list, ApproveStatusEnum.APPROVE, user.getUid(), user.getUserName());
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
@@ -649,6 +650,10 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         }
         return result;
     }
+
+    
+
+
 
     /**
      * 撤销流程
