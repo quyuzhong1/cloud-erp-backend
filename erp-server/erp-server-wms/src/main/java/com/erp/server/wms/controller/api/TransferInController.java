@@ -59,7 +59,7 @@ public class TransferInController extends BaseController {
     /**
      * 分布式调出单下推 分布式调入
      *
-     * @param dto
+     * @param list
      * @return com.common.core.controller.vo.ApiResult
      * @author yl
      * @date 2023-05-23 15:15

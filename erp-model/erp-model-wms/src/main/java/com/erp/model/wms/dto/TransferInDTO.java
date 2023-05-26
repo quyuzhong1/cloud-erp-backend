@@ -367,10 +367,7 @@ public class TransferInDTO implements Serializable {
         private String sourceCode;
 
 
-        /**
-         * 类型
-         */
-        private String type;
+
 
 
         /**
@@ -396,7 +393,12 @@ public class TransferInDTO implements Serializable {
         /**
          * 调拨方向
          */
-        private String transferDirection;
+        private TransferDirectionEnum transferDirection;
+
+        /**
+         * 调拨类型
+         */
+        private TransferTypeEnum transferType;
 
 
         /**

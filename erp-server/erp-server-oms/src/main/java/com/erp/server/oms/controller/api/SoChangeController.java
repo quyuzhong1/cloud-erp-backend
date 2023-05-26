@@ -76,6 +76,18 @@ public class SoChangeController extends BaseController {
         return success(view);
     }
 
+    /**
+     * 根据销售订单详情id 检测能否变更
+     *
+     * @param
+     * @return
+     */
+    @PostMapping("/checkBySoDetailIds")
+    public ApiResult<List<String>> checkBySoDetailIds(@RequestBody List<String>  soDetailIds) {
+        List<String> soDetailIdList = soChangeService.checkBySoDetailIds(soDetailIds);
+        return success(soDetailIds);
+    }
+
 
     /**
      * 根据销售订单id 获取到对应的产品信息
