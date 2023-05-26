@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoChangeDTO;
+import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -161,4 +162,14 @@ public interface SoChangeService extends SuperService<SoChangeEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoChangeDTO.SoRefDTO>
      */
     List<SoChangeDTO.SoRefDTO> listSoRefSoChangeBySoId(String soId);
+
+    
+    /**
+     * 根据选择销售订单id 获取到对应的sku 信息
+     * @author yl
+     * @date 2023-05-26 9:26
+     * @param soId
+     * @return java.util.List<com.erp.model.oms.dto.SoChangeDetailDTO.ViewDTO>
+     */
+    List<SoChangeDetailDTO.ViewDTO> listSoSkuBySoId(String soId);
 }

@@ -69,6 +69,4 @@ public class SoDetailController extends BaseController {
 
 
 
-
-
 }
