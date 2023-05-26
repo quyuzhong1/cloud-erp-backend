@@ -98,13 +98,13 @@ public class OtherInstockEntity extends BaseEntity<OtherInstockEntity> {
     private String orgName;
 
     /**
-     * 部门id
+     * 领料部门id
      */
     @TableField("dept_id")
     private String deptId;
 
     /**
-     * 部门名称
+     * 领料部门名称
      */
     @TableField("dept_name")
     private String deptName;
