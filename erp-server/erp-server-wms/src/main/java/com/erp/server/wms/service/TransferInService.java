@@ -1,7 +1,10 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.model.wms.entity.TransferInEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -13,4 +16,5 @@ import com.erp.model.wms.entity.TransferInEntity;
  */
 public interface TransferInService extends SuperService<TransferInEntity> {
 
+    List<TransferInDTO.TabListDTO> tabList();
 }

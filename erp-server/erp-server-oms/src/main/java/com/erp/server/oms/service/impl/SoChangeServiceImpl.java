@@ -26,6 +26,7 @@ import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoChangeEntity;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -75,6 +76,10 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
     @Resource
     private SoChangeDetailService soChangeDetailService;
+
+
+    @Resource
+    private SoDetailService soDetailService;
 
     @Resource
     private SoInfoService soInfoService;
@@ -535,15 +540,32 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     /**
      * 根据销售订单id 获取到对应详情
      *
-     * @param soId
+     * @param soDetailIds
      * @return com.erp.model.oms.dto.SoChangeDTO.ViewDTO
      * @author yl
      * @date 2023-05-25 14:04
      */
     @Override
-    public SoChangeDTO.ViewDTO getViewBySoId(String soId) {
+    public SoChangeDTO.ViewDTO getViewBySoDetailIds(List<String> soDetailIds) {
+        if (CollectionUtils.isEmpty(soDetailIds)) {
+            throw new ServiceException(ApiError.ERROR_92015);
+        }
+        List<SoDetailEntity> soDetailList = soDetailService.listByIds(soDetailIds);
+        if (CollectionUtils.isEmpty(soDetailList)) {
+            throw new ServiceException(ApiError.ERROR_92015);
+        }
+        List<String> soIdList = soDetailList.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        if (soIdList.size()>1) {
+            throw new ServiceException(ApiError.ERROR_92039);
+        }
+        String soId = soDetailList.get(0).getMainId();
         SoChangeDTO.ViewDTO view = new SoChangeDTO.ViewDTO();
         SoInfoDTO.CustomerDTO soInfo = soInfoService.getSoCustomer(soId);
+        String soInfoApproveStatus = soInfo.getApproveStatus().getStatus();
+        String soApproveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        if (!soInfoApproveStatus.equals(soApproveStatus)) {
+            throw new ServiceException(ApiError.ERROR_92033);
+        }
         view.setAddressTypeName(soInfo.getAddressTypeName());
         ApproveStatusEnum approveStatus = ApproveStatusEnum.WAIT_SUBMIT;
         view.setApproveStatusName(approveStatus.getName());
@@ -561,7 +583,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         view.setSoId(soInfo.getId());
         view.setTelNumber(soInfo.getTelNumber());
         //根据主表id 获取详情
-        List<SoChangeDetailDTO.ViewDTO> detailList = soChangeDetailService.listDetailBySoId(soId);
+        List<SoChangeDetailDTO.ViewDTO> detailList = soChangeDetailService.listDetailBySoId(soId, soDetailIds, true);
         view.setDetailList(detailList);
         return view;
     }
@@ -610,15 +632,16 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
     /**
      * 根据选择销售订单id 获取到对应的sku 信息
-     * @author yl
-     * @date 2023-05-26 9:26
+     *
      * @param soId
      * @return java.util.List<com.erp.model.oms.dto.SoChangeDetailDTO.ViewDTO>
+     * @author yl
+     * @date 2023-05-26 9:26
      */
     @Override
     public List<SoChangeDetailDTO.ViewDTO> listSoSkuBySoId(String soId) {
         //根据主表id 获取详情
-        List<SoChangeDetailDTO.ViewDTO> detailList = soChangeDetailService.listDetailBySoId(soId);
+        List<SoChangeDetailDTO.ViewDTO> detailList = soChangeDetailService.listDetailBySoId(soId, Collections.emptyList(), Boolean.FALSE);
         return detailList;
     }
 
@@ -664,9 +687,6 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         }
         return result;
     }
-
-    
-
 
 
     /**

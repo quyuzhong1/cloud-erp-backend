@@ -65,22 +65,20 @@ public class SoChangeController extends BaseController {
     }
 
     /**
-     * 根据销售订单id
-     * 获取到对应的详情
+     * 根据销售订单详情id 获取到对应销售变更的详情
      *
-     * @param soId
+     * @param
      * @return
      */
-    @GetMapping("/getViewBySoId")
-    public ApiResult<SoChangeDTO.ViewDTO> getViewBySoId(@RequestParam("soId") String soId) {
-        SoChangeDTO.ViewDTO view = soChangeService.getViewBySoId(soId);
+    @PostMapping("/getViewBySoDetailIds")
+    public ApiResult<SoChangeDTO.ViewDTO> getViewBySoDetailIds(@RequestBody List<String>  soDetailIds) {
+        SoChangeDTO.ViewDTO view = soChangeService.getViewBySoDetailIds(soDetailIds);
         return success(view);
     }
 
 
     /**
-     * 根据销售订单id
-     * 获取到对应的产品信息
+     * 根据销售订单id 获取到对应的产品信息
      *
      * @param soId
      * @return

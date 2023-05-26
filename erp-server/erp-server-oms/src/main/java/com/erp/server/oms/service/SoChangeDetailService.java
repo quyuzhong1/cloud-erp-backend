@@ -73,9 +73,11 @@ public interface SoChangeDetailService extends SuperService<SoChangeDetailEntity
      * @author yl
      * @date 2023-05-25 14:11
      * @param soId
+     * @param soDetailIds 销售订单详情id
+     * @param hasContain 是否包含
      * @return java.util.List<com.erp.model.oms.dto.SoChangeDetailDTO.ViewDTO>
      */
-    List<SoChangeDetailDTO.ViewDTO> listDetailBySoId(String soId);
+    List<SoChangeDetailDTO.ViewDTO> listDetailBySoId(String soId,List<String> soDetailIds,Boolean hasContain);
 
 
     /**

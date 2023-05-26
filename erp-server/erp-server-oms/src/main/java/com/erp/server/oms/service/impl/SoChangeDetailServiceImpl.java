@@ -188,8 +188,8 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
      * @date 2023-05-25 14:11
      */
     @Override
-    public List<SoChangeDetailDTO.ViewDTO> listDetailBySoId(String soId) {
-        List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainId(soId);
+    public List<SoChangeDetailDTO.ViewDTO> listDetailBySoId(String soId,List<String> soDetailIds,Boolean hasContain) {
+        List<SoDetailEntity> soDetailList = soDetailService.listDetailBySoId(soId,soDetailIds,hasContain);
         List<SoChangeDetailDTO.ViewDTO> viewList = new ArrayList<>(soDetailList.size());
         if (CollectionUtils.isNotEmpty(soDetailList)) {
             BigDecimal zero = BigDecimal.ZERO;
