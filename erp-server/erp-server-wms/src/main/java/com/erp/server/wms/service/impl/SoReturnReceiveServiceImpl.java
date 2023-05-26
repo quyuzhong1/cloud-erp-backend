@@ -192,6 +192,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     public String add(SoReturnReceiveDTO.Add dto) {
         //获取退货单信息
         SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
+        if (ObjectUtil.isEmpty(soReturnEntity)) {
+            throw new ServiceException(ApiError.ERROR_92023);
+        }
         //获取销售单信息
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
         //获取核算公司
@@ -613,7 +616,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             List<SoReturnNoticeDTO.GenerateSoReturnReceiveView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
             SoReturnNoticeEntity noticeEntity = soReturnNoticeService.getById(id);
             SoReturnReceiveDTO.Add dto = new SoReturnReceiveDTO.Add();
-            dto.setSourceId(id);
             dto.setSourceType(SourceTypeEnum.SO_RETURN_NOTICE.getCode());
             dto.setInventoryOrgId(noticeEntity.getInventoryOrgId());
             dto.setWarehouseKeeperId(noticeEntity.getWarehouseKeeperId());
@@ -621,14 +623,14 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             dto.setBillDate(LocalDate.now());
             List<SoReturnReceiveDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnNoticeDTO.GenerateSoReturnReceiveView view : viewList) {
+                dto.setSourceId(view.getSourceId());
                 SoReturnReceiveDetailDTO.Add detailAddDTO = new SoReturnReceiveDetailDTO.Add();
                 detailAddDTO.setReturnQty(view.getReturnQty());
                 detailAddDTO.setReceiveQty(view.getReturnQty());
                 detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
                 detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
                 detailAddDTO.setRemark(view.getRemark());
-                detailAddDTO.setSourceDetailId(view.getId());
-
+                detailAddDTO.setSourceDetailId(view.getSourceDetailId());
                 detailList.add(detailAddDTO);
             }
             dto.setDetailList(detailList);

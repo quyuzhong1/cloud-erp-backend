@@ -1496,7 +1496,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         for (SoReturnInstockDTO.GenerateSoReturnInstockView view : list) {
             SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(view.getMainId());
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailService.getById(view.getId());
-            view.setId(soReturnReceiveEntity.getId());
+            view.setId(soReturnReceiveEntity.getSourceId());
+            view.setSourceId(soReturnReceiveEntity.getSourceId());
             view.setSourceDetailId(soReturnReceiveDetailEntity.getSourceDetailId());
             view.setCode(soReturnReceiveEntity.getSourceCode());
             view.setCustomerId(soReturnReceiveEntity.getCustomerId());

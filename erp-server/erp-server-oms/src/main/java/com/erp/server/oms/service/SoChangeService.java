@@ -149,10 +149,10 @@ public interface SoChangeService extends SuperService<SoChangeEntity> {
      * 根据销售订单id 获取到对应详情
      * @author yl
      * @date 2023-05-25 14:04
-     * @param soId
+     * @param soDetailIds
      * @return com.erp.model.oms.dto.SoChangeDTO.ViewDTO
      */
-    SoChangeDTO.ViewDTO getViewBySoId(String soId);
+    SoChangeDTO.ViewDTO getViewBySoDetailIds(List<String>  soDetailIds);
 
     /**
      * 销售订单 关联的销售变更单

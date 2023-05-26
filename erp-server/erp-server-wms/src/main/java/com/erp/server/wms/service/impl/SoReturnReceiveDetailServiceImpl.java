@@ -6,11 +6,13 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
+import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
 import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
@@ -54,48 +56,33 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
     @Resource
     private OperateLogService operateLogService;
 
-    /**
-     * 根据退货单获取销售单已出库数量
-     * @Author Luo_WG
-     * @Date 2023/5/19 12:21
-     * @param returnId
-     * @return java.util.List<com.erp.model.wms.entity.SoOutstockDetailEntity>
-     **/
-    private  List<SoOutstockDetailEntity> listSoOutstockByReturnId(String returnId) {
-        //获取退货详情
-        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainId(returnId);
-        //获取销售订单明细表id
-        List<String> soDetailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
-        //根据销售单详情id获取发货通知单详情信息
-        List<SoDeliveryNoticeDetailEntity> detailEntityList = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(soDetailIds);
-        //获取发货通知单明细表id
-        List<String> deliveryNoticeDetailIdList = detailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
-        soDetailIds.addAll(deliveryNoticeDetailIdList);
-        //根据销售单获取出库单
-        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySourceDetailId(soDetailIds);
-        return soOutstockDetailEntities;
-    }
-
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean add(SoReturnReceiveDTO.Add dto, String id) {
-        List<SoOutstockDetailEntity> soOutstockDetailEntities = listSoOutstockByReturnId(dto.getSourceId());
+        SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
+        //根据销售单获取出库单
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySoIds(Arrays.asList(soReturnEntity.getSourceId()));
         //获取退货单详情表id
         List<String> returnDetailIds = dto.getDetailList().stream().map(SoReturnReceiveDetailDTO.Add::getSourceDetailId).collect(Collectors.toList());
         List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(returnDetailIds);
         List<SoReturnReceiveDetailEntity> list = new ArrayList<>();
+        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = this.listDetailBySourceIds(Arrays.asList(dto.getSourceId()));
         for (SoReturnReceiveDetailDTO.Add detailDto : dto.getDetailList()) {
             SoReturnReceiveDetailEntity detailEntity = new SoReturnReceiveDetailEntity();
             SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_92023);
             }
+            //此单历史退货数量
+            Integer historyReturnQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSkuId().equals(soReturnDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (actualQty < detailDto.getReturnQty()) {
+            if (actualQty < detailDto.getReturnQty() + historyReturnQty) {
                 throw new ServiceException(ApiError.ERROR_92009);
             }
-            if (detailDto.getReceiveQty() > returnQty) {
+            //此单历史签收数量
+            Integer historyReceiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (detailDto.getReceiveQty() + historyReceiveQty > returnQty) {
                 throw new ServiceException(ApiError.ERROR_92020);
             }
             detailEntity.setMainId(id);
@@ -115,7 +102,9 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnReceiveDTO.Update dto) {
         List<String> addList = dto.getDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).map(SoReturnReceiveDetailDTO.Update::getId).collect(Collectors.toList());
-        List<SoOutstockDetailEntity> soOutstockDetailEntities = listSoOutstockByReturnId(dto.getSourceId());
+        SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
+        //根据销售单获取出库单
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySoIds(Arrays.asList(soReturnEntity.getSourceId()));
         //获取退货单详情表id
         List<String> returnDetailIds = dto.getDetailList().stream().map(SoReturnReceiveDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
         List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(returnDetailIds);
@@ -130,18 +119,28 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
+        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = this.listDetailBySourceIds(Arrays.asList(dto.getSourceId()));
         for (SoReturnReceiveDetailDTO.Update detailDto : dto.getDetailList()) {
             SoReturnReceiveDetailEntity detailEntity = new SoReturnReceiveDetailEntity();
             SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_92023);
             }
+            //此单历史退货数量
+            Integer historyReturnQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            //此单历史签收数量
+            Integer historyReceiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (StringUtils.isNotBlank(detailDto.getId())) {
+                detailEntity.setId(detailDto.getId());
+                historyReturnQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnReceiveDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                historyReceiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
             Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSkuId().equals(soReturnDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (actualQty < detailDto.getReturnQty()) {
+            if (actualQty < detailDto.getReturnQty() + historyReturnQty) {
                 throw new ServiceException(ApiError.ERROR_92009);
             }
-            if (detailDto.getReceiveQty() > returnQty) {
+            if (detailDto.getReceiveQty() + historyReceiveQty > returnQty) {
                 throw new ServiceException(ApiError.ERROR_92020);
             }
             detailEntity.setId(detailDto.getId());
@@ -204,4 +203,5 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
     public List<SoReturnReceiveDetailEntity> listDetailByMainIds(List<String> ids) {
         return lambdaQuery().in(SoReturnReceiveDetailEntity::getMainId, ids).list();
     }
+
 }

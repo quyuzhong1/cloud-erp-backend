@@ -447,4 +447,19 @@ public class TransferInDTO implements Serializable {
 
         private List<String> ids;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ApproveCountDTO {
+
+        /**
+         * 类型
+         */
+        private String approveStatus;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
 }

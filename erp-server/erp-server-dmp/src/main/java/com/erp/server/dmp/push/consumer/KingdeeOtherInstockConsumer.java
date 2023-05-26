@@ -50,7 +50,7 @@ public class KingdeeOtherInstockConsumer implements RocketMQListener<Map<String,
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FBillNo = '%s'", "QTRK002504"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FID,FBillTypeID.FNumber";
+        String fieldKeys = "FID,FSTOCKSTATUSID.FNumber";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,0);
         System.out.println(queryList);
 

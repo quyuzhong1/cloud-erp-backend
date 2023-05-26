@@ -80,7 +80,7 @@ public class SoInfoDTO implements Serializable {
         private String approveStatusName;
 
         /**
-         * id
+         * 详情id
          */
         private String detailId;
 

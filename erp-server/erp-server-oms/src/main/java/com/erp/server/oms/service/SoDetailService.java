@@ -203,4 +203,15 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @date 2023-05-24 18:42
      */
     void checkSkuQty(String warehouseId, List<SoDetailDTO.AddDTO> detailList);
+
+    /**
+     * 获取到对应销售订单的详情
+     * @author yl
+     * @date 2023-05-26 10:16
+     * @param soId
+     * @param soDetailIds
+     * @param hasContain 是否包含 true 包含
+     * @return java.util.List<com.erp.model.oms.entity.SoDetailEntity>
+     */
+    List<SoDetailEntity> listDetailBySoId(String soId, List<String> soDetailIds, Boolean hasContain);
 }

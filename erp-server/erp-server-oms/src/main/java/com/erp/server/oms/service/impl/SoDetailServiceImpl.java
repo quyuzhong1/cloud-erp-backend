@@ -918,6 +918,27 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
 
     /**
+     * 获取到对应销售订单的详情
+     *
+     * @param soId
+     * @param soDetailIds
+     * @param hasContain  是否包含 true 包含
+     * @return java.util.List<com.erp.model.oms.entity.SoDetailEntity>
+     * @author yl
+     * @date 2023-05-26 10:16
+     */
+    @Override
+    public List<SoDetailEntity> listDetailBySoId(String soId, List<String> soDetailIds, Boolean hasContain) {
+        LambdaQueryWrapper<SoDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SoDetailEntity::getMainId,soId);
+        if(CollectionUtils.isNotEmpty(soDetailIds)&&hasContain!=null&&hasContain){
+            queryWrapper.in(SoDetailEntity::getId,soDetailIds);
+        }
+        return this.list(queryWrapper);
+    }
+
+
+    /**
      * 根据sku id list 获取sku 的历史价格
      *
      * @param skuIdList
