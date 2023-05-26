@@ -10,6 +10,7 @@ import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.netflix.client.ClientException;
 import lombok.extern.slf4j.Slf4j;
+import ma.glasnost.orika.MappingException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -173,6 +174,12 @@ public class GlobalExceptionHandler {
     public ApiResult resolveException(HttpMessageNotReadableException e) {
         log.error("系统异常：", e);
         return ApiResult.error(ApiError.ERROR_600);
+    }
+
+    @ExceptionHandler(value = MappingException.class)
+    public ApiResult resolveException(MappingException e) {
+        log.error("系统异常：", e);
+        return ApiResult.error(ApiError.ERROR_COPY_ERROR);
     }
 
 }

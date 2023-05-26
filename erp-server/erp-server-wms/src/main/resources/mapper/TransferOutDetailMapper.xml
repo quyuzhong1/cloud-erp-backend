@@ -9,7 +9,7 @@
             tod.sku_id,
             tod.sku_no,
             tod.qty,
-            tod.warehouse_location,
+            tod.out_warehouse_location,
             tod.source_detail_id,
             tod.remark
         from transfer_out tot

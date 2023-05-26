@@ -568,19 +568,18 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             if (MathUtil.ONE.equals(type)) {
                 //分步式调出单
                 TransferOutDTO.AddDTO addOutDTO = new TransferOutDTO.AddDTO();
-                BeanMapperUtils.copy(addOutDTO,transferInfoDTO);
+                BeanMapperUtils.copy(transferInfoDTO,addOutDTO);
                 addOutDTO.setTransferDirection(transferDirection);
                 List<TransferOutDetailDTO.AddDTO> addDetailList = new ArrayList<>();
                 for (TransferApplicationDTO.GenerateTransferInfoDTO dto : value) {
                     //验证明细是否已经被调拨
                     checkGenerateTransfer(transferInfoDetailList,transferOutDetailList,detailList,dto);
-                    TransferOutDetailDTO.AddDTO addDetailDTO = new TransferOutDetailDTO.AddDTO();
-                    BeanMapperUtils.copy(dto,addDetailDTO);
+                    TransferOutDetailDTO.AddDTO addDetailDTO = BeanMapperUtils.map(TransferOutDetailDTO.AddDTO.class,dto);
                     addDetailList.add(addDetailDTO);
                 }
                 addOutDTO.setDetailList(addDetailList);
                 //新增直接调拨单
-                //transferOutService.add(addOutDTO);
+                transferOutService.add(addOutDTO);
             }
         }
 

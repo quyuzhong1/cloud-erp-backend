@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -213,7 +214,13 @@ public class TransferOutDTO implements Serializable {
         /**
          * 来源类型
          */
+        @StateEnumValue(clazz = SourceTypeEnum.class, message = "来源类型输入值有误")
         private String sourceType;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
 
 
         /**

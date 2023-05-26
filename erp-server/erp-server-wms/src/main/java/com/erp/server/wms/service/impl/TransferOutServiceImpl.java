@@ -18,9 +18,11 @@ import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.TransferOutEntity;
 import com.erp.model.wms.enums.TransferTypeEnum;
+import com.erp.model.wms.enums.TransitOwnerEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.TransferOutMapper;
 import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.TransferOutDetailService;
 import com.erp.server.wms.service.TransferOutService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
@@ -60,6 +62,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     @Autowired
     private WarehouseService warehouseService;
 
+    @Autowired
+    private TransferOutDetailService transferOutDetailService;
+
     @Override
     public List<TransferOutEntity> listBySourceIds(List<String> ids) {
         return lambdaQuery()
@@ -76,16 +81,18 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         ValidatorUtil.validateEntity(addDTO);
         TransferOutEntity transferOutEntity = new TransferOutEntity();
         BeanMapperUtils.copy(addDTO, transferOutEntity);
+        handleData(transferOutEntity);
         log.info("开始新增分步式调出单主单");
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.FBDC, BusinessNoTypeEnum.CODE_FBDC.getCode()));
         transferOutEntity.setCode(code);
         boolean save = super.save(transferOutEntity);
+        ValidatorUtil.isTrue(save,()->new ServiceException("分布式调出单保存失败"));
         if (save) {
             //操作日志
             operateLogService.addModuleOperateLog(String.format("新增了一个分步式调出单【%s】", code), ModuleTypeEnum.TRANSFER_OUT.getCode(), transferOutEntity.getId(), "新增操作");
             //新增明细
-            log.info("开始新增分步式调出单明细信息");
+            transferOutDetailService.add(addDTO.getDetailList(), transferOutEntity.getId());
         }
     }
 
@@ -125,6 +132,8 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
                 transferOutEntity.setWarehouseKeeperName(userDTO.getUserName());
             }
         }
+        // 在途归属（默认调入方）
+        transferOutEntity.setTransitOwner(TransitOwnerEnum.TRANSFER_IN.getCode());
     }
 
 }

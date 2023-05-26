@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Date;
 
 /**
@@ -46,7 +47,7 @@ public class TransferOutEntity extends BaseEntity<TransferOutEntity> {
      * 调出日期
      */
     @TableField("bill_date")
-    private Date billDate;
+    private LocalDate billDate;
 
     /**
      * 调出仓库id
@@ -139,6 +140,17 @@ public class TransferOutEntity extends BaseEntity<TransferOutEntity> {
     @TableField("out_org_name")
     private String outOrgName;
 
+    /**
+     * 来源单号
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
+    /**
+     * 在途归属
+     */
+    @TableField("transit_owner")
+    private String transitOwner;
 
     public static final String CODE = "code";
 
@@ -173,6 +185,10 @@ public class TransferOutEntity extends BaseEntity<TransferOutEntity> {
     public static final String OUT_ORG_ID = "out_org_id";
 
     public static final String OUT_ORG_NAME = "out_org_name";
+
+    public static final String SOURCE_CODE = "source_code";
+
+    public static final String TRANSIT_OWNER = "transit_owner";
 
     @Override
     public Serializable pkVal() {

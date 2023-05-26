@@ -55,7 +55,7 @@ public class TransferOutDetailDTO implements Serializable {
         /**
          * 调出仓位
          */
-        private String warehouseLocation;
+        private String outWarehouseLocation;
 
         /**
          * 单位
@@ -119,7 +119,7 @@ public class TransferOutDetailDTO implements Serializable {
         /**
          * 调出仓位
          */
-        private String warehouseLocation;
+        private String outWarehouseLocation;
 
     }
 
@@ -158,7 +158,7 @@ public class TransferOutDetailDTO implements Serializable {
         /**
          * 调出仓位
          */
-        private String warehouseLocation;
+        private String outWarehouseLocation;
 
         /**
          * 单位
