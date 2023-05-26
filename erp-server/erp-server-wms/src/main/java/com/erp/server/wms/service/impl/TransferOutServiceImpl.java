@@ -16,6 +16,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -25,6 +26,7 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.excel.ExportTransferOutExcelDTO;
 import com.erp.model.wms.entity.TransferOutEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.TransferTypeEnum;
@@ -43,6 +45,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -117,9 +120,27 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         if (CollectionUtils.isEmpty(records)) {
             return new PagingVO(pageData);
         }
-        handleView(records);
+        // 数据填充处理
+        filling(records);
+        // 明细信息多行第一行复制，其他行赋空（主单属性）
         listHideMainData(records);
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public void exportList(TransferOutDTO.ExportDTO param, HttpServletResponse response) {
+        List<TransferOutDTO.PagingViewDTO> list = this.baseMapper.exportList(param);
+        if(CollUtil.isEmpty(list)) {
+            return;
+        }
+        filling(list);
+        List<ExportTransferOutExcelDTO> resultList = BeanMapperUtils.copyList(ExportTransferOutExcelDTO.class, list);
+        String fileName = "分布式调出单导出数据";
+        try {
+            ExcelUtil.exportAdapt(fileName, "期初库存数据", resultList, ExportTransferOutExcelDTO.class, response, null);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
     }
 
     /**
@@ -169,7 +190,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
      * 分页查询、导出数据处理
      * @param list
      */
-    private void handleView(List<TransferOutDTO.PagingViewDTO> list) {
+    private void filling(List<TransferOutDTO.PagingViewDTO> list) {
         if(CollUtil.isEmpty(list)) {
             return;
         }

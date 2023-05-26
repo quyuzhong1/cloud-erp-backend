@@ -6,6 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.entity.TransferOutEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -38,4 +39,11 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
      * @return
      */
     PagingVO<TransferOutDTO.PagingViewDTO> paging(PagingDTO<TransferOutDTO.PagingParamDTO> pagingParamDTO);
+
+    /**
+     * 导出Excel
+     * @param param
+     * @param response
+     */
+    void exportList(TransferOutDTO.ExportDTO param, HttpServletResponse response);
 }

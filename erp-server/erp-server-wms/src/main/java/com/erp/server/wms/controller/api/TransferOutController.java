@@ -163,13 +163,11 @@ public class TransferOutController extends BaseController {
     }
 
     /**
-     * 导出
-     * 数据
+     * 导出数据
      */
     @PostMapping("/export")
-    public ApiResult exportWarehouse(@RequestBody @Valid TransferOutDTO.ExportDTO dto, HttpServletResponse response) {
-
-        return success();
+    public void exportList(@RequestBody @Valid TransferOutDTO.ExportDTO dto, HttpServletResponse response) {
+        transferOutService.exportList(dto, response);
     }
 
 }

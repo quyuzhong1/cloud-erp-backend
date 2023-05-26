@@ -8,6 +8,8 @@ import com.erp.model.wms.entity.TransferOutEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * <p>
  * 分布式调出单 Mapper 接口
@@ -26,5 +28,12 @@ public interface TransferOutMapper extends BaseMapper<TransferOutEntity> {
      * @return
      */
     IPage<TransferOutDTO.PagingViewDTO> paging(Page query, @Param("params") TransferOutDTO.PagingParamDTO params);
+
+    /**
+     * 导出查询
+     * @param params
+     * @return
+     */
+    List<TransferOutDTO.PagingViewDTO> exportList(@Param("params") TransferOutDTO.ExportDTO params);
 
 }

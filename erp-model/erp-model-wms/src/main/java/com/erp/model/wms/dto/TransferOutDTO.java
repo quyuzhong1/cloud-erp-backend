@@ -104,7 +104,7 @@ public class TransferOutDTO implements Serializable {
         /**
          * 调出日期
          */
-        private Date billDate;
+        private LocalDate billDate;
 
 
         /**
@@ -152,6 +152,10 @@ public class TransferOutDTO implements Serializable {
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime createTime;
 
+        /**
+         * 备注
+         */
+        private String remark;
     }
 
     @Data
@@ -169,7 +173,7 @@ public class TransferOutDTO implements Serializable {
         private String code;
 
         /**
-         * 审核状态集合
+         * 审核状态集合 接口地址：/scm/drop/down/approveStatus/list
          */
         private List<String> approveStatusList;
 
@@ -179,7 +183,7 @@ public class TransferOutDTO implements Serializable {
         private String transferDirection;
 
         /**
-         * 作废状态  /scm/drop/down/invalidStatus/list
+         * 作废状态  接口地址：/scm/drop/down/invalidStatus/list
          * true 已作废
          * false 未作废
          */
@@ -191,7 +195,7 @@ public class TransferOutDTO implements Serializable {
         private List<LocalDate> billDateList;
 
         /**
-         * 创建人 id 集合
+         * 创建人id集合 接口地址：/plm/common/findUserList
          */
         private List<String> createUserIdList;
 
@@ -201,7 +205,7 @@ public class TransferOutDTO implements Serializable {
         private List<LocalDate> createTimeList;
 
         /**
-         * 调出仓库集合
+         * 调出仓库集合  接口地址：/wms/warehouse/list
          */
         private List<String> outWarehouseIdList;
 
