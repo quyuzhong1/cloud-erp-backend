@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-@SaveData(method = PlatformApiEnum.GET_HISTORY_ORDER_LIST)
+@SaveData(method = PlatformApiEnum.ORDER_GET_HISTORY_DELIVERY_LIST)
 public class MabangHistoryDeliveryServiceImpl implements IReportSaveService<OrderEntity> {
 
     @Resource
