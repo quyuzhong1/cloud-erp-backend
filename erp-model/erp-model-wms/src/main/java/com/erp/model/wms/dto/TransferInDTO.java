@@ -84,7 +84,7 @@ public class TransferInDTO implements Serializable {
         /**
          * 作废状态名
          */
-        private Boolean invalidStatusName;
+        private String invalidStatusName;
 
         /**
          * 调拨方向

@@ -2,6 +2,7 @@ package com.erp.model.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.erp.model.wms.enums.TransferTypeEnum;
@@ -36,7 +37,7 @@ public class TransferInEntity extends BaseEntity<TransferInEntity> {
      * 审核状态 
      */
     @TableField("approve_status")
-    private String approveStatus;
+    private ApproveStatusEnum approveStatus;
 
     /**
      * 调拨类型
@@ -91,6 +92,12 @@ public class TransferInEntity extends BaseEntity<TransferInEntity> {
      */
     @TableField("transfer_direction")
     private TransferDirectionEnum transferDirection;
+
+    /**
+     * 备注
+     */
+    @TableField("approve_user_name")
+    private String approveUserName;
 
     /**
      * 备注

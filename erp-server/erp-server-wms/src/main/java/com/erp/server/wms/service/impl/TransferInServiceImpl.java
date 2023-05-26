@@ -3,33 +3,38 @@ package com.erp.server.wms.service.impl;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.validator.ValidList;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.model.wms.dto.TransferInDetailDTO;
 import com.erp.model.wms.entity.TransferInEntity;
 import com.erp.model.wms.entity.TransferOutDetailEntity;
+import com.erp.model.wms.enums.TransferDirectionEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.TransferInMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.TransferInDetailService;
-import com.erp.server.wms.service.TransferInService;
-import com.erp.server.wms.service.TransferOutDetailService;
+import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,6 +66,12 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private CommonService commonService;
 
     @Override
     public List<TransferInDTO.TabListDTO> tabList() {
@@ -115,7 +126,6 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         }
         Map<String, List<TransferInDTO.ViewGenerateTransferInDTO>> map = list.stream().collect(Collectors.groupingBy(TransferInDTO.ViewGenerateTransferInDTO::getSourceId));
         List<TransferInDTO.AddDTO> addList = new ArrayList<>(map.size());
-
         //这个是调出详情id
         List<String> outDetailIds = list.stream().map(TransferInDTO.ViewGenerateTransferInDTO::getSourceDetailId).collect(Collectors.toList());
         //调出单详情
@@ -181,8 +191,151 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         //根据搜索类型获取到审核状态
         List<String> approveList = listBySearchType(searchType);
         IPage pageData = baseMapper.paging(query, params, approveList);
+        List<TransferInDTO.PagingViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>(pageData);
+        }
+        List<String> skuIdList = list.stream().map(TransferInDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        List<String> flagList = new ArrayList<>();
+        for (TransferInDTO.PagingViewDTO item : list) {
+            boolean contains = flagList.contains(item.getId());
+            ApproveStatusEnum approveStatus = item.getApproveStatus();
+            item.setApproveStatusName(approveStatus.getName());
+            TransferDirectionEnum transferDirection = item.getTransferDirection();
+            item.setTransferDirectionName(transferDirection.getName());
+            Boolean invalidStatus = item.getInvalidStatus();
+            String invalidStatusName = invalidStatus ? "作废" : "未作废";
+            item.setInvalidStatusName(invalidStatusName);
+            String skuId = item.getSkuId();
+            SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
+            item.setProductName(sku.getSkuName());
+            item.setUnit(sku.getUnitName());
+            if (contains) {
+                item.setId("");
+                item.setCode("");
+                item.setSourceCode("");
+                item.setTransferDirectionName("");
+                item.setApproveStatusName("");
+                item.setOutWarehouseName("");
+                item.setInWarehouseName("");
+                item.setCreateUserName("");
+                item.setCreateTime(null);
+                item.setApproveUserName("");
+            }
+            flagList.add(item.getId());
+        }
+        return new PagingVO<>(pageData);
+    }
 
-        return null;
+    /**
+     * 提交审核
+     *
+     * @param ids
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-26 16:52
+     */
+    @Override
+    public Boolean submit(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return false;
+        }
+        List<TransferInEntity> list = this.listByIds(ids);
+        long invalidCount = list.stream().filter(s -> s.getInvalidStatus()).count();
+        if (invalidCount > 0) {
+            throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
+        }
+        //待审核
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        //审核不通过
+        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
+        List<String> statusList = new ArrayList<>(2);
+        statusList.add(rejectStatus);
+        statusList.add(waitSubmitStatus);
+        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
+        }
+        List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(waitSubmitStatus)).
+                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+
+        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(rejectStatus)).
+                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.APPROVE_ING);
+        if (result) {
+            //添加日志
+            String content = String.format("状态由[%s]变更为[%s]", BillApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "状态变更");
+            //审核不通过
+            String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            operateLogService.batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.TRANSFER_IN.getCode(), rejectPairList, "状态变更");
+        }
+        return result;
+
+    }
+
+    /**
+     * 审核
+     * @author yl
+     * @date 2023-05-26 16:58
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    @Override
+    public Boolean approve(BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<TransferInEntity> list = this.listByIds(ids);
+        String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+        long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
+        String ingStatusName = ApproveStatusEnum.APPROVE_ING.getName();
+        //意见
+        String comment = dto.getComment();
+        Boolean result = true;
+        String content = "";
+        LoginUser user = commonService.getUserInfo();
+        if (dto.getType().equals(ApproveType.PASS)) {
+
+            //审核通
+            result = this.updateApproveInfo(list, ApproveStatusEnum.APPROVE, user.getUserName());
+            content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
+        } else {
+            //审核不通过
+            result = this.updateApproveInfo(list, ApproveStatusEnum.REJECT, user.getUserName());
+            content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
+        }
+        if (result) {
+            //添加日志
+            List<Pair<String, String>> pairList = list.stream().
+                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "状态变更");
+        }
+        return result;
+
+    }
+
+    private Boolean updateApproveInfo(List<TransferInEntity> list, ApproveStatusEnum approveStatus, String approveUserName) {
+        if (CollectionUtils.isNotEmpty(list)) {
+            for (TransferInEntity item : list) {
+                item.setApproveStatus(approveStatus);
+                item.setApproveUserName(approveUserName);
+            }
+            return this.updateBatchById(list);
+        }
+        return Boolean.TRUE;
+    }
+
+    private Boolean updateApproveStatus(List<TransferInEntity> list, ApproveStatusEnum statusEnum) {
+        if (CollectionUtils.isNotEmpty(list)) {
+            for (TransferInEntity item : list) {
+                item.setApproveStatus(statusEnum);
+            }
+            return this.updateBatchById(list);
+        }
+        return Boolean.TRUE;
     }
 
     private List<String> listBySearchType(String searchType) {

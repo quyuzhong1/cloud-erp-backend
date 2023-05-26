@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
@@ -39,4 +40,22 @@ public interface TransferInService extends SuperService<TransferInEntity> {
      * @return com.common.business.vo.PagingVO<com.erp.model.wms.dto.TransferInDTO.PagingViewDTO>
      */
     PagingVO<TransferInDTO.PagingViewDTO> paging(PagingDTO<TransferInDTO.PagingParamDTO> dto);
+
+    /**
+     * 提交审核
+     * @author yl
+     * @date 2023-05-26 16:52
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean submit(List<String> ids);
+
+    /**
+     * 审核
+     * @author yl
+     * @date 2023-05-26 16:58
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean approve(BaseApproveParamDTO dto);
 }

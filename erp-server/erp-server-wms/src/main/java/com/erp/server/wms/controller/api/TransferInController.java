@@ -11,7 +11,6 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.server.wms.service.TransferInService;
 import org.springframework.validation.annotation.Validated;
@@ -54,11 +53,10 @@ public class TransferInController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+    @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:transfer:in:paging",
-            serviceClass = TransferInService.class,
-            keyIdName = "so"
+            tableAlias = "ti"
     )
     public ApiResult<PagingVO<TransferInDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<TransferInDTO.PagingParamDTO> dto) {
         PagingVO<TransferInDTO.PagingViewDTO> pagingVO = transferInService.paging(dto);
@@ -90,20 +88,18 @@ public class TransferInController extends BaseController {
      * @return
      */
     @PostMapping("/submit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:transfer:in:submit",
+            serviceClass = TransferInService.class,
+            keyIdName = "ids"
+    )
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success();
+        Boolean result = transferInService.submit(dto.getIds());
+        return result ? success() : failure();
     }
 
-    /**
-     * 新增并提交
-     *
-     * @param dto
-     * @return
-     */
-    @PostMapping("/addAndSubmit")
-    public ApiResult<Void> addAndSubmit(@RequestBody @Validated TransferInDTO.AddDTO dto) {
-        return success();
-    }
+
 
     /**
      * 详情
@@ -146,7 +142,9 @@ public class TransferInController extends BaseController {
      */
     @PostMapping("/approve")
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
-        return success();
+        Boolean result = transferInService.approve(dto);
+        return result ? success() : failure();
+
     }
 
     /**
