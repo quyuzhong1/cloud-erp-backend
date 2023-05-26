@@ -121,7 +121,7 @@ public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeShop
         // 异步推送到MQ
         entityToMqlist.stream().peek(msg -> {
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_ECC_SHOP_INFO_TAG.getName(),
-                    msg, StrUtil.format("{}_{}", msg.getPlarformShopNo(), msg.getId()));
+                    msg, StrUtil.format("{}_{}", msg.getPlatformShopNo(), msg.getId()));
             if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
@@ -132,7 +132,7 @@ public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeShop
     private DmpShopInfoEntity initOrderInfoEntity(KingdeeEccShopEntity shopEntity) {
         DmpShopInfoEntity dmpShopInfoEntity = new DmpShopInfoEntity();
         //平台店铺编号
-        dmpShopInfoEntity.setPlarformShopNo(shopEntity.getFNumber());
+        dmpShopInfoEntity.setPlatformShopNo(shopEntity.getFNumber());
         //平台店铺账户
         dmpShopInfoEntity.setAccountUserName(shopEntity.getFShopName());
         //平台店铺标识

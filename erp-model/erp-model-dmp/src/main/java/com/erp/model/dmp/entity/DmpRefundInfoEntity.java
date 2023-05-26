@@ -22,6 +22,11 @@ public class DmpRefundInfoEntity implements Serializable {
      */
     @TableId(value = "id", type = IdType.ASSIGN_ID)
     private String id;
+    /**
+     * 退款单号
+     */
+    @TableField(value = "refund_code")
+    private String refundCode;
 
     /**
      * 平台订单编号
@@ -200,8 +205,8 @@ public class DmpRefundInfoEntity implements Serializable {
     /**
      * 退款单号
      */
-    @TableField(value = "refund_id")
-    private String refundId;
+    @TableField(value = "platform_refund_code")
+    private String platformRefundCode;
 
     /**
      * 平台标识
@@ -256,7 +261,8 @@ public class DmpRefundInfoEntity implements Serializable {
     @Override
     public String toString() {
         return "DmpRefundInfoEntity{" +
-                "platformOrderId='" + platformOrderId + '\'' +
+                "refundCode='" + refundCode + '\'' +
+                ", platformOrderId='" + platformOrderId + '\'' +
                 ", currencyCode='" + currencyCode + '\'' +
                 ", refundAmount=" + refundAmount +
                 ", refundType=" + refundType +
@@ -277,13 +283,15 @@ public class DmpRefundInfoEntity implements Serializable {
                 ", buyerName='" + buyerName + '\'' +
                 ", itemTotalOrigin=" + itemTotalOrigin +
                 ", shippingTotalOrigin=" + shippingTotalOrigin +
+                ", orderTime=" + orderTime +
                 ", expressTime=" + expressTime +
                 ", pictureUrl='" + pictureUrl + '\'' +
                 ", platformUpdateTime=" + platformUpdateTime +
                 ", trackNumber='" + trackNumber + '\'' +
+                ", createTime=" + createTime +
                 ", companyId='" + companyId + '\'' +
                 ", companyName='" + companyName + '\'' +
-                ", refundId='" + refundId + '\'' +
+                ", platformRefundCode='" + platformRefundCode + '\'' +
                 ", platformSign='" + platformSign + '\'' +
                 '}';
     }
