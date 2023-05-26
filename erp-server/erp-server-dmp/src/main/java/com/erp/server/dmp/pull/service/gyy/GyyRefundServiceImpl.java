@@ -16,6 +16,8 @@ import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import com.erp.model.dmp.entity.DmpRefundItemEntity;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.common.message.enums.RocketMqTagEnum;
@@ -24,6 +26,7 @@ import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +58,8 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
 
     @Autowired
     private MQProducerService<DmpRefundInfoEntity> mqProducerService;
+    @Resource
+    private DmpShopInfoService dmpShopInfoService;
 
     public static void main(String[] args) {
         GyyRefundServiceImpl gyyRefundService = new GyyRefundServiceImpl();
@@ -162,6 +167,11 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
         //退货金额
         dmpRefundInfoEntity.setRefundAmount(gyyRefundEntity.getAmount());
         //退款类型：1、未收到货部分退款 2、未收到货全额退款 3、已收到货部分退款 4、已收到货全额退款
+        /**
+         * refund:仅退款
+         * return:退货退款
+         * deliveried_refund:发货后仅退款
+         */
         dmpRefundInfoEntity.setRefundType(0);
         //退款原因
         dmpRefundInfoEntity.setRefundReasonDesc(gyyRefundEntity.getReason());
@@ -193,9 +203,10 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
         }
 
         //店铺编号
-        dmpRefundInfoEntity.setShopNo(gyyRefundEntity.getShopId());
+        dmpRefundInfoEntity.setShopNo(gyyRefundEntity.getShopCode());
+        DmpShopInfoEntity shopInfo = dmpShopInfoService.getShopByShopNo(gyyRefundEntity.getShopCode(), PlatformEnum.GYY.getDesc());
         //店铺名称
-        dmpRefundInfoEntity.setShopName(gyyRefundEntity.getShopCode());
+        dmpRefundInfoEntity.setShopName(null != shopInfo ? shopInfo.getName() : "");
         //平台名称
         dmpRefundInfoEntity.setPlatformName("");
         //退款时间

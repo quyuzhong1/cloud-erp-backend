@@ -230,8 +230,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
             return null;
         }
         List<DmpDeliveryDetailItemEntity> items = new ArrayList<>();
-        for (int i = 0; i < orderItems.size(); i++) {
-            OrderItemEntity itemEntity = orderItems.get(i);
+        for (OrderItemEntity itemEntity : orderItems) {
             DmpDeliveryDetailItemEntity delivery = new DmpDeliveryDetailItemEntity();
             //商品id
             delivery.setItemId(itemEntity.getItemId());
