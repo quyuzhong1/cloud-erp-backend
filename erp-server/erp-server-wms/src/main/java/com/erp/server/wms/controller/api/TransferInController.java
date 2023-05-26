@@ -141,10 +141,35 @@ public class TransferInController extends BaseController {
      * @return
      */
     @PostMapping("/approve")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:transfer:in:approve",
+            serviceClass = TransferInService.class,
+            keyIdName = "ids"
+    )
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
         Boolean result = transferInService.approve(dto);
         return result ? success() : failure();
 
+    }
+
+
+    /**
+     * 撤销流程
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/cancelProcess")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:transfer:in:cancelProcess",
+            serviceClass = TransferInService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = transferInService.cancelProcess(dto.getIds());
+        return result ? success() : failure();
     }
 
     /**
@@ -156,14 +181,22 @@ public class TransferInController extends BaseController {
     }
 
     /**
-     * 删除仓库
+     * 删除分布式调入单
      *
      * @param dto
      * @return
      */
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:transfer:in:delete",
+            serviceClass = TransferInService.class,
+            keyIdName = "ids"
+    )
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        return success();
+        Boolean result = transferInService.deleteByIds(dto.getIds());
+        return result ? success() : failure();
+
     }
 
     /**

@@ -317,6 +317,66 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
 
     }
 
+    /**
+     * 撤销流程
+     * @author yl
+     * @date 2023-05-26 19:00
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    @Override
+    public Boolean cancelProcess(List<String> ids) {
+        List<TransferInEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_99066);
+        }
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus().getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        //TODO 撤销流程
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.WAIT_SUBMIT);
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("分布式调入单【%s】取消流程", ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "取消流程操作");
+        return result;
+
+    }
+
+    /**
+     * 删除分布是调入单
+     * @author yl
+     * @date 2023-05-26 19:05
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    @Override
+    public Boolean deleteByIds(List<String> ids) {
+        List<TransferInEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_99066);
+        }
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        long invalidCount = list.stream().filter(s -> s.getInvalidStatus()).count();
+        if (invalidCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        Boolean result = this.removeByIds(ids);
+        if (result) {
+            //添加日志
+            String content = "删除分布式调入单[%s]";
+            List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "删除");
+            //删除明细
+          //  soChangeDetailService.removeByMainIdList(ids);
+
+        }
+        return result;
+    }
+
     private Boolean updateApproveInfo(List<TransferInEntity> list, ApproveStatusEnum approveStatus, String approveUserName) {
         if (CollectionUtils.isNotEmpty(list)) {
             for (TransferInEntity item : list) {

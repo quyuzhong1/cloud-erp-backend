@@ -58,4 +58,22 @@ public interface TransferInService extends SuperService<TransferInEntity> {
      * @return java.lang.Boolean
      */
     Boolean approve(BaseApproveParamDTO dto);
+
+    /**
+     * 撤销流程
+     * @author yl
+     * @date 2023-05-26 19:00
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean cancelProcess(List<String> ids);
+
+    /**
+     * 删除分布是调入单
+     * @author yl
+     * @date 2023-05-26 19:05
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean deleteByIds(List<String> ids);
 }

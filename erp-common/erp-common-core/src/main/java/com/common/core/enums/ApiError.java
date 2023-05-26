@@ -518,6 +518,7 @@ public enum ApiError implements Serializable {
     ERROR_99063(99063,"未找到其他出库客户信息"),
     ERROR_99064(99064,"只有已审核调拨申请单支持下推单据"),
     ERROR_99065(99065,"调入数量不能大于调出数量"),
+    ERROR_99066(99066,"未找到分布式调入单"),
 
     /**
      * OMS 错误
@@ -564,6 +565,7 @@ public enum ApiError implements Serializable {
     ERROR_92037(92037,"变更类型为删除的产品有下游单据不可删除"),
     ERROR_92038(92038,"销售订单详情sku 只能进行一种类型的变更"),
     ERROR_92039(92039,"存在多个销售订单变更,请重新选择"),
+
 
     ERROR_end(1000000, "系统错误");
 
