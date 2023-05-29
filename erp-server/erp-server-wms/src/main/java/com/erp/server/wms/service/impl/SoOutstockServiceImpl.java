@@ -198,6 +198,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-05-19 10:34
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean submit(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return false;
@@ -249,6 +250,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-05-19 10:42
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean addAndSubmit(SoOutstockDTO.AddDTO dto) {
         String id = this.add(dto);
         if (StringUtils.isBlank(id)) {
@@ -547,6 +549,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-05-19 14:17
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String remark) {
         List<SoOutstockEntity> list = this.listByIds(ids);
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -753,6 +756,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-05-22 18:00
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String updateSoOutstock(SoOutstockDTO.UpdateDTO dto) {
         String id = dto.getId();
         SoOutstockEntity soOutstock = this.getById(id);
@@ -827,6 +831,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-05-22 19:04
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateAndSubmit(SoOutstockDTO.UpdateDTO dto) {
         String id = this.updateSoOutstock(dto);
         if (StringUtils.isBlank(id)) {

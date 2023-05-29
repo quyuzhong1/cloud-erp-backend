@@ -45,4 +45,15 @@ public interface TransferInDetailService extends SuperService<TransferInDetailEn
      * @return java.util.List<com.erp.model.wms.dto.TransferInDetailDTO.ViewDTO>
      */
     List<TransferInDetailDTO.ViewDTO> listByMainId(String mainId);
+
+    
+    /**
+     * 更改详情
+     * @author yl
+     * @date 2023-05-29 14:11
+     * @param mainId
+     * @param detailList
+     * @return void
+     */
+    void updateDetailList(String mainId, List<TransferInDetailDTO.UpdateDTO> detailList);
 }

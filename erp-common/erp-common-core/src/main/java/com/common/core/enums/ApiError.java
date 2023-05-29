@@ -519,6 +519,7 @@ public enum ApiError implements Serializable {
     ERROR_99064(99064,"只有已审核调拨申请单支持下推单据"),
     ERROR_99065(99065,"调入数量不能大于调出数量"),
     ERROR_99066(99066,"未找到分布式调入单"),
+    ERROR_99067(99067,"调出仓库不能修改"),
 
     /**
      * OMS 错误

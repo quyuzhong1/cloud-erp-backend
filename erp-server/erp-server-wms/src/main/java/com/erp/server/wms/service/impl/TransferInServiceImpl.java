@@ -29,6 +29,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.model.wms.dto.TransferInDetailDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.TransferInEntity;
 import com.erp.model.wms.entity.TransferOutDetailEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -556,6 +557,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         }
         TransferInDTO.ViewDTO viewDTO = new TransferInDTO.ViewDTO();
         BeanMapper.copy(transferIn, viewDTO);
+        ApproveStatusEnum approveStatusEnum = transferIn.getApproveStatus();
+        viewDTO.setApproveStatusName(approveStatusEnum.getName());
         String inWarehouseId = transferIn.getInWarehouseId();
         String outWarehouseId = transferIn.getOutWarehouseId();
         List<String> warehouseIds = Arrays.asList(inWarehouseId, outWarehouseId);
@@ -591,6 +594,71 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         List<TransferInDetailDTO.ViewDTO> detailList = transferInDetailService.listByMainId(id);
         viewDTO.setDetailList(detailList);
         return viewDTO;
+    }
+
+    /**
+     * 更改分布式调入单
+     *
+     * @param dto
+     * @return java.lang.String
+     * @author yl
+     * @date 2023-05-29 14:02
+     */
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String updateTransferIn(TransferInDTO.UpdateDTO dto) {
+        String id = dto.getId();
+        TransferInEntity transferIn = this.getById(id);
+        if (Objects.isNull(transferIn)) {
+            throw new ServiceException(ApiError.ERROR_99066);
+        }
+        String outWarehouseId = dto.getOutWarehouseId();
+        if (!transferIn.getOutWarehouseId().equals(outWarehouseId)) {
+            throw new ServiceException(ApiError.ERROR_99067);
+        }
+        String code = transferIn.getCode();
+        //旧的
+        TransferInEntity old = new TransferInEntity();
+        BeanMapper.copy(transferIn, old);
+        BeanMapper.copy(dto, transferIn);
+        transferIn.setCode(code);
+        String inWarehouseId = dto.getInWarehouseId();
+        WarehouseDTO.UpdateDTO warehouse = warehouseService.detailWithCache(inWarehouseId);
+        String warehouseKeeperId = dto.getWarehouseKeeperId();
+        if (StringUtils.isNotBlank(warehouseKeeperId)) {
+            //用户信息
+            FindUserDTO userInfo = sysUserFeign.getUserByUserId(warehouseKeeperId);
+            if (userInfo != null) {
+                transferIn.setWarehouseKeeperName(userInfo.getUserName());
+            }
+        }
+        transferIn.setInWarehouseName(warehouse.getName());
+        Boolean updateResult = this.updateById(transferIn);
+        if (updateResult) {
+            operateLogService.addModuleOperateLogByObj(old, transferIn, ModuleTypeEnum.TRANSFER_IN.getCode(), id, "", "");
+            transferInDetailService.updateDetailList(id, dto.getDetailList());
+            return id;
+        }
+
+        return "";
+    }
+
+    /**
+     * 修改并提交
+     * @author yl
+     * @date 2023-05-29 14:27
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateAndSubmit(TransferInDTO.UpdateDTO dto) {
+        String id = this.updateTransferIn(dto);
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_1020);
+        }
+        return this.submit(Arrays.asList(id));
     }
 
     private Boolean updateApproveInfo(List<TransferInEntity> list, ApproveStatusEnum approveStatus, String approveUserName) {

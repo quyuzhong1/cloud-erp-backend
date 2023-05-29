@@ -13,6 +13,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.server.wms.service.TransferInService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,7 +43,7 @@ public class TransferInController extends BaseController {
      */
     @GetMapping("/tabList")
     public ApiResult<List<TransferInDTO.TabListDTO>> tabList() {
-        List<TransferInDTO.TabListDTO>  tabList= transferInService.tabList();
+        List<TransferInDTO.TabListDTO> tabList = transferInService.tabList();
         return success(tabList);
     }
 
@@ -80,7 +81,6 @@ public class TransferInController extends BaseController {
     }
 
 
-
     /**
      * 提交
      *
@@ -98,7 +98,6 @@ public class TransferInController extends BaseController {
         Boolean result = transferInService.submit(dto.getIds());
         return result ? success() : failure();
     }
-
 
 
     /**
@@ -126,8 +125,16 @@ public class TransferInController extends BaseController {
      * @return
      */
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:transfer:in:update",
+            serviceClass = TransferInService.class,
+            keyIdName = "id"
+    )
     public ApiResult update(@RequestBody @Validated TransferInDTO.UpdateDTO dto) {
-        return success(null);
+        String id = transferInService.updateTransferIn(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
+
     }
 
     /**
@@ -137,8 +144,16 @@ public class TransferInController extends BaseController {
      * @return
      */
     @PostMapping("/updateAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:transfer:in:updateAndSubmit",
+            serviceClass = TransferInService.class,
+            keyIdName = "id"
+    )
     public ApiResult updateAndSubmit(@RequestBody @Validated TransferInDTO.UpdateDTO dto) {
-        return success(null);
+        Boolean result = transferInService.updateAndSubmit(dto);
+        return result ? success() : failure();
+
     }
 
     /**

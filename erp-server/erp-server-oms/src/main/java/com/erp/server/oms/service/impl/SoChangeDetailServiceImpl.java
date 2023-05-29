@@ -12,11 +12,13 @@ import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.mapper.SoChangeDetailMapper;
+import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoChangeDetailService;
 import com.erp.server.oms.service.SoDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -57,6 +59,9 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private OperateLogService operateLogService;
 
     /**
      * 添加变更详情信息
@@ -461,6 +466,23 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                     flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
             item.setSkuNo(skuNo);
         }
+        //这是删除
+        List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("删除了一个销售变更单产品【%s】", ModuleTypeEnum.SO_CHANGE.getCode(), removePairList, "编辑操作");
+
+        //这是添加
+        List<Pair<String, String>> addPairList = saveOrUpdateList.stream().filter(s -> StringUtils.isBlank(s.getId())).map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("添加了一个销售变更单产品【%s】", ModuleTypeEnum.SO_CHANGE.getCode(), addPairList, "编辑操作");
+        //修改的
+        updateEntityList = saveOrUpdateList.stream().filter(s -> StringUtils.isNotBlank(s.getId())).collect(Collectors.toList());
+        for (SoChangeDetailEntity update : updateEntityList) {
+            String id = update.getId();
+            SoChangeDetailEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
+            if (old != null) {
+                operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.SO_CHANGE.getCode(), mainId, "", "");
+            }
+        }
+
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
 
