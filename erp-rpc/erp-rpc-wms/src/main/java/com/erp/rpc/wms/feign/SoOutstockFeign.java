@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -40,4 +41,9 @@ public interface SoOutstockFeign {
      **/
     @PostMapping("feign/soOutstock/listBySoIds")
     List<SoOutstockEntity> listBySoIds(@RequestBody List<String> soIds);
+
+    @PostMapping("feign/soOutstock/listDetailBySoDetailIds")
+    List<SoOutstockDetailDTO.DeliveryQtyDTO> listDetailBySoDetailIds(List<String> soDetailIds);
+
+
 }

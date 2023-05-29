@@ -98,7 +98,7 @@
         si.approve_status
         FROM so_detail sd
         INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
-        WHERE si.is_deleted=FALSE
+        WHERE si.is_deleted=FALSE AND si.approve_status='approve'
         <if test="deliveryStatusList !=null  and deliveryStatusList.size>0">
             AND  sd.delivery_status IN
             <foreach collection="deliveryStatusList" item="deliveryStatus" open="(" separator="," close=")">

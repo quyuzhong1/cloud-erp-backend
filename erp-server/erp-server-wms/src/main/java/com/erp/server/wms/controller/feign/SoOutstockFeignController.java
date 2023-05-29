@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.feign;
 
+import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.server.wms.service.SoOutstockDetailService;
@@ -55,5 +56,18 @@ public class SoOutstockFeignController {
     @PostMapping("/listBySoIds")
     List<SoOutstockEntity> listBySoIds(@RequestBody List<String> soIds) {
         return soOutstockService.listBySoIds(soIds);
+    }
+
+   
+    /**
+     * 根据销售订单详情ids 获取对应的出库详情
+     * @author yl
+     * @date 2023-05-29 17:32
+     * @param soDetailIds
+     * @return java.util.List<com.erp.model.wms.entity.SoOutstockDetailEntity>
+     */
+    @PostMapping("/listDetailBySoDetailIds")
+    List<SoOutstockDetailDTO.DeliveryQtyDTO> listDetailBySoDetailIds(@RequestBody List<String> soDetailIds) {
+        return soOutstockDetailService.listDetailBySoDetailIds(soDetailIds);
     }
 }

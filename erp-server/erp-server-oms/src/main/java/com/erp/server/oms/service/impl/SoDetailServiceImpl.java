@@ -167,7 +167,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //已发货
         SoInfoDTO.TabListDTO delivery = new SoInfoDTO.TabListDTO();
         delivery.setSearchType(OmsConstant.DELIVERY);
-        int deliveryCount = (int) list.stream().filter(s -> completeShipment.equals(s.getDeliveryStatus())).
+        int deliveryCount = (int) list.stream().filter(s ->  s.getApproveStatus().equals(approveStatus)&&completeShipment.equals(s.getDeliveryStatus())).
                 map(SoDetailDTO.InfoDTO::getMainId).distinct().count();
         delivery.setCount(deliveryCount);
         result.add(delivery);
@@ -302,7 +302,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             item.setWaitQty(waitQty);
             //税率
             BigDecimal taxRate = item.getTaxRate();
-            BigDecimal flagTaxRate = MathUtil.divide(taxRate,MathUtil.BigDecimal_100);
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //单价
             BigDecimal price = item.getPrice();
             //含税单价=销售单价*（税率+1）
@@ -583,7 +583,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             item.setWaitQty(waitQty);
             //税率
             BigDecimal taxRate = item.getTaxRate();
-            BigDecimal flagTaxRate = MathUtil.divide(taxRate,MathUtil.BigDecimal_100);
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //单价
             BigDecimal price = item.getPrice();
             item.setAmount(MathUtil.multiply(price, qty));
@@ -692,7 +692,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         result.setWaitQty(waitQty);
         //税率
         BigDecimal taxRate = BigDecimal.ZERO;
-        BigDecimal flagTaxRate = MathUtil.divide(taxRate,MathUtil.BigDecimal_100);
+        BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
 
         //单价
         BigDecimal price = BigDecimal.ZERO;
@@ -752,7 +752,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             result.setQty(item.getQty());
             result.setAmount(item.getAmount());
             BigDecimal taxRate = item.getTaxRate();
-            BigDecimal flagTaxRate = MathUtil.divide(taxRate,MathUtil.BigDecimal_100);
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
 
             result.setTaxRate(taxRate);
             //单价
@@ -842,7 +842,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             item.setWaitQty(waitQty);
             //税率
             BigDecimal taxRate = item.getTaxRate();
-            BigDecimal flagTaxRate = MathUtil.divide(taxRate,MathUtil.BigDecimal_100);
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //单价
             BigDecimal price = item.getPrice();
             //含税单价=销售单价*（税率+1）
@@ -895,12 +895,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * @date 2023-05-24 18:42
      */
     @Override
-    public void checkSkuQty(String warehouseId, List<SoDetailDTO.AddDTO> detailList) {
+    public List<String> checkSkuQty(String warehouseId, List<SoDetailDTO.AddDTO> detailList) {
+        List<String> scarceSkuList = new ArrayList<>(10);
         if (CollectionUtils.isNotEmpty(detailList)) {
             List<String> skuIdList = detailList.stream().map(SoDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
             List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
             List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSkuInventoryTotalList(skuIdList, warehouseId);
-            List<String> scarceSkuList = new ArrayList<>(skuIdList.size());
             for (SoDetailDTO.AddDTO item : detailList) {
                 int qty = item.getQty();
                 String skuId = item.getSkuId();
@@ -913,15 +913,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     scarceSkuList.add(skuNo);
                 }
             }
-
-            //表示有
-            if (CollectionUtils.isNotEmpty(scarceSkuList)) {
-                String scarceSkuNo = scarceSkuList.stream().collect(Collectors.joining(","));
-                throw new ServiceException(ApiError.ERROR_92035.code, String.format(ApiError.ERROR_92035.msg, scarceSkuNo));
-            }
-
         }
-
+        return scarceSkuList;
     }
 
 
@@ -938,9 +931,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Override
     public List<SoDetailEntity> listDetailBySoId(String soId, List<String> soDetailIds, Boolean hasContain) {
         LambdaQueryWrapper<SoDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SoDetailEntity::getMainId,soId);
-        if(CollectionUtils.isNotEmpty(soDetailIds)&&hasContain!=null&&hasContain){
-            queryWrapper.in(SoDetailEntity::getId,soDetailIds);
+        queryWrapper.eq(SoDetailEntity::getMainId, soId);
+        if (CollectionUtils.isNotEmpty(soDetailIds) && hasContain != null && hasContain) {
+            queryWrapper.in(SoDetailEntity::getId, soDetailIds);
         }
         return this.list(queryWrapper);
     }

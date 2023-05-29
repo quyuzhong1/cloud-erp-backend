@@ -202,7 +202,7 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @author yl
      * @date 2023-05-24 18:42
      */
-    void checkSkuQty(String warehouseId, List<SoDetailDTO.AddDTO> detailList);
+    List<String> checkSkuQty(String warehouseId, List<SoDetailDTO.AddDTO> detailList);
 
     /**
      * 获取到对应销售订单的详情

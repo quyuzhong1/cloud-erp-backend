@@ -37,8 +37,8 @@ public class SoDetailController extends BaseController {
      */
     @PostMapping("/checkScarce")
     public ApiResult add(@RequestBody @Validated({AddGroup.class}) SoInfoDTO.AddDTO dto) {
-        soDetailService.checkSkuQty(dto.getWarehouseId(), dto.getDetailList());
-        return success();
+       List<String> skuNoList= soDetailService.checkSkuQty(dto.getWarehouseId(), dto.getDetailList());
+        return success(skuNoList);
     }
 
 

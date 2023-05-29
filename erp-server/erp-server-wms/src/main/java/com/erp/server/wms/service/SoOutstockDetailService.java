@@ -3,9 +3,6 @@ package com.erp.server.wms.service;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -118,4 +115,14 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @date 2023-05-25 19:25
      */
     void closeBySoDetailIds(List<String> soDetailIds);
+
+
+    /**
+     * 根据销售订单详情ids 获取对应的出库详情
+     * @author yl
+     * @date 2023-05-29 17:32
+     * @param soDetailIds
+     * @return java.util.List<com.erp.model.wms.entity.SoOutstockDetailEntity>
+     */
+    List<SoOutstockDetailDTO.DeliveryQtyDTO> listDetailBySoDetailIds(List<String> soDetailIds);
 }

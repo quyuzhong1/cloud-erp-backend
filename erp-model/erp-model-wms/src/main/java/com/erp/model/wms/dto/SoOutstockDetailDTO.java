@@ -402,6 +402,51 @@ public class SoOutstockDetailDTO implements Serializable {
         private String sourceDetailId;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class DeliveryQtyDTO {
+
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * sku id
+         */
+        private String skuId;
+        /**
+         * sku no
+         */
+        private String skuNo;
+
+
+        /**
+         * 应发数量
+         */
+        private Integer planQty;
+
+        /**
+         * 实发数量
+         */
+        private Integer actualQty;
+
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 销售订单详情id
+         */
+        private String soDetailId;
+
+
+
+
+    }
+
     /**
      * 修改
      */

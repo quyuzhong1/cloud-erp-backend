@@ -421,7 +421,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if (CollectionUtils.isEmpty(soDetailIds)) {
             return 0;
         }
-        return this.lambdaQuery().in(SoOutstockDetailEntity::getSourceDetailId,soDetailIds).count();
+        return this.lambdaQuery().in(SoOutstockDetailEntity::getSourceDetailId, soDetailIds).count();
     }
 
     @Override
@@ -440,10 +440,45 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      */
     @Override
     public void closeBySoDetailIds(List<String> soDetailIds) {
-        if(CollectionUtils.isNotEmpty(soDetailIds)){
+    }
 
+
+    /**
+     * 根据销售订单详情ids 获取对应的出库详情
+     *
+     * @param soDetailIds
+     * @return java.util.List<com.erp.model.wms.entity.SoOutstockDetailEntity>
+     * @author yl
+     * @date 2023-05-29 17:32
+     */
+    @Override
+    public List<SoOutstockDetailDTO.DeliveryQtyDTO> listDetailBySoDetailIds(List<String> soDetailIds) {
+        if (CollectionUtils.isEmpty(soDetailIds)) {
+            return Collections.emptyList();
         }
-
+        //发货通知详情id
+        List<SoDeliveryNoticeDetailEntity> noticeDetailSourceDetailList = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(soDetailIds);
+        List<String> noticeDetailSourceDetailIdList = noticeDetailSourceDetailList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
+        soDetailIds.addAll(noticeDetailSourceDetailIdList);
+        List<SoOutstockDetailEntity> list = this.listBySourceDetailIds(soDetailIds);
+        List<SoOutstockDetailDTO.DeliveryQtyDTO> resultList = new ArrayList<>(list.size());
+        for (SoOutstockDetailEntity item : list) {
+            SoOutstockDetailDTO.DeliveryQtyDTO out = new SoOutstockDetailDTO.DeliveryQtyDTO();
+            out.setActualQty(item.getActualQty());
+            out.setPlanQty(item.getPlanQty());
+            out.setId(item.getId());
+            out.setSkuId(item.getSkuId());
+            out.setSkuNo(item.getSkuNo());
+            //这个可能是发货通知的单
+            String sourceDetailId = item.getSourceDetailId();
+            out.setSourceDetailId(sourceDetailId);
+            //销售订单详情id
+            String soDetailId = noticeDetailSourceDetailList.stream().filter(n -> n.getId().equals(sourceDetailId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getSourceDetailId())).orElse(sourceDetailId);
+            out.setSoDetailId(soDetailId);
+            resultList.add(out);
+        }
+        return resultList;
     }
 
     private List<String> getDeleteIds(List<Pair<String, String>> pairList, List<SoOutstockDetailEntity> dbList) {
