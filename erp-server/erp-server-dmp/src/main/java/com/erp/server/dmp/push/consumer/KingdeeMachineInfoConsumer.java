@@ -45,11 +45,11 @@ public class KingdeeMachineInfoConsumer implements RocketMQListener<Map<String, 
 
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_TRANSFERDIRECT.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_ASSEMBLEDAPP.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "ZJDB23052400004"));
+        queryFilters.add(String.format("FBillNo = '%s'", "ZZCX001369"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FID,FTransferDirect";
+        String fieldKeys = "FID,FBillTypeID.FNumber";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,0);
         System.out.println(queryList);
 
@@ -58,9 +58,9 @@ public class KingdeeMachineInfoConsumer implements RocketMQListener<Map<String, 
     @Override
     public void onMessage(Map<String, Object> map) {
         //模块类型
-        Integer type = ApiModuleTypeEnum.TRANSFER_INFO.getCode();
+        Integer type = ApiModuleTypeEnum.MACHINE_INFO.getCode();
 
-        log.info("直接调拨单开始推送金蝶 map = {}", JSONUtil.toJsonStr(map));
+        log.info("加工单开始推送金蝶 map = {}", JSONUtil.toJsonStr(map));
 
         //业务编码
         String code = (String) map.get("code");
@@ -70,7 +70,7 @@ public class KingdeeMachineInfoConsumer implements RocketMQListener<Map<String, 
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_TRANSFERDIRECT.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_ASSEMBLEDAPP.getCode());
 
         //操作项
         String operate = (String) map.get("operate");
@@ -179,8 +179,7 @@ public class KingdeeMachineInfoConsumer implements RocketMQListener<Map<String, 
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
             //给修改json对象赋值ID
             KingdeeUtils.makeFieldJson(json,"FId",".", id);
-            //更新数据不能传入库组织
-            json.remove("FStockOrgId");
+
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);

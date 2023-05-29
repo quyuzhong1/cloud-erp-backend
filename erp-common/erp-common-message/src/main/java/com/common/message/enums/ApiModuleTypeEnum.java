@@ -28,6 +28,7 @@ public enum ApiModuleTypeEnum {
     CUSTOMER_INFO(17, "customerInfo", "客户","oms"),
     OTHER_OUTSTOCK(18, "otherOutstock", "其他出库单","wms"),
     OTHER_INSTOCK(19, "otherInstock", "其他入库单","wms"),
+    MACHINE_INFO(20, "machineInfo", "加工单","wms"),
 
     ;
     private Integer code;
