@@ -26,22 +26,20 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
-import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
-import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.CustomerAddressTypeEnum;
 import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -133,8 +131,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public String add(SoInfoDTO.AddDTO dto) {
         //id
         String id = dto.getId();
-        //检查sku 数量
-        soDetailService.checkSkuQty(dto.getWarehouseId(),dto.getDetailList());
         String customerId = dto.getCustomerId();
         if (StringUtils.isNotBlank(customerId)) {
             customerInfoService.quoteCustomer(Arrays.asList(customerId));
@@ -187,6 +183,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         addEntity.setWarehouseOrgName(warehouseOrgName);
         String waitSubmitStatus = BillApproveStatusEnum.WAIT_SUBMIT.getStatus();
         addEntity.setApproveStatus(BillApproveStatusEnum.getByStatus(waitSubmitStatus));
+        String currency = dto.getCurrency();
+        List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(Arrays.asList(currency));
+        String symbol = currencyViewList.stream().filter(c -> c.getId().equals(currency)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
+        addEntity.setCurrencySymbol(symbol);
         //保存成功
         Boolean addResult = this.saveOrUpdate(addEntity);
         if (addResult) {
@@ -215,8 +216,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             return false;
         }
         List<SoInfoEntity> list = this.listByIds(ids);
-        long invalidCount= list.stream().filter(s -> s.getInvalidStatus()).count();
-        if(invalidCount>0){
+        long invalidCount = list.stream().filter(s -> s.getInvalidStatus()).count();
+        if (invalidCount > 0) {
             throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
         }
         //待审核
@@ -569,7 +570,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         soInfo.setWarehouseOrgId(warehouseOrgId);
         soInfo.setWarehouseOrgName(warehouseOrgName);
-
+        String currency = dto.getCurrency();
+        List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(Arrays.asList(currency));
+        String symbol = currencyViewList.stream().filter(c -> c.getId().equals(currency)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
+        soInfo.setCurrencySymbol(symbol);
         Boolean updateResult = this.updateById(soInfo);
         if (updateResult) {
             /**

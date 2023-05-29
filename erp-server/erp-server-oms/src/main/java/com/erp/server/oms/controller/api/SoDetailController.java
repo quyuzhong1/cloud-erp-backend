@@ -1,10 +1,13 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.validator.AddGroup;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoDetailDTO;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.server.oms.service.SoDetailService;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,18 +30,30 @@ public class SoDetailController extends BaseController {
 
 
     /**
+     * 检测 sku 是否缺货
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/checkScarce")
+    public ApiResult add(@RequestBody @Validated({AddGroup.class}) SoInfoDTO.AddDTO dto) {
+        soDetailService.checkSkuQty(dto.getWarehouseId(), dto.getDetailList());
+        return success();
+    }
+
+
+    /**
      * 根据skuId 获取产品明细
      */
     @GetMapping("/getSkuInfoBySkuId")
-    public ApiResult<SoDetailDTO.SkuDTO> getSkuInfoBySkuId(@RequestParam("skuNo") String skuNo,@RequestParam("warehouseId") String warehouseId) {
-        SoDetailDTO.SkuDTO skuDTO = soDetailService.getSkuInfoBySkuNo(skuNo,warehouseId);
+    public ApiResult<SoDetailDTO.SkuDTO> getSkuInfoBySkuId(@RequestParam("skuNo") String skuNo, @RequestParam("warehouseId") String warehouseId) {
+        SoDetailDTO.SkuDTO skuDTO = soDetailService.getSkuInfoBySkuNo(skuNo, warehouseId);
         return success(skuDTO);
     }
 
 
     /**
      * 根据销售订单id 获取到对应产品明细
-     *
      */
     @GetMapping("/listBySoId")
     public ApiResult<List<SoDetailDTO.ViewDTO>> listBySoId(@RequestParam("soId") String soId) {
@@ -66,7 +81,6 @@ public class SoDetailController extends BaseController {
         soDetailService.downloadTemplate(response);
         return success();
     }
-
 
 
 }
