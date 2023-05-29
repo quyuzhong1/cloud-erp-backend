@@ -3,12 +3,16 @@ package com.erp.server.dmp.utils;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.erp.model.dmp.entity.PlatformEntity;
+import com.google.gson.Gson;
 import com.kingdee.bos.webapi.entity.*;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -226,6 +230,33 @@ public class KingdeeApiUtils {
     }
 
     /**
+     * 查询客户分组
+     * @param id
+     * @return  返回操作结果
+     */
+    public JSONObject queryGroupInfo(String id) {
+        JSONObject json;
+        try {
+            LinkedHashMap<String,Object> viewMap =  new LinkedHashMap<>();
+            viewMap.put("FormId", this.formId);
+            viewMap.put("GroupPkIds",id);
+//            viewMap.put("GroupFieldKey","测试分组");
+            String jsonData = JSONUtil.toJsonStr(viewMap);
+            String view = client.queryGroupInfo(jsonData);
+            JSONObject parse =  JSONUtil.parseObj(view);
+            JSONObject result = JSONUtil.parseObj(parse.get("Result"));
+            JSONObject responseStatus = (JSONObject)result.get("ResponseStatus");
+            json = (JSONObject)result.get("Result");
+            if(!(Boolean) responseStatus.get("IsSuccess")){
+                throw new RuntimeException("【查看单据】出错:"+ responseStatus.get("Errors"));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return json;
+    }
+
+    /**
      * 审核 单据(按ID）
      * @param idList    ID列表
      * @param ignoreError （可选) true:忽略错误,false:出现错误时抛出异常
@@ -420,6 +451,57 @@ public class KingdeeApiUtils {
         return result;
     }
 
+    /**
+     * 分组保存单据
+     * @param data  单据数据
+     * @return
+     */
+    public RepoRet customerGroupSave(SaveParam<?> data) {
+        RepoRet repoRet;
+        try {
+            String jsonData = JSONUtil.toJsonStr(data.getModel());
+            String view = client.groupSave(this.formId, jsonData);
+            //用于记录结果
+            Gson gson = new Gson();
+            //对返回结果进行解析和校验
+            repoRet = gson.fromJson(view, RepoRet.class);
+            if (repoRet.getResult().getResponseStatus().isIsSuccess()) {
+                return repoRet;
+            } else {
+                throw new RuntimeException("【查看单据】出错:"+ repoRet.getResult().getResponseStatus().getErrors());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * @description: 删除客户分组
+     * @return JSONObject
+     */
+    public JSONObject customerGroupDelete(String id){
+        JSONObject json;
+        try {
+            LinkedHashMap<String,Object> viewMap =  new LinkedHashMap<>();
+            viewMap.put("FormId", this.formId);
+            viewMap.put("GroupFieldKey", "02");
+            viewMap.put("GroupPkIds", "379804");
+            viewMap.put("FNumber", "测试分组");
+            //[{"FID":379804,"FNUMBER":"测试分组","FGROUPID":"66f39f43-f586-4ec7-9419-8e21cf5c7196","FPARENTID":0,"FFULLPARENTID":" ","FLEFT":0,"FRIGHT":0,"FNAME":"测试分组","FDESCRIPTION":" "}]}}
+            String jsonData = JSONUtil.toJsonStr(viewMap);
+            String view = client.groupDelete(jsonData);
+            JSONObject parse = JSONUtil.parseObj(view);
+            JSONObject result = JSONUtil.parseObj(parse.get("Result"));
+            JSONObject responseStatus = (JSONObject)result.get("ResponseStatus");
+            json = (JSONObject)result.get("Result");
+            if(!(Boolean) responseStatus.get("IsSuccess")){
+                throw new RuntimeException("【查看单据】出错:"+ responseStatus.get("Errors"));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return json;
+    }
 
     /**
      * @description: 禁用、反禁用、作废、反作废

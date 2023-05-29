@@ -1,7 +1,13 @@
 package com.erp.server.dmp.pull.service.dmp;
 
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.RequestDTO;
+import com.erp.model.dmp.entity.PlatformEntity;
+import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.kingdee.KingdeeEccShopEntity;
 import com.erp.server.dmp.ErpServerDmpApplication;
@@ -12,6 +18,11 @@ import com.erp.server.dmp.pull.service.mabang.MabangHistoryOrderInfoServiceImpl;
 import com.erp.server.dmp.pull.service.mabang.MabangOrderInfoServiceImpl;
 import com.erp.server.dmp.pull.service.mabang.MabangRefundServiceImpl;
 import com.erp.server.dmp.pull.service.mabang.MabangReturnOrderInfoServiceImpl;
+import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
+import com.erp.server.dmp.push.service.kingdee.impl.KingdeeCommonServiceImpl;
+import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.kingdee.bos.webapi.entity.SaveParam;
+import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,7 +33,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 
 /**
@@ -35,6 +49,46 @@ import java.util.stream.IntStream;
 @SpringBootTest(classes = {ErpServerDmpApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Profile("dev")
 public class MabangPullServiceTest {
+    @Resource
+    private KingdeeCommonService kingdeeCommonService;
+
+    @Test
+    public void testtt() {
+        //379801
+        //模块类型
+        Integer type = ApiModuleTypeEnum.CUSTOMER_INFO.getCode();
+        Map<String, Object> map = new LinkedHashMap<>();
+        //读取配置，初始化SDK
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_CUSTOMER.getCode());
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FBillNo = '%s'", "CGTJ23050500001"));
+        String filterStr = String.join(" and ", queryFilters);
+        String fieldKeys = "FId,FPUR_PATENTRY_FEntryID,FMaterialId.FNumber,FSrcEntryID,FIsPriceListPush";
+        map.put("groupName", "测试分组");
+        map.put("groupName", "测试分组");
+        map.put("id", "379804");
+        map.put("Ids", "");
+
+        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
+        if (ObjectUtils.isEmpty(platformEntity)) {
+            return;
+        }
+
+        //根据录入值和字段配置生成JSONObject
+        JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
+        SaveParam param = new SaveParam(json);
+//        kingdeeCommonService.queryGroupInfo(apiUtils, map.get("Ids").toString());
+        kingdeeCommonService.customerGroupDelete(apiUtils, platformEntity, map, type);
+
+
+//        Boolean aBoolean = kingdeeCommonService.customerGroupSaveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+
+       /* LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
+        viewMap.put("Number","CGDD-230413-8806");
+        JSONObject viewJson = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
+        System.out.println(viewJson);
+*/
+    }
 
 
     @Test

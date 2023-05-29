@@ -781,6 +781,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 detailAdd.setAttachUrlList(view.getAttachmentUrlList());
                 detailList.add(detailAdd);
             }
+            add.setDetailList(detailList);
             this.add(add);
         }
         return Boolean.TRUE;

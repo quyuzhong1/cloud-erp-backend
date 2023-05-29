@@ -73,6 +73,11 @@ public class RocketMqConsumerGroup {
      */
     public static final String SYNC_KINGDEE_CUSTOMER_INFO = "${spring.profiles.active}-sync_kingdee_customer_info";
 
+    /**
+     * 客户列表
+     */
+    public static final String SYNC_KINGDEE_CUSTOMER_GROUP_INFO = "${spring.profiles.active}-sync_kingdee_customer_group_info";
+
 
     /**
      * 其他出库

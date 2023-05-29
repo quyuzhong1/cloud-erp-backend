@@ -2,6 +2,7 @@ package com.erp.server.dmp.push.service.kingdee.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -32,8 +33,10 @@ import com.erp.server.dmp.service.CfgApiFieldMapValueService;
 import com.erp.server.dmp.service.PlatformService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
+import com.kingdee.bos.webapi.entity.RepoRet;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import com.kingdee.bos.webapi.entity.SaveResult;
+import com.kingdee.bos.webapi.entity.SuccessEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -171,6 +174,12 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     }
 
     @Override
+    public JSONObject queryGroupInfo(KingdeeApiUtils apiUtils, String id) {
+        JSONObject model = apiUtils.queryGroupInfo(id);
+        return model;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number,String operate) {
         LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
@@ -219,7 +228,51 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONUtil.toJsonStr(viewMap),"删除",type,ApiSendStatusEnum.SUCCESS.getCode());
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void customerGroupDelete(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type) {
+        try {
+            apiUtils.customerGroupDelete(String.valueOf(map.get("id")));
+        } catch (Exception e) {
+            //新增失败时添加日志及定时任务
+            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),JSONUtil.toJsonStr(map),e.getMessage(),type,ApiSendStatusEnum.FAILURE.getCode());
+            return;
+        }
+        //操作成功添加日志
+        insertLogWriteBackSyncKingdeeStatus(platformEntity,String.valueOf(map.get("id")),JSONUtil.toJsonStr(map),"删除",type,ApiSendStatusEnum.SUCCESS.getCode());
 
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean customerGroupSaveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param,Integer type) {
+        RepoRet repoRet;
+        String msg = "新增数据";
+        if (CollectionUtils.isNotEmpty(param.getNeedUpDateFields())) {
+            msg = "修改数据";
+        }
+        try {
+            repoRet = apiUtils.customerGroupSave(param);
+        } catch (Exception e) {
+            //新增失败时添加日志及定时任务
+            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(json), msg.concat("；").concat(e.getMessage()), type, ApiSendStatusEnum.FAILURE.getCode());
+            return Boolean.FALSE;
+        }
+        if (ObjectUtil.isNotEmpty(repoRet.getResult()) && repoRet.getResult().getResponseStatus().getSuccessEntitys() != null) {
+            ArrayList<SuccessEntity> successEntitys = repoRet.getResult().getResponseStatus().getSuccessEntitys();
+            if (CollectionUtils.isNotEmpty(successEntitys)) {
+                //数据id
+                String id = successEntitys.get(MathUtil.ZERO).getId();
+                //金蝶id
+                map.put("syncKingdeeId", id);
+                //更新业务表中的金蝶id
+                updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), "", id);
+                //新增成功操作日志
+                insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(json), msg, type, ApiSendStatusEnum.SUCCESS.getCode());
+            }
+        }
+        return Boolean.TRUE;
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)

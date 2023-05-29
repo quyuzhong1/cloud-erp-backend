@@ -114,6 +114,16 @@ public interface KingdeeCommonService {
     JSONObject view (KingdeeApiUtils apiUtils,String id,String number);
 
     /**
+     * 查询客户分组
+     * @Author Luo_WG
+     * @Date 2023/5/26 16:05
+     * @param apiUtils
+     * @param id
+     * @return cn.hutool.json.JSONObject
+     **/
+    JSONObject queryGroupInfo(KingdeeApiUtils apiUtils, String id);
+
+    /**
      * @description: 查询平台
      * @author Will
      * @date: 2023/4/7 11:39
@@ -147,6 +157,32 @@ public interface KingdeeCommonService {
      * @param number
      */
     void delete (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number);
+
+    /**
+     * 删除客户分组
+     * @Author Luo_WG
+     * @Date 2023/5/26 15:32
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     * @return void
+     **/
+    void customerGroupDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type);
+
+    /**
+     * 客户分组新增或修改
+     * @Author Luo_WG
+     * @Date 2023/5/26 15:46
+     * @param platformEntity
+     * @param map
+     * @param apiUtils
+     * @param json
+     * @param param
+     * @return java.lang.Boolean
+     **/
+    Boolean customerGroupSaveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param,Integer type);
+
     /**
      * 保存到金蝶数据
      * @param orderNo
