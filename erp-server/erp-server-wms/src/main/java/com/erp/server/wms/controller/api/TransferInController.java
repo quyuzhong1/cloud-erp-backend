@@ -108,8 +108,15 @@ public class TransferInController extends BaseController {
      * @return
      */
     @PostMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:transfer:in:view",
+            serviceClass = TransferInService.class,
+            keyIdName = "id"
+    )
     public ApiResult<TransferInDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
-        return success(null);
+        TransferInDTO.ViewDTO result = transferInService.view(dto.getId());
+        return success(result);
     }
 
     /**

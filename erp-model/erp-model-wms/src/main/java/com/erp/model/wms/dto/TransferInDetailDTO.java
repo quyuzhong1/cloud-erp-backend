@@ -124,7 +124,8 @@ public class TransferInDetailDTO implements Serializable {
 
 
         /**
-         * 调出仓位
+         * 调出仓位 不能更改
+         *
          */
         private String outWarehouseLocation;
 
@@ -138,10 +139,7 @@ public class TransferInDetailDTO implements Serializable {
          */
         private String transitDamageResponsible;
 
-        /**
-         * 即时库存
-         */
-        private Integer curInventoryQty;
+
         /**
          * 来源明细id
          */

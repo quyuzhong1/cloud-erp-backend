@@ -301,10 +301,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             item.setWaitQty(waitQty);
             //税率
             BigDecimal taxRate = item.getTaxRate();
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate,MathUtil.BigDecimal_100);
             //单价
             BigDecimal price = item.getPrice();
             //含税单价=销售单价*（税率+1）
-            BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
+            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             item.setTaxPrice(taxPrice);
             //历史价格
@@ -581,11 +582,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             item.setWaitQty(waitQty);
             //税率
             BigDecimal taxRate = item.getTaxRate();
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate,MathUtil.BigDecimal_100);
             //单价
             BigDecimal price = item.getPrice();
             item.setAmount(MathUtil.multiply(price, qty));
             //含税单价=销售单价*（税率+1）
-            BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
+            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             item.setTaxPrice(taxPrice);
             //历史价格
@@ -689,11 +691,13 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         result.setWaitQty(waitQty);
         //税率
         BigDecimal taxRate = BigDecimal.ZERO;
+        BigDecimal flagTaxRate = MathUtil.divide(taxRate,MathUtil.BigDecimal_100);
+
         //单价
         BigDecimal price = BigDecimal.ZERO;
         result.setAmount(MathUtil.multiply(price, qty));
         //含税单价=销售单价*（税率+1）
-        BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
+        BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
         BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
         result.setTaxPrice(taxPrice);
         result.setPrice(price);
@@ -747,11 +751,13 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             result.setQty(item.getQty());
             result.setAmount(item.getAmount());
             BigDecimal taxRate = item.getTaxRate();
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate,MathUtil.BigDecimal_100);
+
             result.setTaxRate(taxRate);
             //单价
             BigDecimal price = item.getPrice();
             //含税单价=销售单价*（税率+1）
-            BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
+            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             result.setTaxPrice(MathUtil.multiply(price, multiplyTax));
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().orElse(null);
@@ -835,10 +841,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             item.setWaitQty(waitQty);
             //税率
             BigDecimal taxRate = item.getTaxRate();
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate,MathUtil.BigDecimal_100);
             //单价
             BigDecimal price = item.getPrice();
             //含税单价=销售单价*（税率+1）
-            BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
+            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             item.setTaxPrice(taxPrice);
         }

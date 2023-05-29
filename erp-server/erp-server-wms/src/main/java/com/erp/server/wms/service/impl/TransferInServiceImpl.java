@@ -8,6 +8,7 @@ import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -537,6 +538,60 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         }
         return Boolean.TRUE;
 
+    }
+
+    /**
+     * 分布是调入详情
+     *
+     * @param id
+     * @return com.erp.model.wms.dto.TransferInDTO.ViewDTO
+     * @author yl
+     * @date 2023-05-29 10:52
+     */
+    @Override
+    public TransferInDTO.ViewDTO view(String id) {
+        TransferInEntity transferIn = this.getById(id);
+        if (Objects.isNull(transferIn)) {
+            throw new ServiceException(ApiError.ERROR_99066);
+        }
+        TransferInDTO.ViewDTO viewDTO = new TransferInDTO.ViewDTO();
+        BeanMapper.copy(transferIn, viewDTO);
+        String inWarehouseId = transferIn.getInWarehouseId();
+        String outWarehouseId = transferIn.getOutWarehouseId();
+        List<String> warehouseIds = Arrays.asList(inWarehouseId, outWarehouseId);
+        List<WarehouseEntity> warehouseList = CollectionUtils.isNotEmpty(warehouseIds) ? warehouseService.listByIds(warehouseIds) : Collections.emptyList();
+        //调入仓库
+        WarehouseEntity inWarehouse = warehouseList.stream().filter(w -> w.getId().equals(inWarehouseId)).
+                findFirst().orElse(null);
+        List<String> orgIdList = new ArrayList<>(2);
+        String inOrgId = "";
+        if (inWarehouse != null) {
+            inOrgId = inWarehouse.getOrgId();
+        }
+        viewDTO.setInOrgId(inOrgId);
+        //调出仓库
+        WarehouseEntity outWarehouse = warehouseList.stream().filter(w -> w.getId().equals(outWarehouseId)).
+                findFirst().orElse(null);
+        String outOrgId = "";
+        if (outWarehouse != null) {
+            outOrgId = outWarehouse.getOrgId();
+        }
+        viewDTO.setOutOrgId(outOrgId);
+
+        orgIdList.add(outOrgId);
+        orgIdList.add(inOrgId);
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
+        String finalOutOrgId = outOrgId;
+        String outOrgName = orgList.stream().filter(o -> o.getId().equals(finalOutOrgId)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        viewDTO.setOutOrgName(outOrgName);
+
+        String finalInOrgId = inOrgId;
+        String inOrgName = orgList.stream().filter(o -> o.getId().equals(finalInOrgId)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        viewDTO.setInOrgName(inOrgName);
+
+        return viewDTO;
     }
 
     private Boolean updateApproveInfo(List<TransferInEntity> list, ApproveStatusEnum approveStatus, String approveUserName) {
