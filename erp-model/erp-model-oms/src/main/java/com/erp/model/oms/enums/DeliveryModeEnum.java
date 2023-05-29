@@ -1,9 +1,10 @@
 package com.erp.model.oms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum DeliveryModeEnum {
+public enum DeliveryModeEnum implements EnumMessage {
     DELIVERGOODS("deliverGoods","发货"),
     SELFEXTRACTION("selfExtraction","自提"),
     ;

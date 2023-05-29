@@ -12,6 +12,7 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.InvoiceDTO;
 import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
@@ -21,10 +22,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
-import com.erp.server.oms.service.CustomerInfoService;
-import com.erp.server.oms.service.CustomerInvoiceService;
-import com.erp.server.oms.service.CustomerSellerService;
-import com.erp.server.oms.service.DictBasicService;
+import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -55,6 +53,9 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 
     @Resource
     private CustomerSellerService customerSellerService;
+
+    @Resource
+    private CustomerAddressService customerAddressService;
 
     @Resource
     private MQProducerService mQProducerService;
@@ -122,7 +123,9 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         DictBasicDTO.ViewDTO collectionTerms = collectionTermsList.stream().filter(req -> req.getValue().equals(entity.getConditionDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
         resultMap.put("collectionTermsCode",collectionTerms.getRemark());
 
-
+        resultMap.put("invoiceList", viewDTOS);
+        List<CustomerAddressDTO.ViewDTO> customerAddressList = customerAddressService.listByMainId(entity.getId());
+        resultMap.put("customerAddressList", customerAddressList);
         /*
         //部门
         SysDepartmentDTO sysDepartmentDTO = sysUserFeign.getUserDeptById(entity.getDeptId());

@@ -1,5 +1,6 @@
 package com.erp.rpc.oms.feign;
 
+import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,9 +12,10 @@ import java.util.List;
 public interface CustomerFeign {
     /**
      * 获取客户信息
+     *
+     * @return com.erp.model.oms.entity.SoInfoEntity
      * @Author Luo_WG
      * @Date 2023/5/15 18:18
-     * @return com.erp.model.oms.entity.SoInfoEntity
      **/
     @PostMapping("feign/customer/listCustomer")
     List<CustomerInfoEntity> listCustomer();
@@ -21,11 +23,24 @@ public interface CustomerFeign {
 
     /**
      * 引用客户
+     *
+     * @param ids ids
+     * @return java.util.List<com.erp.model.oms.entity.CustomerInfoEntity>
      * @author yl
      * @date 2023-05-17 18:35
-     * @param ids  ids
-     * @return java.util.List<com.erp.model.oms.entity.CustomerInfoEntity>
      */
     @PostMapping("feign/customer/quoteCustomer")
     List<CustomerInfoEntity> quoteCustomer(@RequestBody List<String> ids);
+
+    /**
+     * 根据id查询收货地址
+     *
+     * @param ids
+     * @return java.util.List<com.erp.model.oms.entity.CustomerAddressEntity>
+     * @Author Luo_WG
+     * @Date 2023/5/29 17:39
+     **/
+    @PostMapping("feign/customer/ListCustomerAddressByIds")
+    List<CustomerAddressEntity> ListCustomerAddressByIds(@RequestBody List<String> ids);
+
 }

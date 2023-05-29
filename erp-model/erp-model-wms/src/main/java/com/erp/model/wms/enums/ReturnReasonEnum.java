@@ -1,9 +1,10 @@
 package com.erp.model.wms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum ReturnReasonEnum {
+public enum ReturnReasonEnum implements EnumMessage {
     MAINTENANCE("maintenance","保修"),
     EXPIRE("expire","过期"),
     BREAKAGE("breakage","破损"),

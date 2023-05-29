@@ -1,6 +1,8 @@
 package com.erp.server.oms.controller.feign;
 
+import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.server.oms.service.CustomerAddressService;
 import com.erp.server.oms.service.CustomerInfoService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,6 +17,9 @@ import java.util.List;
 public class CustomerFeignController {
     @Resource
     private CustomerInfoService customerInfoService;
+
+    @Resource
+    private CustomerAddressService customerAddressService;
 
     /**
      * 获取所有客户信息
@@ -31,5 +36,10 @@ public class CustomerFeignController {
     @PostMapping("/quoteCustomer")
     public Boolean quoteCustomer(@RequestBody List<String> ids) {
         return customerInfoService.quoteCustomer(ids);
+    }
+
+    @PostMapping("/ListCustomerAddressByIds")
+    List<CustomerAddressEntity> ListCustomerAddressByIds(@RequestBody List<String> ids) {
+        return customerAddressService.listByIds(ids);
     }
 }

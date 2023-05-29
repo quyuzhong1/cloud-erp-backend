@@ -1,13 +1,14 @@
 package com.erp.model.oms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
  * 单据类型
  */
-public enum BillTypeEnum {
+public enum BillTypeEnum implements EnumMessage {
     B2B("B2B", "B2B订单"),
     B2C("B2C", "B2C订单"),
     ;
