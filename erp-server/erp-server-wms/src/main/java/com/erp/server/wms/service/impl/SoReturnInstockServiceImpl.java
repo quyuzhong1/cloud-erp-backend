@@ -316,10 +316,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
             entity.setWarehouseKeeperName(userDTO.getUserName());
         }
-        boolean flag = this.updateById(entity);
         //操作日志
         SoReturnInstockEntity byId = this.getById(dto.getId());
         operateLogService.addModuleOperateLogByObj(byId, entity, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "", "");
+
+        boolean flag = this.updateById(entity);
 
         soReturnInstockDetailService.update(dto);
         return flag;

@@ -329,11 +329,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeEntity.setWarehouseId(dto.getWarehouseId());
         soDeliveryNoticeEntity.setWarehouseName(warehouseEntity.getName());
         boolean flag = this.updateById(soDeliveryNoticeEntity);
-        soDeliveryNoticeDetailService.update(dto);
         //操作日志
         SoDeliveryNoticeEntity byId = this.getById(dto.getId());
         operateLogService.addModuleOperateLogByObj(byId, soDeliveryNoticeEntity, ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), soDeliveryNoticeEntity.getId(), "", "");
-        return flag;
+
+        soDeliveryNoticeDetailService.update(dto);
+         return flag;
     }
 
     @Override

@@ -36,6 +36,7 @@ import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -272,6 +273,10 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnEntity.setSourceId(dto.getSourceId());
         soReturnEntity.setSourceCode(soInfoEntity.getCode());
         soReturnEntity.setBillDate(dto.getBillDate());
+        //操作日志
+        SoReturnEntity byId = this.getById(dto.getId());
+        operateLogService.addModuleOperateLogByObj(byId, entity, ModuleTypeEnum.SO_RETURN.getCode(), entity.getId(), "", "");
+
         boolean flag = this.updateById(soReturnEntity);
         soReturnDetailService.update(dto);
         return flag;

@@ -321,10 +321,11 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             entity.setWarehouseId(dto.getWarehouseId());
             entity.setWarehouseName(warehouseEntity.getName());
         }
-        boolean flag = this.updateById(entity);
         //操作日志
         SoReturnNoticeEntity byId = this.getById(dto.getId());
         operateLogService.addModuleOperateLogByObj(byId, entity, ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "", "");
+
+        boolean flag = this.updateById(entity);
 
         soReturnNoticeDetailService.update(dto);
         return flag;
