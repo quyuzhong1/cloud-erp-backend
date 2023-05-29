@@ -123,7 +123,7 @@
         LEFT JOIN dmp_return_order_item droit ON droit.return_order_id = droi."id"
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_refund_item drit ON drit.refund_id = dri."id"
-        LEFT JOIN dmp_shop_info dsi ON dsi.plarform_shop_no = doi.shop_no
+        LEFT JOIN dmp_shop_info dsi ON dsi.platform_shop_no = doi.shop_no
         LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
         <where>
             <if test="params.timeType == 0">
@@ -228,7 +228,7 @@
         LEFT JOIN dmp_return_order_item droit ON droit.return_order_id = droi."id"
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_refund_item drit ON drit.refund_id = dri."id"
-        LEFT JOIN dmp_shop_info dsi ON dsi.plarform_shop_no = doi.shop_no
+        LEFT JOIN dmp_shop_info dsi ON dsi.platform_shop_no = doi.shop_no
         LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
         <where>
             <if test="params.timeType == 0">

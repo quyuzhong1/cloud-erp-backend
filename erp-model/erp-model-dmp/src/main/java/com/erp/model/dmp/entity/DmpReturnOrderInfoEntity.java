@@ -22,18 +22,22 @@ public class DmpReturnOrderInfoEntity implements Serializable {
      */
     @TableId(value = "id", type = IdType.ASSIGN_ID)
     private String id;
+    /**
+     * 退货单号
+     */
+    @TableField(value = "return_code")
+    private String returnCode;
+    /**
+     * 平台退货单号
+     */
+    @TableField(value = "platform_return_code")
+    private String platformReturnCode;
 
     /**
      * 平台订单编号
      */
     @TableField(value = "platform_order_id")
     private String platformOrderId;
-
-    /**
-     * 退货单号
-     */
-    @TableField(value = "return_order_id")
-    private String returnOrderId;
 
     /**
      * 店铺编号
@@ -235,8 +239,9 @@ public class DmpReturnOrderInfoEntity implements Serializable {
     @Override
     public String toString() {
         return "DmpReturnOrderInfoEntity{" +
-                "platformOrderId='" + platformOrderId + '\'' +
-                ", returnOrderId='" + returnOrderId + '\'' +
+                "returnCode='" + returnCode + '\'' +
+                ", platformReturnCode='" + platformReturnCode + '\'' +
+                ", platformOrderId='" + platformOrderId + '\'' +
                 ", shopNo='" + shopNo + '\'' +
                 ", shopName='" + shopName + '\'' +
                 ", paidTime=" + paidTime +
@@ -257,8 +262,13 @@ public class DmpReturnOrderInfoEntity implements Serializable {
                 ", refundTime=" + refundTime +
                 ", currencyCode='" + currencyCode + '\'' +
                 ", currencyRate=" + currencyRate +
+                ", createTime=" + createTime +
                 ", platformSign='" + platformSign + '\'' +
-                ", isDeleted='" + isDeleted + '\'' +
+                ", companyId='" + companyId + '\'' +
+                ", companyName='" + companyName + '\'' +
+                ", orderTime=" + orderTime +
+                ", isDeleted=" + isDeleted +
                 '}';
     }
 }
+
