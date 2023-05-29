@@ -193,6 +193,10 @@ public class SoReturnReceiveDTO {
          * 创建时间
          */
         private LocalDateTime createTime;
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
     }
 
     /**
