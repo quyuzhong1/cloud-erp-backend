@@ -88,7 +88,7 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
     @Override
     public DmpRefundInfoEntity getByRefundId(String refundId) {
         LambdaQueryWrapper<DmpRefundInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(DmpRefundInfoEntity::getRefundId,refundId);
+        queryWrapper.eq(DmpRefundInfoEntity::getRefundCode,refundId);
         queryWrapper.last("limit 1");
         return this.getOne(queryWrapper);
     }
