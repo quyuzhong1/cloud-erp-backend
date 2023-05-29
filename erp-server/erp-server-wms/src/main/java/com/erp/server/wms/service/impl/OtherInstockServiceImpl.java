@@ -592,7 +592,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         }
         List<OtherInstockEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_99047);
+            throw new ServiceException(ApiError.ERROR_99059);
         }
         return list;
     }

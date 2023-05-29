@@ -348,6 +348,18 @@ public class SalesDemandDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 申请日期
+         */
+        @NotNull(message = "申请日期不能为空")
+        private LocalDate applyDate;
+
+        /**
+         * 新品首批不能为空
+         */
+        @NotNull(message = "新品首批不能为空")
+        private Boolean isFirstMassProduct;
+
+        /**
          * 销售订单数量
          */
         @NotNull(message = "销售订单数量不能为空")
