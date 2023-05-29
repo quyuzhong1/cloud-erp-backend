@@ -51,4 +51,11 @@ public interface TransferOutDetailService extends SuperService<TransferOutDetail
      * @return
      */
     List<TransferOutDetailEntity> listByMainIds(List<String> mainIds);
+
+    /**
+     * 根据主单id集合删除明细数据
+     * @param mainIds
+     */
+    void removeByMainIds(List<String> mainIds);
+
 }
