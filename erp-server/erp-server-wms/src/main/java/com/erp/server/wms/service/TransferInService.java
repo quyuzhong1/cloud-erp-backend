@@ -137,4 +137,11 @@ public interface TransferInService extends SuperService<TransferInEntity> {
      * @return java.lang.Boolean
      */
     Boolean updateAndSubmit(TransferInDTO.UpdateDTO dto);
+
+    /**
+     * 根据来源id集合查询分步式调入单
+     * @param sourceIds
+     * @return
+     */
+    List<TransferInEntity> listBySourceIds(List<String> sourceIds);
 }

@@ -106,4 +106,10 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
      */
     void cancel(List<String> ids);
 
+    /**
+     * 反审核
+     * @param ids
+     */
+    void disApprove(List<String> ids);
+
 }

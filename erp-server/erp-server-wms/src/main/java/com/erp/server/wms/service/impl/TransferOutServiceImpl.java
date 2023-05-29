@@ -32,8 +32,10 @@ import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.dto.TransferOutDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.ExportTransferOutExcelDTO;
+import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
+import com.erp.model.wms.entity.TransferInEntity;
 import com.erp.model.wms.entity.TransferOutDetailEntity;
 import com.erp.model.wms.entity.TransferOutEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
@@ -100,6 +102,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Autowired
     private WorkflowFeign workflowFeign;
+
+    @Autowired
+    private TransferInService transferInService;
 
     @Override
     public List<TransferOutEntity> listBySourceIds(List<String> ids) {
@@ -373,6 +378,36 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         log.info("撤销 开始记录操作日志，id集合：【{}】", JSONObject.toJSONString(ids));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("分布式调出单【%s】取消流程", ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "取消流程操作");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void disApprove(List<String> ids) {
+        ids = ids.stream().distinct().collect(Collectors.toList());
+        List<TransferOutEntity> list = super.listByIds(ids);
+        Map<String, TransferOutEntity> transferOutEntityMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
+        ids.stream().forEach(id->{
+            TransferOutEntity transferOutEntity = transferOutEntityMap.get(id);
+            ValidatorUtil.isTrue(Objects.nonNull(transferOutEntity),()->new ServiceException("分步式调出单数据不存在"));
+            ValidatorUtil.isTrue(Objects.equals(transferOutEntity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()),()->new ServiceException("只有已审核数据支持反审核"));
+        });
+        // 检查是否已经有下推单据
+        List<TransferInEntity> transferInEntityList = transferInService.listBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(transferInEntityList)) {
+            throw new ServiceException("分步式调出单已下推分步式调入单，不支持反审核");
+        }
+
+        log.info("反审核 开始修改分步式调出单状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.WAIT_SUBMIT;
+        updateForDisApprove(ids, approveStatus.getStatus()); // 修改单据状态为待提交
+
+        log.info("反审核 开始记录操作日志，id集合：【{}】", JSONObject.toJSONString(ids));
+        // 操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("反审核了一个分步式调出单【%s】", ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "反审核操作");
+        // 库存交易反审核
+        inventoryTransCoreService.batchUnApprove(new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.TRANSFER_OUT, ids));
+        // TODO 流程
     }
 
     /**

@@ -700,6 +700,14 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         return this.submit(Arrays.asList(id));
     }
 
+    @Override
+    public List<TransferInEntity> listBySourceIds(List<String> sourceIds) {
+        return lambdaQuery()
+                .in(TransferInEntity::getSourceId,sourceIds)
+                .eq(TransferInEntity::getInvalidStatus,Boolean.FALSE)
+                .list();
+    }
+
     private Boolean updateApproveInfo(List<TransferInEntity> list, ApproveStatusEnum approveStatus, String approveUserName) {
         if (CollectionUtils.isNotEmpty(list)) {
             for (TransferInEntity item : list) {
