@@ -983,7 +983,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     private List<String> listBySearchType(String searchType) {
-        List<String> approveList = new ArrayList<>();
+        List<String> approveList = new ArrayList<>(3);
         //待审核
         if (SearchType.WAIT_APPROVE.equals(searchType)) {
             approveList.add(ApproveStatusEnum.APPROVE_ING.getStatus());

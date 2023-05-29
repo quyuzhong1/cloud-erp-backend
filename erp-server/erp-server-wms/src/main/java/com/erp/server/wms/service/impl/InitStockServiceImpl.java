@@ -243,7 +243,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
                 && Objects.equals(originInitStock.getInvalidStatus(),Boolean.FALSE),
                 ()->new ServiceException("只有待提交或审核不通过并且未作废数据支持提交"));
 
-        InitStockEntity nowInitStock =  BeanMapperUtils.map(InitStockEntity.class, originInitStock);
+        InitStockEntity nowInitStock =  BeanMapperUtils.map(InitStockEntity.class, dto);
         fillingAddOrUpdate(nowInitStock, dto.getWarehouseId());
         // 修改期初库存主单数据
         nowInitStock.setBillDate(dto.getBillDate());

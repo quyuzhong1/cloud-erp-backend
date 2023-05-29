@@ -16,6 +16,8 @@ import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import com.erp.model.dmp.entity.DmpRefundItemEntity;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.common.message.enums.RocketMqTagEnum;
@@ -24,6 +26,7 @@ import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +58,8 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
 
     @Autowired
     private MQProducerService<DmpRefundInfoEntity> mqProducerService;
+    @Resource
+    private DmpShopInfoService dmpShopInfoService;
 
     public static void main(String[] args) {
         GyyRefundServiceImpl gyyRefundService = new GyyRefundServiceImpl();
@@ -151,21 +156,28 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
      **/
     private DmpRefundInfoEntity initOrderInfoEntity(GyyRefundEntity gyyRefundEntity) {
         DmpRefundInfoEntity dmpRefundInfoEntity = new DmpRefundInfoEntity();
+        // 退款单号
+        dmpRefundInfoEntity.setRefundCode(gyyRefundEntity.getCode());
         //平台订单编号
-        dmpRefundInfoEntity.setPlatformOrderId(gyyRefundEntity.getCode());
-        //退货单号
-        dmpRefundInfoEntity.setRefundId(gyyRefundEntity.getRefundCode());
+        dmpRefundInfoEntity.setPlatformOrderId(gyyRefundEntity.getPlatfromCode());
+        //平台退货单号
+        dmpRefundInfoEntity.setPlatformRefundCode(gyyRefundEntity.getRefundCode());
         //币别编号
         dmpRefundInfoEntity.setCurrencyCode("CNY");
         //退货金额
         dmpRefundInfoEntity.setRefundAmount(gyyRefundEntity.getAmount());
         //退款类型：1、未收到货部分退款 2、未收到货全额退款 3、已收到货部分退款 4、已收到货全额退款
+        /**
+         * refund:仅退款
+         * return:退货退款
+         * deliveried_refund:发货后仅退款
+         */
         dmpRefundInfoEntity.setRefundType(0);
         //退款原因
         dmpRefundInfoEntity.setRefundReasonDesc(gyyRefundEntity.getReason());
         //退款备注
         dmpRefundInfoEntity.setRefundRemark(gyyRefundEntity.getNote());
-        Integer refundStatus = 4;
+        int refundStatus = 4;
         if (gyyRefundEntity.getApprove()) {
             refundStatus = 3;
         } else {
@@ -174,11 +186,8 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
         if (gyyRefundEntity.getCancel()) {
             refundStatus = 6;
         }
-        if (gyyRefundEntity.getCancel()) {
-            refundStatus = 6;
-        }
         if (null != gyyRefundEntity.getAgreeRefuse()) {
-            Integer agreeRefuse = gyyRefundEntity.getAgreeRefuse();
+            int agreeRefuse = gyyRefundEntity.getAgreeRefuse();
             if (agreeRefuse == 1) {
                 refundStatus = 4;
             } else if (agreeRefuse == 2) {
@@ -194,9 +203,10 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
         }
 
         //店铺编号
-        dmpRefundInfoEntity.setShopNo(gyyRefundEntity.getShopId());
+        dmpRefundInfoEntity.setShopNo(gyyRefundEntity.getShopCode());
+        DmpShopInfoEntity shopInfo = dmpShopInfoService.getShopByShopNo(gyyRefundEntity.getShopCode(), PlatformEnum.GYY.getDesc());
         //店铺名称
-        dmpRefundInfoEntity.setShopName(gyyRefundEntity.getShopCode());
+        dmpRefundInfoEntity.setShopName(null != shopInfo ? shopInfo.getName() : "");
         //平台名称
         dmpRefundInfoEntity.setPlatformName("");
         //退款时间
@@ -245,7 +255,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
     private List<DmpRefundItemEntity> initOrderItem(GyyRefundEntity gyyRefundEntity) {
         List<DmpRefundItemEntity> orderItemList = new ArrayList<>();
         Map<String, Integer> skuCountMap = new HashMap<>();
-        gyyRefundEntity.getDetails().stream().forEach(refundDetailsBean -> {
+        gyyRefundEntity.getDetails().forEach(refundDetailsBean -> {
             DmpRefundItemEntity dmpRefundItemEntity = new DmpRefundItemEntity();
             //sku编号
             dmpRefundItemEntity.setSkuNo(refundDetailsBean.getItemCode());

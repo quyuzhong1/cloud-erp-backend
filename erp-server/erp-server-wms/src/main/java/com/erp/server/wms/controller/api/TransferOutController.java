@@ -97,8 +97,14 @@ public class TransferOutController extends BaseController {
      * @return
      */
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated TransferOutDTO.UpdateDTO dto) {
-        return success(null);
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "warehouse_keeper_id",
+            menuCode = "wms:transferOut:update",
+            serviceClass = TransferOutService.class,
+            keyIdName = "id")
+    public ApiResult<Void> update(@RequestBody @Validated TransferOutDTO.UpdateDTO dto) {
+        transferOutService.update(dto);
+        return success();
     }
 
     /**

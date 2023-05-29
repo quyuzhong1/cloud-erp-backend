@@ -28,8 +28,10 @@ import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.TransferOutDTO;
+import com.erp.model.wms.dto.TransferOutDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.ExportTransferOutExcelDTO;
+import com.erp.model.wms.entity.TransferOutDetailEntity;
 import com.erp.model.wms.entity.TransferOutEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.TransferTypeEnum;
@@ -97,6 +99,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     public void add(TransferOutDTO.AddDTO addDTO) {
         // 验证数据
         ValidatorUtil.validateEntity(addDTO);
+        // 调入仓库和调出仓库不能一样
+        ValidatorUtil.isTrue(!Objects.equals(addDTO.getInWarehouseId(), addDTO.getOutWarehouseId()),()->new ServiceException("分布式调出单调入仓库和调出仓库不能一样"));
+
         TransferOutEntity transferOutEntity = new TransferOutEntity();
         BeanMapperUtils.copy(addDTO, transferOutEntity);
         handleData(transferOutEntity);
@@ -140,7 +145,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         List<ExportTransferOutExcelDTO> resultList = BeanMapperUtils.copyList(ExportTransferOutExcelDTO.class, list);
         String fileName = "分布式调出单导出数据";
         try {
-            ExcelUtil.exportAdapt(fileName, "期初库存数据", resultList, ExportTransferOutExcelDTO.class, response, null);
+            ExcelUtil.exportAdapt(fileName, "分布式调出单数据", resultList, ExportTransferOutExcelDTO.class, response, null);
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
@@ -166,6 +171,44 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             resultList.add(tab);
         });
         return resultList;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void update(TransferOutDTO.UpdateDTO updateDTO) {
+        TransferOutEntity originTransferOutEntity = super.getById(updateDTO.getId());
+        Optional.ofNullable(originTransferOutEntity).orElseThrow(()->new ServiceException("未找到分步式调出单"));
+
+        // 调入仓库和调出仓库不能一样
+        ValidatorUtil.isTrue(!Objects.equals(updateDTO.getInWarehouseId(), updateDTO.getOutWarehouseId()),()->new ServiceException("分布式调出单调入仓库和调出仓库不能一样"));
+        ValidatorUtil.isTrue((Objects.equals(originTransferOutEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || Objects.equals(originTransferOutEntity.getApproveStatus(), ApproveStatusEnum.REJECT.getStatus()) )
+                        && Objects.equals(originTransferOutEntity.getInvalidStatus(),Boolean.FALSE),
+                ()->new ServiceException("只有待提交或审核不通过并且未作废数据支持提交"));
+
+        TransferOutEntity nowTransferOutEntity =  BeanMapperUtils.map(TransferOutEntity.class, updateDTO);
+
+        handleData(nowTransferOutEntity);
+        log.info("编辑 开始修改分步式调出单数据，单号：【{}】", originTransferOutEntity.getCode());
+        boolean save = super.updateById(nowTransferOutEntity);
+        ValidatorUtil.isTrue(save, ()->new ServiceException("分步式调出单保存失败"));
+
+        // 修改明细数据（包含增删改）
+        log.info("编辑 开始修改分步式调出单明细数据，单号：【{}】", originTransferOutEntity.getCode());
+        transferOutDetailService.update(updateDTO.getDetailList(), nowTransferOutEntity.getId());
+
+        // 记录主单操作日志
+        log.info("编辑 开始记录分步式调出单日志数据，单号：【{}】", originTransferOutEntity.getCode());
+        operateLogService.addModuleOperateLogByObj(originTransferOutEntity, nowTransferOutEntity, ModuleTypeEnum.TRANSFER_OUT.getCode(), nowTransferOutEntity.getId(), "", "");
+    }
+
+    @Override
+    public TransferOutDTO.ViewDTO view(String id) {
+        TransferOutEntity transferOutEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到分步式调出单数据"));
+        TransferOutDTO.ViewDTO data = BeanMapperUtils.map(TransferOutDTO.ViewDTO.class, transferOutEntity);
+        List<TransferOutDetailEntity> members = transferOutDetailService.listByMainId(id);
+        List<TransferOutDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(TransferOutDetailDTO.ViewDTO.class, members);
+
+        return data;
     }
 
     /**
@@ -240,6 +283,22 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
         }
+    }
+
+    /**
+     * 详情填充
+     * @param data
+     */
+    private void fillingView(TransferOutDTO.ViewDTO data) {
+        // 调拨方向
+        List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
+        // 调拨方向名称
+        String transferDirectionName = transferDirectionList.stream().filter(e -> Objects.equals(e.getValue(), data.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
+        data.setTransferDirectionName(transferDirectionName);
+        // 审核状态
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        // 调拨类型
+        data.setTypeName(TransferTypeEnum.getNameByCode(data.getType()));
     }
 
     /**

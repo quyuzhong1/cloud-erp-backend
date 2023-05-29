@@ -1,9 +1,12 @@
 package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.model.wms.entity.TransferInEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -26,4 +29,6 @@ public interface TransferInMapper extends BaseMapper<TransferInEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoChangeDTO.ApproveCountDTO>
      */
     List<TransferInDTO.ApproveCountDTO> listApproveCount();
+
+    IPage<TransferInDTO.PagingViewDTO> paging(Page query, @Param("params")TransferInDTO.PagingParamDTO params, @Param("approveList") List<String> approveList);
 }

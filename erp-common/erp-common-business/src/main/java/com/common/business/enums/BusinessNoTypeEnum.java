@@ -41,6 +41,7 @@ public enum BusinessNoTypeEnum {
     CODE_XSBG(31, "xsbg","销售变更单"),
     CODE_FHTZ(32, "fhtz","发货通知单"),
     CODE_FBDC(33, "fbdc","分步式调拨调出"),
+    CODE_FBDR(34, "fbdr","分步式调拨调入"),
     ;
 
 

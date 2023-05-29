@@ -2,13 +2,16 @@ package com.erp.model.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.wms.enums.TransferDirectionEnum;
+import com.erp.model.wms.enums.TransferTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -34,19 +37,19 @@ public class TransferInEntity extends BaseEntity<TransferInEntity> {
      * 审核状态 
      */
     @TableField("approve_status")
-    private String approveStatus;
+    private ApproveStatusEnum approveStatus;
 
     /**
      * 调拨类型
      */
     @TableField("type")
-    private String type;
+    private TransferTypeEnum transferType;
 
     /**
      * 调入日期
      */
     @TableField("bill_date")
-    private Date billDate;
+    private LocalDate billDate;
 
     /**
      * 调出仓库id
@@ -88,7 +91,13 @@ public class TransferInEntity extends BaseEntity<TransferInEntity> {
      * 调拨方向
      */
     @TableField("transfer_direction")
-    private String transferDirection;
+    private TransferDirectionEnum transferDirection;
+
+    /**
+     * 备注
+     */
+    @TableField("approve_user_name")
+    private String approveUserName;
 
     /**
      * 备注

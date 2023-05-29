@@ -11,4 +11,87 @@
 	     WHERE is_deleted=FALSE
          GROUP BY approve_status
     </select>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.TransferInDTO$PagingViewDTO">
+        SELECT
+          ti.id,
+          ti.code,
+          ti.source_code,
+          ti.transfer_direction,
+          ti.approve_status,
+          ti.invalid_status,
+          ti.bill_date,
+          ti.out_warehouse_id,
+          ti.out_warehouse_name,
+          ti.in_warehouse_id,
+          ti.in_warehouse_name,
+          ti.approve_user_name,
+          ti.create_user_name,
+          ti.create_time,
+          tid.sku_id,
+          tid.sku_no,
+          tid.qty,
+          tid.out_warehouse_location,
+          tid.remark,
+          tid.plan_qty,
+          tid.source_detail_id
+        FROM transfer_in ti
+        INNER JOIN transfer_in_detail tid
+        ON ti.id=tid.main_id AND tid.is_deleted=FALSE
+        WHERE ti.is_deleted=FALSE
+        <if test="params.skuNoList !=null and params.skuNoList.size>0">
+            AND tid.sku_no IN
+            <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+        <if test="params.code !=null and params.code!=''">
+            AND ti.code ILIKE concat('%', #{params.code} ,'%')
+        </if>
+        <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
+            AND ti.approve_status IN
+            <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
+                #{approveStatus}
+            </foreach>
+        </if>
+        <if test="params.invalidStatus !=null ">
+            AND ti.invalid_status =#{params.invalidStatus}
+        </if>
+        <if test="params.transferDirection !=null and params.transferDirection!=''">
+            AND ti.transfer_direction =#{params.transferDirection}
+        </if>
+        <if test="params.outWarehouseIdList !=null and params.outWarehouseIdList.size>0">
+            AND ti.out_warehouse_id IN
+            <foreach collection="params.outWarehouseIdList" item="warehouseId" open="(" separator="," close=")">
+                #{warehouseId}
+            </foreach>
+        </if>
+        <if test="params.inWarehouseIdList !=null and params.inWarehouseIdList.size>0">
+            AND ti.in_warehouse_id IN
+            <foreach collection="params.inWarehouseIdList" item="warehouseId" open="(" separator="," close=")">
+                #{warehouseId}
+            </foreach>
+        </if>
+        <if test="params.createTimeList !=null and params.createTimeList.size>0">
+            AND ti.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > ti.create_time
+        </if>
+        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+            AND ti.create_user_id IN
+            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                #{createUserId}
+            </foreach>
+        </if>
+        <if test="params.billDateList !=null and params.billDateList.size>0">
+            AND ti.bill_date >= #{params.billDateList[0]} and
+            (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > ti.bill_date
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY ti.create_time DESC
+
+    </select>
 </mapper>

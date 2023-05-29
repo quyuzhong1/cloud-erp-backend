@@ -135,7 +135,6 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                 obj.setCode(null);
                 obj.setTransferDirection(null);
                 obj.setTransferDirectionName(null);
-                obj.setApproveStatus(null);
                 obj.setApproveStatusName(null);
                 obj.setInvalidStatus(null);
                 obj.setInvalidStatusName(null);

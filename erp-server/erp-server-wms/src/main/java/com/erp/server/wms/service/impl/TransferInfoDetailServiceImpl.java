@@ -156,7 +156,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
             }
             //数量检验
             if (detailEntity.getQty().intValue() > pickingQty.intValue() - hasPickingQty.intValue()) {
-                throw new ServiceException(ApiError.ERROR_99051.code, String.format(ApiError.ERROR_99051.msg, detailEntity.getSkuNo()));
+                throw new ServiceException(ApiError.ERROR_99051.code, String.format(ApiError.ERROR_99051.msg,transferInfoEntity.getSourceCode(), detailEntity.getSkuNo()));
             }
         }
 

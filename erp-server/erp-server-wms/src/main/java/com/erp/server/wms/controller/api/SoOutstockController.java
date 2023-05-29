@@ -54,11 +54,10 @@ public class SoOutstockController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+    @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:so:outstock:paging",
-            serviceClass = SoOutstockService.class,
-            keyIdName = "so"
+            tableAlias = "so"
     )
     public ApiResult<PagingVO<SoOutstockDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
         PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = soOutstockService.paging(dto);

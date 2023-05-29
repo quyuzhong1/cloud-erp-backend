@@ -72,4 +72,7 @@ public interface BusinessNoConstant {
 
     //分布式调拨调出
     String FBDC = "FBDC";
+
+    //分布式调拨调入
+    String FBDR = "FBDR";
 }

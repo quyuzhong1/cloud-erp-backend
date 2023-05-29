@@ -160,10 +160,12 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
      **/
     private DmpReturnOrderInfoEntity initOrderInfoEntity(GyyReturnOrderEntity gyyReturnOrderEntity) {
         DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = new DmpReturnOrderInfoEntity();
-        //平台订单编号
-        dmpReturnOrderInfoEntity.setPlatformOrderId(gyyReturnOrderEntity.getCode());
         //退货单号
-        dmpReturnOrderInfoEntity.setReturnOrderId(gyyReturnOrderEntity.getOrderCode());
+        dmpReturnOrderInfoEntity.setReturnCode(gyyReturnOrderEntity.getCode());
+        //平台订单编号
+        dmpReturnOrderInfoEntity.setPlatformOrderId(gyyReturnOrderEntity.getPlatformCode());
+        // 平台退款单号
+        dmpReturnOrderInfoEntity.setPlatformReturnCode(gyyReturnOrderEntity.getPlatformRefundId());
         //店铺编号
         dmpReturnOrderInfoEntity.setShopNo(gyyReturnOrderEntity.getShopCode());
         //店铺名称

@@ -3,10 +3,7 @@ package com.erp.model.wms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 
 /**
@@ -49,6 +46,7 @@ public class TransferOutDetailDTO implements Serializable {
         /**
          * 来源明细id
          */
+        @NotEmpty(message = "来源明细id不能为空")
         private String sourceDetailId;
 
 
@@ -111,12 +109,6 @@ public class TransferOutDetailDTO implements Serializable {
 
 
         /**
-         * 来源明细id
-         */
-        private String sourceDetailId;
-
-
-        /**
          * 调出仓位
          */
         private String outWarehouseLocation;
@@ -136,24 +128,22 @@ public class TransferOutDetailDTO implements Serializable {
         /**
          * sku id
          */
+        @NotEmpty(message = "sku不能为空")
         private String skuId;
 
         /**
          * 调出数量
          */
+        @NotNull(message = "数量不能为空")
+        @Min(value = 1,message = "数量最小值为1")
+        @Max(value = 99999999,message = "数量最大值为99999999")
         private Integer qty;
 
         /**
          * 备注
          */
+        @Size(max = 200, message = "备注最大长度只能为200位")
         private String remark;
-
-
-        /**
-         * 来源明细id
-         */
-        private String sourceDetailId;
-
 
         /**
          * 调出仓位
@@ -164,5 +154,6 @@ public class TransferOutDetailDTO implements Serializable {
          * 单位
          */
         private String unit;
+
     }
 }

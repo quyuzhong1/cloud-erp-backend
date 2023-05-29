@@ -54,4 +54,17 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
      * @return
      */
     List<TransferOutDTO.TabListDTO> listCount(PermissionsDTO param);
+
+    /**
+     * 修改
+     * @param updateDTO
+     */
+    void update(TransferOutDTO.UpdateDTO updateDTO);
+
+    /**
+     * 详情
+     * @param id
+     * @return
+     */
+    TransferOutDTO.ViewDTO view(String id);
 }
