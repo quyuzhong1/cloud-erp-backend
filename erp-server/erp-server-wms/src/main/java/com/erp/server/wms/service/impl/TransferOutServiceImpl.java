@@ -250,7 +250,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         operateLogService.batchAddModuleOperateLog("提交了一个分步式调出单【%s】", ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "提交操作");
     }
 
-    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Override
     public void addAndSubmit(TransferOutDTO.AddDTO dto) {
         // 新增
@@ -298,6 +298,11 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         log.info("审核 开始修改分步式调出单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
         List<Pair<String, String>> pairList = list.stream().map(data -> new Pair<>(data.getId(), data.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个分步式调出单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.INIT_STOCK.getCode(), pairList, "审核操作");
+    }
+
+    @Override
+    public void delete(List<String> ids) {
+
     }
 
     /**

@@ -94,4 +94,10 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
      */
     void approve(BaseApproveParamDTO baseApproveParamDTO);
 
+    /**
+     * 删除
+     * @param ids
+     */
+    void delete(List<String> ids);
+
 }
