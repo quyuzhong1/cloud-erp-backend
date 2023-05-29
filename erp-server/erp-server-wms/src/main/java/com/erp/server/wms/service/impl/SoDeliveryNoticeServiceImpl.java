@@ -25,6 +25,7 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -365,6 +366,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         } else {
             viewDTO.setDeliveryStatusName(DeliveryStatusEnum.UN_SHIPPED.getName());
         }
+
+        viewDTO.setDeliveryModeDictName(DeliveryModeEnum.getName(soInfoEntity.getDeliveryMode()));
+        viewDTO.setReceiveAddress(soInfoEntity.getReceiveAddress());
         for (SoDeliveryNoticeDetailEntity deliveryNoticeDetailEntity : detailEntityList) {
             SoDeliveryNoticeDetailDTO.View detailView = new SoDeliveryNoticeDetailDTO.View();
             BeanMapperUtils.copy(deliveryNoticeDetailEntity, detailView);

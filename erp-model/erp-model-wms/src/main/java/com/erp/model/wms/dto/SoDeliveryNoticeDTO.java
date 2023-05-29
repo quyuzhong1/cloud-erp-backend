@@ -434,6 +434,10 @@ public class SoDeliveryNoticeDTO {
          */
         private String deliveryModeDict;
         /**
+         * 交货方式名称
+         */
+        private String deliveryModeDictName;
+        /**
          * 作废状态
          */
         private Boolean invalidStatus;
