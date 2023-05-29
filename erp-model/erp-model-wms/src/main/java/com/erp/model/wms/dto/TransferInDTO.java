@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotBlank;
@@ -251,7 +252,7 @@ public class TransferInDTO implements Serializable {
         /**
          * 来源单号
          */
-        @NotBlank(message = "来源单号为空")
+        @NotBlank(message = "来源单号不能为空")
         private String sourceCode;
 
         /**
@@ -357,12 +358,14 @@ public class TransferInDTO implements Serializable {
         /**
          * 来源id
          */
+        @NotBlank(message ="来源不能为空")
         private String sourceId;
 
 
         /**
          * 来源类型
          */
+        @NotBlank(message = "来源类型不能为空")
         private String sourceType;
 
         /**
@@ -378,11 +381,13 @@ public class TransferInDTO implements Serializable {
         /**
          * 调入日期
          */
+        @NotNull(message = "调入日期不能为空")
         private LocalDate billDate;
 
         /**
          * 调出仓库id
          */
+        @NotBlank(message = "调出仓库不能为空")
         private String outWarehouseId;
 
         /**
@@ -393,6 +398,7 @@ public class TransferInDTO implements Serializable {
         /**
          * 调入仓库id
          */
+        @NotBlank(message = "调入仓库不能为空")
         private String inWarehouseId;
 
         /**
@@ -405,11 +411,15 @@ public class TransferInDTO implements Serializable {
         /**
          * 调拨方向
          */
+        @NotNull(message = "调拨方向不能为空")
+        @StateEnumValue(clazz = TransferDirectionEnum.class, message = "调拨方向输入值有误")
         private TransferDirectionEnum transferDirection;
 
         /**
          * 调拨类型
          */
+        @NotNull(message = "调拨类型不能为空")
+        @StateEnumValue(clazz = TransferTypeEnum.class, message = "调拨类型输入值有误")
         private TransferTypeEnum transferType;
 
 
@@ -421,6 +431,7 @@ public class TransferInDTO implements Serializable {
         /**
          * 详情
          */
+        @Valid
         private List<TransferInDetailDTO.AddDTO> detailList;
 
     }
@@ -535,25 +546,27 @@ public class TransferInDTO implements Serializable {
         /**
          * id
          */
+        @NotBlank(message = "分布式调入单不能为空")
         private String id;
+
 
         /**
          * 来源id
          */
+        @NotBlank(message ="来源不能为空")
         private String sourceId;
 
 
         /**
          * 来源类型
          */
+        @NotBlank(message = "来源类型不能为空")
         private String sourceType;
 
-
         /**
-         * 类型
+         * 来源code
          */
-        private String type;
-
+        private String sourceCode;
 
         /**
          * 仓管员id
@@ -563,22 +576,46 @@ public class TransferInDTO implements Serializable {
         /**
          * 调入日期
          */
+        @NotNull(message = "调入日期不能为空")
         private LocalDate billDate;
 
         /**
          * 调出仓库id
          */
+        @NotBlank(message = "调出仓库不能为空")
         private String outWarehouseId;
+
+        /**
+         * 调出仓库
+         */
+        private String outWarehouseName;
 
         /**
          * 调入仓库id
          */
+        @NotBlank(message = "调入仓库不能为空")
         private String inWarehouseId;
+
+        /**
+         * 调入仓库
+         */
+        private String inWarehouseName;
+
+
 
         /**
          * 调拨方向
          */
-        private String transferDirection;
+        @NotNull(message = "调拨方向不能为空")
+        @StateEnumValue(clazz = TransferDirectionEnum.class, message = "调拨方向输入值有误")
+        private TransferDirectionEnum transferDirection;
+
+        /**
+         * 调拨类型
+         */
+        @NotNull(message = "调拨类型不能为空")
+        @StateEnumValue(clazz = TransferTypeEnum.class, message = "调拨类型输入值有误")
+        private TransferTypeEnum transferType;
 
 
         /**
@@ -586,9 +623,11 @@ public class TransferInDTO implements Serializable {
          */
         private String remark;
 
+
         /**
          * 详情
          */
+        @Valid
         private List<TransferInDetailDTO.UpdateDTO> detailList;
     }
 

@@ -551,6 +551,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                 TransferInfoDTO.AddDTO addInfoDTO = new TransferInfoDTO.AddDTO();
                 BeanMapperUtils.copy(transferInfoDTO,addInfoDTO);
                 addInfoDTO.setTransferDirection(transferDirection);
+                addInfoDTO.setRemark(null);
                 List<TransferInfoDetailDTO.AddDTO> addDetailList = new ArrayList<>();
                 for (TransferApplicationDTO.GenerateTransferInfoDTO dto : value) {
                     //验证明细是否已经被调拨
@@ -570,6 +571,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                 TransferOutDTO.AddDTO addOutDTO = new TransferOutDTO.AddDTO();
                 BeanMapperUtils.copy(transferInfoDTO,addOutDTO);
                 addOutDTO.setTransferDirection(transferDirection);
+                addOutDTO.setRemark(null);
                 List<TransferOutDetailDTO.AddDTO> addDetailList = new ArrayList<>();
                 for (TransferApplicationDTO.GenerateTransferInfoDTO dto : value) {
                     //验证明细是否已经被调拨

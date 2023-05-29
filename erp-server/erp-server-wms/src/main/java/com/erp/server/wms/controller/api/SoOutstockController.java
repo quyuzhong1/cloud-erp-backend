@@ -170,7 +170,7 @@ public class SoOutstockController extends BaseController {
     )
     public ApiResult updateAndSubmit(@RequestBody @Validated SoOutstockDTO.UpdateDTO dto) {
         Boolean result = soOutstockService.updateAndSubmit(dto);
-        return result ? success(null) : failure();
+        return result ? success() : failure();
     }
 
 

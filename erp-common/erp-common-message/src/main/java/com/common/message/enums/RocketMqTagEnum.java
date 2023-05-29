@@ -15,6 +15,9 @@ import java.util.stream.Collectors;
  * @Date 2023/2/6 10:32
  **/
 public enum RocketMqTagEnum {
+
+    //---------------------------------中台数据抓取从1开始------------------------------------------------------------------------------------------
+
     /**
      * 管易销售订单tag
      */
@@ -22,7 +25,6 @@ public enum RocketMqTagEnum {
     /**
      * 管易销售历史订单tag
      */
-
     GYY_SALE_HISTORY_ORDER_TAG(2,RocketMqTagEnum.SALES_ORDER,"gyy_sales_history_order_tag"),
     /**
      * 管易发货订单tag
@@ -104,156 +106,169 @@ public enum RocketMqTagEnum {
      */
     MABANG_SKU_INFO_TAG(20, RocketMqTagEnum.SKU_INFO,"mabang_sku_info_tag"),
 
+    //---------------------------------金蝶数据同步code从1001开始------------------------------------------------------------------------------------------
 
-    //---------------------------------金蝶数据同步------------------------------------------------------------------------------------------
     /**
      * 产品信息同步金蝶
      */
-    KINGDEE_PRODUCT_DETAIL_TAG(21, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_product_detail_tag"),
+    KINGDEE_PRODUCT_DETAIL_TAG(1001, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_product_detail_tag"),
 
     /**
      * BOM管理同步金蝶
      */
-    KINGDEE_BOM_INFO_TAG(22, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_bom_info_tag"),
+    KINGDEE_BOM_INFO_TAG(1002, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_bom_info_tag"),
 
     /**
      * 辅助资料同步金蝶（产品分类、）
      */
-    KINGDEE_ASSISTANT_DATA_TAG(23, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_assistant_data_tag"),
+    KINGDEE_ASSISTANT_DATA_TAG(1003, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_assistant_data_tag"),
 
-
-    GC_STOCK_INBOUND_ORDER_TAG(24,RocketMqTagEnum.STOCK,"gc_stock_inbound_order_tag"),
-
-    IML_STOCK_INBOUND_ORDER_TAG(25,RocketMqTagEnum.STOCK,"iml_stock_inbound_order_tag"),
-
-    /**
-     * 同步产品信息到中台dmp
-     */
-    SYNC_DMP_PRODUCT_INFO_TAG(26,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_info_tag"),
-    /**
-     * 同步产品sku到中台dmp
-     */
-    SYNC_DMP_PRODUCT_SKU_TAG(27,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_sku_tag"),
-    /**
-     * 同步产品sku变更新老品
-     */
-    SYNC_DMP_PRODUCT_LISTING_TAG(28,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_listing_tag"),
-    /**
-     * 获取上市时间
-     */
-    GET_DMP_PRODUCT_LISTING_TAG(38,RocketMqTagEnum.SYNC_DMP,"get_dmp_product_listing_tag"),
     /**
      * 系统用户同步金蝶
      */
-    KINGDEE_SYS_USER_INFO_TAG(30, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_sys_user_info_tag"),
+    KINGDEE_SYS_USER_INFO_TAG(1004, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_sys_user_info_tag"),
 
     /**
      * 采购订单同步金蝶
      */
-    KINGDEE_PURCHASE_ORDER_TAG(31, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_order_tag"),
+    KINGDEE_PURCHASE_ORDER_TAG(1005, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_order_tag"),
 
     /**
      * 采购价目表
      */
-    KINGDEE_PURCHASE_PRICE_TAG(32, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_price_tag"),
+    KINGDEE_PURCHASE_PRICE_TAG(1006, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_price_tag"),
 
     /**
      * 采购退货单同步金蝶
      */
-    KINGDEE_PURCHASE_RETURN_ORDER_TAG(33, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_return_order_tag"),
+    KINGDEE_PURCHASE_RETURN_ORDER_TAG(1007, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_return_order_tag"),
 
     /**
      * 采购调价表
      */
-    KINGDEE_PURCHASE_PRICE_CHANGE_TAG(34, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_price_change_tag"),
+    KINGDEE_PURCHASE_PRICE_CHANGE_TAG(1008, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_price_change_tag"),
 
     /**
      * 采购入库单同步金蝶
      */
-    KINGDEE_PURCHASE_STOCK_IN_TAG(35, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_stock_in_tag"),
+    KINGDEE_PURCHASE_STOCK_IN_TAG(1009, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_purchase_stock_in_tag"),
 
     /**
      * 供应商同步金蝶
      */
-    KINGDEE_SUPPLIER_TAG(36, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_supplier_tag"),
+    KINGDEE_SUPPLIER_TAG(1010, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_supplier_tag"),
 
     /**
      * 仓库同步金蝶
      */
-    KINGDEE_WAREHOUSE_TAG(37, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_warehouse_tag"),
+    KINGDEE_WAREHOUSE_TAG(1011, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_warehouse_tag"),
 
     /**
      * 部门同步金蝶
      */
-    KINGDEE_SYS_DEPARTMENT_TAG(38, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_sys_department_tag"),
+    KINGDEE_SYS_DEPARTMENT_TAG(1012, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_sys_department_tag"),
 
     /**
      * 直接调拨单同步金蝶
      */
-    KINGDEE_TRANSFER_INFO_TAG(39, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_transfer_info_tag"),
+    KINGDEE_TRANSFER_INFO_TAG(1013, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_transfer_info_tag"),
 
     /**
      * 客户信息同步金蝶
      */
-    KINGDEE_CUSTOMER_TAG(40, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_customer_tag"),
+    KINGDEE_CUSTOMER_TAG(1014, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_customer_tag"),
 
     /**
      * 其他出库单同步金蝶
      */
-    KINGDEE_OTHER_OUTSTOCK_TAG(41, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_other_outstock_tag"),
+    KINGDEE_OTHER_OUTSTOCK_TAG(1015, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_other_outstock_tag"),
 
     /**
      * 其他入库单同步金蝶
      */
-    KINGDEE_OTHER_INSTOCK_TAG(42, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_other_instock_tag"),
+    KINGDEE_OTHER_INSTOCK_TAG(1016, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_other_instock_tag"),
 
     /**
      * 客户分组同步金蝶
      */
-    KINGDEE_CUSTOMER_GROUP_TAG(43, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_customer_group_tag"),
-    //-----------------------------消息通知--------------------------------------------
+    KINGDEE_CUSTOMER_GROUP_TAG(1017, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_customer_group_tag"),
 
     /**
-     * 消息通知，可以不同的业务使用不同的tag
+     * 加工单同步金蝶
      */
-    MSG_NOTICE_TAG(29,RocketMqTagEnum.MSG_NOTICE,"msg_notice_default_tag"),
+    KINGDEE_MACHINE_INFO_TAG(1018, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_machine_info_tag"),
 
-    //-----------------------------dmp数据更新--------------------------------------------
+
+    //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
+
+    /**
+     * 谷仓库存业务处理实现
+     */
+    GC_STOCK_INBOUND_ORDER_TAG(2001,RocketMqTagEnum.STOCK,"gc_stock_inbound_order_tag"),
+
+    /**
+     * 拉取艾姆勒入库单
+     */
+    IML_STOCK_INBOUND_ORDER_TAG(2002,RocketMqTagEnum.STOCK,"iml_stock_inbound_order_tag"),
+
+    /**
+     * 同步产品信息到中台dmp
+     */
+    SYNC_DMP_PRODUCT_INFO_TAG(2003,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_info_tag"),
+    /**
+     * 同步产品sku到中台dmp
+     */
+    SYNC_DMP_PRODUCT_SKU_TAG(2004,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_sku_tag"),
+    /**
+     * 同步产品sku变更新老品
+     */
+    SYNC_DMP_PRODUCT_LISTING_TAG(2005,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_listing_tag"),
+    /**
+     * 获取上市时间
+     */
+    GET_DMP_PRODUCT_LISTING_TAG(2006,RocketMqTagEnum.SYNC_DMP,"get_dmp_product_listing_tag"),
 
     /**
      * 店铺变更负责人
      */
-    SHOP_INFO_CHANGE_CHARGE_TAG(33, RocketMqTagEnum.SYNC_DMP,"shop_info_change_charge_tag"),
+    SHOP_INFO_CHANGE_CHARGE_TAG(2007, RocketMqTagEnum.SYNC_DMP,"shop_info_change_charge_tag"),
     /**
      * 店铺变更部门
      */
-    SHOP_INFO_CHANGE_DEPT_TAG(34, RocketMqTagEnum.SYNC_DMP,"shop_info_change_dept_tag"),
+    SHOP_INFO_CHANGE_DEPT_TAG(2008, RocketMqTagEnum.SYNC_DMP,"shop_info_change_dept_tag"),
     /**
      * 汇率更新
      */
-    CHANGE_CURRENCY_TAG(35, RocketMqTagEnum.SYNC_DMP,"change_currency_tag"),
+    CHANGE_CURRENCY_TAG(2009, RocketMqTagEnum.SYNC_DMP,"change_currency_tag"),
 
 
-    //-----------------------------plm数据更新--------------------------------------------
+    //-----------------------------plm数据更新编码从3001开始---------------------------------------------------------------
     /**
      * 修改上市时间
      */
-    PRODUCT_LISTING_UPDATE_TAG(36, RocketMqTagEnum.SKU_INFO,"product_listing_update_tag"),
+    PRODUCT_LISTING_UPDATE_TAG(3001, RocketMqTagEnum.SKU_INFO,"product_listing_update_tag"),
 
     /**
      * 同步产品sku到中台wms仓储系统
      */
-    SYNC_WMS_PRODUCT_SKU_TAG(37,RocketMqTagEnum.SYNC_WMS,"sync_wms_product_sku_tag"),
+    SYNC_WMS_PRODUCT_SKU_TAG(3002,RocketMqTagEnum.SYNC_WMS,"sync_wms_product_sku_tag"),
 
     /**
      * 同步产品sku销售信息到wms仓储系统
      */
-    SYNC_WMS_PRODUCT_SKU_SALE_TAG(38,RocketMqTagEnum.SYNC_WMS,"sync_wms_product_sku_sale_tag"),
+    SYNC_WMS_PRODUCT_SKU_SALE_TAG(3003,RocketMqTagEnum.SYNC_WMS,"sync_wms_product_sku_sale_tag"),
 
     /**
      * 同步产品信息到wms仓储系统
      */
-    SYNC_WMS_PRODUCT_INFO_TAG(39,RocketMqTagEnum.SYNC_WMS,"sync_wms_product_info_tag"),
+    SYNC_WMS_PRODUCT_INFO_TAG(3004,RocketMqTagEnum.SYNC_WMS,"sync_wms_product_info_tag"),
+
+    //-----------------------------公共信息编码从9001开始------------------------------------------------------------------
+
+    /**
+     * 消息通知，可以不同的业务使用不同的tag
+     */
+    MSG_NOTICE_TAG(9001,RocketMqTagEnum.MSG_NOTICE,"msg_notice_default_tag"),
 
     ;
     public static final String SALES_ORDER = "sales";

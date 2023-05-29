@@ -117,4 +117,24 @@ public interface TransferInService extends SuperService<TransferInEntity> {
      * @return com.erp.model.wms.dto.TransferInDTO.ViewDTO
      */
     TransferInDTO.ViewDTO view(String id);
+
+    
+    /**
+     * 更改分布式调入单
+     * @author yl
+     * @date 2023-05-29 14:02
+     * @param dto
+     * @return java.lang.String
+     */
+    String updateTransferIn(TransferInDTO.UpdateDTO dto);
+
+    
+    /**
+     * 修改并提交
+     * @author yl
+     * @date 2023-05-29 14:27
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateAndSubmit(TransferInDTO.UpdateDTO dto);
 }

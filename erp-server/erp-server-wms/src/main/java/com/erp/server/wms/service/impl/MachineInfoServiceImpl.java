@@ -314,6 +314,17 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     }
 
     @Override
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String operate) {
+        return  this.lambdaUpdate()
+                .eq(MachineInfoEntity::getId,id)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),MachineInfoEntity::getSyncKingdeeStatus,syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),MachineInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId),MachineInfoEntity::getSyncKingdeeId,syncKingdeeId)
+                .set(StringUtils.isNotBlank(operate),MachineInfoEntity::getSyncOperate,operate)
+                .update();
+    }
+
+    @Override
     public List<MachineSubComponentsDTO.ViewDTO> viewSubComponents(String detailId) {
         List<MachineSubComponentsEntity> machineSubComponentsList = machineSubComponentsService.listByDetailId(detailId);
         if (CollectionUtils.isEmpty(machineSubComponentsList)) {
