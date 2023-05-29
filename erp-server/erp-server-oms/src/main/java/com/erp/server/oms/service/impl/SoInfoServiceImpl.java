@@ -1178,11 +1178,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> skuIdList = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        List<String> customerIds = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getCustomerId).collect(Collectors.toList());
+        List<CustomerInfoEntity> customerList = CollectionUtils.isNotEmpty(customerIds) ? customerInfoService.listByIds(customerIds) : Collections.emptyList();
         for (SoInfoDTO.GenerateDeliveryView view : viewList) {
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             view.setProductName(productDetailEntity.getName());
             view.setDeliveryQty(view.getSalesQty());
             view.setPlanDeliveryDate(view.getRequireDate());
+            String customerName = customerList.stream().filter(c -> c.getId().equals(view.getCustomerId())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            view.setCustomerName(customerName);
         }
         return viewList;
     }
