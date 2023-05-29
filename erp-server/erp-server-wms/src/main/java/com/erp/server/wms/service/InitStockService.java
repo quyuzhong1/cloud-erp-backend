@@ -109,7 +109,7 @@ public interface InitStockService extends SuperService<InitStockEntity> {
     void invalid(List<String> ids, String remark);
 
     /**
-     * 删除
+     * 撤销
      * @param ids
      */
     void cancel(List<String> ids);
