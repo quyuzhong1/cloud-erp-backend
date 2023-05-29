@@ -219,4 +219,20 @@ public class TransferOutController extends BaseController {
         transferOutService.exportList(dto, response);
     }
 
+
+    /**
+     * 下推分布式调入数据显示
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/viewGenerateTransferIn")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "warehouse_keeper_id",
+            menuCode = "wms:transferOut:viewGenerateTransferIn",
+            tableAlias = "tfo"
+    )
+    public ApiResult<List<TransferOutDTO.ViewGenerateTransferInDTO>> viewGenerateTransferIn(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<TransferOutDTO.ViewGenerateTransferInDTO> list = transferOutService.viewGenerateTransferIn(dto.getIds());
+        return success(list);
+    }
 }

@@ -412,7 +412,29 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Override
     public List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransferIn(List<String> ids) {
-        return null;
+        ids = ids.stream().distinct().collect(Collectors.toList());
+        List<TransferOutDTO.ViewGenerateTransferInDTO> dataList = this.baseMapper.viewGenerateTransfer(ids);
+        if(CollUtil.isEmpty(dataList)) {
+            return null;
+        }
+        // 获取所有的sku信息
+        List<String> skuIds = dataList.stream().map(TransferOutDTO.ViewGenerateTransferInDTO::getSkuId).collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(skuIds);
+        Map<String,ProductDetailEntity> skuMap = skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, Function.identity()));
+
+        //调拨方向
+        List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
+
+        dataList.stream().forEach(data->{
+            //产品名称
+            String productName = skuMap.getOrDefault(data.getSkuId(),new ProductDetailEntity()).getName();
+            data.setProductName(productName);
+
+            //调拨方向名称
+            String transferDirectionName = transferDirectionList.stream().filter(e -> Objects.equals(e.getValue(), data.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
+            data.setTransferDirectionName(transferDirectionName);
+        });
+        return dataList;
     }
 
     /**
