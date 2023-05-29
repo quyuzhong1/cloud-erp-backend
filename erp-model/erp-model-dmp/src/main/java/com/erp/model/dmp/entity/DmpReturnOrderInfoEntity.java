@@ -190,6 +190,12 @@ public class DmpReturnOrderInfoEntity implements Serializable {
     private LocalDateTime orderTime;
 
     /**
+     * 订单编号
+     */
+    @TableField(value = "order_code")
+    private String orderCode;
+
+    /**
      * cny-结算汇率
      */
     @TableField(value = "cny_settle_rate")
@@ -267,6 +273,7 @@ public class DmpReturnOrderInfoEntity implements Serializable {
                 ", companyId='" + companyId + '\'' +
                 ", companyName='" + companyName + '\'' +
                 ", orderTime=" + orderTime +
+                ", orderCode=" + orderCode +
                 ", isDeleted=" + isDeleted +
                 '}';
     }
