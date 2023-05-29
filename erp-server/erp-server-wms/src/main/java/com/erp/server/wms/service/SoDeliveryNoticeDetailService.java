@@ -106,4 +106,7 @@ public interface SoDeliveryNoticeDetailService extends SuperService<SoDeliveryNo
      * @return void
      */
     void closeBySoDetailIds(List<String> soDetailIds);
+
+
+
 }

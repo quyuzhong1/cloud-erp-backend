@@ -94,7 +94,7 @@ public class TransferInEntity extends BaseEntity<TransferInEntity> {
     private TransferDirectionEnum transferDirection;
 
     /**
-     * 备注
+     * 审核人
      */
     @TableField("approve_user_name")
     private String approveUserName;

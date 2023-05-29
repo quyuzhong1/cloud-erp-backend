@@ -153,4 +153,13 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @return Boolean
      */
     Boolean generateSalesDemand(ValidList<SalesDemandDTO.GenerateSalesDemandDTO> list);
+
+    /**
+     * 方法说明
+     * @author yl
+     * @date 2023-05-29 16:40
+     * @param soIds
+     * @return java.lang.Integer
+     */
+    Integer getPushDownBySourceIds(List<String> soIds);
 }

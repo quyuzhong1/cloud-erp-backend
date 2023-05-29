@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.TransferInDTO;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.entity.TransferInEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -39,4 +40,13 @@ public interface TransferInMapper extends BaseMapper<TransferInEntity> {
      * @return
      */
     List<TransferInDTO.PagingViewDTO> listExport(@Param("params") TransferInDTO.ExportDTO dto, @Param("approveList") List<String> approveList);
+
+    /**
+     * 获取到对应参数
+     * @author yl
+     * @date 2023-05-29 14:44
+     * @param idList
+     * @return java.util.List<com.erp.model.wms.dto.inventory.InOutStockDTO>
+     */
+    List<InOutStockDTO> listInventoryInOut(@Param("ids") List<String> idList);
 }

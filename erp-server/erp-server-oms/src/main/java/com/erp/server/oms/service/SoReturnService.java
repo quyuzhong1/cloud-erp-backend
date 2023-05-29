@@ -196,4 +196,14 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoReturnDTO.PagingView>
      **/
     List<SoReturnDTO.PagingView> listSoReturnDetailBySourceId(String sourceId);
+
+    
+    /**
+     * 根据来源id 集合获取到对应的下推数据
+     * @author yl
+     * @date 2023-05-29 16:47
+     * @param soIds
+     * @return java.lang.Integer
+     */
+    Integer getPushDownBySourceIds(List<String> soIds);
 }

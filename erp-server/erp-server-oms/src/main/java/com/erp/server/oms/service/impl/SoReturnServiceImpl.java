@@ -20,7 +20,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.dto.SoReturnDetailDTO;
@@ -37,7 +36,6 @@ import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -664,5 +662,23 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             obj.setCustomerName(customerInfoEntity.getName());
         }
         return list;
+    }
+
+    /**
+     * 根据来源id 集合获取到对应的下推数据
+     *
+     * @param soIds
+     * @return java.lang.Integer
+     * @author yl
+     * @date 2023-05-29 16:47
+     */
+    @Override
+    public Integer getPushDownBySourceIds(List<String> soIds) {
+        if (CollectionUtils.isEmpty(soIds)) {
+            return 0;
+        }
+        return this.lambdaQuery().in(SoReturnEntity::getSourceId,soIds).
+                eq(SoReturnEntity::getInvalidStatus,Boolean.FALSE).
+                count();
     }
 }

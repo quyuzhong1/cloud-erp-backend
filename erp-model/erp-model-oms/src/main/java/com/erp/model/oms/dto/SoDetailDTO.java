@@ -518,6 +518,11 @@ public class SoDetailDTO implements Serializable {
          * 变体名称
          */
         private String variantProperty;
+
+        /**
+         * 即时库存
+         */
+        private Integer curInventoryQty;
         /**
          * 仓库id
          */

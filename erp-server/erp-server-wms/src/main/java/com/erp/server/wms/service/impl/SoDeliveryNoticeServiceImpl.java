@@ -822,4 +822,27 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         return pagingViews;
     }
+
+
+    /**
+     * 根据销售 销售订单ids 获取是否有下推的单据
+     * @author yl
+     * @date 2023-05-25 10:27
+     * @return java.lang.Integer
+     */
+    @Override
+    public Integer getPushDownBySourceIds(List<String> soIds) {
+        if (CollectionUtils.isEmpty(soIds)) {
+            return 0;
+        }
+        //发货通知的
+        Integer deliveryNoticeCount = this.lambdaQuery().
+                in(SoDeliveryNoticeEntity::getSourceId, soIds).
+                eq(SoDeliveryNoticeEntity::getInvalidStatus,Boolean.FALSE).
+                count();
+
+        Integer soOutStockCount = soOutstockService.getPushDownCountBySoIds(soIds);
+        return deliveryNoticeCount+soOutStockCount;
+    }
+
 }

@@ -46,6 +46,7 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.mapper.SoInfoMapper;
@@ -106,6 +107,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Resource
     private CommonService commonService;
 
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
+
+    @Resource
+    private SoReturnService soReturnService;
 
 
     @Value("${so.contract.company}")
@@ -667,22 +673,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public Boolean disApprove(BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<SoInfoEntity> list = this.listByIds(ids);
-        //审核中
-        String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         //待提交
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         List<String> statusList = new ArrayList<>(2);
-        statusList.add(approveIngStatus);
         statusList.add(approveStatus);
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveIngStatus))).
-                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-
+        //检查关联单据
+        checkRefBill(ids);
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
@@ -690,14 +692,52 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //反审核
         if (result) {
             //添加日志
-            String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
-            operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.SO.getCode(), pairList, "状态变更");
-            //审核通过
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), rejectPairList, "状态变更");
 
         }
         return result;
+    }
+
+
+    /**
+     * 检查关联单据
+     *
+     * @param soIds
+     * @return void
+     * @author yl
+     * @date 2023-05-29 16:08
+     */
+    private void checkRefBill(List<String> soIds) {
+        Integer wmsCount = wmsTaskFeign.getPushDownBySourceIds(soIds);
+        if (wmsCount > 0) {
+            throw new ServiceException(ApiError.ERROR_92040);
+        }
+        Integer omsCount = soReturnService.getPushDownBySourceIds(soIds);
+        if (omsCount > 0) {
+            throw new ServiceException(ApiError.ERROR_92040);
+        }
+        Integer scmCount = scmTaskFeign.getPushDownBySourceIds(soIds);
+        if (scmCount > 0) {
+            throw new ServiceException(ApiError.ERROR_92040);
+        }
+    }
+
+    private void checkRemove(List<String> soIds) {
+
+        Integer wmsCount = wmsTaskFeign.getPushDownBySourceIds(soIds);
+        if (wmsCount > 0) {
+            throw new ServiceException(ApiError.ERROR_92018);
+        }
+        Integer omsCount = soReturnService.getPushDownBySourceIds(soIds);
+        if (omsCount > 0) {
+            throw new ServiceException(ApiError.ERROR_92018);
+        }
+        Integer scmCount = scmTaskFeign.getPushDownBySourceIds(soIds);
+        if (scmCount > 0) {
+            throw new ServiceException(ApiError.ERROR_92018);
+        }
+
     }
 
 
@@ -747,12 +787,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_92017);
         }
-        //占用状态
-        long occupyCount = list.stream().filter(s -> s.getOccupyStatus()).count();
-        if (occupyCount > 0) {
-            throw new ServiceException(ApiError.ERROR_92018);
-        }
-
+        //检查能否删除
+        checkRemove(ids);
         Boolean result = this.removeByIds(ids);
         if (result) {
             //添加日志
@@ -766,6 +802,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         return result;
     }
+
+
+
 
     /**
      * 作废
@@ -950,7 +989,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public List<BaseIdDTO.CodeDTO> listSo() {
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         List<SoInfoEntity> list = this.lambdaQuery().
-                eq(SoInfoEntity::getApproveStatus, ApproveStatusEnum.getByStatus(approveStatus)).list();
+                eq(SoInfoEntity::getApproveStatus, ApproveStatusEnum.getByStatus(approveStatus)).
+                orderByDesc(SoInfoEntity::getCreateTime).
+                list();
         return BeanMapper.copyList(list, BaseIdDTO.CodeDTO.class);
     }
 

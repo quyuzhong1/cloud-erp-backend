@@ -179,4 +179,12 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @return java.util.List<com.erp.model.wms.dto.SoDeliveryNoticeDTO.PagingView>
      **/
     List<SoDeliveryNoticeDTO.PagingView> listSoReturnDetailBySourceId(String sourceId);
+
+    /**
+     * 根据销售 销售订单ids 获取是否有下推的单据
+     * @author yl
+     * @date 2023-05-25 10:27
+     * @return java.lang.Integer
+     */
+    Integer getPushDownBySourceIds(List<String> soIds);
 }

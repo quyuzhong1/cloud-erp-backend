@@ -33,10 +33,7 @@ import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -981,6 +978,24 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
         return this.batchAdd(addList);
+    }
+
+    /**
+     *
+     *@parms
+     *@return
+     *@author yl
+     *@date
+     */
+    @Override
+    public Integer getPushDownCountBySoIds(List<String> soIds) {
+        if (CollectionUtils.isEmpty(soIds)) {
+            return 0;
+        }
+        Integer count = this.lambdaQuery().in(SoOutstockEntity::getSoId, soIds).
+                eq(SoOutstockEntity::getInvalidStatus,Boolean.FALSE).
+                count();
+        return count;
     }
 
     @Transactional(rollbackFor = Exception.class)

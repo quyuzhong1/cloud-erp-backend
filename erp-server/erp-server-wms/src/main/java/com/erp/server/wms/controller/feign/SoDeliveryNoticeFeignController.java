@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.feign;
 
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.server.wms.service.SoDeliveryNoticeDetailService;
+import com.erp.server.wms.service.SoDeliveryNoticeService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +16,9 @@ import java.util.List;
 public class SoDeliveryNoticeFeignController {
     @Resource
     private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
+
+    @Resource
+    private SoDeliveryNoticeService soDeliveryNoticeService;
     /**
      * 根据来源明细id查询出库表
      * @Author Luo_WG
@@ -38,6 +42,17 @@ public class SoDeliveryNoticeFeignController {
     @PostMapping("/getPushDownBySoDetailIds")
     public Integer getPushDownBySoDetailIds(@RequestBody List<String> soDetailIds) {
         return soDeliveryNoticeDetailService.getPushDownBySoDetailIds(soDetailIds);
+    }
+
+    /**
+     * 根据销售 销售订单ids 获取是否有下推的单据
+     * @author yl
+     * @date 2023-05-25 10:27
+     * @return java.lang.Integer
+     */
+    @PostMapping("/getPushDownBySourceIds")
+    public Integer getPushDownBySourceIds(@RequestBody List<String> soIds) {
+        return soDeliveryNoticeService.getPushDownBySourceIds(soIds);
     }
 
 

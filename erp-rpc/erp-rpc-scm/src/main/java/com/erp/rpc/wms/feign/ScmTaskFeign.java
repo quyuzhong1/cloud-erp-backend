@@ -229,4 +229,14 @@ public interface ScmTaskFeign {
      **/
     @PostMapping("feign/scmWorkOption/purchaseApplicationApprove")
     Boolean purchaseApplicationApprove(@RequestBody @Validated BaseApproveParamDTO dto);
+
+    /**
+     * 根据来源id集合获取到下推数据
+     * @author yl
+     * @date 2023-05-29 16:43
+     * @param soIds
+     * @return java.lang.Integer
+     */
+    @PostMapping("feign/purchaseOrder/getPushDownBySourceIds")
+    Integer getPushDownBySourceIds(List<String> soIds);
 }

@@ -139,7 +139,7 @@ public interface WmsTaskFeign {
     Boolean purchaseReturnOrderApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
 
     /**
-     * 根据销售 销售订单ids 获取是否有下推的单据
+     * 根据销售 销售订单详情ids 获取是否有下推的单据
      * @author yl
      * @date 2023-05-25 10:27
      * @param soDetailIdList
@@ -147,6 +147,17 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/soDeliveryNotice/getPushDownBySoDetailIds")
     Integer getPushDownBySoDetailIds(@RequestBody List<String> soDetailIdList);
+
+
+    /**
+     * 根据销售订单ids 获取是否有下推的单据
+     * @author yl
+     * @date 2023-05-25 10:27
+     * @param soIds
+     * @return java.lang.Integer
+     */
+    @PostMapping("feign/soDeliveryNotice/getPushDownBySoIds")
+    Integer getPushDownBySourceIds(@RequestBody List<String> soIds);
 
     /**
      * 关闭关联单据的关闭状态

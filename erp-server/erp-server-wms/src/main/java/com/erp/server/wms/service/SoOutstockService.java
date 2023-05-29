@@ -8,9 +8,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
@@ -204,4 +202,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return java.lang.Boolean
      */
     Boolean generateSoSave(ValidList<SoInfoDTO.GenerateDeliveryView> dto);
+
+    /**
+     *
+     *@parms
+     *@return 
+     *@author yl
+     *@date 
+     */
+    Integer getPushDownCountBySoIds(List<String> soIds);
 }

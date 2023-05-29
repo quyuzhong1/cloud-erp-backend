@@ -201,11 +201,7 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     private String addressType;
 
 
-    /**
-     * 占用状态
-     */
-    @TableField("occupy_status")
-    private Boolean occupyStatus;
+
 
 
     public static final String CODE = "code";

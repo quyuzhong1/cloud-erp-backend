@@ -30,10 +30,15 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.model.wms.dto.TransferInDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.TransferInEntity;
 import com.erp.model.wms.entity.TransferOutDetailEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.TransferDirectionEnum;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.TransferInMapper;
@@ -85,6 +90,10 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
 
     @Resource
     private WarehouseService warehouseService;
+
+
+    @Resource
+    private InventoryTransCoreService inventoryTransCoreService;
 
     @Override
     public List<TransferInDTO.TabListDTO> tabList() {
@@ -262,6 +271,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
      * @date 2023-05-26 16:52
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean submit(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return false;
@@ -309,6 +319,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
      * @date 2023-05-26 16:58
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean approve(BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<TransferInEntity> list = this.listByIds(ids);
@@ -324,7 +335,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         String content = "";
         LoginUser user = commonService.getUserInfo();
         if (dto.getType().equals(ApproveType.PASS)) {
-
+            handleData(ids);
             //审核通
             result = this.updateApproveInfo(list, ApproveStatusEnum.APPROVE, user.getUserName());
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
@@ -340,6 +351,29 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "状态变更");
         }
         return result;
+
+    }
+
+    /**
+     * 方法说明
+     *
+     * @param idList
+     * @return void
+     * @author yl
+     * @date 2023-05-29 14:35
+     */
+    public void handleData(List<String> idList) {
+        if (CollectionUtils.isEmpty(idList)) {
+            return;
+        }
+        InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.STEP_INVENTORY_IN.getCode());
+        List<InOutStockDTO> members = baseMapper.listInventoryInOut(idList);
+        InventorySourceTypeEnum transferIn = InventorySourceTypeEnum.TRANSFER_IN;
+        members.stream().forEach(m -> m.setSourceType(transferIn));
+        if (CollectionUtils.isNotEmpty(members)) {
+            inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+        }
 
     }
 
@@ -441,6 +475,10 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         Boolean result = this.updateApproveStatus(list, waitSubmitStatus);
         //反审核
         if (result) {
+            InventoryBatchUnApproveDTO batchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.TRANSFER_IN, ids);
+            inventoryTransCoreService.batchUnApprove(batchUnApproveDTO);
+
+
             //添加日志
             String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "状态变更");
@@ -646,10 +684,11 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
 
     /**
      * 修改并提交
-     * @author yl
-     * @date 2023-05-29 14:27
+     *
      * @param dto
      * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-29 14:27
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
