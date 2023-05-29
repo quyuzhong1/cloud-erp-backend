@@ -430,7 +430,6 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         return resultList;
     }
 
-
     /**
      * 关闭关联单据的关闭状态
      *

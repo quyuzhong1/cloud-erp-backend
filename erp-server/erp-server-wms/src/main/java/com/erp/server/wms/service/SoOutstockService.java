@@ -10,6 +10,8 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -33,7 +35,15 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      **/
     List<SoOutstockEntity> listBySourceId(List<String> ids);
 
-    
+    /**
+     * 销售订单ids获取销售出库单主表信息
+     * @Author Luo_WG
+     * @Date 2023/5/25 15:42
+     * @param soIds
+     * @return java.util.List<com.erp.model.wms.entity.SoOutstockEntity>
+     **/
+    List<SoOutstockEntity> listBySoIds(@RequestBody List<String> soIds);
+
     /**
      * 添加销售出库单
      * @author yl

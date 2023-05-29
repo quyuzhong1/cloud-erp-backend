@@ -25,6 +25,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
+import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
@@ -1490,9 +1491,18 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //退货单id
         List<String> returnDetailIds = list.stream().map(SoReturnInstockDTO.GenerateSoReturnInstockView::getSourceDetailId).collect(Collectors.toList());
         List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByIds(returnDetailIds);
-        //销售单id
+        //销售单明细id
         List<String> soDetailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(soDetailIds);
+
+        //退货单id
+        List<String> returnIds = list.stream().map(SoReturnInstockDTO.GenerateSoReturnInstockView::getSourceId).collect(Collectors.toList());
+        List<SoReturnEntity> returnEntityList = soReturnFeign.listByIds(returnIds);
+        //销售单id
+        List<String> soIds = returnEntityList.stream().map(SoReturnEntity::getSourceId).collect(Collectors.toList());
+        //根据销售单获取出库单
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySoIds(soIds);
+
         for (SoReturnInstockDTO.GenerateSoReturnInstockView view : list) {
             SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(view.getMainId());
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailService.getById(view.getId());
@@ -1509,8 +1519,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(req -> req.getId().equals(view.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(req -> req.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             view.setSalesQty(soDetailEntity.getQty());
-            List<SoOutstockDetailEntity> soOutstockDetailEntities = listSoOutstockByReturnId(soReturnDetailEntity.getMainId());
-            Integer actualQty = soOutstockDetailEntities.stream().filter(req -> req.getId().equals(soDetailEntity.getId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(soDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             view.setDeliveryQty(actualQty);
             view.setMustQty(soReturnReceiveDetailEntity.getReturnQty());
             view.setReceiveQty(soReturnReceiveDetailEntity.getReceiveQty());
@@ -1521,27 +1530,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         return list;
     }
 
-    /**
-     * 根据退货单获取销售单已出库数量
-     * @Author Luo_WG
-     * @Date 2023/5/19 12:21
-     * @param returnId
-     * @return java.util.List<com.erp.model.wms.entity.SoOutstockDetailEntity>
-     **/
-    private  List<SoOutstockDetailEntity> listSoOutstockByReturnId(String returnId) {
-        //获取退货详情
-        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainId(returnId);
-        //获取销售订单明细表id
-        List<String> soDetailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
-        //根据销售单详情id获取发货通知单详情信息
-        List<SoDeliveryNoticeDetailEntity> detailEntityList = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(soDetailIds);
-        //获取发货通知单明细表id
-        List<String> deliveryNoticeDetailIdList = detailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
-        soDetailIds.addAll(deliveryNoticeDetailIdList);
-        //根据销售单获取出库单
-        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySourceDetailId(soDetailIds);
-        return soOutstockDetailEntities;
-    }
     /**
      * 根据来源id查询质检单
      * @Author Luo_WG

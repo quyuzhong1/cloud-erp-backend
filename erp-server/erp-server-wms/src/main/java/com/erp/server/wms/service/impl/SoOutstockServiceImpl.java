@@ -50,6 +50,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -106,6 +107,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return lambdaQuery().in(SoOutstockEntity::getSourceId, ids).list();
     }
 
+    @Override
+    public List<SoOutstockEntity> listBySoIds(@RequestBody List<String> soIds) {
+        return lambdaQuery().in(SoOutstockEntity::getSoId, soIds).list();
+    }
 
     /**
      * 添加销售出库单
