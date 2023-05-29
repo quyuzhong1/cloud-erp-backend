@@ -147,7 +147,13 @@ public class TransferOutController extends BaseController {
      *
      */
     @PostMapping("/disApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "warehouse_keeper_id",
+            menuCode = "wms:transferOut:disApprove",
+            serviceClass = TransferOutService.class,
+            keyIdName = "ids")
     public ApiResult<Void> disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        transferOutService.disApprove(dto.getIds());
         return  success();
     }
 
