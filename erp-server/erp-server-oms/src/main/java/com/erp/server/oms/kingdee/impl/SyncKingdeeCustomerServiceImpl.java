@@ -12,6 +12,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.InvoiceDTO;
+import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -20,6 +21,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.CustomerInvoiceService;
+import com.erp.server.oms.service.CustomerSellerService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -46,6 +48,9 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 
     @Resource
     private CustomerInvoiceService customerInvoiceService;
+
+    @Resource
+    private CustomerSellerService customerSellerService;
 
     @Resource
     private MQProducerService mQProducerService;
@@ -81,6 +86,11 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
             resultMap.put("bankName", viewDTO.getBankName());
             resultMap.put("bankAccount", viewDTO.getBankAccount());
         }
+        resultMap.put("currency", entity.getCurrency());
+        resultMap.put("remark",entity.getRemark());
+        List<SellerDTO.ViewDTO> seller = customerSellerService.listByMainId(entity.getId());
+
+//        resultMap.put("remark",entity.getde());
 
         /*
         //部门

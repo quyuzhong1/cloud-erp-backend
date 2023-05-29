@@ -491,6 +491,10 @@ public class SoDetailDTO implements Serializable {
          */
         private String id;
         /**
+         * 销售单Id
+         */
+        private String soId;
+        /**
          * 主表id
          */
         private String mainId;

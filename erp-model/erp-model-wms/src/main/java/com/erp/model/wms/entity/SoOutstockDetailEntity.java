@@ -79,6 +79,9 @@ public class SoOutstockDetailEntity extends BaseEntity<SoOutstockDetailEntity> {
     @TableField(exist = false)
     private Boolean invalidStatus ;
 
+    @TableField(exist = false)
+    private String soId ;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";
