@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.InvoiceTypeEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.utils.MathUtil;
@@ -14,6 +15,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.InvoiceDTO;
 import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.entity.DictBasicEntity;
@@ -22,7 +24,9 @@ import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.CustomerInvoiceService;
 import com.erp.server.oms.service.CustomerSellerService;
+import com.erp.server.oms.service.DictBasicService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
@@ -55,6 +59,9 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
     @Resource
     private MQProducerService mQProducerService;
 
+    @Resource
+    private DictBasicService dictBasicService;
+
     @Override
     public void syncDataToKingdee(CustomerInfoEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
@@ -85,12 +92,36 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
             resultMap.put("head", viewDTO.getHead());
             resultMap.put("bankName", viewDTO.getBankName());
             resultMap.put("bankAccount", viewDTO.getBankAccount());
+            if (InvoiceTypeEnum.INVOICE.getCode().equals(viewDTO.getType())) {
+                resultMap.put("FInvoiceType", InvoiceTypeEnum.INVOICE.getName());
+            } else {
+                resultMap.put("FInvoiceType", "增值税专用发票");
+            }
         }
         resultMap.put("currency", entity.getCurrency());
         resultMap.put("remark",entity.getRemark());
-        List<SellerDTO.ViewDTO> seller = customerSellerService.listByMainId(entity.getId());
+        List<SellerDTO.ViewDTO> sellerList = customerSellerService.listByMainId(entity.getId());
+        if (CollectionUtils.isNotEmpty(sellerList)) {
+            SellerDTO.ViewDTO viewDTO = sellerList.get(MathUtil.ZERO);
+            String deptId = viewDTO.getDeptId();
+            if (StringUtils.isNotBlank(deptId)) {
+                SysDepartmentDTO dept = sysUserFeign.getUserDeptById(deptId);
+                if (dept != null) {
+                    resultMap.put("sellerDeptCode",dept.getCode());
+                }
+            }
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(viewDTO.getSellerId());
+            resultMap.put("sellerUserCode",findUserDTO.getCode());
 
-//        resultMap.put("remark",entity.getde());
+
+        }
+        List<DictBasicDTO.ViewDTO> settleModeList = dictBasicService.getByKey("settleMode");
+        DictBasicDTO.ViewDTO settleMode = settleModeList.stream().filter(req -> req.getValue().equals(entity.getSettleDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
+        resultMap.put("settleModeCode",settleMode.getRemark());
+        List<DictBasicDTO.ViewDTO> collectionTermsList = dictBasicService.getByKey("collectionTerms");
+        DictBasicDTO.ViewDTO collectionTerms = collectionTermsList.stream().filter(req -> req.getValue().equals(entity.getConditionDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
+        resultMap.put("collectionTermsCode",collectionTerms.getRemark());
+
 
         /*
         //部门

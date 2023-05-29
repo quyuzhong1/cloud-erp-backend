@@ -45,7 +45,7 @@
             and srn.code = #{params.code}
         </if>
         <if test="params.sourceCode != null and params.sourceCode != ''">
-            and srn.so_code = #{params.sourceCode}
+            and srn.source_code = #{params.sourceCode}
         </if>
         <if test="params.customerIdList != null and params.customerIdList.size != ''">
             and srn.customer_id in
@@ -158,7 +158,7 @@
                     and srn.code = #{params.code}
                 </if>
                 <if test="params.sourceCode != null and params.sourceCode != ''">
-                    and srn.so_code = #{params.sourceCode}
+                    and srn.source_code = #{params.sourceCode}
                 </if>
                 <if test="params.customerIdList != null and params.customerIdList.size != ''">
                     and srn.customer_id in

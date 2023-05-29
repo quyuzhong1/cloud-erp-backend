@@ -248,7 +248,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             //获取退货数量
             Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(addDetailView.getId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             //获取已出库数量
-            Integer actualQty = soOutstockDetailEntities.stream().filter(req -> addDetailView.getSoId().equals(req.getSoId()) && req.getSkuId().equals(addDetailView.getSkuId())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer actualQty = soOutstockDetailEntities.stream().filter(req -> addDetailView.getSoId().equals(req.getSoId()) && req.getSkuId().equals(addDetailView.getSkuId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             //即时库存
             Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(addDetailView.getSkuId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);

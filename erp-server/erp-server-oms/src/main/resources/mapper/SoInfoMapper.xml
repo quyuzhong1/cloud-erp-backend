@@ -229,6 +229,7 @@
     <select id="generateSoReturnView" resultType="com.erp.model.oms.dto.SoInfoDTO$GenerateSoReturnView">
         SELECT
             si.code AS soCode,
+            si.customer_id,
             sd.id AS detailId,
             sd.main_id AS soId,
             sd.sku_id,

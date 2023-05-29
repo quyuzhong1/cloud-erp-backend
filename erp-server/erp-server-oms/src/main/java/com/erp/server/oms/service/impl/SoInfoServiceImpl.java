@@ -1211,12 +1211,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //获取出库详情
         List<String> soIds = viewList.stream().map(SoInfoDTO.GenerateSoReturnView::getSoId).distinct().collect(Collectors.toList());
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
+        List<CustomerInfoEntity> customerInfoEntities = customerInfoService.list();
         for (SoInfoDTO.GenerateSoReturnView view : viewList) {
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             view.setProductName(productDetailEntity.getName());
             view.setReturnQty(view.getSalesQty());
             Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> view.getSoId().equals(detail.getSoId()) && detail.getSkuId().equals(view.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             view.setDeliveryQty(actualQty);
+            CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(view.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+            view.setCustomerName(customerInfoEntity.getName());
         }
         return viewList;
     }

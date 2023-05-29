@@ -159,7 +159,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
                 obj.setProductName(productDetailEntity.getName());
                 obj.setSalesQty(soDetailEntity.getQty());
-                Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(obj.getSkuId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+                Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(obj.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                 obj.setDeliveryQty(actualQty);
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
                 obj.setCustomerName(customerInfoEntity.getName());
@@ -360,6 +360,11 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         if (CollectionUtils.isNotEmpty(warehouseList)) {
             viewDTO.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
         }
+        //获取退货单id
+        List<SoReturnEntity> returnEntities = soReturnFeign.listByIds(Arrays.asList(entity.getSourceId()));
+        List<String> soIds = returnEntities.stream().map(SoReturnEntity::getSourceId).distinct().collect(Collectors.toList());
+        //根据销售单获取出库单
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySoIds(soIds);
         for (SoReturnNoticeDetailEntity detailEntity : detailEntityList) {
             SoReturnNoticeDetailDTO.View detailView = new SoReturnNoticeDetailDTO.View();
             BeanMapperUtils.copy(detailEntity, detailView);
@@ -369,9 +374,11 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 throw new ServiceException(ApiError.ERROR_95107);
             }
             detailView.setProductName(productDetailEntity.getName());
-            //销售单信息
-            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
+            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             detailView.setSalesQty(soDetailEntity.getQty());
+            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(detailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            detailView.setDeliveryQty(actualQty);
             detailViewDTOS.add(detailView);
         }
         viewDTO.setDetailList(detailViewDTOS);
@@ -604,7 +611,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             obj.setProductName(productDetailEntity.getName());
             obj.setSalesQty(soDetailEntity.getQty());
-            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(obj.getSkuId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(obj.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             obj.setDeliveryQty(actualQty);
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             obj.setCustomerName(customerInfoEntity.getName());
