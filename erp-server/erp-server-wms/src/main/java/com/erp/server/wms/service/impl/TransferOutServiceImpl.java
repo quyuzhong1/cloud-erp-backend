@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -267,6 +268,10 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     public void approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();// 提交审核的单据id
         ids = ids.stream().distinct().collect(Collectors.toList());
+        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(baseApproveParamDTO.getType());
+        if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(baseApproveParamDTO.getComment())) {
+            throw new ServiceException("审核不通过请填写审核意见");
+        }
         List<TransferOutEntity> list = super.listByIds(ids);
         ValidatorUtil.isTrue(CollUtil.isNotEmpty(list),()->new ServiceException("未找到分步式调出单数据"));
         Map<String, TransferOutEntity> transferOutEntityMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
@@ -275,23 +280,25 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             ValidatorUtil.isTrue(transferOutEntityMap.containsKey(id),()->new ServiceException("分步式调出单数据不存在"));
             ValidatorUtil.isTrue(Objects.equals(transferOutEntityMap.get(id).getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus()),()->new ServiceException("只有审核中数据支持审核"));
         });
-        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(baseApproveParamDTO.getType());
-        ApproveStatusEnum approveStatus = null;
+        String hisStatusName = ApproveStatusEnum.APPROVE_ING.getName(); // 原单据审核状态
+        ApproveStatusEnum approveStatus = Objects.equals(ApproveTypeEnum.PASS, approveType) ? ApproveStatusEnum.APPROVE : ApproveStatusEnum.REJECT; // 新审核状态
+        String content = "";
         if(Objects.equals(ApproveTypeEnum.PASS, approveType)) { // 审核通过
-            approveStatus = ApproveStatusEnum.APPROVE;
+            content = StrUtil.format("状态由【{}】变更为【{}】, 意见：{}", hisStatusName, approveStatus.getName(), baseApproveParamDTO.getComment());
             // TODO 审核通过流程
             this.updateInventoryTransCore(list);
         } else if (Objects.equals(ApproveTypeEnum.REJECT, approveType)) { // 审核不通过
-            approveStatus = ApproveStatusEnum.REJECT;
+            content = StrUtil.format("状态由【{}】变更为【{}】, 不通过原因：{}", hisStatusName, approveStatus.getName(), baseApproveParamDTO.getComment());
             // TODO 中止当前审批流程
         }
-
         log.info("审核 开始修改分步式调出单状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
         updateApproveStatus(ids, approveStatus.getStatus()); // 修改单据状态
+
         //操作日志
         log.info("审核 开始修改分步式调出单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        List<Pair<String, String>> pairList = list.stream().map(data -> new Pair<>(data.getId(), data.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个分步式调出单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "审核操作");
+        List<Pair<String, String>> pairList = list.stream().
+                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "状态变更");
     }
 
     @Transactional(rollbackFor = Exception.class)
