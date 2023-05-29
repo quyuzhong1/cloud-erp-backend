@@ -166,6 +166,8 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
         dmpReturnOrderInfoEntity.setPlatformOrderId(gyyReturnOrderEntity.getPlatformCode());
         // 平台退款单号
         dmpReturnOrderInfoEntity.setPlatformReturnCode(gyyReturnOrderEntity.getPlatformRefundId());
+        // erp平台销售单号
+        dmpReturnOrderInfoEntity.setOrderCode(gyyReturnOrderEntity.getOrderCode());
         //店铺编号
         dmpReturnOrderInfoEntity.setShopNo(gyyReturnOrderEntity.getShopCode());
         //店铺名称
