@@ -83,12 +83,17 @@ public class TransferOutController extends BaseController {
 
     /**
      * 详情
-     * @param dto
+     * @param id
      * @return
      */
-    @PostMapping("/view")
-    public ApiResult<TransferOutDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
-        return success(null);
+    @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "warehouse_keeper_id",
+            menuCode = "wms:transferOut:view",
+            serviceClass = TransferOutService.class,
+            keyIdName = "id")
+    public ApiResult<TransferOutDTO.ViewDTO> view(@RequestParam("id") String id) {
+        return success(transferOutService.view(id));
     }
 
     /**

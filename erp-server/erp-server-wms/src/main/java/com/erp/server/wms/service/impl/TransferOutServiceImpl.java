@@ -22,6 +22,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
@@ -84,6 +85,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Autowired
     private DictBasicService dictBasicService;
+
+    @Autowired
+    private InventoryService inventoryService;
 
     @Override
     public List<TransferOutEntity> listBySourceIds(List<String> ids) {
@@ -207,7 +211,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         TransferOutDTO.ViewDTO data = BeanMapperUtils.map(TransferOutDTO.ViewDTO.class, transferOutEntity);
         List<TransferOutDetailEntity> members = transferOutDetailService.listByMainId(id);
         List<TransferOutDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(TransferOutDetailDTO.ViewDTO.class, members);
-
+        this.fillingView(data, viewDetailList);
         return data;
     }
 
@@ -289,7 +293,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
      * 详情填充
      * @param data
      */
-    private void fillingView(TransferOutDTO.ViewDTO data) {
+    private void fillingView(TransferOutDTO.ViewDTO data, List<TransferOutDetailDTO.ViewDTO> viewDetailList) {
         // 调拨方向
         List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
         // 调拨方向名称
@@ -299,6 +303,30 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
         // 调拨类型
         data.setTypeName(TransferTypeEnum.getNameByCode(data.getType()));
+        // 仓管员名称
+        if (StringUtils.isNotBlank(data.getWarehouseKeeperId())) {
+            FindUserDTO userDTO = sysUserFeign.getUserByUserId(data.getWarehouseKeeperId());
+            if (ObjectUtils.isNotEmpty(userDTO)) {
+                data.setWarehouseKeeperName(userDTO.getUserName());
+            }
+        }
+        // 在途归属
+        data.setTransitOwnerName(TransitOwnerEnum.getNameByCode(data.getTransitOwner()));
+        // 明细信息填充
+        List<String> skuIds = viewDetailList.stream().map(TransferOutDetailDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        Map<String,SkuVO> skuMap =  skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        viewDetailList.stream().forEach(member->{
+            //产品名称
+            SkuVO skuVO = skuMap.get(member.getSkuId());
+            if(Objects.nonNull(skuVO)) {
+                member.setProductName(skuVO.getSkuName());
+            }
+            //根据组织、仓库、仓位、sku查询可用库存
+            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(data.getOutWarehouseId(), member.getSkuId(), member.getOutWarehouseLocation());
+            member.setCurInventoryQty(curInventoryQty);
+        });
+        data.setDetailList(viewDetailList);
     }
 
     /**

@@ -113,6 +113,11 @@ public class TransferOutDetailDTO implements Serializable {
          */
         private String outWarehouseLocation;
 
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
     }
 
 
@@ -121,7 +126,7 @@ public class TransferOutDetailDTO implements Serializable {
     public static class UpdateDTO {
 
         /**
-         * 详情id
+         * 明细id
          */
         private String id;
 
@@ -130,6 +135,11 @@ public class TransferOutDetailDTO implements Serializable {
          */
         @NotEmpty(message = "sku不能为空")
         private String skuId;
+
+        /**
+         * sku编号
+         */
+        private String skuNo;
 
         /**
          * 调出数量
@@ -154,6 +164,12 @@ public class TransferOutDetailDTO implements Serializable {
          * 单位
          */
         private String unit;
+
+        /**
+         * 来源明细id
+         */
+        @NotEmpty(message = "来源明细id不能为空")
+        private String sourceDetailId;
 
     }
 }
