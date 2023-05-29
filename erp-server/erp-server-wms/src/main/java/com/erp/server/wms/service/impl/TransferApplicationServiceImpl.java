@@ -178,6 +178,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String add(TransferApplicationDTO.AddDTO dto) {
         TransferApplicationEntity entity = new TransferApplicationEntity();
         BeanMapperUtils.copy(dto, entity);

@@ -164,6 +164,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String add(MachineInfoDTO.AddDTO dto) {
         MachineInfoEntity entity = new MachineInfoEntity();
         BeanMapperUtils.copy(dto, entity);
@@ -186,6 +187,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String addAndSubmit(MachineInfoDTO.AddDTO dto) {
         //新增
         String id = this.add(dto);

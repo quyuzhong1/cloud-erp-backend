@@ -170,6 +170,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String add(TransferInfoDTO.AddDTO dto) {
         TransferInfoEntity entity = new TransferInfoEntity();
         BeanMapperUtils.copy(dto, entity);
@@ -192,6 +193,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String addAndSubmit(TransferInfoDTO.AddDTO dto) {
         //新增
         String id = this.add(dto);

@@ -169,6 +169,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String add(OtherInstockDTO.AddDTO dto) {
         OtherInstockEntity entity = new OtherInstockEntity();
         BeanMapperUtils.copy(dto, entity);
@@ -191,6 +192,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String addAndSubmit(OtherInstockDTO.AddDTO dto) {
         //新增
         String id = this.add(dto);

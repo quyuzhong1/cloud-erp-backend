@@ -178,6 +178,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String add(PoInstockDTO.AddDTO dto) {
         PoInstockEntity entity = new PoInstockEntity();
         BeanMapperUtils.copy(dto, entity);
@@ -223,6 +224,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public String addAndSubmit(PoInstockDTO.AddDTO dto) {
         //新增
@@ -245,6 +247,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
      * @date 2023-04-24 15:08
      */
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchAdd(List<PoInstockDTO.AddDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
@@ -676,6 +679,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean batchAddPurchaseStockIn(List<PoInstockDTO.AddDTO> resultList) {
         if (CollectionUtils.isEmpty(resultList)) {
             return Boolean.FALSE;
@@ -873,7 +877,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean generateStockIn(PurchaseOrderDTO.ListGenerateStockInDTO dto) {
         //保存信息
         List<PurchaseOrderDTO.GenerateStockInDTO> list = dto.getList();

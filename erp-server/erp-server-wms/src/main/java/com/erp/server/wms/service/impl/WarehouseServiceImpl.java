@@ -124,6 +124,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String add(WarehouseDTO.AddDTO dto) {
         //检查名称
         checkName(null, dto.getName());
@@ -181,6 +182,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public Boolean addAndSubmit(WarehouseDTO.AddDTO dto) {
         String warehouseId = this.add(dto);
         if (StringUtils.isBlank(warehouseId)) {
