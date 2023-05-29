@@ -13,6 +13,7 @@ import com.erp.server.oms.service.CustomerInfoService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -42,6 +43,7 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
      * @date 2023-05-11 17:48
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean saveOrUpdateBatchGroup(ValidList<CustomerGroupDTO.AddOrUpdateDTO> groupList) {
         if (CollectionUtils.isEmpty(groupList)) {
             throw new ServiceException(ApiError.ERROR_92000);

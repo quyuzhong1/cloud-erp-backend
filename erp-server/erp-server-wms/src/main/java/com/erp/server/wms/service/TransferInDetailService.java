@@ -35,4 +35,14 @@ public interface TransferInDetailService extends SuperService<TransferInDetailEn
      * @return void
      */
     void removeByMainIdList(List<String> mainIds);
+
+    
+    /**
+     * 根据主表id 获取到详情
+     * @author yl
+     * @date 2023-05-29 11:45
+     * @param mainId 主表id
+     * @return java.util.List<com.erp.model.wms.dto.TransferInDetailDTO.ViewDTO>
+     */
+    List<TransferInDetailDTO.ViewDTO> listByMainId(String mainId);
 }

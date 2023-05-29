@@ -22,7 +22,6 @@ public class TransferInDetailDTO implements Serializable {
     public static class AddDTO {
 
 
-
         /**
          * sku id
          */
@@ -102,6 +101,12 @@ public class TransferInDetailDTO implements Serializable {
 
 
         /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+
+        /**
          * 调入数量
          */
         private Integer qty;
@@ -125,7 +130,6 @@ public class TransferInDetailDTO implements Serializable {
 
         /**
          * 调出仓位 不能更改
-         *
          */
         private String outWarehouseLocation;
 

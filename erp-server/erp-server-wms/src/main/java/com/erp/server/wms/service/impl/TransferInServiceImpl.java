@@ -577,7 +577,6 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             outOrgId = outWarehouse.getOrgId();
         }
         viewDTO.setOutOrgId(outOrgId);
-
         orgIdList.add(outOrgId);
         orgIdList.add(inOrgId);
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
@@ -585,12 +584,12 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         String outOrgName = orgList.stream().filter(o -> o.getId().equals(finalOutOrgId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         viewDTO.setOutOrgName(outOrgName);
-
         String finalInOrgId = inOrgId;
         String inOrgName = orgList.stream().filter(o -> o.getId().equals(finalInOrgId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         viewDTO.setInOrgName(inOrgName);
-
+        List<TransferInDetailDTO.ViewDTO> detailList = transferInDetailService.listByMainId(id);
+        viewDTO.setDetailList(detailList);
         return viewDTO;
     }
 
