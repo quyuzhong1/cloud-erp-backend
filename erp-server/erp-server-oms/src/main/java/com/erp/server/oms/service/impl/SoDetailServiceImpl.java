@@ -122,10 +122,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     public List<SoInfoDTO.TabListDTO> tabList() {
         List<SoInfoDTO.TabListDTO> result = new ArrayList<>(5);
         //所有的
-        List<SoDetailDTO.InfoDTO> list = baseMapper.listAllSoDetail();
+        List<SoDetailDTO.TypeCountDTO> countList = baseMapper.listApproveCount();
+        int allCount = countList.stream().mapToInt(SoDetailDTO.TypeCountDTO::getCount).sum();
         SoInfoDTO.TabListDTO all = new SoInfoDTO.TabListDTO();
-        int allCount = (int) list.stream().
-                map(SoDetailDTO.InfoDTO::getMainId).distinct().count();
         all.setCount(allCount);
         all.setSearchType(OmsConstant.ALL);
         result.add(all);
@@ -134,24 +133,23 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         SoInfoDTO.TabListDTO waitApprove = new SoInfoDTO.TabListDTO();
         waitApprove.setSearchType(OmsConstant.WAIT_APPROVE);
-        int waitApproveCount = (int) list.stream().filter(s -> approveIngStatus.equals(s.getApproveStatus())).
-                map(SoDetailDTO.InfoDTO::getMainId).distinct().count();
+        int waitApproveCount = countList.stream().filter(a -> a.getType().equals(approveIngStatus)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         waitApprove.setCount(waitApproveCount);
         result.add(waitApprove);
 
 
+        List<SoDetailDTO.TypeCountDTO> deliveryCountList = baseMapper.listDeliveryCount();
         //待发货
         SoInfoDTO.TabListDTO waitDelivery = new SoInfoDTO.TabListDTO();
         waitDelivery.setSearchType(OmsConstant.WAIT_DELIVERY);
 
         //已发货
         String completeShipment = DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode();
-        //已审核
-        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+
         //已审核+未发货+部分发货的
-        int waitDeliveryCount = (int) list.stream().filter(s -> s.getApproveStatus().equals(approveStatus) &&
-                !completeShipment.equals(s.getDeliveryStatus())).
-                map(SoDetailDTO.InfoDTO::getMainId).distinct().count();
+        int waitDeliveryCount = deliveryCountList.stream().filter(s->!completeShipment.equals(s.getType())).
+                mapToInt(SoDetailDTO.TypeCountDTO::getCount).sum();
         waitDelivery.setCount(waitDeliveryCount);
         result.add(waitDelivery);
 
@@ -159,16 +157,16 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
         SoInfoDTO.TabListDTO reject = new SoInfoDTO.TabListDTO();
         reject.setSearchType(OmsConstant.REJECT);
-        int rejectCount = (int) list.stream().filter(s -> rejectStatus.equals(s.getApproveStatus())).
-                map(SoDetailDTO.InfoDTO::getMainId).distinct().count();
+        int rejectCount = countList.stream().filter(a -> a.getType().equals(rejectStatus)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         reject.setCount(rejectCount);
         result.add(reject);
 
         //已发货
         SoInfoDTO.TabListDTO delivery = new SoInfoDTO.TabListDTO();
         delivery.setSearchType(OmsConstant.DELIVERY);
-        int deliveryCount = (int) list.stream().filter(s ->  s.getApproveStatus().equals(approveStatus)&&completeShipment.equals(s.getDeliveryStatus())).
-                map(SoDetailDTO.InfoDTO::getMainId).distinct().count();
+        int deliveryCount = (int) deliveryCountList.stream().filter(s ->  completeShipment.equals(s.getType())).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         delivery.setCount(deliveryCount);
         result.add(delivery);
         return result;

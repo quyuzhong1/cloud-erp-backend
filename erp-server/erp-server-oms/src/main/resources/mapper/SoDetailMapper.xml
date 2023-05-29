@@ -4,19 +4,19 @@
 
     <select id="listAddDetailView" resultType="com.erp.model.oms.dto.SoDetailDTO$AddDetailView">
         SELECT
-            sd.id,
-            sd.main_id,
-            sd.sku_id,
-            sd.sku_no,
-            si.warehouse_org_id AS inventoryOrgId,
-            sd.qty AS salesQty,
-            sd.amount AS salesAmount,
-            sd.is_gift,
-            sd.is_close,
-            sd.remark,
-            si.warehouse_id,
-            sd.currency,
-            sd.currency_symbol
+        sd.id,
+        sd.main_id,
+        sd.sku_id,
+        sd.sku_no,
+        si.warehouse_org_id AS inventoryOrgId,
+        sd.qty AS salesQty,
+        sd.amount AS salesAmount,
+        sd.is_gift,
+        sd.is_close,
+        sd.remark,
+        si.warehouse_id,
+        sd.currency,
+        sd.currency_symbol
         FROM so_detail sd
         INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
         WHERE si.is_deleted = FALSE AND sd.is_close = FALSE
@@ -63,16 +63,16 @@
 
     <select id="listSoDetailByApprove" resultType="com.erp.model.oms.dto.SoDetailDTO$InfoDTO">
         SELECT
-            sd.id,
-            sd.main_id,
-            sd.sku_id,
-            sd.sku_no,
-            sd.qty,
-            sd.is_gift,
-            sd.is_close,
-            sd.remark,
-            sd.delivery_status,
-            si.approve_status
+        sd.id,
+        sd.main_id,
+        sd.sku_id,
+        sd.sku_no,
+        sd.qty,
+        sd.is_gift,
+        sd.is_close,
+        sd.remark,
+        sd.delivery_status,
+        si.approve_status
         FROM so_detail sd
         INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
         WHERE si.is_deleted=FALSE
@@ -100,7 +100,7 @@
         INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
         WHERE si.is_deleted=FALSE AND si.approve_status='approve'
         <if test="deliveryStatusList !=null  and deliveryStatusList.size>0">
-            AND  sd.delivery_status IN
+            AND sd.delivery_status IN
             <foreach collection="deliveryStatusList" item="deliveryStatus" open="(" separator="," close=")">
                 #{deliveryStatus}
             </foreach>
@@ -128,5 +128,25 @@
         FROM so_detail sd
         INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
         WHERE si.is_deleted = FALSE
+    </select>
+
+    <select id="listApproveCount" resultType="com.erp.model.oms.dto.SoDetailDTO$TypeCountDTO">
+        SELECT
+            si.approve_status AS type,
+	        count(sd.id)
+        FROM so_detail sd
+        INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
+        WHERE si.is_deleted=FALSE
+        GROUP BY si.approve_status
+    </select>
+
+    <select id="listDeliveryCount" resultType="com.erp.model.oms.dto.SoDetailDTO$TypeCountDTO">
+        SELECT
+          sd.delivery_status AS type,
+	      count(sd.id)
+        FROM so_detail sd
+        INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
+        WHERE si.is_deleted=FALSE AND si.approve_status='approve'
+         GROUP BY sd.delivery_status
     </select>
 </mapper>

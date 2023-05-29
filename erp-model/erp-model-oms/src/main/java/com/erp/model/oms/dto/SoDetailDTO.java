@@ -663,6 +663,21 @@ public class SoDetailDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class TypeCountDTO {
+        /**
+         * 类型
+         */
+        private String type;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
+
+
     /**
      * 销售订单明细
      * 导出成功数据

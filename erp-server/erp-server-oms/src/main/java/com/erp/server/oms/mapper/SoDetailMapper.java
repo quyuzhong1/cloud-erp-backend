@@ -73,4 +73,16 @@ public interface SoDetailMapper extends BaseMapper<SoDetailEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.InfoDTO>
      */
     List<SoDetailDTO.InfoDTO> listSoDetailByDeliveryStatus(@Param("deliveryStatusList") List<String> deliveryStatusList);
+
+    /**
+     * 审核状态
+     * @return
+     */
+    List<SoDetailDTO.TypeCountDTO> listApproveCount();
+
+    /**
+     * 发货状态
+     * @return
+     */
+    List<SoDetailDTO.TypeCountDTO> listDeliveryCount();
 }
