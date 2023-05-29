@@ -19,7 +19,7 @@ import java.util.List;
 
 /**
  * 调拨管理-分布式调出
- *
+ * 不能手动新增
  * @author lambda
  * @since 2023-05-10
  */
@@ -77,21 +77,6 @@ public class TransferOutController extends BaseController {
         return  success();
     }
 
-    /**
-     * 新增并提交
-     * @param dto
-     * @return
-     */
-    @PostMapping("/addAndSubmit")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferOut:add",
-            serviceClass = TransferOutService.class,
-            keyIdName = "ids")
-    public ApiResult<Void> addAndSubmit(@RequestBody @Validated TransferOutDTO.AddDTO dto) {
-        transferOutService.addAndSubmit(dto);
-        return  success();
-    }
 
     /**
      * 详情
@@ -135,9 +120,9 @@ public class TransferOutController extends BaseController {
             menuCode = "wms:transferOut:update",
             serviceClass = TransferOutService.class,
             keyIdName = "id")
-    public ApiResult updateAndSubmit(@RequestBody @Validated TransferOutDTO.UpdateDTO dto) {
+    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated TransferOutDTO.UpdateDTO dto) {
         transferOutService.updateAndSubmit(dto);
-        return success(null);
+        return success();
     }
 
 
@@ -152,7 +137,7 @@ public class TransferOutController extends BaseController {
             tableField = "warehouse_keeper_id",
             menuCode = "wms:transferOut:approve",
             serviceClass = TransferOutService.class,
-            keyIdName = "id")
+            keyIdName = "ids")
     public ApiResult<Void> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         transferOutService.approve(dto);
         return success();
@@ -163,29 +148,40 @@ public class TransferOutController extends BaseController {
      *
      */
     @PostMapping("/disApprove")
-    public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Void> disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         return  success();
     }
+
     /**
-     * 删除仓库
+     * 删除
      *
      * @param dto
      * @return
      */
     @PostMapping("/delete")
-    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "warehouse_keeper_id",
+            menuCode = "wms:transferOut:delete",
+            serviceClass = TransferOutService.class,
+            keyIdName = "ids")
+    public ApiResult<Void> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        transferOutService.delete(dto.getIds());
         return success();
     }
 
     /**
      * 作废
-     * @author Will
-     * @date: 2023/5/10 20:11
      * @param dto
      * @return ApiResult
      */
     @PostMapping("/invalid")
-    public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "warehouse_keeper_id",
+            menuCode = "wms:transferOut:invalid",
+            serviceClass = TransferOutService.class,
+            keyIdName = "ids")
+    public ApiResult<Void> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        transferOutService.invalid(dto.getIds(), dto.getRemark());
         return  success();
     }
 

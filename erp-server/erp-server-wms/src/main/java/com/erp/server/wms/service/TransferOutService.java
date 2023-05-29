@@ -76,13 +76,6 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
     void submit(List<String> ids);
 
     /**
-     * 新增并提交审核
-     * @param dto
-     * @return
-     */
-    void addAndSubmit(TransferOutDTO.AddDTO dto);
-
-    /**
      * 修改并提交审核
      * @param dto
      */
@@ -99,5 +92,12 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
      * @param ids
      */
     void delete(List<String> ids);
+
+    /**
+     * 作废
+     * @param ids
+     * @param remark
+     */
+    void invalid(List<String> ids, String remark);
 
 }

@@ -122,6 +122,12 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
                 .list();
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void removeByMainIds(List<String> mainIds) {
+        lambdaUpdate().in(TransferOutDetailEntity::getMainId, mainIds).remove();
+    }
+
     private void handleDetails(List<TransferOutDetailEntity> newList, String mainId, Boolean isUpdate) {
         // 新增的明细
         List<TransferOutDetailEntity> addList = newList.stream().filter(c -> StrUtils.isEmpty(c.getId())).collect(Collectors.toList());

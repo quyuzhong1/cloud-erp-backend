@@ -105,6 +105,12 @@ public class TransferOutEntity extends BaseEntity<TransferOutEntity> {
     private Boolean invalidStatus;
 
     /**
+     * 作废原因
+     */
+    @TableField("invalid_remark")
+    private String invalidRemark;
+
+    /**
      * 来源id
      */
     @TableField("source_id")
@@ -208,6 +214,8 @@ public class TransferOutEntity extends BaseEntity<TransferOutEntity> {
     public static final String SOURCE_CODE = "source_code";
 
     public static final String TRANSIT_OWNER = "transit_owner";
+
+    public static final String INVALID_REMARK = "invalid_remark";
 
 
 

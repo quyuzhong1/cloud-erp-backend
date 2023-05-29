@@ -12,7 +12,6 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -250,15 +249,6 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         operateLogService.batchAddModuleOperateLog("提交了一个分步式调出单【%s】", ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "提交操作");
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Override
-    public void addAndSubmit(TransferOutDTO.AddDTO dto) {
-        // 新增
-        String id = this.add(dto);
-        // 提交
-        this.submit(Arrays.asList(id));
-    }
-
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateAndSubmit(TransferOutDTO.UpdateDTO dto) {
@@ -297,12 +287,57 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         //操作日志
         log.info("审核 开始修改分步式调出单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
         List<Pair<String, String>> pairList = list.stream().map(data -> new Pair<>(data.getId(), data.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个分步式调出单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.INIT_STOCK.getCode(), pairList, "审核操作");
+        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个分步式调出单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "审核操作");
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void delete(List<String> ids) {
+        ids = ids.stream().distinct().collect(Collectors.toList());
+        List<TransferOutEntity> list = super.listByIds(ids);
+        Map<String, TransferOutEntity> transferOutEntityMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
+        //只有待提交的数据允许删除
+        ids.stream().forEach(id->{
+            ValidatorUtil.isTrue(transferOutEntityMap.containsKey(id),()->new ServiceException("分步式调出单数据不存在"));
+            TransferOutEntity transferOutEntity = transferOutEntityMap.get(id);
+            ValidatorUtil.isTrue(Objects.equals(transferOutEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) && Objects.equals(transferOutEntity.getInvalidStatus(), Boolean.FALSE),()->new ServiceException("只有待提交并且未作废数据支持删除"));
+        });
+        // 删除日志数据
+        log.info("删除 开始删除分步式调出单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        operateLogService.removeByBusinessIds(ids);
 
+        // 删除明细数据
+        log.info("删除 开始删除分步式调出单明细数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        transferOutDetailService.removeByMainIds(ids);
+
+        // 删除主单数据
+        log.info("删除 开始删除分步式调出单主单数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        super.removeByIds(ids);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void invalid(List<String> ids, String remark) {
+        ids = ids.stream().distinct().collect(Collectors.toList());
+        List<TransferOutEntity> list = super.listByIds(ids);
+        Map<String, TransferOutEntity> transferOutEntityMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
+        //只有待提交的数据允许作废
+        ids.stream().forEach(id->{
+            ValidatorUtil.isTrue(transferOutEntityMap.containsKey(id),()->new ServiceException("分步式调出单数据不存在"));
+            TransferOutEntity transferOutEntity = transferOutEntityMap.get(id);
+            ValidatorUtil.isTrue(Objects.equals(transferOutEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || Objects.equals(transferOutEntity.getApproveStatus(), ApproveStatusEnum.REJECT.getStatus()),()->new ServiceException("只有待提交和审核不通过数据支持作废"));
+            //已作废数据不支持作废
+            ValidatorUtil.isTrue(Objects.equals(transferOutEntity.getInvalidStatus(), Boolean.FALSE),()->new ServiceException("已作废数据不支持作废"));
+        });
+        log.info("作废 开始修改分步式调出单状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        lambdaUpdate().in(TransferOutEntity::getId, ids)
+                .set(TransferOutEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+                .set(TransferOutEntity::getInvalidRemark, remark)
+                .update();
+
+        log.info("作废 开始记录操作日志，id集合：【{}】", JSONObject.toJSONString(ids));
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("作废了一个分步式调出单【%s】，作废原因：".concat(remark), ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "作废操作");
     }
 
     /**

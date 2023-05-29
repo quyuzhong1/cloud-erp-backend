@@ -260,7 +260,6 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         operateLogService.addModuleOperateLogByObj(originInitStock, nowInitStock, ModuleTypeEnum.INIT_STOCK.getCode(), nowInitStock.getId(), "", "");
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void submit(List<String> ids) {
@@ -342,12 +341,11 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void delete(List<String> ids) {
-        ValidatorUtil.isTrue(ids.size() == new HashSet<>(ids).size(),()->new ServiceException("提交的数据存在重复期初库存id"));
+        ids = ids.stream().distinct().collect(Collectors.toList());
         List<InitStockEntity> list = super.listByIds(ids);
         Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
         //只有待提交的数据允许删除
-        IntStream.range(0,ids.size()).forEach(idx->{
-            String id = ids.get(idx);
+        ids.stream().forEach(id->{
             ValidatorUtil.isTrue(initStockEntityMap.containsKey(id),()->new ServiceException("期初库存数据不存在"));
             InitStockEntity initStockEntity = initStockEntityMap.get(id);
             ValidatorUtil.isTrue(Objects.equals(initStockEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) && Objects.equals(initStockEntity.getInvalidStatus(), Boolean.FALSE),()->new ServiceException("只有待提交并且未作废数据支持删除"));
@@ -394,16 +392,15 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void invalid(List<String> ids, String remark) {
-        ValidatorUtil.isTrue(ids.size() == new HashSet<>(ids).size(),()->new ServiceException("提交的数据存在重复期初库存id"));
+        ids = ids.stream().distinct().collect(Collectors.toList());
         List<InitStockEntity> list = super.listByIds(ids);
         Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
-        //只有待提交的数据允许删除
-        IntStream.range(0,ids.size()).forEach(idx->{
-            String id = ids.get(idx);
+        //只有待提交的数据允许作废
+        ids.stream().forEach(id->{
             ValidatorUtil.isTrue(initStockEntityMap.containsKey(id),()->new ServiceException("期初库存数据不存在"));
-            ValidatorUtil.isTrue(Objects.equals(initStockEntityMap.get(id).getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || Objects.equals(initStockEntityMap.get(id).getApproveStatus(), ApproveStatusEnum.REJECT.getStatus()),()->new ServiceException("只有待提交和审核不通过数据支持作废"));
-            //已作废数据不支持作废
             InitStockEntity initStockEntity = initStockEntityMap.get(id);
+            ValidatorUtil.isTrue(Objects.equals(initStockEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || Objects.equals(initStockEntity.getApproveStatus(), ApproveStatusEnum.REJECT.getStatus()),()->new ServiceException("只有待提交和审核不通过数据支持作废"));
+            //已作废数据不支持作废
             ValidatorUtil.isTrue(Objects.equals(initStockEntity.getInvalidStatus(), Boolean.FALSE),()->new ServiceException("已作废数据不支持作废"));
         });
         log.info("作废 开始修改期初库存状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
