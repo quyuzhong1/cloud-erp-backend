@@ -15,9 +15,11 @@ import com.google.common.collect.Lists;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -39,6 +41,9 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
             return Lists.newArrayList();
         }
         List<WarehouseLocationDTO.LocationListDTO> dataList = Lists.newArrayListWithExpectedSize(warehouseLocationList.size());
+        // 让空仓位排前面
+        warehouseLocationList = warehouseLocationList.stream().sorted(Comparator.comparing(WarehouseLocationEntity::getCode)).collect(Collectors.toList());
+
         warehouseLocationList.stream().forEach(warehouseLocation->{
             WarehouseLocationDTO.LocationListDTO data = new WarehouseLocationDTO.LocationListDTO();
             data.setId(warehouseLocation.getId());

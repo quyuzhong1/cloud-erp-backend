@@ -32,7 +32,6 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.InventoryMapper;
 import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.InventoryService;
-import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -80,9 +79,6 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Autowired
     private PlmTaskFeign plmTaskFeign;
-
-    @Autowired
-    private WarehouseLocationService warehouseLocationService;
 
     @Override
     public InventoryEntity findInventory(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
@@ -195,10 +191,14 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Override
     public Integer getUsableInventoryTotal(String warehouseId, String skuId, String warehouseLocationId) {
-        // 查询仓库组织
-        WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
-        Optional.ofNullable(warehouseEntity).orElseThrow(()->new ServiceException("仓库信息不存在"));
-        return this.getInventoryTotal(warehouseEntity.getOrgId(), warehouseId, skuId, warehouseLocationId, InventoryStatusEnum.USABLE.getCode());
+        if(Objects.isNull(warehouseLocationId)) { // 查询仓库下面的SKU的可用库存
+            return this.getUsableInventoryTotal(warehouseId, skuId);
+        } else { // 查询仓库下面仓位的SKU可用库存
+            // 查询仓库组织
+            WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
+            Optional.ofNullable(warehouseEntity).orElseThrow(()->new ServiceException("仓库信息不存在"));
+            return this.getInventoryTotal(warehouseEntity.getOrgId(), warehouseId, skuId, warehouseLocationId, InventoryStatusEnum.USABLE.getCode());
+        }
     }
 
     @Override

@@ -110,7 +110,7 @@ public class InventoryController extends BaseController {
     }
 
     /**
-     * 查询可用库存，特别注意：不带库位查询，包含有库位和空库位的数量汇总
+     * 查询可用库存，特别注意：不传仓位字段则查询仓库下面的该SKU的可用库存，传仓位（含空字符串）则查询仓库下面该仓位的可用库存
      * @author Will
      * @date: 2023/5/11 10:10
      * @param dto
@@ -118,19 +118,6 @@ public class InventoryController extends BaseController {
      */
     @PostMapping(value = "/getUsableInventoryTotal")
     public ApiResult<Integer> getUsableInventoryTotal(@RequestBody @Validated InventoryDTO.UsableInventoryParamDTO dto) {
-        Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(dto.getWarehouseId(), dto.getSkuId());
-        return success(usableInventoryTotal);
-    }
-
-    /**
-     * 查询可用库存，特别注意：带库位查询，传空则按空库位查询
-     * @author Will
-     * @date: 2023/5/23 10:10
-     * @param dto
-     * @return ApiResult<Integer>
-     */
-    @PostMapping(value = "/getLocationUsableInventoryTotal")
-    public ApiResult<Integer> getLocationUsableInventoryTotal(@RequestBody @Validated InventoryDTO.UsableInventoryParamDTO dto) {
         Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(dto.getWarehouseId(), dto.getSkuId(), dto.getWarehouseLocation());
         return success(usableInventoryTotal);
     }
