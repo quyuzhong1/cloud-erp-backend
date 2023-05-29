@@ -100,4 +100,10 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
      */
     void invalid(List<String> ids, String remark);
 
+    /**
+     * 撤销
+     * @param ids
+     */
+    void cancel(List<String> ids);
+
 }

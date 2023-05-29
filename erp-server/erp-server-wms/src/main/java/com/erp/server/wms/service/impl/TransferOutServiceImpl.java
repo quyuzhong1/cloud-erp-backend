@@ -42,6 +42,7 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.TransferOutMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
@@ -95,6 +96,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Autowired
     private InventoryTransCoreService inventoryTransCoreService;
+
+    @Autowired
+    private WorkflowFeign workflowFeign;
 
     @Override
     public List<TransferOutEntity> listBySourceIds(List<String> ids) {
@@ -340,6 +344,30 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         operateLogService.batchAddModuleOperateLog("作废了一个分步式调出单【%s】，作废原因：".concat(remark), ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "作废操作");
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void cancel(List<String> ids) {
+        ids = ids.stream().distinct().collect(Collectors.toList());
+        List<TransferOutEntity> list = super.listByIds(ids);
+        Map<String, TransferOutEntity> transferOutEntityMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
+        //只有待提交的数据允许撤销
+        ids.stream().forEach(id->{
+            TransferOutEntity transferOutEntity = transferOutEntityMap.get(id);
+            ValidatorUtil.isTrue(Objects.nonNull(transferOutEntity),()->new ServiceException("分步式调出单数据不存在"));
+            ValidatorUtil.isTrue(Objects.equals(transferOutEntity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus()),()->new ServiceException("只有审核中数据支持撤销流程"));
+        });
+        log.info("撤销  开始撤销流程，id集合：【{}】",JSONObject.toJSONString(ids));
+        workflowFeign.cancelProcess(ids);
+
+        log.info("撤销 开始修改分布式调出单状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        updateForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
+        //操作日志
+        log.info("撤销 开始记录操作日志，id集合：【{}】", JSONObject.toJSONString(ids));
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("分布式调出单【%s】取消流程", ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "取消流程操作");
+    }
+
     /**
      * 更新审核状态
      */
@@ -348,6 +376,21 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         //更新审核状态
         lambdaUpdate().in(TransferOutEntity::getId, ids)
                 .set(TransferOutEntity::getApproveStatus, approveStatus)
+                .update();
+    }
+
+    /**
+     * 反审核更新审核状态、审核人、审核时间
+     * @param ids
+     * @param approveStatus
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void updateForDisApprove(List<String> ids, String approveStatus) {
+        this.lambdaUpdate().in(TransferOutEntity::getId, ids)
+                .set(TransferOutEntity::getApproveUserId, "")
+                .set(TransferOutEntity::getApproveUserName, "")
+                .set(TransferOutEntity::getApproveStatus, approveStatus)
+                .set(TransferOutEntity::getApproveTime, null)
                 .update();
     }
 

@@ -19,7 +19,6 @@ import java.util.List;
 
 /**
  * 调拨管理-分布式调出
- * 不能手动新增
  * @author lambda
  * @since 2023-05-10
  */
@@ -186,9 +185,30 @@ public class TransferOutController extends BaseController {
     }
 
     /**
+     * 撤销
+     * @param dto
+     * @return
+     */
+    @PostMapping("/cancel")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "warehouse_keeper_id",
+            menuCode = "wms:transferOut:cancel",
+            serviceClass = TransferOutService.class,
+            keyIdName = "ids")
+    public ApiResult cancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        transferOutService.cancel(dto.getIds());
+        return  success();
+    }
+
+    /**
      * 导出数据
      */
     @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "warehouse_keeper_id",
+            menuCode = "wms:transferOut:paging",
+            tableAlias = "tfo"
+    )
     public void exportList(@RequestBody @Valid TransferOutDTO.ExportDTO dto, HttpServletResponse response) {
         transferOutService.exportList(dto, response);
     }
