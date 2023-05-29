@@ -160,7 +160,7 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
     public DmpRefundInfoEntity initOrderInfoEntity(RefundOrderEntity refundOrderEntity) {
         DmpRefundInfoEntity dmpRefundInfoEntity = new DmpRefundInfoEntity();
         BeanUtil.copyProperties(refundOrderEntity, dmpRefundInfoEntity);
-        dmpRefundInfoEntity.setRefundCode(refundOrderEntity.getRefundOrderId().toString());
+        dmpRefundInfoEntity.setRefundCode(refundOrderEntity.getId());
         //币别编号
         dmpRefundInfoEntity.setCurrencyCode(refundOrderEntity.getCurrencyId());
         //退款单号

@@ -28,7 +28,7 @@ public class DmpReturnOrderInfoEntity implements Serializable {
     @TableField(value = "return_code")
     private String returnCode;
     /**
-     * 退货单号
+     * 平台退货单号
      */
     @TableField(value = "platform_return_code")
     private String platformReturnCode;
