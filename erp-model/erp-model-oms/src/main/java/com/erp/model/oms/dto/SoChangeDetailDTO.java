@@ -111,6 +111,11 @@ public class SoChangeDetailDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
+
 
         /**
          * sku id
@@ -246,7 +251,7 @@ public class SoChangeDetailDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public class UpdateDTO extends AddDTO {
+    public static class UpdateDTO extends AddDTO {
 
         private String id;
 

@@ -51,7 +51,7 @@ public class DictCurrencyEntity extends BaseEntity<DictCurrencyEntity> {
      * 金蝶编码
      */
     @TableField("kingdee_code")
-    private Boolean kingdeeCode;
+    private String kingdeeCode;
 
 
     @Override

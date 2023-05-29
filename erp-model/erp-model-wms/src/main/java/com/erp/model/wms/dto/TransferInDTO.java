@@ -390,9 +390,21 @@ public class TransferInDTO implements Serializable {
         private String outWarehouseId;
 
         /**
+         * 调出仓库
+         */
+        private String outWarehouseName;
+
+        /**
          * 调入仓库id
          */
         private String inWarehouseId;
+
+        /**
+         * 调入仓库
+         */
+        private String inWarehouseName;
+
+
 
         /**
          * 调拨方向

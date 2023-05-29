@@ -5,6 +5,7 @@
 
     <select id="listSourceDetailIds" resultType="com.erp.model.wms.entity.TransferOutDetailEntity">
         select
+            tod.id,
             tod.main_id,
             tod.sku_id,
             tod.sku_no,

@@ -176,8 +176,15 @@ public class TransferInController extends BaseController {
      * 反审核
      */
     @PostMapping("/disApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:transfer:in:disApprove",
+            serviceClass = TransferInService.class,
+            keyIdName = "ids"
+    )
     public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        return success();
+        Boolean result = transferInService.disApprove(dto);
+        return result ? success() : failure();
     }
 
     /**
@@ -208,8 +215,15 @@ public class TransferInController extends BaseController {
      * @date: 2023/5/10 20:11
      */
     @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:transfer:in:invalid",
+            serviceClass = TransferInService.class,
+            keyIdName = "ids"
+    )
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        return success();
+        Boolean result = transferInService.invalid(dto.getIds(), dto.getRemark());
+        return result ? success() : failure();
     }
 
     /**
@@ -218,8 +232,8 @@ public class TransferInController extends BaseController {
      */
     @PostMapping("/export")
     public ApiResult exportWarehouse(@RequestBody @Valid TransferInDTO.ExportDTO dto, HttpServletResponse response) {
-
-        return success();
+        Boolean result = transferInService.exportExcel(dto, response);
+        return result ? success() : failure();
     }
 
 

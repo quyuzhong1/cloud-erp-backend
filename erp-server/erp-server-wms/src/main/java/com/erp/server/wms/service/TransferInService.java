@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
@@ -8,6 +9,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.model.wms.entity.TransferInEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -76,4 +78,34 @@ public interface TransferInService extends SuperService<TransferInEntity> {
      * @return java.lang.Boolean
      */
     Boolean deleteByIds(List<String> ids);
+
+    /**
+     * 反审核
+     * @author yl
+     * @date 2023-05-29 9:47
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean disApprove(BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 作废
+     * @author yl
+     * @date 2023-05-29 9:51
+     * @param ids
+     * @param remark
+     * @return java.lang.Boolean
+     */
+    Boolean invalid(List<String> ids, String remark);
+
+    
+    /**
+     * 导出数据
+     * @author yl
+     * @date 2023-05-29 10:04
+     * @param dto
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean exportExcel(TransferInDTO.ExportDTO dto, HttpServletResponse response);
 }

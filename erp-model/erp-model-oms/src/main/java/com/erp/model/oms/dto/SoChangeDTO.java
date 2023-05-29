@@ -435,6 +435,13 @@ public class SoChangeDTO implements Serializable {
          */
         private String currency;
 
+
+
+        /**
+         * 币种
+         */
+        private String currencySymbol;
+
         /**
          * 是否含税
          * true 是
@@ -494,6 +501,12 @@ public class SoChangeDTO implements Serializable {
          */
         @NotBlank(message = "变更人不能为空")
         private String userId;
+
+
+        /**
+         * 变更原因
+         */
+        private String remark;
 
         /**
          * 产品信息

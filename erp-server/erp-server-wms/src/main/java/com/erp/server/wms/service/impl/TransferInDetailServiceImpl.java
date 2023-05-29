@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.wms.dto.TransferInDetailDTO;
@@ -42,5 +43,23 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
         List<TransferInDetailEntity> addDetailList = BeanMapper.copyList(detailList, TransferInDetailEntity.class);
         addDetailList.stream().forEach(a -> a.setMainId(mainId));
         this.saveBatch(addDetailList);
+    }
+
+
+    /**
+     * 删除明细
+     * @author yl
+     * @date 2023-05-29 8:53
+     * @param mainIds
+     * @return void
+     */
+    @Override
+    public void removeByMainIdList(List<String> mainIds) {
+        if (CollectionUtils.isEmpty(mainIds)) {
+            return;
+        }
+        LambdaQueryWrapper<TransferInDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(TransferInDetailEntity::getMainId, mainIds);
+        this.remove(queryWrapper);
     }
 }

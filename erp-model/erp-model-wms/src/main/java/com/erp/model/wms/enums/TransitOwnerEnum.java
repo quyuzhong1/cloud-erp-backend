@@ -1,5 +1,9 @@
 package com.erp.model.wms.enums;
 
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Optional;
+
 /**
  * @Classname: TransitOwnerEnum
  * @Description: 在途归属
@@ -32,6 +36,25 @@ public enum TransitOwnerEnum {
 
     public String getName() {
         return name;
+    }
+
+    /**
+     * 根据代码获取
+     * @param code
+     * @return
+     */
+    public static TransitOwnerEnum of(String code) {
+        return Arrays.stream(TransitOwnerEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
+    }
+
+    /**
+     * 根据代码获取名称
+     * @param code
+     * @return
+     */
+    public static String getNameByCode(String code) {
+        TransitOwnerEnum transitOwnerEnum =  of(code);
+        return Optional.ofNullable(transitOwnerEnum).map(TransitOwnerEnum::getName).orElse("");
     }
 
 }

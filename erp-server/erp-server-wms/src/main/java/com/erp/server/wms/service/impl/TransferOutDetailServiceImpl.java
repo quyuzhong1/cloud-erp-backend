@@ -2,11 +2,13 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.common.core.enums.ApiError;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.model.wms.entity.TransferOutEntity;
 import com.erp.server.wms.service.PickingDetailService;
 import com.erp.server.wms.service.TransferOutService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.service.SuperServiceImpl;
@@ -109,7 +111,7 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
     public List<TransferOutDetailEntity> listByMainId(String mainId) {
         return lambdaQuery()
                 .eq(TransferOutDetailEntity::getMainId,mainId)
-                .orderByDesc(TransferOutDetailEntity::getId)
+                .orderByAsc(TransferOutDetailEntity::getId)
                 .list();
     }
 
@@ -161,13 +163,14 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
     private void checkTransferOutQty (List<TransferOutDetailEntity> newList ,String mainId) {
         TransferOutEntity transferOutEntity = transferOutService.getById(mainId);
         // 分步式调出单都是下推
+
         List<String> sourceDetailIds = newList.stream().map(TransferOutDetailEntity::getSourceDetailId).collect(Collectors.toList());
 
         //拣货明细
         List<PickingDetailEntity> pickingDetailList = pickingDetailService.listByIds(sourceDetailIds);
 
         //已下推明细
-        List<TransferOutDetailEntity> transferInfoDetailList = this.listSourceDetailIds(sourceDetailIds);
+        List<TransferOutDetailEntity> transferOutDetailList = this.listSourceDetailIds(sourceDetailIds);
 
         for (TransferOutDetailEntity detailEntity : newList) {
             // 拣货数量
@@ -177,10 +180,10 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
                         .map(PickingDetailEntity::getQty).findFirst().orElse(0);
             }
             //已下推数量（不包括本明细数量）
-            Integer hasPickingQty = 0;
-            if (CollUtil.isNotEmpty(transferInfoDetailList)) {
-                hasPickingQty = transferInfoDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId()) && !obj.getId().equals(detailEntity.getId()))
-                        .map(TransferOutDetailEntity::getQty).reduce(0, Integer::sum);
+            Integer hasPickingQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(transferOutDetailList)) {
+                hasPickingQty = transferOutDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId()) && !obj.getId().equals(detailEntity.getId()))
+                        .map(TransferOutDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             //数量检验
             if (detailEntity.getQty().intValue() > pickingQty.intValue() - hasPickingQty.intValue()) {
