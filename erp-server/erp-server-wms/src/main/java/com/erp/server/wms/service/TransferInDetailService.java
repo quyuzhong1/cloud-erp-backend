@@ -25,4 +25,14 @@ public interface TransferInDetailService extends SuperService<TransferInDetailEn
      * @return void
      */
     void add(String id, List<TransferInDetailDTO.AddDTO> detailList);
+
+    
+    /**
+     * 删除明细
+     * @author yl
+     * @date 2023-05-29 8:53
+     * @param mainIds
+     * @return void
+     */
+    void removeByMainIdList(List<String> mainIds);
 }

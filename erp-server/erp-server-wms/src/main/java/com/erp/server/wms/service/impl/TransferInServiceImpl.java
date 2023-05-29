@@ -371,7 +371,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "删除");
             //删除明细
-          //  soChangeDetailService.removeByMainIdList(ids);
+            transferInDetailService.removeByMainIdList(ids);
 
         }
         return result;

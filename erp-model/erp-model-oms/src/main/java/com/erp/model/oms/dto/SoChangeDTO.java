@@ -435,6 +435,13 @@ public class SoChangeDTO implements Serializable {
          */
         private String currency;
 
+
+
+        /**
+         * 币种
+         */
+        private String currencySymbol;
+
         /**
          * 是否含税
          * true 是

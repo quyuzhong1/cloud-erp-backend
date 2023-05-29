@@ -154,12 +154,15 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
             String unit = "";
             String productName = "";
+            String variantProperty = "";
             if (sku != null) {
                 unit = sku.getUnitName();
                 productName = sku.getSkuName();
+                variantProperty=sku.getVariantProperty();
             }
             item.setUnit(unit);
             item.setProductName(productName);
+            item.setVariantProperty(variantProperty);
             //税率
             BigDecimal taxRate = item.getTaxRate();
             //单价
@@ -188,8 +191,8 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
      * @date 2023-05-25 14:11
      */
     @Override
-    public List<SoChangeDetailDTO.ViewDTO> listDetailBySoId(String soId,List<String> soDetailIds,Boolean hasContain) {
-        List<SoDetailEntity> soDetailList = soDetailService.listDetailBySoId(soId,soDetailIds,hasContain);
+    public List<SoChangeDetailDTO.ViewDTO> listDetailBySoId(String soId, List<String> soDetailIds, Boolean hasContain) {
+        List<SoDetailEntity> soDetailList = soDetailService.listDetailBySoId(soId, soDetailIds, hasContain);
         List<SoChangeDetailDTO.ViewDTO> viewList = new ArrayList<>(soDetailList.size());
         if (CollectionUtils.isNotEmpty(soDetailList)) {
             BigDecimal zero = BigDecimal.ZERO;
@@ -218,15 +221,25 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 view.setIsReissue(Boolean.FALSE);
                 view.setPrice(zero);
                 view.setTaxRate(zero);
-                view.setCurrency("CNY");
-                view.setCurrencySymbol("¥");
+                view.setCurrency(item.getCurrency());
+                view.setCurrencySymbol(item.getCurrencySymbol());
                 String skuId = item.getSkuId();
                 view.setSkuId(skuId);
                 view.setSkuNo(item.getSkuNo());
                 view.setSoDetailId(item.getId());
-                String productName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
-                        flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
+
+                SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+                String unit="";
+                String productName="";
+                String variantProperty = "";
+                if (sku != null) {
+                    unit = sku.getUnitName();
+                    productName = sku.getSkuName();
+                    variantProperty=sku.getVariantProperty();
+                }
+                view.setUnit(unit);
                 view.setProductName(productName);
+                view.setVariantProperty(variantProperty);
                 viewList.add(view);
             }
         }
@@ -321,9 +334,9 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
     @Override
     public void checkChange(List<SoChangeDetailDTO.AddDTO> detailList) {
         if (CollectionUtils.isNotEmpty(detailList)) {
-            Boolean hasRepeat = detailList.stream().filter(d->StringUtils.isNotBlank(d.getSoDetailId())).collect(Collectors.groupingBy(SoChangeDetailDTO.AddDTO::getSoDetailId)).
+            Boolean hasRepeat = detailList.stream().filter(d -> StringUtils.isNotBlank(d.getSoDetailId())).collect(Collectors.groupingBy(SoChangeDetailDTO.AddDTO::getSoDetailId)).
                     entrySet().stream().allMatch(entry -> entry.getValue().size() > 1);
-            if(hasRepeat){
+            if (hasRepeat) {
                 throw new ServiceException(ApiError.ERROR_92038);
             }
             String deleteCode = SoChangeTypeEnum.DELETE.getCode();

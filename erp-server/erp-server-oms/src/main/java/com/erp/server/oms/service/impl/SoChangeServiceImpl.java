@@ -519,6 +519,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         ApproveStatusEnum approveStatus = soChange.getApproveStatus();
         view.setApproveStatusName(approveStatus.getName());
         view.setCurrency(soInfo.getCurrency());
+        view.setCurrencySymbol(soInfo.getCurrencySymbol());
         view.setCustomerId(soInfo.getCustomerId());
         view.setCustomerName(soInfo.getCustomerName());
         view.setIsTax(soInfo.getIsTax());
@@ -571,6 +572,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         view.setApproveStatusName(approveStatus.getName());
         view.setApproveStatus(approveStatus);
         view.setCurrency(soInfo.getCurrency());
+        view.setCurrencySymbol(soInfo.getCurrencySymbol());
         view.setCustomerId(soInfo.getCustomerId());
         view.setCustomerName(soInfo.getCustomerName());
         view.setIsTax(soInfo.getIsTax());
@@ -686,6 +688,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      * @date 2023-05-25 10:46
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean approve(BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<SoChangeEntity> list = this.listByIds(ids);
@@ -795,6 +798,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      * @date 2023-05-25 11:14
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String remark) {
         List<SoChangeEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
