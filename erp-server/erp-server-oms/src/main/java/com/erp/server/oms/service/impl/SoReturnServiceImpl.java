@@ -624,6 +624,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 detailAdd.setRemark(view.getRemark());
                 detailList.add(detailAdd);
             }
+            add.setDetailList(detailList);
             this.add(add);
         }
         return Boolean.TRUE;
