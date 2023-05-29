@@ -413,7 +413,6 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             InitStockDTO.ConditionDTO condition = new InitStockDTO.ConditionDTO();
             condition.setWarehouseId(data.getWarehouseId());
             condition.setSkuId(data.getSkuId());
-            condition.setDateList(dateList);
             Integer iniQty = initStockService.getInitQty(condition);
             data.setInitQty(iniQty);
         }

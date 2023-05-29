@@ -161,9 +161,6 @@
         inner join init_stock ini on ini.id = isd.main_id
         <where>
            ini.warehouse_id = #{params.warehouseId} and ini.approve_status = 'approve'
-            <if test="params.dateList != null and params.dateList.size > 0">
-                and ini.bill_date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ini.bill_date
-            </if>
            and isd.sku_id = #{params.skuId}
         </where>
     </select>

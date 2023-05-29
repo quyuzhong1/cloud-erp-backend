@@ -172,5 +172,32 @@
             group by tfo.approve_status
         </where>
     </select>
+    <select id="viewGenerateTransfer"
+            resultType="com.erp.model.wms.dto.TransferOutDTO$ViewGenerateTransferInDTO">
+        select
+        tfo.code as sourceCode,
+        tfo.id as sourceId,
+        tod.id as sourceDetailId,
+        tfo.transfer_direction as transferDirection,
+        tfo.approve_status as approveStatus,
+        tod.sku_id as skuId,
+        tod.sku_no as skuNo,
+        tod.qty as qty,
+        tod.qty as planQty,
+        tfo.bill_date as billDate,
+        tfo.out_warehouse_id as outWarehouseId,
+        tfo.out_warehouse_name as outWarehouseName,
+        tfo.in_warehouse_id as inWarehouseId,
+        tfo.in_warehouse_name as inWarehouseName,
+        tod.out_warehouse_location as outWarehouseLocation
+        from transfer_out tfo
+        inner join transfer_out_detail tod on tfo.id = tod.main_id and tod.is_deleted = false
+        <where>
+            tfo.is_deleted = false and tfo.id in
+            <foreach collection="ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </where>
+    </select>
 
 </mapper>

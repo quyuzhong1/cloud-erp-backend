@@ -474,4 +474,111 @@ public class TransferOutDTO implements Serializable {
 
         private List<String> ids;
     }
+
+    /**
+     * 下推分步式调入单数据
+     */
+    @Data
+    @NoArgsConstructor
+    public class ViewGenerateTransferInDTO implements Serializable {
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 分步式调出单号(来源编号)
+         */
+        private String sourceCode;
+
+        /**
+         * 调出日期
+         */
+        private LocalDate billDate;
+
+        /**
+         * 调拨方向
+         */
+        private String transferDirection;
+
+        /**
+         * 调拨方向名称
+         */
+        private String transferDirectionName;
+
+
+        /**
+         * 调出仓库id
+         */
+        private String   outWarehouseId;
+
+        /**
+         * 调出仓库名称
+         */
+        private String   outWarehouseName;
+
+        /**
+         * 调入仓库id
+         */
+        private String  inWarehouseId;
+
+        /**
+         * 调入仓库名称
+         */
+        private String   inWarehouseName;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 调出数量
+         */
+        private Integer qty;
+
+        /**
+         * 计划调入数量
+         */
+        private Integer planQty;
+
+        /**
+         * 调出仓位
+         */
+        private String outWarehouseLocation;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+    }
+
 }

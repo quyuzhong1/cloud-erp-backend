@@ -112,4 +112,11 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
      */
     void disApprove(List<String> ids);
 
+    /**
+     * 分步式调出单下推分布式调入单
+     * @param ids
+     * @return
+     */
+    List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransferIn(List<String> ids);
+
 }

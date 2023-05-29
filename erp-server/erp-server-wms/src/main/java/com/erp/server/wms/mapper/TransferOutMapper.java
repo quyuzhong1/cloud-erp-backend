@@ -45,4 +45,11 @@ public interface TransferOutMapper extends BaseMapper<TransferOutEntity> {
      */
     List<ApproveStatusQtyDTO> listCount(@Param("params") TransferOutDTO.PagingParamDTO params);
 
+    /**
+     * 查询调出单数据
+     * @param ids
+     * @return
+     */
+    List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransfer(@Param("ids") List<String> ids);
+
 }

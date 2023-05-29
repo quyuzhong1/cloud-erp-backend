@@ -410,6 +410,11 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         // TODO 流程
     }
 
+    @Override
+    public List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransferIn(List<String> ids) {
+        return null;
+    }
+
     /**
      * 更新审核状态
      */
