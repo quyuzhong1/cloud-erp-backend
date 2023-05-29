@@ -5,6 +5,7 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.CurrencyEnum;
+import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.DmpRefundInfoImportExcelDTO;
@@ -66,41 +67,30 @@ public class DmpRefundInfoExcelListener extends AnalysisEventListener<DmpRefundI
 
     */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void invoke(DmpRefundInfoImportExcelDTO dto, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
+
+        //注解验证信息
+        List<String> msgList = FieldValidUtil.fieldValid(dto);
+        if (CollectionUtils.isNotEmpty(msgList)) {
+            errorMsgList.addAll(msgList);
+        }
+
         DmpRefundInfoEntity entity = new DmpRefundInfoEntity();
-        if (StringUtils.isBlank(dto.getRefundId())) {
-            errorMsgList.add("退款单号不能为空");
-        }
-        if (StringUtils.isBlank(dto.getPlatformOrderId())) {
-            errorMsgList.add("订单号不能为空");
-        }
-        if (StringUtils.isNotBlank(dto.getRefundId()) && dto.getRefundId().length() > 50) {
-            errorMsgList.add("退款单号不能超过50个字节");
-        }
-        if (!StrUtils.isLetterDigitBar(dto.getRefundId())) {
+        if (!StrUtils.isLetterDigitBar(dto.getRefundCode())) {
             errorMsgList.add("退款单号只能包含字母、数字、-");
         }
 
         if (CollectionUtils.isNotEmpty(refundList)) {
-            long count = refundList.stream().filter(obj -> obj.getRefundId().equals(dto.getRefundId())).count();
+            long count = refundList.stream().filter(obj -> obj.getRefundCode().equals(dto.getRefundCode())).count();
             if (count > 0) {
                 errorMsgList.add("退款单号已存在，不能重复添加");
             }
         }
-        if (StringUtils.isNotBlank(dto.getPlatformOrderId()) && dto.getPlatformOrderId().length() > 50) {
-            errorMsgList.add("订单号不能超过50个字节");
-        }
-        if (StringUtils.isBlank(dto.getPlatformName())) {
-            errorMsgList.add("平台名称不能为空");
-        }
-        if (StringUtils.isBlank(dto.getShopName())) {
-            errorMsgList.add("店铺名称不能为空");
-        }
-        if(StringUtils.isBlank(dto.getSkuNo())) {
-            errorMsgList.add("SKU不能为空");
-        } else {
+
+        if(StringUtils.isNotBlank(dto.getSkuNo())) {
+
             if (!StrUtils.isLetterDigit(dto.getSkuNo())) {
                 errorMsgList.add("SKU只能包含字母和数字");
             }
@@ -117,12 +107,6 @@ public class DmpRefundInfoExcelListener extends AnalysisEventListener<DmpRefundI
         }
         if (MathUtil.compareTo(dto.getRefundAmount(),MathUtil.ZERO) <= 0) {
             errorMsgList.add("退款金额必须大于0");
-        }
-        if (StringUtils.isBlank(dto.getRefundStatusName())) {
-            errorMsgList.add("退款状态不能为空");
-        }
-        if (StringUtils.isBlank(dto.getCurrencyCode())) {
-            errorMsgList.add("币种不能为空");
         }
         CurrencyEnum currencyEnum = CurrencyEnum.getByCode(dto.getCurrencyCode());
         if (ObjectUtils.isEmpty(currencyEnum)) {
@@ -158,7 +142,7 @@ public class DmpRefundInfoExcelListener extends AnalysisEventListener<DmpRefundI
             list.add(dto);
             return;
         }
-        DmpRefundInfoEntity dmpRefundInfoEntity = dmpRefundInfoService.getByRefundId(dto.getRefundId());
+        DmpRefundInfoEntity dmpRefundInfoEntity = dmpRefundInfoService.getByRefundId(dto.getRefundCode());
         if (ObjectUtils.isEmpty(dmpRefundInfoEntity)) {
             BeanUtils.copyProperties(dto,entity);
             entity.setRefundStatus(RefundStatusEnum.getCodeByName(dto.getRefundStatusName()));
