@@ -1,18 +1,18 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.ApproveStatusQtyDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -32,11 +32,15 @@ import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.dto.TransferOutDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.ExportTransferOutExcelDTO;
+import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
+import com.erp.model.wms.dto.inventory.TransferDTO;
 import com.erp.model.wms.entity.TransferOutDetailEntity;
 import com.erp.model.wms.entity.TransferOutEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.TransferTypeEnum;
 import com.erp.model.wms.enums.TransitOwnerEnum;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.TransferOutMapper;
@@ -46,6 +50,7 @@ import com.google.common.collect.Sets;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,6 +94,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     @Autowired
     private InventoryService inventoryService;
 
+    @Autowired
+    private InventoryTransCoreService inventoryTransCoreService;
+
     @Override
     public List<TransferOutEntity> listBySourceIds(List<String> ids) {
         return lambdaQuery()
@@ -100,7 +108,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void add(TransferOutDTO.AddDTO addDTO) {
+    public String add(TransferOutDTO.AddDTO addDTO) {
         // 验证数据
         ValidatorUtil.validateEntity(addDTO);
         // 调入仓库和调出仓库不能一样
@@ -115,12 +123,11 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         transferOutEntity.setCode(code);
         boolean save = super.save(transferOutEntity);
         ValidatorUtil.isTrue(save,()->new ServiceException("分步式调出单保存失败"));
-        if (save) {
-            //操作日志
-            operateLogService.addModuleOperateLog(String.format("新增了一个分步式调出单【%s】", code), ModuleTypeEnum.TRANSFER_OUT.getCode(), transferOutEntity.getId(), "新增操作");
-            //新增明细
-            transferOutDetailService.add(addDTO.getDetailList(), transferOutEntity.getId());
-        }
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("新增了一个分步式调出单【%s】", code), ModuleTypeEnum.TRANSFER_OUT.getCode(), transferOutEntity.getId(), "新增操作");
+        //新增明细
+        transferOutDetailService.add(addDTO.getDetailList(), transferOutEntity.getId());
+        return transferOutEntity.getId();
     }
 
     @Override
@@ -213,6 +220,95 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         List<TransferOutDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(TransferOutDetailDTO.ViewDTO.class, members);
         this.fillingView(data, viewDetailList);
         return data;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void submit(List<String> ids) {
+        ids = ids.stream().distinct().collect(Collectors.toList());
+        // 判断id是否正确
+        List<TransferOutEntity> list = super.listByIds(ids);
+        Map<String, TransferOutEntity> transferOutEntityMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
+        // 能查询到的数据id集合
+        List<String> findIds = list.stream().map(TransferOutEntity::getId).distinct().collect(Collectors.toList());
+        for(String id : ids) {
+            ValidatorUtil.isTrue(findIds.contains(id),()->new ServiceException("分步式调出单数据不存在"));
+            TransferOutEntity transferOutEntity = transferOutEntityMap.get(id);
+            //待提交或审核不通过并且未作废允许提交
+            if((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(transferOutEntity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(transferOutEntity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(transferOutEntity.getInvalidStatus())) {
+                throw new ServiceException("只有待提交或审核不通过并且未作废数据支持提交");
+            }
+        }
+        // 更新单据审核状态
+        log.info("提交 开始修改分步式调出状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        this.updateApproveStatus(ids, ApproveStatusEnum.APPROVE_ING.getStatus());
+        // TODO 启动流程
+
+        // 记录操作日志
+        log.info("提交 开始记录分步式调出日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("提交了一个分步式调出单【%s】", ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "提交操作");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void addAndSubmit(TransferOutDTO.AddDTO dto) {
+        // 新增
+        String id = this.add(dto);
+        // 提交
+        this.submit(Arrays.asList(id));
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateAndSubmit(TransferOutDTO.UpdateDTO dto) {
+        // 修改
+        this.update(dto);
+        // 提交
+        this.submit(Arrays.asList(dto.getId()));
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void approve(BaseApproveParamDTO baseApproveParamDTO) {
+        List<String> ids = baseApproveParamDTO.getIds();// 提交审核的单据id
+        ids = ids.stream().distinct().collect(Collectors.toList());
+        List<TransferOutEntity> list = super.listByIds(ids);
+        ValidatorUtil.isTrue(CollUtil.isNotEmpty(list),()->new ServiceException("未找到分步式调出单数据"));
+        Map<String, TransferOutEntity> transferOutEntityMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
+        // 只有审核中的数据允许审核
+        ids.stream().forEach(id->{
+            ValidatorUtil.isTrue(transferOutEntityMap.containsKey(id),()->new ServiceException("分步式调出单数据不存在"));
+            ValidatorUtil.isTrue(Objects.equals(transferOutEntityMap.get(id).getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus()),()->new ServiceException("只有审核中数据支持审核"));
+        });
+        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(baseApproveParamDTO.getType());
+        ApproveStatusEnum approveStatus = null;
+        if(Objects.equals(ApproveTypeEnum.PASS, approveType)) { // 审核通过
+            approveStatus = ApproveStatusEnum.APPROVE;
+            // TODO 审核通过流程
+            this.updateInventoryTransCore(list);
+        } else if (Objects.equals(ApproveTypeEnum.REJECT, approveType)) { // 审核不通过
+            approveStatus = ApproveStatusEnum.REJECT;
+            // TODO 中止当前审批流程
+        }
+
+        log.info("审核 开始修改分步式调出单状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        updateApproveStatus(ids, approveStatus.getStatus()); // 修改单据状态
+        //操作日志
+        log.info("审核 开始修改分步式调出单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
+        List<Pair<String, String>> pairList = list.stream().map(data -> new Pair<>(data.getId(), data.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个分步式调出单", ApproveTypeEnum.getName(baseApproveParamDTO.getType())).concat("【%s】").concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.INIT_STOCK.getCode(), pairList, "审核操作");
+    }
+
+    /**
+     * 更新审核状态
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void updateApproveStatus(List<String> ids, String approveStatus) {
+        //更新审核状态
+        lambdaUpdate().in(TransferOutEntity::getId, ids)
+                .set(TransferOutEntity::getApproveStatus, approveStatus)
+                .update();
     }
 
     /**
@@ -352,6 +448,43 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             }
             mainIds.add(data.getId());
         }
+    }
+
+    /**
+     * 更新库存数据
+     * @param list
+     */
+    public void updateInventoryTransCore(List<TransferOutEntity> list) {
+        List<String> mainIds = list.stream().map(TransferOutEntity::getId).distinct().collect(Collectors.toList());
+        Map<String,TransferOutEntity> mainMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
+        List<TransferOutDetailEntity> detailList = transferOutDetailService.listByMainIds(mainIds);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException("未找到分步式调拨明细数据");
+        }
+
+        InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
+        inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.STEP_INVENTORY_OUT.getCode());
+        List<TransferDTO> members = Lists.newArrayListWithExpectedSize(detailList.size());
+        detailList.stream().forEach(detailEntity->{
+            TransferDTO transferDTO = new TransferDTO();
+            transferDTO.setSourceType(InventorySourceTypeEnum.TRANSFER_OUT);
+
+            TransferOutEntity transferOutEntity = mainMap.get(detailEntity.getMainId());
+            transferDTO.setSourceId(transferOutEntity.getId());
+            transferDTO.setSourceCode(transferOutEntity.getCode());
+            transferDTO.setSourceDetailId(detailEntity.getId());
+            transferDTO.setBillDate(transferOutEntity.getBillDate());
+            transferDTO.setCurWarehouseId(transferOutEntity.getOutWarehouseId());
+            transferDTO.setCurWarehouseLocation(detailEntity.getOutWarehouseLocation());
+            transferDTO.setTargetWarehouseId(transferOutEntity.getInWarehouseId());
+            transferDTO.setTargetWarehouseLocation("");// 调入仓位为空
+            transferDTO.setSkuId(detailEntity.getSkuId());
+            transferDTO.setSkuNo(detailEntity.getSkuNo());
+            transferDTO.setQty(detailEntity.getQty());
+            members.add(transferDTO);
+        });
+        inventoryTransferDTO.setMembers(members);
+        inventoryTransCoreService.approveByType(inventoryTransferDTO);
     }
 
 

@@ -115,6 +115,13 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
                 .list();
     }
 
+    @Override
+    public List<TransferOutDetailEntity> listByMainIds(List<String> mainIds) {
+        return lambdaQuery()
+                .in(TransferOutDetailEntity::getMainId,mainIds)
+                .list();
+    }
+
     private void handleDetails(List<TransferOutDetailEntity> newList, String mainId, Boolean isUpdate) {
         // 新增的明细
         List<TransferOutDetailEntity> addList = newList.stream().filter(c -> StrUtils.isEmpty(c.getId())).collect(Collectors.toList());

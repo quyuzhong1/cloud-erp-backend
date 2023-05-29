@@ -31,7 +31,7 @@ public class TransferOutController extends BaseController {
     private final TransferOutService transferOutService;
 
     /**
-     * 获取 状态统计
+     * 获取状态统计
      * @return
      */
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -67,7 +67,13 @@ public class TransferOutController extends BaseController {
      * @return
      */
     @PostMapping("/submit")
-    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "warehouse_keeper_id",
+            menuCode = "wms:transferOut:submit",
+            serviceClass = TransferOutService.class,
+            keyIdName = "ids")
+    public ApiResult<Void> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        transferOutService.submit(dto.getIds());
         return  success();
     }
 
@@ -77,7 +83,13 @@ public class TransferOutController extends BaseController {
      * @return
      */
     @PostMapping("/addAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "warehouse_keeper_id",
+            menuCode = "wms:transferOut:add",
+            serviceClass = TransferOutService.class,
+            keyIdName = "ids")
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated TransferOutDTO.AddDTO dto) {
+        transferOutService.addAndSubmit(dto);
         return  success();
     }
 
@@ -118,7 +130,13 @@ public class TransferOutController extends BaseController {
      * @return
      */
     @PostMapping("/updateAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "warehouse_keeper_id",
+            menuCode = "wms:transferOut:update",
+            serviceClass = TransferOutService.class,
+            keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated TransferOutDTO.UpdateDTO dto) {
+        transferOutService.updateAndSubmit(dto);
         return success(null);
     }
 
@@ -130,7 +148,13 @@ public class TransferOutController extends BaseController {
      * @return
      */
     @PostMapping("/approve")
-    public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "warehouse_keeper_id",
+            menuCode = "wms:transferOut:approve",
+            serviceClass = TransferOutService.class,
+            keyIdName = "id")
+    public ApiResult<Void> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        transferOutService.approve(dto);
         return success();
     }
 
