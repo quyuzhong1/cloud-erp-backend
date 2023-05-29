@@ -60,9 +60,9 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
      **/
     @Override
     public DmpRefundInfoEntity getRefundByPlatformOrderId(DmpRefundInfoEntity returnOrderInfoEntity) {
-        LambdaQueryWrapper<DmpRefundInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<DmpRefundInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.eq(DmpRefundInfoEntity::getPlatformOrderId, returnOrderInfoEntity.getPlatformOrderId());
-        lambdaQueryWrapper.eq(DmpRefundInfoEntity::getRefundId, returnOrderInfoEntity.getRefundId());
+        lambdaQueryWrapper.eq(DmpRefundInfoEntity::getRefundCode, returnOrderInfoEntity.getRefundCode());
         return this.getOne(lambdaQueryWrapper);
     }
 
@@ -75,9 +75,9 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
      **/
     @Override
     public Boolean updateRefundByPlatformOrderId(DmpRefundInfoEntity dmpRefundInfoEntity) {
-        LambdaQueryWrapper<DmpRefundInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<DmpRefundInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.eq(DmpRefundInfoEntity::getPlatformOrderId, dmpRefundInfoEntity.getPlatformOrderId());
-        lambdaQueryWrapper.eq(DmpRefundInfoEntity::getRefundId, dmpRefundInfoEntity.getRefundId());
+        lambdaQueryWrapper.eq(DmpRefundInfoEntity::getRefundCode, dmpRefundInfoEntity.getRefundCode());
         return this.update(dmpRefundInfoEntity, lambdaQueryWrapper);
     }
 

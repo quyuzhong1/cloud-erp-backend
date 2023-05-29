@@ -8,6 +8,7 @@ import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
@@ -162,6 +163,7 @@ public class TransferOutDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @EqualsAndHashCode(callSuper = true)
     public static class PagingParamDTO extends SortDTO {
 
         /**
@@ -467,6 +469,7 @@ public class TransferOutDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @EqualsAndHashCode(callSuper = true)
     public static class ExportDTO extends PagingParamDTO {
 
         private List<String> ids;

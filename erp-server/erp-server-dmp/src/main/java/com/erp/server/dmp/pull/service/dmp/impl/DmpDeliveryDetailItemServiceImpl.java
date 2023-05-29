@@ -54,7 +54,7 @@ public class DmpDeliveryDetailItemServiceImpl extends ServiceImpl<DmpDeliveryDet
      **/
     @Override
     public Boolean deleteDeliveryDetailItemByDetailId(String deliveryDetailId) {
-        LambdaQueryWrapper<DmpDeliveryDetailItemEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<DmpDeliveryDetailItemEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.eq(DmpDeliveryDetailItemEntity::getDeliveryDetailId, deliveryDetailId);
         return this.remove(lambdaQueryWrapper);
     }

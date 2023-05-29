@@ -5,6 +5,7 @@ import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
 import com.erp.model.wms.enums.OutstockTypeEnum;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
@@ -129,6 +130,7 @@ public class OtherOutstockDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @EqualsAndHashCode(callSuper = true)
     public static class SearchParamDTO extends SortDTO {
 
         /**
@@ -248,6 +250,7 @@ public class OtherOutstockDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @EqualsAndHashCode(callSuper = true)
     public static class AddDTO extends CommonDTO {
 
 
@@ -268,6 +271,7 @@ public class OtherOutstockDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @EqualsAndHashCode(callSuper = true)
     public static class UpdateDTO extends CommonDTO {
 
         /**
@@ -292,6 +296,7 @@ public class OtherOutstockDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @EqualsAndHashCode(callSuper = true)
     public static class ViewDTO extends CommonDTO {
 
         /**
