@@ -513,6 +513,11 @@ public class TransferApplicationDTO implements Serializable {
         private String outWarehouseLocation;
 
         /**
+         * 调入仓位
+         */
+        private String inWarehouseLocation;
+
+        /**
          * 备注
          */
         private String remark;

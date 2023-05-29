@@ -59,7 +59,7 @@ public class DmpShopInfoEntity implements Serializable {
     /**
      * 平台店铺编号
      */
-    @TableField(value = "plarform_shop_no")
+    @TableField(value = "platform_shop_no")
     private String platformShopNo;
 
     /**

@@ -370,10 +370,6 @@ public class TransferInDTO implements Serializable {
          */
         private String sourceCode;
 
-
-
-
-
         /**
          * 仓管员id
          */
@@ -433,37 +429,39 @@ public class TransferInDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
-
+        /**
+         * id
+         */
         private String id;
 
-
         /**
-         * code
+         * 调拨单号
          */
         private String code;
 
-
         /**
-         * 审核状态code
+         * 审核状态
          */
         private ApproveStatusEnum approveStatus;
 
         /**
+         * 审核状态名
+         */
+        private String approveStatusName;
+        /**
          * 来源id
          */
         private String sourceId;
-
 
         /**
          * 来源类型
          */
         private String sourceType;
 
-
         /**
          * 调拨类型
          */
-        private String type;
+        private TransferTypeEnum transferType;
 
         /**
          * 调入日期
@@ -471,9 +469,14 @@ public class TransferInDTO implements Serializable {
         private LocalDate billDate;
 
         /**
-         * 调出仓库id
+         * 调出仓库id 不能更改
          */
         private String outWarehouseId;
+
+        /**
+         * 调出仓库id 不能更改
+         */
+        private String outWarehouseName;
 
         /**
          * 调出组织d
@@ -509,7 +512,7 @@ public class TransferInDTO implements Serializable {
         /**
          * 调拨方向
          */
-        private String transferDirection;
+        private TransferDirectionEnum transferDirection;
 
 
         /**

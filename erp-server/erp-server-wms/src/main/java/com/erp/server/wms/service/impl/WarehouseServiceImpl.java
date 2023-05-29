@@ -35,6 +35,7 @@ import com.erp.server.wms.mapper.WarehouseMapper;
 import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -122,6 +123,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 10:17
      */
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public String add(WarehouseDTO.AddDTO dto) {
         //检查名称
         checkName(null, dto.getName());
@@ -146,6 +148,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 11:08
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String updateWarehouse(WarehouseDTO.UpdateDTO dto) {
         // 删除缓存
         removeCache(Collections.singletonList(dto.getId()));
@@ -177,6 +180,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 11:16
      */
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean addAndSubmit(WarehouseDTO.AddDTO dto) {
         String warehouseId = this.add(dto);
         if (StringUtils.isBlank(warehouseId)) {
@@ -196,6 +200,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 11:31
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean submit(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return false;
@@ -233,6 +238,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 11:43
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateStatus(UpdateStateDTO dto) {
         // 删除缓存
         removeCache(Collections.singletonList(dto.getId()));
@@ -263,6 +269,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 11:45
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean approve(BaseApproveParamDTO dto) {
         List<String> warehouseIds = dto.getIds();
         // 删除缓存
@@ -305,6 +312,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 11:59
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean disApprove(List<String> warehouseIds) {
         // 删除缓存
         removeCache(warehouseIds);
@@ -533,6 +541,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 17:17
      */
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
         //获取到仓库类型
         List<DictBasicDTO.ListDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
@@ -566,6 +575,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-28 11:17
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateAndSubmit(WarehouseDTO.UpdateDTO dto) {
         String id = this.updateWarehouse(dto);
         if (StringUtils.isBlank(id)) {

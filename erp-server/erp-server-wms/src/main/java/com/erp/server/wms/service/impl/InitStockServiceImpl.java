@@ -311,13 +311,12 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     @Override
     public void approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();// 提交审核的单据id
-        ValidatorUtil.isTrue(ids.size() == new HashSet<>(ids).size(),()->new ServiceException("提交的数据存在重复期初库存id"));
+        ids = ids.stream().distinct().collect(Collectors.toList());
         List<InitStockEntity> list = super.listByIds(ids);
         ValidatorUtil.isTrue(CollUtil.isNotEmpty(list),()->new ServiceException("未找到期初库存数据"));
         Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
         //只有审核中的数据允许审核
-        IntStream.range(0,ids.size()).forEach(idx->{
-            String id = ids.get(idx);
+        ids.stream().forEach(id->{
             ValidatorUtil.isTrue(initStockEntityMap.containsKey(id),()->new ServiceException("期初库存数据不存在"));
             ValidatorUtil.isTrue(Objects.equals(initStockEntityMap.get(id).getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus()),()->new ServiceException("只有审核中数据支持审核"));
         });

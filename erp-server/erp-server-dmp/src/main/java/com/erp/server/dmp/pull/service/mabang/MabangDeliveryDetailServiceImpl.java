@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-@SaveData(method = PlatformApiEnum.ORDER_GET_DELIVERY_LIST)
+//@SaveData(method = PlatformApiEnum.ORDER_GET_DELIVERY_LIST)
 public class MabangDeliveryDetailServiceImpl implements IReportSaveService<OrderEntity> {
 
     @Resource
@@ -191,29 +191,29 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
         deliveryDetailInfoEntity.setStatus(status);
 
         //平台单据审核时间
-        deliveryDetailInfoEntity.setPlatformApproveTime(null);
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         //平台单据创建时间
-        if (StringUtils.isNotBlank(orderEntity.getCreateDate()) && !orderEntity.getCreateDate().equals("null")) {
+        if (StringUtils.isNotBlank(orderEntity.getCreateDate()) && !"null".equals(orderEntity.getCreateDate())) {
             deliveryDetailInfoEntity.setPlatformCreateTime(LocalDateTime.parse(orderEntity.getCreateDate(),sdf));
         }
 
         //平台单据修改时间
-        if (StringUtils.isNotBlank(orderEntity.getOperTime()) && !orderEntity.getOperTime().equals("null")) {
+        if (StringUtils.isNotBlank(orderEntity.getOperTime()) && !"null".equals(orderEntity.getOperTime())) {
             deliveryDetailInfoEntity.setPlatformUpdateTime(LocalDateTime.parse(orderEntity.getOperTime(),sdf));
         }
         //发货时间
-        if (StringUtils.isNotBlank(orderEntity.getTransportTime()) && !orderEntity.getTransportTime().equals("null")) {
-            deliveryDetailInfoEntity.setDeliveryDate(LocalDateTime.parse(orderEntity.getTransportTime(),sdf));
+        if (StringUtils.isNotBlank(orderEntity.getExpressTime()) && !"null".equals(orderEntity.getExpressTime())) {
+            deliveryDetailInfoEntity.setDeliveryDate(LocalDateTime.parse(orderEntity.getExpressTime(),sdf));
         }
         //备注
         deliveryDetailInfoEntity.setRemark(orderEntity.getRemark());
         //平台标识
         deliveryDetailInfoEntity.setPlatformSign(PlatformEnum.MABANG.getDesc());
         //企业Id
-        deliveryDetailInfoEntity.setCompanyId("1");
+        deliveryDetailInfoEntity.setCompanyId(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getCode());
         //企业名称
         deliveryDetailInfoEntity.setCompanyName(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getName());
+        deliveryDetailInfoEntity.setPlatformApproveTime(LocalDateTime.parse(orderEntity.getCreateDate(), sdf));
         //创建时间
         deliveryDetailInfoEntity.setCreateTime(LocalDateTime.now());
         deliveryDetailInfoEntity.setDetails(initOrderItem(orderEntity));

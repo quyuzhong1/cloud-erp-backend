@@ -17,12 +17,11 @@ import java.util.List;
  */
 @Mapper
 public interface TransferOutDetailMapper extends BaseMapper<TransferOutDetailEntity> {
+
     /**
-     * @description: 根据来源明细id查询有效数据
-     * @author Will
-     * @date: 2023/5/18 10:27
+     * 根据来源明细id查询有效数据
      * @param sourceDetailIds
-     * @return List<TransferOutDetailEntity>
+     * @return
      */
     List<TransferOutDetailEntity> listSourceDetailIds(@Param("sourceDetailIds") List<String> sourceDetailIds);
 }

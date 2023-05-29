@@ -222,7 +222,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
         //登记人名称
         dmpReturnOrderInfoEntity.setEmployeeName(gyyReturnOrderEntity.getBusinessMan());
         //备注
-        dmpReturnOrderInfoEntity.setRemark(gyyReturnOrderEntity.getNote());
+        dmpReturnOrderInfoEntity.setRemark(StrUtil.format("Note = {}_refundCodes =【{}】", gyyReturnOrderEntity.getNote(), JSONUtil.toJsonStr(gyyReturnOrderEntity.getRefundCodes())));
         //退货信息创建时间
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         if (!"null".equalsIgnoreCase(gyyReturnOrderEntity.getCreateDate()) && StrUtil.isNotBlank(gyyReturnOrderEntity.getCreateDate())) {

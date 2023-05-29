@@ -200,6 +200,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String addAndSubmit(TransferApplicationDTO.AddDTO dto) {
         //新增
         String id = this.add(dto);

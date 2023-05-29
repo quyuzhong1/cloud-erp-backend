@@ -205,6 +205,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      * @date 2023-05-25 12:23
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateAndSubmit(SoChangeDTO.UpdateDTO dto) {
         String id = this.updateSoChange(dto);
         if (StringUtils.isBlank(id)) {
@@ -262,6 +263,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      * @date 2023-05-24 14:45
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean submit(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return false;

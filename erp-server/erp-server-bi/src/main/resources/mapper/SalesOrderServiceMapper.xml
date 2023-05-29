@@ -627,7 +627,7 @@
             </if>
         </where>
         GROUP BY o.shop_no
-        ) a LEFT JOIN dmp_shop_info s ON A.shop_no = s.plarform_shop_no
+        ) a LEFT JOIN dmp_shop_info s ON A.shop_no = s.platform_shop_no
         ORDER BY sales DESC
     </select>
     <select id="getShopLastDays" resultType="com.erp.model.bi.vo.SalesBaseVO">
@@ -768,7 +768,7 @@
     <select id="byShopCountry" resultType="com.erp.model.bi.vo.ShopSalesVO">
         SELECT
         o.shop_no,
-        COALESCE(( SELECT NAME FROM dmp_shop_info WHERE plarform_shop_no = o.shop_no LIMIT 1 ),'') AS shopName,
+        COALESCE(( SELECT NAME FROM dmp_shop_info WHERE platform_shop_no = o.shop_no LIMIT 1 ),'') AS shopName,
         o.country_name_cn AS platformName,
         <if test="settleRate !=null and settleRate!=''">
             round(SUM (i.amount_after * i.${settleRate}),2) AS sales
@@ -1075,7 +1075,7 @@
             round(SUM (i.amount_after * 1),2) AS sales,
         </if>
         i.sku_no,o.shop_no,
-        ( SELECT NAME FROM dmp_shop_info WHERE plarform_shop_no = o.shop_no LIMIT 1 ) AS shopName
+        ( SELECT NAME FROM dmp_shop_info WHERE platform_shop_no = o.shop_no LIMIT 1 ) AS shopName
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
         WHERE (o.shop_no !=null or o.shop_no!='')
         <if test="params.timeType!=null and params.timeType==0">

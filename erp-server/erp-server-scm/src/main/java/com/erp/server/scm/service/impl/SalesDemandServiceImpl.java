@@ -64,7 +64,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -455,8 +454,8 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         for (Map.Entry<String, List<SalesDemandDTO.GenerateSalesDemandDTO>> entry : map.entrySet()) {
             List<SalesDemandDTO.GenerateSalesDemandDTO> value = entry.getValue();
             SalesDemandDTO.AddDTO addDTO = new SalesDemandDTO.AddDTO();
-            addDTO.setApplyDate(LocalDate.now());
-            addDTO.setIsFirstMassProduct(Boolean.TRUE);
+            addDTO.setApplyDate(value.get(0).getApplyDate());
+            addDTO.setIsFirstMassProduct(value.get(0).getIsFirstMassProduct());
             addDTO.setSourceId(value.get(0).getSourceId());
             addDTO.setSourceCode(value.get(0).getSourceCode());
             addDTO.setSourceType(value.get(0).getSourceType());

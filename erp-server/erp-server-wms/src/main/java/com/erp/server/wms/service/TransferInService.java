@@ -108,4 +108,13 @@ public interface TransferInService extends SuperService<TransferInEntity> {
      * @return java.lang.Boolean
      */
     Boolean exportExcel(TransferInDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 分布是调入详情
+     * @author yl
+     * @date 2023-05-29 10:52
+     * @param id
+     * @return com.erp.model.wms.dto.TransferInDTO.ViewDTO
+     */
+    TransferInDTO.ViewDTO view(String id);
 }

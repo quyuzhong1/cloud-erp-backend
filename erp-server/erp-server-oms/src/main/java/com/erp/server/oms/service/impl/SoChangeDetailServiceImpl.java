@@ -165,16 +165,20 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             item.setVariantProperty(variantProperty);
             //税率
             BigDecimal taxRate = item.getTaxRate();
+            //税率
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate,MathUtil.BigDecimal_100);
             //单价
             BigDecimal price = item.getPrice();
             //含税单价=销售单价*（税率+1）
-            BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
+            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             item.setTaxPrice(taxPrice);
             BigDecimal oldPrice = item.getOldPrice();
             BigDecimal oldTaxRate = item.getOldTaxRate();
+            BigDecimal oldFlagTaxRate = MathUtil.divide(oldTaxRate,MathUtil.BigDecimal_100);
+
             //含税单价=销售单价*（税率+1）
-            BigDecimal oldMultiplyTax = MathUtil.add(oldTaxRate, MathUtil.BigDecimal_1);
+            BigDecimal oldMultiplyTax = MathUtil.add(oldFlagTaxRate, MathUtil.BigDecimal_1);
             BigDecimal oldTaxPrice = MathUtil.multiply(oldPrice, oldMultiplyTax);
             item.setOldPrice(oldTaxPrice);
         }
@@ -208,9 +212,10 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 BigDecimal oldPrice = item.getPrice();
                 view.setOldPrice(oldPrice);
                 BigDecimal oldTaxRate = item.getTaxRate();
+                BigDecimal oldFlagTaxRate = MathUtil.divide(oldTaxRate,MathUtil.BigDecimal_100);
                 view.setOldTaxRate(oldTaxRate);
                 //含税单价=销售单价*（税率+1）
-                BigDecimal oldMultiplyTax = MathUtil.add(oldTaxRate, MathUtil.BigDecimal_1);
+                BigDecimal oldMultiplyTax = MathUtil.add(oldFlagTaxRate, MathUtil.BigDecimal_1);
                 BigDecimal oldTaxPrice = MathUtil.multiply(oldPrice, oldMultiplyTax);
                 view.setOldTaxPrice(oldTaxPrice);
                 view.setQty(0);

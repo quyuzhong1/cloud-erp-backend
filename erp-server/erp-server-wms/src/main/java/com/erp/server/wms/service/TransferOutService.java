@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -32,7 +33,7 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
      * 新增
      * @param addDTO
      */
-    void add(TransferOutDTO.AddDTO addDTO);
+    String add(TransferOutDTO.AddDTO addDTO);
 
     /**
      * 分页列表
@@ -67,4 +68,30 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
      * @return
      */
     TransferOutDTO.ViewDTO view(String id);
+
+    /**
+     * 提交审核
+     * @param ids
+     */
+    void submit(List<String> ids);
+
+    /**
+     * 新增并提交审核
+     * @param dto
+     * @return
+     */
+    void addAndSubmit(TransferOutDTO.AddDTO dto);
+
+    /**
+     * 修改并提交审核
+     * @param dto
+     */
+    void updateAndSubmit(TransferOutDTO.UpdateDTO dto);
+
+    /**
+     * 审核
+     * @param baseApproveParamDTO
+     */
+    void approve(BaseApproveParamDTO baseApproveParamDTO);
+
 }
