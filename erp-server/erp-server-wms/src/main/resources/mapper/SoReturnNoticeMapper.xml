@@ -125,9 +125,12 @@
         srnd.source_detail_id,
         srn.code,
         srn.source_code,
+        srn.so_code,
         srn.approve_status,
         srn.invalid_status,
+        srn.customer_id,
         srn.customer_name,
+        srn.inventory_org_id,
         srn.inventory_org_name,
         srn.seller_name,
         srnd.sku_id,
@@ -136,6 +139,8 @@
         srn.bill_date,
         srn.approve_user_name,
         srn.create_user_name,
+        srnd.return_type_dict,
+        srnd.return_reason_dict,
         srn.create_time
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
