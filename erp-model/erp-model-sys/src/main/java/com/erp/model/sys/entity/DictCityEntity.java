@@ -94,7 +94,7 @@ public class DictCityEntity extends BaseEntity<DictCityEntity> {
      * 金蝶编码
      */
     @TableField("kingdee_code")
-    private Boolean kingdeeCode;
+    private String kingdeeCode;
 
 
     public static final String NAME = "name";

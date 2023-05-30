@@ -99,7 +99,7 @@ public class DictCountryEntity extends BaseEntity<DictCountryEntity> {
      * 金蝶编码
      */
     @TableField("kingdee_code")
-    private Boolean kingdeeCode;
+    private String kingdeeCode;
 
 
     public static final String NAME_CN = "name_cn";
