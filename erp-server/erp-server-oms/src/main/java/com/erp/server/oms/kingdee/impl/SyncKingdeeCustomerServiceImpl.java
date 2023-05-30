@@ -96,8 +96,10 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
             resultMap.put("bankAccount", viewDTO.getBankAccount());
             if (InvoiceTypeEnum.INVOICE.getCode().equals(viewDTO.getType())) {
                 resultMap.put("FInvoiceType", InvoiceTypeEnum.INVOICE.getName());
+                resultMap.put("FInvoiceType", 1);
             } else {
                 resultMap.put("FInvoiceType", "增值税专用发票");
+                resultMap.put("FInvoiceType", 2);
             }
         }
         List<CurrencyDTO.ViewDTO> viewDTOS1 = sysUserFeign.listByCurrency(Arrays.asList(entity.getCurrency()));

@@ -262,8 +262,8 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             addDetailView.setDeliveryQty(actualQty);
             addDetailView.setUnDeliveryQty(addDetailView.getSalesQty() - actualQty);
             addDetailView.setReturnQty(returnQty);
-            SoReturnReceiveDetailEntity receiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(detail -> detail.getSourceDetailId().equals(addDetailView.getId())).findFirst().orElse(new SoReturnReceiveDetailEntity());
-            addDetailView.setReceiveQty(receiveDetailEntity.getReceiveQty());
+            Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> addDetailView.getSoId().equals(req.getSourceDetailId()) && req.getSkuId().equals(addDetailView.getSkuId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            addDetailView.setReceiveQty(receiveQty);
             addDetailView.setMustQty(returnQty);
         }
         return list;

@@ -24,9 +24,7 @@ import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -41,6 +39,25 @@ import java.util.stream.Collectors;
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_customer_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_CUSTOMER_INFO)
 public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Object>> {
+    public static void main(String[] args) {
+
+        Map<String, Object> resultMap = new LinkedHashMap<>();
+        //读取配置，初始化SDK
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_CUSTOMER.getCode());
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FNumber = '%s'", "CUST5423"));
+        String filterStr = String.join(" and ", queryFilters);
+        String fieldKeys = "FInvoiceType";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
+        System.out.println(queryList);
+
+
+      /* LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
+        viewMap.put("Number","CGDD-230413-8806");
+        JSONObject viewJson = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
+        System.out.println(viewJson);*/
+
+    }
 
     @Resource
     private KingdeeCommonService kingdeeCommonService;
