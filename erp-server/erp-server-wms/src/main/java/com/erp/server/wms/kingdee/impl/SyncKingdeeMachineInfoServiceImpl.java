@@ -158,10 +158,12 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
                 if (CollectionUtils.isNotEmpty(warehouseList)) {
                     //仓库编码
                     String warehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(machineSubComponents.getWarehouseId()))
-                            .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse(null);
+                            .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse("");
                     //子件调出仓库
-                    jsonObject.set("warehouseCode", warehouseCode);
+                    subObject.set("warehouseCode", warehouseCode);
                 }
+                //备注
+                subObject.set("remark", machineSubComponents.getRemark());
                 subComponents.add(subObject);
             }
             jsonObject.set("subComponentsList",subComponents);
