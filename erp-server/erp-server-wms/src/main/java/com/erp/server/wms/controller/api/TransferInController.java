@@ -90,7 +90,7 @@ public class TransferInController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:transfer:in:submit",
+            menuCode = "wms:transfer:in:addAndSubmit",
             serviceClass = TransferInService.class,
             keyIdName = "ids"
     )

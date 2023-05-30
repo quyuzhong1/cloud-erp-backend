@@ -91,7 +91,7 @@ public class SoOutstockController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:so:outstock:submit",
+            menuCode = "oms:so:outstock:addAndSubmit",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids"
     )
