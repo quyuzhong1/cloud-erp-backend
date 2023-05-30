@@ -316,6 +316,10 @@ public class TransferOutDTO implements Serializable {
          */
         private String approveStatusName;
 
+        /**
+         * 来源id
+         */
+        private String sourceId;
 
         /**
          * 调拨申请单号
