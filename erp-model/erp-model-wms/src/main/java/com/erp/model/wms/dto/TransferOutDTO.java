@@ -733,12 +733,7 @@ public class TransferOutDTO implements Serializable {
         private String variantProperty;
 
         /**
-         * 调入数量
-         */
-        private Integer qty;
-
-        /**
-         * 计划调入数量
+         * 计划调入数量（已扣除已调入的数量）
          */
         private Integer planQty;
 

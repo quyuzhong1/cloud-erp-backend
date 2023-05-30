@@ -168,6 +168,11 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
             if(transferInDetailMap.containsKey(data.getSourceDetailId())) {
                 pushedQty = transferInDetailMap.get(data.getSourceDetailId()).stream().map(TransferInDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
             }
+            if(transferOutDetailEntity.getQty() <= pushedQty) {
+                data.setPlanQty(0);
+            } else {
+                data.setPlanQty(transferOutDetailEntity.getQty() - pushedQty);
+            }
         }
         return resultList;
     }
