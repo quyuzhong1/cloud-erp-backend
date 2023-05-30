@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -31,5 +30,5 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
 
     List<SoOutstockDTO.SoRefDTO> listSoRefSoOutstockBySoId(@Param("soId") String soId);
 
-    List<SoOutstockDTO.ApproveCountDTO> listApproveCount();
+    List<SoOutstockDTO.ApproveCountDTO> listApproveCount(@Param("permissionSql")String permissionSql);
 }

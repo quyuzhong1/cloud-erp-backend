@@ -2,6 +2,7 @@ package com.erp.server.oms.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -57,7 +58,7 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @param
      * @return java.util.List<com.erp.model.oms.dto.CustomerDTO.TabListDTO>
      */
-    List<CustomerDTO.TabListDTO> tabList();
+    List<CustomerDTO.TabListDTO> tabList(PermissionsDTO dto);
 
     /**
      * 分页信息

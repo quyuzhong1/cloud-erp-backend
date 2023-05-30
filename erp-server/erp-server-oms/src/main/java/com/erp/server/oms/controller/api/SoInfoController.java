@@ -2,10 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.AddGroup;
 import com.common.business.vo.PagingVO;
@@ -47,9 +44,14 @@ public class SoInfoController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/tabList")
-    public ApiResult<List<SoInfoDTO.TabListDTO>> tabList() {
-        List<SoInfoDTO.TabListDTO> tabList = soDetailService.tabList();
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:so:tabList",
+            tableAlias = "ci"
+    )
+    public ApiResult<List<SoInfoDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<SoInfoDTO.TabListDTO> tabList = soDetailService.tabList(dto);
         return success(tabList);
     }
 

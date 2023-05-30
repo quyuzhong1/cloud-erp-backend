@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
@@ -38,7 +39,7 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @author yl
      * @date 2023-05-17 14:03
      */
-    List<SoInfoDTO.TabListDTO> tabList();
+    List<SoInfoDTO.TabListDTO> tabList(PermissionsDTO dto);
 
 
     /**

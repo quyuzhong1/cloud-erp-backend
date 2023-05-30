@@ -137,6 +137,9 @@
         FROM so_detail sd
         INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
         WHERE si.is_deleted=FALSE
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
         GROUP BY si.approve_status
     </select>
 
@@ -147,6 +150,9 @@
         FROM so_detail sd
         INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
         WHERE si.is_deleted=FALSE AND si.approve_status='approve'
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
          GROUP BY sd.delivery_status
     </select>
 </mapper>

@@ -3,6 +3,7 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -132,7 +133,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param
      * @return java.util.List<com.erp.model.wms.dto.SoOutstockDTO.TabListDTO>
      */
-    List<SoOutstockDTO.TabListDTO> tabList();
+    List<SoOutstockDTO.TabListDTO> tabList(PermissionsDTO dto);
 
     
     /**

@@ -10,6 +10,7 @@ import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -331,9 +332,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      * @date 2023-05-24 14:56
      */
     @Override
-    public List<SoChangeDTO.TabListDTO> tabList() {
+    public List<SoChangeDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<SoChangeDTO.TabListDTO> resultList = new ArrayList<>(4);
-        List<SoChangeDTO.ApproveCountDTO> approveCountList = baseMapper.listApproveCount();
+        List<SoChangeDTO.ApproveCountDTO> approveCountList = baseMapper.listApproveCount(dto.getPermissionSql());
         int allCount = approveCountList.stream().mapToInt(SoChangeDTO.ApproveCountDTO::getCount).sum();
         SoChangeDTO.TabListDTO all = new SoChangeDTO.TabListDTO();
         all.setCount(allCount);

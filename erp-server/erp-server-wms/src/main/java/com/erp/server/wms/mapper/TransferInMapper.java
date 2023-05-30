@@ -29,7 +29,7 @@ public interface TransferInMapper extends BaseMapper<TransferInEntity> {
      * @param
      * @return java.util.List<com.erp.model.oms.dto.SoChangeDTO.ApproveCountDTO>
      */
-    List<TransferInDTO.ApproveCountDTO> listApproveCount();
+    List<TransferInDTO.ApproveCountDTO> listApproveCount(@Param("permissionSql")String permissionSql);
 
     IPage<TransferInDTO.PagingViewDTO> paging(Page query, @Param("params")TransferInDTO.PagingParamDTO params, @Param("approveList") List<String> approveList);
 

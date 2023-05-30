@@ -43,9 +43,14 @@ public class CustomerInfoController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/tabList")
-    public ApiResult<List<CustomerDTO.TabListDTO>> tabList() {
-        List<CustomerDTO.TabListDTO> list = customerInfoService.tabList();
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:customer:tabList",
+            tableAlias = "ci"
+    )
+    public ApiResult<List<CustomerDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<CustomerDTO.TabListDTO> list = customerInfoService.tabList(dto);
         return success(list);
     }
 

@@ -2,10 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -41,9 +38,14 @@ public class SoOutstockController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/tabList")
-    public ApiResult<List<SoOutstockDTO.TabListDTO>> tabList() {
-        List<SoOutstockDTO.TabListDTO> tabList = soOutstockService.tabList();
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:so:outstock:tabList",
+            tableAlias = "so"
+    )
+    public ApiResult<List<SoOutstockDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<SoOutstockDTO.TabListDTO> tabList = soOutstockService.tabList(dto);
         return success(tabList);
     }
 

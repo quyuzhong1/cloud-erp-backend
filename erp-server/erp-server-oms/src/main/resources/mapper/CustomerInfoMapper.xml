@@ -127,6 +127,9 @@
 	        count(*)
 	     FROM   customer_info
 	     WHERE is_deleted=FALSE
+	     <if test="permissionSql!=null and permissionSql!=''">
+             ${permissionSql}
+         </if>
          GROUP BY approve_status
     </select>
 </mapper>

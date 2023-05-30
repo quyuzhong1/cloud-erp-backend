@@ -2,10 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -15,7 +12,10 @@ import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.server.wms.service.TransferInService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -41,9 +41,14 @@ public class TransferInController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/tabList")
-    public ApiResult<List<TransferInDTO.TabListDTO>> tabList() {
-        List<TransferInDTO.TabListDTO> tabList = transferInService.tabList();
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:transfer:in:tabList",
+            tableAlias = "ti"
+    )
+    public ApiResult<List<TransferInDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<TransferInDTO.TabListDTO> tabList = transferInService.tabList(dto);
         return success(tabList);
     }
 

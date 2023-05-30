@@ -42,5 +42,5 @@ public interface CustomerInfoMapper extends BaseMapper<CustomerInfoEntity> {
      */
     List<CustomerDTO.PagingViewDTO> listExport(@Param("params") CustomerDTO.ExportDTO dto,@Param("approveList") List<String> approveList);
 
-    List<CustomerDTO.ApproveCountDTO> listApproveCount();
+    List<CustomerDTO.ApproveCountDTO> listApproveCount(@Param("permissionSql") String permissionSql);
 }
