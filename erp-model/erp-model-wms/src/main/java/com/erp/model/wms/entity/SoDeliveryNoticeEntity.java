@@ -83,14 +83,14 @@ public class SoDeliveryNoticeEntity extends BaseEntity<SoDeliveryNoticeEntity> {
     /**
      * 发货组织id
      */
-    @TableField("delivery_org_id")
-    private String deliveryOrgId;
+    @TableField("warehouse_org_id")
+    private String warehouseOrgId;
 
     /**
      * 发货组织名称
      */
-    @TableField("delivery_org_name")
-    private String deliveryOrgName;
+    @TableField("warehouse_org_name")
+    private String warehouseOrgName;
 
     /**
      * 要货日期

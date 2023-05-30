@@ -220,9 +220,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String add(SoDeliveryNoticeDTO.Add dto) {
-        //获取核算公司
-        SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getDeliveryOrgId());
-
         //获取销售单信息
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(dto.getSourceId());
         //生成单号
@@ -249,20 +246,17 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeEntity.setReceiveAddress(soInfoEntity.getReceiveAddress());
         soDeliveryNoticeEntity.setDeliveryModeDict(soInfoEntity.getDeliveryMode());
         soDeliveryNoticeEntity.setRequireDate(soInfoEntity.getRequireDate());
-        soDeliveryNoticeEntity.setDeliveryOrgId(soInfoEntity.getWarehouseOrgId());
-        soDeliveryNoticeEntity.setDeliveryOrgName(soInfoEntity.getWarehouseOrgName());
         soDeliveryNoticeEntity.setWarehouseId(soInfoEntity.getWarehouseId());
         soDeliveryNoticeEntity.setWarehouseName(soInfoEntity.getWarehouseOrgName());
         soDeliveryNoticeEntity.setCode(code);
         soDeliveryNoticeEntity.setSourceId(dto.getSourceId());
         soDeliveryNoticeEntity.setSourceCode(soInfoEntity.getCode());
         soDeliveryNoticeEntity.setSourceType(dto.getSourceType());
-        soDeliveryNoticeEntity.setDeliveryOrgId(dto.getDeliveryOrgId());
         if (dto.getPlanDeliveryDate() != null) {
             soDeliveryNoticeEntity.setPlanDeliveryDate(dto.getPlanDeliveryDate());
         }
         soDeliveryNoticeEntity.setTrackNo(dto.getTrackNo());
-        soDeliveryNoticeEntity.setDeliveryOrgName(sysAccountingCompanyEntity.getCompanyName());
+
         if (StringUtils.isNotBlank(dto.getCarrierId())) {
             //获取采购单供应商信息
             SupplierEntity supplierById = scmTaskFeign.getSupplierById(dto.getCarrierId());
@@ -273,8 +267,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         WarehouseEntity warehouseEntity = warehouseService.getById(soInfoEntity.getWarehouseId());
         soDeliveryNoticeEntity.setWarehouseId(soInfoEntity.getWarehouseId());
         soDeliveryNoticeEntity.setWarehouseName(warehouseEntity.getName());
-        soDeliveryNoticeEntity.setDeliveryOrgId(soInfoEntity.getWarehouseOrgId());
-        soDeliveryNoticeEntity.setDeliveryOrgName(soInfoEntity.getWarehouseOrgName());
+        soDeliveryNoticeEntity.setWarehouseOrgId(soInfoEntity.getWarehouseOrgId());
+        soDeliveryNoticeEntity.setWarehouseOrgName(soInfoEntity.getWarehouseOrgName());
         this.save(soDeliveryNoticeEntity);
         soDeliveryNoticeDetailService.add(dto, soDeliveryNoticeEntity.getId());
         //操作日志
@@ -285,8 +279,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(SoDeliveryNoticeDTO.Update dto) {
-        //获取核算公司
-        SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getDeliveryOrgId());
         //获取销售单信息
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(dto.getSourceId());
         SoDeliveryNoticeEntity soDeliveryNoticeEntity = new SoDeliveryNoticeEntity();
@@ -318,8 +310,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeEntity.setApproveStatus(entity.getApproveStatus());
         soDeliveryNoticeEntity.setSourceId(dto.getSourceId());
         soDeliveryNoticeEntity.setSourceCode(soInfoEntity.getCode());
-        soDeliveryNoticeEntity.setDeliveryOrgId(dto.getDeliveryOrgId());
-        soDeliveryNoticeEntity.setDeliveryOrgName(sysAccountingCompanyEntity.getCompanyName());
         if (StringUtils.isNotBlank(dto.getCarrierId())) {
             //获取采购单供应商信息
             SupplierEntity supplierById = scmTaskFeign.getSupplierById(dto.getCarrierId());
@@ -330,8 +320,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         WarehouseEntity warehouseEntity = warehouseService.getById(soInfoEntity.getWarehouseId());
         soDeliveryNoticeEntity.setWarehouseId(soInfoEntity.getWarehouseId());
         soDeliveryNoticeEntity.setWarehouseName(warehouseEntity.getName());
-        soDeliveryNoticeEntity.setDeliveryOrgId(soInfoEntity.getWarehouseOrgId());
-        soDeliveryNoticeEntity.setDeliveryOrgName(soInfoEntity.getWarehouseOrgName());
+        soDeliveryNoticeEntity.setWarehouseOrgId(soInfoEntity.getWarehouseOrgId());
+        soDeliveryNoticeEntity.setWarehouseOrgName(soInfoEntity.getWarehouseOrgName());
         boolean flag = this.updateById(soDeliveryNoticeEntity);
         //操作日志
         SoDeliveryNoticeEntity byId = this.getById(dto.getId());
