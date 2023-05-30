@@ -26,7 +26,9 @@
         sri.bill_date,
         sri.approve_user_name,
         sri.create_user_name,
-        sri.create_time
+        sri.create_time,
+        sri.inventory_org_id,
+        sri.inventory_org_name
         FROM so_return_instock_detail srid
         INNER JOIN so_return_instock sri ON sri.id = srid.main_id
         WHERE srid.is_deleted = FALSE

@@ -289,6 +289,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             result.setSellerName(soInfo.getSellerName());
             result.setSalesDeptId(soInfo.getSalesDeptId());
             result.setSalesDeptName(soInfo.getSalesDeptName());
+            result.setSalesOrgName(soInfo.getSalesOrgName());
 
         }
         List<SoOutstockDetailDTO.ViewDTO> detailList = soOutstockDetailService.listByMainId(id, soOutstock.getWarehouseId());

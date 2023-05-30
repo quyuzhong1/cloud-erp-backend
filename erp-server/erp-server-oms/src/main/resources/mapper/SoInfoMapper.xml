@@ -218,6 +218,7 @@
         FROM so_info si
         LEFT JOIN so_detail sd ON si.id = sd.main_id AND si.is_deleted = FALSE
         WHERE sd.is_deleted = FALSE
+        AND sd.is_close=FALSE
         <if test="ids!=null and ids.size>0">
             AND si.id IN
             <foreach collection="ids" item="id" open="(" separator="," close=")">
@@ -238,6 +239,7 @@
         FROM so_info si
         LEFT JOIN so_detail sd ON si.id = sd.main_id AND si.is_deleted = FALSE
         WHERE sd.is_deleted = FALSE
+        AND sd.is_close=FALSE
         <if test="ids!=null and ids.size>0">
             AND si.id IN
             <foreach collection="ids" item="id" open="(" separator="," close=")">

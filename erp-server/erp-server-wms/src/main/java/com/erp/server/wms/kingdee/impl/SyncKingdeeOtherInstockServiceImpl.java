@@ -3,6 +3,7 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
@@ -92,10 +93,13 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
             resultMap.put("orgCode", orgCode);
         }
+
         //部门
-        SysDepartmentDTO sysDepartmentDTO = sysUserFeign.getUserDeptById(entity.getDeptId());
-        if (ObjectUtils.isNotEmpty(sysDepartmentDTO)) {
-            resultMap.put("deptCode", sysDepartmentDTO.getCode());
+        if  (StringUtils.isNotBlank(entity.getDeptId())) {
+            SysDepartmentDTO sysDepartmentDTO = sysUserFeign.getUserDeptById(entity.getDeptId());
+            if (ObjectUtils.isNotEmpty(sysDepartmentDTO)) {
+                resultMap.put("deptCode", sysDepartmentDTO.getCode());
+            }
         }
 
 

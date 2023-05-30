@@ -85,7 +85,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         resultMap.put("shortName", entity.getShortName());
         DictCountryEntity countryEntity = sysUserFeign.getCountryById(entity.getCountryId());
         //国家
-        resultMap.put("nameCn", countryEntity.getNameCn());
+        resultMap.put("countryCode", countryEntity.getKingdeeCode());
 
         List<InvoiceDTO.ViewDTO> viewDTOS = customerInvoiceService.listByMainId(entity.getId());
         if (CollectionUtils.isNotEmpty(viewDTOS)) {

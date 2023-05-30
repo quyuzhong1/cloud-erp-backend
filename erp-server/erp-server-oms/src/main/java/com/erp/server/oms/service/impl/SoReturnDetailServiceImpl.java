@@ -96,7 +96,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         if (CollectionUtils.isEmpty(soDetailEntitieList)) {
             throw new ServiceException(ApiError.ERROR_92003);
         }
-        List<SoReturnDetailEntity> soReturnDetailEntities = this.listDetailBySourceId(returnDetailIds);
+        List<SoReturnDetailEntity> soReturnDetailEntities = this.listDetailBySourceId(Arrays.asList(dto.getSourceId()));
         List<SoReturnDetailEntity> list = new ArrayList<>();
         for (SoReturnDetailDTO.Add detailDto : dto.getDetailList()) {
             SoReturnDetailEntity soReturnDetailEntity = new SoReturnDetailEntity();
@@ -144,7 +144,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             this.removeByIds(deleteIds);
         }
 
-        List<SoReturnDetailEntity> soReturnDetailEntities = this.listDetailBySourceId(returnDetailIds);
+        List<SoReturnDetailEntity> soReturnDetailEntities = this.listDetailBySourceId(Arrays.asList(dto.getSourceId()));
         List<SoReturnDetailEntity> list = new ArrayList<>();
         for (SoReturnDetailDTO.Update detailDto : dto.getDetailList()) {
             SoReturnDetailEntity soReturnDetailEntity = new SoReturnDetailEntity();
@@ -262,7 +262,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             addDetailView.setDeliveryQty(actualQty);
             addDetailView.setUnDeliveryQty(addDetailView.getSalesQty() - actualQty);
             addDetailView.setReturnQty(returnQty);
-            Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> addDetailView.getSoId().equals(req.getSourceDetailId()) && req.getSkuId().equals(addDetailView.getSkuId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> addDetailView.getId().equals(req.getSourceDetailId()) && req.getSkuId().equals(addDetailView.getSkuId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             addDetailView.setReceiveQty(receiveQty);
             addDetailView.setMustQty(returnQty);
         }

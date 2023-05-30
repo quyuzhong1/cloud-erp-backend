@@ -156,7 +156,7 @@ public interface WmsTaskFeign {
      * @param soIds
      * @return java.lang.Integer
      */
-    @PostMapping("feign/soDeliveryNotice/getPushDownBySoIds")
+    @PostMapping("feign/soDeliveryNotice/getPushDownBySourceIds")
     Integer getPushDownBySourceIds(@RequestBody List<String> soIds);
 
     /**

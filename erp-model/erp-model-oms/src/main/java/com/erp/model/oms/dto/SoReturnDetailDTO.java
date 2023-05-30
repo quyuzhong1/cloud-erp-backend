@@ -152,6 +152,14 @@ public class SoReturnDetailDTO {
          */
         private String returnTypeDict;
         /**
+         * 退货原因
+         */
+        private String returnReasonDict;
+        /**
+         * 退货原因名称
+         */
+        private String returnReasonDictName;
+        /**
          * 备注
          */
         private String remark;

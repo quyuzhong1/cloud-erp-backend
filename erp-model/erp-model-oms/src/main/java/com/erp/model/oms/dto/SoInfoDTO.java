@@ -1061,6 +1061,11 @@ public class SoInfoDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        /**
+         * 是否是一级数据
+         */
+        private Boolean flag;
     }
 
     /**

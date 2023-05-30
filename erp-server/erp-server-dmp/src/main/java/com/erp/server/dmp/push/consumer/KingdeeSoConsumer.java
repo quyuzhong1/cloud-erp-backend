@@ -47,11 +47,11 @@ public class KingdeeSoConsumer implements RocketMQListener<Map<String, Object>> 
 
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PURCHASEORDER.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "PO23042400006"));
+        queryFilters.add(String.format("FBillNo = '%s'", "XSD-20230427-35411"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FId,FPOOrderEntry_FEntryID,FMaterialId.FNumber,F_ulz_Base.FNumber";
+        String fieldKeys = "FBillTypeID.FNUMBER,FBillTypeID.FNAME,FOUTLMTUNIT";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
         System.out.println(queryList);
 
@@ -67,7 +67,7 @@ public class KingdeeSoConsumer implements RocketMQListener<Map<String, Object>> 
     @Transactional(rollbackFor = Exception.class)
     public void onMessage(Map<String, Object> map) {
         //模块类型
-        Integer type = ApiModuleTypeEnum.PURCHASE_ORDER.getCode();
+        Integer type = ApiModuleTypeEnum.SO_INFO.getCode();
         //业务id
         String  businessId = String.valueOf(map.get("id"));
         //业务编码
@@ -78,7 +78,7 @@ public class KingdeeSoConsumer implements RocketMQListener<Map<String, Object>> 
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PURCHASEORDER.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(),type);
