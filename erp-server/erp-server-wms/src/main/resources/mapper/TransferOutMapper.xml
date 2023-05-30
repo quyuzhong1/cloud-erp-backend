@@ -188,7 +188,6 @@
         tod.sku_id as sku_id,
         tod.sku_no as sku_no,
         tod.qty as qty,
-        tod.qty as plan_qty,
         tfo.bill_date as bill_date,
         tfo.out_warehouse_id as out_warehouse_id,
         tfo.out_warehouse_name as out_warehouse_name,

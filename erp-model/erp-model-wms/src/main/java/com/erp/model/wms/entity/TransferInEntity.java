@@ -123,6 +123,13 @@ public class TransferInEntity extends BaseEntity<TransferInEntity> {
     @TableField("source_type")
     private String sourceType;
 
+    /**
+     * 来源单号
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
+
 
     public static final String CODE = "code";
 
@@ -153,6 +160,8 @@ public class TransferInEntity extends BaseEntity<TransferInEntity> {
     public static final String SOURCE_ID = "source_id";
 
     public static final String SOURCE_TYPE = "source_type";
+
+    public static final String SOURCE_CODE = "source_code";
 
     @Override
     public Serializable pkVal() {

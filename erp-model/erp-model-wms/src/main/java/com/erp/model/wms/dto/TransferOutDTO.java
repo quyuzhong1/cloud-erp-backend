@@ -580,6 +580,21 @@ public class TransferOutDTO implements Serializable {
 
 
     /**
+     * 下推单据列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListGenerateTransferInDTO {
+
+        @NotEmpty(message = "下推数据不能为空")
+        @Size(min = 1, message = "下推数据至少需要1条数据")
+        private List<TransferOutDTO.GenerateTransferInDTO> list;
+
+    }
+
+
+
+    /**
      * 下推分步式调入单数据保存实体
      */
     @Data

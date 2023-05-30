@@ -235,4 +235,16 @@ public class TransferOutController extends BaseController {
         List<TransferOutDTO.ViewGenerateTransferInDTO> list = transferOutService.viewGenerateTransferIn(dto.getIds());
         return success(list);
     }
+
+    /**
+     * 下推分布式调入数据保存
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/generateTransferIn")
+    public ApiResult<Void> generateTransferIn(@RequestBody @Validated TransferOutDTO.ListGenerateTransferInDTO dto) {
+        transferOutService.generateTransferIn(dto.getList());
+        return success();
+    }
+
 }

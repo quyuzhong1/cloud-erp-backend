@@ -168,7 +168,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
                 addDTO.setInWarehouseName(inWarehouseName);
                 String outWarehouseId = viewGenerate.getOutWarehouseId();
                 addDTO.setOutWarehouseId(outWarehouseId);
-                String outWarehouseName = warehouseList.stream().filter(w -> w.getId().equals(inWarehouseId)).findFirst().
+                String outWarehouseName = warehouseList.stream().filter(w -> w.getId().equals(outWarehouseId)).findFirst().
                         flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 addDTO.setOutWarehouseName(outWarehouseName);
                 addDTO.setSourceCode(viewGenerate.getSourceCode());

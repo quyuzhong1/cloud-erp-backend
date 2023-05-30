@@ -427,6 +427,12 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         // 调拨方向
         List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
 
+        // 分步式调出单明细id集合
+        List<String> sourceDetailIds = dataList.stream().map(TransferOutDTO.ViewGenerateTransferInDTO::getSourceDetailId).distinct().collect(Collectors.toList());
+        // 根据分步式调出单明细id集合查询已下推的分布式调入单明细
+        List<TransferInDetailEntity> transferInDetailList = transferInDetailService.listBySourceDetailIds(sourceDetailIds);
+        Map<String,List<TransferInDetailEntity>> transferInDetailMap = transferInDetailList.stream().collect(Collectors.groupingBy(TransferInDetailEntity::getSourceDetailId));
+
         dataList.stream().forEach(data->{
             // 产品名称
             String productName = skuMap.getOrDefault(data.getSkuId(),new ProductDetailEntity()).getName();
@@ -437,6 +443,16 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             data.setTransferDirectionName(transferDirectionName);
             // 单据来源
             data.setSourceType(SourceTypeEnum.TRANSFER_OUT.getCode());
+            // 累计已下推分步式调入数量
+            Integer pushedQty = 0;
+            if(transferInDetailMap.containsKey(data.getSourceDetailId())) {
+                pushedQty = transferInDetailMap.get(data.getSourceDetailId()).stream().map(TransferInDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            if(data.getQty() <= pushedQty) {
+                data.setPlanQty(0);
+            } else {
+                data.setPlanQty(data.getQty() - pushedQty);
+            }
         });
         return dataList;
     }
@@ -448,7 +464,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         List<String> sourceIds = dataList.stream().map(TransferOutDTO.GenerateTransferInDTO::getSourceId).distinct().collect(Collectors.toList());
         List<TransferOutEntity> transferOutList =  this.listByIds(sourceIds);
         ValidatorUtil.isTrue(CollUtil.isNotEmpty(transferOutList),()->new ServiceException("未找到分步式调出单信息"));
-        boolean noApprove = transferOutList.stream().anyMatch(r->!Objects.equals(r.getApproveStatus(), ApproveStatusEnum.APPROVE));
+        boolean noApprove = transferOutList.stream().anyMatch(r->!Objects.equals(r.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()));
         ValidatorUtil.isTrue(!noApprove,()->new ServiceException("只有已审核分步式调出单支持下推单据"));
         Map<String,TransferOutEntity> transferOutEntityMap =  transferOutList.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
 
@@ -484,6 +500,10 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
                 if(transferInDetailMap.containsKey(pushData.getSourceDetailId())) {
                     pushedQty = transferInDetailMap.get(pushData.getSourceDetailId()).stream().map(TransferInDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
+                if(pushData.getPlanQty() + pushedQty > transferOutDetailEntity.getQty()) {
+                    throw new ServiceException(StrUtil.format("【{}】已下推数量合计不能大于调出数量", transferOutDetailEntity.getSkuNo()));
+                }
+
                 TransferInDTO.ViewGenerateTransferInDTO transferInDTO = new TransferInDTO.ViewGenerateTransferInDTO();
                 transferInDTO.setTransferType(TransferTypeEnum.of(transferType));
                 transferInDTO.setSourceCode(pushData.getSourceCode());
@@ -497,7 +517,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
                 transferInDTO.setInWarehouseId(pushData.getInWarehouseId());
                 transferInDTO.setSkuId(pushData.getSkuId());
                 transferInDTO.setSkuNo(pushData.getSkuNo());
-                transferInDTO.setQty(transferOutDetailEntity.getQty());
+                transferInDTO.setOutQty(transferOutDetailEntity.getQty());
                 transferInDTO.setPlanQty(pushData.getPlanQty());
                 transferInDTO.setRemark(pushData.getRemark());
                 transferInList.add(transferInDTO);
