@@ -516,6 +516,13 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         return Boolean.TRUE;
     }
 
+    /**
+     * @description: 调拨申请单下推保存
+     * @author Will
+     * @date: 2023/5/30 16:15
+     * @param list
+     * @param type 0、直接调拨。1、分步式调出
+     */
     private void generateTransferData(List<TransferApplicationDTO.GenerateTransferInfoDTO> list,Integer type) {
         //调拨申请单主表信息
         List<String> sourceIds = list.stream().map(TransferApplicationDTO.GenerateTransferInfoDTO::getSourceId).distinct().collect(Collectors.toList());
@@ -602,25 +609,35 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         //sku编码
         String skuNo = dto.getSkuNo();
 
-        if (CollectionUtils.isNotEmpty(transferInfoDetailList)) {
-            //拣货数量
-            Integer pickingQty = detailList.stream().filter(obj -> obj.getId().equals(sourceDetailId)).map(PickingDetailEntity::getQty).findFirst().orElse(MathUtil.ZERO);
+        //拣货数量
+        Integer pickingQty = detailList.stream().filter(obj -> obj.getId().equals(sourceDetailId)).map(PickingDetailEntity::getQty).findFirst().orElse(MathUtil.ZERO);
 
+        //直接调拨数量
+       Integer transferInfoQty = MathUtil.ZERO;
+
+       //分步式调出数量
+        Integer transferOutQty = MathUtil.ZERO;
+
+        //直接调拨
+        if (CollectionUtils.isNotEmpty(transferInfoDetailList)) {
             //已调拨数量
-            Integer totalQty = transferInfoDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(sourceDetailId)).map(TransferInfoDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (pickingQty.intValue() == totalQty.intValue()) {
+            transferInfoQty = transferInfoDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(sourceDetailId)).map(TransferInfoDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (pickingQty.intValue() == transferInfoQty.intValue()) {
                 throw new ServiceException(ApiError.ERROR_99051.code, String.format(ApiError.ERROR_99051.msg,dto.getSourceCode(), skuNo));
             }
-            if (dto.getQty().intValue() > pickingQty.intValue() - totalQty.intValue()) {
-                throw new ServiceException(ApiError.ERROR_99050.code, String.format(ApiError.ERROR_99050.msg,dto.getSourceCode(), skuNo, pickingQty - totalQty));
+        }
+        //分步式调出
+        if (CollectionUtils.isNotEmpty(transferOutDetailList)) {
+            //已调拨数量
+            transferOutQty = transferOutDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(sourceDetailId)).map(TransferOutDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (pickingQty.intValue() == transferOutQty.intValue()) {
+                throw new ServiceException(ApiError.ERROR_99055.code, String.format(ApiError.ERROR_99055.msg,dto.getSourceCode(), skuNo));
             }
         }
-        if (CollectionUtils.isNotEmpty(transferOutDetailList)) {
-            //分步式调出
-            long infoCount = transferOutDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(sourceDetailId)).count();
-            if (infoCount > 0 ) {
-                throw new ServiceException(ApiError.ERROR_99055.code, String.format(ApiError.ERROR_99055.msg, skuNo));
-            }
+        //调拨数量校验（直接调拨数量+分步式调出数量+本次调拨数量 不能大于 拣货数量）
+        if (transferInfoQty.intValue() + transferOutQty.intValue() + dto.getQty().intValue() > pickingQty.intValue()) {
+            throw new ServiceException(ApiError.ERROR_99050.code, String.format(ApiError.ERROR_99050.msg,dto.getSourceCode(), skuNo, pickingQty.intValue() - transferOutQty.intValue() - transferOutQty.intValue()));
+
         }
     }
 
@@ -642,6 +659,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         if (CollectionUtils.isEmpty(list)) {
             return list;
         }
+        List<String> sourceDetailIds = list.stream().map(TransferApplicationDTO.ViewGenerateTransferInfoDTO::getSourceDetailId).collect(Collectors.toList());
 
         List<String> skuIds = list.stream().map(TransferApplicationDTO.ViewGenerateTransferInfoDTO::getSkuId).collect(Collectors.toList());
         //产品信息
@@ -650,7 +668,35 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         //调拨方向
         List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
 
+        //直接调拨明细
+        List<TransferInfoDetailEntity> transferInfoDetailList = transferInfoDetailService.listSourceDetailIds(sourceDetailIds);
+        //分步式调出明细
+        List<TransferOutDetailEntity> transferOutDetailList = transferOutDetailService.listSourceDetailIds(sourceDetailIds);
+
+
+        List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> resultList = new ArrayList<>();
         for (TransferApplicationDTO.ViewGenerateTransferInfoDTO dto : list ) {
+
+            //直接调拨数量
+            Integer transferInfoQty = MathUtil.ZERO;
+            //分步式调出数量
+            Integer transferOutQty = MathUtil.ZERO;
+
+            //直接调拨
+            if (CollectionUtils.isNotEmpty(transferInfoDetailList)) {
+                //已调拨数量
+                transferInfoQty = transferInfoDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(dto.getSourceDetailId())).map(TransferInfoDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //分步式调出
+            if (CollectionUtils.isNotEmpty(transferOutDetailList)) {
+                //已调拨数量
+                transferOutQty = transferOutDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(dto.getSourceDetailId())).map(TransferOutDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+
+            //完成调拨不显示
+            if (transferInfoQty.intValue() + transferOutQty.intValue() >=  dto.getQty().intValue()) {
+                continue;
+            }
 
             //产品名称
             if (CollectionUtils.isNotEmpty(productDetailList)) {
@@ -664,9 +710,10 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             }
 
             dto.setSourceType(SourceTypeEnum.TRANSFER_APPLICATION.getCode());
+            resultList.add(dto);
         }
 
-        return list;
+        return resultList;
     }
 
     /**
