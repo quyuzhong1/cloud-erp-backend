@@ -12,7 +12,7 @@ import java.util.Objects;
 public enum InventoryOperationModeEnum {
     APPROVE("approve", "审核"),
     UN_APPROVE("unApprove", "反审核"),
-    AMEND("amend", "后补单"),
+    // AMEND("amend", "后补单"),
     ;
 
     private String code;

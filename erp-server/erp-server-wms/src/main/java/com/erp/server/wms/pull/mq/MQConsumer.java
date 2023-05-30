@@ -44,6 +44,7 @@ public class MQConsumer {
         @Override
         public void onMessage(List<ProductDetailEntity> entities) {
             try {
+                log.info("监听到plm产品sku信息");
                 productDetailService.saveOrUpdateProductDetail(entities);
             } catch (Exception e) {
                 log.error("mq消息消费失败", e);
@@ -62,6 +63,7 @@ public class MQConsumer {
         @Override
         public void onMessage(List<ProductSaleEntity> entities) {
             try {
+                log.info("监听到plm产品sku销售信息");
                 productSaleService.saveOrUpdateProductSaleDetail(entities);
             }  catch (Exception e) {
                 log.error("mq消息消费失败", e);
@@ -80,6 +82,7 @@ public class MQConsumer {
         @Override
         public void onMessage(List<ProductInfoEntity> entities) {
             try {
+                log.info("监听到plm产品信息");
                 productInfoService.saveOrUpdateProductInfo(entities);
             }  catch (Exception e) {
                 log.error("mq消息消费失败", e);
