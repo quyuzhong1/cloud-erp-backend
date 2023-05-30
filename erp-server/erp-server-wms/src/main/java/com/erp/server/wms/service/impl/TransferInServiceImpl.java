@@ -7,10 +7,7 @@ import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -96,9 +93,9 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     private InventoryTransCoreService inventoryTransCoreService;
 
     @Override
-    public List<TransferInDTO.TabListDTO> tabList() {
+    public List<TransferInDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<TransferInDTO.TabListDTO> resultList = new ArrayList<>(4);
-        List<TransferInDTO.ApproveCountDTO> approveCountList = baseMapper.listApproveCount();
+        List<TransferInDTO.ApproveCountDTO> approveCountList = baseMapper.listApproveCount(dto.getPermissionSql());
         int allCount = approveCountList.stream().mapToInt(TransferInDTO.ApproveCountDTO::getCount).sum();
         TransferInDTO.TabListDTO all = new TransferInDTO.TabListDTO();
         all.setCount(allCount);

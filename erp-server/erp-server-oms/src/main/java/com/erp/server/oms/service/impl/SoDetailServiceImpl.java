@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -119,10 +120,10 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * @date 2023-05-17 14:03
      */
     @Override
-    public List<SoInfoDTO.TabListDTO> tabList() {
+    public List<SoInfoDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<SoInfoDTO.TabListDTO> result = new ArrayList<>(5);
         //所有的
-        List<SoDetailDTO.TypeCountDTO> countList = baseMapper.listApproveCount();
+        List<SoDetailDTO.TypeCountDTO> countList = baseMapper.listApproveCount(dto.getPermissionSql());
         int allCount = countList.stream().mapToInt(SoDetailDTO.TypeCountDTO::getCount).sum();
         SoInfoDTO.TabListDTO all = new SoInfoDTO.TabListDTO();
         all.setCount(allCount);
@@ -139,7 +140,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         result.add(waitApprove);
 
 
-        List<SoDetailDTO.TypeCountDTO> deliveryCountList = baseMapper.listDeliveryCount();
+        List<SoDetailDTO.TypeCountDTO> deliveryCountList = baseMapper.listDeliveryCount(dto.getPermissionSql());
         //待发货
         SoInfoDTO.TabListDTO waitDelivery = new SoInfoDTO.TabListDTO();
         waitDelivery.setSearchType(OmsConstant.WAIT_DELIVERY);

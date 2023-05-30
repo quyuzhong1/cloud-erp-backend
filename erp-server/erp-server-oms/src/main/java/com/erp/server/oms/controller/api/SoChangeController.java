@@ -2,10 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -40,9 +37,14 @@ public class SoChangeController extends BaseController {
      *
      * @return
      */
-    @GetMapping("/tabList")
-    public ApiResult<List<SoChangeDTO.TabListDTO>> tabList() {
-        List<SoChangeDTO.TabListDTO> tabList = soChangeService.tabList();
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "user_id",
+            menuCode = "oms:soChange:tabList",
+            tableAlias = "sc"
+    )
+    public ApiResult<List<SoChangeDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<SoChangeDTO.TabListDTO> tabList = soChangeService.tabList(dto);
         return success(tabList);
     }
 

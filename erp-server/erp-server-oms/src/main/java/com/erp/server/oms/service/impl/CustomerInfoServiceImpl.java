@@ -8,10 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
@@ -259,9 +256,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
      * @date 2023-05-12 17:01
      */
     @Override
-    public List<CustomerDTO.TabListDTO> tabList() {
+    public List<CustomerDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<CustomerDTO.TabListDTO> resultList = new ArrayList<>(4);
-        List<CustomerDTO.ApproveCountDTO> approveCountList = baseMapper.listApproveCount();
+        List<CustomerDTO.ApproveCountDTO> approveCountList = baseMapper.listApproveCount(dto.getPermissionSql());
         int allCount = approveCountList.stream().mapToInt(CustomerDTO.ApproveCountDTO::getCount).sum();
         CustomerDTO.TabListDTO all = new CustomerDTO.TabListDTO();
         all.setCount(allCount);

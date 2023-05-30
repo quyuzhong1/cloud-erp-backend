@@ -57,7 +57,7 @@ public class DictBasicController extends BaseController {
 
     /**
      * 字典通用下拉列表
-     * @param type transferType 调拨类型，transferDirection 调拨方向，instockType 入库类型，outstockType 出库类型，workType 事务类型，machineType 加工单类型
+     * @param type transferType 调拨类型，transferDirection 调拨方向，instockType 入库类型，outstockType 出库类型，workType 事务类型，machineType 加工单类型，inventoryDirection 库存方向
      * @param remark 备注
      * @return
      */

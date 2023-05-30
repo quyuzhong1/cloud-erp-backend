@@ -36,6 +36,7 @@
         select
             oo.id,
             oo.code,
+            ooc.name as customerName,
             oo.inventory_direction as inventoryDirection,
             oo.approve_status as approveStatus,
             oo.invalid_status as invalidStatus,
@@ -49,7 +50,8 @@
             oo.approve_user_name as approveUserName,
             oo.create_user_name as createUserName,
             oo.create_time as createTime
-        from other_outstock oo 
+        from other_outstock oo
+        inner join other_outstock_customer ooc on oo.id = ooc.main_id and ooc.is_deleted = false
         inner join other_outstock_detail ood on oo.id = ood.main_id and ood.is_deleted = false 
         <where>
             oo.is_deleted = false

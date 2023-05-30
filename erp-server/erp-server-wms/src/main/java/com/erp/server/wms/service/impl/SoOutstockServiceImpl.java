@@ -10,6 +10,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -578,9 +579,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-05-19 14:23
      */
     @Override
-    public List<SoOutstockDTO.TabListDTO> tabList() {
+    public List<SoOutstockDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<SoOutstockDTO.TabListDTO> resultList = new ArrayList<>(4);
-        List<SoOutstockDTO.ApproveCountDTO> approveCountList = baseMapper.listApproveCount();
+        List<SoOutstockDTO.ApproveCountDTO> approveCountList = baseMapper.listApproveCount(dto.getPermissionSql());
         int allCount = approveCountList.stream().mapToInt(SoOutstockDTO.ApproveCountDTO::getCount).sum();
         SoOutstockDTO.TabListDTO all = new SoOutstockDTO.TabListDTO();
         all.setCount(allCount);

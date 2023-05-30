@@ -78,11 +78,11 @@ public interface SoDetailMapper extends BaseMapper<SoDetailEntity> {
      * 审核状态
      * @return
      */
-    List<SoDetailDTO.TypeCountDTO> listApproveCount();
+    List<SoDetailDTO.TypeCountDTO> listApproveCount(@Param("permissionSql") String permissionSql);
 
     /**
      * 发货状态
      * @return
      */
-    List<SoDetailDTO.TypeCountDTO> listDeliveryCount();
+    List<SoDetailDTO.TypeCountDTO> listDeliveryCount(@Param("permissionSql") String permissionSql);
 }
