@@ -480,7 +480,7 @@ public class TransferOutDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public class ViewGenerateTransferInDTO implements Serializable {
+    public static class ViewGenerateTransferInDTO implements Serializable {
 
         /**
          * 来源明细id

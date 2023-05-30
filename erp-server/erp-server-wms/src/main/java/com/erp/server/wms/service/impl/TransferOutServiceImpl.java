@@ -13,6 +13,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -422,17 +423,19 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(skuIds);
         Map<String,ProductDetailEntity> skuMap = skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, Function.identity()));
 
-        //调拨方向
+        // 调拨方向
         List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
 
         dataList.stream().forEach(data->{
-            //产品名称
+            // 产品名称
             String productName = skuMap.getOrDefault(data.getSkuId(),new ProductDetailEntity()).getName();
             data.setProductName(productName);
 
-            //调拨方向名称
+            // 调拨方向名称
             String transferDirectionName = transferDirectionList.stream().filter(e -> Objects.equals(e.getValue(), data.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
             data.setTransferDirectionName(transferDirectionName);
+            // 单据来源
+            data.setSourceType(SourceTypeEnum.TRANSFER_OUT.getCode());
         });
         return dataList;
     }

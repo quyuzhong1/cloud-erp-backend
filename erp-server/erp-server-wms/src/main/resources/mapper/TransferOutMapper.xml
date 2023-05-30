@@ -175,21 +175,22 @@
     <select id="viewGenerateTransfer"
             resultType="com.erp.model.wms.dto.TransferOutDTO$ViewGenerateTransferInDTO">
         select
-        tfo.code as sourceCode,
-        tfo.id as sourceId,
-        tod.id as sourceDetailId,
-        tfo.transfer_direction as transferDirection,
-        tfo.approve_status as approveStatus,
-        tod.sku_id as skuId,
-        tod.sku_no as skuNo,
+        tfo.code as source_code,
+        tfo.id as source_id,
+        tod.id as source_detail_id,
+        tfo.transfer_direction as transfer_direction,
+        tfo.approve_status as approve_status,
+        tod.sku_id as sku_id,
+        tod.sku_no as sku_no,
         tod.qty as qty,
-        tod.qty as planQty,
-        tfo.bill_date as billDate,
-        tfo.out_warehouse_id as outWarehouseId,
-        tfo.out_warehouse_name as outWarehouseName,
-        tfo.in_warehouse_id as inWarehouseId,
-        tfo.in_warehouse_name as inWarehouseName,
-        tod.out_warehouse_location as outWarehouseLocation
+        tod.qty as plan_qty,
+        tfo.bill_date as bill_date,
+        tfo.out_warehouse_id as out_warehouse_id,
+        tfo.out_warehouse_name as out_warehouse_name,
+        tfo.in_warehouse_id as in_warehouse_id,
+        tfo.in_warehouse_name as in_warehouse_name,
+        tod.out_warehouse_location as out_warehouse_location,
+        tod.remark
         from transfer_out tfo
         inner join transfer_out_detail tod on tfo.id = tod.main_id and tod.is_deleted = false
         <where>
