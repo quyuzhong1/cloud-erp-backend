@@ -105,8 +105,14 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             String symbol = currencyViewList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
 
+            //税率
+            BigDecimal taxRate = item.getTaxRate();
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+            //含税单价=销售单价*（税率+1）
+            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
+            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             //金额
-            BigDecimal amount = MathUtil.multiply(price, qty);
+            BigDecimal amount = MathUtil.multiply(taxPrice, qty);
             soChangeDetail.setIsGift(isGift);
             soChangeDetail.setPrice(price);
             soChangeDetail.setCurrency(currency);
@@ -449,8 +455,15 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             String currency = item.getCurrency();
             String symbol = currencyViewList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
+
+            //税率
+            BigDecimal taxRate = item.getTaxRate();
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+            //含税单价=销售单价*（税率+1）
+            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
+            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             //金额
-            BigDecimal amount = MathUtil.multiply(price, qty);
+            BigDecimal amount = MathUtil.multiply(taxPrice, qty);
             item.setPrice(price);
             item.setCurrencySymbol(symbol);
             item.setAmount(amount);

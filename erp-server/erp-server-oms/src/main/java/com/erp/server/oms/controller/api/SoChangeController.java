@@ -129,7 +129,7 @@ public class SoChangeController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "user_id",
-            menuCode = "oms:soChange:submit",
+            menuCode = "oms:soChange:addAndSubmit",
             serviceClass = SoChangeService.class,
             keyIdName = "id"
     )
@@ -147,7 +147,7 @@ public class SoChangeController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "user_id",
-            menuCode = "oms:soChange:submit",
+            menuCode = "oms:soChange:addAndSubmit",
             serviceClass = SoChangeService.class,
             keyIdName = "id"
     )
