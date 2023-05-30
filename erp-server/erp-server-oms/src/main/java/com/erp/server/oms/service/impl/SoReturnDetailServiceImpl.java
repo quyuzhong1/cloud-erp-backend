@@ -254,7 +254,8 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                     flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
             addDetailView.setAvailableQty(getAvailableQty(curInventoryQty, addDetailView.getSalesQty()));
             addDetailView.setDeliveryQty(actualQty);
-            addDetailView.setUnDeliveryQty(addDetailView.getSalesQty() + returnQty - actualQty);
+            addDetailView.setUnDeliveryQty(addDetailView.getSalesQty() - actualQty);
+            addDetailView.setReturnQty(returnQty);
         }
         return list;
     }
