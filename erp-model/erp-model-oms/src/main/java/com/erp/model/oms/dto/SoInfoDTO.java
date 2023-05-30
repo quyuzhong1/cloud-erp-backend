@@ -881,7 +881,25 @@ public class SoInfoDTO implements Serializable {
 
         private String sellerId;
 
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
 
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 库存组织id
+         */
+        private String warehouseOrgId;
+
+        /**
+         * 库存组织名称
+         */
+        private String warehouseOrgName;
     }
 
 

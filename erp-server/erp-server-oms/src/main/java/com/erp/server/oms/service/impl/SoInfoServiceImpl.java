@@ -1051,6 +1051,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         customer.setSalesDeptName(salesDeptName);
         String type = soInfo.getOrderType();
         customer.setOrderTypeName(BillTypeEnum.getName(type));
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(soInfo.getWarehouseId()));
+        //仓库
+        if (CollectionUtils.isNotEmpty(warehouseList)) {
+            String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(soInfo.getWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse("");
+            customer.setWarehouseName(warehouseName);
+        }
         return customer;
     }
 
