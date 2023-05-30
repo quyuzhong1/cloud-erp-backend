@@ -317,5 +317,5 @@ public interface SysUserFeign {
      * @return java.util.List<com.erp.model.sys.entity.DictCountryEntity>
      **/
     @PostMapping("feign/dictCountry/getCountryById")
-    DictCountryEntity getCountryById(String id);
+    DictCountryEntity getCountryById(@RequestBody String id);
 }
