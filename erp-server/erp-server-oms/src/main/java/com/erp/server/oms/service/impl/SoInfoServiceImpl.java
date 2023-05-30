@@ -1144,7 +1144,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
             //从wms 获取到sku 的即时库存信息
             List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
-
+            List<String> flagList = new ArrayList<>();
             for (SoInfoDTO.ViewGenerateSalesDemandDTO viewDTO : value) {
                 //即时库存
                 Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(viewDTO.getSkuId())).findFirst().
@@ -1172,6 +1172,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     scarceQty = qty;
                 }
                 viewDTO.setScarceQty(scarceQty);
+
+                viewDTO.setFlag(Boolean.TRUE);
+
+                boolean contains = flagList.contains(viewDTO.getSourceId());
+                if (contains) {
+                    viewDTO.setFlag(Boolean.FALSE);
+                    continue;
+                }
+                flagList.add(viewDTO.getSourceId());
             }
         }
 
