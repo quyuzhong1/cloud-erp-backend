@@ -222,7 +222,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //获取仓库信息
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
         if (CollectionUtils.isNotEmpty(warehouseList)) {
-            entity.setWarehouseId(entity.getWarehouseId());
+            entity.setWarehouseId(warehouseList.get(MathUtil.ZERO).getId());
             entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
         }
         //生成单号
@@ -281,7 +281,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //获取仓库信息
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
         if (CollectionUtils.isNotEmpty(warehouseList)) {
-            entity.setWarehouseId(entity.getWarehouseId());
+            entity.setWarehouseId(warehouseList.get(MathUtil.ZERO).getId());
             entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
         }
         entity.setId(dto.getId());
@@ -334,7 +334,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         viewDTO.setCustomerName(customerInfoEntity.getName());
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(entity.getWarehouseId()));
         if (CollectionUtils.isNotEmpty(warehouseList)) {
-            viewDTO.setWarehouseId(entity.getWarehouseId());
+            viewDTO.setWarehouseId(warehouseList.get(MathUtil.ZERO).getId());
             viewDTO.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
         }
         viewDTO.setReturnDate(soReturnEntity.getBillDate());
