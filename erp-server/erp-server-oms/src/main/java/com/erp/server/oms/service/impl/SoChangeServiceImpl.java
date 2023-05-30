@@ -559,7 +559,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             throw new ServiceException(ApiError.ERROR_92015);
         }
         List<String> soIdList = soDetailList.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
-        if (soIdList.size()>1) {
+        if (soIdList.size() > 1) {
             throw new ServiceException(ApiError.ERROR_92039);
         }
         String soId = soDetailList.get(0).getMainId();
@@ -653,10 +653,11 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
     /**
      * 检测能否变更根据so 详情id
-     * @author yl
-     * @date 2023-05-26 14:42
+     *
      * @param soDetailIds
      * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-05-26 14:42
      */
     @Override
     public List<String> checkBySoDetailIds(List<String> soDetailIds) {
@@ -668,7 +669,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             throw new ServiceException(ApiError.ERROR_92015);
         }
         List<String> soIdList = soDetailList.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
-        if (soIdList.size()>1) {
+        if (soIdList.size() > 1) {
             throw new ServiceException(ApiError.ERROR_92039);
         }
         String soId = soDetailList.get(0).getMainId();
@@ -679,6 +680,22 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             throw new ServiceException(ApiError.ERROR_92033);
         }
         return soDetailIds;
+    }
+
+    /**
+     * 根据销售订单详情 获取到变更的
+     *
+     * @param soIds
+     * @return void
+     * @author yl
+     * @date 2023-05-30 17:24
+     */
+    @Override
+    public List<SoChangeEntity> listBySoIds(List<String> soIds) {
+        if (CollectionUtils.isEmpty(soIds)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(SoChangeEntity::getSoId, soIds).list();
     }
 
 

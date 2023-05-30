@@ -20,6 +20,8 @@ public enum DeliveryModeEnum implements EnumMessage {
     private String name;
 
 
+
+
     DeliveryModeEnum(String code, String name) {
         this.code = code;
         this.name = name;

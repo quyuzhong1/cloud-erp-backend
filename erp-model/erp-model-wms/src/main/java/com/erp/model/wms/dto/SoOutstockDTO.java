@@ -576,10 +576,12 @@ public class SoOutstockDTO implements Serializable {
          */
         private String salesDeptName;
 
+
+
         /**
-         * 发货组织
+         * 销售组织
          */
-        private String deliveryOrgId;
+        private String salesOrgName;
 
         /**
          * 仓库id

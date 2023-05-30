@@ -11,7 +11,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoInfoDTO;
-import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.server.wms.service.SoDeliveryNoticeService;
 import org.apache.commons.lang3.StringUtils;
@@ -315,11 +314,11 @@ public class SoDeliveryNoticeController extends BaseController {
      * 销售单详情-单据关联-发货通知单
      * @Author Luo_WG
      * @Date 2023/5/25 16:36
-     * @param id
+     * @param soId
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.SoDeliveryNoticeDTO.PagingView>>
      **/
-    @PostMapping("/listSoDeliveryNoticeBySourceId")
-    public ApiResult<List<SoDeliveryNoticeDTO.PagingView>> listSoDeliveryNoticeBySourceId(@RequestParam("id") String id) {
+    @GetMapping("/listSoDeliveryNoticeBySourceId")
+    public ApiResult<List<SoDeliveryNoticeDTO.PagingView>> listSoDeliveryNoticeBySourceId(@RequestParam("soId") String id) {
         List<SoDeliveryNoticeDTO.PagingView> list = soDeliveryNoticeService.listSoReturnDetailBySourceId(id);
         return success(list);
     }

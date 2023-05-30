@@ -39,6 +39,8 @@ public class CfgApiFieldMapDTO {
 
     /**
      * 取值方式 ApiFieldType枚举
+     * 0 直接复制
+     * 1 对照表
      */
     @NotNull(message = "取值方式为空")
     private Integer fieldType;

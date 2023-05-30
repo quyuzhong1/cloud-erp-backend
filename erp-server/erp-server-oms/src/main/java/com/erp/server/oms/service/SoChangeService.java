@@ -183,4 +183,13 @@ public interface SoChangeService extends SuperService<SoChangeEntity> {
      * @return java.util.List<java.lang.String>
      */
     List<String> checkBySoDetailIds(List<String> soDetailIds);
+
+    /**
+     * 根据销售订单详情 获取到变更的
+     * @author yl
+     * @date 2023-05-30 17:24
+     * @param soIds
+     * @return void
+     */
+    List<SoChangeEntity> listBySoIds(List<String> soIds);
 }

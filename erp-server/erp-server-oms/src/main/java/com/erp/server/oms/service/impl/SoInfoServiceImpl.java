@@ -28,6 +28,7 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.CustomerAddressTypeEnum;
@@ -114,6 +115,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Resource
     private SoReturnService soReturnService;
 
+    @Resource
+    private SoChangeService soChangeService;
 
     @Value("${so.contract.company}")
     private String company;
@@ -335,7 +338,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> detailIds = list.stream().map(SoInfoDTO.PagingViewDTO::getDetailId).collect(Collectors.toList());
         List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockFeign.listDetailBySoDetailIds(detailIds);
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-        soOutstockDetailList=soOutstockDetailList.stream().filter(s->s.getApproveStatus().equals(approveStatus)).collect(Collectors.toList());
+        soOutstockDetailList = soOutstockDetailList.stream().filter(s -> s.getApproveStatus().equals(approveStatus)).collect(Collectors.toList());
         List<String> skuIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
         List<String> warehouseIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getWarehouseId).collect(Collectors.toList());
         InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
@@ -1117,6 +1120,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Override
     public List<SoInfoDTO.ViewGenerateSalesDemandDTO> viewGenerateSalesDemand(List<String> ids) {
+        checkIfPushDown(ids);
         List<SoInfoDTO.ViewGenerateSalesDemandDTO> list = baseMapper.viewGenerateSalesDemand(ids);
         if (CollectionUtils.isEmpty(list)) {
             return list;
@@ -1189,6 +1193,51 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
 
     /**
+     * 检查能否下推
+     *
+     * @param ids
+     * @return void
+     * @author yl
+     * @date 2023-05-30 17:20
+     */
+    private void checkIfPushDown(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        List<SoInfoEntity> soInfoList = this.listByIds(ids);
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        long unApprove =soInfoList.stream().filter(s -> !s.getApproveStatus().
+                equals(approveStatus)).count();
+        if (unApprove>0){
+            throw new ServiceException(ApiError.ERROR_92042);
+        }
+        long invalidCount =soInfoList.stream().filter(s -> s.getInvalidStatus()).count();
+        if (invalidCount>0){
+            throw new ServiceException(ApiError.ERROR_92043);
+        }
+
+        List<SoChangeEntity> soChangeList = soChangeService.listBySoIds(ids);
+        String waitSubmit = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        String approveIng = ApproveStatusEnum.APPROVE_ING.getStatus();
+        List<String> statusList = new ArrayList<>();
+        statusList.add(waitSubmit);
+        statusList.add(approveIng);
+        long count = soChangeList.stream().filter(s -> statusList.contains(s.getApproveStatus().getStatus())).count();
+        //表示 有变更中的销售变更单
+        if (count > 0) {
+            //但是 如果 有作废的数据 也可以下推
+            long invalidNum = soChangeList.stream().filter(s -> statusList.contains(s.getApproveStatus().getStatus()) && s.getInvalidStatus()).count();
+            if (invalidNum != count) {
+                throw new ServiceException(ApiError.ERROR_92041);
+            }
+
+        }
+
+
+    }
+
+
+    /**
      * 方法说明
      *
      * @param soIdList
@@ -1238,6 +1287,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Override
     public List<SoInfoDTO.GenerateDeliveryView> generateDeliveryView(List<String> ids) {
+        checkIfPushDown(ids);
         List<SoInfoDTO.GenerateDeliveryView> viewList = baseMapper.generateDeliveryView(ids);
         //获取sku的id集合
         List<String> skuIdList = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getSkuId).collect(Collectors.toList());
@@ -1259,6 +1309,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Override
     public List<SoInfoDTO.GenerateSoReturnView> generateSoReturnView(List<String> ids) {
+        checkIfPushDown(ids);
         List<SoInfoDTO.GenerateSoReturnView> viewList = baseMapper.generateSoReturnView(ids);
         //获取sku的id集合
         List<String> skuIdList = viewList.stream().map(SoInfoDTO.GenerateSoReturnView::getSkuId).collect(Collectors.toList());

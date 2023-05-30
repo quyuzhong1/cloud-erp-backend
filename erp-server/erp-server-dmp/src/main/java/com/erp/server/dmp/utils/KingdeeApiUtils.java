@@ -3,11 +3,9 @@ package com.erp.server.dmp.utils;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.erp.model.dmp.entity.PlatformEntity;
 import com.google.gson.Gson;
 import com.kingdee.bos.webapi.entity.*;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -64,11 +62,11 @@ public class KingdeeApiUtils {
 
     public KingdeeApiUtils(String formId){
         IdentifyInfo identifyInfo = new IdentifyInfo();
-        identifyInfo.setdCID(DCID);
-        identifyInfo.setAppId(APPID);
-        identifyInfo.setUserName(USERNAME);
-        identifyInfo.setServerUrl(SERVERURL);
-        identifyInfo.setAppSecret(APPSECRET);
+        identifyInfo.setdCID("6440bbf6c525aa");
+        identifyInfo.setAppId("237496_016p4bjt3qA/S4Xv2Z0r77+M5N781AMo");
+        identifyInfo.setUserName("Administrator");
+        identifyInfo.setServerUrl("http://47.106.224.95:8089/k3cloud/");
+        identifyInfo.setAppSecret("46a860e5bcd144848bc9394c9c4dfbfa");
         this.client = new K3CloudApi(identifyInfo);
         this.formId = formId;
     }
