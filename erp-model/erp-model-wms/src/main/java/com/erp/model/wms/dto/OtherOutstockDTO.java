@@ -42,6 +42,11 @@ public class OtherOutstockDTO implements Serializable {
         private String code;
 
         /**
+         * 客户
+         */
+        private String customerName;
+
+        /**
          * 库存方向
          */
         private String inventoryDirection;
@@ -323,6 +328,16 @@ public class OtherOutstockDTO implements Serializable {
          * 库存方向名称
          */
         private String  inventoryDirectionName;
+
+        /**
+         * 库存组织id
+         */
+        private String inventoryOrgId;
+
+        /**
+         * 库存组织名称
+         */
+        private String inventoryOrgName;
 
         /**
          * 客户信息
