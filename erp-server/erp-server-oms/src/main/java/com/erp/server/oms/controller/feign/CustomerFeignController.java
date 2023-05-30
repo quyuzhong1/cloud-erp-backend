@@ -32,7 +32,6 @@ public class CustomerFeignController {
         return customerInfoService.list();
     }
 
-
     @PostMapping("/quoteCustomer")
     public Boolean quoteCustomer(@RequestBody List<String> ids) {
         return customerInfoService.quoteCustomer(ids);
