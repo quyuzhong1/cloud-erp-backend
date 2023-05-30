@@ -2,10 +2,7 @@ package com.erp.server.wms.kingdee.impl;
 
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.server.wms.kingdee.SyncKingdeeService;
-import com.erp.server.wms.service.OtherInstockService;
-import com.erp.server.wms.service.OtherOutstockService;
-import com.erp.server.wms.service.TransferInfoService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -31,6 +28,12 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
 
     @Resource
     private OtherOutstockService otherOutstockService;
+
+    @Resource
+    private PurchaseReturnOrderService purchaseReturnOrderService;
+
+    @Resource
+    private PoInstockService poInstockService;
 
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
@@ -58,6 +61,14 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //其他出库单
         if (ApiModuleTypeEnum.OTHER_OUTSTOCK.getCode().toString().equals(code)) {
             otherOutstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
+        }
+        //采购退货单
+        if (ApiModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode().toString().equals(code)) {
+            purchaseReturnOrderService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
+        }
+        //采购退货单
+        if (ApiModuleTypeEnum.PURCHASE_STOCK_IN.getCode().toString().equals(code)) {
+            poInstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
         }
     }
 }
