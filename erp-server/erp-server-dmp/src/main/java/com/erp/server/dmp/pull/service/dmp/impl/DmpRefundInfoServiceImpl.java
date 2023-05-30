@@ -139,7 +139,7 @@ public class DmpRefundInfoServiceImpl extends ServiceImpl<DmpRefundInfoMapper, D
 
         for (DmpRefundInfoEntity dmpRefundInfoEntity : dmpRefundInfoEntities) {
             LambdaUpdateWrapper<DmpRefundInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
-            DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderBySalesRecordNumber(dmpRefundInfoEntity.getSalesRecordNumber(), dmpRefundInfoEntity.getPlatformOrderId());
+            DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderBySalesRecordNumber(dmpRefundInfoEntity.getSalesRecordNumber(), dmpRefundInfoEntity.getPlatformOrderId(), dmpRefundInfoEntity.getPlatformSign());
             if (dmpOrderInfoEntity != null) {
                 updateWrapper.set(ObjectUtil.isNotEmpty(dmpOrderInfoEntity.getPlatformCreateTime()), DmpRefundInfoEntity::getOrderTime, dmpOrderInfoEntity.getPlatformCreateTime());
                 updateWrapper.set(StrUtil.isNotEmpty(dmpOrderInfoEntity.getChargeId()), DmpRefundInfoEntity::getChargeId, dmpOrderInfoEntity.getChargeId());

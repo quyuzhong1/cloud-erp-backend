@@ -63,7 +63,7 @@ public interface DmpOrderInfoService extends IService<DmpOrderInfoEntity> {
      * @param salesRecordNumber 销售订单号
      * @return com.erp.model.dmp.entity.DmpOrderInfoEntity
      **/
-    DmpOrderInfoEntity getOrderBySalesRecordNumber(String salesRecordNumber, String platformOrderId);
+    DmpOrderInfoEntity getOrderBySalesRecordNumber(String salesRecordNumber, String platformOrderId, String platformSign);
 
     /**
      * 更新清洗数据
