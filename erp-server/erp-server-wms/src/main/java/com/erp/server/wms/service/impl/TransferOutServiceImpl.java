@@ -459,7 +459,8 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void generateTransferIn(List<TransferOutDTO.GenerateTransferInDTO> dataList) {
+    public void generateTransferIn(ValidList<TransferOutDTO.GenerateTransferInDTO> dataList) {
+        ValidatorUtil.isTrue(CollUtil.isNotEmpty(dataList),()->new ServiceException("下推数据不能为空"));
         // 分步式调出单主单id集合
         List<String> sourceIds = dataList.stream().map(TransferOutDTO.GenerateTransferInDTO::getSourceId).distinct().collect(Collectors.toList());
         List<TransferOutEntity> transferOutList =  this.listByIds(sourceIds);
@@ -503,27 +504,18 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
                 if(pushData.getPlanQty() + pushedQty > transferOutDetailEntity.getQty()) {
                     throw new ServiceException(StrUtil.format("【{}】已下推数量合计不能大于调出数量", transferOutDetailEntity.getSkuNo()));
                 }
-
-                TransferInDTO.ViewGenerateTransferInDTO transferInDTO = new TransferInDTO.ViewGenerateTransferInDTO();
-                transferInDTO.setTransferType(TransferTypeEnum.of(transferType));
-                transferInDTO.setSourceCode(pushData.getSourceCode());
-                transferInDTO.setSourceId(pushData.getSourceId());
-                transferInDTO.setSourceDetailId(pushData.getSourceDetailId());
-                transferInDTO.setBillDate(LocalDate.now());
-                transferInDTO.setOutDate(pushData.getBillDate());
-                transferInDTO.setTransferDirection(TransferDirectionEnum.of(transferDirection));
-                transferInDTO.setOutWarehouseId(pushData.getOutWarehouseId());
-                transferInDTO.setOutWarehouseLocation(pushData.getOutWarehouseLocation());
-                transferInDTO.setInWarehouseId(pushData.getInWarehouseId());
-                transferInDTO.setSkuId(pushData.getSkuId());
-                transferInDTO.setSkuNo(pushData.getSkuNo());
-                transferInDTO.setOutQty(transferOutDetailEntity.getQty());
-                transferInDTO.setPlanQty(pushData.getPlanQty());
-                transferInDTO.setRemark(pushData.getRemark());
+                TransferInDTO.ViewGenerateTransferInDTO transferInDTO = wrapTransferIn(transferType, transferDirection, pushData, transferOutDetailEntity);
                 transferInList.add(transferInDTO);
             });
         });
         transferInService.generateTransferIn(transferInList);// 下推生成分步式调入单
+    }
+
+    @Override
+    public List<TransferOutDTO.ChooseListDTO> listTransferOut(TransferOutDTO.SearchParamDTO param) {
+        TransferOutEntity transferOutEntity = super.getById(param.getSourceId());
+        ValidatorUtil.isTrue(Objects.nonNull(transferOutEntity),()->new ServiceException("未找到分布式调出单信息"));
+        return transferOutDetailService.listChoose(param, transferOutEntity);
     }
 
     /**
@@ -727,6 +719,35 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         });
         inventoryTransferDTO.setMembers(members);
         inventoryTransCoreService.approveByType(inventoryTransferDTO);
+    }
+
+    /**
+     * 填充下推分步式调入数据
+     * @param transferType
+     * @param transferDirection
+     * @param pushData
+     * @param transferOutDetailEntity
+     * @return
+     */
+    private TransferInDTO.ViewGenerateTransferInDTO wrapTransferIn(String transferType, String transferDirection,
+                                                                   TransferOutDTO.GenerateTransferInDTO pushData,TransferOutDetailEntity transferOutDetailEntity) {
+        TransferInDTO.ViewGenerateTransferInDTO transferInDTO = new TransferInDTO.ViewGenerateTransferInDTO();
+        transferInDTO.setTransferType(TransferTypeEnum.of(transferType));
+        transferInDTO.setSourceCode(pushData.getSourceCode());
+        transferInDTO.setSourceId(pushData.getSourceId());
+        transferInDTO.setSourceDetailId(pushData.getSourceDetailId());
+        transferInDTO.setBillDate(LocalDate.now());
+        transferInDTO.setOutDate(pushData.getBillDate());
+        transferInDTO.setTransferDirection(TransferDirectionEnum.of(transferDirection));
+        transferInDTO.setOutWarehouseId(pushData.getOutWarehouseId());
+        transferInDTO.setOutWarehouseLocation(pushData.getOutWarehouseLocation());
+        transferInDTO.setInWarehouseId(pushData.getInWarehouseId());
+        transferInDTO.setSkuId(pushData.getSkuId());
+        transferInDTO.setSkuNo(pushData.getSkuNo());
+        transferInDTO.setOutQty(transferOutDetailEntity.getQty());
+        transferInDTO.setPlanQty(pushData.getPlanQty());
+        transferInDTO.setRemark(pushData.getRemark());
+        return transferInDTO;
     }
 
 

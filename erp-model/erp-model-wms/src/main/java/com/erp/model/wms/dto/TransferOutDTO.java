@@ -583,20 +583,6 @@ public class TransferOutDTO implements Serializable {
     }
 
 
-    /**
-     * 下推单据列表
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ListGenerateTransferInDTO {
-
-        @NotEmpty(message = "下推数据不能为空")
-        @Size(min = 1, message = "下推数据至少需要1条数据")
-        private List<TransferOutDTO.GenerateTransferInDTO> list;
-
-    }
-
-
 
     /**
      * 下推分步式调入单数据保存实体
@@ -675,6 +661,87 @@ public class TransferOutDTO implements Serializable {
          * 备注（分步式调出单明细）
          */
         private String remark;
+
+    }
+
+    /**
+     * 下推的分步式调入单选择产品
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SearchParamDTO {
+
+        /**
+         * 来源id
+         */
+        @NotBlank(message = "来源id不能为空")
+        private String sourceId;
+
+        /**
+         * sku编码
+         */
+        private List<String> skuNoList;
+    }
+
+    /**
+     * 下推的分步式调入单选择产品结果
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ChooseListDTO implements Serializable {
+
+        private String id;
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 分步式调出单号(来源编号)
+         */
+        private String sourceCode;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
+         * 计划调入数量（已扣除已调入的数量）
+         */
+        private Integer planQty;
+
+        /**
+         * 调出仓位
+         */
+        private String outWarehouseLocation;
+
 
     }
 

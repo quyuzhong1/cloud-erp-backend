@@ -1,8 +1,10 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.dto.TransferOutDetailDTO;
 import com.erp.model.wms.entity.TransferOutDetailEntity;
+import com.erp.model.wms.entity.TransferOutEntity;
 
 import java.util.List;
 
@@ -57,5 +59,12 @@ public interface TransferOutDetailService extends SuperService<TransferOutDetail
      * @param mainIds
      */
     void removeByMainIds(List<String> mainIds);
+
+    /**
+     * 下推分布式调入单修改页面选择产品信息
+     * @param param
+     * @return
+     */
+    List<TransferOutDTO.ChooseListDTO> listChoose(TransferOutDTO.SearchParamDTO param, TransferOutEntity transferOutEntity);
 
 }

@@ -363,6 +363,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         return Boolean.TRUE;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean addAndSubmit(SoReturnDTO.Add dto) {
         String id = this.add(dto);
@@ -372,6 +373,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         return this.submit(Arrays.asList(id));
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean updateAndSubmit(SoReturnDTO.Update dto) {
         Boolean update = this.update(dto);

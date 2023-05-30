@@ -1,13 +1,16 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.entity.PickingDetailEntity;
+import com.erp.model.wms.entity.TransferInDetailEntity;
 import com.erp.model.wms.entity.TransferOutEntity;
-import com.erp.server.wms.service.PickingDetailService;
-import com.erp.server.wms.service.TransferOutService;
+import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import cn.hutool.core.util.StrUtil;
@@ -21,14 +24,13 @@ import com.erp.model.wms.dto.TransferOutDetailDTO;
 import com.erp.model.wms.entity.TransferOutDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.TransferOutDetailMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.TransferOutDetailService;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -58,6 +60,9 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
 
     @Autowired
     private TransferOutService transferOutService;
+
+    @Autowired
+    private TransferInDetailService transferInDetailService;
 
     @Override
     public List<TransferOutDetailEntity> listSourceDetailIds(List<String> sourceDetailIds) {
@@ -126,6 +131,50 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
     @Override
     public void removeByMainIds(List<String> mainIds) {
         lambdaUpdate().in(TransferOutDetailEntity::getMainId, mainIds).remove();
+    }
+
+    @Override
+    public List<TransferOutDTO.ChooseListDTO> listChoose(TransferOutDTO.SearchParamDTO param, TransferOutEntity transferOutEntity) {
+        // 从分步式调入单的来源id查询分步式调出单明细
+        List<TransferOutDetailEntity> transferOutDetailList = lambdaQuery().eq(TransferOutDetailEntity::getMainId, param.getSourceId())
+                .in(CollectionUtils.isNotEmpty(param.getSkuNoList()),TransferOutDetailEntity::getSkuNo,param.getSkuNoList())
+                .list();
+        if (CollUtil.isEmpty(transferOutDetailList)) {
+            return Collections.EMPTY_LIST;
+        }
+        Map<String,TransferOutDetailEntity> transferDetailMap = transferOutDetailList.stream().collect(Collectors.toMap(TransferOutDetailEntity::getId, Function.identity()));
+        // 分步式调出单明细id集合
+        List<String> sourceDetailIds = transferOutDetailList.stream().map(TransferOutDetailEntity::getId).distinct().collect(Collectors.toList());
+        // 根据分步式调出单明细id集合查询已下推的分布式调入单明细
+        List<TransferInDetailEntity> transferInDetailList = transferInDetailService.listBySourceDetailIds(sourceDetailIds);
+        Map<String,List<TransferInDetailEntity>> transferInDetailMap = transferInDetailList.stream().collect(Collectors.groupingBy(TransferInDetailEntity::getSourceDetailId));
+
+        List<TransferOutDTO.ChooseListDTO> resultList = BeanMapperUtils.copyList(TransferOutDTO.ChooseListDTO.class, transferOutDetailList);
+        List<String> skuIds = resultList.stream().map(TransferOutDTO.ChooseListDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        Map<String,SkuVO> skuMap =  skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        for (TransferOutDTO.ChooseListDTO data : resultList) {
+            SkuVO skuInfo = skuMap.getOrDefault(data.getSkuId(),new SkuVO());
+            data.setProductName(skuInfo.getSkuName()); //产品名称
+            data.setVariantProperty(skuInfo.getVariantProperty()); // 变体信息
+            data.setSourceType(SourceTypeEnum.TRANSFER_OUT.getCode());
+            data.setSourceDetailId(data.getId());
+            data.setSourceId(transferOutEntity.getId());
+            data.setSourceCode(transferOutEntity.getCode());
+            // 可计划调入数量
+            TransferOutDetailEntity transferOutDetailEntity = transferDetailMap.get(data.getId());
+            // 累计下推的分步式调入数量不能大于调出数量
+            Integer pushedQty = 0;
+            if(transferInDetailMap.containsKey(data.getSourceDetailId())) {
+                pushedQty = transferInDetailMap.get(data.getSourceDetailId()).stream().map(TransferInDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            if(transferOutDetailEntity.getQty() <= pushedQty) {
+                data.setPlanQty(0);
+            } else {
+                data.setPlanQty(transferOutDetailEntity.getQty() - pushedQty);
+            }
+        }
+        return resultList;
     }
 
     private void handleDetails(List<TransferOutDetailEntity> newList, String mainId, Boolean isUpdate) {
