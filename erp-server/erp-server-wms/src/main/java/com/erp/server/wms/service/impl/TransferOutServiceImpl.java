@@ -15,31 +15,28 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.StrUtils;
-import com.common.core.utils.ValidatorUtil;
+import com.common.core.utils.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
-import com.erp.model.wms.dto.DictBasicDTO;
-import com.erp.model.wms.dto.TransferOutDTO;
-import com.erp.model.wms.dto.TransferOutDetailDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.ExportTransferOutExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
+import com.erp.model.wms.entity.TransferInDetailEntity;
 import com.erp.model.wms.entity.TransferInEntity;
 import com.erp.model.wms.entity.TransferOutDetailEntity;
 import com.erp.model.wms.entity.TransferOutEntity;
 import com.erp.model.wms.enums.DictBasicEnum;
+import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.erp.model.wms.enums.TransferTypeEnum;
 import com.erp.model.wms.enums.TransitOwnerEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -61,6 +58,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -106,6 +104,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Autowired
     private TransferInService transferInService;
+
+    @Autowired
+    private TransferInDetailService transferInDetailService;
 
     @Override
     public List<TransferOutEntity> listBySourceIds(List<String> ids) {
@@ -187,7 +188,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         statusMapping.put(PurchaseChangeListTypeEnum.REJECT, ApproveStatusEnum.REJECT);
 
         statusMapping.forEach((purchaseChangeType, approveStatus)->{
-            Integer qty = statusMap.getOrDefault(approveStatus, new ApproveStatusQtyDTO()).getCount();
+            Integer qty = statusMap.getOrDefault(approveStatus.getStatus(), new ApproveStatusQtyDTO()).getCount();
             TransferOutDTO.TabListDTO tab = new TransferOutDTO.TabListDTO(purchaseChangeType.getCode(), qty);
             resultList.add(tab);
         });
@@ -438,6 +439,71 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             data.setSourceType(SourceTypeEnum.TRANSFER_OUT.getCode());
         });
         return dataList;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void generateTransferIn(List<TransferOutDTO.GenerateTransferInDTO> dataList) {
+        // 分步式调出单主单id集合
+        List<String> sourceIds = dataList.stream().map(TransferOutDTO.GenerateTransferInDTO::getSourceId).distinct().collect(Collectors.toList());
+        List<TransferOutEntity> transferOutList =  this.listByIds(sourceIds);
+        ValidatorUtil.isTrue(CollUtil.isNotEmpty(transferOutList),()->new ServiceException("未找到分步式调出单信息"));
+        boolean noApprove = transferOutList.stream().anyMatch(r->!Objects.equals(r.getApproveStatus(), ApproveStatusEnum.APPROVE));
+        ValidatorUtil.isTrue(!noApprove,()->new ServiceException("只有已审核分步式调出单支持下推单据"));
+        Map<String,TransferOutEntity> transferOutEntityMap =  transferOutList.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
+
+        // 分步式调出单明细id集合
+        List<String> sourceDetailIds = dataList.stream().map(TransferOutDTO.GenerateTransferInDTO::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<TransferOutDetailEntity> transferOutDetailList = transferOutDetailService.listByIds(sourceDetailIds);
+        Map<String,TransferOutDetailEntity> transferDetailMap = transferOutDetailList.stream().collect(Collectors.toMap(TransferOutDetailEntity::getId, Function.identity()));
+        // 计划调入数量不能大于调出数量
+        dataList.stream().forEach(data->{
+            TransferOutDetailEntity transferOutDetailEntity = transferDetailMap.get(data.getSourceDetailId());
+            if(data.getPlanQty() > transferOutDetailEntity.getQty()) {
+                throw new ServiceException("计划调入数量不能大于调出数量");
+            }
+        });
+
+        // 根据分步式调出单明细id集合查询已下推的分布式调入单明细
+        List<TransferInDetailEntity> transferInDetailList = transferInDetailService.listBySourceDetailIds(sourceDetailIds);
+        Map<String,List<TransferInDetailEntity>> transferInDetailMap = transferInDetailList.stream().collect(Collectors.groupingBy(TransferInDetailEntity::getSourceDetailId));
+
+        // 一次可以下推多个分步式调出单，按调出单id分组
+        Map<String,List<TransferOutDTO.GenerateTransferInDTO>> sourceMap = dataList.stream().collect(Collectors.groupingBy(TransferOutDTO.GenerateTransferInDTO::getSourceId));
+        ValidList<TransferInDTO.ViewGenerateTransferInDTO> transferInList = new ValidList();
+        sourceMap.forEach((sourceId,pushList)->{
+            TransferOutEntity transferOutEntity = transferOutEntityMap.get(sourceId);
+            // 调拨方向
+            String transferDirection = transferOutEntity.getTransferDirection();
+            // 调拨类型
+            String transferType = transferOutEntity.getType();
+            pushList.stream().forEach(pushData->{
+                TransferOutDetailEntity transferOutDetailEntity = transferDetailMap.get(pushData.getSourceDetailId());
+                // 累计下推的分步式调入数量不能大于调出数量
+                Integer pushedQty = 0;
+                if(transferInDetailMap.containsKey(pushData.getSourceDetailId())) {
+                    pushedQty = transferInDetailMap.get(pushData.getSourceDetailId()).stream().map(TransferInDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+                }
+                TransferInDTO.ViewGenerateTransferInDTO transferInDTO = new TransferInDTO.ViewGenerateTransferInDTO();
+                transferInDTO.setTransferType(TransferTypeEnum.of(transferType));
+                transferInDTO.setSourceCode(pushData.getSourceCode());
+                transferInDTO.setSourceId(pushData.getSourceId());
+                transferInDTO.setSourceDetailId(pushData.getSourceDetailId());
+                transferInDTO.setBillDate(LocalDate.now());
+                transferInDTO.setOutDate(pushData.getBillDate());
+                transferInDTO.setTransferDirection(TransferDirectionEnum.of(transferDirection));
+                transferInDTO.setOutWarehouseId(pushData.getOutWarehouseId());
+                transferInDTO.setOutWarehouseLocation(pushData.getOutWarehouseLocation());
+                transferInDTO.setInWarehouseId(pushData.getInWarehouseId());
+                transferInDTO.setSkuId(pushData.getSkuId());
+                transferInDTO.setSkuNo(pushData.getSkuNo());
+                transferInDTO.setQty(transferOutDetailEntity.getQty());
+                transferInDTO.setPlanQty(pushData.getPlanQty());
+                transferInDTO.setRemark(pushData.getRemark());
+                transferInList.add(transferInDTO);
+            });
+        });
+        transferInService.generateTransferIn(transferInList);// 下推生成分步式调入单
     }
 
     /**

@@ -119,4 +119,10 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
      */
     List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransferIn(List<String> ids);
 
+    /**
+     * 下推分布式调入单保存
+     * @param dataList
+     */
+    void generateTransferIn(List<TransferOutDTO.GenerateTransferInDTO> dataList);
+
 }

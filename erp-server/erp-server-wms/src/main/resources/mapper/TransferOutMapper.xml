@@ -26,6 +26,9 @@
         inner join transfer_out_detail tod on tfo.id = tod.main_id and tod.is_deleted = false
         <where>
             tfo.is_deleted = false
+            <if test="params.searchType != null and params.searchType != ''">
+                AND tfo.approve_status = #{params.searchType}
+            </if>
             <if test="params.code != null and params.code != ''">
                 and tfo.code ilike concat('%',#{params.code},'%')
             </if>
@@ -100,50 +103,52 @@
         inner join transfer_out_detail tod on tfo.id = tod.main_id and tod.is_deleted = false
         <where>
             tfo.is_deleted = false
-            <if test="params.code != null and params.code != ''">
-                and tfo.code ilike concat('%',#{params.code},'%')
-            </if>
-            <if test="params.invalidStatus != null ">
-                and tfo.invalid_status = #{params.invalidStatus}
-            </if>
-            <if test="params.transferDirection != null ">
-                and tfo.transfer_direction = #{params.transferDirection}
-            </if>
             <if test="params.ids != null and params.ids.size > 0">
                 and tfo.id in
                 <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.skuNoList != null and params.skuNoList.size > 0">
-                and tod.sku_no in
-                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                and tfo.approve_status in
-                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.outWarehouseIdList != null and params.outWarehouseIdList.size > 0">
-                and tfo.out_warehouse_id in
-                <foreach collection="params.outWarehouseIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
-                and tfo.create_user_id in
-                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.createTimeList != null and params.createTimeList.size > 0">
-                and tfo.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > tfo.create_time
-            </if>
-            <if test="params.billDateList != null and params.billDateList.size > 0">
-                and tfo.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > tfo.bill_date
+            <if test="params.ids == null or params.ids.size == 0">
+                <if test="params.code != null and params.code != ''">
+                    and tfo.code ilike concat('%',#{params.code},'%')
+                </if>
+                <if test="params.invalidStatus != null ">
+                    and tfo.invalid_status = #{params.invalidStatus}
+                </if>
+                <if test="params.transferDirection != null ">
+                    and tfo.transfer_direction = #{params.transferDirection}
+                </if>
+                <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                    and tod.sku_no in
+                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                    and tfo.approve_status in
+                    <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.outWarehouseIdList != null and params.outWarehouseIdList.size > 0">
+                    and tfo.out_warehouse_id in
+                    <foreach collection="params.outWarehouseIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+                    and tfo.create_user_id in
+                    <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                    and tfo.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > tfo.create_time
+                </if>
+                <if test="params.billDateList != null and params.billDateList.size > 0">
+                    and tfo.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > tfo.bill_date
+                </if>
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}

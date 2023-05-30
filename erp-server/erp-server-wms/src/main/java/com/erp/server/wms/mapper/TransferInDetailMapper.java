@@ -3,6 +3,9 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.wms.entity.TransferInDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * <p>
@@ -14,5 +17,12 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface TransferInDetailMapper extends BaseMapper<TransferInDetailEntity> {
+
+    /**
+     * 根据来源明细id查询有效数据
+     * @param sourceDetailIds
+     * @return
+     */
+    List<TransferInDetailEntity> listSourceDetailIds(@Param("sourceDetailIds") List<String> sourceDetailIds);
 
 }

@@ -169,6 +169,11 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
 
+    @Override
+    public List<TransferInDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds) {
+        return this.baseMapper.listSourceDetailIds(sourceDetailIds);
+    }
+
     /**
      * 获取到删除的数据
      *

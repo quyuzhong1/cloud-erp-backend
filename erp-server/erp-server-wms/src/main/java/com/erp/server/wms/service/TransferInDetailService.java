@@ -56,4 +56,13 @@ public interface TransferInDetailService extends SuperService<TransferInDetailEn
      * @return void
      */
     void updateDetailList(String mainId, List<TransferInDetailDTO.UpdateDTO> detailList);
+
+
+    /**
+     * 根据来源明细id查询
+     * @param sourceDetailIds
+     * @return
+     */
+    List<TransferInDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds);
+
 }

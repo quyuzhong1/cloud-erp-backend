@@ -5,6 +5,9 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 /**
  * @author Will
  * @version 1.0
@@ -45,12 +48,21 @@ public enum TransferDirectionEnum implements EnumMessage {
 
     public static String getName(String code) {
         if (StringUtils.isNotBlank(code)) {
-            for (InventoryDirectionEnum item : InventoryDirectionEnum.values()) {
+            for (TransferDirectionEnum item : TransferDirectionEnum.values()) {
                 if (code.equals(item.getCode())) {
                     return item.getName();
                 }
             }
         }
         return "";
+    }
+
+    /**
+     * 根据代码获取
+     * @param code
+     * @return
+     */
+    public static TransferDirectionEnum of(String code) {
+        return Arrays.stream(TransferDirectionEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 }

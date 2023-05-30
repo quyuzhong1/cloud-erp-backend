@@ -12,9 +12,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -170,6 +168,11 @@ public class TransferOutDTO implements Serializable {
          * sku no 集合
          */
         private List<String> skuNoList;
+
+        /**
+         * 搜索类型
+         */
+        private String  searchType;
 
         /**
          * 调拨单号
@@ -476,7 +479,7 @@ public class TransferOutDTO implements Serializable {
     }
 
     /**
-     * 下推分步式调入单数据
+     * 下推分步式调入单数据展示
      */
     @Data
     @NoArgsConstructor
@@ -539,12 +542,6 @@ public class TransferOutDTO implements Serializable {
         private String   inWarehouseName;
 
         /**
-         * 审核状态
-         */
-        private String approveStatus;
-
-
-        /**
          * skuId
          */
         private String skuId;
@@ -575,10 +572,92 @@ public class TransferOutDTO implements Serializable {
         private String outWarehouseLocation;
 
         /**
-         * 备注
+         * 备注（分步式调出单明细）
          */
         private String remark;
 
     }
+
+
+    /**
+     * 下推分步式调入单数据保存实体
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenerateTransferInDTO implements Serializable {
+
+        /**
+         * 来源明细id
+         */
+        @NotBlank(message = "来源明细id不能为空")
+        private String sourceDetailId;
+
+        /**
+         * 来源类型
+         */
+        @NotBlank(message = "来源类型不能为空")
+        private String sourceType;
+
+        /**
+         * 来源id
+         */
+        @NotBlank(message = "来源单据id不能为空")
+        private String sourceId;
+
+        /**
+         * 分步式调出单号(来源编号)
+         */
+        @NotBlank(message = "来源单据编号不能为空")
+        private String sourceCode;
+
+        /**
+         * 调出日期
+         */
+        @NotNull(message = "调出日期不能为空")
+        private LocalDate billDate;
+
+        /**
+         * 调出仓库id
+         */
+        @NotNull(message = "调出仓库不能为空")
+        private String   outWarehouseId;
+
+        /**
+         * 调入仓库id
+         */
+        @NotNull(message = "调入仓库不能为空")
+        private String  inWarehouseId;
+
+        /**
+         * skuId
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 计划调入数量
+         */
+        @NotNull(message = "计划调入数量不能为空")
+        @Min(value = 1,message = "计划调入数量最小值为1")
+        @Max(value = 99999999,message = "计划调入数量最大值为99999999")
+        private Integer planQty;
+
+        /**
+         * 调出仓位
+         */
+        private String outWarehouseLocation;
+
+        /**
+         * 备注（分步式调出单明细）
+         */
+        private String remark;
+
+    }
+
 
 }
