@@ -136,7 +136,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                     obj.setSourceCode(null);
                     obj.setCustomerName(null);
                     obj.setInventoryOrgName(null);
-                    obj.setApproveStatus(null);
                     obj.setApproveStatusName(null);
                     obj.setInvalidStatus(null);
                     obj.setInvalidStatusName(null);
