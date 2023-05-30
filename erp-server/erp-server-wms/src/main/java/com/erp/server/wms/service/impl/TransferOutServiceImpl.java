@@ -658,6 +658,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             SkuVO skuVO = skuMap.get(member.getSkuId());
             if(Objects.nonNull(skuVO)) {
                 member.setProductName(skuVO.getSkuName());
+                member.setVariantProperty(skuVO.getVariantProperty());
             }
             //根据组织、仓库、仓位、sku查询可用库存
             Integer curInventoryQty = inventoryService.getUsableInventoryTotal(data.getOutWarehouseId(), member.getSkuId(), member.getOutWarehouseLocation());

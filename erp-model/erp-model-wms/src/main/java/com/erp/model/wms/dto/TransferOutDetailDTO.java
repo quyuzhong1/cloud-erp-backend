@@ -85,6 +85,10 @@ public class TransferOutDetailDTO implements Serializable {
          */
         private String productName;
 
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
 
         /**
          * 调出数量
