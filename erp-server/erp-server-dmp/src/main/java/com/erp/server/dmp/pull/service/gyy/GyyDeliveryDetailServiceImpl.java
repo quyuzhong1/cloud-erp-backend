@@ -2,6 +2,7 @@ package com.erp.server.dmp.pull.service.gyy;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -15,9 +16,11 @@ import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
+import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
+import com.erp.model.dmp.gyy.GyyOrderEntity;
 import com.erp.model.dmp.gyy.bean.DeliveryDetailsBean;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
@@ -64,63 +67,72 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
         log.info("拉取管易发货订单列表数据 gyyDeliveryDetailEntityList.size = {} ", gyyDeliveryDetailEntityList.size());
         XxlJobHelper.log("拉取管易发货订单列表数据 gyyDeliveryDetailEntityList.size = {} ", gyyDeliveryDetailEntityList.size());
         List<GyyDeliveryDetailEntity> insertList = new ArrayList<>();
-        List<GyyDeliveryDetailEntity> pushToMqList = new ArrayList<>();
-        for (GyyDeliveryDetailEntity entity : gyyDeliveryDetailEntityList) {
-            OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByCode(entity.getCode());
+        for (GyyDeliveryDetailEntity deliveryEntity : gyyDeliveryDetailEntityList) {
+            OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByCode(deliveryEntity.getCode());
+            deliveryEntity.setDownloadStatus(0);
+            deliveryEntity.setApiCode(dto.getPlatformApiEnum().getTaskName());
             List<GyyDeliveryDetailEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
             if(CollectionUtil.isEmpty(mongoData)){
-                insertList.add(entity);
-                pushToMqList.add(entity);
+                insertList.add(deliveryEntity);
                 continue;
             }
             GyyDeliveryDetailEntity mongoDatum = mongoData.get(0);
-            String id = mongoDatum.get_id();
-            mongoDatum.set_id(null);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(entity.toString())) {
-                log.warn("管易发货订单 mongo数据无变化无需更新 entity={}", JSONUtil.toJsonStr(entity));
+            if (mongoDatum.toString().equals(deliveryEntity.toString())) {
+                log.warn("管易发货订单 mongo数据无变化无需更新 deliveryEntity={}", JSONUtil.toJsonStr(deliveryEntity));
                 continue;
             }
-            pushToMqList.add(entity);
-            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
-            OrderMongoDTO updateDto = new OrderMongoDTO(id);
+            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(deliveryEntity), MapUtil.class);
+            OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL);
         }
-        if (CollectionUtil.isEmpty(pushToMqList)){
-            log.warn("管易发货订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
+
+    }
+
+    /**
+     * 补充详情信息并发送到mq
+     * @param gyyOrderEntity
+     */
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void addOrderDetail(GyyDeliveryDetailEntity gyyOrderEntity){
+        // 根据状态查询未下载数据
+        // 查询订单详情
+        GyyDeliveryDetailEntity deliveryEntity = GyyApiUtils.queryDeliveryOrderDetail(gyyOrderEntity.getApiCode(), gyyOrderEntity.getCode());
+        if (null == deliveryEntity){
             return;
         }
-        // 构造订单结构  管易需要拆单处理
+        deliveryEntity.setDownloadStatus(1);
+        // 修改数据
+        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(deliveryEntity), MapUtil.class);
+        OrderMongoDTO updateDto = new OrderMongoDTO(gyyOrderEntity.get_id());
+        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
         List<DmpDeliveryDetailInfoEntity> entityToMqlist = new ArrayList<>();
-        pushToMqList.stream()
-            .forEach(x -> {
-                if (CollectionUtil.isEmpty(x.getDetails()) ||  1 == x.getDetails().size()) {
-                    entityToMqlist.add(initOrderInfoEntity(x));
-                }else {
-                    // 对应多个销售订单时进行拆单操作
-                    Map<String, List<DeliveryDetailsBean>> tradeCodeItemMap = x.getDetails().stream()
-                            .collect(Collectors.groupingBy(DeliveryDetailsBean::getTradeCode));
-                    if (1 == tradeCodeItemMap.keySet().size()) {
-                        entityToMqlist.add(initOrderInfoEntity(x));
-                    }else {
-                        tradeCodeItemMap.keySet().stream().forEach(tradeCode -> {
-                            List<DeliveryDetailsBean> itemList = tradeCodeItemMap.get(tradeCode);
-                            GyyDeliveryDetailEntity deliveryInfoEntity = new GyyDeliveryDetailEntity();
-                            BeanUtil.copyProperties(x, deliveryInfoEntity);
-                            deliveryInfoEntity.setDetails(itemList);
-                            entityToMqlist.add(initOrderInfoEntity(deliveryInfoEntity));
-                        });
-                    }
-                }
-        });
+        if (CollectionUtil.isEmpty(gyyOrderEntity.getDetails()) ||  1 == gyyOrderEntity.getDetails().size()) {
+            entityToMqlist.add(initOrderInfoEntity(gyyOrderEntity));
+        }else {
+            // 对应多个销售订单时进行拆单操作
+            Map<String, List<DeliveryDetailsBean>> tradeCodeItemMap = gyyOrderEntity.getDetails().stream()
+                    .collect(Collectors.groupingBy(DeliveryDetailsBean::getTradeCode));
+            if (1 == tradeCodeItemMap.keySet().size()) {
+                entityToMqlist.add(initOrderInfoEntity(gyyOrderEntity));
+            }else {
+                tradeCodeItemMap.keySet().forEach(tradeCode -> {
+                    List<DeliveryDetailsBean> itemList = tradeCodeItemMap.get(tradeCode);
+                    GyyDeliveryDetailEntity deliveryInfoEntity = new GyyDeliveryDetailEntity();
+                    BeanUtil.copyProperties(gyyOrderEntity, deliveryInfoEntity);
+                    deliveryInfoEntity.setDetails(itemList);
+                    entityToMqlist.add(initOrderInfoEntity(deliveryInfoEntity));
+                });
+            }
+        }
         // 异步推送到MQ
-        entityToMqlist.stream().peek(msg ->{
+        List<DmpDeliveryDetailInfoEntity> collect = entityToMqlist.stream().peek(msg -> {
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_DELIVERY_ORDER_TAG.getName(),
                     msg, StrUtil.format("{}_{}", msg.getBillNo(), msg.getOrderNo()));
-            if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());
@@ -158,6 +170,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
             orderNo = gyyDeliveryDetailEntity.getDetails().get(0).getTradeCode();
         }
         deliveryDetailInfoEntity.setOrderNo(orderNo);
+        deliveryDetailInfoEntity.setPlatformOrderId(gyyDeliveryDetailEntity.getPlatformCode());
         //物流单号
         deliveryDetailInfoEntity.setLogisticsNo(gyyDeliveryDetailEntity.getExpressNo());
         //客户名称
@@ -170,11 +183,11 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
         deliveryDetailInfoEntity.setShopName(gyyDeliveryDetailEntity.getShopName());
         String currencyCode = "";
         BigDecimal totalCostPrice = BigDecimal.ZERO;
-        String BusinessmanName = "";
+        String businessmanName = "";
         for (DeliveryDetailsBean detail : gyyDeliveryDetailEntity.getDetails()) {
             totalCostPrice = totalCostPrice.add(detail.getTotalCostPrice());
             currencyCode = detail.getCurrencyCode();
-            BusinessmanName = detail.getBusinessmanName();
+            businessmanName = detail.getBusinessmanName();
         }
         //订单成本价
         deliveryDetailInfoEntity.setItemTotalCost(totalCostPrice);
@@ -216,7 +229,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
         //销售员编号
         deliveryDetailInfoEntity.setSalesManId("");
         //销售员名称
-        deliveryDetailInfoEntity.setSalesManName(BusinessmanName);
+        deliveryDetailInfoEntity.setSalesManName(businessmanName);
         Integer status = (null != gyyDeliveryDetailEntity.getCancel() && gyyDeliveryDetailEntity.getCancel()) ? 2 : 1;
         //状态 1.已发货 2..已作废
         deliveryDetailInfoEntity.setStatus(status);

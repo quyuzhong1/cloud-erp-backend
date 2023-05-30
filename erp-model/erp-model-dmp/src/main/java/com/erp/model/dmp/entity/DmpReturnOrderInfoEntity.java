@@ -225,6 +225,12 @@ public class DmpReturnOrderInfoEntity implements Serializable {
     @TableField(value = "is_deleted")
     private Boolean isDeleted;
 
+    /**
+     * erp订单code
+     */
+    @TableField(value = "order_code")
+    private String orderCode;
+
     @TableField(exist = false)
     private List<DmpReturnOrderItemEntity> itemList;
 

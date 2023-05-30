@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.HttpCommonUtil;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 管易API 处理类
@@ -89,6 +91,32 @@ public class GyyApiUtils {
         return infoArrayList;
     }
 
+    public static GyyOrderEntity querySalesOrderDetail(String method, String code){
+        //总页数
+        HashMap<String, Object> params = new HashMap<>(6);
+        params.put("code", code);
+        Map<String, Object> paramMap = getParamMap(method, 0, 0, params);
+        //设置请求头
+        Map<String, String> headerMap = new HashMap<>(2);
+        headerMap.put("Content-Type", "text/json");
+        JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.GYY_HOST, JSONUtil.toJsonStr(paramMap), null, headerMap, RequestMethod.POST);
+        boolean isHistory = method.contains("history");
+        if(null == responseMap || null == responseMap.getBoolean("success")){
+            log.error(JSONObject.toJSONString(responseMap));
+            return null;
+        }
+        if (!responseMap.getBoolean("success")) {
+            log.error("调用url={} param={} {}管易销售详情订单数据失败 responseMap={}",UrlContant.GYY_HOST, JSONUtil.toJsonStr(paramMap), isHistory ? "历史" : "", JSONUtil.toJsonStr(responseMap));
+            throw new RuntimeException(StrUtil.format("调用url={} param={} {}管易销售详情订单数据失败 responseMap={}",
+                    UrlContant.GYY_HOST, JSONUtil.toJsonStr(paramMap),  isHistory ? "历史" : "", JSONUtil.toJsonStr(responseMap)));
+        }
+        JSONArray orders = responseMap.getJSONArray("orders");
+        if(CollectionUtil.isEmpty(orders)){
+            return null;
+        }
+        return JSONObject.parseObject(JSONObject.toJSONString(orders.get(0)), GyyOrderEntity.class);
+    }
+
     /**
      * 查询管易发货订单列表
      * @param method
@@ -139,6 +167,33 @@ public class GyyApiUtils {
         return infoArrayList;
     }
 
+    /**
+     * 查询发送单详情信息
+     * @param method
+     * @param code
+     * @return GyyDeliveryDetailEntity
+     */
+    public static GyyDeliveryDetailEntity queryDeliveryOrderDetail(String method, String code){
+        //总页数
+        HashMap<String, Object> params = new HashMap<>(6);
+        params.put("code", code);
+        Map<String, Object> paramMap = getParamMap(method, 0, 0, params);
+        //设置请求头
+        Map<String, String> headerMap = new HashMap<>(2);
+        headerMap.put("Content-Type", "text/json");
+        JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.GYY_HOST, JSONUtil.toJsonStr(paramMap), null, headerMap, RequestMethod.POST);
+        boolean isHistory = method.contains("history");
+        if (!responseMap.getBoolean("success")) {
+            log.error("调用url={} param={} {}管易发货单详情订单数据失败 responseMap={}",UrlContant.GYY_HOST, JSONUtil.toJsonStr(paramMap), isHistory ? "历史" : "", JSONUtil.toJsonStr(responseMap));
+            throw new RuntimeException(StrUtil.format("调用url={} param={} {}管易发货单详情订单数据失败 responseMap={}",
+                    UrlContant.GYY_HOST, JSONUtil.toJsonStr(paramMap),  isHistory ? "历史" : "", JSONUtil.toJsonStr(responseMap)));
+        }
+        JSONArray deliverys = responseMap.getJSONArray("deliverys");
+        if(CollectionUtil.isEmpty(deliverys)){
+            return null;
+        }
+        return JSONObject.parseObject(JSONObject.toJSONString(deliverys.get(0)), GyyDeliveryDetailEntity.class);
+    }
     /**
      * 查询管易退款信息接口
      * @param method
@@ -330,11 +385,15 @@ public class GyyApiUtils {
      * @return java.lang.String
      **/
     public static String sign(String jsonDate, String secret) {
-        StringBuilder enValue = new StringBuilder();
-        enValue.append(secret);
-        enValue.append(jsonDate);
-        enValue.append(secret);
-        return Md5Util.md5(enValue.toString());
+        String enValue = secret +
+                jsonDate +
+                secret;
+        return Md5Util.md5(enValue);
+    }
+
+    public static void main(String[] args) {
+//        GyyOrderEntity gyyOrder = querySalesOrderDetail("gy.erp.trade.history.detail.get", "SO375039116724");
+        GyyOrderEntity gyyOrder1 = querySalesOrderDetail("gy.erp.trade.detail.get", "SO609669500496");
     }
 
 }

@@ -43,6 +43,9 @@ public class  OrderMongoDTO {
     @Panno(findType = PannoEnum.EQ,field = "fMaterialId")
     private String fMaterialId;
 
+    @Panno(findType = PannoEnum.EQ,field = "downloadStatus")
+    private Integer downloadStatus;
+
     public OrderMongoDTO(String platformCode, String code) {
         this.platformCode = platformCode;
         this.code = code;
@@ -84,6 +87,12 @@ public class  OrderMongoDTO {
     public static OrderMongoDTO getShopByMaterialId(String fMaterialId) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
         orderMongoDTO.setFMaterialId(fMaterialId);
+        return orderMongoDTO;
+    }
+
+    public static OrderMongoDTO getByDownloadStatus(Integer status) {
+        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+        orderMongoDTO.setDownloadStatus(status);
         return orderMongoDTO;
     }
 }

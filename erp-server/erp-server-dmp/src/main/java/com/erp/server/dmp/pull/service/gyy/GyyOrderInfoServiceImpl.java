@@ -28,6 +28,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
+import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -55,7 +56,7 @@ import java.util.stream.Collectors;
 public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntity> {
     @Resource
     private MongoService mongoService;
-    @Autowired
+    @Resource
     private MQProducerService<DmpOrderInfoEntity> mqProducerService;
     @Resource
     private DmpShopInfoService dmpShopInfoService;
@@ -69,29 +70,31 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto){
-        //请求api
+        // 请求列表API获取更新订单列表
         List<GyyOrderEntity> gyyOrderEntityList = pullDate(dto);
         if (CollectionUtil.isEmpty(gyyOrderEntityList)) {
             log.info("拉取管易订单列表数据为空 .gyyOrderEntityList size = 0 ");
             return;
         }
-        //过滤数据
+        log.info("拉取管易销售订单列表数据 gyyDeliveryDetailEntityList.size = {} ", gyyOrderEntityList.size());
+        XxlJobHelper.log("拉取管易销售订单列表数据 gyyDeliveryDetailEntityList.size = {} ", gyyOrderEntityList.size());
+        // 对数据进行检查类，需要新增和更新数据
         List<GyyOrderEntity> insertList = new ArrayList<>();
-        List<GyyOrderEntity> pushToMqList = new ArrayList<>();
         for (GyyOrderEntity gyyOrderEntity : gyyOrderEntityList) {
-            OrderMongoDTO orderMongoDTO = new OrderMongoDTO(gyyOrderEntity.getPlatformCode(), gyyOrderEntity.getCode());
+            OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByCode(gyyOrderEntity.getCode());
+            gyyOrderEntity.setDownloadStatus(0);
+            gyyOrderEntity.setApiCode(dto.getPlatformApiEnum().getTaskName());
             List<GyyOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(gyyOrderEntity);
-                pushToMqList.add(gyyOrderEntity);
                 continue;
             }
             GyyOrderEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
             if (mongoDatum.toString().equals(gyyOrderEntity.toString())) {
+                log.warn("管易销售订单 mongo数据无变化无需更新 deliveryEntity={}", JSONUtil.toJsonStr(gyyOrderEntity));
                 continue;
             }
-            pushToMqList.add(gyyOrderEntity);
             // 修改数据
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(gyyOrderEntity), MapUtil.class);
             OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
@@ -100,25 +103,34 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_GYY_ORDER);
         }
-        if (CollectionUtil.isEmpty(pushToMqList)){
-            log.warn("管易销售订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
+
+    }
+
+    /**
+     * 补充详情信息并发送到mq
+     * @param gyyOrderEntity
+     */
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void addOrderDetail(GyyOrderEntity gyyOrderEntity){
+        // 查询订单详情
+        GyyOrderEntity gyyOrder = GyyApiUtils.querySalesOrderDetail(gyyOrderEntity.getApiCode(), gyyOrderEntity.getCode());
+        if(null == gyyOrder){
             return;
         }
-        // 构造订单结构
-        List<DmpOrderInfoEntity> entityToMqlist = pushToMqList.stream()
-                .map(this::initOrderInfoEntity)
-                .filter(ObjectUtil::isNotEmpty)
-                .collect(Collectors.toList());
-
-        // 异步推送到MQ
-        entityToMqlist.stream().peek(msg ->{
-            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_SALE_ORDER_TAG.getName(),
-                    msg, StrUtil.format("{}_{}", msg.getPlatformOrderId(), msg.getSalesRecordNumber()));
-            if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
-                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-            }
-        }).collect(Collectors.toList());
-
+        gyyOrder.setDownloadStatus(1);
+        // 修改数据
+        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(gyyOrder), MapUtil.class);
+        OrderMongoDTO updateDto = OrderMongoDTO.getByCode(gyyOrderEntity.getCode());
+        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
+        DmpOrderInfoEntity infoEntity = initOrderInfoEntity(gyyOrderEntity);
+        if(null == infoEntity){
+            return;
+        }
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_SALE_ORDER_TAG.getName(),
+                infoEntity, StrUtil.format("{}_{}", infoEntity.getPlatformOrderId(), infoEntity.getSalesRecordNumber()));
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+        }
     }
 
     /**
@@ -151,7 +163,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         //源平台订单id
         dmpOrderInfoEntity.setPlatformOrderId(gyyOrderEntity.getPlatformCode());
         //订单状态 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
-        Integer orderState = 4;
+        int orderState = 4;
         //0:未配货 1:部分配货 2:全部配货
         Integer assignState = gyyOrderEntity.getAssignState();
         if (assignState.equals(1) || assignState.equals(2)) {
