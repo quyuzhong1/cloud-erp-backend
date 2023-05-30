@@ -11,6 +11,21 @@ import org.apache.ibatis.annotations.Mapper;
 public interface ProductSaleMapper extends BaseMapper<ProductSaleEntity> {
 
 
+    /**
+     * 更新所有字段包括逻辑删除字段
+     * @param productSaleEntity
+     * @return
+     */
+    int updateAllById(ProductSaleEntity productSaleEntity);
+
+    /**
+     * 根据id获取
+     * @param id
+     * @return
+     */
+    ProductSaleEntity selectById(String id);
+
+
 }
 
 

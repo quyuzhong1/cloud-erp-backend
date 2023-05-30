@@ -7,4 +7,8 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
 
+    ProductDetailEntity getProductDetailById(String id);
+
+    int updateAllById(ProductDetailEntity productDetailEntity);
+
 }

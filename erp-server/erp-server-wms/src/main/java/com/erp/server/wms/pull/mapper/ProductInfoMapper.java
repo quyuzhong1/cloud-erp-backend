@@ -31,4 +31,18 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
      */
     List<String> getNotEmptySpuNos();
 
+    /**
+     * 根据id查询（包含已删除的数据）
+     * @param id
+     * @return
+     */
+    ProductInfoEntity selectById(String id);
+
+    /**
+     * 更新所有字段包括逻辑删除字段
+     * @param productInfoEntity
+     * @return
+     */
+    int updateAllById(ProductInfoEntity productInfoEntity);
+
 }
