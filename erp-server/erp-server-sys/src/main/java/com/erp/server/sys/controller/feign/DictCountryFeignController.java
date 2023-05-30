@@ -3,6 +3,7 @@ package com.erp.server.sys.controller.feign;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.server.sys.service.DictCountryService;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -28,7 +29,7 @@ public class DictCountryFeignController {
      * @return java.util.List<com.erp.model.sys.entity.DictCountryEntity>
      **/
     @PostMapping("/getCountryById")
-    public DictCountryEntity getCountryById(String id) {
+    public DictCountryEntity getCountryById(@RequestBody String id) {
         return dictCountryService.getById(id);
     }
 }
