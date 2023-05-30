@@ -568,6 +568,14 @@ public class SoDetailDTO implements Serializable {
          */
         private Integer returnQty;
         /**
+         * 签收数量
+         */
+        private Integer receiveQty;
+        /**
+         * 应退数量
+         */
+        private Integer mustQty;
+        /**
          * 是否赠品 true 是
          */
         private Boolean isGift;

@@ -21,4 +21,14 @@ public interface SoReturnReceiveFeign {
      **/
     @PostMapping("feign/soReturnReceive/listDetailByIds")
     List<SoReturnReceiveDetailEntity> listDetailByIds(@RequestBody List<String> ids);
+
+    /**
+     * 根据来源id查询详情信息
+     * @Author Luo_WG
+     * @Date 2023/5/15 16:55
+     * @param ids ids
+     * @return java.util.List<com.erp.model.wms.entity.SoReturnNoticeDetailEntity>
+     **/
+    @PostMapping("feign/soReturnReceive/listDetailBySourceIds")
+    List<SoReturnReceiveDetailEntity> listDetailBySourceIds(@RequestBody List<String> ids);
 }

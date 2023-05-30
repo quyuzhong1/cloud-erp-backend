@@ -348,7 +348,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         viewDTO.setCustomerName(customerInfoEntity.getName());
-
         //退货单id
         List<SoReturnEntity> returnEntityList = soReturnFeign.listByIds(Arrays.asList(viewDTO.getSourceId()));
         //销售单id
@@ -369,6 +368,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             detailView.setSalesQty(soDetailEntity.getQty());
             Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSoId().equals(soDetailEntity.getMainId()) && detail.getSkuId().equals(detailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             detailView.setDeliveryQty(actualQty);
+            //获取退货数量
+            Integer returnQty = returnDetailEntityList.stream().filter(req -> req.getId().equals(detailEntity.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            detailView.setMustQty(returnQty);
+
             detailViewDTOS.add(detailView);
         }
         viewDTO.setDetailList(detailViewDTOS);
@@ -658,8 +661,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             List<SoReturnInstockDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnInstockDTO.GenerateSoReturnInstockView view : viewList) {
                 SoReturnInstockDetailDTO.Add detailAddDTO = new SoReturnInstockDetailDTO.Add();
-                detailAddDTO.setMustQty(view.getMustQty());
-                detailAddDTO.setReceiveQty(view.getReceiveQty());
                 detailAddDTO.setRealQty(view.getRealQty());
                 detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
                 detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());

@@ -16,6 +16,7 @@ import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.InvoiceDTO;
 import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -99,7 +100,9 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
                 resultMap.put("FInvoiceType", "增值税专用发票");
             }
         }
-        resultMap.put("currency", entity.getCurrency());
+        List<CurrencyDTO.ViewDTO> viewDTOS1 = sysUserFeign.listByCurrency(Arrays.asList(entity.getCurrency()));
+
+        resultMap.put("currency", viewDTOS1.get(MathUtil.ZERO).getKingdeeCode());
         resultMap.put("remark",entity.getRemark());
         List<SellerDTO.ViewDTO> sellerList = customerSellerService.listByMainId(entity.getId());
         if (CollectionUtils.isNotEmpty(sellerList)) {
@@ -124,6 +127,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         resultMap.put("invoiceList", viewDTOS);
         List<CustomerAddressDTO.ViewDTO> customerAddressList = customerAddressService.listByMainId(entity.getId());
         resultMap.put("customerAddressList", customerAddressList);
+        resultMap.put("platformType", entity.getPlatformType().getKingdeeCode());
 
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {

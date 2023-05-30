@@ -17,18 +17,17 @@ import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
+import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
+import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.wms.feign.InventoryFeign;
-import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
-import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.mapper.SoReturnDetailMapper;
 import com.erp.server.oms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -74,6 +73,9 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
+    private SoReturnReceiveFeign soReturnReceiveFeign;
+
+    @Resource
     private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
 
     @Resource
@@ -104,6 +106,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             if (actualQty < detailDto.getReturnQty() + returnQty) {
                 throw new ServiceException(ApiError.ERROR_92009);
             }
+
             soReturnDetailEntity.setMainId(id);
             soReturnDetailEntity.setSkuId(soDetailEntity.getSkuId());
             soReturnDetailEntity.setSkuNo(soDetailEntity.getSkuNo());
@@ -238,6 +241,9 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
         //从wms 获取到sku 的即时库存信息
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
+        //获取退货单id
+        List<String> returnMainIds = list.stream().map(SoDetailDTO.AddDetailView::getMainId).distinct().collect(Collectors.toList());
+        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveFeign.listDetailBySourceIds(returnMainIds);
 
         for (SoDetailDTO.AddDetailView addDetailView : list) {
             ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(addDetailView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
@@ -256,6 +262,9 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             addDetailView.setDeliveryQty(actualQty);
             addDetailView.setUnDeliveryQty(addDetailView.getSalesQty() - actualQty);
             addDetailView.setReturnQty(returnQty);
+            SoReturnReceiveDetailEntity receiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(detail -> detail.getSourceDetailId().equals(addDetailView.getId())).findFirst().orElse(new SoReturnReceiveDetailEntity());
+            addDetailView.setReceiveQty(receiveDetailEntity.getReceiveQty());
+            addDetailView.setMustQty(returnQty);
         }
         return list;
     }
