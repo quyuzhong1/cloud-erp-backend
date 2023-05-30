@@ -68,16 +68,16 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     private String soCode;
 
     /**
-     * 发货组织
+     * 库存组织
      */
-    @TableField("delivery_org_id")
-    private String deliveryOrgId;
+    @TableField("warehouse_org_id")
+    private String warehouseOrgId;
 
     /**
-     * 发货组织名
+     * 库存组织名
      */
-    @TableField("delivery_org_name")
-    private String deliveryOrgName;
+    @TableField("warehouse_org_name")
+    private String warehouseOrgName;
 
 
 

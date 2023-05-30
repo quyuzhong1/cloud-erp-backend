@@ -343,11 +343,7 @@ public class SoOutstockDTO implements Serializable {
          */
         private String warehouseKeeperId;
 
-        /**
-         * 发货组织
-         */
-        @NotBlank(message = "发货组织不能为空")
-        private String deliveryOrgId;
+
 
 
         /**
@@ -553,14 +549,16 @@ public class SoOutstockDTO implements Serializable {
 
 
         /**
-         * 销售组织
+         * 库存组织id
          */
-        private String salesOrgId;
+        private String warehouseOrgId;
 
         /**
-         * 销售组织名
+         * 库存组织名
          */
-        private String salesOrgName;
+        private String warehouseOrgName;
+
+
 
         /**
          * 销售员

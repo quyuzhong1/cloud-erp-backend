@@ -443,6 +443,9 @@ public class SoOutstockDetailDTO implements Serializable {
         private String soDetailId;
 
 
+        private String approveStatus;
+
+
 
 
     }

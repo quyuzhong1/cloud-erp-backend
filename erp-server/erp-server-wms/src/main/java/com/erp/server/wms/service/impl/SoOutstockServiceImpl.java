@@ -8,7 +8,6 @@ import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -33,7 +32,10 @@ import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -150,8 +152,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<SoOutstockDetailDTO.AddDTO> addDetailList = dto.getDetailList();
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSCK, BusinessNoTypeEnum.CODE_XSCK.getCode()));
         soOutstock.setCode(code);
-        //发货组织
-        String deliveryOrgId = dto.getDeliveryOrgId();
+
+        soOutstock.setWarehouseOrgId(soInfo.getWarehouseOrgId());
+        soOutstock.setWarehouseOrgName(soInfo.getWarehouseOrgName());
         //仓库id
         String warehouseId = dto.getWarehouseId();
         //仓管员
@@ -163,11 +166,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 soOutstock.setWarehouseKeeperName(userInfo.getUserName());
             }
         }
-        //组织列表
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(deliveryOrgId));
-        String salesOrgName = orgList.stream().filter(d -> d.getId().equals(deliveryOrgId)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-        soOutstock.setDeliveryOrgName(salesOrgName);
         WarehouseEntity warehouse = warehouseService.getById(warehouseId);
         if (Objects.isNull(warehouse)) {
             throw new ServiceException(ApiError.ERROR_99002);
@@ -284,7 +282,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             result.setReceiveAddress(soInfo.getReceiveAddress());
             result.setReceiverName(soInfo.getReceiverName());
             result.setDeliveryModeName(soInfo.getDeliveryModeName());
-            result.setSalesOrgName(soInfo.getSalesOrgName());
             result.setRequireDate(soInfo.getRequireDate());
             result.setTelNumber(soInfo.getTelNumber());
             result.setTypeName(soInfo.getOrderTypeName());
@@ -782,8 +779,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setSoCode(soInfo.getCode());
         soOutstock.setCustomerId(soInfo.getCustomerId());
         soOutstock.setOrderType(soInfo.getOrderType());
-        //发货组织
-        String deliveryOrgId = dto.getDeliveryOrgId();
+        soOutstock.setWarehouseOrgId(soInfo.getWarehouseOrgId());
+        soOutstock.setWarehouseOrgName(soInfo.getWarehouseOrgName());
+
         //仓库id
         String warehouseId = dto.getWarehouseId();
         //仓管员
@@ -795,11 +793,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 soOutstock.setWarehouseKeeperName(userInfo.getUserName());
             }
         }
-        //组织列表
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(deliveryOrgId));
-        String salesOrgName = orgList.stream().filter(d -> d.getId().equals(deliveryOrgId)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-        soOutstock.setDeliveryOrgName(salesOrgName);
         WarehouseEntity warehouse = warehouseService.getById(warehouseId);
         if (Objects.isNull(warehouse)) {
             throw new ServiceException(ApiError.ERROR_99002);
@@ -866,7 +859,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 add.setSourceCode(generateInfo.getSourceCode());
                 add.setSourceType(generateInfo.getSourceType());
                 add.setCarrierId(generateInfo.getCarrierId());
-                add.setDeliveryOrgId(generateInfo.getDeliveryOrgId());
                 add.setPlanDeliveryDate(generateInfo.getPlanDeliveryDate());
                 add.setWarehouseId(generateInfo.getWarehouseId());
                 add.setTrackNo(generateInfo.getTrackNo());
@@ -982,11 +974,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     /**
-     *
-     *@parms
-     *@return
-     *@author yl
-     *@date
+     * @return
+     * @parms
+     * @author yl
+     * @date
      */
     @Override
     public Integer getPushDownCountBySoIds(List<String> soIds) {
@@ -994,7 +985,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             return 0;
         }
         Integer count = this.lambdaQuery().in(SoOutstockEntity::getSoId, soIds).
-                eq(SoOutstockEntity::getInvalidStatus,Boolean.FALSE).
+                eq(SoOutstockEntity::getInvalidStatus, Boolean.FALSE).
                 count();
         return count;
     }
