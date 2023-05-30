@@ -10,11 +10,13 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.wms.entity.MachineDetailEntity;
 import com.erp.model.wms.entity.MachineInfoEntity;
+import com.erp.model.wms.entity.MachineSubComponentsEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeMachineInfoService;
 import com.erp.server.wms.service.MachineDetailService;
 import com.erp.server.wms.service.MachineInfoService;
+import com.erp.server.wms.service.MachineSubComponentsService;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -24,6 +26,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * @description: 同步其他入库单
@@ -48,10 +51,34 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
     @Resource
     private WarehouseService warehouseService;
 
+    @Resource
+    private MachineSubComponentsService machineSubComponentsService;
 
     @Override
     public void syncDataToKingdee(MachineInfoEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
+
+        //加工明细
+        List<MachineDetailEntity> detailList = machineDetailService.listByMainId(entity.getId());
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+
+        //子件明细
+        List<String> subComponentIds = detailList.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
+        List<MachineSubComponentsEntity> machineSubComponentsList = machineSubComponentsService.listByDetailIds(subComponentIds);
+        if (CollectionUtils.isEmpty(machineSubComponentsList)) {
+            return;
+        }
+        List<String> warehouseIds = machineSubComponentsList.stream().map(MachineSubComponentsEntity::getWarehouseId).collect(Collectors.toList());
+        warehouseIds.add(entity.getWarehouseId());
+
+        //所有仓库
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
+
+        //人员
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(entity.getWarehouseKeeperId(),entity.getReceiverId()));
+
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         //业务id
@@ -62,11 +89,6 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
         resultMap.put("type", entity.getType());
         //出库日期
         resultMap.put("billDate", entity.getBillDate());
-        //仓库
-        List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(entity.getWarehouseId()));
-
-        //人员
-        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(entity.getWarehouseKeeperId(),entity.getReceiverId()));
 
         if (CollectionUtils.isNotEmpty(userList)) {
             //仓管员
@@ -96,11 +118,6 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
             resultMap.put("receiveOrgCode", receiveOrgCode);
         }
 
-        List<MachineDetailEntity> detailList = machineDetailService.listByMainId(entity.getId());
-        if (CollectionUtils.isEmpty(detailList)) {
-            return;
-        }
-
         List<JSONObject> list = new ArrayList<>();
         for (MachineDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
@@ -120,24 +137,52 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
             }
             //仓位
             jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
+            //参照版本
+            jsonObject.set("referenceVersion", detail.getReferenceVersion());
             //备注
             jsonObject.set("remark", detail.getRemark());
 
+            //子件
+            List<MachineSubComponentsEntity> componentsList = machineSubComponentsList.stream().filter(obj -> obj.getDetailId().equals(detail.getId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(componentsList)) {
+                continue;
+            }
+            //子件信息录入
+            List<JSONObject> subComponents = new ArrayList<>();
+            for (MachineSubComponentsEntity machineSubComponents : componentsList) {
+                JSONObject subObject = new JSONObject();
+                subObject.set("skuNo",machineSubComponents.getSkuNo());
+                subObject.set("unit",machineSubComponents.getUnit());
+                subObject.set("qty",machineSubComponents.getQty());
+                subObject.set("warehouseLocation",machineSubComponents.getWarehouseLocation());
+                if (CollectionUtils.isNotEmpty(warehouseList)) {
+                    //仓库编码
+                    String warehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(machineSubComponents.getWarehouseId()))
+                            .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse(null);
+                    //子件调出仓库
+                    jsonObject.set("warehouseCode", warehouseCode);
+                }
+                subComponents.add(subObject);
+            }
+            jsonObject.set("subComponentsList",subComponents);
             list.add(jsonObject);
         }
-        resultMap.put("list", list);
+        resultMap.put("detailList", list);
 
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
 
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_OTHER_INSTOCK_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
+            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_MACHINE_INFO_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
                 return machineInfoService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "",operate);
             }
             return Boolean.TRUE;
         });
+
+
+
     }
 }
