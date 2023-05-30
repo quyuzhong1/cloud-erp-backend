@@ -148,8 +148,8 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         boolean isNotVijim = null != shopInfo && (ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(shopInfo.getUseOrgId().toString()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(shopInfo.getUseOrgId().toString()));
         if(isNotVijim){ return null; }
         DmpOrderInfoEntity dmpOrderInfoEntity = new DmpOrderInfoEntity();
-        //平台订单id
-        dmpOrderInfoEntity.setPlatformOrderId(gyyOrderEntity.getCode());
+        //源平台订单id
+        dmpOrderInfoEntity.setPlatformOrderId(gyyOrderEntity.getPlatformCode());
         //订单状态 2.配货中 3.已发货 4.已完成 5.已作废 6.退货 7.退款
         Integer orderState = 4;
         //0:未配货 1:部分配货 2:全部配货
@@ -192,7 +192,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
             dmpOrderInfoEntity.setPlatformCreateTime(LocalDateTime.parse(gyyOrderEntity.getDealtime(), sdf));
         }
         //平台交易号
-        dmpOrderInfoEntity.setSalesRecordNumber(gyyOrderEntity.getPlatformCode());
+        dmpOrderInfoEntity.setSalesRecordNumber(gyyOrderEntity.getCode());
         //平台的订单状态
         dmpOrderInfoEntity.setPlatformOrderStatus(gyyOrderEntity.getPlatformTradingState());
         //订单来源平台
