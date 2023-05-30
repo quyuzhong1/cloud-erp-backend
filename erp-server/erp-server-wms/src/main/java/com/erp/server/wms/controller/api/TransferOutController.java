@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.api;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -242,9 +243,19 @@ public class TransferOutController extends BaseController {
      * @return
      */
     @PostMapping(value = "/generateTransferIn")
-    public ApiResult<Void> generateTransferIn(@RequestBody @Validated TransferOutDTO.ListGenerateTransferInDTO dto) {
-        transferOutService.generateTransferIn(dto.getList());
+    public ApiResult<Void> generateTransferIn(@RequestBody @Validated ValidList<TransferOutDTO.GenerateTransferInDTO> dto) {
+        transferOutService.generateTransferIn(dto);
         return success();
+    }
+
+    /**
+     * 下推分布式调入单修改页面选择产品信息
+     * @param param
+     * @return
+     */
+    @PostMapping("/listTransferOut")
+    public ApiResult<List<TransferOutDTO.ChooseListDTO>> listTransferOut(@RequestBody @Valid TransferOutDTO.SearchParamDTO param) {
+        return success(transferOutService.listTransferOut(param));
     }
 
 }

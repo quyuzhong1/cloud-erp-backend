@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.entity.TransferOutEntity;
@@ -123,6 +124,13 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
      * 下推分布式调入单保存
      * @param dataList
      */
-    void generateTransferIn(List<TransferOutDTO.GenerateTransferInDTO> dataList);
+    void generateTransferIn(ValidList<TransferOutDTO.GenerateTransferInDTO> dataList);
+
+    /**
+     * 下推分布式调入单修改页面选择产品信息
+     * @param param
+     * @return
+     */
+    List<TransferOutDTO.ChooseListDTO> listTransferOut(TransferOutDTO.SearchParamDTO param);
 
 }
