@@ -428,10 +428,11 @@
             qi.source_type,
             qp.sku_id,
             qp.sku_no,
-            qi.qc_status
+            qi.qc_status,
+            qi.warehouse_id
         FROM qc_info qi
         INNER JOIN qc_product qp ON qi.id = qp.main_id AND qi.is_deleted=FALSE
-        WHERE qb.is_deleted=FALSE
+        WHERE qp.is_deleted=FALSE
         <if test="ids != null and ids.size > 0">
             and qi.id in
             <foreach collection="ids" item="item" open="(" close=")" separator=",">

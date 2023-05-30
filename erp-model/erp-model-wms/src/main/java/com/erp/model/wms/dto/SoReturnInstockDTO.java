@@ -479,13 +479,17 @@ public class SoReturnInstockDTO {
          */
         private String  returnReasonDict;
         /**
-         * 仓库
+         * 仓位
          */
         private String warehouseLocation;
         /**
-         * 仓位
+         * 仓库
          */
         private String warehouseId;
+        /**
+         * 仓库
+         */
+        private String warehouseName;
         /**
          * 备注
          */

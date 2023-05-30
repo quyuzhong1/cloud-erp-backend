@@ -614,7 +614,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         SoInfoEntity soInfoEntity = soInfoService.getById(entity.getSourceId());
         entity.setWarehouseId(soInfoEntity.getWarehouseId());
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(soInfoEntity.getWarehouseId()));
-        entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
+        if (CollectionUtils.isNotEmpty(warehouseList)) {
+            entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
+        }
         return entity;
     }
 
