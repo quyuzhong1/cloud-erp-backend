@@ -817,14 +817,14 @@ public class SoOutstockDTO implements Serializable {
         private String customerName;
 
         /**
-         * 发货组织id
+         * 库存组织id
          */
-        private String deliveryOrgId;
+        private String warehouseOrgId;
 
         /**
-         * 发货组织名
+         * 库存组织名
          */
-        private String deliveryOrgName;
+        private String warehouseOrgName;
 
 
         /**
