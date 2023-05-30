@@ -152,7 +152,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     obj.setCode(null);
                     obj.setSourceCode(null);
                     obj.setCustomerName(null);
-                    obj.setDeliveryOrgName(null);
+                    obj.setWarehouseOrgName(null);
                     obj.setApproveStatusName(null);
                     obj.setApproveStatus(null);
                     obj.setInvalidStatusName(null);
@@ -780,7 +780,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             List<SoInfoDTO.GenerateDeliveryView> viewList = list.stream().filter(req -> req.getSoId().equals(soId)).collect(Collectors.toList());
             List<SoDeliveryNoticeDetailDTO.Add> detailList = new ArrayList<>();
             for (SoInfoDTO.GenerateDeliveryView view : viewList) {
-                add.setDeliveryOrgId(view.getInventoryOrgId());
                 add.setWarehouseId(view.getWarehouseId());
                 add.setPlanDeliveryDate(view.getPlanDeliveryDate());
                 SoDeliveryNoticeDetailDTO.Add detailAdd = new SoDeliveryNoticeDetailDTO.Add();
