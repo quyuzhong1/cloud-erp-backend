@@ -579,9 +579,11 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         entity.setOrgName(orgName);
 
         //部门信息
-        SysDepartmentDTO sysDepartmentDTO = sysUserFeign.getUserDeptById(deptId);
-        if (ObjectUtils.isNotEmpty(sysDepartmentDTO)) {
-            entity.setDeptName(sysDepartmentDTO.getName());
+        if (StringUtils.isNotBlank(deptId)) {
+            SysDepartmentDTO sysDepartmentDTO = sysUserFeign.getUserDeptById(deptId);
+            if (ObjectUtils.isNotEmpty(sysDepartmentDTO)) {
+                entity.setDeptName(sysDepartmentDTO.getName());
+            }
         }
     }
 
