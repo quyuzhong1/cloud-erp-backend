@@ -3,7 +3,7 @@
 <mapper namespace="com.erp.server.wms.mapper.SoReturnReceiveDetailMapper">
     <select id="listDetailBySourceIds" resultType="com.erp.model.wms.entity.SoReturnReceiveDetailEntity">
         SELECT
-        srr.id,
+        srrd.id,
         srrd.main_id,
         srrd.sku_id,
         srrd.sku_no,
@@ -27,7 +27,7 @@
 
     <select id="listDetailByIds" resultType="com.erp.model.wms.entity.SoReturnReceiveDetailEntity">
         SELECT
-        srr.id,
+        srrd.id,
         srrd.main_id,
         srrd.sku_id,
         srrd.sku_no,
