@@ -57,7 +57,7 @@ public class DictGlobalAreaEntity extends BaseEntity<DictGlobalAreaEntity> {
      * 金蝶编码
      */
     @TableField("kingdee_code")
-    private Boolean kingdeeCode;
+    private String kingdeeCode;
 
 
     public static final String SUBREGION_NAME = "subregion_name";
