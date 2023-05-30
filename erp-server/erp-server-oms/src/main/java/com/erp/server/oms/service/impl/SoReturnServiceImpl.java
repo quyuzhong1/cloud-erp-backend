@@ -37,6 +37,7 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
+import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
@@ -109,6 +110,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private CustomerAddressService customerAddressService;
 
     @Override
     public PagingVO<SoReturnDTO.PagingView> paging(PagingDTO<SoReturnDTO.PagingParam> pagingParamDTO) {
@@ -313,6 +317,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnEntity.setCustomerName(customerInfoEntity.getName());
         List<String> soIds = soDetailEntities.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
+        CustomerAddressEntity customerAddressEntity = customerAddressService.getById(soInfoEntity.getReceiveAddressId());
+        viewDTO.setReceiveAddress(customerAddressEntity.getAddress());
         for (SoReturnDetailEntity detailEntity : detailEntityList) {
             SoReturnDetailDTO.View detailView = new SoReturnDetailDTO.View();
             BeanMapperUtils.copy(detailEntity, detailView);
@@ -326,6 +332,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             detailView.setSalesAmount(soDetailEntity.getAmount());
             detailView.setCurrency(soDetailEntity.getCurrency());
             detailView.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
+            detailView.setReturnReasonDictName(ReturnReasonEnum.getName(detailEntity.getReturnReasonDict()));
             detailViewDTOS.add(detailView);
         }
         viewDTO.setDetailList(detailViewDTOS);

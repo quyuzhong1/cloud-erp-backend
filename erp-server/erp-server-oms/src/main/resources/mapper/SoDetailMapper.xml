@@ -9,6 +9,7 @@
         sd.sku_id,
         sd.sku_no,
         si.warehouse_org_id AS inventoryOrgId,
+        si.warehouse_org_name AS inventoryOrgName,
         sd.qty AS salesQty,
         sd.amount AS salesAmount,
         sd.is_gift,
