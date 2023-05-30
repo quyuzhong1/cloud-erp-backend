@@ -47,7 +47,7 @@ public class SyncKingdeeCustomerGroupServiceImpl implements SyncKingdeeCustomerG
     private MQProducerService mQProducerService;
 
     @Override
-    public void syncDataToKingdee(CustomerInfoEntity entity, String operate) {
+    public void syncDataToKingdee(CustomerGroupEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());

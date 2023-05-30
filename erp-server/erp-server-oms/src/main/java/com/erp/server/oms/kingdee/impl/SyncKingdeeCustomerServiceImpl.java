@@ -113,8 +113,6 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
             }
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(viewDTO.getSellerId());
             resultMap.put("sellerUserCode",findUserDTO.getCode());
-
-
         }
         List<DictBasicDTO.ViewDTO> settleModeList = dictBasicService.getByKey("settleMode");
         DictBasicDTO.ViewDTO settleMode = settleModeList.stream().filter(req -> req.getValue().equals(entity.getSettleDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
@@ -126,40 +124,6 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         resultMap.put("invoiceList", viewDTOS);
         List<CustomerAddressDTO.ViewDTO> customerAddressList = customerAddressService.listByMainId(entity.getId());
         resultMap.put("customerAddressList", customerAddressList);
-        /*
-        //部门
-        SysDepartmentDTO sysDepartmentDTO = sysUserFeign.getUserDeptById(entity.getDeptId());
-        if (ObjectUtils.isNotEmpty(sysDepartmentDTO)) {
-            resultMap.put("deptCode", sysDepartmentDTO.getCode());
-        }*/
-
-
-     /*       //仓库组织
-        resultMap.put("orgId",entity.getOrgId());
-        //仓库地址
-        resultMap.put("address",entity.getAddress());
-        //仓库电话
-        resultMap.put("tel",entity.getContactTelNumber());
-        //是否禁用
-        resultMap.put("disabled",entity.getDisabled());
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
-
-        //审核未通过、非反审核不推送
-        if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus()) && !SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
-            return;
-        }
-
-        //仓库类型
-        DictBasicEntity type = dictBasicService.getById(entity.getTypeId());
-        if (ObjectUtils.isNotEmpty(type)) {
-            resultMap.put("type",type.getValue());
-        }
-        //仓库负责人
-        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getChargeId());
-        if (ObjectUtils.isNotEmpty(findUserDTO)) {
-            resultMap.put("chargeCode",findUserDTO.getCode());
-        }*/
 
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {

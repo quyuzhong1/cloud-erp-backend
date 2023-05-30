@@ -106,9 +106,13 @@ public class SoDeliveryNoticeDTO {
          */
         private String customerName;
         /**
+         * 发货组织id
+         */
+        private String warehouseOrgId;
+        /**
          * 发货组织
          */
-        private String deliveryOrgName;
+        private String warehouseOrgName;
         /**
          * 单据状态
          */
@@ -223,11 +227,6 @@ public class SoDeliveryNoticeDTO {
          */
         private String sourceType;
         /**
-         * 发货组织
-         */
-        @NotBlank(message = "发货组织不能为空")
-        private String deliveryOrgId;
-        /**
          * 承运商id
          */
         private String carrierId;
@@ -265,11 +264,6 @@ public class SoDeliveryNoticeDTO {
          */
         @NotBlank(message = "来源id不能为空")
         private String sourceId;
-        /**
-         * 发货组织
-         */
-        @NotBlank(message = "发货组织不能为空")
-        private String deliveryOrgId;
         /**
          * 承运商id
          */
@@ -366,11 +360,11 @@ public class SoDeliveryNoticeDTO {
         /**
          * 发货组织id
          */
-        private String deliveryOrgId;
+        private String warehouseOrgId;
         /**
          * 发货组织名称
          */
-        private String deliveryOrgName;
+        private String warehouseOrgName;
         /**
          * 出货仓库
          */

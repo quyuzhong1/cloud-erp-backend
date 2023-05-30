@@ -13,6 +13,8 @@
             sdn.approve_status,
             sdn.invalid_status,
             sdn.delivery_status,
+            sdn.warehouse_org_id,
+            sdn.warehouse_org_name,
             sdnd.sku_id,
             sdnd.sku_no,
             sdnd.delivery_qty,
