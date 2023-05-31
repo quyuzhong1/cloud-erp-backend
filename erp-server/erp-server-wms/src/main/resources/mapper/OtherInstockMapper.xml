@@ -49,7 +49,7 @@
             oi.create_user_name as createUserName,
             oi.create_time as createTime
         from other_instock oi
-        inner join other_instock_detail oid on oi.id = oid.main_id and oi.is_deleted = false
+        inner join other_instock_detail oid on oi.id = oid.main_id and oid.is_deleted = false
         <where>
             oi.is_deleted = false
             <if test="params.searchType != null and params.searchType != ''">
@@ -144,7 +144,7 @@
             oi.create_user_name as createUserName,
             oi.create_time as createTime
         from other_instock oi
-        inner join other_instock_detail oid on oi.id = oid.main_id and oi.is_deleted = false
+        inner join other_instock_detail oid on oi.id = oid.main_id and oid.is_deleted = false
         <where>
             oi.is_deleted = false
             <if test="params.ids != null and params.ids.size > 0">
