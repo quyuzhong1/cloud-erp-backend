@@ -828,6 +828,11 @@ public class SoOutstockDTO implements Serializable {
          */
         private String warehouseOrgName;
 
+        /**
+         * 销售组织
+         */
+        private String salesOrgName;
+
 
         /**
          * sku id

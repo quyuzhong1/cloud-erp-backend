@@ -973,6 +973,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             item.setApproveStatusName(approveStatus.getName());
             item.setOrderType(soCustomer.getOrderType());
             item.setOrderTypeName(soCustomer.getOrderTypeName());
+            item.setSalesOrgName(soCustomer.getSalesOrgName());
             item.setCustomerId(soCustomer.getCustomerId());
             item.setCustomerName(soCustomer.getCustomerName());
             SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
