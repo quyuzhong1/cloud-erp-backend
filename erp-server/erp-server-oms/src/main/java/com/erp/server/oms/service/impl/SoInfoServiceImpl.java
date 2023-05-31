@@ -1372,4 +1372,22 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 .set(StringUtils.isNotBlank(syncOperate), SoInfoEntity::getSyncOperate, syncOperate)
                 .update();
     }
+
+
+    /**
+     * 查看 客户是有使用
+     *
+     * @param customerIds
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-05-31 18:17
+     */
+    @Override
+    public Boolean getIsUseCustomer(List<String> customerIds) {
+        if (CollectionUtils.isEmpty(customerIds)) {
+            return Boolean.FALSE;
+        }
+        long count = this.lambdaQuery().in(SoInfoEntity::getCustomerId, customerIds).count();
+        return count>0;
+    }
 }

@@ -89,6 +89,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Resource
     private SyncKingdeeCustomerService syncKingdeeCustomerService;
 
+    @Resource
+    private SoInfoService soInfoService;
+
     /**
      * 获取到分组的id 集合
      *
@@ -757,10 +760,18 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (CollectionUtils.isEmpty(customerList)) {
             throw new ServiceException(ApiError.ERROR_92011);
         }
+
         Boolean disabled = dto.getDisabled();
         long count = customerList.stream().filter(d -> !d.getDisabled() == disabled).count();
         if (count != customerList.size()) {
             throw new ServiceException(ApiError.ERROR_98027);
+        }
+        if (disabled) {
+            //客户是否有使用
+            Boolean isUseCustomer = soInfoService.getIsUseCustomer(ids);
+            if (isUseCustomer) {
+                throw new ServiceException(ApiError.ERROR_92044);
+            }
         }
         customerList.forEach(d -> d.setDisabled(disabled));
         //添加日志
