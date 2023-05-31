@@ -196,7 +196,7 @@
         from so_info si
         left join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
         <where>
-            si.is_deleted = false and si.id in
+            si.is_deleted = false and sd.is_close = false and si.id in
             <foreach collection="ids" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
