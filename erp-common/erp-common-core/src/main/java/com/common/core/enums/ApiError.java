@@ -573,7 +573,7 @@ public enum ApiError implements Serializable {
     ERROR_92042(92042,"只有审核通过的销售订单才能下推单据"),
     ERROR_92043(92043,"只有未作废的销售订单才能下推单据"),
 
-
+    ERROR_99999(99999, "参数错误"),
     ERROR_end(1000000, "系统错误");
 
 

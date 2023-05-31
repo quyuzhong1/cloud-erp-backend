@@ -412,7 +412,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             //判断剩余数量是否存在相同库存数量，如果存在则直接匹配
             Integer finalQty = qty;
             List<String> inventoryIds = resultList.stream().map(InventoryEntity::getId).collect(Collectors.toList());
-            InventoryEntity matches = inventoryList.stream().filter(obj -> obj.getQty().intValue() == finalQty.intValue() && !inventoryIds.contains(obj.getId())).findFirst().orElse(null);
+            InventoryEntity matches = inventoryList.stream().filter(obj -> finalQty.intValue() != MathUtil.ZERO.intValue() && obj.getQty().intValue() == finalQty.intValue() && !inventoryIds.contains(obj.getId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(matches)) {
                 //添加拣货明细
                 resultList.add(matches);

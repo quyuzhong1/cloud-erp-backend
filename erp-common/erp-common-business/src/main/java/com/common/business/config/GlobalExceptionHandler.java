@@ -97,9 +97,9 @@ public class GlobalExceptionHandler {
         List<ObjectError> fieldErrors = e.getBindingResult().getAllErrors();
         if (fieldErrors != null && fieldErrors.size() > 0) {
             ObjectError objectError = ValidatorUtil.getPermanentError(fieldErrors);
-            return ApiResult.error(ApiError.ERROR_400.code, objectError.getDefaultMessage());
+            return ApiResult.error(ApiError.ERROR_99999.code, objectError.getDefaultMessage());
         }
-        return ApiResult.error(ApiError.ERROR_400);
+        return ApiResult.error(ApiError.ERROR_99999);
     }
 
     @ExceptionHandler(value = DataIntegrityViolationException.class)
