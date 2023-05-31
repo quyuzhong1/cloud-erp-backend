@@ -247,6 +247,188 @@ public class SoChangeDetailDTO implements Serializable {
 
 
     /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SoDetailViewDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku no
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 变更类型
+         */
+        private SoChangeTypeEnum changeType;
+
+        /**
+         * 新销售数量
+         */
+        private Integer qty;
+
+        /**
+         * 原销售数量
+         */
+        private Integer oldQty;
+
+
+        /**
+         * 新币种
+         */
+        private String currency;
+
+
+        /**
+         * 新币种符号
+         */
+        private String currencySymbol;
+
+
+        /**
+         * 原币种
+         */
+        private String oldCurrency;
+
+
+        /**
+         * 原币种符号
+         */
+        private String oldCurrencySymbol;
+
+
+        /**
+         * 新单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 原销售单价
+         */
+        private BigDecimal oldPrice;
+
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 原税率
+         */
+        private BigDecimal oldTaxRate;
+
+
+        /**
+         * 新含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 原含税单价
+         */
+        private BigDecimal oldTaxPrice;
+
+        /**
+         * 单位
+         */
+        private String unit;
+
+        /**
+         * 新销售金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 原销售金额
+         */
+        private BigDecimal oldAmount;
+
+
+        /**
+         * 是否赠品
+         */
+        private Boolean isGift;
+
+        /**
+         * 是否补发
+         */
+        private Boolean isReissue;
+
+
+        /**
+         * 销售订单详情id
+         */
+        private String soDetailId;
+
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+
+
+
+
+        /**
+         * 缺货数量
+         */
+        private Integer scarceQty;
+
+        /**
+         * 可出数量
+         */
+        private Integer availableQty;
+
+        /**
+         * 已经出库数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 剩余数量
+         */
+        private Integer waitQty;
+
+        /**
+         * 及时库存
+         */
+        private Integer curInventoryQty;
+
+
+        /**
+         * 仓库组织名
+         */
+        private String warehouseOrgName;
+
+
+    }
+
+
+    /**
      * 修改
      */
     @Data

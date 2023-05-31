@@ -542,7 +542,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
 
     /**
-     * 根据销售订单id 获取到对应详情
+     * 根据销售订单详情 获取到对应详情
      *
      * @param soDetailIds
      * @return com.erp.model.oms.dto.SoChangeDTO.ViewDTO
@@ -612,6 +612,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
             item.setOrderType(soCustomer.getOrderType());
+            item.setOrderTypeName(soCustomer.getOrderTypeName());
             item.setCustomerId(soCustomer.getCustomerId());
             item.setCustomerName(soCustomer.getCustomerName());
             SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
@@ -644,9 +645,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      * @date 2023-05-26 9:26
      */
     @Override
-    public List<SoChangeDetailDTO.ViewDTO> listSoSkuBySoId(String soId) {
+    public List<SoChangeDetailDTO.SoDetailViewDTO> listSoSkuBySoId(String soId) {
         //根据主表id 获取详情
-        List<SoChangeDetailDTO.ViewDTO> detailList = soChangeDetailService.listDetailBySoId(soId, Collections.emptyList(), Boolean.FALSE);
+        List<SoChangeDetailDTO.SoDetailViewDTO> detailList = soChangeDetailService.listSelectDetailBySoId(soId, Collections.emptyList(), Boolean.FALSE);
         return detailList;
     }
 

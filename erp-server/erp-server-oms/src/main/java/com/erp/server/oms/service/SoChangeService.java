@@ -172,7 +172,7 @@ public interface SoChangeService extends SuperService<SoChangeEntity> {
      * @param soId
      * @return java.util.List<com.erp.model.oms.dto.SoChangeDetailDTO.ViewDTO>
      */
-    List<SoChangeDetailDTO.ViewDTO> listSoSkuBySoId(String soId);
+    List<SoChangeDetailDTO.SoDetailViewDTO> listSoSkuBySoId(String soId);
 
     
     /**
