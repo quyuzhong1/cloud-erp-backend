@@ -58,15 +58,12 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * <p>
- *  退货单服务实现类
+ * 退货单服务实现类
  * </p>
  *
  * @author LUO_WG
@@ -662,6 +659,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Override
     public List<SoReturnDTO.PagingView> listSoReturnDetailBySourceId(String sourceId) {
         List<SoReturnDTO.PagingView> list = this.baseMapper.listSoReturnDetailBySourceId(sourceId);
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyList();
+        }
         //获取sku的id集合
         List<String> skuIdList = list.stream().map(SoReturnDTO.PagingView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
@@ -704,8 +704,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         if (CollectionUtils.isEmpty(soIds)) {
             return 0;
         }
-        return this.lambdaQuery().in(SoReturnEntity::getSourceId,soIds).
-                eq(SoReturnEntity::getInvalidStatus,Boolean.FALSE).
+        return this.lambdaQuery().in(SoReturnEntity::getSourceId, soIds).
+                eq(SoReturnEntity::getInvalidStatus, Boolean.FALSE).
                 count();
     }
 }

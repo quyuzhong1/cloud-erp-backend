@@ -36,7 +36,7 @@ public interface SoDetailMapper extends BaseMapper<SoDetailEntity> {
      * @param skuIdList
      * @return java.util.List<com.erp.model.oms.dto.SoDetailDTO.SkuHistoryPriceDTO>
      */
-    List<SoDetailDTO.SkuHistoryPriceDTO> listSkuPriceHistory(List<String> skuIdList);
+    List<SoDetailDTO.SkuHistoryPriceDTO> listSkuPriceHistory(@Param("skuIdList") List<String> skuIdList);
     /**
      * 根据销售单主表id查询详情表信息
      * @Author Luo_WG
@@ -44,7 +44,7 @@ public interface SoDetailMapper extends BaseMapper<SoDetailEntity> {
      * @param ids
      * @return java.util.List<com.erp.model.oms.entity.SoDetailEntity>
      **/
-    List<SoDetailEntity> listSoDetailByMainIds(List<String> ids);
+    List<SoDetailEntity> listSoDetailByMainIds(@Param("mainIds") List<String> ids);
 
     /**
      * 获取到所有

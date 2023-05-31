@@ -7,7 +7,6 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
-import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
@@ -204,31 +203,6 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
     }
 
 
-    /**
-     * 处理数据 更改销售订单的发货状态
-     *
-     * @param ids
-     * @return void
-     * @author yl
-     * @date 2023-05-23 10:02
-     */
-    @Override
-    public void handleData(List<String> ids) {
-        if (CollectionUtils.isNotEmpty(ids)) {
-            List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList = new ArrayList<>(ids.size());
-            List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = this.listByIds(ids);
-            for (SoDeliveryNoticeDetailEntity item : soDeliveryNoticeDetailList) {
-                SoDetailDTO.UpdateDeliveryStatusDTO param = new SoDetailDTO.UpdateDeliveryStatusDTO();
-                param.setId(item.getSourceDetailId());
-                param.setDeliveryQty(item.getDeliveryQty());
-                paramList.add(param);
-            }
-            soInfoFeign.updateDeliveryStatus(paramList);
-
-        }
-
-
-    }
 
     /**
      * 根据销售订单详情id 获取对应 下推的数据

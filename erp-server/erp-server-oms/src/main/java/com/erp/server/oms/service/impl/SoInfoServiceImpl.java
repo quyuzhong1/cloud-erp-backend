@@ -1206,7 +1206,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         List<SoInfoEntity> soInfoList = this.listByIds(ids);
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-        long unApprove =soInfoList.stream().filter(s -> !s.getApproveStatus().
+        long unApprove =soInfoList.stream().filter(s -> !s.getApproveStatus().getStatus().
                 equals(approveStatus)).count();
         if (unApprove>0){
             throw new ServiceException(ApiError.ERROR_92042);

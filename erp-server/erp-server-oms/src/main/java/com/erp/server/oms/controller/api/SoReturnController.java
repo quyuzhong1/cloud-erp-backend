@@ -9,19 +9,17 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.SoReturnEntity;
-import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoReturnDetailService;
 import com.erp.server.oms.service.SoReturnService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -350,8 +348,8 @@ public class SoReturnController extends BaseController {
      * @param id id
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @PostMapping("/listSoReturnDetail")
-    public ApiResult<List<SoReturnDTO.PagingView>> listSoReturnDetailBySourceId(@RequestParam("id") String id) {
+    @GetMapping("/listSoReturnDetail")
+    public ApiResult<List<SoReturnDTO.PagingView>> listSoReturnDetailBySourceId(@RequestParam("soId") String id) {
         List<SoReturnDTO.PagingView> list = soReturnService.listSoReturnDetailBySourceId(id);
         return success(list);
     }

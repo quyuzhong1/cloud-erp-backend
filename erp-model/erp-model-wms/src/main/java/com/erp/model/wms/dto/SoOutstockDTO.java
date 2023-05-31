@@ -80,6 +80,11 @@ public class SoOutstockDTO implements Serializable {
         private String sourceCode;
 
         /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
          * 来源id
          */
         private String sourceId;
@@ -147,12 +152,12 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 发货组织
          */
-        private String deliveryOrgId;
+        private String warehouseOrgId;
 
         /**
          * 发货组织名
          */
-        private String deliveryOrgName;
+        private String warehouseOrgName;
 
 
         /**
@@ -711,11 +716,6 @@ public class SoOutstockDTO implements Serializable {
          */
         private String consumerId;
 
-        /**
-         * 发货组织
-         */
-        @NotBlank(message = "发货组织不能为空")
-        private String deliveryOrgId;
 
 
         /**
