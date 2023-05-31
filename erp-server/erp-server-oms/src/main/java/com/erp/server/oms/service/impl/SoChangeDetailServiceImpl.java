@@ -292,7 +292,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         String warehouseOrgName = soInfo.getWarehouseOrgName();
         String warehouseId = soInfo.getWarehouseId();
         List<SoDetailEntity> soDetailList = soDetailService.listDetailBySoId(soId, soDetailIds, hasContain);
-        if (CollectionUtils.isNotEmpty(soDetailList)) {
+        if (CollectionUtils.isEmpty(soDetailList)) {
             return Collections.emptyList();
         }
         List<String> detailIds = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());

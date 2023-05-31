@@ -360,6 +360,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
      * @author yl
      * @date 2023-05-29 14:35
      */
+    @Transactional(rollbackFor = Exception.class)
     public void handleData(List<String> idList) {
         if (CollectionUtils.isEmpty(idList)) {
             return;

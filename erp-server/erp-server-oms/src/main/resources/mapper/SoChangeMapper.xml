@@ -184,6 +184,7 @@
     </select>
     <select id="listSoRefSoChangeBySoId" resultType="com.erp.model.oms.dto.SoChangeDTO$SoRefDTO">
        SELECT
+          sc.id,
           sc.code,
           sc.approve_status,
           sc.approve_user_name,

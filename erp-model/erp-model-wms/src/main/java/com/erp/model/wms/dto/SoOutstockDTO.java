@@ -349,8 +349,6 @@ public class SoOutstockDTO implements Serializable {
         private String warehouseKeeperId;
 
 
-
-
         /**
          * 预计发货日期
          */
@@ -564,7 +562,6 @@ public class SoOutstockDTO implements Serializable {
         private String warehouseOrgName;
 
 
-
         /**
          * 销售员
          */
@@ -580,7 +577,6 @@ public class SoOutstockDTO implements Serializable {
          * 销售部门id
          */
         private String salesDeptName;
-
 
 
         /**
@@ -717,7 +713,6 @@ public class SoOutstockDTO implements Serializable {
         private String consumerId;
 
 
-
         /**
          * 预计发货日期
          */
@@ -782,6 +777,9 @@ public class SoOutstockDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SoRefDTO {
+
+
+        private String id;
 
         /**
          * 出库单号

@@ -525,6 +525,12 @@ public class SoChangeDTO implements Serializable {
     @NoArgsConstructor
     public static class SoRefDTO {
 
+
+        /**
+         * id
+         */
+        private String id;
+
         /**
          * 变更单号
          */
