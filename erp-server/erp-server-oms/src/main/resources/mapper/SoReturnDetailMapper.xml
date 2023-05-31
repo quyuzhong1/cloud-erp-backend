@@ -65,7 +65,9 @@
         si.warehouse_id,
         sd.currency,
         sd.currency_Symbol,
-        si.id AS soId
+        si.id AS soId,
+        srd.return_type_dict,
+        srd.return_reason_dict
         FROM so_return sr
         INNER JOIN so_return_detail srd ON srd.main_id = sr.id AND sr.is_deleted = FALSE
         INNER JOIN so_info si ON sr.source_id = si.id AND srd.is_deleted = FALSE
