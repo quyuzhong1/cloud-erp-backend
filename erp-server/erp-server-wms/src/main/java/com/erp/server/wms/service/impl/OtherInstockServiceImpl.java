@@ -544,7 +544,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     private void doOpHandleDataId(String warehouseId, String receiverId, String warehouseKeeperId,String deptId, OtherInstockEntity entity) {
 
         //用户信息
-        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(warehouseId,receiverId));
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(warehouseKeeperId,receiverId));
 
         //仓管员
         if (StringUtils.isNotBlank(warehouseKeeperId)) {
