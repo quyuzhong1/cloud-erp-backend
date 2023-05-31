@@ -13,7 +13,7 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.oms.kingdee.SyncKingdeeSoService;
+import com.erp.server.oms.kingdee.SyncKingdeeSoChangeService;
 import com.erp.server.oms.service.CustomerAddressService;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.SoDetailService;
@@ -39,7 +39,7 @@ import java.util.concurrent.CompletableFuture;
  */
 @Slf4j
 @Service
-public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoService {
+public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeService{
 
 
     @Resource
@@ -61,7 +61,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoService {
     private SoInfoService soInfoService;
 
     /**
-     * 销售订单同步金碟
+     * 销售变更单同步金碟
      *
      * @param entity
      * @param operate
