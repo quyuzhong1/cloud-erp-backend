@@ -439,6 +439,7 @@ public enum ApiError implements Serializable {
     ERROR_98064(98064,"备货申请单SKU【%s】数量不能超过【%s】"),
     ERROR_INVALID_TO_SUBMIT(98065,"已作废单据不能提交审核"),
     ERROR_98066(98066,"只有来源是【销售退货签收单】的单据可以下推【销售退货入库单】"),
+    ERROR_98067(98067,"只有已质检才能下推单据"),
 
 
 

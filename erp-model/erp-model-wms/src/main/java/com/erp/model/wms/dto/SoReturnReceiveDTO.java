@@ -89,6 +89,10 @@ public class SoReturnReceiveDTO {
          */
         private String id;
         /**
+         * 明细表id
+         */
+        private String receiveDetailId;
+        /**
          * 退货单id
          */
         private String sourceId;

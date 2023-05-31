@@ -210,7 +210,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 bill.setPurchaseOrderCode(purchaseOrder.getCode());
             }
         }
-
+        bill.setSourceDetailId(dto.getSourceDetailId());
         Boolean result = this.saveOrUpdate(bill);
         if (result) {
             //质检产品 暂存
@@ -1481,9 +1481,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
         long count = list.stream().filter(f -> !f.getQcStatus().equals(finishQcCode)).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98063);
+            throw new ServiceException(ApiError.ERROR_98067);
         }
-        long receiveCount = list.stream().filter(req -> !req.getSourceType().equals(SourceTypeEnum.SO_RETURN_RECEIVE)).count();
+        long receiveCount = list.stream().filter(req -> !req.getSourceType().equals(SourceTypeEnum.SO_RETURN_RECEIVE.getCode())).count();
         if (receiveCount > 0) {
             throw new ServiceException(ApiError.ERROR_98066);
         }
@@ -1505,7 +1505,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
         //签收单id
         List<String> receiveIds = list.stream().map(SoReturnInstockDTO.GenerateSoReturnInstockView::getSourceId).collect(Collectors.toList());
-        List<SoReturnReceiveEntity> soReturnReceiveEntities = soReturnReceiveService.listBySourceIds(receiveIds);
+        List<SoReturnReceiveEntity> soReturnReceiveEntities = soReturnReceiveService.listByIds(receiveIds);
         List<String> returnIds = soReturnReceiveEntities.stream().map(SoReturnReceiveEntity::getSourceId).collect(Collectors.toList());
         List<SoReturnEntity> returnEntityList = soReturnFeign.listByIds(returnIds);
         //销售单id
