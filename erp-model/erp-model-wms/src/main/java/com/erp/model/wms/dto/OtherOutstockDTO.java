@@ -260,6 +260,7 @@ public class OtherOutstockDTO implements Serializable {
         /**
          * 领料部门id
          */
+        @NotBlank(message = "领料部门不能为空")
         private String deptId;
 
     }
