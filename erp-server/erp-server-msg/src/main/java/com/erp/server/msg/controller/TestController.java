@@ -10,6 +10,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.server.msg.config.MsgContext;
 import lombok.extern.slf4j.Slf4j;
@@ -85,6 +86,31 @@ public class TestController extends BaseController {
         }
          */
         SendResult sendResult = mqProducerService.sendNoticeMsg(noticeMsgInfoDTO, null);
+        return success();
+    }
+
+
+    /**
+     * 发送预警消息
+     */
+    @RequestMapping("/sendWarnMsg")
+    public ApiResult sendWarnMsg() {
+        WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
+        warnMsgInfoDTO.setTitle("销售出库单推送金蝶异常");
+        warnMsgInfoDTO.setContent("单据编号: SO001002003\n销售员：测试账号");
+        msgContext.routeSendWarnMsg(warnMsgInfoDTO);
+        return success();
+    }
+
+    /**
+     * 发送预警消息MQ
+     */
+    @RequestMapping("/sendWarnMsgMQ")
+    public ApiResult sendWarnMsgMQ() {
+        WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
+        warnMsgInfoDTO.setTitle("销售出库单推送金蝶异常");
+        warnMsgInfoDTO.setContent("单据编号: SO001002003\n销售员：测试账号");
+        mqProducerService.sendWarnMsg(warnMsgInfoDTO);
         return success();
     }
 

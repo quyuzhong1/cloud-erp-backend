@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.IdUtils;
 import com.common.core.utils.StrUtils;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.MessageChannelEnum;
 import com.erp.model.msg.enums.NoticeMessageTypeEnum;
 import com.erp.model.msg.enums.NoticeTypeEnum;
@@ -76,6 +77,10 @@ public class MsgContext {
                 HOLDER.get(msgSendChannelWrapParam.getSendChannel()).doSendMsg(msgSendChannelWrapParam);
             });
         }
+    }
+
+    public void routeSendWarnMsg(WarnMsgInfoDTO warnMsgInfo) {
+        HOLDER.get(MessageChannelEnum.FEISHU).doSendWarnMsg(warnMsgInfo);
     }
 
     /**

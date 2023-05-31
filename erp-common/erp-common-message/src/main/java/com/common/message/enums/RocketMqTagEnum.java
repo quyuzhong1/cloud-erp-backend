@@ -275,6 +275,11 @@ public enum RocketMqTagEnum {
      */
     MSG_NOTICE_TAG(9001,RocketMqTagEnum.MSG_NOTICE,"msg_notice_default_tag"),
 
+    /**
+     * 预警通知
+     */
+    MSG_WARN_TAG(9002,RocketMqTagEnum.MSG_WARN,"msg_warn_tag"),
+
     ;
     public static final String SALES_ORDER = "sales";
     public static final String DELIVERY_ORDER = "delivery";
@@ -293,6 +298,8 @@ public enum RocketMqTagEnum {
     public static final String MSG_NOTICE = "msg_notice";
 
     public static final String SYNC_WMS = "sync_wms";
+
+    public static final String MSG_WARN = "msg_warn";
 
     private Integer code;
 

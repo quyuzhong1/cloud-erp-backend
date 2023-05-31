@@ -9,8 +9,10 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.common.core.utils.StrUtils;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.MessageChannelEnum;
 import com.erp.model.msg.enums.NoticeMessageTypeEnum;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.sys.enums.ThirdPlatformEnums;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -26,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -53,6 +56,8 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
     public MessageChannelEnum channel() {
         return MessageChannelEnum.FEISHU;
     }
+
+    private static final String EXCEPTION_KEY_WORLD = "系统预警";
 
     /**
      * 获取飞书tenantAccessToken
@@ -111,6 +116,11 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             msgResult = sendBatchMsg(noticeMsgInfo);
         }
         return msgResult;
+    }
+
+    @Override
+    public void doSendWarnMsg(WarnMsgInfoDTO msgInfo) {
+        this.sendWebhookMessage(msgInfo);
     }
 
     /**
@@ -316,6 +326,35 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         }
         feiShuSendSingleParam.setContent(contentDTO);
         return feiShuSendSingleParam;
+    }
+
+    /**
+     * 发送系统异常信息至飞书群
+     */
+    public void sendWebhookMessage(WarnMsgInfoDTO warnMsgInfo) {
+        try {
+            // 由于采用关键字（系统预警）
+            if(!StrUtils.null2EmptyWithTrim(warnMsgInfo.getTitle()).contains(EXCEPTION_KEY_WORLD)) {
+                warnMsgInfo.setTitle(EXCEPTION_KEY_WORLD + "：" + warnMsgInfo.getTitle());
+            }
+            WarnMsgTypeEnum warnMsgTypeEnum = warnMsgInfo.getWarnMsgTypeEnum();
+            Map<String, String> warns = fsProperties.getWarns();
+            if(!warns.containsKey(warnMsgTypeEnum.getCode())) {
+                log.error("nacos未配置飞书预警配置【{}】，不发送预警通知", warnMsgTypeEnum.getName());
+                return;
+            }
+            String fsToken = warns.get(warnMsgTypeEnum.getCode());
+            String requestUrl = StrUtil.format(FeishuConstant.FS_WARN_HOOK_URL, fsToken);
+            FeiShuSendBaseParam.ContentDTO param = MsgConvertUtil.wrapTypicalCard(warnMsgInfo);
+            Map<String, Object> bodyMap = new HashMap<>();
+            bodyMap.put("msg_type", FeishuMessageTypeEnum.INTERACTIVE.getCode());
+            bodyMap.put("card", param);
+            log.info("开始发送飞书预警消息，请求内容体参数=【{}】", JSONUtil.toJsonStr(bodyMap));
+            String resultStr = OkHttpUtils.doPostJson(requestUrl, bodyMap, null);
+            log.info("结束批量发送飞书预警消息，请求内容体参数=【{}】，响应内容=【{}】", JSONUtil.toJsonStr(bodyMap), resultStr);
+        } catch (Exception e) {
+            log.info("飞书发送预警信息异常", e);
+        }
     }
 
 }

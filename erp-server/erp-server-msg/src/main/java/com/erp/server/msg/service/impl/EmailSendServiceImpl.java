@@ -6,6 +6,7 @@ import cn.hutool.extra.mail.MailUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.StrUtils;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.MessageChannelEnum;
 import com.erp.model.sys.dto.SysUserSimpleDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -98,6 +99,11 @@ public class EmailSendServiceImpl extends BaseMessageSendService {
             msgResult.setMsg(sendMailError.msg);
         }
         return msgResult;
+    }
+
+    @Override
+    public void doSendWarnMsg(WarnMsgInfoDTO msgInfo) {
+
     }
 
     @Override

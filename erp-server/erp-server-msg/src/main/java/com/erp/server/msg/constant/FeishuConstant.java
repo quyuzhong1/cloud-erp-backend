@@ -38,4 +38,9 @@ public interface FeishuConstant {
      */
     String FS_BATCH_SEND_MESSAGE_URL = "https://open.feishu.cn/open-apis/message/v4/batch_send/";
 
+    /**
+     * 飞书预警消息发送URL
+     */
+    String FS_WARN_HOOK_URL = "https://open.feishu.cn/open-apis/bot/v2/hook/{}";
+
 }
