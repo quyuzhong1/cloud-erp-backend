@@ -12,7 +12,7 @@
         LEFT JOIN dmp_order_info doi ON doi.id = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
-        LEFT JOIN dmp_shop_info dsi ON dsi.plarform_shop_no = doi.shop_no
+        LEFT JOIN dmp_shop_info dsi ON dsi.platform_shop_no = doi.shop_no
         where  ( (doit.sell_price > 0 and doit.quantity > 0) OR dri.refund_amount > 0 OR droi.order_fee > 0 )
         <if test="params.timeType == 0">
                 <if test="params.startTime != null">
@@ -104,7 +104,7 @@
             SUM(doit.amount_after) AS sales,
             0 AS netProfit
         FROM dmp_shop_info shop
-        LEFT JOIN dmp_order_info doi ON shop.plarform_shop_no = doi.shop_no
+        LEFT JOIN dmp_order_info doi ON shop.platform_shop_no = doi.shop_no
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
         LEFT JOIN dmp_sku_info dsi ON dsi.sku_no = doit.sku_no
         where  (doit.sell_price >0 and doit.quantity > 0)
@@ -187,7 +187,7 @@
             <if test="params.param!=null and params.param!=''">
                 #{params.param}
             </if>
-        GROUP BY shop.plarform_shop_no,shop."name"
+        GROUP BY shop.platform_shop_no,shop."name"
         ORDER BY sales
     </select>
 
@@ -195,12 +195,12 @@
         SELECT
             date_part('YEAR', doi.platform_create_time) AS year,
             shop."name" AS name,
-            shop.plarform_shop_no AS shop_no,
+            shop.platform_shop_no AS shop_no,
             SUM(doit.amount_after) AS sales
         FROM dmp_order_info doi
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
         LEFT JOIN dmp_sku_info dsi ON dsi.sku_no = doit.sku_no
-        LEFT JOIN dmp_shop_info shop ON shop.plarform_shop_no = doi.shop_no
+        LEFT JOIN dmp_shop_info shop ON shop.platform_shop_no = doi.shop_no
         WHERE shop."name" IS NOT NULL
         <if test="params.timeType == 0">
             <if test="params.startTime != null">
@@ -282,7 +282,7 @@
         <if test="params.param!=null and params.param!=''">
             #{params.param}
         </if>
-        GROUP BY date_part('YEAR', doi.platform_create_time),shop.plarform_shop_no,shop."name"
+        GROUP BY date_part('YEAR', doi.platform_create_time),shop.platform_shop_no,shop."name"
         ORDER BY shop."name",date_part('YEAR', doi.platform_create_time)
     </select>
 
@@ -296,7 +296,7 @@
         LEFT JOIN dmp_order_info doi ON doi.id = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
-        LEFT JOIN dmp_shop_info dsi ON dsi.plarform_shop_no = doi.shop_no
+        LEFT JOIN dmp_shop_info dsi ON dsi.platform_shop_no = doi.shop_no
         where ( (doit.sell_price > 0 and doit.quantity > 0) OR dri.refund_amount > 0 OR droi.order_fee > 0 )
         <if test="params.timeType == 0">
                 <if test="params.startTime != null">
@@ -396,7 +396,7 @@
         LEFT JOIN dmp_order_info doi ON doi.id = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
-        LEFT JOIN dmp_shop_info dsi ON dsi.plarform_shop_no = doi.shop_no
+        LEFT JOIN dmp_shop_info dsi ON dsi.platform_shop_no = doi.shop_no
 
         <where>
             <if test="params.timeType == 0">
@@ -547,7 +547,7 @@
         SUM(dri.refund_amount) AS refundAmount,
         count(dri.platform_order_id) refundOrderQty
         FROM dmp_shop_info dsi
-        LEFT JOIN dmp_order_info doi ON dsi.plarform_shop_no = doi.shop_no
+        LEFT JOIN dmp_order_info doi ON dsi.platform_shop_no = doi.shop_no
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
@@ -635,7 +635,7 @@
             </if>
 
         </where>
-        GROUP BY dsi.name, dsi.plarform_shop_no
+        GROUP BY dsi.name, dsi.platform_shop_no
     </select>
 
     <select id="shopYearSaleAmount" resultType="com.erp.model.bi.vo.SkuYearSaleAmountVO">
@@ -643,7 +643,7 @@
         dsi.name AS name,
         SUM(doit.amount_after) AS amount
         FROM dmp_shop_info dsi
-        LEFT JOIN dmp_order_info doi ON dsi.plarform_shop_no = doi.shop_no
+        LEFT JOIN dmp_order_info doi ON dsi.platform_shop_no = doi.shop_no
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
         LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
         <where>
@@ -666,7 +666,7 @@
             COALESCE(SUM(dri.refund_amount), 0) AS refundAmount,
             count(dri.platform_order_id) refundOrderQty
         FROM dmp_shop_info dsi
-        LEFT JOIN dmp_order_info doi ON dsi.plarform_shop_no = doi.shop_no
+        LEFT JOIN dmp_order_info doi ON dsi.platform_shop_no = doi.shop_no
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
@@ -760,7 +760,7 @@
             dsi.charge_name AS name,
             SUM(doit.amount_after) AS amount
         FROM dmp_shop_info dsi
-        LEFT JOIN dmp_order_info doi ON dsi.plarform_shop_no = doi.shop_no
+        LEFT JOIN dmp_order_info doi ON dsi.platform_shop_no = doi.shop_no
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
         LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
         <where>
@@ -784,7 +784,7 @@
             COALESCE(SUM(dri.refund_amount), 0)AS refundAmount,
             count(dri.platform_order_id) refundOrderQty
         FROM dmp_shop_info dsi
-        LEFT JOIN dmp_order_info doi ON dsi.plarform_shop_no = doi.shop_no
+        LEFT JOIN dmp_order_info doi ON dsi.platform_shop_no = doi.shop_no
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
         LEFT JOIN dmp_return_order_info droi ON droi.platform_order_id = doi.platform_order_id
         LEFT JOIN dmp_refund_info dri ON dri.platform_order_id = doi.platform_order_id
@@ -978,7 +978,7 @@
             COALESCE(sum(doit.quantity), 0)AS salesQuantity,
             COALESCE(SUM(doit.amount_after), 0) AS sales
         FROM dmp_shop_info dsi
-        LEFT JOIN dmp_order_info doi ON dsi.plarform_shop_no = doi.shop_no
+        LEFT JOIN dmp_order_info doi ON dsi.platform_shop_no = doi.shop_no
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
         LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
         <where>
@@ -1079,7 +1079,7 @@
         COALESCE(sum(doit.quantity), 0)AS salesQuantity,
         COALESCE(SUM(doit.amount_after), 0) AS sales
         FROM dmp_shop_info dsi
-        LEFT JOIN dmp_order_info doi ON dsi.plarform_shop_no = doi.shop_no
+        LEFT JOIN dmp_order_info doi ON dsi.platform_shop_no = doi.shop_no
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
         LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
         where doi.platform_create_time IS NOT NULL
@@ -1177,7 +1177,7 @@
             COALESCE(sum(doit.quantity), 0)AS salesQuantity,
             COALESCE(SUM(doit.amount_after), 0) AS sales
             FROM dmp_shop_info dsi
-            LEFT JOIN dmp_order_info doi ON dsi.plarform_shop_no = doi.shop_no
+            LEFT JOIN dmp_order_info doi ON dsi.platform_shop_no = doi.shop_no
             LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
             LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
             where doi.platform_create_time IS NOT NULL
@@ -1275,7 +1275,7 @@
         COALESCE(sum(doit.quantity), 0)AS salesQuantity,
         COALESCE(SUM(doit.amount_after), 0) AS sales
         FROM dmp_shop_info dsi
-        LEFT JOIN dmp_order_info doi ON dsi.plarform_shop_no = doi.shop_no
+        LEFT JOIN dmp_order_info doi ON dsi.platform_shop_no = doi.shop_no
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
         LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
         <where>
@@ -1375,7 +1375,7 @@
         COALESCE(sum(doit.quantity), 0)AS salesQuantity,
         COALESCE(SUM(doit.amount_after), 0) AS sales
         FROM dmp_shop_info dsi
-        LEFT JOIN dmp_order_info doi ON dsi.plarform_shop_no = doi.shop_no
+        LEFT JOIN dmp_order_info doi ON dsi.platform_shop_no = doi.shop_no
         LEFT JOIN dmp_order_item doit ON doi.id = doit.order_id
         LEFT JOIN dmp_sku_info sku ON sku.sku_no = doit.sku_no
         <where>

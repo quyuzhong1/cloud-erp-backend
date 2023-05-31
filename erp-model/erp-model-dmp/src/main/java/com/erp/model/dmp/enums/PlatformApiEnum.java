@@ -21,8 +21,15 @@ public enum PlatformApiEnum {
 
     //获取退货订单数据
     ORDER_GET_RETURN_ORDER_LIST(5,"order-get-return-order-list"),
-    //商品出库详情
+    /**
+     * 获取出库单列表
+     */
     ORDER_GET_DELIVERY_LIST(16,"order-get-delivery-list"),
+
+    /**
+     * 获取历史商品出库详情
+     */
+    ORDER_GET_HISTORY_DELIVERY_LIST(24,"order-get-history-delivery-list"),
 
     /**
      * 管易云api
@@ -44,6 +51,13 @@ public enum PlatformApiEnum {
 
     GY_ERP_TRADE_DELIVERYS_HISTORY_GET(20,"gy.erp.trade.deliverys.history.get"),
 
+    GY_ERP_TRADE_DELIVERYS_DETAIL_GET(25, "gy.erp.trade.deliverys.detail.get"),
+
+    GY_ERP_TRADE_DELIVERYS_DETAIL_HISTORY_GET(26, "gy.erp.trade.deliverys.detail.history.get"),
+
+    GY_ERP_TRADE_DETAIL_GET(27, "gy.erp.trade.detail.get"),
+
+    GY_ERP_TRADE_HISTORY_DETAIL_GET(28, "gy.erp.trade.history.detail.get"),
 
     /**
      * 金蝶云星空API

@@ -1,6 +1,7 @@
 package com.erp.model.dmp.dto;
 
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.common.core.anno.FieldValid;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -22,30 +23,35 @@ public class DmpReturnOrderInfoImportExcelDTO implements Serializable {
      * 退货单号
      */
     @ExcelProperty(value = "*退货单号", index = 0)
-    private String returnOrderId;
+    @FieldValid(fieldName = "退货单号",isNotBlank = true,maxLength = 50)
+    private String returnCode;
 
     /**
      * 原订单号
      */
     @ExcelProperty(value = "*原订单号", index = 1)
+    @FieldValid(fieldName = "原订单号",isNotBlank = true,maxLength = 50)
     private String platformOrderId;
 
     /**
      * 平台名称
      */
     @ExcelProperty(value = "*平台名称", index = 2)
+    @FieldValid(fieldName = "平台名称",isNotBlank = true)
     private String platformName;
 
     /**
      * 店铺名称
      */
     @ExcelProperty(value = "*店铺名称", index = 3)
+    @FieldValid(fieldName = "店铺名称",isNotBlank = true)
     private String shopName;
 
     /**
      * SKU
      */
     @ExcelProperty(value = "*SKU", index = 4)
+    @FieldValid(fieldName = "SKU",isNotBlank = true)
     private String skuNo;
 
     /**
@@ -78,6 +84,7 @@ public class DmpReturnOrderInfoImportExcelDTO implements Serializable {
      * 退货状态：1待处理 2已退款 3已重发 4已完成 5已作废
      */
     @ExcelProperty(value = "*退货状态", index = 9)
+    @FieldValid(fieldName = "退货状态",isNotBlank = true)
     private String statusName;
 
     /**
@@ -90,6 +97,7 @@ public class DmpReturnOrderInfoImportExcelDTO implements Serializable {
      * 币种
      */
     @ExcelProperty(value = "*币种", index = 11)
+    @FieldValid(fieldName = "币种",isNotBlank = true)
     private String currencyCode;
 
     /**

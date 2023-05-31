@@ -14,7 +14,6 @@ import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.server.dmp.pull.mapper.DmpShopInfoMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,7 +52,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     @Override
     public DmpShopInfoEntity getShopByShopNo(String shopNo, String platformSign){
         LambdaQueryWrapper<DmpShopInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
-        lambdaQueryWrapper.eq(DmpShopInfoEntity::getPlarformShopNo, shopNo);
+        lambdaQueryWrapper.eq(DmpShopInfoEntity::getPlatformShopNo, shopNo);
         lambdaQueryWrapper.eq(StrUtil.isNotBlank(platformSign), DmpShopInfoEntity::getPlatformSign, platformSign);
         return this.getOne(lambdaQueryWrapper);
     }
@@ -68,7 +67,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     @Override
     public Boolean updateShopByShopNo(DmpShopInfoEntity dmpShopInfoEntity) {
         LambdaQueryWrapper<DmpShopInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
-        lambdaQueryWrapper.eq(DmpShopInfoEntity::getPlarformShopNo, dmpShopInfoEntity.getPlarformShopNo());
+        lambdaQueryWrapper.eq(DmpShopInfoEntity::getPlatformShopNo, dmpShopInfoEntity.getPlatformShopNo());
         lambdaQueryWrapper.eq(DmpShopInfoEntity::getPlatformSign, dmpShopInfoEntity.getPlatformSign());
         return this.update(dmpShopInfoEntity, lambdaQueryWrapper);
     }
@@ -82,7 +81,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void checkOrder(DmpShopInfoEntity dmpShopInfoEntity) {
-        DmpShopInfoEntity dmpOrderInfoEntity = this.getShopByShopNo(dmpShopInfoEntity.getPlarformShopNo(), dmpShopInfoEntity.getPlatformSign());
+        DmpShopInfoEntity dmpOrderInfoEntity = this.getShopByShopNo(dmpShopInfoEntity.getPlatformShopNo(), dmpShopInfoEntity.getPlatformSign());
         if (dmpOrderInfoEntity != null) {
             //如果数据有变动需要更新数据库订单信息
             if (!dmpOrderInfoEntity.toString().equals(dmpShopInfoEntity.toString())) {
@@ -126,8 +125,8 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     @Transactional(rollbackFor = Exception.class)
     public void checkShopByKingDee(DmpShopInfoEntity dmpShopInfoEntity) {
         List<DmpShopInfoEntity> shopInfoEntity = lambdaQuery()
-                .eq(PlatformEnum.KINGDEE.getDesc().equals(dmpShopInfoEntity.getPlatformSign()) ,DmpShopInfoEntity::getFinanceCode, dmpShopInfoEntity.getPlarformShopNo())
-                .eq(PlatformEnum.KINGDEE_ECC.getDesc().equals(dmpShopInfoEntity.getPlatformSign()) ,DmpShopInfoEntity::getPlarformShopNo, dmpShopInfoEntity.getPlarformShopNo())
+                .eq(PlatformEnum.KINGDEE.getDesc().equals(dmpShopInfoEntity.getPlatformSign()) ,DmpShopInfoEntity::getFinanceCode, dmpShopInfoEntity.getPlatformShopNo())
+                .eq(PlatformEnum.KINGDEE_ECC.getDesc().equals(dmpShopInfoEntity.getPlatformSign()) ,DmpShopInfoEntity::getPlatformShopNo, dmpShopInfoEntity.getPlatformShopNo())
                 .list();
         if (CollectionUtil.isEmpty(shopInfoEntity)) {
             return;

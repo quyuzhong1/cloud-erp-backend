@@ -17,7 +17,7 @@
 
     <select id="paging" resultType="com.erp.model.dmp.dto.DmpReturnOrderInfoDTO">
         select
-            droi.return_order_id,
+            droi.return_code AS returnOrderId,
             droi.platform_order_id,
             droi.platform_name,
             droi.shop_name,
@@ -33,7 +33,7 @@
         inner join dmp_return_order_item droid on droi.id = droid.return_order_id
         <where>
             <if test="params.returnOrderId != null and params.returnOrderId != ''">
-                and droi.return_order_id like concat('%',#{params.returnOrderId},'%')
+                and droi.return_code ilike concat('%',#{params.returnOrderId},'%')
             </if>
             <if test="params.platformOrderId != null and params.platformOrderId != ''">
                 and droi.platform_order_id like concat('%',#{params.platformOrderId},'%')
@@ -67,7 +67,7 @@
 
     <select id="getAllDmpReturnOrderInfo" resultType="com.erp.model.dmp.dto.DmpReturnOrderInfoDTO">
         select
-        droi.return_order_id,
+        droi.return_code AS returnOrderId,
         droi.platform_order_id,
         droi.platform_name,
         droi.shop_name,
@@ -82,7 +82,7 @@
         inner join dmp_return_order_item droid on droi.id = droid.return_order_id
         <where>
             <if test="params.returnOrderId != null and params.returnOrderId != ''">
-                and droi.return_order_id like concat('%',#{params.returnOrderId},'%')
+                and droi.return_code ilike concat('%',#{params.returnOrderId},'%')
             </if>
             <if test="params.platformOrderId != null and params.platformOrderId != ''">
                 and droi.platform_order_id like concat('%',#{params.platformOrderId},'%')

@@ -54,7 +54,7 @@ public class MongoServiceImpl implements MongoService {
 		Criteria criteria = MongoUtil.mongoFilter_duplicateKey(obj);
 		Query query = new Query(criteria);
 		if(currentPage > 0 && pageSize> 0) {
-			query.skip((currentPage-1)*pageSize).limit(pageSize);
+			query.skip((long) (currentPage - 1) *pageSize).limit(pageSize);
 		}
 		List<T> list = orderTemplate.find(query, clazz, table);
 		if(list == null || list.size() <= 0) {

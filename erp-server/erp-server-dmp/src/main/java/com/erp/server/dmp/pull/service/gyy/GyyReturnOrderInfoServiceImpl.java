@@ -136,7 +136,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
         // 异步推送到MQ
         entityToMqlist.stream().peek(msg -> {
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_RETURN_ORDER_TAG.getName(),
-                    msg, StrUtil.format("{}_{}", msg.getPlatformOrderId(), msg.getSalesRecordNumber()));
+                    msg, StrUtil.format("{}_{}", msg.getReturnCode(), msg.getPlatformOrderId()));
             if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
@@ -160,10 +160,14 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
      **/
     private DmpReturnOrderInfoEntity initOrderInfoEntity(GyyReturnOrderEntity gyyReturnOrderEntity) {
         DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = new DmpReturnOrderInfoEntity();
-        //平台订单编号
-        dmpReturnOrderInfoEntity.setPlatformOrderId(gyyReturnOrderEntity.getCode());
         //退货单号
-        dmpReturnOrderInfoEntity.setReturnOrderId(gyyReturnOrderEntity.getOrderCode());
+        dmpReturnOrderInfoEntity.setReturnCode(gyyReturnOrderEntity.getCode());
+        //平台订单编号
+        dmpReturnOrderInfoEntity.setPlatformOrderId(gyyReturnOrderEntity.getPlatformCode());
+        // 平台退款单号
+        dmpReturnOrderInfoEntity.setPlatformReturnCode(gyyReturnOrderEntity.getPlatformRefundId());
+        // erp平台销售单号
+        dmpReturnOrderInfoEntity.setOrderCode(gyyReturnOrderEntity.getOrderCode());
         //店铺编号
         dmpReturnOrderInfoEntity.setShopNo(gyyReturnOrderEntity.getShopCode());
         //店铺名称
@@ -220,7 +224,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
         //登记人名称
         dmpReturnOrderInfoEntity.setEmployeeName(gyyReturnOrderEntity.getBusinessMan());
         //备注
-        dmpReturnOrderInfoEntity.setRemark(gyyReturnOrderEntity.getNote());
+        dmpReturnOrderInfoEntity.setRemark(StrUtil.format("Note = {}_refundCodes =【{}】", gyyReturnOrderEntity.getNote(), JSONUtil.toJsonStr(gyyReturnOrderEntity.getRefundCodes())));
         //退货信息创建时间
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         if (!"null".equalsIgnoreCase(gyyReturnOrderEntity.getCreateDate()) && StrUtil.isNotBlank(gyyReturnOrderEntity.getCreateDate())) {

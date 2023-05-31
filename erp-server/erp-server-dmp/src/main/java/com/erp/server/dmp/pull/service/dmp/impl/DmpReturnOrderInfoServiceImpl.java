@@ -59,9 +59,9 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
      **/
     @Override
     public DmpReturnOrderInfoEntity getOrderByPlatformOrderId(DmpReturnOrderInfoEntity returnOrderInfoEntity) {
-        LambdaQueryWrapper<DmpReturnOrderInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
-        lambdaQueryWrapper.eq(DmpReturnOrderInfoEntity::getPlatformOrderId, returnOrderInfoEntity.getPlatformOrderId());
-        lambdaQueryWrapper.eq(StrUtil.isNotBlank(returnOrderInfoEntity.getReturnOrderId()), DmpReturnOrderInfoEntity::getReturnOrderId, returnOrderInfoEntity.getReturnOrderId());
+        LambdaQueryWrapper<DmpReturnOrderInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(DmpReturnOrderInfoEntity::getReturnCode, returnOrderInfoEntity.getReturnCode());
+        lambdaQueryWrapper.eq(StrUtil.isNotBlank(returnOrderInfoEntity.getPlatformOrderId()), DmpReturnOrderInfoEntity::getPlatformOrderId, returnOrderInfoEntity.getPlatformOrderId());
         return this.getOne(lambdaQueryWrapper);
     }
 
@@ -89,8 +89,8 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
     @Override
     public Boolean updateOrderByPlatformOrderId(DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity) {
         LambdaQueryWrapper<DmpReturnOrderInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
+        lambdaQueryWrapper.eq(DmpReturnOrderInfoEntity::getReturnCode, dmpReturnOrderInfoEntity.getReturnCode());
         lambdaQueryWrapper.eq(DmpReturnOrderInfoEntity::getPlatformOrderId, dmpReturnOrderInfoEntity.getPlatformOrderId());
-        lambdaQueryWrapper.eq(DmpReturnOrderInfoEntity::getReturnOrderId, dmpReturnOrderInfoEntity.getReturnOrderId());
         return this.update(dmpReturnOrderInfoEntity, lambdaQueryWrapper);
     }
 
@@ -140,7 +140,7 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
 
         for (DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity : dmpReturnOrderInfoEntities) {
             LambdaUpdateWrapper<DmpReturnOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
-            DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderBySalesRecordNumber(dmpReturnOrderInfoEntity.getSalesRecordNumber(), dmpReturnOrderInfoEntity.getPlatformOrderId());
+            DmpOrderInfoEntity dmpOrderInfoEntity = dmpOrderInfoService.getOrderBySalesRecordNumber(dmpReturnOrderInfoEntity.getSalesRecordNumber(), dmpReturnOrderInfoEntity.getPlatformOrderId(),dmpReturnOrderInfoEntity.getPlatformSign());
             if (dmpOrderInfoEntity != null) {
                 updateWrapper.set(ObjectUtil.isNotEmpty(dmpOrderInfoEntity.getPlatformCreateTime()), DmpReturnOrderInfoEntity::getOrderTime, dmpOrderInfoEntity.getPlatformCreateTime());
                 updateWrapper.set(StrUtil.isNotBlank(dmpOrderInfoEntity.getChargeId()), DmpReturnOrderInfoEntity::getChargeId, dmpOrderInfoEntity.getChargeId());

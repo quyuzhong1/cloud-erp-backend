@@ -74,9 +74,6 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     private SysUserFeign sysUserFeign;
 
     @Resource
-    private SupplierService supplierService;
-
-    @Resource
     private ModuleOperateLogService moduleOperateLogService;
 
     @Resource

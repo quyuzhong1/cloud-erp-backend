@@ -130,7 +130,7 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
         // 异步推送到MQ
         entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_REFUND_ORDER_TAG.getName(),
-                    msg, StrUtil.format("{}_{}", msg.getPlatformOrderId(), msg.getSalesRecordNumber()));
+                    msg, StrUtil.format("{}_{}", msg.getRefundCode(), msg.getPlatformOrderId()));
             if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
@@ -160,10 +160,12 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
     public DmpRefundInfoEntity initOrderInfoEntity(RefundOrderEntity refundOrderEntity) {
         DmpRefundInfoEntity dmpRefundInfoEntity = new DmpRefundInfoEntity();
         BeanUtil.copyProperties(refundOrderEntity, dmpRefundInfoEntity);
+        dmpRefundInfoEntity.setRefundCode(refundOrderEntity.getId());
         //币别编号
         dmpRefundInfoEntity.setCurrencyCode(refundOrderEntity.getCurrencyId());
         //退款单号
-        dmpRefundInfoEntity.setRefundId(refundOrderEntity.getRefundplatformOrderId());
+        dmpRefundInfoEntity.setPlatformRefundCode(refundOrderEntity.getRefundplatformOrderId());
+        dmpRefundInfoEntity.setPlatformOrderId(refundOrderEntity.getPlatformOrderId());
         //退货金额
         dmpRefundInfoEntity.setRefundAmount(refundOrderEntity.getApplyRefundMoney());
         //退款备注

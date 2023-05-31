@@ -1,4 +1,4 @@
-package com.erp.server.dmp.task.schedule;
+package com.erp.server.dmp.task;
 
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.SyncKingdeeOmsStatusEnum;

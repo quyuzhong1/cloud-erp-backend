@@ -5,6 +5,7 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.CurrencyEnum;
+import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.DmpReturnOrderInfoImportExcelDTO;
@@ -66,41 +67,28 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
     * @param analysisContext
     */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void invoke(DmpReturnOrderInfoImportExcelDTO dto, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
         DmpReturnOrderInfoEntity entity = new DmpReturnOrderInfoEntity();
 
-        if (StringUtils.isBlank(dto.getReturnOrderId())) {
-            errorMsgList.add("退货单号不能为空");
+        //注解验证信息
+        List<String> msgList = FieldValidUtil.fieldValid(dto);
+        if (CollectionUtils.isNotEmpty(msgList)) {
+            errorMsgList.addAll(msgList);
         }
+
         if (CollectionUtils.isNotEmpty(returnOrderList)) {
-            long count = returnOrderList.stream().filter(obj -> obj.getReturnOrderId().equals(dto.getReturnOrderId())).count();
+            long count = returnOrderList.stream().filter(obj -> obj.getReturnCode().equals(dto.getReturnCode())).count();
             if (count > 0) {
                 errorMsgList.add("退货单号已存在，不能重复添加");
             }
         }
-        if (StringUtils.isBlank(dto.getPlatformOrderId())) {
-            errorMsgList.add("原订单号不能为空");
-        }
-        if (StringUtils.isNotBlank(dto.getReturnOrderId()) && dto.getReturnOrderId().length() > 50) {
-            errorMsgList.add("退货单号不能超过50个字节");
-        }
-        if (!StrUtils.isLetterDigitBar(dto.getReturnOrderId())) {
+        if (!StrUtils.isLetterDigitBar(dto.getReturnCode())) {
             errorMsgList.add("退货单号只能包含字母、数字、-");
         }
-        if (StringUtils.isNotBlank(dto.getPlatformOrderId()) && dto.getPlatformOrderId().length() > 50) {
-            errorMsgList.add("订单号不能超过50个字节");
-        }
-        if (StringUtils.isBlank(dto.getPlatformName())) {
-            errorMsgList.add("平台名称不能为空");
-        }
-        if (StringUtils.isBlank(dto.getShopName())) {
-            errorMsgList.add("店铺名称不能为空");
-        }
-        if(StringUtils.isBlank(dto.getSkuNo())) {
-            errorMsgList.add("SKU不能为空");
-        } else {
+
+        if(StringUtils.isNotBlank(dto.getSkuNo())) {
             if (!StrUtils.isLetterDigit(dto.getSkuNo())) {
                 errorMsgList.add("SKU只能包含字母和数字");
             }
@@ -117,12 +105,6 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
         }
         if (MathUtil.compareTo(dto.getOrderFee(),MathUtil.ZERO) <= 0) {
             errorMsgList.add("退货金额必须大于0");
-        }
-        if (StringUtils.isBlank(dto.getStatusName())) {
-            errorMsgList.add("退货状态不能为空");
-        }
-        if (StringUtils.isBlank(dto.getCurrencyCode())) {
-            errorMsgList.add("币种不能为空");
         }
         CurrencyEnum currencyEnum = CurrencyEnum.getByCode(dto.getCurrencyCode());
         if (ObjectUtils.isEmpty(currencyEnum)) {
@@ -161,7 +143,7 @@ public class DmpReturnOrderInfoExcelListener extends AnalysisEventListener<DmpRe
             return;
         }
         //查询退货
-        DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = dmpReturnOrderInfoService.getByReturnOrderId(dto.getReturnOrderId());
+        DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = dmpReturnOrderInfoService.getByReturnOrderId(dto.getReturnCode());
         if (ObjectUtils.isEmpty(dmpReturnOrderInfoEntity)) {
             BeanUtils.copyProperties(dto,entity);
             entity.setStatus(ReturnOrderStatusEnum.getCodeByName(dto.getStatusName()));
