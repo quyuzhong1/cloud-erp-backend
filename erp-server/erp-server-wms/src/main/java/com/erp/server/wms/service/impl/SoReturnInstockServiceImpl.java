@@ -652,15 +652,16 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_92032);
         }
+
         for (String id : soReceiveIdList) {
             List<SoReturnInstockDTO.GenerateSoReturnInstockView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
             QcInfoEntity qcInfoEntity = qcInfoService.getById(id);
             SoReturnReceiveEntity receiveEntity = soReturnReceiveService.getById(qcInfoEntity.getSourceId());
             SoReturnInstockDTO.Add dto = new  SoReturnInstockDTO.Add();
-            dto.setSourceId(id);
             dto.setSourceType(SourceTypeEnum.QC_BILL.getCode());
             dto.setWarehouseId(qcInfoEntity.getWarehouseId());
             dto.setWarehouseKeeperId(receiveEntity.getWarehouseKeeperId());
+            dto.setSourceId(receiveEntity.getSourceId());
             List<SoReturnInstockDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnInstockDTO.GenerateSoReturnInstockView view : viewList) {
                 SoReturnInstockDetailDTO.Add detailAddDTO = new SoReturnInstockDetailDTO.Add();
@@ -669,7 +670,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
                 detailAddDTO.setWarehouseLocation(view.getWarehouseLocation());
                 detailAddDTO.setRemark(view.getRemark());
-                detailAddDTO.setSourceDetailId(view.getId());
+                SoReturnReceiveDetailEntity detailEntity = soReturnReceiveDetailService.getById(view.getSourceDetailId());
+                detailAddDTO.setSourceDetailId(detailEntity.getSourceDetailId());
                 detailList.add(detailAddDTO);
             }
             dto.setDetailList(detailList);
