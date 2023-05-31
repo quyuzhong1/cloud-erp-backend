@@ -8,6 +8,7 @@ import com.erp.model.oms.enums.BillTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.sf.cglib.core.Local;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -1236,6 +1237,11 @@ public class SoInfoDTO implements Serializable {
          * 退货原因 wms/common/enumDropDown?type=ReturnReason
          */
         private String returnReasonDict;
+
+        /**
+         * 退货日期
+         */
+        private LocalDate returnDate;
 
         /**
          * 备注

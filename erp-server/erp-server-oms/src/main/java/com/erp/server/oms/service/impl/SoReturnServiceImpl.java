@@ -57,6 +57,7 @@ import org.springframework.util.ObjectUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -648,6 +649,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 detailAdd.setReturnReasonDict(view.getReturnReasonDict());
                 detailAdd.setSourceDetailId(view.getDetailId());
                 detailAdd.setRemark(view.getRemark());
+                add.setBillDate(view.getReturnDate());
                 detailList.add(detailAdd);
             }
             add.setDetailList(detailList);
