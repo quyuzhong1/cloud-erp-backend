@@ -369,6 +369,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         InventorySourceTypeEnum transferIn = InventorySourceTypeEnum.TRANSFER_IN;
         members.stream().forEach(m -> m.setSourceType(transferIn));
         if (CollectionUtils.isNotEmpty(members)) {
+            inventoryInOutStockDTO.setMembers(members);
             inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
         }
 
