@@ -10,17 +10,24 @@ import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.entity.SoChangeDetailEntity;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.wms.dto.SoOutstockDetailDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.mapper.SoChangeDetailMapper;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoChangeDetailService;
 import com.erp.server.oms.service.SoDetailService;
+import com.erp.server.oms.service.SoInfoService;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -30,10 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -50,6 +54,8 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
     @Resource
     private SoDetailService soDetailService;
 
+    @Resource
+    private SoInfoService soInfoService;
 
     @Resource
     private SysUserFeign sysUserFeign;
@@ -62,6 +68,12 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private InventoryFeign inventoryFeign;
+
+    @Resource
+    private SoOutstockFeign soOutstockFeign;
 
     /**
      * 添加变更详情信息
@@ -169,7 +181,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             if (sku != null) {
                 unit = sku.getUnitName();
                 productName = sku.getSkuName();
-                variantProperty=sku.getVariantProperty();
+                variantProperty = sku.getVariantProperty();
             }
             item.setUnit(unit);
             item.setProductName(productName);
@@ -177,7 +189,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             //税率
             BigDecimal taxRate = item.getTaxRate();
             //税率
-            BigDecimal flagTaxRate = MathUtil.divide(taxRate,MathUtil.BigDecimal_100);
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //单价
             BigDecimal price = item.getPrice();
             //含税单价=销售单价*（税率+1）
@@ -186,7 +198,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             item.setTaxPrice(taxPrice);
             BigDecimal oldPrice = item.getOldPrice();
             BigDecimal oldTaxRate = item.getOldTaxRate();
-            BigDecimal oldFlagTaxRate = MathUtil.divide(oldTaxRate,MathUtil.BigDecimal_100);
+            BigDecimal oldFlagTaxRate = MathUtil.divide(oldTaxRate, MathUtil.BigDecimal_100);
 
             //含税单价=销售单价*（税率+1）
             BigDecimal oldMultiplyTax = MathUtil.add(oldFlagTaxRate, MathUtil.BigDecimal_1);
@@ -223,7 +235,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 BigDecimal oldPrice = item.getPrice();
                 view.setOldPrice(oldPrice);
                 BigDecimal oldTaxRate = item.getTaxRate();
-                BigDecimal oldFlagTaxRate = MathUtil.divide(oldTaxRate,MathUtil.BigDecimal_100);
+                BigDecimal oldFlagTaxRate = MathUtil.divide(oldTaxRate, MathUtil.BigDecimal_100);
                 view.setOldTaxRate(oldTaxRate);
                 //含税单价=销售单价*（税率+1）
                 BigDecimal oldMultiplyTax = MathUtil.add(oldFlagTaxRate, MathUtil.BigDecimal_1);
@@ -243,15 +255,14 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 view.setSkuId(skuId);
                 view.setSkuNo(item.getSkuNo());
                 view.setSoDetailId(item.getId());
-
                 SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
-                String unit="";
-                String productName="";
+                String unit = "";
+                String productName = "";
                 String variantProperty = "";
                 if (sku != null) {
                     unit = sku.getUnitName();
                     productName = sku.getSkuName();
-                    variantProperty=sku.getVariantProperty();
+                    variantProperty = sku.getVariantProperty();
                 }
                 view.setUnit(unit);
                 view.setProductName(productName);
@@ -259,8 +270,150 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 viewList.add(view);
             }
         }
-
         return viewList;
+    }
+
+
+    /**
+     * 根据销售单id 获取到选择产品的信息
+     * @author yl
+     * @date 2023-05-25 14:11
+     * @param soId
+     * @param soDetailIds 销售订单详情id
+     * @param hasContain 是否包含
+     * @return java.util.List<com.erp.model.oms.dto.SoChangeDetailDTO.ViewDTO>
+     */
+    @Override
+    public List<SoChangeDetailDTO.SoDetailViewDTO> listSelectDetailBySoId(String soId, List<String> soDetailIds, Boolean hasContain) {
+        SoInfoEntity soInfo = soInfoService.getById(soId);
+        if (Objects.isNull(soInfo)) {
+            throw new ServiceException(ApiError.ERROR_92016);
+        }
+        String warehouseOrgName = soInfo.getWarehouseOrgName();
+        String warehouseId = soInfo.getWarehouseId();
+        List<SoDetailEntity> soDetailList = soDetailService.listDetailBySoId(soId, soDetailIds, hasContain);
+        if (CollectionUtils.isNotEmpty(soDetailList)) {
+            return Collections.emptyList();
+        }
+        List<String> detailIds = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
+        List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockFeign.listDetailBySoDetailIds(detailIds);
+        List<String> skuIdList = soDetailList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
+        //从wms 获取到sku 的即时库存信息
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = new ArrayList<>();
+        if (StringUtils.isNotBlank(warehouseId) && CollectionUtils.isNotEmpty(skuIdList)) {
+            skuInventoryTotalList = listSkuInventoryTotalList(skuIdList, warehouseId);
+        }
+        List<SoChangeDetailDTO.SoDetailViewDTO> viewList = new ArrayList<>(soDetailList.size());
+        BigDecimal zero = BigDecimal.ZERO;
+        SoChangeTypeEnum update = SoChangeTypeEnum.UPDATE;
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        for (SoDetailEntity item : soDetailList) {
+            SoChangeDetailDTO.SoDetailViewDTO view = new SoChangeDetailDTO.SoDetailViewDTO();
+            view.setOldAmount(item.getPrice());
+            view.setOldCurrency(item.getCurrency());
+            view.setOldCurrencySymbol(item.getCurrencySymbol());
+            view.setOldQty(item.getQty());
+            BigDecimal oldPrice = item.getPrice();
+            view.setOldPrice(oldPrice);
+            BigDecimal oldTaxRate = item.getTaxRate();
+            BigDecimal oldFlagTaxRate = MathUtil.divide(oldTaxRate, MathUtil.BigDecimal_100);
+            view.setOldTaxRate(oldTaxRate);
+            view.setWarehouseOrgName(warehouseOrgName);
+            //含税单价=销售单价*（税率+1）
+            BigDecimal oldMultiplyTax = MathUtil.add(oldFlagTaxRate, MathUtil.BigDecimal_1);
+            BigDecimal oldTaxPrice = MathUtil.multiply(oldPrice, oldMultiplyTax);
+            view.setOldTaxPrice(oldTaxPrice);
+            view.setQty(0);
+            view.setTaxPrice(zero);
+            view.setAmount(zero);
+            view.setChangeType(update);
+            view.setIsGift(Boolean.FALSE);
+            view.setIsReissue(Boolean.FALSE);
+            view.setPrice(zero);
+            view.setTaxRate(zero);
+            view.setCurrency(item.getCurrency());
+            view.setCurrencySymbol(item.getCurrencySymbol());
+            String skuId = item.getSkuId();
+            view.setSkuId(skuId);
+            view.setSkuNo(item.getSkuNo());
+            view.setSoDetailId(item.getId());
+
+            //即时库存
+            Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+            view.setCurInventoryQty(curInventoryQty);
+            //销售数量
+            Integer qty = item.getQty();
+            /**
+             * 缺货数量
+             * 当可用即时库存数量小于销售数量时，
+             * 缺货数量=销售数量-可用即时库存数量；
+             * 当可用即时库存数量大于销售数量时，缺货数量为0
+             */
+            Integer scarceQty = 0;
+
+            /**
+             * 已出库数量
+             * 新增时默认为0
+             * 编辑时根据关联出库单
+             * 总共已发货数量同步
+             *
+             */
+            Integer deliveryQty = soOutstockDetailList.stream().filter(req -> req.getSoDetailId().equals(item.getId())).map(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            /**
+             * 剩余数量
+             * 销售数量-已出库数量
+             */
+            Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
+            if (qty > curInventoryQty) {
+                scarceQty = qty - curInventoryQty;
+            }
+            view.setScarceQty(scarceQty);
+            view.setAvailableQty(getAvailableQty(curInventoryQty, qty));
+            view.setDeliveryQty(deliveryQty);
+            view.setWaitQty(waitQty);
+            SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+            String unit = "";
+            String productName = "";
+            String variantProperty = "";
+            if (sku != null) {
+                unit = sku.getUnitName();
+                productName = sku.getSkuName();
+                variantProperty = sku.getVariantProperty();
+            }
+            view.setUnit(unit);
+            view.setProductName(productName);
+            view.setVariantProperty(variantProperty);
+            viewList.add(view);
+        }
+        return viewList;
+    }
+
+    private Integer getAvailableQty(Integer curInventoryQty, Integer salesQty) {
+        /**
+         * 可出数量
+         * 根据可用即时库存计算可出数量，
+         * 当可用即时库存数量大于销售数量时 可出数量=销售数量；
+         * 若可用即时库存数量小于销售数量，可出数量=即时可用库存数量
+         */
+        Integer availableQty = 0;
+        Boolean isGre = curInventoryQty > salesQty;
+        if (isGre) {
+            availableQty = salesQty;
+        } else {
+            availableQty = curInventoryQty;
+        }
+        return availableQty;
+    }
+
+    private List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventoryTotalList(List<String> skuIdList, String warehouseId) {
+        InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
+        paramDTO.setSkuIds(skuIdList);
+        paramDTO.setWarehouseId(warehouseId);
+        paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        //从wms 获取到sku 的即时库存信息
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
+        return skuInventoryTotalList;
     }
 
 
@@ -350,9 +503,9 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
     @Override
     public void checkChange(List<SoChangeDetailDTO.AddDTO> detailList) {
         if (CollectionUtils.isNotEmpty(detailList)) {
-            Boolean hasRepeat = detailList.stream().filter(d -> StringUtils.isNotBlank(d.getSoDetailId())).collect(Collectors.groupingBy(SoChangeDetailDTO.AddDTO::getSoDetailId)).
-                    entrySet().stream().allMatch(entry -> entry.getValue().size() > 1);
-            if (hasRepeat) {
+            List<SoChangeDetailDTO.AddDTO> list = detailList.stream().filter(d -> StringUtils.isNotBlank(d.getSoDetailId())).collect(Collectors.toList());
+            long distinctCount = list.stream().map(SoChangeDetailDTO.AddDTO::getChangeType).distinct().count();
+            if (list.size() != distinctCount) {
                 throw new ServiceException(ApiError.ERROR_92038);
             }
             String deleteCode = SoChangeTypeEnum.DELETE.getCode();

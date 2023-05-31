@@ -87,7 +87,7 @@ public class SoChangeController extends BaseController {
     @PostMapping("/checkBySoDetailIds")
     public ApiResult<List<String>> checkBySoDetailIds(@RequestBody List<String>  soDetailIds) {
         List<String> soDetailIdList = soChangeService.checkBySoDetailIds(soDetailIds);
-        return success(soDetailIds);
+        return success(soDetailIdList);
     }
 
 
@@ -98,8 +98,8 @@ public class SoChangeController extends BaseController {
      * @return
      */
     @GetMapping("/listSoSkuBySoId")
-    public ApiResult<List<SoChangeDetailDTO.ViewDTO>> listSoSkuBySoId(@RequestParam("soId") String soId) {
-        List<SoChangeDetailDTO.ViewDTO> resultList = soChangeService.listSoSkuBySoId(soId);
+    public ApiResult<List<SoChangeDetailDTO.SoDetailViewDTO>> listSoSkuBySoId(@RequestParam("soId") String soId) {
+        List<SoChangeDetailDTO.SoDetailViewDTO> resultList = soChangeService.listSoSkuBySoId(soId);
         return success(resultList);
     }
 
