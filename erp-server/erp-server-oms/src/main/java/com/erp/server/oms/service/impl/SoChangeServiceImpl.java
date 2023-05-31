@@ -270,6 +270,10 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             return false;
         }
         List<SoChangeEntity> list = this.listByIds(ids);
+        long invalidCount = list.stream().filter(s -> s.getInvalidStatus()).count();
+        if (invalidCount > 0) {
+            throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
+        }
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         //审核不通过
@@ -534,6 +538,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         view.setSoCode(soInfo.getCode());
         view.setSoId(soInfo.getId());
         view.setTelNumber(soInfo.getTelNumber());
+        view.setSalesOrgName(soInfo.getSalesOrgName());
+        view.setSellerId(soInfo.getSellerId());
+        view.setSellerName(soInfo.getSellerName());
         //根据主表id 获取详情
         List<SoChangeDetailDTO.ViewDTO> detailList = soChangeDetailService.listDetailByMainId(id);
         view.setDetailList(detailList);

@@ -398,6 +398,28 @@ public class SoChangeDTO implements Serializable {
 
 
         /**
+         * 销售组织
+         */
+        private String salesOrgName;
+
+        /**
+         * 销售组织
+         */
+        private String salesOrgId;
+
+
+        /**
+         * 销售员id
+         */
+        private String sellerId;
+
+        /**
+         * 销售员
+         */
+        private String sellerName;
+
+
+        /**
          * 客户id
          */
         private String customerId;
