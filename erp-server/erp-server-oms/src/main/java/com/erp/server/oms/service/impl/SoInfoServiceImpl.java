@@ -12,10 +12,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.BillApproveStatusEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -51,6 +48,7 @@ import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.mapper.SoInfoMapper;
 import com.erp.server.oms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -64,6 +62,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -126,6 +125,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Value("${so.contract.companyAddress}")
     private String companyAddress;
+
+
+    @Resource
+    private SyncKingdeeSoService syncKingdeeSoService;
 
     /**
      * 添加销售订单
@@ -299,6 +302,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             throw new ServiceException(ApiError.ERROR_92016);
         }
         BeanMapper.copy(soInfo, view);
+        String customerId = soInfo.getCustomerId();
+        String customerName = "";
+        if (StringUtils.isNotBlank(customerId)) {
+            CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
+            customerName = customerInfo.getName();
+        }
+        view.setCustomerName(customerName);
         String warehouseId = view.getWarehouseId();
         BillApproveStatusEnum approveStatus = view.getApproveStatus();
         view.setApproveStatusName(approveStatus.getName());
@@ -649,6 +659,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(approveStatus), userName);
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
+
+            //审核通过发送金蝶
+            list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
         } else {
             //审核不通过
             String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
@@ -699,7 +712,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), rejectPairList, "状态变更");
-
+            list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         return result;
     }
@@ -842,6 +855,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         String content = "作废了一个销售订单【%s】,作废原因: ".concat(remark);
         operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "作废");
+        list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
 
         return Boolean.TRUE;
     }
@@ -1206,13 +1220,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         List<SoInfoEntity> soInfoList = this.listByIds(ids);
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-        long unApprove =soInfoList.stream().filter(s -> !s.getApproveStatus().getStatus().
+        long unApprove = soInfoList.stream().filter(s -> !s.getApproveStatus().getStatus().
                 equals(approveStatus)).count();
-        if (unApprove>0){
+        if (unApprove > 0) {
             throw new ServiceException(ApiError.ERROR_92042);
         }
-        long invalidCount =soInfoList.stream().filter(s -> s.getInvalidStatus()).count();
-        if (invalidCount>0){
+        long invalidCount = soInfoList.stream().filter(s -> s.getInvalidStatus()).count();
+        if (invalidCount > 0) {
             throw new ServiceException(ApiError.ERROR_92043);
         }
 
@@ -1329,5 +1343,31 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             view.setCustomerName(customerInfoEntity.getName());
         }
         return viewList;
+    }
+
+
+    /**
+     * 更改销售订单金蝶推送的状态
+     *
+     * @param id
+     * @param syncKingdeeStatus
+     * @param syncKingdeeId
+     * @param syncOperate
+     * @return
+     * @author yl
+     * @date 2023-05-31 14:20
+     */
+    @Override
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+        if (StringUtils.isEmpty(id)) {
+            return Boolean.TRUE;
+        }
+        return this.lambdaUpdate()
+                .eq(SoInfoEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), SoInfoEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), SoInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), SoInfoEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncOperate), SoInfoEntity::getSyncOperate, syncOperate)
+                .update();
     }
 }

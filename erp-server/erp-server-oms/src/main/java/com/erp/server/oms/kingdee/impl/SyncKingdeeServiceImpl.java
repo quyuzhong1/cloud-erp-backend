@@ -1,15 +1,12 @@
 package com.erp.server.oms.kingdee.impl;
 
-import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.server.oms.kingdee.SyncKingdeeService;
 import com.erp.server.oms.service.CustomerInfoService;
+import com.erp.server.oms.service.SoInfoService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -22,6 +19,9 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
 
     @Resource
     private CustomerInfoService customerInfoService;
+
+    @Resource
+    private SoInfoService soInfoService;
 
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
@@ -37,6 +37,15 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //客户列表
         if (ApiModuleTypeEnum.CUSTOMER_INFO.getCode().toString().equals(code)) {
             customerInfoService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+        }
+        //客户列表
+        if (ApiModuleTypeEnum.SO_INFO.getCode().toString().equals(code)) {
+            soInfoService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+        }
+
+        //客户列表
+        if (ApiModuleTypeEnum.SO_CHANGE.getCode().toString().equals(code)) {
+            soInfoService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
         }
     }
 }

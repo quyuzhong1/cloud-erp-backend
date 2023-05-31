@@ -39,7 +39,7 @@ import java.util.concurrent.CompletableFuture;
  */
 @Slf4j
 @Service
-public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
+public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoService {
 
 
     @Resource
