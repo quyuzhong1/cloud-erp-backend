@@ -14,7 +14,7 @@ public enum MachineTypeEnum implements EnumMessage {
 
 
     ORDINARY("ordinary", "普通加工单"),
-    OUTSOURCING("disassemble", "委外加工单");
+    OUTSOURCING("outsourcing", "委外加工单");
 
     /**
      * 类型
