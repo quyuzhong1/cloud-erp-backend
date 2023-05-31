@@ -21,10 +21,12 @@ public class ReturnOrderEntity {
     /**
      * 平台退货单编号
      */
+    @SerializedName("platform_return_order")
     private String platformReturnOrder;
     /**
      * 马帮退货单编号
      */
+    @SerializedName("return_orderId")
     private String returnOrderId;
     /**
      * 店铺编号
