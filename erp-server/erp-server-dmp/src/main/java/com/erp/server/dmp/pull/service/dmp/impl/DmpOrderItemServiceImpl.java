@@ -2,6 +2,7 @@ package com.erp.server.dmp.pull.service.dmp.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -125,6 +126,9 @@ public class DmpOrderItemServiceImpl extends ServiceImpl<DmpOrderItemMapper, Dmp
     public void checkOrderItem(List<DmpOrderItemEntity> orderItem, LocalDate platformCreateTime) {
         List<DmpOrderItemEntity> insertList = new ArrayList<>();
         for (DmpOrderItemEntity orderItemBean : orderItem) {
+            if(StrUtil.isBlank(orderItemBean.getSkuNo())){
+                continue;
+            }
             Object skuListing = redisUtil.hget(RedisKeyConstant.SKU_LISTING_TIME, orderItemBean.getSkuNo());
             if (ObjectUtil.isEmpty(skuListing)) {
                 Map<String, Object> resultMap = new HashMap<>();
