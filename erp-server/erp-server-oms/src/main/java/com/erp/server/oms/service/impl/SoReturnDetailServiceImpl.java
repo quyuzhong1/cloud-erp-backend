@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -27,6 +28,7 @@ import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.mapper.SoReturnDetailMapper;
 import com.erp.server.oms.service.*;
@@ -83,6 +85,9 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
 
     @Resource
     private SoReturnService soReturnService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -244,13 +249,17 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         //获取退货单id
         List<String> returnMainIds = list.stream().map(SoDetailDTO.AddDetailView::getMainId).distinct().collect(Collectors.toList());
         List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveFeign.listDetailBySourceIds(returnMainIds);
+        List<String> orgIds = list.stream().map(SoDetailDTO.AddDetailView::getInventoryOrgId).collect(Collectors.toList());
+
+        //组织列表
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIds);
 
         for (SoDetailDTO.AddDetailView addDetailView : list) {
+            BaseIdDTO.CodeDTO codeDTO = orgList.stream().filter(req -> addDetailView.getInventoryOrgId().equals(req.getId())).findFirst().orElse(new BaseIdDTO.CodeDTO());
+            addDetailView.setInventoryOrgName(codeDTO.getName());
             ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(addDetailView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             addDetailView.setVariantProperty(productDetailEntity.getVariantProperty());
             addDetailView.setProductName(productDetailEntity.getName());
-            WarehouseDTO.UpdateDTO warehouse = warehouseList.stream().filter(req -> req.getOrgId().equals(addDetailView.getInventoryOrgId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-            addDetailView.setInventoryOrgName(warehouse.getName());
             //获取退货数量
             Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(addDetailView.getId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             //获取已出库数量

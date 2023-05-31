@@ -646,16 +646,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean generateSoReturnInstockSave(List<SoReturnInstockDTO.GenerateSoReturnInstockView> list) {
-        Boolean flag = Boolean.TRUE;
+        Boolean flag = Boolean.FALSE;
         List<String> soReceiveIdList = list.stream().map(SoReturnInstockDTO.GenerateSoReturnInstockView::getMainId).distinct().collect(Collectors.toList());
-        List<String> soDetailIdList = list.stream().map(SoReturnInstockDTO.GenerateSoReturnInstockView::getSourceDetailId).distinct().collect(Collectors.toList());
         long count = soReturnReceiveDetailService.listByIds(soReceiveIdList).stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_92032);
-        }
-        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByIds(soDetailIdList);
-        if (CollectionUtils.isEmpty(returnDetailEntityList)) {
-            throw new ServiceException(ApiError.ERROR_92023);
         }
         for (String id : soReceiveIdList) {
             List<SoReturnInstockDTO.GenerateSoReturnInstockView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
@@ -679,8 +674,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             }
             dto.setDetailList(detailList);
             String noticeId = this.add(dto);
-            if (StringUtils.isBlank(noticeId)) {
-                flag = Boolean.FALSE;
+            if (StringUtils.isNotBlank(noticeId)) {
+                flag = Boolean.TRUE;
             }
         }
         return flag;
