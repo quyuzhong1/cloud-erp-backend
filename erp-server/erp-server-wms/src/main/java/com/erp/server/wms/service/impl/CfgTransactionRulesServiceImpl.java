@@ -157,7 +157,7 @@ public class CfgTransactionRulesServiceImpl extends SuperServiceImpl<CfgTransact
         // 06-调拨申请单
         // 1.可用减少
         cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
-        businessType = InventoryBusinessTypeEnum.INVENTOR_ALLOCATE;
+        businessType = InventoryBusinessTypeEnum.TRANSFER_APPLY;
         cfgTransactionRulesEntity.setDictBizType(businessType.getCode());
         cfgTransactionRulesEntity.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getCode());
         inventoryStatus = InventoryStatusEnum.USABLE;
@@ -168,7 +168,7 @@ public class CfgTransactionRulesServiceImpl extends SuperServiceImpl<CfgTransact
         rules.add(cfgTransactionRulesEntity);
         // 2.冻结增加
         cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
-        businessType = InventoryBusinessTypeEnum.INVENTOR_ALLOCATE;
+        businessType = InventoryBusinessTypeEnum.TRANSFER_APPLY;
         cfgTransactionRulesEntity.setDictBizType(businessType.getCode());
         cfgTransactionRulesEntity.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getCode());
         inventoryStatus = InventoryStatusEnum.FROZEN;
@@ -205,7 +205,7 @@ public class CfgTransactionRulesServiceImpl extends SuperServiceImpl<CfgTransact
         // 11-销售出库
         // 冻结减少
         cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
-        businessType = InventoryBusinessTypeEnum.SALES_DELIVERY_ORDER;
+        businessType = InventoryBusinessTypeEnum.SO_OUTSTOCK;
         cfgTransactionRulesEntity.setDictBizType(businessType.getCode());
         cfgTransactionRulesEntity.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getCode());
         inventoryStatus = InventoryStatusEnum.FROZEN;
@@ -242,7 +242,7 @@ public class CfgTransactionRulesServiceImpl extends SuperServiceImpl<CfgTransact
         // 08-分布式调拨调出
         // 当前仓冻结减少
         cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
-        businessType = InventoryBusinessTypeEnum.STEP_INVENTORY_OUT;
+        businessType = InventoryBusinessTypeEnum.TRANSFER_OUT;
         cfgTransactionRulesEntity.setDictBizType(businessType.getCode());
         cfgTransactionRulesEntity.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getCode());
         inventoryStatus = InventoryStatusEnum.FROZEN;
@@ -253,7 +253,7 @@ public class CfgTransactionRulesServiceImpl extends SuperServiceImpl<CfgTransact
         rules.add(cfgTransactionRulesEntity);
         // 目的仓在途增加
         cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
-        businessType = InventoryBusinessTypeEnum.STEP_INVENTORY_OUT;
+        businessType = InventoryBusinessTypeEnum.TRANSFER_OUT;
         cfgTransactionRulesEntity.setDictBizType(businessType.getCode());
         cfgTransactionRulesEntity.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET.getCode());
         inventoryStatus = InventoryStatusEnum.IN_TRANSIT;
@@ -266,7 +266,7 @@ public class CfgTransactionRulesServiceImpl extends SuperServiceImpl<CfgTransact
         // 09-分布式调拨调入
         // 目的仓在途减少
         cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
-        businessType = InventoryBusinessTypeEnum.STEP_INVENTORY_IN;
+        businessType = InventoryBusinessTypeEnum.TRANSFER_IN;
         cfgTransactionRulesEntity.setDictBizType(businessType.getCode());
         cfgTransactionRulesEntity.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET.getCode());
         inventoryStatus = InventoryStatusEnum.IN_TRANSIT;
@@ -277,7 +277,7 @@ public class CfgTransactionRulesServiceImpl extends SuperServiceImpl<CfgTransact
         rules.add(cfgTransactionRulesEntity);
         // 目的仓可用增加
         cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
-        businessType = InventoryBusinessTypeEnum.STEP_INVENTORY_IN;
+        businessType = InventoryBusinessTypeEnum.TRANSFER_IN;
         cfgTransactionRulesEntity.setDictBizType(businessType.getCode());
         cfgTransactionRulesEntity.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_TARGET.getCode());
         inventoryStatus = InventoryStatusEnum.USABLE;
@@ -317,7 +317,7 @@ public class CfgTransactionRulesServiceImpl extends SuperServiceImpl<CfgTransact
         // 12-销售退货
         // 当前仓可用增加
         cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
-        businessType = InventoryBusinessTypeEnum.SALES_RETURN_RECEIPT;
+        businessType = InventoryBusinessTypeEnum.SO_RETURN_INSTOCK;
         cfgTransactionRulesEntity.setDictBizType(businessType.getCode());
         inventoryWarehouseOptionEnum = InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT;
         cfgTransactionRulesEntity.setWarehouseOption(inventoryWarehouseOptionEnum.getCode());

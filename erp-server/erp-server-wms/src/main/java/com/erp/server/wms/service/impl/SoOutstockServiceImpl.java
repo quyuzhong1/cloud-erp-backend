@@ -409,10 +409,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         soInfoFeign.updateDeliveryStatus(paramList);
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SALES_DELIVERY_ORDER.getCode());
+        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
         List<InOutStockDTO> members = baseMapper.listInventoryInOut(allList);
         for (InOutStockDTO member : members) {
-            member.setSourceType(InventorySourceTypeEnum.PURCHASE_STOCK_OUT);
+            member.setSourceType(InventorySourceTypeEnum.SO_OUTSTOCK);
             member.setBillDate(LocalDate.now());
         }
         if (CollectionUtils.isNotEmpty(members)) {
@@ -460,7 +460,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //反审核 TODO 需要做什么
         if (result) {
             //反审核
-            InventoryBatchUnApproveDTO batchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.PURCHASE_STOCK_OUT, ids);
+            InventoryBatchUnApproveDTO batchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_OUTSTOCK, ids);
             inventoryTransCoreService.batchUnApprove(batchUnApproveDTO);
 
             //添加日志

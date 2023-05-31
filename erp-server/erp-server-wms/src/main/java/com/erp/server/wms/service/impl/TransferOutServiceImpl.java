@@ -697,7 +697,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         }
 
         InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
-        inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.STEP_INVENTORY_OUT.getCode());
+        inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.TRANSFER_OUT.getCode());
         List<TransferDTO> members = Lists.newArrayListWithExpectedSize(detailList.size());
         detailList.stream().forEach(detailEntity->{
             TransferDTO transferDTO = new TransferDTO();

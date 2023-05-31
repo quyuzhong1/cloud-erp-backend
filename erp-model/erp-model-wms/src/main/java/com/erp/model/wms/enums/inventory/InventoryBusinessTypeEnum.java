@@ -24,15 +24,15 @@ public enum InventoryBusinessTypeEnum {
     PO_RETURN_REP("po_return_rep", "04","采购退货（库存退货，退货补货）"),
     PO_RETURN_REF("po_return_ref", "05","采购退货（库存退货，退货退款）"),
 
-    INVENTOR_ALLOCATE("inventory_allocate", "06","调拨申请单"),
+    TRANSFER_APPLY("transfer_apply", "06","调拨申请单"),
     DIRECT_ALLOCATE("direct_allocate", "07","直接调拨单（新增）"),
 
-    STEP_INVENTORY_OUT("step_inventory_out", "08","分步式调拨调出"),
-    STEP_INVENTORY_IN("step_inventory_in", "09","分步式调拨调入"),
+    TRANSFER_OUT("transfer_out", "08","分步式调拨调出"),
+    TRANSFER_IN("transfer_in", "09","分步式调拨调入"),
 
-    SHIP_NOTICE("so_delivery_notice", "10","销售发货通知单"),
-    SALES_DELIVERY_ORDER("sales_delivery_order", "11","销售出库"),
-    SALES_RETURN_RECEIPT("sales_return_receipt", "12","销售退货"),
+    SO_DELIVERY_NOTICE("so_delivery_notice", "10","销售发货通知单"),
+    SO_OUTSTOCK("so_outstock", "11","销售出库"),
+    SO_RETURN_INSTOCK("so_return_instock", "12","销售退货"),
 
     INVENTORY_PROFIT("inventory_profit", "13","盘盈"),
     INVENTORY_LOSS("inventory_loss", "14","盘亏"),

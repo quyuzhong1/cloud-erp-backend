@@ -364,7 +364,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             return;
         }
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.STEP_INVENTORY_IN.getCode());
+        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.TRANSFER_IN.getCode());
         List<InOutStockDTO> members = baseMapper.listInventoryInOut(idList);
         InventorySourceTypeEnum transferIn = InventorySourceTypeEnum.TRANSFER_IN;
         members.stream().forEach(m -> m.setSourceType(transferIn));

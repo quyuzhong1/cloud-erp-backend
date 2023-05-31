@@ -25,7 +25,7 @@ public enum InventorySourceTypeEnum {
     TRANSFER_OUT("transferOut", "分步式调拨出库单"),
     TRANSFER_IN("transferIn", "分步式调拨入库单"),
     SO_DELIVERY_NOTICE("soDeliveryNotice", "发货通知单"),
-    PURCHASE_STOCK_OUT("purchaseStockOut", "销售出库单"),
+    SO_OUTSTOCK("soOutstock", "销售出库单"),
     SO_RETURN_INSTOCK("soReturnInstock", "销售退货入库单"),
     MACHINE_INFO("machineInfo", "加工单"),
     OTHER_INSTOCK("otherInstock", "其他入库单"),
