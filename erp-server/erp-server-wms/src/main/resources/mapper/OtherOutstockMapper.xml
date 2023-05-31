@@ -36,6 +36,7 @@
         select
             oo.id,
             oo.code,
+            oo.type,
             ooc.name as customerName,
             oo.inventory_direction as inventoryDirection,
             oo.approve_status as approveStatus,
@@ -131,22 +132,25 @@
     
     <select id="listExportExcel" resultType="com.erp.model.wms.dto.OtherOutstockDTO$ListDTO">
         select
-        oo.id,
-        oo.code,
-        oo.inventory_direction as inventoryDirection,
-        oo.approve_status as approveStatus,
-        oo.invalid_status as invalidStatus,
-        ood.sku_id as skuId,
-        ood.sku_no as skuNo,
-        oo.bill_date as billDate,
-        ood.actual_qty as actualQty,
-        ood.unit,
-        oo.warehouse_name as warehouseName,
-        ood.warehouse_location as warehouseLocation,
-        oo.approve_user_name as approveUserName,
-        oo.create_user_name as createUserName,
-        oo.create_time as createTime
+            oo.id,
+            oo.code,
+            oo.type,
+            ooc.name as customerName,
+            oo.inventory_direction as inventoryDirection,
+            oo.approve_status as approveStatus,
+            oo.invalid_status as invalidStatus,
+            ood.sku_id as skuId,
+            ood.sku_no as skuNo,
+            oo.bill_date as billDate,
+            ood.actual_qty as actualQty,
+            ood.unit,
+            oo.warehouse_name as warehouseName,
+            ood.warehouse_location as warehouseLocation,
+            oo.approve_user_name as approveUserName,
+            oo.create_user_name as createUserName,
+            oo.create_time as createTime
         from other_outstock oo
+        inner join other_outstock_customer ooc on oo.id = ooc.main_id and ooc.is_deleted = false
         inner join other_outstock_detail ood on oo.id = ood.main_id and ood.is_deleted = false
         <where>
             oo.is_deleted = false

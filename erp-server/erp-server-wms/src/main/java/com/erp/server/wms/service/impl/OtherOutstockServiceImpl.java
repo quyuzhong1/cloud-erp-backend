@@ -42,6 +42,7 @@ import com.erp.model.wms.entity.OtherOutstockDetailEntity;
 import com.erp.model.wms.entity.OtherOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
+import com.erp.model.wms.enums.OutstockTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -125,6 +126,9 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             boolean contains = list.contains(obj.getId());
             if (contains) {
                 obj.setCode(null);
+                obj.setCustomerName(null);
+                obj.setType(null);
+                obj.setTypeName(null);
                 obj.setInventoryDirection(null);
                 obj.setInventoryDirectionName(null);
                 obj.setApproveStatus(null);
@@ -553,13 +557,11 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 throw new ServiceException(ApiError.ERROR_95084);
             }
             obj.setProductName(productName);
-
+            obj.setTypeName(OutstockTypeEnum.getByCode(obj.getType()));
             //库存方向名称
             obj.setInventoryDirectionName(InventoryDirectionEnum.getName(obj.getInventoryDirection()));
-
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
-
         }
     }
 

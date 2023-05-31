@@ -47,6 +47,17 @@ public class OtherOutstockDTO implements Serializable {
         private String customerName;
 
         /**
+         * 出库类型
+         */
+        private String type;
+
+
+        /**
+         * 出库类型名称
+         */
+        private String typeName;
+
+        /**
          * 库存方向
          */
         private String inventoryDirection;

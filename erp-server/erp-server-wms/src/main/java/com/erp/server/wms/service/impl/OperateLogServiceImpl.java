@@ -112,7 +112,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
                 continue;
             }
             String content;
-            String concat = msg.concat("编辑了[").concat(fieldName).concat("]");
+            String concat = (StringUtils.isBlank(msg) ? "" : msg).concat("编辑了[").concat(fieldName).concat("]");
             if (StringUtils.isBlank(valuePair.getKey())) {
                 content = concat.concat("由空值变更为[").concat(newValue).concat("]");
             } else {
