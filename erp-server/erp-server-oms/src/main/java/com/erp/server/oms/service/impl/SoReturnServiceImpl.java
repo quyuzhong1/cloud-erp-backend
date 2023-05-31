@@ -551,13 +551,11 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<String> skuIdList = pagingViews.stream().map(SoReturnDTO.PagingView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        //销售单详情表id集合
-        List<String> orderDetailIds = pagingViews.stream().map(SoReturnDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
-        //获取销售单详情信息
-        List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(orderDetailIds);
-        List<String> soIds = soDetailEntities.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
-        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
+        List<String> soIds = pagingViews.stream().map(SoReturnDTO.PagingView::getSourceId).distinct().collect(Collectors.toList());
         List<CustomerInfoEntity> customerInfoEntities = customerInfoService.list();
+        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
+        List<String> soDetailIds = pagingViews.stream().map(SoReturnDTO.PagingView::getSourceDetailId).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(soDetailIds);
         for (SoReturnDTO.PagingView pagingView : pagingViews) {
             pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
             pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
@@ -566,14 +564,13 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(pagingView.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             pagingView.setProductName(productDetailEntity.getName());
             pagingView.setSalesQty(soDetailEntity.getQty());
-            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSourceDetailId().equals(pagingView.getSourceDetailId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(pagingView.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             pagingView.setDeliveryQty(actualQty);
             pagingView.setUnDeliveryQty(soDetailEntity.getQty() - actualQty);
             pagingView.setUnit(productDetailEntity.getUnitName());
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             pagingView.setCustomerName(customerInfoEntity.getName());
             pagingView.setSalesAmount(soDetailEntity.getAmount());
-
         }
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/SoReturnExport.xlsx";

@@ -113,10 +113,10 @@
     <select id="soDeliveryNoticeExportExcel" resultType="com.erp.model.oms.dto.SoReturnDTO$PagingView">
         SELECT
         sr.id,
-        sr.create_time,
-        sr.code,
         sr.source_id,
         srd.source_detail_id,
+        sr.create_time,
+        sr.code,
         sr.source_code,
         sr.type,
         sr.approve_status,
