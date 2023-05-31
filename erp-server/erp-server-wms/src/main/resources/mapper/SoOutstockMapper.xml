@@ -234,7 +234,7 @@
               so.approve_status,
               so.order_type,
               so.warehouse_org_id,
-              so.warehouseorg_name,
+              so.warehouse_org_name,
               so.warehouse_id,
               so.warehouse_name,
               so.plan_delivery_date,
