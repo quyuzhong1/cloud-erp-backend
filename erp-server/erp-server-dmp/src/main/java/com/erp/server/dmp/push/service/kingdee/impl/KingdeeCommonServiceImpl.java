@@ -177,6 +177,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         if (StringUtils.isNotBlank(syncKingdeeId)) {
             viewMap.put("ids",syncKingdeeId);
         } else {
+            //现默认唯迹科技
+            viewMap.put("CreateOrgId",1);
             viewMap.put("numbers",Arrays.asList(number));
         }
         //金蝶操作编码
@@ -185,7 +187,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         try {
             apiUtils.excuteOperation(operateNumber,JSONUtil.toJsonStr(viewMap));
         } catch (Exception e) {
-            //新增失败时添加日志及定时任务
+            //新增失败时添加日志
             insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")),JSONUtil.toJsonStr(viewMap),e.getMessage(),type,ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
