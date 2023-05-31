@@ -105,12 +105,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
-        return lambdaQuery().in(SoOutstockEntity::getSourceId, ids).list();
+        return lambdaQuery().eq(SoOutstockEntity::getInvalidStatus, Boolean.FALSE)
+                .in(SoOutstockEntity::getSourceId, ids).list();
     }
 
     @Override
     public List<SoOutstockEntity> listBySoIds(@RequestBody List<String> soIds) {
-        return lambdaQuery().in(SoOutstockEntity::getSoId, soIds).list();
+        return lambdaQuery().eq(SoOutstockEntity::getInvalidStatus, Boolean.FALSE)
+                .in(SoOutstockEntity::getSoId, soIds).list();
     }
 
     /**

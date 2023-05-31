@@ -713,6 +713,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
 
     @Override
     public List<SoReturnNoticeEntity> listBySourceId(List<String> sourceIds) {
-        return lambdaQuery().in(SoReturnNoticeEntity::getSourceId, sourceIds).list();
+        return lambdaQuery().eq(SoReturnNoticeEntity::getInvalidStatus, Boolean.FALSE)
+                .in(SoReturnNoticeEntity::getSourceId, sourceIds).list();
     }
 }

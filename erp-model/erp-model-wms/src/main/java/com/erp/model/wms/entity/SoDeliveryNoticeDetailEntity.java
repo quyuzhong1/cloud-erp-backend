@@ -71,7 +71,6 @@ public class SoDeliveryNoticeDetailEntity extends BaseEntity<SoDeliveryNoticeDet
     @TableField(exist = false)
     private String approveStatus;
 
-
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";

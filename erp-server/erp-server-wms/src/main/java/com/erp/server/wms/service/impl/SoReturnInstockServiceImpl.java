@@ -22,6 +22,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
@@ -177,8 +178,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 obj.setProductName(productDetailEntity.getName());
                 obj.setSalesQty(soDetailEntity.getQty());
                 Integer returnQty = soReturnReceiveDetailEntities.stream().filter(detail -> detail.getSourceDetailId().equals(obj.getSourceDetailId()) && detail.getSkuId().equals(obj.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoReturnReceiveDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(detail -> detail.getSourceDetailId().equals(obj.getSourceDetailId()) && detail.getSkuId().equals(obj.getSkuId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                obj.setReceiveQty(receiveQty);
                 obj.setMustQty(returnQty);
-                obj.setReceiveQty(returnQty);
                 Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(obj.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                 obj.setDeliveryQty(actualQty);
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
@@ -355,6 +357,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<String> soIds = returnEntityList.stream().map(SoReturnEntity::getSourceId).collect(Collectors.toList());
         //根据销售单获取出库单
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySoIds(soIds);
+        //获取退货单id
+        List<String> returnMainIds = returnEntityList.stream().map(SoReturnEntity::getId).distinct().collect(Collectors.toList());
+        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailBySourceIds(returnMainIds);
+
         for (SoReturnInstockDetailEntity detailEntity : detailEntityList) {
             SoReturnInstockDetailDTO.View detailView = new SoReturnInstockDetailDTO.View();
             BeanMapperUtils.copy(detailEntity, detailView);
@@ -372,7 +378,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             //获取退货数量
             Integer returnQty = returnDetailEntityList.stream().filter(req -> req.getId().equals(detailEntity.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             detailView.setMustQty(returnQty);
-
+            Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> detailEntity.getSourceDetailId().equals(req.getSourceDetailId()) && req.getSkuId().equals(detailEntity.getSkuId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            detailView.setReceiveQty(receiveQty);
             detailViewDTOS.add(detailView);
         }
         viewDTO.setDetailList(detailViewDTOS);

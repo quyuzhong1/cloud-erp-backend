@@ -78,6 +78,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             detailEntity.setRealQty(detailDto.getRealQty());
             detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
             detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
+            detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
             list.add(detailEntity);
@@ -117,6 +118,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             //签收单数量
             Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             if (StringUtils.isNotBlank(detailDto.getId())) {
+                detailEntity.setId(detailDto.getId());
                 realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             if (receiveQty <  detailDto.getRealQty() + realQty) {
@@ -128,6 +130,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             detailEntity.setRealQty(detailDto.getRealQty());
             detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
             detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
+            detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
             list.add(detailEntity);

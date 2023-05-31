@@ -123,7 +123,6 @@
     <select id="soDeliveryNoticeExportExcel" resultType="com.erp.model.wms.dto.SoDeliveryNoticeDTO$PagingView">
         SELECT
         sdn.id,
-        sdnd.id AS detailid,
         sdn.source_id,
         sdnd.source_detail_id,
         sdn.code,
@@ -133,6 +132,8 @@
         sdn.approve_status,
         sdn.invalid_status,
         sdn.delivery_status,
+        sdn.warehouse_org_id,
+        sdn.warehouse_org_name,
         sdnd.sku_id,
         sdnd.sku_no,
         sdnd.delivery_qty,
