@@ -4,7 +4,7 @@
     <select id="paging" resultType="com.erp.model.wms.dto.SoReturnReceiveDTO$PagingView">
         SELECT
             srr.id,
-            srrd.id AS receiveDetailId
+            srrd.id AS receiveDetailId,
             srr.source_id,
             srrd.source_detail_id,
             srr.code,
@@ -127,7 +127,7 @@
     <select id="soReturnReceiveExportExcel" resultType="com.erp.model.wms.dto.SoReturnReceiveDTO$PagingView">
         SELECT
         srr.id,
-        srrd.id AS receiveDetailId
+        srrd.id AS receiveDetailId,
         srr.source_id,
         srrd.source_detail_id,
         srr.code,
