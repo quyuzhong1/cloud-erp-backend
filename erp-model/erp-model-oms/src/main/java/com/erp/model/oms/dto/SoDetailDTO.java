@@ -4,10 +4,7 @@ import com.common.business.validator.AddGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.DecimalMax;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -44,6 +41,7 @@ public class SoDetailDTO implements Serializable {
          */
         @NotNull(message = "销售数量不能为空", groups = {AddGroup.class})
         @DecimalMax(value = "999999999",message ="销售数量最大值",groups = {AddGroup.class})
+        @DecimalMin(value = "1",message ="销售数量最小值不能为0",groups = {AddGroup.class})
         private Integer qty;
 
         /**

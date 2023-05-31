@@ -519,7 +519,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 //下推单据的数量
                 Integer pushDownCount = wmsTaskFeign.getPushDownBySoDetailIds(soDetailIdList);
                 if (pushDownCount > 0) {
-                    throw new ServiceException(ApiError.ERROR_92015);
+                    throw new ServiceException(ApiError.ERROR_92037);
 
                 }
             }
