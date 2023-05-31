@@ -181,7 +181,7 @@ public class CfgTransactionRulesServiceImpl extends SuperServiceImpl<CfgTransact
         // 10-销售发货通知单
         // 1.可用减少
         cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
-        businessType = InventoryBusinessTypeEnum.SHIP_NOTICE;
+        businessType = InventoryBusinessTypeEnum.SO_DELIVERY_NOTICE;
         cfgTransactionRulesEntity.setDictBizType(businessType.getCode());
         cfgTransactionRulesEntity.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getCode());
         inventoryStatus = InventoryStatusEnum.USABLE;
@@ -192,7 +192,7 @@ public class CfgTransactionRulesServiceImpl extends SuperServiceImpl<CfgTransact
         rules.add(cfgTransactionRulesEntity);
         // 2.冻结增加
         cfgTransactionRulesEntity = new CfgTransactionRulesEntity();
-        businessType = InventoryBusinessTypeEnum.SHIP_NOTICE;
+        businessType = InventoryBusinessTypeEnum.SO_DELIVERY_NOTICE;
         cfgTransactionRulesEntity.setDictBizType(businessType.getCode());
         cfgTransactionRulesEntity.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT.getCode());
         inventoryStatus = InventoryStatusEnum.FROZEN;
