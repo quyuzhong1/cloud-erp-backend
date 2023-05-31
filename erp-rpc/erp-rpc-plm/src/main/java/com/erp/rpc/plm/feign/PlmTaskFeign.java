@@ -1,6 +1,7 @@
 package com.erp.rpc.plm.feign;
 
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.ProductVO;
@@ -210,4 +211,14 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/plmWorkOption/getProductIdByTaskId")
     ProjectTaskEntity getProductIdByTaskId(@RequestBody String taskId);
+
+    /**
+     * @description: 根据父级skuIds查询BOM信息
+     * @author Will
+     * @date: 2023/5/31 10:57
+     * @param skuIds
+     * @return List<BomInfoEntity>
+     */
+    @PostMapping("feign/bom/listBomByParentSkuIds")
+    List<BomInfoEntity> listBomByParentSkuIds(List<String> skuIds);
 }

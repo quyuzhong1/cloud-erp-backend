@@ -8,10 +8,12 @@ import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.wms.entity.MachineDetailEntity;
 import com.erp.model.wms.entity.MachineInfoEntity;
 import com.erp.model.wms.entity.MachineSubComponentsEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeMachineInfoService;
 import com.erp.server.wms.service.MachineDetailService;
@@ -40,6 +42,9 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
     private SysUserFeign sysUserFeign;
 
     @Resource
+    private PlmTaskFeign plmTaskFeign;
+
+    @Resource
     private MachineInfoService machineInfoService;
 
     @Resource
@@ -63,15 +68,20 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
+        List<String> detailIds = detailList.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
 
         //子件明细
-        List<String> subComponentIds = detailList.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
-        List<MachineSubComponentsEntity> machineSubComponentsList = machineSubComponentsService.listByDetailIds(subComponentIds);
+        List<MachineSubComponentsEntity> machineSubComponentsList = machineSubComponentsService.listByDetailIds(detailIds);
         if (CollectionUtils.isEmpty(machineSubComponentsList)) {
             return;
         }
         List<String> warehouseIds = machineSubComponentsList.stream().map(MachineSubComponentsEntity::getWarehouseId).collect(Collectors.toList());
         warehouseIds.add(entity.getWarehouseId());
+
+        //根据明细skuIds查询bom
+        List<String> skuIds = detailList.stream().map(MachineDetailEntity::getSkuId).collect(Collectors.toList());
+        List<BomInfoEntity> bomInfoList = plmTaskFeign.listBomByParentSkuIds(skuIds);
+
 
         //所有仓库
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
@@ -137,8 +147,12 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
             }
             //仓位
             jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
-            //参照版本
-            jsonObject.set("referenceVersion", detail.getReferenceVersion());
+            if (CollectionUtils.isNotEmpty(bomInfoList)) {
+                String referenceVersion = bomInfoList.stream().filter(obj -> obj.getParentSkuId().equals(detail.getSkuId()))
+                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getSerialNumber()+ "_"+ obj.getVersion())).orElse(null);
+                //参照版本
+                jsonObject.set("referenceVersion", referenceVersion);
+            }
             //备注
             jsonObject.set("remark", detail.getRemark());
 

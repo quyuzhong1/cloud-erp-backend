@@ -23,4 +23,27 @@
         </where>
     </select>
 
+    <select id="listBomByParentSkuIds" resultType="com.erp.model.plm.entity.BomInfoEntity">
+        select
+            DISTINCT
+            pbi.version,
+            pbi.serial_number,
+            pbi.type,
+            pbi.state,
+            pbi.remark,
+            pbi.sync_kingdee_status,
+            pbi.sync_kingdee_time,
+            pbi.sync_kingdee_id,
+            pbs.parent_sku_id
+        from product_bom_info pbi
+        left join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
+        <where>
+            pbi.is_deleted = false and pbi.state = 4
+            and pbs.parent_sku_id in
+            <foreach collection="parentSkuIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+
 </mapper>
