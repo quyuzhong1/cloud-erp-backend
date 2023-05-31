@@ -1424,8 +1424,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             qcInfo.setQcDeptName(departName);
             qcInfo.setQcUserId(qcUserId);
             qcInfo.setQcUserName(qcUserName);
-            qcInfo.setSourceId(item.getId());
-            qcInfo.setSourceDetailId(item.getSourceDetailId());
+            qcInfo.setSourceId(item.getMainId());
+            qcInfo.setSourceDetailId(item.getId());
             qcInfo.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
             addQcList.add(qcInfo);
             //质检结果
@@ -1483,32 +1483,42 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98063);
         }
+        long receiveCount = list.stream().filter(req -> !req.getSourceType().equals(SourceTypeEnum.SO_RETURN_RECEIVE)).count();
+        if (receiveCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98066);
+        }
+
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         //获取sku的id集合
         List<String> skuIdList = list.stream().map(SoReturnInstockDTO.GenerateSoReturnInstockView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIdList);
-        //退货单id
-        List<String> returnDetailIds = list.stream().map(SoReturnInstockDTO.GenerateSoReturnInstockView::getSourceDetailId).collect(Collectors.toList());
+        //退货签收单明细表id
+        List<String> receiveDetailIds = list.stream().map(SoReturnInstockDTO.GenerateSoReturnInstockView::getSourceDetailId).collect(Collectors.toList());
+        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailByIds(receiveDetailIds);
+
+        List<String> returnDetailIds = soReturnReceiveDetailEntities.stream().map(SoReturnReceiveDetailEntity::getSourceDetailId).collect(Collectors.toList());
         List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByIds(returnDetailIds);
         //销售单明细id
         List<String> soDetailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(soDetailIds);
 
-        //退货单id
-        List<String> returnIds = list.stream().map(SoReturnInstockDTO.GenerateSoReturnInstockView::getSourceId).collect(Collectors.toList());
+        //签收单id
+        List<String> receiveIds = list.stream().map(SoReturnInstockDTO.GenerateSoReturnInstockView::getSourceId).collect(Collectors.toList());
+        List<SoReturnReceiveEntity> soReturnReceiveEntities = soReturnReceiveService.listBySourceIds(receiveIds);
+        List<String> returnIds = soReturnReceiveEntities.stream().map(SoReturnReceiveEntity::getSourceId).collect(Collectors.toList());
         List<SoReturnEntity> returnEntityList = soReturnFeign.listByIds(returnIds);
         //销售单id
         List<String> soIds = returnEntityList.stream().map(SoReturnEntity::getSourceId).collect(Collectors.toList());
         //根据销售单获取出库单
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySoIds(soIds);
-
         for (SoReturnInstockDTO.GenerateSoReturnInstockView view : list) {
-            SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(view.getMainId());
-            SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailService.getById(view.getId());
-            view.setId(soReturnReceiveEntity.getSourceId());
+            //拿到签收单id
+            SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveEntities.stream().filter(req -> req.getId().equals(view.getSourceId())).findFirst().orElse(new SoReturnReceiveEntity());
+            SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(view.getSourceDetailId())).findFirst().orElse(new SoReturnReceiveDetailEntity());
+            view.setId(view.getId());
             view.setSourceId(soReturnReceiveEntity.getSourceId());
-            view.setSourceDetailId(soReturnReceiveDetailEntity.getSourceDetailId());
+            view.setSourceDetailId(view.getSourceDetailId());
             view.setCode(soReturnReceiveEntity.getSourceCode());
             view.setCustomerId(soReturnReceiveEntity.getCustomerId());
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(view.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());

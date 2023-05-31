@@ -45,11 +45,11 @@ public interface SoReturnFeign {
      * 根据详情id查询详情表信息
      * @Author Luo_WG
      * @Date 2023/5/15 18:17
-     * @param ids ids
+     * @param detailIds ids
      * @return java.util.List<com.erp.model.oms.entity.SoReturnDetailEntity>
      **/
     @PostMapping("feign/soReturn/listDetailByIds")
-    List<SoReturnDetailEntity> listDetailByIds(@RequestBody List<String> ids);
+    List<SoReturnDetailEntity> listDetailByIds(@RequestBody List<String> detailIds);
 
     /***
      * 根据主表id查询详情表信息

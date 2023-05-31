@@ -425,6 +425,7 @@
             qi.id,
             qi.code,
             qi.source_id,
+            qi.source_detail_id,
             qi.source_type,
             qp.sku_id,
             qp.sku_no,
