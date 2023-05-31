@@ -138,7 +138,7 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
         if(Objects.nonNull(param.getInventoryStatus())) { // 参数传输了要改的状态
             log.info("参数已传库存状态：【{}】，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】", param.getInventoryStatus().getName(), businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getBillDate(), param.getSkuNo());
             InventoryModeEnum inventoryModeEnum = param.getInventoryMode();
-            ValidatorUtil.isTrue(Objects.nonNull(inventoryModeEnum),()->new ServiceException(ApiError.ERROR_400.code, "交易类型不能为空"));
+            ValidatorUtil.isTrue(Objects.nonNull(inventoryModeEnum),()->new ServiceException(ApiError.ERROR_99999.code, "交易类型不能为空"));
             // 转换成出入库参数
             InOutStockCoreDTO inOutStockCoreDTO = InventoryUtils.wrapCoreParamByTransfer(param, InventoryOperationModeEnum.APPROVE);
             if(Objects.equals(InventoryModeEnum.IN_STOCK, inventoryModeEnum)) { //入库
