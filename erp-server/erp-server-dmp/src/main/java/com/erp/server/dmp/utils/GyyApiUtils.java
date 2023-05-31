@@ -2,6 +2,7 @@ package com.erp.server.dmp.utils;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONArray;
@@ -110,11 +111,11 @@ public class GyyApiUtils {
             throw new RuntimeException(StrUtil.format("调用url={} param={} {}管易销售详情订单数据失败 responseMap={}",
                     UrlContant.GYY_HOST, JSONUtil.toJsonStr(paramMap),  isHistory ? "历史" : "", JSONUtil.toJsonStr(responseMap)));
         }
-        JSONArray orders = responseMap.getJSONArray("orders");
-        if(CollectionUtil.isEmpty(orders)){
+        JSONObject order = responseMap.getJSONObject("orderDetail");
+        if(ObjectUtil.isNull(order)){
             return null;
         }
-        return JSONObject.parseObject(JSONObject.toJSONString(orders.get(0)), GyyOrderEntity.class);
+        return JSONObject.parseObject(JSONObject.toJSONString(order), GyyOrderEntity.class);
     }
 
     /**
@@ -183,16 +184,20 @@ public class GyyApiUtils {
         headerMap.put("Content-Type", "text/json");
         JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.GYY_HOST, JSONUtil.toJsonStr(paramMap), null, headerMap, RequestMethod.POST);
         boolean isHistory = method.contains("history");
+        if(null == responseMap || null == responseMap.getBoolean("success")){
+            log.error(JSONObject.toJSONString(responseMap));
+            return null;
+        }
         if (!responseMap.getBoolean("success")) {
             log.error("调用url={} param={} {}管易发货单详情订单数据失败 responseMap={}",UrlContant.GYY_HOST, JSONUtil.toJsonStr(paramMap), isHistory ? "历史" : "", JSONUtil.toJsonStr(responseMap));
             throw new RuntimeException(StrUtil.format("调用url={} param={} {}管易发货单详情订单数据失败 responseMap={}",
                     UrlContant.GYY_HOST, JSONUtil.toJsonStr(paramMap),  isHistory ? "历史" : "", JSONUtil.toJsonStr(responseMap)));
         }
-        JSONArray deliverys = responseMap.getJSONArray("deliverys");
-        if(CollectionUtil.isEmpty(deliverys)){
+        JSONObject delivery = responseMap.getJSONObject("delivery");
+        if(ObjectUtil.isEmpty(delivery)){
             return null;
         }
-        return JSONObject.parseObject(JSONObject.toJSONString(deliverys.get(0)), GyyDeliveryDetailEntity.class);
+        return JSONObject.parseObject(JSONObject.toJSONString(delivery), GyyDeliveryDetailEntity.class);
     }
     /**
      * 查询管易退款信息接口
@@ -393,7 +398,9 @@ public class GyyApiUtils {
 
     public static void main(String[] args) {
 //        GyyOrderEntity gyyOrder = querySalesOrderDetail("gy.erp.trade.history.detail.get", "SO375039116724");
-        GyyOrderEntity gyyOrder1 = querySalesOrderDetail("gy.erp.trade.detail.get", "SO609669500496");
+//        GyyOrderEntity gyyOrder1 = querySalesOrderDetail("gy.erp.trade.detail.get", "SO609669500496");
+
+        GyyDeliveryDetailEntity deliveryDetailEntity = queryDeliveryOrderDetail("gy.erp.trade.deliverys.detail.get", "SDO609902091306");
     }
 
 }

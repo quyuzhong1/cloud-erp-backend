@@ -100,7 +100,9 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
     public void addOrderDetail(GyyDeliveryDetailEntity gyyOrderEntity){
         // 根据状态查询未下载数据
         // 查询订单详情
-        GyyDeliveryDetailEntity deliveryEntity = GyyApiUtils.queryDeliveryOrderDetail(gyyOrderEntity.getApiCode(), gyyOrderEntity.getCode());
+        boolean isHistory = gyyOrderEntity.getApiCode().contains("history");
+        String apiCode = isHistory ? PlatformApiEnum.GY_ERP_TRADE_DELIVERYS_DETAIL_HISTORY_GET.getTaskName() : PlatformApiEnum.GY_ERP_TRADE_DELIVERYS_DETAIL_GET.getTaskName();
+        GyyDeliveryDetailEntity deliveryEntity = GyyApiUtils.queryDeliveryOrderDetail(apiCode, gyyOrderEntity.getCode());
         if (null == deliveryEntity){
             return;
         }
@@ -127,6 +129,9 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
                     entityToMqlist.add(initOrderInfoEntity(deliveryInfoEntity));
                 });
             }
+        }
+        if(CollectionUtil.isEmpty(entityToMqlist)){
+            return;
         }
         // 异步推送到MQ
         List<DmpDeliveryDetailInfoEntity> collect = entityToMqlist.stream().peek(msg -> {

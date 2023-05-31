@@ -53,18 +53,13 @@ public class GyyDetailDownloadJob {
         if(CollectionUtil.isEmpty(orderEntityList)){
             return;
         }
-
-        int count = 1;
-        for (GyyOrderEntity gyyOrderEntity : orderEntityList) {
+        orderEntityList.parallelStream().forEach(gyyOrderEntity -> {
             try {
                 gyyOrderInfoService.addOrderDetail(gyyOrderEntity);
-                log.info("count = {}", count ++);
             }catch (Exception e){
-                log.error("管易销售数据下载失败 gyyOrderEntity={}", JSONUtil.toJsonStr(gyyOrderEntity), e);
-                count = 1;
+                log.error("管易销售数据下载失败 code={}", gyyOrderEntity.getCode(), e);
             }
-        }
-
+        });
     }
 
     @XxlJob("gyyDeliveryDetailDownload")
@@ -81,13 +76,13 @@ public class GyyDetailDownloadJob {
         if(CollectionUtil.isEmpty(orderEntityList)){
             return;
         }
-        for (GyyDeliveryDetailEntity deliveryEntity : orderEntityList) {
+        orderEntityList.parallelStream().forEach(deliveryEntity -> {
             try {
                 gyyDeliveryDetailService.addOrderDetail(deliveryEntity);
             }catch (Exception e){
-                log.error("管易销售数据下载失败 gyyOrderEntity={}", JSONUtil.toJsonStr(deliveryEntity), e);
+                log.error("管易销售数据下载失败 code={}", deliveryEntity.getCode(), e);
             }
-        }
+        });
     }
 
 }

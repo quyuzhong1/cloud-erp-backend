@@ -105,7 +105,7 @@ public class HttpCommonUtil {
     private static Response doSend(Request.Builder request) throws Exception {
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
                 //设置连接超时时间
-                .connectTimeout(300, TimeUnit.SECONDS)
+                .connectTimeout(60, TimeUnit.SECONDS)
                 //设置读取超时时间
                 .readTimeout(300, TimeUnit.SECONDS)
                 .build();

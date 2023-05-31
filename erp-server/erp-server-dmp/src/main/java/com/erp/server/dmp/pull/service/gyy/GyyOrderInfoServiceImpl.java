@@ -113,7 +113,9 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void addOrderDetail(GyyOrderEntity gyyOrderEntity){
         // 查询订单详情
-        GyyOrderEntity gyyOrder = GyyApiUtils.querySalesOrderDetail(gyyOrderEntity.getApiCode(), gyyOrderEntity.getCode());
+        boolean isHistory = gyyOrderEntity.getApiCode().contains("history");
+        String apiCode = isHistory ? PlatformApiEnum.GY_ERP_TRADE_HISTORY_DETAIL_GET.getTaskName() : PlatformApiEnum.GY_ERP_TRADE_DETAIL_GET.getTaskName();
+        GyyOrderEntity gyyOrder = GyyApiUtils.querySalesOrderDetail(apiCode, gyyOrderEntity.getCode());
         if(null == gyyOrder){
             return;
         }
