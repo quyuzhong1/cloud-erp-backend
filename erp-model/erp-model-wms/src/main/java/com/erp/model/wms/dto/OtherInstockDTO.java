@@ -228,6 +228,7 @@ public class OtherInstockDTO implements Serializable {
         /**
          * 部门id
          */
+        @NotBlank(message = "部门不能为空")
         private String deptId;
 
         /**
@@ -300,6 +301,16 @@ public class OtherInstockDTO implements Serializable {
          * 库存方向名称
          */
         private String  inventoryDirectionName;
+
+        /**
+         * 库存组织id
+         */
+        private String orgId;
+
+        /**
+         * 库存组织名称
+         */
+        private String orgName;
 
 
         /**

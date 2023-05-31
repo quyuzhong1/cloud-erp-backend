@@ -39,7 +39,7 @@ public class SoChangeController extends BaseController {
      */
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "user_id",
+            tableField = "create_user_id",
             menuCode = "oms:soChange:tabList",
             tableAlias = "sc"
     )
@@ -57,7 +57,7 @@ public class SoChangeController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "user_id",
+            tableField = "create_user_id",
             menuCode = "oms:soChange:paging",
             tableAlias = "sc"
     )
@@ -112,7 +112,7 @@ public class SoChangeController extends BaseController {
      */
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "user_id",
+            tableField = "create_user_id",
             menuCode = "oms:soChange:add",
             serviceClass = SoChangeService.class,
             keyIdName = "id"
@@ -130,7 +130,7 @@ public class SoChangeController extends BaseController {
      */
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "user_id",
+            tableField = "create_user_id",
             menuCode = "oms:soChange:addAndSubmit",
             serviceClass = SoChangeService.class,
             keyIdName = "id"
@@ -148,7 +148,7 @@ public class SoChangeController extends BaseController {
      */
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "user_id",
+            tableField = "create_user_id",
             menuCode = "oms:soChange:addAndSubmit",
             serviceClass = SoChangeService.class,
             keyIdName = "id"
@@ -166,7 +166,7 @@ public class SoChangeController extends BaseController {
      */
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "user_id",
+            tableField = "create_user_id",
             menuCode = "oms:soChange:submit",
             serviceClass = SoChangeService.class,
             keyIdName = "id"
@@ -185,7 +185,7 @@ public class SoChangeController extends BaseController {
      */
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "user_id",
+            tableField = "create_user_id",
             menuCode = "oms:soChange:update",
             serviceClass = SoChangeService.class,
             keyIdName = "id"
@@ -204,7 +204,7 @@ public class SoChangeController extends BaseController {
      */
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "user_id",
+            tableField = "create_user_id",
             menuCode = "oms:soChange:updateAndSubmit",
             serviceClass = SoChangeService.class,
             keyIdName = "id"
@@ -222,7 +222,7 @@ public class SoChangeController extends BaseController {
      */
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "user_id",
+            tableField = "create_user_id",
             menuCode = "oms:soChange:approve",
             serviceClass = SoChangeService.class,
             keyIdName = "id"
@@ -241,7 +241,7 @@ public class SoChangeController extends BaseController {
      */
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "user_id",
+            tableField = "create_user_id",
             menuCode = "oms:soChange:cancelProcess",
             serviceClass = SoChangeService.class,
             keyIdName = "id"
@@ -260,7 +260,7 @@ public class SoChangeController extends BaseController {
      */
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "user_id",
+            tableField = "create_user_id",
             menuCode = "oms:soChange:delete",
             serviceClass = SoChangeService.class,
             keyIdName = "id"
@@ -280,7 +280,7 @@ public class SoChangeController extends BaseController {
      */
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "user_id",
+            tableField = "create_user_id",
             menuCode = "oms:soChange:invalid",
             serviceClass = SoChangeService.class,
             keyIdName = "id"

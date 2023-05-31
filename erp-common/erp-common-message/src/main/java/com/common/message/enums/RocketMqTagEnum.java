@@ -198,6 +198,11 @@ public enum RocketMqTagEnum {
      */
     KINGDEE_MACHINE_INFO_TAG(1018, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_machine_info_tag"),
 
+    /**
+     *销售订单同步金蝶
+     */
+    KINGDEE_SO_INFO_TAG(1019, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_so_info_tag"),
+
 
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 

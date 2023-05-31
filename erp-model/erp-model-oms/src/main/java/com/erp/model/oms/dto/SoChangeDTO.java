@@ -308,7 +308,6 @@ public class SoChangeDTO implements Serializable {
         /**
          * 变更人
          */
-        @NotBlank(message = "变更人不能为空")
         private String userId;
 
 
@@ -499,7 +498,6 @@ public class SoChangeDTO implements Serializable {
         /**
          * 变更员id
          */
-        @NotBlank(message = "变更人不能为空")
         private String userId;
 
 

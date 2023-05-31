@@ -6,12 +6,8 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -217,4 +213,17 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return java.util.List<com.erp.model.oms.dto.SoInfoDTO.GenerateSoReturnView>
      **/
     List<SoInfoDTO.GenerateSoReturnView> generateSoReturnView(List<String> ids);
+  
+    /**
+     * 更改销售订单金蝶推送的状态
+     * @author yl
+     * @date 2023-05-31 14:20
+     * @param id
+     * @param syncKingdeeStatus
+     * @param syncKingdeeId
+     * @param syncOperate
+     * @return 
+     */
+    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId,String syncOperate);
+
 }
