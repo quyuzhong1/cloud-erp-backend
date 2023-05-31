@@ -70,6 +70,7 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
      * @date 2023-05-29 8:53
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void removeByMainIdList(List<String> mainIds) {
         if (CollectionUtils.isEmpty(mainIds)) {
             return;

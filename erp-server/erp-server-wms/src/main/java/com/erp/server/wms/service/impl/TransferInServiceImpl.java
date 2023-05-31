@@ -40,6 +40,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.TransferInMapper;
 import com.erp.server.wms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -294,7 +295,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(rejectStatus)).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.APPROVE_ING);
+        Boolean result = this.updateApproveInfo(list, ApproveStatusEnum.APPROVE_ING,"");
         if (result) {
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", BillApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
@@ -394,7 +395,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             throw new ServiceException(ApiError.ERROR_98007);
         }
         //TODO 撤销流程
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.WAIT_SUBMIT);
+        Boolean result = this.updateApproveInfo(list, ApproveStatusEnum.WAIT_SUBMIT,"");
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("分布式调入单【%s】取消流程", ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "取消流程操作");
         return result;
@@ -410,6 +411,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
      * @date 2023-05-26 19:05
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean deleteByIds(List<String> ids) {
         List<TransferInEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
@@ -446,6 +448,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
      * @date 2023-05-29 9:47
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean disApprove(BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<TransferInEntity> list = this.listByIds(ids);
@@ -470,12 +474,11 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-        Boolean result = this.updateApproveStatus(list, waitSubmitStatus);
+        Boolean result = this.updateApproveInfo(list, waitSubmitStatus,"");
         //反审核
         if (result) {
             InventoryBatchUnApproveDTO batchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.TRANSFER_IN, ids);
             inventoryTransCoreService.batchUnApprove(batchUnApproveDTO);
-
 
             //添加日志
             String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
@@ -497,6 +500,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
      * @date 2023-05-29 9:51
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String remark) {
         List<TransferInEntity> list = this.listByIds(ids);
         if (CollectionUtils.isEmpty(list)) {
@@ -706,7 +710,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
                 .list();
     }
 
-    private Boolean updateApproveInfo(List<TransferInEntity> list, ApproveStatusEnum approveStatus, String approveUserName) {
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateApproveInfo(List<TransferInEntity> list, ApproveStatusEnum approveStatus, String approveUserName) {
         if (CollectionUtils.isNotEmpty(list)) {
             for (TransferInEntity item : list) {
                 item.setApproveStatus(approveStatus);
@@ -717,15 +722,6 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         return Boolean.TRUE;
     }
 
-    private Boolean updateApproveStatus(List<TransferInEntity> list, ApproveStatusEnum statusEnum) {
-        if (CollectionUtils.isNotEmpty(list)) {
-            for (TransferInEntity item : list) {
-                item.setApproveStatus(statusEnum);
-            }
-            return this.updateBatchById(list);
-        }
-        return Boolean.TRUE;
-    }
 
     private List<String> listBySearchType(String searchType) {
         List<String> approveList = new ArrayList<>(3);
