@@ -7,7 +7,9 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.*;
+import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.vo.*;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
@@ -318,4 +321,16 @@ public interface SysUserFeign {
      **/
     @PostMapping("feign/dictCountry/getCountryById")
     DictCountryEntity getCountryById(@RequestBody String id);
+
+    /**
+     * 根据id查询区域
+     */
+    @PostMapping("feign/globalArea/getById")
+    DictGlobalAreaEntity getGlobalAreaById(@RequestBody String id);
+
+    /**
+     * 根据id查询省/市
+     */
+    @PostMapping("feign/city/getById")
+    DictCityEntity getCityById(@RequestBody String id);
 }

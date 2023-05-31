@@ -1,5 +1,6 @@
 package com.erp.server.oms.kingdee.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
@@ -13,13 +14,16 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.CustomerAddressDTO;
+import com.erp.model.oms.dto.CustomerContactDTO;
 import com.erp.model.oms.dto.InvoiceDTO;
 import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
@@ -59,6 +63,9 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
     private CustomerAddressService customerAddressService;
 
     @Resource
+    private CustomerContactService customerContactService;
+
+    @Resource
     private MQProducerService mQProducerService;
 
     @Resource
@@ -86,6 +93,16 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         DictCountryEntity countryEntity = sysUserFeign.getCountryById(entity.getCountryId());
         //国家
         resultMap.put("countryCode", countryEntity.getKingdeeCode());
+
+        DictCityEntity province = sysUserFeign.getCityById(entity.getProvinceId());
+        if (ObjectUtil.isNotEmpty(province)) {
+            resultMap.put("province", province.getCountryCode());
+        }
+
+        DictCityEntity city = sysUserFeign.getCityById(entity.getCityId());
+        if (ObjectUtil.isNotEmpty(city)) {
+            resultMap.put("city", city.getCountryCode());
+        }
 
         List<InvoiceDTO.ViewDTO> viewDTOS = customerInvoiceService.listByMainId(entity.getId());
         if (CollectionUtils.isNotEmpty(viewDTOS)) {
@@ -125,12 +142,23 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         List<DictBasicDTO.ViewDTO> collectionTermsList = dictBasicService.getByKey("collectionTerms");
         DictBasicDTO.ViewDTO collectionTerms = collectionTermsList.stream().filter(req -> req.getValue().equals(entity.getConditionDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
         resultMap.put("collectionTermsCode",collectionTerms.getRemark());
-
+        List<CustomerContactDTO.ViewDTO> customerContactList = customerContactService.listByMainId(entity.getId());
+        resultMap.put("customerContactList",customerContactList);
         resultMap.put("invoiceList", viewDTOS);
         List<CustomerAddressDTO.ViewDTO> customerAddressList = customerAddressService.listByMainId(entity.getId());
+        if (CollectionUtils.isNotEmpty(customerAddressList)) {
+            List<CustomerAddressDTO.ViewDTO> collect = customerAddressList.stream().sorted(Comparator.comparing(CustomerAddressDTO.ViewDTO::getIsDefault).reversed()).collect(Collectors.toList());
+            resultMap.put("telNumber", collect.get(MathUtil.ZERO).getTelNumber());
+            resultMap.put("person", collect.get(MathUtil.ZERO).getPerson());
+            resultMap.put("address", collect.get(MathUtil.ZERO).getAddress());
+        }
         resultMap.put("customerAddressList", customerAddressList);
         resultMap.put("platformType", entity.getPlatformType().getKingdeeCode());
-
+        String regionCode = countryEntity.getRegionCode();
+        DictGlobalAreaEntity globalAreaEntity = sysUserFeign.getGlobalAreaById(regionCode);
+        if (ObjectUtil.isNotEmpty(globalAreaEntity)) {
+            resultMap.put("globalAreaCode", globalAreaEntity.getKingdeeCode());
+        }
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_CUSTOMER_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
