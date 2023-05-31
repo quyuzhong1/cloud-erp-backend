@@ -24,6 +24,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -34,7 +35,6 @@ import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -44,6 +44,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.SoOutstockMapper;
 import com.erp.server.wms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -360,22 +361,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @date 2023-05-22 20:01
      */
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void handleData(List<SoOutstockEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        //销售订单的id
+        List<String> soIds = list.stream().map(SoOutstockEntity::getSoId).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(soIds);
+        List<String> soDetailIdList = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
         List<String> allList = list.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
         //发货通知单
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
         //发货通知单的 id
         List<SoOutstockEntity> noticeSoOutstockList = list.stream().filter(s -> s.getSourceType().equals(soDeliveryNotice)).
                 collect(Collectors.toList());
-        //销售订单出库单的
-        List<SoOutstockEntity> soOutstockList = list.stream().filter(s -> !s.getSourceType().equals(soDeliveryNotice)).
-                collect(Collectors.toList());
-        //销售出库单
-        List<String> soOutstockIdList = soOutstockList.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
-        List<String> noticeSoOutstockIds = noticeSoOutstockList.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
+
         List<String> noticeIdList = noticeSoOutstockList.stream().map(SoOutstockEntity::getSourceId).collect(Collectors.toList());
         //发货通知集合
         List<SoDeliveryNoticeEntity> noticeList = CollectionUtils.isNotEmpty(noticeIdList) ? soDeliveryNoticeService.listByIds(noticeIdList) : Collections.emptyList();
@@ -391,21 +392,24 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         //更改打包日期 以及发货状态
         soDeliveryNoticeService.updateBatchById(noticeList);
-        //这个是发货通知的详情
-        List<SoOutstockDetailEntity> noticeSoOutstockDetailList = soOutstockDetailService.listByMainIds(noticeSoOutstockIds);
-        //来源明细
-        List<String> sourceDetailIdList = noticeSoOutstockDetailList.stream().map(SoOutstockDetailEntity::getSourceDetailId).collect(Collectors.toList());
-        //处理数据 更改销售订单的发货状态
-        soDeliveryNoticeDetailService.handleData(sourceDetailIdList);
 
-        //这个是销售订单的
-        List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockDetailService.listByMainIds(soOutstockIdList);
-        List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList = new ArrayList<>(soOutstockIdList.size());
-        for (SoOutstockDetailEntity item : soOutstockDetailList) {
+        //这个是销售订单的 这个要统计 存在多个
+        List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockDetailService.listDetailBySoDetailIds(soDetailIdList);
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        soOutstockDetailList = soOutstockDetailList.stream().filter(s -> s.getApproveStatus().equals(approveStatus)).collect(Collectors.toList());
+
+        //分组
+        Map<String, List<SoOutstockDetailDTO.DeliveryQtyDTO>> map = soOutstockDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailDTO.DeliveryQtyDTO::getSoDetailId));
+        List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList = new ArrayList<>(map.size());
+        for (Map.Entry<String, List<SoOutstockDetailDTO.DeliveryQtyDTO>> entry : map.entrySet()) {
             SoDetailDTO.UpdateDeliveryStatusDTO param = new SoDetailDTO.UpdateDeliveryStatusDTO();
-            param.setId(item.getSourceDetailId());
-            param.setDeliveryQty(item.getActualQty());
+            String soDetailId = entry.getKey();
+            param.setId(soDetailId);
+            //已发货数量
+            Integer alreadyDeliveryQty = entry.getValue().stream().mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
+            param.setAlreadyDeliveryQty(alreadyDeliveryQty);
             paramList.add(param);
+
         }
         soInfoFeign.updateDeliveryStatus(paramList);
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
@@ -419,7 +423,57 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             inventoryInOutStockDTO.setMembers(members);
             inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
         }
+    }
 
+
+    /**
+     * 处理反审核的数据
+     *
+     * @param list
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void handleDisApproveData(List<SoOutstockEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //销售订单的id
+        List<String> soIds = list.stream().map(SoOutstockEntity::getSoId).collect(Collectors.toList());
+        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(soIds);
+        List<String> soDetailIdList = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
+        //发货通知单
+        String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
+        //发货通知单的
+        List<SoOutstockEntity> noticeSoOutstockList = list.stream().filter(s -> s.getSourceType().equals(soDeliveryNotice)).
+                collect(Collectors.toList());
+
+        List<String> noticeIdList = noticeSoOutstockList.stream().map(SoOutstockEntity::getSourceId).collect(Collectors.toList());
+        //发货通知集合
+        List<SoDeliveryNoticeEntity> noticeList = CollectionUtils.isNotEmpty(noticeIdList) ? soDeliveryNoticeService.listByIds(noticeIdList) : Collections.emptyList();
+        for (SoDeliveryNoticeEntity item : noticeList) {
+            item.setDeliveryStatus(Boolean.FALSE);
+        }
+        //更改发货状态
+        soDeliveryNoticeService.updateBatchById(noticeList);
+
+        //这个是销售订单的 这个要统计 存在多个
+        List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockDetailService.listDetailBySoDetailIds(soDetailIdList);
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        soOutstockDetailList = soOutstockDetailList.stream().filter(s -> s.getApproveStatus().equals(approveStatus)).collect(Collectors.toList());
+        //分组
+        Map<String, List<SoOutstockDetailDTO.DeliveryQtyDTO>> map = soOutstockDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailDTO.DeliveryQtyDTO::getSoDetailId));
+        List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList = new ArrayList<>(map.size());
+        for (Map.Entry<String, List<SoOutstockDetailDTO.DeliveryQtyDTO>> entry : map.entrySet()) {
+            SoDetailDTO.UpdateDeliveryStatusDTO param = new SoDetailDTO.UpdateDeliveryStatusDTO();
+            String soDetailId = entry.getKey();
+            param.setId(soDetailId);
+            //已发货数量
+            Integer alreadyDeliveryQty = entry.getValue().stream().mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
+            param.setAlreadyDeliveryQty(alreadyDeliveryQty);
+            paramList.add(param);
+
+        }
+        soInfoFeign.updateDeliveryStatus(paramList);
 
     }
 
@@ -462,6 +516,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //反审核
             InventoryBatchUnApproveDTO batchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_OUTSTOCK, ids);
             inventoryTransCoreService.batchUnApprove(batchUnApproveDTO);
+            handleDisApproveData(list);
 
             //添加日志
             String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
@@ -647,18 +702,22 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> skuIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         List<String> flagList = new ArrayList<>();
-
+        //发货通知单
+        String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
         for (SoOutstockDTO.PagingViewDTO item : list) {
             boolean contains = flagList.contains(item.getId());
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
             String soId = item.getSoId();
+            String sourceType = item.getSourceType();
+            String sourceCode = soDeliveryNotice.equals(sourceType) ? item.getSourceCode() : "";
+            item.setSourceCode(sourceCode);
             SoInfoDTO.CustomerDTO soInfo = soCustomerList.stream().filter(s -> s.getId().equals(soId)).findFirst().orElse(new SoInfoDTO.CustomerDTO());
             item.setOrderTypeName(soInfo.getOrderTypeName());
             item.setSalesOrgName(soInfo.getSalesOrgName());
             item.setCustomerName(soInfo.getCustomerName());
             Boolean invalidStatus = item.getInvalidStatus();
-            String invalidStatusName = invalidStatus ? "作废" : "未作废";
+            String invalidStatusName = invalidStatus ? "已作废" : "未作废";
             item.setInvalidStatusName(invalidStatusName);
             String skuId = item.getSkuId();
             SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
@@ -673,7 +732,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 item.setOrderTypeName("");
                 item.setApproveStatusName("");
                 item.setCustomerName("");
-                item.setDeliveryOrgName("");
+                item.setWarehouseOrgName("");
                 item.setSalesOrgName("");
                 item.setPlanDeliveryDate(null);
                 item.setPackDate(null);
@@ -711,16 +770,21 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //sku id
         List<String> skuIdList = list.stream().map(SoOutstockDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        //发货通知单
+        String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
         for (SoOutstockDTO.PagingViewDTO item : list) {
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
             String soId = item.getSoId();
+            String sourceType = item.getSourceType();
+            String sourceCode = soDeliveryNotice.equals(sourceType) ? item.getSourceCode() : "";
+            item.setSourceCode(sourceCode);
             SoInfoDTO.CustomerDTO soInfo = soCustomerList.stream().filter(s -> s.getId().equals(soId)).findFirst().orElse(new SoInfoDTO.CustomerDTO());
             item.setOrderTypeName(soInfo.getOrderTypeName());
             item.setSalesOrgName(soInfo.getSalesOrgName());
             item.setCustomerName(soInfo.getCustomerName());
             Boolean invalidStatus = item.getInvalidStatus();
-            String invalidStatusName = invalidStatus ? "作废" : "未作废";
+            String invalidStatusName = invalidStatus ? "已作废" : "未作废";
             item.setInvalidStatusName(invalidStatusName);
             String skuId = item.getSkuId();
             SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());

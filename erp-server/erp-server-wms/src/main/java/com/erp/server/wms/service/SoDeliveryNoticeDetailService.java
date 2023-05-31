@@ -80,14 +80,7 @@ public interface SoDeliveryNoticeDetailService extends SuperService<SoDeliveryNo
     List<SoDeliveryNoticeDetailEntity> listDetailBySourceDetailIds(List<String> sourceIds);
 
 
-    /**
-     * 处理数据 更改销售订单的发货状态
-     * @author yl
-     * @date 2023-05-23 10:02
-     * @param sourceDetailIdList
-     * @return void
-     */
-    void handleData(List<String> sourceDetailIdList);
+
 
     /**
      * 根据销售订单详情id 获取对应 下推的数据

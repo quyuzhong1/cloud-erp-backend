@@ -836,9 +836,9 @@ public class SoDetailDTO implements Serializable {
 
 
         /**
-         * 发货数量
+         * 已发货数量
          */
-        private Integer deliveryQty;
+        private Integer alreadyDeliveryQty;
 
     }
 }

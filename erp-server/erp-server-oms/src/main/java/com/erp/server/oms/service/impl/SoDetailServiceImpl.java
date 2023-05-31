@@ -876,7 +876,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 String id = item.getId();
                 Integer qty = item.getQty();
                 Integer deliveryQty = paramList.stream().filter(p -> p.getId().equals(id)).findFirst().
-                        flatMap(obj -> Optional.ofNullable(obj.getDeliveryQty())).orElse(0);
+                        flatMap(obj -> Optional.ofNullable(obj.getAlreadyDeliveryQty())).orElse(0);
                 if (deliveryQty >= qty) {
                     item.setDeliveryStatus(DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode());
                 }
