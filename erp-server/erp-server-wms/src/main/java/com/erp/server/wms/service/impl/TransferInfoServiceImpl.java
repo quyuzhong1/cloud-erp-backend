@@ -679,6 +679,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 .set(TransferInfoEntity::getApproveUserName, userInfo.getUserName())
                 .set(TransferInfoEntity::getApproveStatus, approveStatus)
                 .set(TransferInfoEntity::getApproveTime, LocalDateTime.now())
+                .set(ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus), TransferInfoEntity::getSyncKingdeeStatus, SyncKingdeeStatusEnum.TO_BE_SYNC.getCode())
                 .update();
     }
 
