@@ -17,6 +17,7 @@
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
         WHERE srn.is_deleted = FALSE
+        AND srn.invalid_status = FALSE
         <if test="ids != null and ids.size != ''">
             and srn.source_id in
             <foreach collection="ids" item="id" open="(" close=")" separator=",">
@@ -40,6 +41,7 @@
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
         WHERE srn.is_deleted = FALSE
+        AND srn.invalid_status = FALSE
         <if test="ids != null and ids.size != ''">
             and srnd.source_detail_id in
             <foreach collection="ids" item="id" open="(" close=")" separator=",">

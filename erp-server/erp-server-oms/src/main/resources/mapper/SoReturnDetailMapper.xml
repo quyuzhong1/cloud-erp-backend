@@ -16,6 +16,7 @@
         FROM so_return_detail srd
         INNER JOIN so_return sr ON srd.main_id = sr.id AND srd.is_deleted = FALSE
         WHERE sr.is_deleted = FALSE
+        AND sr.invalid_status = FALSE
         <if test="ids != null and ids.size != ''">
             and sr.source_id in
             <foreach collection="ids" item="id" open="(" close=")" separator=",">
@@ -39,6 +40,7 @@
         FROM so_return_detail srd
         INNER JOIN so_return sr ON srd.main_id = sr.id AND srd.is_deleted = FALSE
         WHERE sr.is_deleted = FALSE
+        AND sr.invalid_status = FALSE
         <if test="ids != null and ids.size != ''">
             and srd.id in
             <foreach collection="ids" item="id" open="(" close=")" separator=",">

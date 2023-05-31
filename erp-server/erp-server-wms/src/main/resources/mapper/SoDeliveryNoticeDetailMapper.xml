@@ -15,6 +15,7 @@
         FROM so_delivery_notice sdn
         INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
         WHERE sdnd.is_deleted = FALSE
+        AND sdn.invalid_status = FALSE
         <if test="ids != null and ids.size != ''">
             and sdn.source_id in
             <foreach collection="ids" item="id" open="(" close=")" separator=",">
@@ -37,6 +38,7 @@
         FROM so_delivery_notice sdn
         INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
         WHERE sdnd.is_deleted = FALSE
+        AND sdn.invalid_status = FALSE
         <if test="ids != null and ids.size != ''">
             and sdnd.source_detail_id in
             <foreach collection="ids" item="id" open="(" close=")" separator=",">

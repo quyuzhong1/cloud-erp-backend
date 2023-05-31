@@ -17,6 +17,7 @@
         FROM so_return_receive_detail srrd
         INNER JOIN so_return_receive srr ON srrd.main_id = srr.id AND srrd.is_deleted = FALSE
         WHERE srr.is_deleted = FALSE
+        AND srr.invalid_status = FALSE
         <if test="ids != null and ids.size != ''">
             and srr.source_id in
             <foreach collection="ids" item="id" open="(" close=")" separator=",">
@@ -41,6 +42,7 @@
         FROM so_return_receive_detail srrd
         INNER JOIN so_return_receive srr ON srrd.main_id = srr.id AND srrd.is_deleted = FALSE
         WHERE srr.is_deleted = FALSE
+        AND srr.invalid_status = FALSE
         <if test="ids != null and ids.size != ''">
             and srrd.id in
             <foreach collection="ids" item="id" open="(" close=")" separator=",">

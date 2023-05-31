@@ -20,6 +20,7 @@
         FROM so_return_instock_detail srid
         INNER JOIN so_return_instock sri ON sri.id = srid.main_id AND srid.is_deleted = FALSE
         WHERE sri.is_deleted = FALSE
+        AND sri.invalid_status = FALSE
         <if test="ids != null and ids.size != ''">
             and sri.source_id in
             <foreach collection="ids" item="id" open="(" close=")" separator=",">
@@ -46,6 +47,7 @@
         FROM so_return_instock_detail srid
         INNER JOIN so_return_instock sri ON sri.id = srid.main_id AND srid.is_deleted = FALSE
         WHERE sri.is_deleted = FALSE
+        AND sri.invalid_status = FALSE
         <if test="ids != null and ids.size != ''">
             and srid.source_detail_id in
             <foreach collection="ids" item="id" open="(" close=")" separator=",">
