@@ -216,7 +216,7 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
                     map(TransferOutDetailEntity::getQty).findFirst().orElse(0);
             int alreadyInQty = transferInDetailList.stream().filter(i -> i.getSourceDetailId().equals(sourceDetailId) && !i.getId().equals(id)).
                     mapToInt(TransferInDetailDTO.QtyDTO::getPlanQty).sum();
-            if (outQty > alreadyInQty + planQty) {
+            if (alreadyInQty + planQty > outQty) {
                 throw new ServiceException(ApiError.ERROR_99065);
             }
 
