@@ -155,6 +155,10 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
      * 解析退款订单数据
      **/
     private DmpRefundInfoEntity initOrderInfoEntity(GyyRefundEntity gyyRefundEntity) {
+        GyyOrderInfoServiceImpl gyyOrderInfoService = new GyyOrderInfoServiceImpl();
+        if (gyyOrderInfoService.assertOrgIsVijim(gyyRefundEntity.getShopCode())){
+            return null;
+        }
         DmpRefundInfoEntity dmpRefundInfoEntity = new DmpRefundInfoEntity();
         // 退款单号
         dmpRefundInfoEntity.setRefundCode(gyyRefundEntity.getCode());
