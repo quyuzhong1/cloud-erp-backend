@@ -54,7 +54,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
 
         //采购订单
         if (ApiModuleTypeEnum.PURCHASE_ORDER.getCode().toString().equals(code)) {
-            purchaseOrderService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId);
+            purchaseOrderService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId,"");
         }
         //采购价目表
         if (ApiModuleTypeEnum.PURCHASE_PRICE.getCode().toString().equals(code)) {
@@ -63,15 +63,15 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
                 purchasePriceDetailService.updateKingdeeDetailId(list);
                 return;
             }
-            purchasePriceService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId);
+            purchasePriceService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId,"");
         }
         //采购调价表
         if (ApiModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode().toString().equals(code)) {
-            purchasePriceChangeService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId);
+            purchasePriceChangeService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId, "");
         }
         //供应商表
         if (ApiModuleTypeEnum.SUPPLIER.getCode().toString().equals(code)) {
-            supplierService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId);
+            supplierService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId,"");
         }
     }
 }

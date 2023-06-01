@@ -221,7 +221,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param syncKingdeeId
      * @return Boolean
      */
-    Boolean updateSyncKingdeeStatus(List<String> ids, String code, String syncKingdeeId);
+    Boolean updateSyncKingdeeStatus(List<String> ids, String code, String syncKingdeeId,String syncOperate);
 
     /**
      * 根据采购订单id 集合获取对应数量

@@ -238,7 +238,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @author Will
      * @date: 2023/4/25 18:48
      */
-    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId);
+    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId,String syncOperate);
 
     /**
      * 根据供应商类型 获取对应供应商

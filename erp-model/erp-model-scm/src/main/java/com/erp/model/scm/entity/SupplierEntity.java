@@ -141,6 +141,12 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
 
+    /**
+     * 同步操作
+     */
+    @TableField("sync_operate")
+    private String syncOperate;
+
 
     @Override
     public Serializable pkVal() {
