@@ -626,6 +626,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             SoReturnNoticeEntity noticeEntity = soReturnNoticeService.getById(id);
             SoReturnReceiveDTO.Add dto = new SoReturnReceiveDTO.Add();
             dto.setSourceType(SourceTypeEnum.SO_RETURN_NOTICE.getCode());
+            dto.setWarehouseId(noticeEntity.getWarehouseId());
             dto.setInventoryOrgId(noticeEntity.getInventoryOrgId());
             dto.setWarehouseKeeperId(noticeEntity.getWarehouseKeeperId());
             dto.setReturnDate(noticeEntity.getBillDate());

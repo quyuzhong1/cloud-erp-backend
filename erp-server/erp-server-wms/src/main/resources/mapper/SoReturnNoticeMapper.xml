@@ -226,6 +226,8 @@
             srnd.id,
             srnd.main_id,
             srn.source_id,
+            srn.warehouse_id,
+            srn.inventory_org_id,
             srn.warehouse_keeper_id,
             srnd.source_detail_id,
             srn.source_code,

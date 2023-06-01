@@ -418,6 +418,14 @@ public class SoReturnNoticeDTO {
          */
         private String sourceType;
         /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 库存组织
+         */
+        private String inventoryOrgId;
+        /**
          * 仓管员id
          */
         private String warehouseKeeperId;
