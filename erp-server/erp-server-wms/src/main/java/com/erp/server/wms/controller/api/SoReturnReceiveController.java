@@ -46,8 +46,8 @@ public class SoReturnReceiveController extends BaseController {
      **/
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "seller_id",
-            menuCode = "wms:soReturnReceiveService:paging",
+            tableField = "create_user_id",
+            menuCode = "wms:soReturnReceive:paging",
             tableAlias = "srr"
     )
     public ApiResult<PagingVO<SoReturnReceiveDTO.PagingView>> paging(@RequestBody @Validated PagingDTO<SoReturnReceiveDTO.PagingParam> dto) {
@@ -64,8 +64,8 @@ public class SoReturnReceiveController extends BaseController {
      **/
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "receive_user_id",
-            menuCode = "wms:soReturnReceiveService:listCount",
+            tableField = "create_user_id",
+            menuCode = "wms:soReturnReceive:listCount",
             tableAlias = "srr"
     )
     public ApiResult<List<SoReturnReceiveDTO.StatusCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
@@ -95,8 +95,8 @@ public class SoReturnReceiveController extends BaseController {
      **/
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:soReturnReceiveService:update",
+            tableField = "create_user_id",
+            menuCode = "wms:soReturnReceive:update",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "id")
     public ApiResult update(@RequestBody @Validated SoReturnReceiveDTO.Update dto) {
@@ -113,8 +113,8 @@ public class SoReturnReceiveController extends BaseController {
      **/
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "receive_user_id",
-            menuCode = "wms:soReturnReceiveService:view",
+            tableField = "create_user_id",
+            menuCode = "wms:soReturnReceive:view",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "id")
     public ApiResult<SoReturnReceiveDTO.View> view(@RequestParam("id") String id) {
@@ -131,8 +131,8 @@ public class SoReturnReceiveController extends BaseController {
      **/
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:soReturnReceiveService:submit",
+            tableField = "create_user_id",
+            menuCode = "wms:soReturnReceive:submit",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -149,8 +149,8 @@ public class SoReturnReceiveController extends BaseController {
      **/
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:soReturnReceiveService:add",
+            tableField = "create_user_id",
+            menuCode = "wms:soReturnReceive:add",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated SoReturnReceiveDTO.Add dto) {
@@ -167,8 +167,8 @@ public class SoReturnReceiveController extends BaseController {
      **/
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:soReturnReceiveService:update",
+            tableField = "create_user_id",
+            menuCode = "wms:soReturnReceive:update",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated SoReturnReceiveDTO.Update dto) {
@@ -185,8 +185,8 @@ public class SoReturnReceiveController extends BaseController {
      **/
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:soReturnReceiveService:approve",
+            tableField = "create_user_id",
+            menuCode = "wms:soReturnReceive:approve",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
@@ -203,8 +203,8 @@ public class SoReturnReceiveController extends BaseController {
      **/
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:soReturnReceiveService:disApprove",
+            tableField = "create_user_id",
+            menuCode = "wms:soReturnReceive:disApprove",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -221,8 +221,8 @@ public class SoReturnReceiveController extends BaseController {
      **/
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:soReturnReceiveService:cancelProcess",
+            tableField = "create_user_id",
+            menuCode = "wms:soReturnReceive:cancelProcess",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -239,8 +239,8 @@ public class SoReturnReceiveController extends BaseController {
      **/
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
-            menuCode = "wms:soReturnReceiveService:invalid",
+            tableField = "create_user_id",
+            menuCode = "wms:soReturnReceive:invalid",
             serviceClass = SoReturnReceiveService.class,
             keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO remarkDTO) {
@@ -256,6 +256,11 @@ public class SoReturnReceiveController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:soReturnReceive:delete",
+            serviceClass = SoReturnReceiveService.class,
+            keyIdName = "ids")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
         Boolean flag = soReturnReceiveService.delete(idsDTO.getIds());
         return flag == true ? success() : failure();
@@ -271,8 +276,8 @@ public class SoReturnReceiveController extends BaseController {
      **/
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "receive_user_id",
-            menuCode = "wms:soReturnReceiveService:paging",
+            tableField = "create_user_id",
+            menuCode = "wms:soReturnReceive:paging",
             tableAlias = "srr"
     )
     public ApiResult exportExcel(@RequestBody SoReturnReceiveDTO.PagingParam dto, HttpServletResponse response) {

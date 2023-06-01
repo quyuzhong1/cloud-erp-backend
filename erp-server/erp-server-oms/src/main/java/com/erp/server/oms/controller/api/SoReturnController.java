@@ -49,9 +49,9 @@ public class SoReturnController extends BaseController {
      **/
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "seller_id",
+            tableField = "create_user_id",
             menuCode = "oms:soReturn:paging",
-            tableAlias = "osp"
+            tableAlias = "sr"
     )
     public ApiResult<PagingVO<SoReturnDTO.PagingView>> paging(@RequestBody @Validated PagingDTO<SoReturnDTO.PagingParam> dto) {
         PagingVO<SoReturnDTO.PagingView> pagingVO = soReturnService.paging(dto);
@@ -66,7 +66,11 @@ public class SoReturnController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.SoReturnDTO.soReturnCountDTO>>
      **/
     @PostMapping("/listCount")
-
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:soReturn:paging",
+            tableAlias = "sr"
+    )
     public ApiResult<List<SoReturnDTO.StatusCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
         List<SoReturnDTO.StatusCountDTO> soReturnCountDTOS = soReturnService.listCount(dto);
         return success(soReturnCountDTOS);
@@ -94,7 +98,7 @@ public class SoReturnController extends BaseController {
      **/
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "create_user_id",
             menuCode = "oms:soReturn:update",
             serviceClass = SoReturnService.class,
             keyIdName = "id")
@@ -112,7 +116,7 @@ public class SoReturnController extends BaseController {
      **/
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "seller_id",
+            tableField = "create_user_id",
             menuCode = "oms:soReturn:view",
             serviceClass = SoReturnService.class,
             keyIdName = "id")
@@ -130,7 +134,7 @@ public class SoReturnController extends BaseController {
      **/
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "seller_id",
+            tableField = "create_user_id",
             menuCode = "oms:soReturn:submit",
             serviceClass = SoReturnService.class,
             keyIdName = "ids")
@@ -148,7 +152,7 @@ public class SoReturnController extends BaseController {
      **/
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "seller_id",
+            tableField = "create_user_id",
             menuCode = "oms:soReturn:add",
             serviceClass = SoReturnService.class,
             keyIdName = "id")
@@ -166,7 +170,7 @@ public class SoReturnController extends BaseController {
      **/
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "seller_id",
+            tableField = "create_user_id",
             menuCode = "oms:soReturn:update",
             serviceClass = SoReturnService.class,
             keyIdName = "id")
@@ -184,7 +188,7 @@ public class SoReturnController extends BaseController {
      **/
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "seller_id",
+            tableField = "create_user_id",
             menuCode = "oms:soReturn:approve",
             serviceClass = SoReturnService.class,
             keyIdName = "ids")
@@ -202,7 +206,7 @@ public class SoReturnController extends BaseController {
      **/
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "seller_id",
+            tableField = "create_user_id",
             menuCode = "oms:soReturn:disApprove",
             serviceClass = SoReturnService.class,
             keyIdName = "ids")
@@ -220,7 +224,7 @@ public class SoReturnController extends BaseController {
      **/
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "seller_id",
+            tableField = "create_user_id",
             menuCode = "oms:soReturn:cancelProcess",
             serviceClass = SoReturnService.class,
             keyIdName = "ids")
@@ -238,7 +242,7 @@ public class SoReturnController extends BaseController {
      **/
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "seller_id",
+            tableField = "create_user_id",
             menuCode = "oms:soReturn:invalid",
             serviceClass = SoReturnService.class,
             keyIdName = "ids")
@@ -255,6 +259,12 @@ public class SoReturnController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "oms:soReturn:delete",
+            serviceClass = SoReturnService.class,
+            keyIdName = "ids"
+    )
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
         Boolean flag = soReturnService.delete(idsDTO.getIds());
         return flag == true ? success() : failure();
@@ -270,9 +280,9 @@ public class SoReturnController extends BaseController {
      **/
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "seller_id",
+            tableField = "create_user_id",
             menuCode = "oms:soReturn:paging",
-            tableAlias = "osp"
+            tableAlias = "sr"
     )
     public ApiResult exportExcel(@RequestBody SoReturnDTO.PagingParam dto, HttpServletResponse response) {
         Boolean flag = soReturnService.exportExcel(dto, response);

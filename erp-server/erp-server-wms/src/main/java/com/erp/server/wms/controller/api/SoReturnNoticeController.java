@@ -44,9 +44,9 @@ public class SoReturnNoticeController extends BaseController {
      **/
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "seller_id",
+            tableField = "create_user_id",
             menuCode = "wms:soReturnNotice:paging",
-            tableAlias = "sdn"
+            tableAlias = "srn"
     )
     public ApiResult<PagingVO<SoReturnNoticeDTO.PagingView>> paging(@RequestBody @Validated PagingDTO<SoReturnNoticeDTO.PagingParam> dto) {
         PagingVO<SoReturnNoticeDTO.PagingView> pagingVO = soReturnNoticeService.paging(dto);
@@ -62,9 +62,9 @@ public class SoReturnNoticeController extends BaseController {
      **/
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "receive_user_id",
+            tableField = "create_user_id",
             menuCode = "wms:soReturnNotice:listCount",
-            tableAlias = "sdn"
+            tableAlias = "srn"
     )
     public ApiResult<List<SoReturnNoticeDTO.StatusCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
         List<SoReturnNoticeDTO.StatusCountDTO> soDeliveryNoticeCountDTOS = soReturnNoticeService.listCount(dto);
@@ -93,7 +93,7 @@ public class SoReturnNoticeController extends BaseController {
      **/
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "create_user_id",
             menuCode = "wms:soReturnNotice:update",
             serviceClass = SoReturnNoticeService.class,
             keyIdName = "id")
@@ -111,7 +111,7 @@ public class SoReturnNoticeController extends BaseController {
      **/
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "receive_user_id",
+            tableField = "create_user_id",
             menuCode = "wms:soReturnNotice:view",
             serviceClass = SoReturnNoticeService.class,
             keyIdName = "id")
@@ -129,7 +129,7 @@ public class SoReturnNoticeController extends BaseController {
      **/
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "create_user_id",
             menuCode = "wms:soReturnNotice:submit",
             serviceClass = SoReturnNoticeService.class,
             keyIdName = "ids")
@@ -147,7 +147,7 @@ public class SoReturnNoticeController extends BaseController {
      **/
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "create_user_id",
             menuCode = "wms:soReturnNotice:add",
             serviceClass = SoReturnNoticeService.class,
             keyIdName = "id")
@@ -165,7 +165,7 @@ public class SoReturnNoticeController extends BaseController {
      **/
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "create_user_id",
             menuCode = "wms:soReturnNotice:update",
             serviceClass = SoReturnNoticeService.class,
             keyIdName = "id")
@@ -183,7 +183,7 @@ public class SoReturnNoticeController extends BaseController {
      **/
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "create_user_id",
             menuCode = "wms:soReturnNotice:approve",
             serviceClass = SoReturnNoticeService.class,
             keyIdName = "ids")
@@ -201,7 +201,7 @@ public class SoReturnNoticeController extends BaseController {
      **/
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "create_user_id",
             menuCode = "wms:soReturnNotice:disApprove",
             serviceClass = SoReturnNoticeService.class,
             keyIdName = "ids")
@@ -219,7 +219,7 @@ public class SoReturnNoticeController extends BaseController {
      **/
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "create_user_id",
             menuCode = "wms:soReturnNotice:cancelProcess",
             serviceClass = SoReturnNoticeService.class,
             keyIdName = "ids")
@@ -237,7 +237,7 @@ public class SoReturnNoticeController extends BaseController {
      **/
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "create_user_id",
             menuCode = "wms:soReturnNotice:invalid",
             serviceClass = SoReturnNoticeService.class,
             keyIdName = "ids")
@@ -254,6 +254,11 @@ public class SoReturnNoticeController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:soReturnNotice:delete",
+            serviceClass = SoReturnNoticeService.class,
+            keyIdName = "ids")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
         Boolean flag = soReturnNoticeService.delete(idsDTO.getIds());
         return flag == true ? success() : failure();
@@ -269,9 +274,9 @@ public class SoReturnNoticeController extends BaseController {
      **/
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "receive_user_id",
+            tableField = "create_user_id",
             menuCode = "wms:soReturnNotice:paging",
-            tableAlias = "sdn"
+            tableAlias = "srn"
     )
     public ApiResult exportExcel(@RequestBody SoReturnNoticeDTO.PagingParam dto, HttpServletResponse response) {
         Boolean flag = soReturnNoticeService.exportExcel(dto, response);
