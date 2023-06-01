@@ -209,6 +209,7 @@
        INNER JOIN so_change_detail scd
        ON sc.id=scd.main_id AND  scd.is_deleted=FALSE
        WHERE sc.is_deleted=FALSE AND sc.so_id=#{soId}
+       ORDER BY sc.create_time DESC
     </select>
 
 </mapper>
