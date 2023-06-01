@@ -318,7 +318,7 @@ public class SoReturnController extends BaseController {
 
     /**
      * 添加详情按钮-列表查询
-     * @param id id
+     * @param dto dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoDetailDTO.AddDetailView>>
      * @Author Luo_WG
      * @Date 2023/5/16 18:43
