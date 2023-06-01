@@ -44,7 +44,7 @@ public class StockMQConsumerService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC,
             selectorExpression = "gc_stock_inbound_order_tag||iml_stock_inbound_order_tag",
-            consumerGroup = "${spring.profiles.active}-stock_inbound_order_consumer")
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-stock_inbound_order_consumer")
     public class ConsumerErpSalesOrder implements RocketMQListener<GoodcangDTO.MessageDTO> {
         @Override
         public void onMessage(GoodcangDTO.MessageDTO ext) {

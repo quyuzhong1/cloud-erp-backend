@@ -28,7 +28,7 @@ public class MsgRocketMQConsumerReceiver {
 
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.NOTICE_MSG_TOPIC,
-            consumerGroup = "${spring.profiles.active}-erp_msg_group")
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-erp_msg_group")
     public class ConsumerNoticeMsg implements RocketMQListener<NoticeMsgInfoDTO> {
         @Override
         public void onMessage(NoticeMsgInfoDTO msgInfoDTO) {
@@ -41,7 +41,7 @@ public class MsgRocketMQConsumerReceiver {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.WARN_MSG_TOPIC,
             selectorExpression = "msg_warn_tag",
-            consumerGroup = "${spring.profiles.active}-erp_warn_group")
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-erp_warn_group")
     public class ConsumerWarnMsg implements RocketMQListener<WarnMsgInfoDTO> {
         @Override
         public void onMessage(WarnMsgInfoDTO msgInfoDTO) {
