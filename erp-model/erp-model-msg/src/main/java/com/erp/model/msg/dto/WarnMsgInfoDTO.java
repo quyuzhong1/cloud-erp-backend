@@ -7,6 +7,7 @@ import lombok.Data;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * 飞书系统预警请求实体
@@ -61,5 +62,10 @@ public class WarnMsgInfoDTO implements Serializable {
      */
     @NotNull(message = "预警类型不能为空")
     private WarnMsgTypeEnum warnMsgTypeEnum = WarnMsgTypeEnum.SYS_EXCEPTION;
+
+    /**
+     * 异常发生事件
+     */
+    private LocalDateTime happenTime;
 
 }
