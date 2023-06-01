@@ -10,13 +10,21 @@ import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
+import com.erp.rpc.oms.feign.CustomerFeign;
+import com.erp.rpc.oms.feign.OmsTaskFeign;
+import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
@@ -54,6 +62,12 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
+    private SoInfoFeign soInfoFeign;
+
+    @Resource
+    private CustomerFeign customerFeign;
+
+    @Resource
     private PurchaseReturnOrderService purchaseReturnOrderService;
 
     @Resource
@@ -77,18 +91,70 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     @Override
     public void syncDataToKingdee(SoOutstockEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
+        //销售单信息
+        SoInfoEntity soInfoById = soInfoFeign.getSoInfoById(entity.getSoId());
+        //组织信息
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(soInfoById.getSalesOrgId(),soInfoById.getWarehouseOrgId()));
+        //客户信息
+        List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Arrays.asList(entity.getCustomerId()));
+        //部门信息
+        SysDepartmentDTO dept = sysUserFeign.getUserDeptById(soInfoById.getSalesDeptId());
+        //查询供应商信息
+        SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(entity.getCarrierId());
+        //获取币别信息
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(soInfoById.getCurrency()));
+
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         //业务id
         resultMap.put("id", entity.getId());
         //退货单号
         resultMap.put("code", entity.getCode());
+        //单据类型
+        resultMap.put("orderType", entity.getOrderType());
+        //单据日期
+        resultMap.put("billDate", entity.getActualDeliveryDate());
+        //销售组织
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soInfoById.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            resultMap.put("salesOrgCode", salesOrgCode);
+        }
+        //客户
+        if (CollectionUtils.isNotEmpty(customerInfoEntitieList)) {
+            CustomerInfoEntity customerInfoEntity = customerInfoEntitieList.stream().filter(obj -> obj.getId().equals(soInfoById.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+            resultMap.put("customerCode", customerInfoEntity.getCode());
+        }
+        //销售部门
+        if (ObjectUtil.isNotEmpty(dept)) {
+            resultMap.put("salesDeptCode", dept.getCode());
+        }
+        //运输单号
+        resultMap.put("trackNo", entity.getTrackNo());
+        //发货组织
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            String warehouseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soInfoById.getWarehouseOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            resultMap.put("warehouseOrgCode", warehouseOrgCode);
+        }
+        //承运商
+        resultMap.put("carrierCode", supplierEntity.getCode());
 
-        //退货单号
-        resultMap.put("code", entity.getCode());
+        //财务信息
+        Map<String, Object> subHeadEntity = new HashMap<>();
+        //结算币别
+        CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(soInfoById.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
+        subHeadEntity.put("currencyCode", viewDTO.getKingdeeCode());
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soInfoById.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            subHeadEntity.put("salesOrgCode", salesOrgCode);
+        }
+
+
+        resultMap.put("subHeadEntity", subHeadEntity);
 
 
 
+        soInfoById.getSalesOrgId();
+        resultMap.put("billDate", soInfoById.getSalesOrgId());
 
         //退货单明细
         List<PurchaseReturnOrderDetailEntity> detailList = purchaseReturnOrderDetailService.getDetailByMainId(entity.getId());

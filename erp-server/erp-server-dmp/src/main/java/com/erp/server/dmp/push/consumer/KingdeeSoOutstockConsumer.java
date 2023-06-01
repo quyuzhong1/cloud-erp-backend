@@ -1,6 +1,7 @@
 package com.erp.server.dmp.push.consumer;
 
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.enums.ApiError;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -45,27 +47,12 @@ public class KingdeeSoOutstockConsumer implements RocketMQListener<Map<String, O
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "CGTJ23050500001"));
+        queryFilters.add(String.format("FBillNo = '%s'", "XSCKD4062917"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FId,FPUR_PATENTRY_FEntryID,FMaterialId.FNumber,FSrcEntryID,FIsPriceListPush";
-        map.put("groupName", "测试分组");
-
-        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
-        if (ObjectUtils.isEmpty(platformEntity)) {
-            return;
-        }
-
-        //根据录入值和字段配置生成JSONObject
-        JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
-        SaveParam param = new SaveParam(json);
-        Boolean aBoolean = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
-        System.out.println(aBoolean);
-
-       /* LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("Number","CGDD-230413-8806");
-        JSONObject viewJson = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
-        System.out.println(viewJson);
-*/
+        String fieldKeys = "FBillTypeID.FNUMBER";
+        map.put("groupName", "XSCKD01_SYS，XSCKD07_SYS");
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);
+        System.out.println(queryList);
     }
 
     @Override

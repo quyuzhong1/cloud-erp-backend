@@ -228,6 +228,9 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     @Override
     public List<SoDetailDTO.AddDetailView> listAddDetailView(listAddDetailViewDTO dto) {
         List<SoDetailDTO.AddDetailView> list = baseMapper.listAddDetailView(dto);
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
         List<String> soIds = list.stream().map(SoDetailDTO.AddDetailView::getSourceId).distinct().collect(Collectors.toList());
         List<SoReturnDetailEntity> soReturnDetailEntities = this.listDetailByMainId(dto.getId());
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);

@@ -43,4 +43,14 @@ public interface CustomerFeign {
     @PostMapping("feign/customer/ListCustomerAddressByIds")
     List<CustomerAddressEntity> ListCustomerAddressByIds(@RequestBody List<String> ids);
 
+    /**
+     * 根据ids查询客户信息
+     * @Author Luo_WG
+     * @Date 2023/6/1 15:42
+     * @param ids ids
+     * @return java.util.List<com.erp.model.oms.entity.CustomerInfoEntity>
+     **/
+    @PostMapping("feign/customer/listCustomerByIds")
+    List<CustomerInfoEntity> listCustomerByIds(@RequestBody List<String> ids);
+
 }
