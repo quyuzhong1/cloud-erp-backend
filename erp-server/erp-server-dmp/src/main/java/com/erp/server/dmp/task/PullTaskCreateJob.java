@@ -1,4 +1,4 @@
-package com.erp.server.dmp.task.schedule;
+package com.erp.server.dmp.task;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
@@ -7,8 +7,8 @@ import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
 import com.erp.server.dmp.pull.service.dmp.DmpRefundInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderInfoService;
-import com.erp.server.dmp.task.service.CreateRequestReportTaskService;
-import com.erp.server.dmp.task.service.TbTaskTypeService;
+import com.erp.server.dmp.service.impl.CreateRequestReportTaskService;
+import com.erp.server.dmp.service.impl.TbTaskTypeService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;

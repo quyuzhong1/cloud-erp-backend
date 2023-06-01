@@ -1,4 +1,4 @@
-package com.erp.server.dmp.task.schedule;
+package com.erp.server.dmp.task;
 
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;

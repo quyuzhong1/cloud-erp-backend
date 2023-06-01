@@ -96,7 +96,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     @Resource
     private ProductPurchaseService productPurchaseService;
 
-
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
     private String financial;
@@ -245,7 +244,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             productPurchaseService.checkProductPurchase(purchaseEntity);
         }
     }
-
 
     /**
      * 启动一个变更流程

@@ -1,4 +1,4 @@
-package com.erp.server.dmp.task.mapper;
+package com.erp.server.dmp.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.dmp.entity.PlatformApiEntity;

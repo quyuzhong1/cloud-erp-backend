@@ -39,6 +39,12 @@ public class DmpDeliveryDetailInfoEntity implements Serializable {
     private String orderNo;
 
     /**
+     * 平台订单号
+     */
+    @TableField(value = "platform_order_id")
+    private String platformOrderId;
+
+    /**
      * 物流单号
      */
     @TableField(value = "logistics_no")
@@ -235,6 +241,7 @@ public class DmpDeliveryDetailInfoEntity implements Serializable {
         return "DmpDeliveryDetailInfoEntity{" +
                 "billNo='" + billNo + '\'' +
                 ", orderNo='" + orderNo + '\'' +
+                ", platformOrderId='" + platformOrderId + '\'' +
                 ", logisticsNo='" + logisticsNo + '\'' +
                 ", customerName='" + customerName + '\'' +
                 ", platformName='" + platformName + '\'' +

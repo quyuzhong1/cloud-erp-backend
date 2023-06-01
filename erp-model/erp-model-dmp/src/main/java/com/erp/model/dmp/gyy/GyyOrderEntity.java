@@ -278,6 +278,18 @@ public class GyyOrderEntity {
 
     private String updateTime;
 
+    /**
+     * 数据下载状态
+     * 0 详情数据需要更新
+     * 1 详情数据已更新
+     */
+    private Integer downloadStatus;
+
+    /**
+     * api编码，订单来源于历史订单还是当前订单接口区分
+     */
+    private String apiCode;
+
     @Override
     public String toString() {
         return "GyyOrderEntity{" +

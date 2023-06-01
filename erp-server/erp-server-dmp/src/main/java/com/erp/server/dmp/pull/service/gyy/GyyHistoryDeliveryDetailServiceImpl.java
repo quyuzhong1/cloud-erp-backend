@@ -49,7 +49,7 @@ public class GyyHistoryDeliveryDetailServiceImpl implements IReportHistoryServic
                 throw new RuntimeException("修改历史发货单任务下次执行时间失败！");
             }
         }catch (Exception e) {
-            XxlJobHelper.log(" 管易云拉取历史发货单订单数据错误dto={}", JSONUtil.toJsonStr(requestDTO), e);
+            XxlJobHelper.log(" 管易云拉取历史发货单订单数据错误dto={} e= {}", JSONUtil.toJsonStr(requestDTO), e);
             String message = e.getMessage();
             DmpErrorLogEntity dmpErrorLogEntity = new DmpErrorLogEntity(requestDTO.getJobTaskDTO().getId(), JSONUtil.toJsonStr(requestDTO),message, JSONUtil.toJsonStr(e.getStackTrace()));
             dmpErrorLogService.save(dmpErrorLogEntity);

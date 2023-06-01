@@ -386,12 +386,12 @@ public class WorkflowServiceImpl implements WorkflowService {
         ActivityInstance activityInstance = runtimeService.getActivityInstance(processInstanceId);
 
         if(CollectionUtils.isNotEmpty(taskList)&&activityInstance!=null){
-            for (int i = 0; i < taskList.size(); i++) {
-                runtimeService.createProcessInstanceModification(processInstanceId)
-                        .cancelActivityInstance(getInstanceIdForActivity(activityInstance, taskList.get(i).getTaskDefinitionKey()))//关闭相关任务
-                        .setAnnotation("进行了终止流程操作")
-                        .execute();
-            }
+        for (int i = 0; i < taskList.size(); i++) {
+            runtimeService.createProcessInstanceModification(processInstanceId)
+                    .cancelActivityInstance(getInstanceIdForActivity(activityInstance, taskList.get(i).getTaskDefinitionKey()))//关闭相关任务
+                    .setAnnotation("进行了终止流程操作")
+                    .execute();
+        }
         }
     }
 

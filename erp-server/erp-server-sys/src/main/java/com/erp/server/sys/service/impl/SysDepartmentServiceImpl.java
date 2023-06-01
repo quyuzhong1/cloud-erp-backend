@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -67,7 +66,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         this.saveOrUpdate(sysDepartment);
 
         //金蝶推送
-        syncKingdeeSysDeptService.syncDataToKingdee(id, SyncKingdeeOperateEnum.OPERATE_ADD.getCode());
+        //syncKingdeeSysDeptService.syncDataToKingdee(id, SyncKingdeeOperateEnum.OPERATE_ADD.getCode());
     }
 
     @Override
@@ -86,10 +85,10 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         //删除成功就要去移除对应的员工
         if (flag) {
             sysDepartmentUserService.removeByDepartmentIds(ids);
-            if (CollectionUtils.isNotEmpty(list)) {
+            /*if (CollectionUtils.isNotEmpty(list)) {
                 //金蝶删除
                 list.forEach(obj -> syncKingdeeSysDeptService.deleteDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
-            }
+            }*/
         }
     }
 

@@ -12,9 +12,7 @@
         WHERE 1 = 1
         AND poit.sku_no = #{skuNo}
         AND poit.new_sign NOT IN (1)
-        <if test="year != null and year != ''">
-            AND to_char(platform_create_time, 'yyyy') = #{year}
-        </if>
+        AND to_char(platform_create_time, 'yyyy') = #{year}
     </select>
 
     <select id="getOrderListingTime" resultType="map">
