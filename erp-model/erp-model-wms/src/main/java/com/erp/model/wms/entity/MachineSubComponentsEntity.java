@@ -77,6 +77,13 @@ public class MachineSubComponentsEntity extends BaseEntity<MachineSubComponentsE
     @TableField("remark")
     private String remark;
 
+    /**
+     * 是否是子件子级（作用用于前端判断）
+     */
+    @TableField("is_child")
+    private Boolean isChild;
+
+
 
     public static final String DETAIL_ID = "detail_id";
 
