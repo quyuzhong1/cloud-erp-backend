@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.enums.DistributedLockEnum;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -15,6 +16,7 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysCodeSkuDTO;
 import com.erp.model.sys.entity.SysCodeEntity;
 import com.erp.server.sys.mapper.SysCodeMapper;
+import com.erp.server.sys.service.CommonService;
 import com.erp.server.sys.service.SysCodeService;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -40,6 +42,9 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
 
     @Autowired
     private RedissonClient redisson;
+
+    @Autowired
+    private CommonService commonService;
 
 
     @Override
@@ -230,11 +235,15 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
      * @param num
      */
     private void updateNumByCode (String id,Integer num) {
+        /*
         LambdaUpdateWrapper<SysCodeEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(SysCodeEntity::getId,id);
         updateWrapper.set(SysCodeEntity::getNum,num + 1);
         updateWrapper.set(SysCodeEntity::getUpdateTime,new Date());
         this.update(updateWrapper);
+         */
+        LoginUser loginUser = commonService.getUserInfo();
+        this.baseMapper.updateNum(id, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
     }
 
 }
