@@ -1,5 +1,6 @@
 package com.erp.server.msg.service;
 
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.MessageChannelEnum;
 import com.erp.server.msg.model.MsgResultVO;
 import com.erp.server.msg.model.MsgSendChannelWrapParam;
@@ -13,10 +14,16 @@ import com.erp.server.msg.model.MsgSendChannelWrapParam;
 public interface IMessageSendService {
 
     /**
-     * 发送消息
+     * 发送通知消息
      * @return
      */
     MsgResultVO doSendMsg(MsgSendChannelWrapParam msgInfo);
+
+    /**
+     * 发送预警消息
+     * @param msgInfo
+     */
+    void doSendWarnMsg(WarnMsgInfoDTO msgInfo);
 
     /**
      * 发送渠道

@@ -25,7 +25,7 @@ public class RocketMqTopic {
     public static final String SYNC_PLM_PRODUCT_TOPIC = "${spring.profiles.active}-sync_plm_product_topic";
 
     /**
-     * 发送消息到消息服务主题
+     * 发送任务消息到消息服务主题
      */
     public static final String NOTICE_MSG_TOPIC = "${spring.profiles.active}-notice_msg_topic";
 
@@ -38,5 +38,10 @@ public class RocketMqTopic {
      * 推送Plm产品信息到wms
      */
     public static final String SYNC_PLM_TO_WMS_PRODUCT_TOPIC = "${spring.profiles.active}-sync_plm_to_wms_product_topic";
+
+    /**
+     * 发送预警消息到消息服务主题
+     */
+    public static final String WARN_MSG_TOPIC = "${spring.profiles.active}-warn_msg_topic";
 
 }

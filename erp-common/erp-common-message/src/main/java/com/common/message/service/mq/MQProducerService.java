@@ -8,7 +8,9 @@ import com.common.core.utils.IdUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.entity.MessageBody;
+import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -179,7 +181,7 @@ public class MQProducerService<T> {
     }
 
     /**
-     * 往消息中心发送MQ消息
+     * 往消息中心发送MQ任务消息
      * @param msgInfoDTO
      * @param isSync（true为同步，其他则为异步）
      * @return 同步时返回，异步返回null
@@ -210,6 +212,20 @@ public class MQProducerService<T> {
      */
     public SendResult sendNoticeMsg(NoticeMsgInfoDTO msgInfoDTO) {
         return sendNoticeMsg(msgInfoDTO, Boolean.TRUE);
+    }
+
+    /**
+     * 往消息中心发送MQ预警消息
+     * @param msgInfoDTO
+     */
+    public void sendWarnMsg(WarnMsgInfoDTO msgInfoDTO) {
+        String key = IdUtil.simpleUUID();
+        String topic = RocketMqTopic.WARN_MSG_TOPIC.replace("${spring.profiles.active}", activeProfile);
+        try {
+            asyncClassMsg(topic, RocketMqTagEnum.MSG_WARN_TAG.getName(), (T) msgInfoDTO, key);
+        } catch (Exception e) {
+            log.error("异步发送MQ消息异常", e);
+        }
     }
 
 }
