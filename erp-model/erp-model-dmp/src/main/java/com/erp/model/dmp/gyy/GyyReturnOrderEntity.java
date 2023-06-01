@@ -11,7 +11,6 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
-@ToString
 public class GyyReturnOrderEntity {
     /**
      * code : RGO315677282722
@@ -204,4 +203,75 @@ public class GyyReturnOrderEntity {
     private List<?> refundCodes;
     @SerializedName("stock_location")
     private List<?> stockLocation;
+    /**
+     * 清洗数据
+     */
+    private Boolean isClean;
+    @Override
+    public String toString() {
+        return "GyyReturnOrderEntity{" +
+                "code='" + code + '\'' +
+                ", reason='" + reason + '\'' +
+                ", note='" + note + '\'' +
+                ", createDate='" + createDate + '\'' +
+                ", approveDate='" + approveDate + '\'' +
+                ", approve=" + approve +
+                ", receiveDate='" + receiveDate + '\'' +
+                ", cancel=" + cancel +
+                ", wms=" + wms +
+                ", shopName='" + shopName + '\'' +
+                ", shopCode='" + shopCode + '\'' +
+                ", platformCode='" + platformCode + '\'' +
+                ", vipCode='" + vipCode + '\'' +
+                ", warehouseinCode='" + warehouseinCode + '\'' +
+                ", warehouseoutCode='" + warehouseoutCode + '\'' +
+                ", expressCode='" + expressCode + '\'' +
+                ", expressNum='" + expressNum + '\'' +
+                ", receiverPhone='" + receiverPhone + '\'' +
+                ", returnType='" + returnType + '\'' +
+                ", receive='" + receive + '\'' +
+                ", agreeRefuse=" + agreeRefuse +
+                ", orderCode='" + orderCode + '\'' +
+                ", modifyDate='" + modifyDate + '\'' +
+                ", businessMan='" + businessMan + '\'' +
+                ", receiverName='" + receiverName + '\'' +
+                ", receiverMobile='" + receiverMobile + '\'' +
+                ", receiverZip='" + receiverZip + '\'' +
+                ", receiverAddress='" + receiverAddress + '\'' +
+                ", areaName='" + areaName + '\'' +
+                ", platformRefundId='" + platformRefundId + '\'' +
+                ", sanwuPackage=" + sanwuPackage +
+                ", refundType=" + refundType +
+                ", refundPhase=" + refundPhase +
+                ", expressName='" + expressName + '\'' +
+                ", drpTenantName='" + drpTenantName + '\'' +
+                ", drpTenantMobile='" + drpTenantMobile + '\'' +
+                ", cancelDate='" + cancelDate + '\'' +
+                ", warehouseinName='" + warehouseinName + '\'' +
+                ", vipName='" + vipName + '\'' +
+                ", platformStatus='" + platformStatus + '\'' +
+                ", storeName='" + storeName + '\'' +
+                ", storeCode='" + storeCode + '\'' +
+                ", commodityStatus=" + commodityStatus +
+                ", agStatus=" + agStatus +
+                ", tagId='" + tagId + '\'' +
+                ", createOrder=" + createOrder +
+                ", createRefund=" + createRefund +
+                ", tradeRefundCodes='" + tradeRefundCodes + '\'' +
+                ", changeOutExpressCode='" + changeOutExpressCode + '\'' +
+                ", changeOutExpressName='" + changeOutExpressName + '\'' +
+                ", wmsOrder='" + wmsOrder + '\'' +
+                ", wmsDate='" + wmsDate + '\'' +
+                ", approveName='" + approveName + '\'' +
+                ", kingdeeSyncStatus='" + kingdeeSyncStatus + '\'' +
+                ", kingdeeSyncMemo='" + kingdeeSyncMemo + '\'' +
+                ", sourceType='" + sourceType + '\'' +
+                ", refundState=" + refundState +
+                ", distributionChannel='" + distributionChannel + '\'' +
+                ", details=" + details +
+                ", payments=" + payments +
+                ", refundCodes=" + refundCodes +
+                ", stockLocation=" + stockLocation +
+                '}';
+    }
 }

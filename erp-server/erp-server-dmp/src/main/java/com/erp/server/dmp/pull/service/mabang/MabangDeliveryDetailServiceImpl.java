@@ -19,10 +19,9 @@ import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.mabang.OrderEntity;
-import com.erp.model.dmp.mabang.OrderItemEntity;
+import com.erp.model.dmp.mabang.item.OrderItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
-import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -40,10 +39,10 @@ import java.util.stream.Collectors;
 
 /**
  * 马帮出库详情
+ * @author Cloud
  */
 @Slf4j
 @Component
-//@SaveData(method = PlatformApiEnum.ORDER_GET_DELIVERY_LIST)
 public class MabangDeliveryDetailServiceImpl implements IReportSaveService<OrderEntity> {
 
     @Resource
@@ -70,6 +69,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
         List<OrderEntity> insertList = new ArrayList<>();
         List<OrderEntity> pushToMqList = new ArrayList<>();
         for (OrderEntity entity : entityList) {
+
             OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByOrderIdAndSaleNum(entity.getPlatformOrderId(), entity.getSalesRecordNumber());
             List<OrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_MABANG_DELIVERY_DETAIL, OrderEntity.class);
             if(CollectionUtil.isEmpty(mongoData)){
@@ -115,7 +115,6 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
     /**
      * 请求马帮订单接口
      *
-     * @param dto
      * @return java.util.List<com.erp.server.dmp.pull.entity.OrderEntity>
      */
     private List<OrderEntity> pullDate(RequestDTO dto) {
@@ -131,11 +130,14 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
         DmpDeliveryDetailInfoEntity deliveryDetailInfoEntity = new DmpDeliveryDetailInfoEntity();
         //单据编号
         deliveryDetailInfoEntity.setPlatformOrderId(orderEntity.getPlatformOrderId());
-        deliveryDetailInfoEntity.setBillNo(orderEntity.getPlatformOrderId());
+        deliveryDetailInfoEntity.setBillNo(orderEntity.getSalesRecordNumber());
         //出库编号
-        deliveryDetailInfoEntity.setOrderNo(orderEntity.getErpOrderId());
+        deliveryDetailInfoEntity.setOrderNo(orderEntity.get_id());
         //物流单号
         deliveryDetailInfoEntity.setLogisticsNo(orderEntity.getTrackNumber());
+        if (StrUtil.isBlank(orderEntity.getPlatformOrderId())) {
+            log.info("马帮发货订单, 订单号为空 dto={}", JSONUtil.toJsonStr(orderEntity));
+        }
         //客户名称
         deliveryDetailInfoEntity.setCustomerName(orderEntity.getBuyerName());
         //平台名称
@@ -195,16 +197,16 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         //平台单据创建时间
         if (StringUtils.isNotBlank(orderEntity.getCreateDate()) && !"null".equals(orderEntity.getCreateDate())) {
-            deliveryDetailInfoEntity.setPlatformCreateTime(LocalDateTime.parse(orderEntity.getCreateDate(),sdf));
+            deliveryDetailInfoEntity.setPlatformCreateTime(LocalDateTime.parse(orderEntity.getCreateDate()));
         }
 
         //平台单据修改时间
         if (StringUtils.isNotBlank(orderEntity.getOperTime()) && !"null".equals(orderEntity.getOperTime())) {
-            deliveryDetailInfoEntity.setPlatformUpdateTime(LocalDateTime.parse(orderEntity.getOperTime(),sdf));
+            deliveryDetailInfoEntity.setPlatformUpdateTime(LocalDateTime.parse(orderEntity.getOperTime()));
         }
         //发货时间
         if (StringUtils.isNotBlank(orderEntity.getExpressTime()) && !"null".equals(orderEntity.getExpressTime())) {
-            deliveryDetailInfoEntity.setDeliveryDate(LocalDateTime.parse(orderEntity.getExpressTime(),sdf));
+            deliveryDetailInfoEntity.setDeliveryDate(LocalDateTime.parse(orderEntity.getExpressTime()));
         }
         //备注
         deliveryDetailInfoEntity.setRemark(orderEntity.getRemark());
@@ -214,7 +216,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
         deliveryDetailInfoEntity.setCompanyId(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getCode());
         //企业名称
         deliveryDetailInfoEntity.setCompanyName(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getName());
-        deliveryDetailInfoEntity.setPlatformApproveTime(LocalDateTime.parse(orderEntity.getCreateDate(), sdf));
+        deliveryDetailInfoEntity.setPlatformApproveTime(LocalDateTime.parse(orderEntity.getCreateDate()));
         //创建时间
         deliveryDetailInfoEntity.setCreateTime(LocalDateTime.now());
         deliveryDetailInfoEntity.setDetails(initOrderItem(orderEntity));
@@ -268,5 +270,27 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
             items.add(delivery);
         }
         return items;
+    }
+
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void addDeliveryOrder(OrderEntity entity) {
+        // 更新mongo数据
+        entity.setCleanToDelivery(Boolean.TRUE);
+        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
+        OrderMongoDTO updateDto = new OrderMongoDTO(entity.get_id());
+        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
+        // 构造订单结构
+        DmpDeliveryDetailInfoEntity deliveryDetailInfo = initOrderInfoEntity(entity);
+        if(null == deliveryDetailInfo){
+            log.warn("MabangOrderInfoServiceImpl>>>addDeliveryOrder>>>deliveryDetailInfo 为空 {}", JSONUtil.toJsonStr(entity));
+            return;
+        }
+        // 异步推送到MQ
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_DELIVERY_ORDER_TAG.getName(),
+                deliveryDetailInfo, deliveryDetailInfo.getBillNo());
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+        }
+
     }
 }

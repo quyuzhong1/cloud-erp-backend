@@ -1,4 +1,4 @@
-package com.erp.model.dmp.mabang;
+package com.erp.model.dmp.mabang.item;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

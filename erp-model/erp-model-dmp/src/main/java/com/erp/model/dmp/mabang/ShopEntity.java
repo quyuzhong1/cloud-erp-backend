@@ -40,4 +40,8 @@ public class ShopEntity {
     private String merchantid;
     private String tokenflag;
     private String fbaflag;
+    /**
+     * 清洗数据
+     */
+    private Boolean isClean;
 }

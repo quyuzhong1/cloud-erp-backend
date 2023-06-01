@@ -1,4 +1,4 @@
-package com.erp.model.dmp.mabang;
+package com.erp.model.dmp.mabang.item;
 
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
