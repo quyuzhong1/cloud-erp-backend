@@ -631,6 +631,8 @@ public class TransferInDTO implements Serializable {
         private List<TransferInDetailDTO.UpdateDTO> detailList;
     }
 
+    @Data
+    @NoArgsConstructor
     public static class ExportDTO extends PagingParamDTO {
 
         private List<String> ids;

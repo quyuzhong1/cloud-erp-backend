@@ -2,15 +2,19 @@ package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.TransferInDetailDTO;
 import com.erp.model.wms.entity.TransferInDetailEntity;
+import com.erp.model.wms.entity.TransferOutDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.TransferInDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.TransferInDetailService;
+import com.erp.server.wms.service.TransferOutDetailService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -39,6 +43,9 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private TransferOutDetailService transferOutDetailService;
 
     /**
      * 添加明细
@@ -173,6 +180,48 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
     @Override
     public List<TransferInDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds) {
         return this.baseMapper.listSourceDetailIds(sourceDetailIds);
+    }
+
+
+    /**
+     * 检查数量
+     *
+     * @param detailList
+     * @return void
+     * @author yl
+     * @date 2023-06-01 16:26
+     */
+    @Override
+    public void checkQty(List<TransferInDetailDTO.UpdateDTO> detailList) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        List<String> sourceDetailIds = detailList.stream().map(TransferInDetailDTO.UpdateDTO::getSourceDetailId).collect(Collectors.toList());
+        List<TransferOutDetailEntity> transferOutDetailList = transferOutDetailService.listByIds(sourceDetailIds);
+        List<TransferInDetailDTO.QtyDTO> transferInDetailList = baseMapper.listByDetailIds(sourceDetailIds);
+        for (TransferInDetailDTO.UpdateDTO item : detailList) {
+            String id = item.getId();
+            String sourceDetailId = item.getSourceDetailId();
+            //计划调入数量
+            Integer planQty = item.getPlanQty();
+            //途损数量
+            Integer transitDamageQty = item.getTransitDamageQty();
+            //调入数量
+            Integer qty = item.getQty();
+            if (transitDamageQty + qty > planQty) {
+                throw new ServiceException(ApiError.ERROR_99069);
+            }
+            //调出的数量
+            int outQty = transferOutDetailList.stream().filter(o -> o.getId().equals(sourceDetailId)).
+                    map(TransferOutDetailEntity::getQty).findFirst().orElse(0);
+            int alreadyInQty = transferInDetailList.stream().filter(i -> i.getSourceDetailId().equals(sourceDetailId) && !i.getId().equals(id)).
+                    mapToInt(TransferInDetailDTO.QtyDTO::getPlanQty).sum();
+            if (alreadyInQty + planQty > outQty) {
+                throw new ServiceException(ApiError.ERROR_99065);
+            }
+
+        }
+
     }
 
     /**

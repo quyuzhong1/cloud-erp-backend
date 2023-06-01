@@ -23,5 +23,28 @@
         </where>
     </select>
 
+    <select id="listByDetailIds" resultType="com.erp.model.wms.dto.TransferInDetailDTO$QtyDTO">
+        select
+        tid.id,
+        tid.main_id,
+        tid.sku_id,
+        tid.sku_no,
+        tid.qty,
+        tid.out_warehouse_location,
+        tid.source_detail_id,
+        tid.plan_qty,
+        transit_damage_qty,
+        tid.remark,
+        ti.approve_status
+        from transfer_in ti
+        inner join transfer_in_detail tid on ti.id = tid.main_id and tid.is_deleted = false
+        <where>
+            ti.is_deleted = false and ti.invalid_status = false and tid.source_detail_id in
+            <foreach collection="sourceDetailIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+
 
 </mapper>
