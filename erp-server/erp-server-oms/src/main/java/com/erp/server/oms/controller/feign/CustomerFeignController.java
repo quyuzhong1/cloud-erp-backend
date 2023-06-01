@@ -41,4 +41,9 @@ public class CustomerFeignController {
     List<CustomerAddressEntity> ListCustomerAddressByIds(@RequestBody List<String> ids) {
         return customerAddressService.listByIds(ids);
     }
+
+    @PostMapping("/listCustomerByIds")
+    List<CustomerInfoEntity> listCustomerByIds(@RequestBody List<String> ids) {
+        return customerInfoService.listByIds(ids);
+    }
 }
