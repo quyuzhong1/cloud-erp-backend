@@ -197,25 +197,25 @@ public class SoReturnEntity extends BaseEntity<SoReturnEntity> {
     /**
      * 仓库id
      */
-    @TableField(exist = false)
+    @TableField("warehouse_id")
     private String warehouseId;
 
     /**
      * 仓库名称
      */
-    @TableField(exist = false)
+    @TableField("warehouse_name")
     private String warehouseName;
 
     /**
      * 库存组织
      */
-    @TableField(exist = false)
+    @TableField("inventory_org_id")
     private String inventoryOrgId;
 
     /**
      * 库存组织名称
      */
-    @TableField(exist = false)
+    @TableField("inventory_org_name")
     private String inventoryOrgName;
 
     public static final String APPROVE_STATUS = "approve_status";

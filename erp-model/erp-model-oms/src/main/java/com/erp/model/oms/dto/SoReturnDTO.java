@@ -240,6 +240,10 @@ public class SoReturnDTO {
          */
         private LocalDate billDate;
         /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
          * 明细信息
          */
         private List<SoReturnDetailDTO.Add> detailList;
@@ -263,6 +267,10 @@ public class SoReturnDTO {
          * 退货日期
          */
         private LocalDate billDate;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
         /**
          * 明细信息
          */
@@ -396,6 +404,22 @@ public class SoReturnDTO {
          */
         private LocalDateTime approveTime;
         /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 库存组织id
+         */
+        private String inventoryOrgId;
+        /**
+         * 库存组织id
+         */
+        private String inventoryOrgName;
+        /**
          * 详情信息
          */
         private List<SoReturnDetailDTO.View> detailList;
@@ -476,5 +500,21 @@ public class SoReturnDTO {
          * 备注
          */
         private String remark;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 库存组织id
+         */
+        private String inventoryOrgId;
+        /**
+         * 库存组织id
+         */
+        private String inventoryOrgName;
     }
 }
