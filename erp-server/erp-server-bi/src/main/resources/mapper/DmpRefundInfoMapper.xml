@@ -18,7 +18,7 @@
 
     <select id="paging" resultType="com.erp.model.dmp.dto.DmpRefundInfoDTO">
         select
-            dri.refund_id,
+            dri.refund_code as refundId
             dri.platform_order_id,
             dri.platform_name,
             dri.shop_name,
@@ -34,7 +34,7 @@
         inner join dmp_refund_item drid on dri.id = drid.refund_id
         <where>
             <if test="params.refundId != null and params.refundId != ''">
-                and dri.refund_id like concat('%',#{params.refundId},'%')
+                and dri.refund_code like concat('%',#{params.refundId},'%')
             </if>
             <if test="params.platformOrderId != null and params.platformOrderId != ''">
                 and dri.platform_order_id like concat('%',#{params.platformOrderId},'%')
@@ -69,7 +69,7 @@
 
     <select id="getAllRefundInfo" resultType="com.erp.model.dmp.dto.DmpRefundInfoDTO">
         select
-        dri.refund_id,
+        dri.refund_code as refundId
         dri.platform_order_id,
         dri.platform_name,
         dri.shop_name,
@@ -84,7 +84,7 @@
         inner join dmp_refund_item drid on dri.id = drid.refund_id
         <where>
             <if test="params.refundId != null and params.refundId != ''">
-                and dri.refund_id like concat('%',#{params.refundId},'%')
+                and dri.refund_code like concat('%',#{params.refundId},'%')
             </if>
             <if test="params.platformOrderId != null and params.platformOrderId != ''">
                 and dri.platform_order_id like concat('%',#{params.platformOrderId},'%')

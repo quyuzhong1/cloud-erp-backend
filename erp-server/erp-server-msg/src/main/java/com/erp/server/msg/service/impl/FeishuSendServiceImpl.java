@@ -6,6 +6,7 @@ import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.enums.ErpServerModuleEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
@@ -34,6 +35,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -155,6 +157,16 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             msgResult.setCode(ApiError.ERROR_LARK_TOKEN_IS_NULL.code);
             msgResult.setMsg(ApiError.ERROR_LARK_TOKEN_IS_NULL.msg);
             msgResult.setNeedReSend(false);
+
+            WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
+            warnMsgInfoDTO.setTitle("消息通知发送失败");
+            warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_MSG);
+            warnMsgInfoDTO.setBizName("飞书发送消息通知");
+            warnMsgInfoDTO.setTableName("");
+            warnMsgInfoDTO.setTableId("");
+            warnMsgInfoDTO.setKeyInfo(StrUtil.format("用户【{}】未绑定飞书信息", userId));
+            warnMsgInfoDTO.setHappenTime(LocalDateTime.now());
+            sendWebhookMessage(warnMsgInfoDTO);
             return msgResult;
         }
         String unionId = thirdUnionDTOs.get(0).getThirdUnionId();
@@ -184,6 +196,16 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             msgResult.setCode(ApiError.ERROR_LARK_SEND_MSG_FAIL.code);
             msgResult.setMsg(ApiError.ERROR_LARK_SEND_MSG_FAIL.msg);
             msgResult.setNeedReSend(true);
+
+            WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
+            warnMsgInfoDTO.setTitle("消息通知发送失败");
+            warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_MSG);
+            warnMsgInfoDTO.setBizName("飞书发送消息通知");
+            warnMsgInfoDTO.setTableName("");
+            warnMsgInfoDTO.setTableId("");
+            warnMsgInfoDTO.setKeyInfo(StrUtil.format("飞书响应结果【{}】", JSONObject.toJSONString(result)));
+            warnMsgInfoDTO.setHappenTime(LocalDateTime.now());
+            sendWebhookMessage(warnMsgInfoDTO);
             return msgResult;
         } else {
             msgResult.setCode(200);
@@ -230,6 +252,16 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             msgResult.setCode(ApiError.ERROR_LARK_TOKEN_IS_NULL.code);
             msgResult.setMsg(ApiError.ERROR_LARK_TOKEN_IS_NULL.msg);
             msgResult.setNeedReSend(false);
+
+            WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
+            warnMsgInfoDTO.setTitle("消息通知发送失败");
+            warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_MSG);
+            warnMsgInfoDTO.setBizName("飞书发送批量消息通知");
+            warnMsgInfoDTO.setTableName("");
+            warnMsgInfoDTO.setTableId("");
+            warnMsgInfoDTO.setKeyInfo(StrUtil.format("用户【{}】未绑定飞书信息", JSONObject.toJSONString(noticeMsgWrapInfoDTO.getReceiverUserIds())));
+            warnMsgInfoDTO.setHappenTime(LocalDateTime.now());
+            sendWebhookMessage(warnMsgInfoDTO);
             return msgResult;
         }
         List<String> unionIds = thirdUnionDTOs.stream().map(ThirdUnionDTO::getThirdUnionId).collect(Collectors.toList());
@@ -259,6 +291,16 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             msgResult.setCode(ApiError.ERROR_LARK_SEND_MSG_FAIL.code);
             msgResult.setMsg(ApiError.ERROR_LARK_SEND_MSG_FAIL.msg);
             msgResult.setNeedReSend(true);
+
+            WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
+            warnMsgInfoDTO.setTitle("消息通知发送失败");
+            warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_MSG);
+            warnMsgInfoDTO.setBizName("飞书发送批量消息通知");
+            warnMsgInfoDTO.setTableName("");
+            warnMsgInfoDTO.setTableId("");
+            warnMsgInfoDTO.setKeyInfo(StrUtil.format("飞书响应结果【{}】", JSONObject.toJSONString(result)));
+            warnMsgInfoDTO.setHappenTime(LocalDateTime.now());
+            sendWebhookMessage(warnMsgInfoDTO);
             return msgResult;
         } else {
             msgResult.setCode(200);

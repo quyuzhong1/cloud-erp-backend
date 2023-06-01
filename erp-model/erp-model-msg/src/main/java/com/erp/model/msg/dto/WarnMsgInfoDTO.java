@@ -2,7 +2,9 @@ package com.erp.model.msg.dto;
 
 import com.common.business.enums.ErpServerModuleEnum;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -14,6 +16,8 @@ import java.time.LocalDateTime;
  * @CreateTime: 2023-05-31  18:38
  * @Author: zhangchunlin
  */
+@NoArgsConstructor
+@AllArgsConstructor
 @Data
 public class WarnMsgInfoDTO implements Serializable {
 
