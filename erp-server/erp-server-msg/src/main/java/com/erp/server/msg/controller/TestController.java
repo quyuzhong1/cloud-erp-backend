@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.enums.ErpServerModuleEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqTopic;
@@ -97,7 +98,11 @@ public class TestController extends BaseController {
     public ApiResult sendWarnMsg() {
         WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
         warnMsgInfoDTO.setTitle("销售出库单推送金蝶异常");
-        warnMsgInfoDTO.setContent("单据编号: SO001002003\n销售员：测试账号");
+        warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
+        warnMsgInfoDTO.setBizName("销售出库单推送金蝶");
+        warnMsgInfoDTO.setTableName("so_outstock");
+        warnMsgInfoDTO.setTableId("1661275939021000706");
+        warnMsgInfoDTO.setKeyInfo("单据编号: SO001002003");
         msgContext.routeSendWarnMsg(warnMsgInfoDTO);
         return success();
     }
@@ -109,7 +114,11 @@ public class TestController extends BaseController {
     public ApiResult sendWarnMsgMQ() {
         WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
         warnMsgInfoDTO.setTitle("销售出库单推送金蝶异常");
-        warnMsgInfoDTO.setContent("单据编号: SO001002003\n销售员：测试账号");
+        warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
+        warnMsgInfoDTO.setBizName("销售出库单推送金蝶");
+        warnMsgInfoDTO.setTableName("so_outstock");
+        warnMsgInfoDTO.setTableId("1661275939021000706");
+        warnMsgInfoDTO.setKeyInfo("单据编号: SO001002003");
         mqProducerService.sendWarnMsg(warnMsgInfoDTO);
         return success();
     }

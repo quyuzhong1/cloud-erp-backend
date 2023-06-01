@@ -8,6 +8,7 @@ import com.erp.server.msg.enums.MessageChannelAppEnum;
 import com.erp.server.msg.model.FeiShuSendBaseParam;
 import com.erp.server.msg.model.MsgSendChannelWrapParam;
 import com.erp.server.msg.model.NoticeMsgWrapInfoDTO;
+import com.erp.server.msg.model.WarnMsgContentDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,10 +82,10 @@ public class MsgConvertUtil {
 
     /**
      * 飞书预警信息填充卡片
-     * @param warnMsgInfoDTO
+     * @param warnMsgContentDTO
      * @return
      */
-    public static FeiShuSendBaseParam.ContentDTO wrapTypicalCard(WarnMsgInfoDTO warnMsgInfoDTO) {
+    public static FeiShuSendBaseParam.ContentDTO wrapTypicalCard(WarnMsgContentDTO warnMsgContentDTO) {
         FeiShuSendBaseParam.ContentDTO contentDTO = new FeiShuSendBaseParam.ContentDTO();
 
         FeiShuSendBaseParam.CardDTO.ConfigDTO  config = new FeiShuSendBaseParam.CardDTO.ConfigDTO();
@@ -92,7 +93,7 @@ public class MsgConvertUtil {
         contentDTO.setConfig(config);
 
         FeiShuSendBaseParam.CardDTO.HeaderDTO header = new FeiShuSendBaseParam.CardDTO.HeaderDTO();
-        header.setTitle(new FeiShuSendBaseParam.CardDTO.HeaderDTO.TitleDTO("plain_text", warnMsgInfoDTO.getTitle()));
+        header.setTitle(new FeiShuSendBaseParam.CardDTO.HeaderDTO.TitleDTO("plain_text", warnMsgContentDTO.getTitle()));
         contentDTO.setHeader(header);
 
         List<FeiShuSendBaseParam.CardDTO.ElementsDTO> elements = new ArrayList<>();
@@ -101,7 +102,7 @@ public class MsgConvertUtil {
         fieldElementsDTO.setTag("div");
         List<FeiShuSendBaseParam.CardDTO.ElementsDTO.FieldsDTO> fields = new ArrayList<>();
         FeiShuSendBaseParam.CardDTO.ElementsDTO.FieldsDTO fieldsDTO = new FeiShuSendBaseParam.CardDTO.ElementsDTO.FieldsDTO(true,
-                new FeiShuSendBaseParam.CardDTO.ElementsDTO.FieldsDTO.TextDTO("lark_md", warnMsgInfoDTO.getContent()));
+                new FeiShuSendBaseParam.CardDTO.ElementsDTO.FieldsDTO.TextDTO("lark_md", warnMsgContentDTO.getContent()));
         fields.add(fieldsDTO);
         fieldElementsDTO.setFields(fields);
         elements.add(fieldElementsDTO);

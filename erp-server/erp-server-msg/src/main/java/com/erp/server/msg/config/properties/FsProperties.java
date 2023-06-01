@@ -27,4 +27,6 @@ public class FsProperties {
 
     private Map<String, String> warns;// 飞书发送预警通知配置
 
+    private Boolean warnSend;// 飞书发送预警通知开关，为false则不发送
+
 }
