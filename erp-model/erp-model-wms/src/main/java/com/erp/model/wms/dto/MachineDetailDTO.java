@@ -67,7 +67,7 @@ public class MachineDetailDTO implements Serializable {
          */
         @NotEmpty(message = "子件明细不能为空")
         @Valid
-        private List<MachineSubComponentsDTO.AddDTO> addList;
+        private List<MachineSubComponentsDTO.AddDTO> subComponentsList;
 
     }
 
@@ -84,7 +84,7 @@ public class MachineDetailDTO implements Serializable {
          */
         @NotEmpty(message = "子件明细不能为空")
         @Valid
-        private List<MachineSubComponentsDTO.UpdateDTO> updateList;
+        private List<MachineSubComponentsDTO.UpdateDTO> subComponentsList;
     }
 
     @Data
@@ -113,6 +113,6 @@ public class MachineDetailDTO implements Serializable {
         /**
          * 明细子件
          */
-        private List<MachineSubComponentsDTO.ViewDTO> addList;
+        private List<MachineSubComponentsDTO.ViewDTO> subComponentsList;
     }
 }

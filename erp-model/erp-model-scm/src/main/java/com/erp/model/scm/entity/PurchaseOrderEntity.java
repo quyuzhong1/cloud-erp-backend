@@ -164,6 +164,12 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
 
+    /**
+     * 同步操作
+     */
+    @TableField("sync_operate")
+    private String syncOperate;
+
 
     public static final String APPROVE_STATUS = "approve_status";
 
@@ -200,6 +206,14 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
     public static final String APPROVE_USER_NAME = "approve_user_name";
 
     public static final String INVALID_REMARK = "invalid_remark";
+
+    public static final String SYNC_KINGDEE_STATUS = "sync_kingdee_status";
+
+    public static final String SYNC_KINGDEE_TIME = "sync_kingdee_time";
+
+    public static final String SYNC_KINGDEE_ID = "sync_kingdee_id";
+
+    public static final String SYNC_OPERATE = "sync_operate";
 
     @Override
     public Serializable pkVal() {

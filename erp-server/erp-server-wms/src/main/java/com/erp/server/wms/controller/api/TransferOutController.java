@@ -36,7 +36,7 @@ public class TransferOutController extends BaseController {
      */
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferOut:paging",
+            menuCode = "wms:transfer:out:tabList",
             tableAlias = "tfo"
     )
     @PostMapping("/tabList")
@@ -53,7 +53,7 @@ public class TransferOutController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferOut:paging",
+            menuCode = "wms:transfer:out:paging",
             tableAlias = "tfo"
     )
     public ApiResult<PagingVO<TransferOutDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<TransferOutDTO.PagingParamDTO> dto) {
@@ -69,7 +69,7 @@ public class TransferOutController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferOut:submit",
+            menuCode = "wms:transfer:out:submit",
             serviceClass = TransferOutService.class,
             keyIdName = "ids")
     public ApiResult<Void> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -86,7 +86,7 @@ public class TransferOutController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferOut:view",
+            menuCode = "wms:transfer:out:view",
             serviceClass = TransferOutService.class,
             keyIdName = "id")
     public ApiResult<TransferOutDTO.ViewDTO> view(@RequestParam("id") String id) {
@@ -101,7 +101,7 @@ public class TransferOutController extends BaseController {
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferOut:update",
+            menuCode = "wms:transfer:out:update",
             serviceClass = TransferOutService.class,
             keyIdName = "id")
     public ApiResult<Void> update(@RequestBody @Validated TransferOutDTO.UpdateDTO dto) {
@@ -135,7 +135,7 @@ public class TransferOutController extends BaseController {
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferOut:approve",
+            menuCode = "wms:transfer:out:approve",
             serviceClass = TransferOutService.class,
             keyIdName = "ids")
     public ApiResult<Void> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
@@ -150,7 +150,7 @@ public class TransferOutController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferOut:disApprove",
+            menuCode = "wms:transfer:out:disApprove",
             serviceClass = TransferOutService.class,
             keyIdName = "ids")
     public ApiResult<Void> disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
@@ -167,7 +167,7 @@ public class TransferOutController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferOut:delete",
+            menuCode = "wms:transfer:out:delete",
             serviceClass = TransferOutService.class,
             keyIdName = "ids")
     public ApiResult<Void> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
@@ -183,7 +183,7 @@ public class TransferOutController extends BaseController {
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferOut:invalid",
+            menuCode = "wms:transfer:out:invalid",
             serviceClass = TransferOutService.class,
             keyIdName = "ids")
     public ApiResult<Void> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
@@ -199,7 +199,7 @@ public class TransferOutController extends BaseController {
     @PostMapping("/cancel")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferOut:cancel",
+            menuCode = "wms:transfer:out:cancel",
             serviceClass = TransferOutService.class,
             keyIdName = "ids")
     public ApiResult cancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -213,7 +213,7 @@ public class TransferOutController extends BaseController {
     @PostMapping("/export")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferOut:paging",
+            menuCode = "wms:transfer:out:export",
             tableAlias = "tfo"
     )
     public void exportList(@RequestBody @Valid TransferOutDTO.ExportDTO dto, HttpServletResponse response) {
@@ -229,7 +229,7 @@ public class TransferOutController extends BaseController {
     @PostMapping(value = "/viewGenerateTransferIn")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferOut:viewGenerateTransferIn",
+            menuCode = "wms:transfer:out:viewGenerateTransferIn",
             tableAlias = "tfo"
     )
     public ApiResult<List<TransferOutDTO.ViewGenerateTransferInDTO>> viewGenerateTransferIn(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {

@@ -52,7 +52,17 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
-        List<MachineDetailEntity> list = BeanMapperUtils.copyList(MachineDetailEntity.class, detailList);
+
+        List<MachineDetailEntity> list = new ArrayList<>();
+        for (MachineDetailDTO.AddDTO addDTO : detailList) {
+            MachineDetailEntity detailEntity = new MachineDetailEntity();
+            BeanMapperUtils.copy(addDTO,detailEntity);
+
+            List<MachineSubComponentsDTO.AddDTO> addList = addDTO.getSubComponentsList();
+            List<MachineSubComponentsDTO.UpdateDTO> updateList = BeanMapperUtils.copyList(MachineSubComponentsDTO.UpdateDTO.class, addList);
+            detailEntity.setSubComponentsList(updateList);
+            list.add(detailEntity);
+        }
 
         //处理明细数据
         doOpHandleDetails(list,mainId,Boolean.FALSE);
@@ -62,7 +72,8 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         if (save) {
             //新增子件明细
             for (MachineDetailEntity detailEntity : list) {
-                machineSubComponentsService.add(detailEntity.getAddList(),detailEntity.getId());
+                List<MachineSubComponentsDTO.AddDTO> addList = BeanMapperUtils.copyList(MachineSubComponentsDTO.AddDTO.class, detailEntity.getSubComponentsList());
+                machineSubComponentsService.add(addList,detailEntity.getId());
             }
         }
     }
@@ -93,7 +104,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
 
         //修改子件明细
         for (MachineDetailEntity detailEntity : newList) {
-            machineSubComponentsService.update(detailEntity.getUpdateList(),detailEntity.getId());
+            machineSubComponentsService.update(detailEntity.getSubComponentsList(),detailEntity.getId());
         }
     }
 
@@ -155,7 +166,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
 
         for (MachineDetailEntity detail:newList) {
             //验证子件数量
-            checkBomChildrenSku(bomChildrenSkuList,detail,isUpdate);
+            checkBomChildrenSku(bomChildrenSkuList,detail);
 
             //单位
             String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && StringUtils.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
@@ -191,9 +202,8 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
      * @date: 2023/5/19 10:58
      * @param bomChildrenSkuList
      * @param detail
-     * @param isUpdate
      */
-    private void checkBomChildrenSku (List<BomChildrenSkuDTO> bomChildrenSkuList,MachineDetailEntity detail, Boolean isUpdate) {
+    private void checkBomChildrenSku (List<BomChildrenSkuDTO> bomChildrenSkuList,MachineDetailEntity detail) {
 
         //验证SKU及子件明细数量
         List<BomChildrenSkuDTO> bomList = bomChildrenSkuList.stream().filter(obj -> obj.getParentSkuId().equals(detail.getSkuId())).collect(Collectors.toList());
@@ -202,14 +212,8 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         }
         //明细子件数量验证
         for (BomChildrenSkuDTO bomChildrenSkuDTO : bomList) {
-            Integer qty ;
-            if (isUpdate) {
-                List<MachineSubComponentsDTO.UpdateDTO> updateList = detail.getUpdateList();
-                qty = updateList.stream().filter(obj -> obj.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).map(MachineSubComponentsDTO.UpdateDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
-            } else {
-                List<MachineSubComponentsDTO.AddDTO> updateList = detail.getAddList();
-                qty = updateList.stream().filter(obj -> obj.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).map(MachineSubComponentsDTO.AddDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
-            }
+            List<MachineSubComponentsDTO.UpdateDTO> updateList = detail.getSubComponentsList();
+            Integer qty = updateList.stream().filter(obj -> obj.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).map(MachineSubComponentsDTO.UpdateDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
             //如果子件明细合计数量 != 明细数量 * bom子件数量
             if (MathUtil.compareTo(qty,detail.getQty() * bomChildrenSkuDTO.getQuantity()) != MathUtil.ZERO) {
                 throw new ServiceException(ApiError.ERROR_99055.code, String.format(ApiError.ERROR_99057.msg, bomChildrenSkuDTO.getSkuNo(),detail.getQty() * bomChildrenSkuDTO.getQuantity()));

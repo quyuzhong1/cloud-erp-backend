@@ -94,6 +94,12 @@ public class PurchasePriceEntity extends BaseEntity<PurchasePriceEntity> {
     private String syncKingdeeId;
 
     /**
+     * 同步操作
+     */
+    @TableField("sync_operate")
+    private String syncOperate;
+
+    /**
      * 明细ids
      */
     @TableField(exist = false)

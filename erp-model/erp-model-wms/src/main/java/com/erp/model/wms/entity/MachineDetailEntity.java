@@ -74,10 +74,7 @@ public class MachineDetailEntity extends BaseEntity<MachineDetailEntity> {
     private String remark;
 
     @TableField(exist = false)
-    private List<MachineSubComponentsDTO.AddDTO> addList;
-
-    @TableField(exist = false)
-    private List<MachineSubComponentsDTO.UpdateDTO> updateList;
+    private List<MachineSubComponentsDTO.UpdateDTO> subComponentsList;
 
     public static final String MAIN_ID = "main_id";
 
