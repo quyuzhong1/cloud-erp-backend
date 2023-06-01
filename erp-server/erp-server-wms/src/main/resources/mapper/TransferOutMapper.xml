@@ -78,7 +78,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        tfo.id desc,tod.id desc
+        tfo.id desc,tod.id asc
     </select>
     <select id="exportList" resultType="com.erp.model.wms.dto.TransferOutDTO$PagingViewDTO">
         select
