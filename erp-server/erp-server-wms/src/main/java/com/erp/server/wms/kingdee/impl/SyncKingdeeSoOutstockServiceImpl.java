@@ -84,6 +84,11 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         //退货单号
         resultMap.put("code", entity.getCode());
 
+        //退货单号
+        resultMap.put("code", entity.getCode());
+
+
+
 
         //退货单明细
         List<PurchaseReturnOrderDetailEntity> detailList = purchaseReturnOrderDetailService.getDetailByMainId(entity.getId());

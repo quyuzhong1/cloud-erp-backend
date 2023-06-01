@@ -54,7 +54,7 @@ public interface SoReturnMapper extends BaseMapper<SoReturnEntity> {
      * @param ids ids
      * @return java.util.List<com.erp.model.oms.dto.SoReturnDTO.GenerateSoReturnNoticeView>
      **/
-    List<SoReturnDTO.GenerateSoReturnNoticeView> generateSoReturnNoticeView(List<String> ids);
+    List<SoReturnDTO.GenerateSoReturnNoticeView> generateSoReturnNoticeView(@Param("ids") List<String> ids);
 
     /**
      * 销售单详情-单据关联-退货订单号列表
