@@ -137,7 +137,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
         entityToMqlist.stream().peek(msg -> {
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_RETURN_ORDER_TAG.getName(),
                     msg, StrUtil.format("{}_{}", msg.getReturnCode(), msg.getPlatformOrderId()));
-            if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());

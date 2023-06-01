@@ -281,10 +281,6 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
         mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
         // 构造订单结构
         DmpDeliveryDetailInfoEntity deliveryDetailInfo = initOrderInfoEntity(entity);
-        if(null == deliveryDetailInfo){
-            log.warn("MabangOrderInfoServiceImpl>>>addDeliveryOrder>>>deliveryDetailInfo 为空 {}", JSONUtil.toJsonStr(entity));
-            return;
-        }
         // 异步推送到MQ
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_DELIVERY_ORDER_TAG.getName(),
                 deliveryDetailInfo, deliveryDetailInfo.getBillNo());

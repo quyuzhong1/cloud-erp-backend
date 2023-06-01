@@ -82,7 +82,7 @@ public class TestController extends BaseController {
         String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
                 noticeMsgInfoDTO, IdUtil.simpleUUID());
-        if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
          */
@@ -139,7 +139,7 @@ public class TestController extends BaseController {
         String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
                 noticeMsgInfoDTO, IdUtil.simpleUUID());
-        if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
         return success();
