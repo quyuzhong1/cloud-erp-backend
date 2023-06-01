@@ -2,9 +2,7 @@ package com.erp.server.dmp.task;
 
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.SyncKingdeeOmsStatusEnum;
-import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.entity.DmpWarehouseInboundRecordEntity;
 import com.erp.server.dmp.service.DmpWarehouseInboundRecordService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
@@ -15,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.lang.reflect.Array;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;

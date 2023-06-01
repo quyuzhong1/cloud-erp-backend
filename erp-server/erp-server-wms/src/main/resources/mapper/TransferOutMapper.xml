@@ -78,7 +78,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        tfo.id desc,tod.id desc
+        tfo.id desc,tod.id asc
     </select>
     <select id="exportList" resultType="com.erp.model.wms.dto.TransferOutDTO$PagingViewDTO">
         select
@@ -189,13 +189,14 @@
         tod.sku_no as sku_no,
         tod.qty as qty,
         tfo.bill_date as bill_date,
-        tfo.out_warehouse_id as out_warehouse_id,
-        tfo.out_warehouse_name as out_warehouse_name,
-        tfo.in_warehouse_id as in_warehouse_id,
-        tfo.in_warehouse_name as in_warehouse_name,
+        tfo.in_warehouse_id as out_warehouse_id,
+        tfo.in_warehouse_name as out_warehouse_name,
+        ta.in_warehouse_id as in_warehouse_id,
+        ta.in_warehouse_name as in_warehouse_name,
         tod.out_warehouse_location as out_warehouse_location,
         tod.remark
         from transfer_out tfo
+        inner join transfer_apply ta on tfo.source_id = ta.id
         inner join transfer_out_detail tod on tfo.id = tod.main_id and tod.is_deleted = false
         <where>
             tfo.is_deleted = false and tfo.id in

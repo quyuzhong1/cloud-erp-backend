@@ -214,6 +214,7 @@
             sd.main_id AS soId,
             sd.sku_id,
             sd.sku_no,
+            sd.is_close,
             sd.qty AS salesQty
         FROM so_info si
         LEFT JOIN so_detail sd ON si.id = sd.main_id AND si.is_deleted = FALSE

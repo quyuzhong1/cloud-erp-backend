@@ -238,6 +238,7 @@
         sdn.type AS orderType,
         sdnd.id AS sourceDetailId,
         sdnd.sku_id,
+        sdnd.is_close,
         sdnd.sku_no,
         sdnd.delivery_qty
       FROM so_delivery_notice  sdn
@@ -273,6 +274,8 @@
             sdn.actual_delivery_date,
             sdn.approve_user_name,
             sdn.create_user_name,
+            sdn.warehouse_org_id,
+            sdn.warehouse_org_name,
             sdn.create_time
         FROM so_delivery_notice sdn
         INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
@@ -280,6 +283,7 @@
         <if test="sourceId !='' and sourceId != null">
             AND sdn.source_id = #{sourceId}
         </if>
+        ORDER BY sdn.create_time DESC
     </select>
 
 </mapper>

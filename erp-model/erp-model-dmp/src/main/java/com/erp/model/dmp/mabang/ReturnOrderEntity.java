@@ -1,16 +1,15 @@
 package com.erp.model.dmp.mabang;
 
+import com.erp.model.dmp.mabang.item.ReturnOrderItemEntity;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
-@ToString
 public class ReturnOrderEntity {
 
     private String _id;
@@ -147,4 +146,47 @@ public class ReturnOrderEntity {
     private String updateTime;
     @SerializedName("item")
     private List<ReturnOrderItemEntity> item;
+    /**
+     * 清洗数据
+     */
+    private Boolean isClean;
+
+    @Override
+    public String toString() {
+        return "ReturnOrderEntity{" +
+                "platformOrderId='" + platformOrderId + '\'' +
+                ", platformReturnOrder='" + platformReturnOrder + '\'' +
+                ", returnOrderId='" + returnOrderId + '\'' +
+                ", shopId='" + shopId + '\'' +
+                ", shopName='" + shopName + '\'' +
+                ", paidTime='" + paidTime + '\'' +
+                ", expressTime='" + expressTime + '\'' +
+                ", status=" + status +
+                ", salesRecordNumber='" + salesRecordNumber + '\'' +
+                ", orderFee=" + orderFee +
+                ", orderWeight=" + orderWeight +
+                ", myLogisticsChannelId=" + myLogisticsChannelId +
+                ", myLogisticsChannelName='" + myLogisticsChannelName + '\'' +
+                ", myLogisticsId=" + myLogisticsId +
+                ", myLogisticsName='" + myLogisticsName + '\'' +
+                ", trackNumber='" + trackNumber + '\'' +
+                ", platformId='" + platformId + '\'' +
+                ", type=" + type +
+                ", countryCode='" + countryCode + '\'' +
+                ", countryNameEN='" + countryNameEN + '\'' +
+                ", countryNameCN='" + countryNameCN + '\'' +
+                ", buyerUserId='" + buyerUserId + '\'' +
+                ", buyerName='" + buyerName + '\'' +
+                ", employeeId='" + employeeId + '\'' +
+                ", employeeName='" + employeeName + '\'' +
+                ", remark='" + remark + '\'' +
+                ", currencyId='" + currencyId + '\'' +
+                ", currencyRate=" + currencyRate +
+                ", createDate='" + createDate + '\'' +
+                ", refundTime='" + refundTime + '\'' +
+                ", inTime='" + inTime + '\'' +
+                ", updateTime='" + updateTime + '\'' +
+                ", item=" + item +
+                '}';
+    }
 }

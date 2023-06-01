@@ -413,7 +413,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
              */
             Integer availableQty = 0;
             if (!isGre) {
-                scarceQty = qty;
+                scarceQty = qty-curInventoryQty;
                 availableQty = curInventoryQty;
 
             } else {
@@ -651,24 +651,20 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String ingStatusName = ApproveStatusEnum.APPROVE_ING.getName();
         //意见
         String comment = dto.getComment();
-        Boolean result = true;
         String content = "";
         String userName = commonService.getUserInfo().getUserName();
-
+        String approveStatus =ApproveStatusEnum.APPROVE.getStatus();
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
-            String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-            result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(approveStatus), userName);
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
-
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
         } else {
             //审核不通过
-            String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
-            result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(rejectStatus), userName);
+            approveStatus = ApproveStatusEnum.REJECT.getStatus();
             content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
         }
+        Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(approveStatus), userName);
         if (result) {
             //添加日志
             List<Pair<String, String>> pairList = list.stream().
@@ -1304,6 +1300,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public List<SoInfoDTO.GenerateDeliveryView> generateDeliveryView(List<String> ids) {
         checkIfPushDown(ids);
         List<SoInfoDTO.GenerateDeliveryView> viewList = baseMapper.generateDeliveryView(ids);
+        long closeCount = viewList.stream().filter(s -> s.getIsClose()).count();
+        if(closeCount>0){
+            throw new ServiceException(ApiError.ERROR_98068);
+        }
         //获取sku的id集合
         List<String> skuIdList = viewList.stream().map(SoInfoDTO.GenerateDeliveryView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息

@@ -37,5 +37,8 @@ public class GyyShopInfoEntity {
     private String note;
     @SerializedName("type_name")
     private String typeName;
-
+    /**
+     * 清洗数据
+     */
+    private Boolean isClean;
 }

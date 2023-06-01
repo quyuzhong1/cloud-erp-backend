@@ -1,6 +1,7 @@
 package com.erp.model.dmp.kingdee;
 
 import cn.hutool.core.annotation.Alias;
+import com.erp.model.dmp.kingdee.item.KingdeeReturnOrderItemEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -63,4 +64,38 @@ public class KingdeeReturnOrderEntity {
     @Alias("FHeadNote")
     private String FHeadNote;
     private List<KingdeeReturnOrderItemEntity> itemEntityList;
+    /**
+     * 清洗数据
+     */
+    private Boolean isClean;
+    @Override
+    public String toString() {
+        return "KingdeeReturnOrderEntity{" +
+                "fBillTypeID='" + fBillTypeID + '\'' +
+                ", fBillTypeName='" + fBillTypeName + '\'' +
+                ", fBillTypeCode='" + fBillTypeCode + '\'' +
+                ", fBillNo='" + fBillNo + '\'' +
+                ", fDate='" + fDate + '\'' +
+                ", fDocumentStatus='" + fDocumentStatus + '\'' +
+                ", fSaleOrgId='" + fSaleOrgId + '\'' +
+                ", fSaleOrgName='" + fSaleOrgName + '\'' +
+                ", fRetcustId='" + fRetcustId + '\'' +
+                ", fRetcustName='" + fRetcustName + '\'' +
+                ", fSalesManId='" + fSalesManId + '\'' +
+                ", fSalesManName='" + fSalesManName + '\'' +
+                ", fCreateDate='" + fCreateDate + '\'' +
+                ", fModifyDate='" + fModifyDate + '\'' +
+                ", fCancelStatus='" + fCancelStatus + '\'' +
+                ", fReceiverCountry='" + fReceiverCountry + '\'' +
+                ", fLinkMan='" + fLinkMan + '\'' +
+                ", fExchangeRate=" + fExchangeRate +
+                ", fApproveDate='" + fApproveDate + '\'' +
+                ", fBussinessType='" + fBussinessType + '\'' +
+                ", fOwnerTypeIdHead='" + fOwnerTypeIdHead + '\'' +
+                ", fSettleCurrCode='" + fSettleCurrCode + '\'' +
+                ", FDelTime='" + FDelTime + '\'' +
+                ", FHeadNote='" + FHeadNote + '\'' +
+                ", itemEntityList=" + itemEntityList +
+                '}';
+    }
 }

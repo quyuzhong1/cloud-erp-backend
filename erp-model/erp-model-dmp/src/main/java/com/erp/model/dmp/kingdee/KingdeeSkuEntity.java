@@ -47,4 +47,30 @@ public class KingdeeSkuEntity {
     private String FSSRQ;
     @Alias("FErpClsID")
     private String FErpClsID;
+    /**
+     * 清洗数据
+     */
+    private Boolean isClean;
+    @Override
+    public String toString() {
+        return "KingdeeSkuEntity{" +
+                "fUseOrgId='" + fUseOrgId + '\'' +
+                ", fUseOrgName='" + fUseOrgName + '\'' +
+                ", fNumber='" + fNumber + '\'' +
+                ", fMaterialId='" + fMaterialId + '\'' +
+                ", fName='" + fName + '\'' +
+                ", fSpecification='" + fSpecification + '\'' +
+                ", fCreateDate=" + fCreateDate +
+                ", fModifyDate=" + fModifyDate +
+                ", fDocumentStatus='" + fDocumentStatus + '\'' +
+                ", fForbidStatus='" + fForbidStatus + '\'' +
+                ", fRefStatus='" + fRefStatus + '\'' +
+                ", fPurPrice_CMK='" + fPurPrice_CMK + '\'' +
+                ", f_PRVD_Assistant='" + f_PRVD_Assistant + '\'' +
+                ", f_PRVD_Assistant1='" + f_PRVD_Assistant1 + '\'' +
+                ", fSalePrice_CMK='" + fSalePrice_CMK + '\'' +
+                ", FSSRQ='" + FSSRQ + '\'' +
+                ", FErpClsID='" + FErpClsID + '\'' +
+                '}';
+    }
 }

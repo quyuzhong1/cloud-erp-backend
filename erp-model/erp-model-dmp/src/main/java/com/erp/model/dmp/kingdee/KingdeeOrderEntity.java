@@ -1,6 +1,7 @@
 package com.erp.model.dmp.kingdee;
 
 import cn.hutool.core.annotation.Alias;
+import com.erp.model.dmp.kingdee.item.KingdeeOrderItemEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -257,6 +258,10 @@ public class KingdeeOrderEntity {
      * 商品信息
      */
     private List<KingdeeOrderItemEntity> orderItemEntityList;
+    /**
+     * 清洗数据
+     */
+    private Boolean isClean;
 
     @Override
     public String toString() {

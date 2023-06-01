@@ -20,7 +20,7 @@ import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.mabang.OrderEntity;
-import com.erp.model.dmp.mabang.OrderItemEntity;
+import com.erp.model.dmp.mabang.item.OrderItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;

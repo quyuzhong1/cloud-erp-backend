@@ -1,16 +1,14 @@
 package com.erp.model.dmp.mabang;
 
+import com.erp.model.dmp.mabang.item.RefundOrderItemEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
-@ToString
 public class RefundOrderEntity {
     private String id;
     private Integer refundOrderId;
@@ -56,4 +54,58 @@ public class RefundOrderEntity {
     private String complaintId;
     private String trackNumber;
     private List<RefundOrderItemEntity> productList;
+    /**
+     * 清洗数据
+     */
+    private Boolean isClean;
+
+    @Override
+    public String toString() {
+        return "RefundOrderEntity{" +
+                "id='" + id + '\'' +
+                ", refundOrderId=" + refundOrderId +
+                ", refundPaypalId='" + refundPaypalId + '\'' +
+                ", refundMoneyType='" + refundMoneyType + '\'' +
+                ", refundMoney='" + refundMoney + '\'' +
+                ", applyRefundMoney=" + applyRefundMoney +
+                ", refundType=" + refundType +
+                ", refundReasonName='" + refundReasonName + '\'' +
+                ", refundReasonDesc='" + refundReasonDesc + '\'' +
+                ", note='" + note + '\'' +
+                ", content='" + content + '\'' +
+                ", type=" + type +
+                ", flag=" + flag +
+                ", createTime='" + createTime + '\'' +
+                ", errorDescr='" + errorDescr + '\'' +
+                ", orderStatus=" + orderStatus +
+                ", shopId='" + shopId + '\'' +
+                ", shopName='" + shopName + '\'' +
+                ", platformName='" + platformName + '\'' +
+                ", platformOrderId='" + platformOrderId + '\'' +
+                ", refundplatformOrderId='" + refundplatformOrderId + '\'' +
+                ", refundTime='" + refundTime + '\'' +
+                ", currencyRate=" + currencyRate +
+                ", expressType='" + expressType + '\'' +
+                ", logisticsChannelName='" + logisticsChannelName + '\'' +
+                ", countryCode='" + countryCode + '\'' +
+                ", countryCn='" + countryCn + '\'' +
+                ", countryEn='" + countryEn + '\'' +
+                ", salesRecordNumber='" + salesRecordNumber + '\'' +
+                ", buyerUserId='" + buyerUserId + '\'' +
+                ", buyerName='" + buyerName + '\'' +
+                ", currencyId='" + currencyId + '\'' +
+                ", itemTotalOrigin=" + itemTotalOrigin +
+                ", shippingTotalOrigin=" + shippingTotalOrigin +
+                ", paypalId='" + paypalId + '\'' +
+                ", orderTime='" + orderTime + '\'' +
+                ", expressTime='" + expressTime + '\'' +
+                ", source=" + source +
+                ", pictureUrl='" + pictureUrl + '\'' +
+                ", updateTime='" + updateTime + '\'' +
+                ", refundText='" + refundText + '\'' +
+                ", complaintId='" + complaintId + '\'' +
+                ", trackNumber='" + trackNumber + '\'' +
+                ", productList=" + productList +
+                '}';
+    }
 }

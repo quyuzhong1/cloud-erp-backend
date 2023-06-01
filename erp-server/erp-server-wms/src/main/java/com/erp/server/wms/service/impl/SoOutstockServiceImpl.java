@@ -824,7 +824,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException(ApiError.ERROR_99058);
         }
         List<SoOutstockDetailDTO.UpdateDTO> detailList = dto.getDetailList();
-        String sourceType = dto.getSourceType();
+        String sourceType = soOutstock.getSourceType();
         if (StringUtils.isBlank(sourceType)) {
             sourceType = SourceTypeEnum.SELF_ADD.getCode();
         }

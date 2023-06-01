@@ -67,4 +67,8 @@ public class SkuInfoEntity {
     private List<?> warehouse;
     private List<?> label;
     private List<?> attributes;
+    /**
+     * 清洗数据
+     */
+    private Boolean isClean;
 }

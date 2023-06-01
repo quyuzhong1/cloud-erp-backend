@@ -89,6 +89,9 @@ public class MongoUtil {
 					case LTE:
 						criteria.and(pd.getColum_name()).lte(pd.getVal());
 						break;
+					case EXISTS:
+						criteria.and(pd.getColum_name()).exists(Boolean.parseBoolean(pd.getVal().toString()));
+						break;
 					default:
 						break;
 				}
@@ -244,6 +247,9 @@ public class MongoUtil {
 			case LTE:
 				criteria.and(fieldName).lte(result);
 				break;
+			case EXISTS:
+				criteria.and(fieldName).exists(Boolean.parseBoolean(result.toString()));
+				break;
 			default:
 				break;
 		}
@@ -298,7 +304,9 @@ public class MongoUtil {
 			case LTE:
 				params.put(fieldName+"lte", result);
 				break;
-				
+			case EXISTS:
+				params.put(fieldName+"exists", Boolean.parseBoolean(result.toString()));
+				break;
 			default:
 				break;
 		}

@@ -140,6 +140,9 @@ public class GyySkuInfoEntity {
     private List<?> skus;
     @SerializedName("combine_items")
     private List<CombineItemsBean> combineItems;
-
+    /**
+     * 清洗数据
+     */
+    private Boolean isClean;
     
 }

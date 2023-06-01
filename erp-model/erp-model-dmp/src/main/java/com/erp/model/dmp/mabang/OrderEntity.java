@@ -1,16 +1,15 @@
 package com.erp.model.dmp.mabang;
 
+import com.alibaba.fastjson.JSONObject;
+import com.erp.model.dmp.mabang.item.OrderItemEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
-@ToString
 public class OrderEntity {
 
     private String _id;
@@ -28,6 +27,8 @@ public class OrderEntity {
     private String companyId;
     private String countryCode;
     private BigDecimal orderCost;
+    private String codFlag;
+    private String isUrgent;
     private String transportTime;
     private String quickPickTime;
     private Integer canSend;
@@ -121,9 +122,134 @@ public class OrderEntity {
     private String myLogisticsChannelName;
     private String myLogisticsId;
     private String myLogisticsName;
-    private String orderType;
+    private JSONObject orderTypeNew;
     private String erpOrderId;
     private String shippingWeight;
     private List<OrderItemEntity> orderItem;
-    private String extendAttr;
+    private JSONObject extendAttr;
+    /**
+     * 清洗数据
+     */
+    private Boolean isClean;
+    /**
+     * 清洗到发货订单
+     */
+    private Boolean cleanToDelivery;
+
+    @Override
+    public String toString() {
+        return "OrderEntity{" +
+                "platformOrderId='" + platformOrderId + '\'' +
+                ", salesRecordNumber='" + salesRecordNumber + '\'' +
+                ", orderStatus=" + orderStatus +
+                ", myLogisticsChannelId=" + myLogisticsChannelId +
+                ", trackNumber='" + trackNumber + '\'' +
+                ", trackNumber1='" + trackNumber1 + '\'' +
+                ", trackNumber2='" + trackNumber2 + '\'' +
+                ", orderWeight='" + orderWeight + '\'' +
+                ", buyerUserId='" + buyerUserId + '\'' +
+                ", buyerName='" + buyerName + '\'' +
+                ", shopId='" + shopId + '\'' +
+                ", companyId='" + companyId + '\'' +
+                ", countryCode='" + countryCode + '\'' +
+                ", orderCost=" + orderCost +
+                ", transportTime='" + transportTime + '\'' +
+                ", quickPickTime='" + quickPickTime + '\'' +
+                ", canSend=" + canSend +
+                ", createDate='" + createDate + '\'' +
+                ", isReturned=" + isReturned +
+                ", isRefund=" + isRefund +
+                ", paidTime='" + paidTime + '\'' +
+                ", orderFee=" + orderFee +
+                ", platformId='" + platformId + '\'' +
+                ", expressTime='" + expressTime + '\'' +
+                ", isUnion=" + isUnion +
+                ", isSplit=" + isSplit +
+                ", isResend=" + isResend +
+                ", hasGoods=" + hasGoods +
+                ", hasBattery='" + hasBattery + '\'' +
+                ", isSyncLogisticsDescr='" + isSyncLogisticsDescr + '\'' +
+                ", paypalId='" + paypalId + '\'' +
+                ", isSyncLogistics='" + isSyncLogistics + '\'' +
+                ", isSyncPlatform='" + isSyncPlatform + '\'' +
+                ", isSyncPlatformDescr='" + isSyncPlatformDescr + '\'' +
+                ", district='" + district + '\'' +
+                ", paypalEmail='" + paypalEmail + '\'' +
+                ", closeDate='" + closeDate + '\'' +
+                ", street1='" + street1 + '\'' +
+                ", street2='" + street2 + '\'' +
+                ", isVirtual='" + isVirtual + '\'' +
+                ", city='" + city + '\'' +
+                ", province='" + province + '\'' +
+                ", postCode='" + postCode + '\'' +
+                ", phone1='" + phone1 + '\'' +
+                ", phone2='" + phone2 + '\'' +
+                ", email='" + email + '\'' +
+                ", isNewOrder='" + isNewOrder + '\'' +
+                ", doorcode='" + doorcode + '\'' +
+                ", fbaFlag=" + fbaFlag +
+                ", fbaStartDateTime='" + fbaStartDateTime + '\'' +
+                ", fbaEndDateTime='" + fbaEndDateTime + '\'' +
+                ", CarrierCode='" + CarrierCode + '\'' +
+                ", operTime='" + operTime + '\'' +
+                ", shippingService='" + shippingService + '\'' +
+                ", packageWeight='" + packageWeight + '\'' +
+                ", platformOrderStatus='" + platformOrderStatus + '\'' +
+                ", hasMagnetic='" + hasMagnetic + '\'' +
+                ", hasPowder='" + hasPowder + '\'' +
+                ", hasTort='" + hasTort + '\'' +
+                ", remark='" + remark + '\'' +
+                ", sellerMessage='" + sellerMessage + '\'' +
+                ", currencyId='" + currencyId + '\'' +
+                ", currencyRate=" + currencyRate +
+                ", itemTotal=" + itemTotal +
+                ", shippingFee=" + shippingFee +
+                ", platformFee=" + platformFee +
+                ", shippingTotalOrigin=" + shippingTotalOrigin +
+                ", itemTotalOrigin=" + itemTotalOrigin +
+                ", refundFeeOrigin='" + refundFeeOrigin + '\'' +
+                ", refundFeeCurrencyId='" + refundFeeCurrencyId + '\'' +
+                ", originFax='" + originFax + '\'' +
+                ", beforeStatus='" + beforeStatus + '\'' +
+                ", otherExpend='" + otherExpend + '\'' +
+                ", otherIncome='" + otherIncome + '\'' +
+                ", insuranceFee='" + insuranceFee + '\'' +
+                ", insuranceFeeOrigin='" + insuranceFeeOrigin + '\'' +
+                ", paypalFee='" + paypalFee + '\'' +
+                ", paypalFeeOrigin='" + paypalFeeOrigin + '\'' +
+                ", itemTotalCost=" + itemTotalCost +
+                ", shippingCost='" + shippingCost + '\'' +
+                ", shippingPreCost='" + shippingPreCost + '\'' +
+                ", packageFee='" + packageFee + '\'' +
+                ", fbaPerOrderFulfillmentFee='" + fbaPerOrderFulfillmentFee + '\'' +
+                ", fbaCommission='" + fbaCommission + '\'' +
+                ", promotionAmount='" + promotionAmount + '\'' +
+                ", allianceFeeOrigin='" + allianceFeeOrigin + '\'' +
+                ", voucherPriceOrigin='" + voucherPriceOrigin + '\'' +
+                ", subsidyAmountOrigin='" + subsidyAmountOrigin + '\'' +
+                ", CODCharge='" + CODCharge + '\'' +
+                ", allianceFee='" + allianceFee + '\'' +
+                ", ShippingChargeback='" + ShippingChargeback + '\'' +
+                ", fbaPerUnitFulfillmentFee='" + fbaPerUnitFulfillmentFee + '\'' +
+                ", fbaWeightBasedFee='" + fbaWeightBasedFee + '\'' +
+                ", platformFeeOrigin='" + platformFeeOrigin + '\'' +
+                ", voucherPrice='" + voucherPrice + '\'' +
+                ", subsidyAmount=" + subsidyAmount +
+                ", isWms='" + isWms + '\'' +
+                ", payType='" + payType + '\'' +
+                ", VendorID='" + VendorID + '\'' +
+                ", abnnumber='" + abnnumber + '\'' +
+                ", countryNameEN='" + countryNameEN + '\'' +
+                ", countryNameCN='" + countryNameCN + '\'' +
+                ", shopName='" + shopName + '\'' +
+                ", myLogisticsChannelName='" + myLogisticsChannelName + '\'' +
+                ", myLogisticsId='" + myLogisticsId + '\'' +
+                ", myLogisticsName='" + myLogisticsName + '\'' +
+                ", orderTypeNew='" + orderTypeNew + '\'' +
+                ", erpOrderId='" + erpOrderId + '\'' +
+                ", shippingWeight='" + shippingWeight + '\'' +
+                ", orderItem=" + orderItem +
+                ", extendAttr='" + extendAttr + '\'' +
+                '}';
+    }
 }
