@@ -77,4 +77,33 @@
             AND sr.id = #{id}
         </if>
     </select>
+
+    <select id="listAddDetailViewById" resultType="com.erp.model.oms.dto.SoDetailDTO$AddDetailView">
+        SELECT
+        srd.id,
+        srd.main_id,
+        sr.source_id,
+        srd.sku_id,
+        srd.sku_no,
+        si.warehouse_org_id AS inventoryOrgId,
+        sd.qty AS salesQty,
+        sd.amount AS salesAmount,
+        sd.is_gift,
+        sd.is_close,
+        sd.remark,
+        si.warehouse_id,
+        sd.currency,
+        sd.currency_Symbol,
+        si.id AS soId,
+        srd.return_type_dict,
+        srd.return_reason_dict
+        FROM so_return sr
+        INNER JOIN so_return_detail srd ON srd.main_id = sr.id AND sr.is_deleted = FALSE
+        INNER JOIN so_info si ON sr.source_id = si.id AND srd.is_deleted = FALSE
+        INNER JOIN so_detail sd ON srd.source_detail_id = sd.id AND si.is_deleted = FALSE
+        WHERE sd.is_deleted = FALSE AND sd.is_close = FALSE
+        <if test="id != null and id != ''">
+            AND srd.id = #{id}
+        </if>
+    </select>
 </mapper>

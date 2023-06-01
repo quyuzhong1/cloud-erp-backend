@@ -316,19 +316,6 @@ public class SoReturnController extends BaseController {
     }
 
     /**
-     * 添加详情按钮-列表查询
-     * @param id id
-     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoDetailDTO.AddDetailView>>
-     * @Author Luo_WG
-     * @Date 2023/5/16 18:43
-     **/
-    @PostMapping("/listAddDetailView")
-    public ApiResult<List<SoDetailDTO.AddDetailView>> listAddDetailView(@RequestParam("id") String id) {
-        List<SoDetailDTO.AddDetailView> addDetailViews = soReturnDetailService.listAddDetailView(id);
-        return success(addDetailViews);
-    }
-
-    /**
      * 下推销售退货订单-保存
      * @Author Luo_WG
      * @Date 2023/5/25 12:30

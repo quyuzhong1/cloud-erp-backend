@@ -237,11 +237,8 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         List<String> skuIdList = list.stream().map(SoDetailDTO.AddDetailView::getSkuId).distinct().collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIdList);
-        SoReturnEntity soReturnEntity = soReturnService.getById(id);
-        SoInfoEntity soInfoEntity = soInfoService.getById(soReturnEntity.getSourceId());
         InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
         paramDTO.setSkuIds(skuIdList);
-        paramDTO.setWarehouseId(soInfoEntity.getWarehouseId());
         paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
         //从wms 获取到sku 的即时库存信息
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
@@ -250,10 +247,16 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveFeign.listDetailBySourceIds(returnMainIds);
         List<String> orgIds = list.stream().map(SoDetailDTO.AddDetailView::getInventoryOrgId).collect(Collectors.toList());
 
+        List<String> warehouseIdList = list.stream().map(SoDetailDTO.AddDetailView::getWarehouseId).collect(Collectors.toList());
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIdList);
+
         //组织列表
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIds);
 
         for (SoDetailDTO.AddDetailView addDetailView : list) {
+            String warehouseName = warehouseList.stream().filter(w -> w.getId().equals(addDetailView.getWarehouseId())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            addDetailView.setWarehouseName(warehouseName);
             BaseIdDTO.CodeDTO codeDTO = orgList.stream().filter(req -> addDetailView.getInventoryOrgId().equals(req.getId())).findFirst().orElse(new BaseIdDTO.CodeDTO());
             addDetailView.setInventoryOrgName(codeDTO.getName());
             ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(addDetailView.getSkuId())).findFirst().orElse(new ProductDetailEntity());

@@ -1,9 +1,11 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.common.business.validator.AddGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -240,6 +242,7 @@ public class SoReturnReceiveDTO {
         /**
          * 库存组织id
          */
+        @NotBlank(message = "库存组织不能为空")
         private String inventoryOrgId;
         /**
          * 仓管员
@@ -252,6 +255,7 @@ public class SoReturnReceiveDTO {
         /**
          * 仓库id
          */
+        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
         /**
          * 明细信息
@@ -280,6 +284,7 @@ public class SoReturnReceiveDTO {
         /**
          * 库存组织id
          */
+        @NotBlank(message = "库存组织不能为空")
         private String inventoryOrgId;
         /**
          * 仓管员
@@ -292,6 +297,7 @@ public class SoReturnReceiveDTO {
         /**
          * 仓库id
          */
+        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
         /**
          * 明细信息

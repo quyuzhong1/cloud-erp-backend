@@ -206,6 +206,18 @@ public class SoReturnEntity extends BaseEntity<SoReturnEntity> {
     @TableField(exist = false)
     private String warehouseName;
 
+    /**
+     * 库存组织
+     */
+    @TableField(exist = false)
+    private String inventoryOrgId;
+
+    /**
+     * 库存组织名称
+     */
+    @TableField(exist = false)
+    private String inventoryOrgName;
+
     public static final String APPROVE_STATUS = "approve_status";
 
     public static final String CODE = "code";

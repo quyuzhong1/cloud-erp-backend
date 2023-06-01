@@ -621,6 +621,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         if (CollectionUtils.isNotEmpty(warehouseList)) {
             entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
         }
+        entity.setInventoryOrgId(soInfoEntity.getWarehouseOrgId());
+        entity.setInventoryOrgName(soInfoEntity.getWarehouseOrgName());
         return entity;
     }
 
