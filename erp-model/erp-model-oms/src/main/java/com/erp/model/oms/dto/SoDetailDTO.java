@@ -585,6 +585,14 @@ public class SoDetailDTO implements Serializable {
          * 备注
          */
         private String remark;
+        /**
+         * 退货类型
+         */
+        private String returnTypeDict;
+        /**
+         * 退货原因
+         */
+        private String returnReasonDict;
     }
 
 

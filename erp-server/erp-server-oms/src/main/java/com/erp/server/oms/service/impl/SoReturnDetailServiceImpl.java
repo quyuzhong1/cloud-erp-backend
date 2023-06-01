@@ -234,7 +234,6 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         List<String> soIds = list.stream().map(SoDetailDTO.AddDetailView::getSourceId).distinct().collect(Collectors.toList());
         List<SoReturnDetailEntity> soReturnDetailEntities = this.listDetailByMainId(id);
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
         List<String> skuIdList = list.stream().map(SoDetailDTO.AddDetailView::getSkuId).distinct().collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIdList);

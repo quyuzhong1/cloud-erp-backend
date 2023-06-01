@@ -1,6 +1,7 @@
 package com.erp.server.wms.kingdee;
 
 import com.erp.model.wms.entity.PoInstockEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 
 /**
  * 销售出库单
@@ -16,5 +17,5 @@ public interface SyncKingdeeSoOutstockService {
      * @param operate
      * @return void
      **/
-    void syncDataToKingdee(PoInstockEntity entity, String operate);
+    void syncDataToKingdee(SoOutstockEntity entity, String operate);
 }
