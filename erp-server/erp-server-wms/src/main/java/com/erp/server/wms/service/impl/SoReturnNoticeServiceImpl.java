@@ -492,9 +492,10 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         //TODO 待加审核流程
 
         //下推签收单不能反审核
-        List<SoReturnReceiveEntity> soReturnNoticeEntities = soReturnReceiveService.listBySourceIds(ids);
+        List<String> returnIds = entityList.stream().map(SoReturnNoticeEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<SoReturnReceiveEntity> soReturnNoticeEntities = soReturnReceiveService.listBySourceIds(returnIds);
         if (CollectionUtils.isNotEmpty(soReturnNoticeEntities)) {
-            throw new ServiceException(ApiError.ERROR_92011);
+            throw new ServiceException(ApiError.ERROR_99068);
         }
         //修改状态为待提交
         lambdaUpdate().set(SoReturnNoticeEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())

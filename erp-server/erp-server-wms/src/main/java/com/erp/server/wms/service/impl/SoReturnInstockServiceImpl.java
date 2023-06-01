@@ -493,11 +493,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         //TODO 待加审核流程
 
-        //已下推质检单，不能反审核
-        List<QcInfoEntity> qcBySourceId = qcInfoService.listQCBySourceIds(ids);
-        if (CollectionUtils.isNotEmpty(qcBySourceId)) {
-            throw new ServiceException(ApiError.ERROR_99042);
-        }
+
         //修改状态为待提交
         lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 .in(SoReturnInstockEntity::getId, ids)

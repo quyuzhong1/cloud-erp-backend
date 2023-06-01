@@ -37,11 +37,13 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
+import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.SoReturnNoticeFeign;
+import com.erp.rpc.wms.feign.SoReturnReceiveFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.mapper.SoReturnMapper;
@@ -96,6 +98,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Resource
     private SoReturnNoticeFeign soReturnNoticeFeign;
+
+    @Resource
+    private SoReturnReceiveFeign soReturnReceiveFeign;
 
     @Resource
     private WorkflowFeign workflowFeign;
@@ -444,9 +449,14 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         }
         //TODO 待加审核流程
 
-        //下推入库单不能反审核
+        //下推不能反审核
         List<SoReturnNoticeEntity> soReturnNoticeEntities = soReturnNoticeFeign.listBySourceId(ids);
         if (CollectionUtils.isNotEmpty(soReturnNoticeEntities)) {
+            throw new ServiceException(ApiError.ERROR_92012);
+        }
+
+        List<SoReturnReceiveEntity> soReturnReceiveEntities = soReturnReceiveFeign.listBySourceId(ids);
+        if (CollectionUtils.isNotEmpty(soReturnReceiveEntities)) {
             throw new ServiceException(ApiError.ERROR_92012);
         }
         //修改状态为待提交
