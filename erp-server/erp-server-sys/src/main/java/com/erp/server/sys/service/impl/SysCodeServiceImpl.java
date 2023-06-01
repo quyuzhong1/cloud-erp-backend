@@ -234,7 +234,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
      * @param id
      * @param num
      */
-    private void updateNumByCode (String id,Integer num) {
+    public void updateNumByCode (String id,Integer num) {
         /*
         LambdaUpdateWrapper<SysCodeEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(SysCodeEntity::getId,id);
