@@ -470,6 +470,10 @@ public class SoReturnNoticeDTO {
          */
         private Integer returnQty;
         /**
+         * 退货数量
+         */
+        private Integer receiveQty;
+        /**
          * 退货类型 wms/common/enumDropDown?type=ReturnType
          * 描述：refund 退货扣款 replenishment 退货补货
          */
