@@ -883,6 +883,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 if (deliveryQty < qty && deliveryQty != 0) {
                     item.setDeliveryStatus(DeliveryStatusEnum.PARTIAL_SHIPMENT.getCode());
                 }
+                if ( deliveryQty == 0) {
+                    item.setDeliveryStatus(DeliveryStatusEnum.UN_SHIPPED.getCode());
+                }
             }
             this.updateBatchById(soDetailList);
         }

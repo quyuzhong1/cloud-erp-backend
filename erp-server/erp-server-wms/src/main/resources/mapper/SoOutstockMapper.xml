@@ -255,6 +255,7 @@
             AND  sod.is_deleted=FALSE
             WHERE so.is_deleted=FALSE
             AND so.so_id=#{soId}
+            ORDER BY so.create_time DESC
     </select>
     <select id="listApproveCount" resultType="com.erp.model.wms.dto.SoOutstockDTO$ApproveCountDTO">
           SELECT
