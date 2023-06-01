@@ -126,6 +126,12 @@ public class TransferInDetailDTO implements Serializable {
          */
         private Integer qty;
 
+
+        /**
+         * 单位
+         */
+        private String unit;
+
         /**
          * 备注
          */

@@ -209,7 +209,7 @@ public class TransferInDTO implements Serializable {
         /**
          * 调入日期
          */
-        private List<LocalDateTime> billDateList;
+        private List<LocalDate> billDateList;
 
         /**
          * 创建人 id 集合

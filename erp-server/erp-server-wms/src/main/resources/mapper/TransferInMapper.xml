@@ -90,6 +90,12 @@
             (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1
             DAY' ) > ti.bill_date
         </if>
+        <if test="approveList !=null and approveList.size>0">
+            AND ti.approve_status IN
+            <foreach collection="approveList" item="approve" open="(" separator="," close=")">
+                #{approve}
+            </foreach>
+        </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -181,6 +187,12 @@
                     AND ti.bill_date >= #{params.billDateList[0]} and
                     (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1
                     DAY' ) > ti.bill_date
+                </if>
+                <if test="approveList !=null and approveList.size>0">
+                    AND ti.approve_status IN
+                    <foreach collection="approveList" item="approve" open="(" separator="," close=")">
+                        #{approve}
+                    </foreach>
                 </if>
                 <!--权限-->
                 <if test="params.permissionSql!=null and params.permissionSql!=''">

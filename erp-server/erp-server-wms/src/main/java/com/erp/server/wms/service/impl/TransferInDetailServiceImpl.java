@@ -108,9 +108,11 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
             if (skuVO != null) {
                 item.setProductName(skuVO.getSkuName());
                 item.setVariantProperty(skuVO.getVariantProperty());
+                item.setUnit(skuVO.getUnitName());
             } else {
                 item.setProductName("");
                 item.setVariantProperty("");
+                item.setUnit("");
             }
         }
         return list;

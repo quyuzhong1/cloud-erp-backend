@@ -1,6 +1,6 @@
 package com.erp.server.oms.kingdee;
 
-import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.entity.SoChangeEntity;
 
 /**
  * @author Lambda
@@ -14,5 +14,5 @@ public interface SyncKingdeeSoChangeService {
     /**
      * 推送金蝶
      */
-    void syncDataToKingdee(SoInfoEntity entity, String operate);
+    void syncDataToKingdee(SoChangeEntity entity, String operate);
 }
