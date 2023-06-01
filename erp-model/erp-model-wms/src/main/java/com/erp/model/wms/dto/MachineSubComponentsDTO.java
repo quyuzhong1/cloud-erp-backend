@@ -51,6 +51,11 @@ public class MachineSubComponentsDTO implements Serializable {
         @Size(max = 255,message = "备注不能大于255字符")
         private String remark;
 
+        /**
+         * 是否是子件子级（作用用于前端判断）
+         */
+        private Boolean isChild;
+
     }
 
     @Data

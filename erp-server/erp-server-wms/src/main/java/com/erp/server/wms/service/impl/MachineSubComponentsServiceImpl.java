@@ -93,7 +93,10 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
 
     @Override
     public List<MachineSubComponentsEntity> listByDetailId(String detailId) {
-        return lambdaQuery().eq(MachineSubComponentsEntity::getDetailId, detailId).list();
+        return lambdaQuery()
+                .eq(MachineSubComponentsEntity::getDetailId, detailId)
+                .orderByAsc(MachineSubComponentsEntity::getIsChild)
+                .list();
     }
 
     @Override
