@@ -399,7 +399,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockDetailService.listDetailBySoDetailIds(soDetailIdList);
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         soOutstockDetailList = soOutstockDetailList.stream().filter(s -> s.getApproveStatus().equals(approveStatus)).collect(Collectors.toList());
-
         //分组
         Map<String, List<SoOutstockDetailDTO.DeliveryQtyDTO>> map = soOutstockDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailDTO.DeliveryQtyDTO::getSoDetailId));
         List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList = new ArrayList<>(map.size());
@@ -461,7 +460,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //这个是销售订单的 这个要统计 存在多个
         List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockDetailService.listDetailBySoDetailIds(soDetailIdList);
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-        soOutstockDetailList = soOutstockDetailList.stream().filter(s -> s.getApproveStatus().equals(approveStatus)).collect(Collectors.toList());
         //分组
         Map<String, List<SoOutstockDetailDTO.DeliveryQtyDTO>> map = soOutstockDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailDTO.DeliveryQtyDTO::getSoDetailId));
         List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList = new ArrayList<>(map.size());
@@ -470,7 +468,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             String soDetailId = entry.getKey();
             param.setId(soDetailId);
             //已发货数量
-            Integer alreadyDeliveryQty = entry.getValue().stream().mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
+            Integer alreadyDeliveryQty = entry.getValue().stream().filter(s->s.getApproveStatus().equals(approveStatus)).
+                    mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
             param.setAlreadyDeliveryQty(alreadyDeliveryQty);
             paramList.add(param);
 
@@ -519,7 +518,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             InventoryBatchUnApproveDTO batchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_OUTSTOCK, ids);
             inventoryTransCoreService.batchUnApprove(batchUnApproveDTO);
             handleDisApproveData(list);
-
             //添加日志
             String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "状态变更");

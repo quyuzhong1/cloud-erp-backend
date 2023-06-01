@@ -113,6 +113,6 @@ public class MachineDetailDTO implements Serializable {
         /**
          * 明细子件
          */
-        private List<MachineSubComponentsDTO.ViewDTO> subComponentsList;
+        private List<MachineSubComponentsDTO.ViewDTO> addList;
     }
 }

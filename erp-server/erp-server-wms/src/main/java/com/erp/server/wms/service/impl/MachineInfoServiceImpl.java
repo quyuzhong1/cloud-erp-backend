@@ -291,7 +291,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             viewDetailDTO.setCurInventoryQty(curInventoryQty);
             //明细子件
             List<MachineSubComponentsDTO.ViewDTO> subComponentsList = this.viewSubComponents(viewDetailDTO.getId());
-            viewDetailDTO.setSubComponentsList(subComponentsList);
+            viewDetailDTO.setAddList(subComponentsList);
         }
         viewDTO.setDetailList(viewDetailList);
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
