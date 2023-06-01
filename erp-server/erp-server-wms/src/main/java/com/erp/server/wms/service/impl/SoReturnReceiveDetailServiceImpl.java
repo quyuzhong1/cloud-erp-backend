@@ -62,30 +62,30 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean add(SoReturnReceiveDTO.Add dto, String id) {
-        SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
+//        SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
         //根据销售单获取出库单
-        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySoIds(Arrays.asList(soReturnEntity.getSourceId()));
+//        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySoIds(Arrays.asList(soReturnEntity.getSourceId()));
         //获取退货单详情表id
         List<String> returnDetailIds = dto.getDetailList().stream().map(SoReturnReceiveDetailDTO.Add::getSourceDetailId).collect(Collectors.toList());
         List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(returnDetailIds);
         List<SoReturnReceiveDetailEntity> list = new ArrayList<>();
         List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = this.listDetailBySourceIds(Arrays.asList(dto.getSourceId()));
-        List<String> soDetailIds = soReturnDetailEntities.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
-        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(soDetailIds);
+//        List<String> soDetailIds = soReturnDetailEntities.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
+//        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(soDetailIds);
         for (SoReturnReceiveDetailDTO.Add detailDto : dto.getDetailList()) {
             SoReturnReceiveDetailEntity detailEntity = new SoReturnReceiveDetailEntity();
             SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_92023);
             }
-            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+//            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             //此单历史退货数量
-            Integer historyReturnQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(soReturnDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+//            Integer historyReturnQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+//            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(soReturnDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (actualQty < detailDto.getReturnQty() + historyReturnQty) {
-                throw new ServiceException(ApiError.ERROR_92009);
-            }
+//            if (actualQty < detailDto.getReturnQty() + historyReturnQty) {
+//                throw new ServiceException(ApiError.ERROR_92009);
+//            }
             //此单历史签收数量
             Integer historyReceiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             if (detailDto.getReceiveQty() + historyReceiveQty > returnQty) {
@@ -109,16 +109,16 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnReceiveDTO.Update dto) {
         List<String> addList = dto.getDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).map(SoReturnReceiveDetailDTO.Update::getId).collect(Collectors.toList());
-        SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
+//        SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
         //根据销售单获取出库单
-        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySoIds(Arrays.asList(soReturnEntity.getSourceId()));
+//        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySoIds(Arrays.asList(soReturnEntity.getSourceId()));
         //获取退货单详情表id
         List<String> returnDetailIds = dto.getDetailList().stream().map(SoReturnReceiveDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
         List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(returnDetailIds);
         List<SoReturnReceiveDetailEntity> list = new ArrayList<>();
         List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = this.listDetailBySourceIds(Arrays.asList(dto.getSourceId()));
-        List<String> soDetailIds = soReturnDetailEntities.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
-        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(soDetailIds);
+//        List<String> soDetailIds = soReturnDetailEntities.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
+//        List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(soDetailIds);
         //原明细数据
         List<SoReturnReceiveDetailEntity> oldList = this.listDetailByMainId(dto.getId());
         List<String> deleteIds = getDeleteIds(dto.getDetailList(), oldList);
@@ -135,22 +135,22 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_92023);
             }
-            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+//            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
 
             //此单历史退货数量
-            Integer historyReturnQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+//            Integer historyReturnQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             //此单历史签收数量
             Integer historyReceiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             if (StringUtils.isNotBlank(detailDto.getId())) {
                 detailEntity.setId(detailDto.getId());
-                historyReturnQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnReceiveDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+//                historyReturnQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnReceiveDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                 historyReceiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             }
-            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) &&detail.getSkuId().equals(soReturnDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+//            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) &&detail.getSkuId().equals(soReturnDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (actualQty < detailDto.getReturnQty() + historyReturnQty) {
-                throw new ServiceException(ApiError.ERROR_92009);
-            }
+//            if (actualQty < detailDto.getReturnQty() + historyReturnQty) {
+//                throw new ServiceException(ApiError.ERROR_92009);
+//            }
             if (detailDto.getReceiveQty() + historyReceiveQty > returnQty) {
                 throw new ServiceException(ApiError.ERROR_92020);
             }

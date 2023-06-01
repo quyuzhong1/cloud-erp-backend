@@ -11,6 +11,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -29,9 +30,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
-import com.erp.server.wms.service.PurchaseReturnOrderDetailService;
-import com.erp.server.wms.service.PurchaseReturnOrderService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -68,6 +67,12 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     private CustomerFeign customerFeign;
 
     @Resource
+    private SoOutstockService soOutstockService;
+
+    @Resource
+    private SoOutstockDetailService soOutstockDetailService;
+
+    @Resource
     private PurchaseReturnOrderService purchaseReturnOrderService;
 
     @Resource
@@ -91,8 +96,12 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     @Override
     public void syncDataToKingdee(SoOutstockEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
+        //获取销售出库单详情
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
         //销售单信息
         SoInfoEntity soInfoById = soInfoFeign.getSoInfoById(entity.getSoId());
+        //销售单明细
+        List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByIds(Arrays.asList(soInfoById.getId()));
         //组织信息
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(soInfoById.getSalesOrgId(),soInfoById.getWarehouseOrgId()));
         //客户信息
@@ -138,23 +147,32 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         //承运商
         resultMap.put("carrierCode", supplierEntity.getCode());
 
-        //财务信息
+        //————————————————————财务信息——————————————————————
         Map<String, Object> subHeadEntity = new HashMap<>();
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(soInfoById.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
         subHeadEntity.put("currencyCode", viewDTO.getKingdeeCode());
+        //结算组织
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
             String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soInfoById.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
             subHeadEntity.put("salesOrgCode", salesOrgCode);
         }
 
-
         resultMap.put("subHeadEntity", subHeadEntity);
 
-
-
-        soInfoById.getSalesOrgId();
-        resultMap.put("billDate", soInfoById.getSalesOrgId());
+        //————————————————————物料信息——————————————————————
+        List<Map<String, Object>> fEntityList = new ArrayList<>();
+        for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("skuNo", detailEntity.getSkuNo());
+            map.put("FUnitID", detailEntity.getSkuNo());
+            map.put("actualQty", detailEntity.getActualQty());
+            SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailEntity.getSoId())).findFirst().orElse(new SoDetailEntity());
+            map.put("price", soDetailEntity.getPrice());
+            map.put("isGift", soDetailEntity.getIsGift());
+            fEntityList.add(map);
+        }
+        resultMap.put("FEntity", fEntityList);
 
         //退货单明细
         List<PurchaseReturnOrderDetailEntity> detailList = purchaseReturnOrderDetailService.getDetailByMainId(entity.getId());
