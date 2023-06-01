@@ -197,10 +197,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         }
         //获取销售单信息
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
-        //获取核算公司
-        SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
+
         SoReturnReceiveEntity entity = new SoReturnReceiveEntity();
-        entity.setType(soReturnEntity.getCode());
+        entity.setType(soReturnEntity.getType());
         entity.setSalesOrgId(soReturnEntity.getSalesOrgId());
         entity.setSalesOrgName(soReturnEntity.getSalesOrgName());
         entity.setSalesDeptId(soReturnEntity.getSalesDeptId());
@@ -232,6 +231,8 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         entity.setSourceCode(soReturnEntity.getCode());
         entity.setSourceType(soReturnEntity.getSourceType());
         entity.setInventoryOrgId(dto.getInventoryOrgId());
+        //获取核算公司
+        SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
         entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());
         entity.setBillDate(dto.getBillDate());
         if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
