@@ -130,9 +130,10 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
     public static DmpDeliveryDetailInfoEntity initOrderInfoEntity(OrderEntity orderEntity){
         DmpDeliveryDetailInfoEntity deliveryDetailInfoEntity = new DmpDeliveryDetailInfoEntity();
         //单据编号
+        deliveryDetailInfoEntity.setPlatformOrderId(orderEntity.getPlatformOrderId());
         deliveryDetailInfoEntity.setBillNo(orderEntity.getPlatformOrderId());
         //出库编号
-        deliveryDetailInfoEntity.setOrderNo(orderEntity.getPlatformOrderId());
+        deliveryDetailInfoEntity.setOrderNo(orderEntity.getErpOrderId());
         //物流单号
         deliveryDetailInfoEntity.setLogisticsNo(orderEntity.getTrackNumber());
         //客户名称

@@ -1,13 +1,12 @@
-package com.erp.server.dmp.task.service;
+package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import com.erp.model.dmp.constant.TaskConstant;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.entity.PlatformApiEntity;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
-import com.erp.model.dmp.enums.PlatformApiEnum;
-import com.erp.server.dmp.task.mapper.PlatformApiMapper;
-import com.erp.server.dmp.task.mapper.PlatformApiTaskMapper;
+import com.erp.server.dmp.mapper.PlatformApiMapper;
+import com.erp.server.dmp.mapper.PlatformApiTaskMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

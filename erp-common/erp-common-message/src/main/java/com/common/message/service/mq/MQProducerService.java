@@ -219,6 +219,7 @@ public class MQProducerService<T> {
      * @param msgInfoDTO
      */
     public void sendWarnMsg(WarnMsgInfoDTO msgInfoDTO) {
+        ValidatorUtil.validateEntity(msgInfoDTO);
         String key = IdUtil.simpleUUID();
         String topic = RocketMqTopic.WARN_MSG_TOPIC.replace("${spring.profiles.active}", activeProfile);
         try {

@@ -332,20 +332,34 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
      * 发送系统异常信息至飞书群
      */
     public void sendWebhookMessage(WarnMsgInfoDTO warnMsgInfo) {
+        log.info("接收到系统异常预警消息：【{}】",JSONObject.toJSONString(warnMsgInfo));
+        Boolean warnSend = fsProperties.getWarnSend();
+        if(!warnSend) {
+            log.error("nacos配置飞书预警关闭，不发送预警通知");
+            return;
+        }
         try {
-            // 由于采用关键字（系统预警）
-            if(!StrUtils.null2EmptyWithTrim(warnMsgInfo.getTitle()).contains(EXCEPTION_KEY_WORLD)) {
-                warnMsgInfo.setTitle(EXCEPTION_KEY_WORLD + "：" + warnMsgInfo.getTitle());
-            }
             WarnMsgTypeEnum warnMsgTypeEnum = warnMsgInfo.getWarnMsgTypeEnum();
             Map<String, String> warns = fsProperties.getWarns();
             if(!warns.containsKey(warnMsgTypeEnum.getCode())) {
                 log.error("nacos未配置飞书预警配置【{}】，不发送预警通知", warnMsgTypeEnum.getName());
                 return;
             }
+            WarnMsgContentDTO warnMsgContentDTO = new WarnMsgContentDTO();
+            // 由于采用关键字（系统预警）
+            if(!StrUtils.null2EmptyWithTrim(warnMsgInfo.getTitle()).contains(EXCEPTION_KEY_WORLD)) {
+                warnMsgContentDTO.setTitle(EXCEPTION_KEY_WORLD + "：" + warnMsgInfo.getTitle());
+            }
+            // 组装预警内容
+            String msgContent = StrUtil.format("所属项目：{}\n业务名称：{}\n异常日志表名及表id：{} {}\n关键信息：{}",
+                    warnMsgInfo.getErpServerModuleEnum().getCode(), StrUtils.null2EmptyWithTrim(warnMsgInfo.getBizName()),
+                    StrUtils.null2EmptyWithTrim(warnMsgInfo.getTableName()), StrUtils.null2EmptyWithTrim(warnMsgInfo.getTableId()),
+                    StrUtils.null2EmptyWithTrim(warnMsgInfo.getKeyInfo()));
+            warnMsgContentDTO.setContent(msgContent);
+
             String fsToken = warns.get(warnMsgTypeEnum.getCode());
             String requestUrl = StrUtil.format(FeishuConstant.FS_WARN_HOOK_URL, fsToken);
-            FeiShuSendBaseParam.ContentDTO param = MsgConvertUtil.wrapTypicalCard(warnMsgInfo);
+            FeiShuSendBaseParam.ContentDTO param = MsgConvertUtil.wrapTypicalCard(warnMsgContentDTO);
             Map<String, Object> bodyMap = new HashMap<>();
             bodyMap.put("msg_type", FeishuMessageTypeEnum.INTERACTIVE.getCode());
             bodyMap.put("card", param);

@@ -51,6 +51,13 @@ public enum PlatformApiEnum {
 
     GY_ERP_TRADE_DELIVERYS_HISTORY_GET(20,"gy.erp.trade.deliverys.history.get"),
 
+    GY_ERP_TRADE_DELIVERYS_DETAIL_GET(25, "gy.erp.trade.deliverys.detail.get"),
+
+    GY_ERP_TRADE_DELIVERYS_DETAIL_HISTORY_GET(26, "gy.erp.trade.deliverys.detail.history.get"),
+
+    GY_ERP_TRADE_DETAIL_GET(27, "gy.erp.trade.detail.get"),
+
+    GY_ERP_TRADE_HISTORY_DETAIL_GET(28, "gy.erp.trade.history.detail.get"),
 
     /**
      * 金蝶云星空API
