@@ -23,6 +23,7 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -221,6 +222,7 @@ public class MQProducerService<T> {
     public void sendWarnMsg(WarnMsgInfoDTO msgInfoDTO) {
         ValidatorUtil.validateEntity(msgInfoDTO);
         String key = IdUtil.simpleUUID();
+        msgInfoDTO.setHappenTime(LocalDateTime.now());
         String topic = RocketMqTopic.WARN_MSG_TOPIC.replace("${spring.profiles.active}", activeProfile);
         try {
             asyncClassMsg(topic, RocketMqTagEnum.MSG_WARN_TAG.getName(), (T) msgInfoDTO, key);
