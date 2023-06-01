@@ -221,7 +221,8 @@
             srd.return_qty,
             srd.return_type_dict,
             srd.remark,
-            srd.source_detail_id
+            srd.source_detail_id,
+            srd.return_reason_dict
         FROM so_return_detail srd
         INNER JOIN so_return sr ON srd.main_id = sr.id AND srd.is_deleted = FALSE
         WHERE sr.is_deleted = FALSE
