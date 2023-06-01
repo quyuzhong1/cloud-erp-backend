@@ -39,7 +39,7 @@ public class MQConsumer {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC,
             selectorExpression = "sync_wms_product_sku_tag",
-            consumerGroup = "${spring.profiles.active}-plm_product_detail_consumer")
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-plm_product_detail_consumer")
     public class ConsumerPlmProductDetail implements RocketMQListener<List<ProductDetailEntity>> {
         @Override
         public void onMessage(List<ProductDetailEntity> entities) {
@@ -58,7 +58,7 @@ public class MQConsumer {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC,
             selectorExpression = "sync_wms_product_sku_sale_tag",
-            consumerGroup = "${spring.profiles.active}-plm_product_sale_consumer")
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-plm_product_sale_consumer")
     public class ConsumerPlmProductSale implements RocketMQListener<List<ProductSaleEntity>> {
         @Override
         public void onMessage(List<ProductSaleEntity> entities) {
@@ -77,7 +77,7 @@ public class MQConsumer {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC,
             selectorExpression = "sync_wms_product_info_tag",
-            consumerGroup = "${spring.profiles.active}-plm_product_info_consumer")
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-plm_product_info_consumer")
     public class ConsumerPlmProductInfoSale implements RocketMQListener<List<ProductInfoEntity>> {
         @Override
         public void onMessage(List<ProductInfoEntity> entities) {

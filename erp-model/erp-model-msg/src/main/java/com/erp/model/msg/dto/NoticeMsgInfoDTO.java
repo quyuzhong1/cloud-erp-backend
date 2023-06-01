@@ -63,7 +63,7 @@ public class NoticeMsgInfoDTO implements Serializable {
     /**
      * 发送MQ消息的主题，取值从类RocketMqTopic.NOTICE_MSG_TOPIC，发送消息时会替换环境变量
      */
-    // private String rocketMqTopic = "${spring.profiles.active}-notice_msg_topic";
+    // private String rocketMqTopic = "${spring.cloud.nacos.discovery.namespace}-notice_msg_topic";
 
     /**
      * 发送MQ消息的tag，不指定请赋值为msg_notice_default_tag，取值从类RocketMqTagEnum.MSG_NOTICE_TAG，可以不同的业务使用不同的tag，需替换*号

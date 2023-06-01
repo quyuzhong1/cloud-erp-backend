@@ -59,7 +59,7 @@ public class MQConsumerService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
             selectorExpression = "gyy_sales_order_tag||gyy_sales_history_order_tag||kingdee_sales_order_tag||mabang_sales_order_tag",
-            consumerGroup = "${spring.profiles.active}-sales_order_consumer")
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sales_order_consumer")
     public class ConsumerErpSalesOrder implements RocketMQListener<DmpOrderInfoEntity> {
         @Override
         public void onMessage(DmpOrderInfoEntity ext) {
@@ -75,7 +75,7 @@ public class MQConsumerService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
             selectorExpression = "gyy_delivery_order_tag||kingdee_delivery_order_tag||mabang_delivery_order_tag",
-            consumerGroup = "${spring.profiles.active}-sales_delivery_consumer")
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sales_delivery_consumer")
     public class ConsumerErpDeliveryOrder implements RocketMQListener<DmpDeliveryDetailInfoEntity> {
         @Override
         public void onMessage(DmpDeliveryDetailInfoEntity ext) {
@@ -91,7 +91,7 @@ public class MQConsumerService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
             selectorExpression = "gyy_refund_order_tag||kingdee_refund_order_tag||mabang_refund_order_tag",
-            consumerGroup = "${spring.profiles.active}-sales_refund_order_consumer")
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sales_refund_order_consumer")
     public class ConsumerErpRefundOrder implements RocketMQListener<DmpRefundInfoEntity> {
         @Override
         public void onMessage(DmpRefundInfoEntity ext) {
@@ -107,7 +107,7 @@ public class MQConsumerService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
             selectorExpression = "gyy_return_order_tag||kingdee_return_order_tag||mabang_return_order_tag",
-            consumerGroup = "${spring.profiles.active}-sales_return_order_consumer")
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sales_return_order_consumer")
     public class ConsumerErpReturnOrder implements RocketMQListener<DmpReturnOrderInfoEntity> {
         @Override
         public void onMessage(DmpReturnOrderInfoEntity ext) {
@@ -120,7 +120,7 @@ public class MQConsumerService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
             selectorExpression = "gyy_shop_info_tag||kingdee_shop_info_tag||mabang_shop_info_tag||kingdee_ecc_shop_info_tag",
-            consumerGroup = "${spring.profiles.active}-sales_shop_info_consumer")
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sales_shop_info_consumer")
     public class ConsumerErpShopInfo implements RocketMQListener<DmpShopInfoEntity> {
         @Override
         public void onMessage(DmpShopInfoEntity ext) {
@@ -138,7 +138,7 @@ public class MQConsumerService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
             selectorExpression = "kingdee_sku_info_tag",
-            consumerGroup = "${spring.profiles.active}-sales_sku_info_consumer")
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sales_sku_info_consumer")
     public class ConsumerErpSkuInfo implements RocketMQListener<DmpSkuInfoEntity> {
         @Override
         public void onMessage(DmpSkuInfoEntity ext) {
@@ -151,7 +151,7 @@ public class MQConsumerService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
             selectorExpression = "sync_dmp_product_info_tag",
-            consumerGroup = "${spring.profiles.active}-plm_product_info_consumer")
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-plm_product_info_consumer")
     public class ConsumerPlmProductInfo implements RocketMQListener<ProductInfoEntity> {
         @Override
         public void onMessage(ProductInfoEntity ext) {
@@ -162,7 +162,7 @@ public class MQConsumerService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
             selectorExpression = "sync_dmp_product_sku_tag",
-            consumerGroup = "${spring.profiles.active}-plm_product_detail_consumer")
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-plm_product_detail_consumer")
     public class ConsumerPlmProductDetail implements RocketMQListener<ProductDetailEntity> {
         @Override
         public void onMessage(ProductDetailEntity ext) {
@@ -173,7 +173,7 @@ public class MQConsumerService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
             selectorExpression = "sync_dmp_product_listing_tag",
-            consumerGroup = "${spring.profiles.active}-plm_product_listing_consumer")
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-plm_product_listing_consumer")
     public class ConsumerPlmProductListing implements RocketMQListener<Map<String, List<NewProductDTO>>>  {
         @Override
         public void onMessage(Map<String,List<NewProductDTO>> ext) {
@@ -184,7 +184,7 @@ public class MQConsumerService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC,
             selectorExpression = "get_dmp_product_listing_tag",
-            consumerGroup = "${spring.profiles.active}-get_product_listing_consumer")
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-get_product_listing_consumer")
     public class ConsumerGetProductListing implements RocketMQListener<Map<String, List<NewProductDTO>>>  {
         @Override
         public void onMessage(Map<String,List<NewProductDTO>> ext) {
