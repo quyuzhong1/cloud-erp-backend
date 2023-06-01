@@ -38,12 +38,7 @@ public class ErpServerWmsApplicationTests {
         //用于手动添加字段对应信息，后续可添加界面添加,classPath为比较DTO路径
         String classPath = String.valueOf(TransferInDetailEntity.class);
         List<CfgOperateLogFieldEntity> logFields = Arrays.asList(
-                new CfgOperateLogFieldEntity().setField("skuNo").setFieldName("sku").setClassPath(classPath).setType(0).setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("qty").setFieldName("调入数量").setClassPath(classPath).setType(0).setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("planQty").setFieldName("计划调入数量").setClassPath(classPath).setType(0).setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("transitDamageQty").setFieldName("途损数").setClassPath(classPath).setType(0).setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("transitDamageResponsible").setFieldName("途损责任方").setClassPath(classPath).setType(0).setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("inWarehouseLocation").setFieldName("调入仓位").setClassPath(classPath).setType(0).setEnumClass("")
+                new CfgOperateLogFieldEntity().setField("remark").setFieldName("备注").setClassPath(classPath).setType(0).setEnumClass("")
 //                new CfgOperateLogFieldEntity().setField("orderType").setFieldName("订单类型").setClassPath(classPath).setType(2).setEnumClass(BillTypeEnum.class.getName()),
 //                new CfgOperateLogFieldEntity().setField("warehouseName").setFieldName("仓库").setClassPath(classPath).setType(0).setEnumClass("")
 

@@ -1,5 +1,6 @@
 package com.erp.server.oms.kingdee.impl;
 
+import cn.hutool.json.JSONObject;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
@@ -77,7 +78,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         resultMap.put("soCode", soInfo.getCode());
         resultMap.put("soId", soInfo.getId());
         //单据类型
-        resultMap.put("orderType", soInfo.getOrderType());
+        resultMap.put("orderType", "XSDDBGD01_SYS");
         //单据日期
         resultMap.put("billDate", entity.getBillDate());
         //销售组织
@@ -93,22 +94,22 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         if (CollectionUtils.isEmpty(details)) {
             return;
         }
-        //要货日期
-//        LocalDate requireDate = entity.getRequireDate();
-//        List<JSONObject> list = new ArrayList<>(details.size());
-//        for (SoDetailDTO.ViewDTO item : details) {
-//            JSONObject jsonObject = new JSONObject();
-//            jsonObject.set("skuNo", item.getSkuNo());
-//            jsonObject.set("requireDate", requireDate);
-//            jsonObject.set("qty", item.getQty());
-//            jsonObject.set("price", item.getPrice());
-//            jsonObject.set("taxPrice", item.getTaxPrice());
-//            jsonObject.set("isGift", item.getIsGift());
-//            jsonObject.set("unit", item.getUnit());
-//            list.add(jsonObject);
-//        }
 
-//        resultMap.put("detailList", list);
+        List<JSONObject> list = new ArrayList<>(details.size());
+        for (SoChangeDetailDTO.ViewDTO item : details) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.set("skuNo", item.getSkuNo());
+            jsonObject.set("changeType", item.getChangeType().getCode());
+            jsonObject.set("oldQty", item.getOldQty());
+            jsonObject.set("qty", item.getQty());
+            jsonObject.set("price", item.getPrice());
+            jsonObject.set("oldPrice", item.getOldPrice());
+            jsonObject.set("isGift", item.getIsGift());
+            jsonObject.set("unit", item.getUnit());
+            list.add(jsonObject);
+        }
+
+        resultMap.put("detailList", list);
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
         //异步推送mq

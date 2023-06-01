@@ -244,7 +244,6 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             item.setProductName(sku.getSkuName());
             item.setUnit(sku.getUnitName());
             if (contains) {
-                item.setId("");
                 item.setCode("");
                 item.setSourceCode("");
                 item.setTransferDirectionName("");
