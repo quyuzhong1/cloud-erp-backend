@@ -40,9 +40,9 @@ public class TransferInDetailDTO implements Serializable {
         /**
          * 调入数量
          */
-        @NotNull(message ="调入数量不能为空" )
-        @DecimalMin(value = "1",message = "调入数量最小值为1")
-        @DecimalMax(value = "999999999",message = "调入数量最大值为999999999")
+        @NotNull(message = "调入数量不能为空")
+        @DecimalMin(value = "1", message = "调入数量最小值为1")
+        @DecimalMax(value = "999999999", message = "调入数量最大值为999999999")
         private Integer qty;
 
         /**
@@ -53,9 +53,9 @@ public class TransferInDetailDTO implements Serializable {
         /**
          * 计划调入数量
          */
-        @NotNull(message ="计划调入数量不能为空" )
-        @DecimalMin(value = "1",message = "计划调入数量最小值为1")
-        @DecimalMax(value = "999999999",message = "计划调入数量最大值为999999999")
+        @NotNull(message = "计划调入数量不能为空")
+        @DecimalMin(value = "1", message = "计划调入数量最小值为1")
+        @DecimalMax(value = "999999999", message = "计划调入数量最大值为999999999")
         private Integer planQty;
 
 
@@ -72,9 +72,9 @@ public class TransferInDetailDTO implements Serializable {
         /**
          * 途损数
          */
-        @NotNull(message ="途损数数量不能为空" )
-        @DecimalMin(value = "0",message = "途损数量最小值为0")
-        @DecimalMax(value = "999999999",message = "途损数量最大值为999999999")
+        @NotNull(message = "途损数数量不能为空")
+        @DecimalMin(value = "0", message = "途损数量最小值为0")
+        @DecimalMax(value = "999999999", message = "途损数量最大值为999999999")
         private Integer transitDamageQty;
 
         /**
@@ -86,6 +86,7 @@ public class TransferInDetailDTO implements Serializable {
         /**
          * 来源明细id
          */
+        @NotBlank(message = "来源明细 不能为空")
         private String sourceDetailId;
 
 
@@ -167,12 +168,48 @@ public class TransferInDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO  extends AddDTO{
+    public static class UpdateDTO extends AddDTO {
 
         /**
          * 详情id
          */
         private String id;
+
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QtyDTO {
+
+        private String id;
+
+        /**
+         *已经下推数量
+         */
+        private Integer qty;
+
+        private Integer planQty;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+        /**
+         * sku no
+         */
+        private String skuNo;
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        private String approveStatus;
+
+        private String outWarehouseLocation;
+
+
+
 
 
     }

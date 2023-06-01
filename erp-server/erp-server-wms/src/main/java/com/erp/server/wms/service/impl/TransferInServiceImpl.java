@@ -295,7 +295,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(rejectStatus)).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-        Boolean result = this.updateApproveInfo(list, ApproveStatusEnum.APPROVE_ING,"");
+        Boolean result = this.updateApproveInfo(list, ApproveStatusEnum.APPROVE_ING, "");
         if (result) {
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", BillApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
@@ -396,7 +396,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             throw new ServiceException(ApiError.ERROR_98007);
         }
         //TODO 撤销流程
-        Boolean result = this.updateApproveInfo(list, ApproveStatusEnum.WAIT_SUBMIT,"");
+        Boolean result = this.updateApproveInfo(list, ApproveStatusEnum.WAIT_SUBMIT, "");
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("分布式调入单【%s】取消流程", ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "取消流程操作");
         return result;
@@ -475,7 +475,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-        Boolean result = this.updateApproveInfo(list, waitSubmitStatus,"");
+        Boolean result = this.updateApproveInfo(list, waitSubmitStatus, "");
         //反审核
         if (result) {
             InventoryBatchUnApproveDTO batchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.TRANSFER_IN, ids);
@@ -659,6 +659,9 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             throw new ServiceException(ApiError.ERROR_99067);
         }
         String code = transferIn.getCode();
+        //详情
+        List<TransferInDetailDTO.UpdateDTO> detailList = dto.getDetailList();
+        transferInDetailService.checkQty(detailList);
         //旧的
         TransferInEntity old = new TransferInEntity();
         BeanMapper.copy(transferIn, old);
@@ -706,8 +709,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     @Override
     public List<TransferInEntity> listBySourceIds(List<String> sourceIds) {
         return lambdaQuery()
-                .in(TransferInEntity::getSourceId,sourceIds)
-                .eq(TransferInEntity::getInvalidStatus,Boolean.FALSE)
+                .in(TransferInEntity::getSourceId, sourceIds)
+                .eq(TransferInEntity::getInvalidStatus, Boolean.FALSE)
                 .list();
     }
 

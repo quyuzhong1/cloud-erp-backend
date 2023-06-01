@@ -523,6 +523,7 @@ public enum ApiError implements Serializable {
     ERROR_99066(99066,"未找到分布式调入单"),
     ERROR_99067(99067,"调出仓库不能修改"),
     ERROR_99068(99068,"已下推销售退货签收单，不能反审核"),
+    ERROR_99069(99068,"调入数量+途损数量 不能超过计划调入数量"),
 
     /**
      * OMS 错误
