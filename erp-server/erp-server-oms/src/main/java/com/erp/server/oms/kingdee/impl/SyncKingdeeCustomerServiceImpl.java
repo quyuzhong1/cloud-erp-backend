@@ -96,12 +96,12 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 
         DictCityEntity province = sysUserFeign.getCityById(entity.getProvinceId());
         if (ObjectUtil.isNotEmpty(province)) {
-            resultMap.put("province", province.getCountryCode());
+            resultMap.put("province", province.getKingdeeCode());
         }
 
         DictCityEntity city = sysUserFeign.getCityById(entity.getCityId());
         if (ObjectUtil.isNotEmpty(city)) {
-            resultMap.put("city", city.getCountryCode());
+            resultMap.put("city", city.getKingdeeCode());
         }
 
         List<InvoiceDTO.ViewDTO> viewDTOS = customerInvoiceService.listByMainId(entity.getId());
@@ -159,6 +159,8 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         if (ObjectUtil.isNotEmpty(globalAreaEntity)) {
             resultMap.put("globalAreaCode", globalAreaEntity.getKingdeeCode());
         }
+
+        resultMap.put("operate", operate);
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_CUSTOMER_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
