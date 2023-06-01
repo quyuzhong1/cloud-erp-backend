@@ -143,6 +143,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Override
     public PagingVO<TransferOutDTO.PagingViewDTO> paging(PagingDTO<TransferOutDTO.PagingParamDTO> pagingParamDTO) {
+        if(Objects.equals(pagingParamDTO.getParams().getSearchType(), PurchaseChangeListTypeEnum.TO_BE_APPROVE.getCode())) {
+            pagingParamDTO.getParams().setSearchType(ApproveStatusEnum.APPROVE_ING.getStatus());
+        }
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<TransferOutDTO.PagingViewDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
