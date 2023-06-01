@@ -248,7 +248,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         entity.setInventoryOrgId(soInfoEntity.getWarehouseOrgId());
         entity.setInventoryOrgName(soInfoEntity.getWarehouseOrgName());
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.THTZ, BusinessNoTypeEnum.CODE_THTZ.getCode()));
+        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSTH, BusinessNoTypeEnum.CODE_XSTH.getCode()));
         entity.setCode(code);
         entity.setSourceId(dto.getSourceId());
         entity.setSourceCode(soReturnEntity.getCode());

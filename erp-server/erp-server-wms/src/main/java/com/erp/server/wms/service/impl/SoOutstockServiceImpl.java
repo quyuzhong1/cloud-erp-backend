@@ -14,6 +14,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -34,6 +35,7 @@ import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
+import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -42,6 +44,8 @@ import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.wms.kingdee.SyncKingdeeReturnOrderService;
+import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.mapper.SoOutstockMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -57,6 +61,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -102,6 +107,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private InventoryTransCoreService inventoryTransCoreService;
+
+    @Resource
+    private SyncKingdeeSoOutstockService syncKingdeeSoOutstockService;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -232,9 +240,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "状态变更");
-            //审核不通过
-            String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-            operateLogService.batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.SO_OUT_STOCK.getCode(), rejectPairList, "状态变更");
         }
         return result;
     }
@@ -332,6 +337,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus), userName);
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
+
+            //审核通过发送金蝶
+            list.forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+
         } else {
             //审核不通过
             String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
@@ -521,10 +530,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //添加日志
             String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "状态变更");
-            //审核通过
-            String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
-            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), rejectPairList, "状态变更");
 
+            //审核通过发送金蝶
+            list.forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         return result;
     }
@@ -621,6 +629,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         String content = "作废了一个销售出库单【%s】,作废原因: ".concat(remark);
         operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "作废");
+
+        //作废发送金蝶
+        list.forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
         return Boolean.TRUE;
 
     }
@@ -1109,6 +1120,28 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             return this.updateBatchById(list);
         }
         return true;
+    }
+
+    /**
+     * 修改金蝶同步状态
+     *
+     * @param id
+     * @param syncKingdeeStatus
+     * @param syncKingdeeId
+     * @param syncOperate
+     * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/24 15:29
+     **/
+    @Override
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+        return this.lambdaUpdate()
+                .eq(SoOutstockEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), SoOutstockEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), SoOutstockEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), SoOutstockEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncKingdeeId), SoOutstockEntity::getSyncOperate, syncOperate)
+                .update();
     }
 
 }

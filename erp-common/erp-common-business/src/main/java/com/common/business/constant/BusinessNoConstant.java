@@ -75,4 +75,6 @@ public interface BusinessNoConstant {
 
     //分布式调拨调入
     String FBDR = "FBDR";
+    //销售退货入库单
+    String XSTH = "XSTH";
 }

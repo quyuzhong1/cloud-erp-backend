@@ -8,6 +8,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.ApiModuleTypeEnum;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.entity.CustomerInfoEntity;
@@ -112,6 +113,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(entity.getCarrierId());
         //获取币别信息
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(soInfoById.getCurrency()));
+        //仓库
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(entity.getWarehouseId()));
 
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -132,6 +135,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         if (CollectionUtils.isNotEmpty(customerInfoEntitieList)) {
             CustomerInfoEntity customerInfoEntity = customerInfoEntitieList.stream().filter(obj -> obj.getId().equals(soInfoById.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             resultMap.put("customerCode", customerInfoEntity.getCode());
+            //平台类型
+            resultMap.put("platformType", customerInfoEntity.getPlatformType().getKingdeeCode());
+
         }
         //销售部门
         if (ObjectUtil.isNotEmpty(dept)) {
@@ -145,7 +151,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             resultMap.put("warehouseOrgCode", warehouseOrgCode);
         }
         //承运商
-        resultMap.put("carrierCode", supplierEntity.getCode());
+        if (ObjectUtil.isNotEmpty(supplierEntity)) {
+            resultMap.put("carrierCode", supplierEntity.getCode());
+        }
 
         //————————————————————财务信息——————————————————————
         Map<String, Object> subHeadEntity = new HashMap<>();
@@ -165,35 +173,27 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
             Map<String, Object> map = new HashMap<>();
             map.put("skuNo", detailEntity.getSkuNo());
-            map.put("FUnitID", detailEntity.getSkuNo());
             map.put("actualQty", detailEntity.getActualQty());
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailEntity.getSoId())).findFirst().orElse(new SoDetailEntity());
             map.put("price", soDetailEntity.getPrice());
             map.put("isGift", soDetailEntity.getIsGift());
+            if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+                String warehouseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soInfoById.getWarehouseOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+                resultMap.put("warehouseOrgCode", warehouseOrgCode);
+            }
+            map.put("taxRate", soDetailEntity.getTaxRate());
+            if (CollectionUtils.isNotEmpty(warehouseList)) {
+                String warehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getWarehouseId()))
+                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse(null);
+                map.put("warehouseCode", warehouseCode);
+            }
+            map.put("warehouseLocation", detailEntity.getWarehouseLocation());
+            map.put("remark", detailEntity.getRemark());
+            map.put("FSrcType", "SAL_SaleOrder");
+            map.put("FSrcBillNo", soInfoById.getCode());
             fEntityList.add(map);
         }
         resultMap.put("FEntity", fEntityList);
-
-        //退货单明细
-        List<PurchaseReturnOrderDetailEntity> detailList = purchaseReturnOrderDetailService.getDetailByMainId(entity.getId());
-        if (CollectionUtils.isEmpty(detailList)) {
-            return;
-        }
-
-        //获取sku的id集合
-        List<String> skuIdList = detailList.stream().map(PurchaseReturnOrderDetailEntity::getSkuId).collect(Collectors.toList());
-        //根据ids查询sku信息
-        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-
-        //获取界面传过来的采购单详情表id集合
-        List<String> orderDetailIds = detailList.stream().map(PurchaseReturnOrderDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
-        //根据ids查询采购单详情
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(orderDetailIds);
-        //获取仓库信息
-        WarehouseEntity warehouseEntity = warehouseService.getById(entity.getWarehouseId());
-        List<JSONObject> list = new ArrayList<>();
-
-        resultMap.put("list", list);
 
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);

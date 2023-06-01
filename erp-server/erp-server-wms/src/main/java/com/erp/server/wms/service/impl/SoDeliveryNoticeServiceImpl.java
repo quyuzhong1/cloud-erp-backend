@@ -256,7 +256,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             soDeliveryNoticeEntity.setPlanDeliveryDate(dto.getPlanDeliveryDate());
         }
         soDeliveryNoticeEntity.setTrackNo(dto.getTrackNo());
-
         if (StringUtils.isNotBlank(dto.getCarrierId())) {
             //获取采购单供应商信息
             SupplierEntity supplierById = scmTaskFeign.getSupplierById(dto.getCarrierId());
@@ -310,6 +309,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeEntity.setApproveStatus(entity.getApproveStatus());
         soDeliveryNoticeEntity.setSourceId(dto.getSourceId());
         soDeliveryNoticeEntity.setSourceCode(soInfoEntity.getCode());
+        soDeliveryNoticeEntity.setTrackNo(dto.getTrackNo());
         if (StringUtils.isNotBlank(dto.getCarrierId())) {
             //获取采购单供应商信息
             SupplierEntity supplierById = scmTaskFeign.getSupplierById(dto.getCarrierId());
