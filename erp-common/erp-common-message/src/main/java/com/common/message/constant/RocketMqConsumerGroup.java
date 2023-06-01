@@ -74,10 +74,9 @@ public class RocketMqConsumerGroup {
     public static final String SYNC_KINGDEE_CUSTOMER_INFO = "${spring.profiles.active}-sync_kingdee_customer_info";
 
     /**
-     * 客户列表
+     * 客户分组
      */
     public static final String SYNC_KINGDEE_CUSTOMER_GROUP_INFO = "${spring.profiles.active}-sync_kingdee_customer_group_info";
-
 
     /**
      * 其他出库
@@ -103,6 +102,11 @@ public class RocketMqConsumerGroup {
      * 销售订单变更
      */
     public static final String SYNC_KINGDEE_SO_CHANGE = "${spring.profiles.active}-sync_kingdee_so_change";
+
+    /**
+     * 销售出库
+     */
+    public static final String SYNC_KINGDEE_SO_OUTSTOCK = "${spring.profiles.active}-sync_kingdee_so_outstock";
 
     //-----------------------------------------------------------------dmp数据更新------------------------------------------------------
 

@@ -29,6 +29,7 @@ public enum KingdeePushModuleEnum {
     STK_ASSEMBLEDAPP("STK_AssembledApp","组装拆卸"),
     SAL_SALEORDER("SAL_SaleOrder","销售订单"),
     SAL_SALEORDER_CHANGE("SAL_SaleOrderChange","销售订单"),
+    SAL_OUTSTOCK("SAL_OUTSTOCK","销售出库单"),
 
     ;
     private String code;

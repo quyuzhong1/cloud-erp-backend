@@ -31,6 +31,7 @@ public enum ApiModuleTypeEnum {
     MACHINE_INFO(20, "machineInfo", "加工单","wms"),
     SO_INFO(21, "soInfo", "销售订单","oms"),
     SO_CHANGE(22, "soChange", "销售变更单","oms"),
+    SO_OUTSTOCK(23, "soOutstock", "销售变更单","oms"),
 
     ;
     private Integer code;
