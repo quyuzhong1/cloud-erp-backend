@@ -36,7 +36,7 @@ public class TransferOutController extends BaseController {
      */
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transfer:out:paging",
+            menuCode = "wms:transfer:out:tabList",
             tableAlias = "tfo"
     )
     @PostMapping("/tabList")
@@ -53,7 +53,7 @@ public class TransferOutController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
-            menuCode = "wms:transferOut:paging",
+            menuCode = "wms:transfer:out:paging",
             tableAlias = "tfo"
     )
     public ApiResult<PagingVO<TransferOutDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<TransferOutDTO.PagingParamDTO> dto) {
