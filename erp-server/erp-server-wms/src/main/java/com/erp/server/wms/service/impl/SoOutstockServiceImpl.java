@@ -724,7 +724,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             item.setProductName(sku.getSkuName());
             item.setUnit(sku.getUnitName());
             if (contains) {
-                item.setId("");
                 item.setCode("");
                 item.setSoCode("");
                 item.setSourceCode("");

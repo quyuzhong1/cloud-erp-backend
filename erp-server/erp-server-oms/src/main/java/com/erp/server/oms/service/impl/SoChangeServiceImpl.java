@@ -421,7 +421,6 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 item.setUnit(sku.getUnitName());
             }
             if (contains) {
-                item.setId("");
                 item.setCode("");
                 item.setSoCode("");
                 item.setOrderType(null);

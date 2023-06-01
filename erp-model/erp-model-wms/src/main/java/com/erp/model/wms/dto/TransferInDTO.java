@@ -144,6 +144,11 @@ public class TransferInDTO implements Serializable {
          * 单位
          */
         private String unit;
+        /**
+         * 备注
+         */
+        private String remark;
+
 
         /**
          * 最新审核人

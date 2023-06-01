@@ -1,8 +1,7 @@
 package com.erp.server.oms;
 
 import com.erp.model.oms.entity.CfgOperateLogFieldEntity;
-import com.erp.model.oms.entity.SoChangeDetailEntity;
-import com.erp.model.oms.enums.SoChangeTypeEnum;
+import com.erp.model.wms.entity.TransferInDetailEntity;
 import com.erp.server.oms.service.CfgOperateLogFieldService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,18 +33,8 @@ public class ErpServerOmsApplicationTests {
     @Test
     public void addLogField() {
         //用于手动添加字段对应信息，后续可添加界面添加,classPath为比较DTO路径
-        String classPath = String.valueOf(SoChangeDetailEntity.class);
+        String classPath = String.valueOf(TransferInDetailEntity.class);
         List<CfgOperateLogFieldEntity> logFields = Arrays.asList(
-                new CfgOperateLogFieldEntity().setField("changeType").setFieldName("变更类型").setClassPath(classPath).setType(2).setEnumClass(SoChangeTypeEnum.class.getName()),
-                new CfgOperateLogFieldEntity().setField("skuNo").setFieldName("sku").setClassPath(classPath).setType(0).setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("qty").setFieldName("销售数量").setClassPath(classPath).setType(0).setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("price").setFieldName("销售价格").setClassPath(classPath).setType(0).setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("amount").setFieldName("销售金额").setClassPath(classPath).setType(0).setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("currency").setFieldName("币种").setClassPath(classPath).setType(0).setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("currencySymbol").setFieldName("币种符号").setClassPath(classPath).setType(0).setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("isGift").setFieldName("是否赠品").setClassPath(classPath).setType(1).setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("isReissue").setFieldName("是否补发").setClassPath(classPath).setType(1).setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("taxRate").setFieldName("税率").setClassPath(classPath).setType(0).setEnumClass(""),
                 new CfgOperateLogFieldEntity().setField("remark").setFieldName("备注").setClassPath(classPath).setType(0).setEnumClass("")
 //                new CfgOperateLogFieldEntity().setField("currency").setFieldName("币种").setClassPath(classPath).setType(0).setEnumClass(""),
 //                new CfgOperateLogFieldEntity().setField("currencySymbol").setFieldName("币种符号").setClassPath(classPath).setType(0).setEnumClass(""),
