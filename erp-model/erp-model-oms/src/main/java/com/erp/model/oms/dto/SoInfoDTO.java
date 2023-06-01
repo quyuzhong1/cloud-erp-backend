@@ -8,7 +8,6 @@ import com.erp.model.oms.enums.BillTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import net.sf.cglib.core.Local;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -1149,6 +1148,11 @@ public class SoInfoDTO implements Serializable {
          * 预计发货日期
          */
         private LocalDate planDeliveryDate;
+
+        /**
+         * 是否关闭
+         */
+        private Boolean isClose;
 
         /**
          * 附件地址

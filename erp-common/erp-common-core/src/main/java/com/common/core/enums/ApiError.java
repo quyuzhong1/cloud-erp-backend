@@ -440,7 +440,7 @@ public enum ApiError implements Serializable {
     ERROR_INVALID_TO_SUBMIT(98065,"已作废单据不能提交审核"),
     ERROR_98066(98066,"只有来源是【销售退货签收单】的单据可以下推【销售退货入库单】"),
     ERROR_98067(98067,"只有已质检才能下推单据"),
-
+    ERROR_98068(98068,"存在已关闭的产品,不能下推单据"),
 
 
 

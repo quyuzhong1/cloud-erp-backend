@@ -328,7 +328,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         operateLogService.addModuleOperateLogByObj(byId, soDeliveryNoticeEntity, ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), soDeliveryNoticeEntity.getId(), "", "");
 
         soDeliveryNoticeDetailService.update(dto);
-         return flag;
+        return flag;
     }
 
     @Override
@@ -682,6 +682,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         //获取到销售退货单 下推列表
         List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList = baseMapper.listGenerateSoOutstockView(idList);
+        long closeCount = resultList.stream().filter(s -> s.getIsClose()).count();
+        if(closeCount>0){
+            throw new ServiceException(ApiError.ERROR_98068);
+        }
         List<String> detailIds = resultList.stream().map(SoOutstockDTO.GenerateSoOutstockViewDTO::getSourceDetailId).distinct().collect(Collectors.toList());
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
         //附件信息
@@ -830,9 +834,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     /**
      * 根据销售 销售订单ids 获取是否有下推的单据
+     *
+     * @return java.lang.Integer
      * @author yl
      * @date 2023-05-25 10:27
-     * @return java.lang.Integer
      */
     @Override
     public Integer getPushDownBySourceIds(List<String> soIds) {
@@ -842,11 +847,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //发货通知的
         Integer deliveryNoticeCount = this.lambdaQuery().
                 in(SoDeliveryNoticeEntity::getSourceId, soIds).
-                eq(SoDeliveryNoticeEntity::getInvalidStatus,Boolean.FALSE).
+                eq(SoDeliveryNoticeEntity::getInvalidStatus, Boolean.FALSE).
                 count();
 
         Integer soOutStockCount = soOutstockService.getPushDownCountBySoIds(soIds);
-        return deliveryNoticeCount+soOutStockCount;
+        return deliveryNoticeCount + soOutStockCount;
     }
 
 }

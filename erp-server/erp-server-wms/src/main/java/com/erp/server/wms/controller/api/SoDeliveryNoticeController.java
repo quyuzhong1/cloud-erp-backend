@@ -318,8 +318,8 @@ public class SoDeliveryNoticeController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.SoDeliveryNoticeDTO.PagingView>>
      **/
     @GetMapping("/listSoDeliveryNoticeBySourceId")
-    public ApiResult<List<SoDeliveryNoticeDTO.PagingView>> listSoDeliveryNoticeBySourceId(@RequestParam("soId") String id) {
-        List<SoDeliveryNoticeDTO.PagingView> list = soDeliveryNoticeService.listSoReturnDetailBySourceId(id);
+    public ApiResult<List<SoDeliveryNoticeDTO.PagingView>> listSoDeliveryNoticeBySourceId(@RequestParam("soId") String soId) {
+        List<SoDeliveryNoticeDTO.PagingView> list = soDeliveryNoticeService.listSoReturnDetailBySourceId(soId);
         return success(list);
     }
 }

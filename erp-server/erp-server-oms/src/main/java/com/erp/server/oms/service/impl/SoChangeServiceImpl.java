@@ -115,7 +115,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         String deptId = dto.getDeptId();
         String useName = "";
         String deptName = "";
-        if (StringUtils.isEmpty(userId)) {
+        if (StringUtils.isNotBlank(userId)) {
             FindUserDTO userInfo = sysUserFeign.getUserByUserId(userId);
             if (userInfo != null) {
                 useName = userInfo.getUserName();
@@ -173,7 +173,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         String deptId = dto.getDeptId();
         String useName = "";
         String deptName = "";
-        if (StringUtils.isEmpty(userId)) {
+        if (StringUtils.isNotBlank(userId)) {
             FindUserDTO userInfo = sysUserFeign.getUserByUserId(userId);
             if (userInfo != null) {
                 useName = userInfo.getUserName();

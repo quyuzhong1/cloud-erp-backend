@@ -500,6 +500,11 @@ public class SoOutstockDTO implements Serializable {
 
         private String remark;
 
+        /**
+         * 是否关闭
+         */
+        private Boolean isClose;
+
 
     }
 

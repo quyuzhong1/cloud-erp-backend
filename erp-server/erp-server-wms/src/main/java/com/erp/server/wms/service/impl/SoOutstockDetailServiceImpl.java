@@ -242,7 +242,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
                //这个是已出的数量
                Integer outStockQty = soOutstockDetailList.stream().filter(s ->
-                       s.getSourceDetailId().equals(sourceDetailId) &&
+                       s.getSoDetailId().equals(sourceDetailId) &&
                                !s.getId().equals(id)
                ).mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
                if (outStockQty + planQty > deliveryQty) {
