@@ -7,7 +7,8 @@ public enum PannoEnum {
     LT,
     LTE,
     GT,
-    GTE;
+    GTE,
+    EXISTS;
 
     private PannoEnum() {
     }

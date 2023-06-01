@@ -1,4 +1,4 @@
-package com.erp.model.dmp.kingdee;
+package com.erp.model.dmp.kingdee.item;
 
 import cn.hutool.core.annotation.Alias;
 import lombok.Data;

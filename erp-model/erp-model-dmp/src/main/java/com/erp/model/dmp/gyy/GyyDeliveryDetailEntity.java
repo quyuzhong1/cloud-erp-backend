@@ -217,7 +217,10 @@ public class GyyDeliveryDetailEntity {
      * api编码，订单来源于历史订单还是当前订单接口区分
      */
     private String apiCode;
-
+    /**
+     * 清洗数据
+     */
+    private Boolean isClean;
 
     @Override
     public String toString() {

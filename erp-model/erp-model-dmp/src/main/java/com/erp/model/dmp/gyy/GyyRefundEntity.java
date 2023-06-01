@@ -13,7 +13,6 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
-@ToString
 public class GyyRefundEntity {
 
     /**
@@ -129,4 +128,49 @@ public class GyyRefundEntity {
     private BigDecimal amount;
     @SerializedName("details")
     private List<RefundDetailsBean> details;
+    /**
+     * 清洗数据
+     */
+    private Boolean isClean;
+    @Override
+    public String toString() {
+        return "GyyRefundEntity{" +
+                "createDate='" + createDate + '\'' +
+                ", modifyDate='" + modifyDate + '\'' +
+                ", code='" + code + '\'' +
+                ", approve=" + approve +
+                ", cancel=" + cancel +
+                ", note='" + note + '\'' +
+                ", reason='" + reason + '\'' +
+                ", agreeDate=" + agreeDate +
+                ", refundPhase='" + refundPhase + '\'' +
+                ", accountId='" + accountId + '\'' +
+                ", account='" + account + '\'' +
+                ", status='" + status + '\'' +
+                ", prime='" + prime + '\'' +
+                ", shopId='" + shopId + '\'' +
+                ", shopCode='" + shopCode + '\'' +
+                ", vipCode='" + vipCode + '\'' +
+                ", paymentTypeCode='" + paymentTypeCode + '\'' +
+                ", typeCode='" + typeCode + '\'' +
+                ", approveDate='" + approveDate + '\'' +
+                ", platfromCode='" + platfromCode + '\'' +
+                ", refundCode='" + refundCode + '\'' +
+                ", refundType='" + refundType + '\'' +
+                ", agreeRefuse=" + agreeRefuse +
+                ", accountCode='" + accountCode + '\'' +
+                ", accountName='" + accountName + '\'' +
+                ", agStatus=" + agStatus +
+                ", agErrMsg='" + agErrMsg + '\'' +
+                ", paymentTypeName='" + paymentTypeName + '\'' +
+                ", buyerAccount='" + buyerAccount + '\'' +
+                ", orderStatus='" + orderStatus + '\'' +
+                ", businessManName='" + businessManName + '\'' +
+                ", createName='" + createName + '\'' +
+                ", storeName='" + storeName + '\'' +
+                ", returnOrderCode='" + returnOrderCode + '\'' +
+                ", amount=" + amount +
+                ", details=" + details +
+                '}';
+    }
 }

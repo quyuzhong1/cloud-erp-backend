@@ -7,7 +7,6 @@ import lombok.ToString;
 
 @NoArgsConstructor
 @Data
-@ToString
 public class KingdeeShopEntity {
 
     private String _id;
@@ -56,5 +55,35 @@ public class KingdeeShopEntity {
     private String fCreateDate;
     @Alias("FModifyDate")
     private String fModifyDate;
-
+    /**
+     * 清洗数据
+     */
+    private Boolean isClean;
+    @Override
+    public String toString() {
+        return "KingdeeShopEntity{" +
+                "fCustId='" + fCustId + '\'' +
+                ", fUseOrgId='" + fUseOrgId + '\'' +
+                ", fUseOrgId_FNumber='" + fUseOrgId_FNumber + '\'' +
+                ", fUseOrgId_FName='" + fUseOrgId_FName + '\'' +
+                ", fNumber='" + fNumber + '\'' +
+                ", fName='" + fName + '\'' +
+                ", fShortName='" + fShortName + '\'' +
+                ", fCOUNTRY_FNumber='" + fCOUNTRY_FNumber + '\'' +
+                ", fWEBSITE='" + fWEBSITE + '\'' +
+                ", fGroup='" + fGroup + '\'' +
+                ", fGroup_FNumber='" + fGroup_FNumber + '\'' +
+                ", fGroup_FName='" + fGroup_FName + '\'' +
+                ", fDescription='" + fDescription + '\'' +
+                ", fInvoiceType='" + fInvoiceType + '\'' +
+                ", fCustTypeId_FDataValue='" + fCustTypeId_FDataValue + '\'' +
+                ", fCustTypeId_FNumber='" + fCustTypeId_FNumber + '\'' +
+                ", f_ulz_Assistant_FNumber='" + f_ulz_Assistant_FNumber + '\'' +
+                ", f_ulz_Assistant_FDataValue='" + f_ulz_Assistant_FDataValue + '\'' +
+                ", fDocumentStatus='" + fDocumentStatus + '\'' +
+                ", fForbidStatus='" + fForbidStatus + '\'' +
+                ", fCreateDate='" + fCreateDate + '\'' +
+                ", fModifyDate='" + fModifyDate + '\'' +
+                '}';
+    }
 }
