@@ -3,6 +3,7 @@ package com.erp.server.oms.service;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.dto.SoReturnDetailDTO;
+import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.common.business.service.SuperService;
 
@@ -84,10 +85,10 @@ public interface SoReturnDetailService extends SuperService<SoReturnDetailEntity
     /**
      * 添加详情按钮-列表查询
      *
-     * @param id id
+     * @param dto dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoDetailDTO.AddDetailView>>
      * @Author Luo_WG
      * @Date 2023/5/16 18:43
      **/
-    List<SoDetailDTO.AddDetailView> listAddDetailView(String id);
+    List<SoDetailDTO.AddDetailView> listAddDetailView(listAddDetailViewDTO dto);
 }

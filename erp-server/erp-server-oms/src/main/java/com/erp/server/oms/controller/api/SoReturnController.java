@@ -14,6 +14,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
+import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.server.oms.service.SoReturnDetailService;
 import com.erp.server.oms.service.SoReturnService;
@@ -313,6 +314,19 @@ public class SoReturnController extends BaseController {
     public ApiResult<SoReturnEntity> getSoReturnById(@RequestParam("id") String id) {
         SoReturnEntity entity = soReturnService.getSoReturnById(id);
         return success(entity);
+    }
+
+    /**
+     * 添加详情按钮-列表查询
+     * @param id id
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoDetailDTO.AddDetailView>>
+     * @Author Luo_WG
+     * @Date 2023/5/16 18:43
+     **/
+    @PostMapping("/listAddDetailView")
+    public ApiResult<List<SoDetailDTO.AddDetailView>> listAddDetailView(@RequestBody listAddDetailViewDTO dto) {
+        List<SoDetailDTO.AddDetailView> addDetailViews = soReturnDetailService.listAddDetailView(dto);
+        return success(addDetailViews);
     }
 
     /**

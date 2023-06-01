@@ -7,10 +7,7 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
-import com.erp.model.oms.dto.SoDetailDTO;
-import com.erp.model.oms.dto.SoInfoDTO;
-import com.erp.model.oms.dto.SoReturnDTO;
-import com.erp.model.oms.dto.SoReturnDetailDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
@@ -229,10 +226,10 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     }
 
     @Override
-    public List<SoDetailDTO.AddDetailView> listAddDetailView(String id) {
-        List<SoDetailDTO.AddDetailView> list = baseMapper.listAddDetailView(id);
+    public List<SoDetailDTO.AddDetailView> listAddDetailView(listAddDetailViewDTO dto) {
+        List<SoDetailDTO.AddDetailView> list = baseMapper.listAddDetailView(dto);
         List<String> soIds = list.stream().map(SoDetailDTO.AddDetailView::getSourceId).distinct().collect(Collectors.toList());
-        List<SoReturnDetailEntity> soReturnDetailEntities = this.listDetailByMainId(id);
+        List<SoReturnDetailEntity> soReturnDetailEntities = this.listDetailByMainId(dto.getId());
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
         List<String> skuIdList = list.stream().map(SoDetailDTO.AddDetailView::getSkuId).distinct().collect(Collectors.toList());
         //根据ids查询sku信息

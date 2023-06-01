@@ -76,6 +76,12 @@
         <if test="id != null and id != ''">
             AND sr.id = #{id}
         </if>
+        <if test="skuNoList != null and skuNoList != ''">
+            AND srd.sku_no IN
+            <foreach collection="skuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
     </select>
 
     <select id="listAddDetailViewById" resultType="com.erp.model.oms.dto.SoDetailDTO$AddDetailView">
