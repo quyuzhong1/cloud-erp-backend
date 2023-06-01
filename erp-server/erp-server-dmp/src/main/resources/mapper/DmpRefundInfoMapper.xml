@@ -13,7 +13,7 @@
         country_cn,country_en,sales_record_number,
         buyer_user_id,buyer_name,item_total_origin,
         shipping_total_origin,order_time,express_time,
-        picture_url,platform_update_time,track_number,refund_id
+        picture_url,platform_update_time,track_number,refund_code
         cny_settle_amount,clean_state,retry_count
 
     </sql>
