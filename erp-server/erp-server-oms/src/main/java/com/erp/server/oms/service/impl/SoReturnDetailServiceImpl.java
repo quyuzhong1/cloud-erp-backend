@@ -236,6 +236,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIdList);
         InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
         paramDTO.setSkuIds(skuIdList);
+        paramDTO.setWarehouseId(list.get(MathUtil.ZERO).getWarehouseId());
         paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
         //从wms 获取到sku 的即时库存信息
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);

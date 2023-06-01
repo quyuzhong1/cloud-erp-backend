@@ -25,13 +25,10 @@ import java.util.LinkedList;
 import java.util.Map;
 
 /**
- * 对接金蝶仓库
- * @author Lambda
- * @Classname KingdeeWarehouseConsumer
- * @Description TODO
- * @Date 2023-04-25 14:29
- * @Created by yl
- */
+ * 对接金蝶销售出库
+ * @Author Luo_WG
+ * @Date 2023/6/1 14:45
+ **/
 @Service
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_so_outstock_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SO_OUTSTOCK)
