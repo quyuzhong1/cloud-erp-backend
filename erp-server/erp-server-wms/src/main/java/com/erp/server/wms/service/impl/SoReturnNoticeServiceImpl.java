@@ -309,7 +309,6 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         entity.setId(dto.getId());
         entity.setSourceId(dto.getSourceId());
         entity.setSourceCode(soReturnEntity.getCode());
-        entity.setSourceType(soReturnEntity.getSourceType());
         entity.setBillDate(soReturnEntity.getBillDate());
         entity.setInventoryOrgId(dto.getInventoryOrgId());
         entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());

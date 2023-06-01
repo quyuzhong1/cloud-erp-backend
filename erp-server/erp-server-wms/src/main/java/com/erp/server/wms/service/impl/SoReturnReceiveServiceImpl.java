@@ -287,7 +287,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         entity.setId(dto.getId());
         entity.setSourceId(dto.getSourceId());
         entity.setSourceCode(soReturnEntity.getCode());
-        entity.setSourceType(soReturnEntity.getSourceType());
         entity.setInventoryOrgId(dto.getInventoryOrgId());
         entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());
         entity.setBillDate(dto.getBillDate());
