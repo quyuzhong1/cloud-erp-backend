@@ -48,7 +48,7 @@ public class SoInfoController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "oms:so:tabList",
-            tableAlias = "ci"
+            tableAlias = "si"
     )
     public ApiResult<List<SoInfoDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         List<SoInfoDTO.TabListDTO> tabList = soDetailService.tabList(dto);
@@ -65,7 +65,7 @@ public class SoInfoController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "oms:so:paging",
-            tableAlias = "ci"
+            tableAlias = "si"
     )
     public ApiResult<PagingVO<SoInfoDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SoInfoDTO.PagingParamDTO> dto) {
         PagingVO<SoInfoDTO.PagingViewDTO> pagingVO = soInfoService.paging(dto);

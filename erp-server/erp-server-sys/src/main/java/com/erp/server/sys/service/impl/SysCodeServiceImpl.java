@@ -18,6 +18,7 @@ import com.erp.model.sys.entity.SysCodeEntity;
 import com.erp.server.sys.mapper.SysCodeMapper;
 import com.erp.server.sys.service.CommonService;
 import com.erp.server.sys.service.SysCodeService;
+import io.seata.core.context.RootContext;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -56,7 +57,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         try {
             // 内部会自动续期
             isLock = lock.tryLock(5, TimeUnit.SECONDS);
-            log.info("是否获取到锁: {}", isLock);
+            log.info("是否获取到分布式锁: {}", isLock);
             if (!isLock) {
                 throw new ServiceException(ApiError.ERROR_1026);
             }
@@ -81,9 +82,10 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             log.error("生成单号获取锁异常",e);
             throw new ServiceException(ApiError.ERROR_1026);
         } finally {
-            //释放锁
-            if(lock.isLocked() && lock.isHeldByCurrentThread()){ // 锁是否存在，是当前执行线程的锁
-                lock.unlock(); // 释放锁
+            //释放锁  锁是否存在，是当前执行线程的锁
+            if(lock.isLocked() && lock.isHeldByCurrentThread()){
+                // 释放锁
+                lock.unlock();
             }
         }
     }
@@ -96,7 +98,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         boolean isLock;
         try {
             isLock = lock.tryLock(5, TimeUnit.SECONDS);
-            log.info("是否获取到锁: {}", isLock);
+            log.info("是否获取到分布式锁: {}", isLock);
             if (!isLock) {
                 throw new ServiceException(ApiError.ERROR_1026);
             }
@@ -115,9 +117,10 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             log.error("生成单号获取锁异常",e);
             throw new ServiceException(ApiError.ERROR_1026);
         } finally {
-            //释放锁
-            if(lock.isLocked() && lock.isHeldByCurrentThread()){ // 锁是否存在，是当前执行线程的锁
-                lock.unlock(); // 释放锁
+            // 释放锁 锁是否存在，是当前执行线程的锁
+            if(lock.isLocked() && lock.isHeldByCurrentThread()){
+                // 释放锁
+                lock.unlock();
             }
         }
     }
@@ -130,7 +133,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         boolean isLock;
         try {
             isLock = lock.tryLock(5, TimeUnit.SECONDS);
-            log.info("是否获取到锁: {}", isLock);
+            log.info("是否获取到分布式锁: {}", isLock);
             if (!isLock) {
                 throw new ServiceException(ApiError.ERROR_1026);
             }
@@ -149,9 +152,10 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
             log.error("生成单号获取锁异常",e);
             throw new ServiceException(ApiError.ERROR_1026);
         } finally {
-            //释放锁
-            if(lock.isLocked() && lock.isHeldByCurrentThread()){ // 锁是否存在，是当前执行线程的锁
-                lock.unlock(); // 释放锁
+            //释放锁 锁是否存在，是当前执行线程的锁
+            if(lock.isLocked() && lock.isHeldByCurrentThread()){
+                // 释放锁
+                lock.unlock();
             }
         }
     }
@@ -165,7 +169,7 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
         boolean isLock;
         try {
             isLock = lock.tryLock(5, TimeUnit.SECONDS);
-            log.info("是否获取到锁: {}", isLock);
+            log.info("是否获取到分布式锁: {}", isLock);
             if (!isLock) {
                 throw new ServiceException(ApiError.ERROR_1026);
             }
@@ -184,15 +188,18 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
                 throw new ServiceException(ApiError.ERROR_9027);
             }
             //更新当前顺序码
+            log.info("seata事务id:{}", RootContext.getXID());
             updateNumByCode(dto.getId(),dto.getNum());
             return sysCode.toString();
         }  catch (InterruptedException e) {
             log.error("生成单号获取锁异常",e);
             throw new ServiceException(ApiError.ERROR_1026);
         } finally {
-            //释放锁
-            if(lock.isLocked() && lock.isHeldByCurrentThread()){ // 锁是否存在，是当前执行线程的锁
-                lock.unlock(); // 释放锁
+            //释放锁  锁是否存在，是当前执行线程的锁
+            if(lock.isLocked() && lock.isHeldByCurrentThread()){
+                // 释放锁
+                lock.unlock();
+                log.info("分布式锁释放锁: {}", Thread.currentThread().getId());
             }
         }
     }

@@ -12,7 +12,9 @@ import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.service.CustomerAddressService;
 import com.erp.server.oms.service.CustomerInfoService;
@@ -60,6 +62,9 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
     @Resource
     private SoInfoService soInfoService;
 
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
+
     /**
      * 销售订单同步金碟
      *
@@ -89,6 +94,9 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         //是否收取运费
         resultMap.put("isCollectShippingFee", entity.getIsCollectShippingFee());
 
+        //交货地点
+        resultMap.put("receiveAddressCode", "");
+
         String salesDeptId = entity.getSalesDeptId();
         //销售员
         String sellerId = entity.getSellerId();
@@ -97,7 +105,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             SysDepartmentDTO departmentDTO = sysUserFeign.getUserDeptById(salesDeptId);
             //销售部门
             if (!Objects.isNull(departmentDTO)) {
-                resultMap.put("deptCode", "BM000062");
+                resultMap.put("deptCode", departmentDTO.getCode());
             }
         }
         //获取员工
@@ -116,7 +124,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         List<String> orgIdList = new ArrayList<>(2);
         orgIdList.add(warehouseOrgId);
         orgIdList.add(salesOrgId);
-        String warehouseOrgCode = "100";
+        String warehouseOrgCode = "";
         if (CollectionUtils.isNotEmpty(orgIdList)) {
             List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
             String salesOrgCode = orgList.stream().filter(o -> o.getId().equals(salesOrgId)).
@@ -124,19 +132,22 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             if (StringUtils.isNotBlank(salesOrgCode)) {
                 resultMap.put("salesOrgCode", salesOrgCode);
             }
-             warehouseOrgCode = orgList.stream().filter(o -> o.getId().equals(warehouseOrgId)).
+            warehouseOrgCode = orgList.stream().filter(o -> o.getId().equals(warehouseOrgId)).
                     map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("100");
-
         }
-
-
         //客户
         String customerId = entity.getCustomerId();
         if (StringUtils.isNotBlank(customerId)) {
             CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
             if (customerInfo != null) {
-                resultMap.put("customerCode", "CUST0051");
+                resultMap.put("customerCode", customerInfo.getCode());
             }
+        }
+        String warehouseId = entity.getWarehouseId();
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
+        String kingdeeWarehouseCode = "";
+        if (CollectionUtils.isNotEmpty(warehouseList)) {
+            kingdeeWarehouseCode=warehouseList.get(0).getKingdeeWarehouseCode();
         }
         //联系电话
         resultMap.put("telNumber", entity.getTelNumber());
@@ -147,7 +158,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         String receiveAddress = addressEntity != null ? addressEntity.getAddress() : "";
         //收货地址
         resultMap.put("receiveAddress", receiveAddress);
-        List<SoDetailDTO.ViewDTO> details = soDetailService.listByMainId(id, entity.getWarehouseId());
+        List<SoDetailDTO.ViewDTO> details = soDetailService.listByMainId(id, warehouseId);
         if (CollectionUtils.isEmpty(details)) {
             return;
         }
@@ -156,15 +167,17 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         List<JSONObject> list = new ArrayList<>(details.size());
         for (SoDetailDTO.ViewDTO item : details) {
             JSONObject jsonObject = new JSONObject();
-            jsonObject.set("skuNo", "0009");
+            jsonObject.set("skuNo", item.getSkuNo());
             jsonObject.set("requireDate", requireDate);
             jsonObject.set("qty", item.getQty());
+            jsonObject.set("baseQty", item.getQty());
             jsonObject.set("price", item.getPrice());
             jsonObject.set("taxPrice", item.getTaxPrice());
             jsonObject.set("isGift", item.getIsGift());
             jsonObject.set("unit", item.getUnit());
-            jsonObject.set("warehouseOrgCode",warehouseOrgCode);
-            jsonObject.set("curInventoryQty",55);
+            jsonObject.set("warehouseOrgCode", warehouseOrgCode);
+            jsonObject.set("curInventoryQty", item.getQty());
+            jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
             list.add(jsonObject);
         }
 

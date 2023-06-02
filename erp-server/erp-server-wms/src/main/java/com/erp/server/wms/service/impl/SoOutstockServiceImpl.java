@@ -35,7 +35,6 @@ import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -44,7 +43,6 @@ import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.wms.kingdee.SyncKingdeeReturnOrderService;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.mapper.SoOutstockMapper;
 import com.erp.server.wms.service.*;
@@ -327,26 +325,23 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         String ingStatusName = ApproveStatusEnum.APPROVE_ING.getName();
         //意见
         String comment = dto.getComment();
-        Boolean result = true;
         String content = "";
         String userName = commonService.getUserInfo().getUserName();
         Boolean isPass = dto.getType().equals(ApproveType.PASS);
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
         //TODO 需要做什么 释放冻结 销售订单的发货状态
         if (isPass) {
             //审核通过
-            String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus), userName);
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
-
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
 
         } else {
             //审核不通过
-            String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
-            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(rejectStatus), userName);
+            approveStatus = ApproveStatusEnum.REJECT;
             content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
         }
+        Boolean result = this.updateApproveStatus(list, approveStatus, userName);
         if (result) {
             //处理对应数据
             if (isPass) {
@@ -477,7 +472,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             String soDetailId = entry.getKey();
             param.setId(soDetailId);
             //已发货数量
-            Integer alreadyDeliveryQty = entry.getValue().stream().filter(s->s.getApproveStatus().equals(approveStatus)).
+            Integer alreadyDeliveryQty = entry.getValue().stream().filter(s -> s.getApproveStatus().equals(approveStatus)).
                     mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
             param.setAlreadyDeliveryQty(alreadyDeliveryQty);
             paramList.add(param);
@@ -618,7 +613,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         statusList.add(rejectStatus);
         long invalidCount = list.stream().filter(d -> !d.getInvalidStatus()).count();
         if (invalidCount != list.size()) {
-            throw new ServiceException(ApiError.ERROR_98061);
+            throw new ServiceException(ApiError.ERROR_98012);
         }
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {

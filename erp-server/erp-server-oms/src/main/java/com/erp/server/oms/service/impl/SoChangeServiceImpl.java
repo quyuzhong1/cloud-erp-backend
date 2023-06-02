@@ -727,19 +727,19 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         String ingStatusName = ApproveStatusEnum.APPROVE_ING.getName();
         //意见
         String comment = dto.getComment();
-        Boolean result = true;
         String content = "";
         LoginUser user = commonService.getUserInfo();
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
         if (dto.getType().equals(ApproveType.PASS)) {
             soChangeDetailService.handleDb(list);
             //审核通过
-            result = this.updateApproveInfo(list, ApproveStatusEnum.APPROVE, user.getUid(), user.getUserName());
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
         } else {
+            approveStatus = ApproveStatusEnum.REJECT;
             //审核不通过
-            result = this.updateApproveInfo(list, ApproveStatusEnum.REJECT, user.getUid(), user.getUserName());
             content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
         }
+        Boolean result = this.updateApproveInfo(list, approveStatus, user.getUid(), user.getUserName());
         if (result) {
             //添加日志
             List<Pair<String, String>> pairList = list.stream().
