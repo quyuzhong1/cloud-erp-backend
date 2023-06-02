@@ -65,12 +65,12 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_92023);
             }
-            //实退 入库数量
+            //实退数量
             Integer realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
             //签收单数量
             Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             if (receiveQty <  detailDto.getRealQty() + realQty) {
-                throw new ServiceException(ApiError.ERROR_92026);
+                throw new ServiceException(ApiError.ERROR_92045);
             }
             detailEntity.setMainId(id);
             detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
@@ -112,7 +112,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             SoReturnInstockDetailEntity detailEntity = new SoReturnInstockDetailEntity();
             SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_92023);
+                throw new ServiceException(ApiError.ERROR_92045);
             }
             //实退 入库数量
             Integer realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
