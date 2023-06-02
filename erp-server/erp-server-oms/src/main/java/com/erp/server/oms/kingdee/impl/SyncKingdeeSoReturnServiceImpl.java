@@ -27,6 +27,7 @@ import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
+import com.erp.server.oms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -47,7 +48,7 @@ import java.util.stream.Collectors;
  **/
 @Slf4j
 @Service
-public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeCustomerService {
+public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnService {
     @Resource
     private SysUserFeign sysUserFeign;
 
