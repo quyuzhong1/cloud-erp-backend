@@ -155,7 +155,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         }
         // 数据填充处理
         filling(records);
-        // 明细信息多行第一行复制，其他行赋空（主单属性）
+        // 明细信息多行第一行赋值，其他行赋空（主单属性）
         listHideMainData(records);
         return new PagingVO<>(pageData);
     }
