@@ -260,7 +260,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         entity.setCode(code);
         entity.setSourceId(dto.getSourceId());
         entity.setSourceCode(soReturnEntity.getCode());
-        entity.setSourceType(soReturnEntity.getSourceType());
+        entity.setSourceType(dto.getSourceType());
         entity.setWarehouseId(dto.getWarehouseId());
         entity.setBillDate(dto.getBillDate());
         //获取仓库信息

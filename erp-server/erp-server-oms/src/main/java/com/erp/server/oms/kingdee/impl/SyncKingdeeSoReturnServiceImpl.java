@@ -65,30 +65,13 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
     private SoDetailService soDetailService;
 
     @Resource
-    private CustomerInvoiceService customerInvoiceService;
-
-    @Resource
-    private CustomerSellerService customerSellerService;
-
-    @Resource
-    private CustomerAddressService customerAddressService;
-
-    @Resource
-    private CustomerContactService customerContactService;
-
-    @Resource
     private MQProducerService mQProducerService;
-
-    @Resource
-    private DictBasicService dictBasicService;
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
 
     @Override
     public void syncDataToKingdee(SoReturnEntity entity, String operate) {
-        //组织信息
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getSalesOrgId(), entity.getInventoryOrgId()));
         //客户信息
         List<CustomerInfoEntity> customerInfoEntitieList = customerInfoService.listByIds(Arrays.asList(entity.getCustomerId()));
         //退货详情
@@ -99,6 +82,12 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         List<SoDetailEntity> soDetailEntitieList = soDetailService.listSoDetailByMainIds(Arrays.asList(soInfoEntity.getId()));
         //仓库
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(entity.getWarehouseId()));
+        List<String> orgIdList = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).collect(Collectors.toList());
+        orgIdList.add(entity.getSalesOrgId());
+        orgIdList.add(entity.getInventoryOrgId());
+        //组织信息
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIdList);
+
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -177,5 +166,12 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             }
             return Boolean.TRUE;
         });
+
+        /*
+        * FMaterialId,单据体“明细信息”第1行字段“物料编码”是必填项
+        * 0,FStockId,单据体实体【明细信息】第【1】行分录，【仓库】字段必录
+        * 0,FStockstatusId,单据体实体【明细信息】第【1】行分录，【库存状态】字段必录
+        * 0,,单据编号为“THDD23060200016”的销售退货单，第1行分录，库存基本数量为0，请检查单据数量换算可能有误！
+        * */
     }
 }

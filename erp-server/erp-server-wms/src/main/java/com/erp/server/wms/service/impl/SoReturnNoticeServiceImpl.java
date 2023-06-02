@@ -244,7 +244,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         entity.setCode(code);
         entity.setSourceId(dto.getSourceId());
         entity.setSourceCode(soReturnEntity.getCode());
-        entity.setSourceType(soReturnEntity.getSourceType());
+        entity.setSourceType(dto.getSourceType());
         entity.setBillDate(soReturnEntity.getBillDate());
         entity.setInventoryOrgId(dto.getInventoryOrgId());
         entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());
@@ -655,14 +655,13 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
 
         for (String id : soReturnIdList) {
             List<SoReturnDTO.GenerateSoReturnNoticeView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
-            String sourceId = viewList.stream().filter(req -> req.getMainId().equals(id)).map(SoReturnDTO.GenerateSoReturnNoticeView::getSourceId).distinct().findFirst().orElse("");
-            SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(sourceId);
             SoReturnNoticeDTO.Add dto = new SoReturnNoticeDTO.Add();
             dto.setSourceId(id);
             dto.setSourceType(SourceTypeEnum.SO_RETURN.getCode());
-            dto.setInventoryOrgId(soInfoEntity.getWarehouseOrgId());
             List<SoReturnNoticeDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnDTO.GenerateSoReturnNoticeView view : viewList) {
+                dto.setWarehouseId(view.getWarehouseId());
+                dto.setInventoryOrgId(view.getInventoryOrgId());
                 SoReturnNoticeDetailDTO.Add detailAddDTO = new SoReturnNoticeDetailDTO.Add();
                 detailAddDTO.setReturnQty(view.getReturnQty());
                 detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
