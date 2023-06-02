@@ -208,6 +208,11 @@ public enum RocketMqTagEnum {
      */
     KINGDEE_SO_OUTSTOCK_TAG(1020, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_so_outstock_tag"),
 
+    /**
+     *销售退货单同步金蝶
+     */
+    KINGDEE_SO_RETURN_TAG(1021, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_so_return_tag"),
+
 
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 

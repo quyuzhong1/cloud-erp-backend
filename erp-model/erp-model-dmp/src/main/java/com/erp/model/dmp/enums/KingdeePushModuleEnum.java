@@ -30,6 +30,7 @@ public enum KingdeePushModuleEnum {
     SAL_SALEORDER("SAL_SaleOrder","销售订单"),
     SAL_SALEORDER_CHANGE("SAL_SaleOrderChange","销售订单"),
     SAL_OUTSTOCK("SAL_OUTSTOCK","销售出库单"),
+    SAL_RETURNSTOCK("SAL_RETURNSTOCK","销售退货单"),
 
     ;
     private String code;

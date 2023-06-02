@@ -108,6 +108,11 @@ public class RocketMqConsumerGroup {
      */
     public static final String SYNC_KINGDEE_SO_OUTSTOCK = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_outstock";
 
+    /**
+     * 销售退货单
+     */
+    public static final String SYNC_KINGDEE_SO_RETURN = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_return";
+
     //-----------------------------------------------------------------dmp数据更新------------------------------------------------------
 
     /**
