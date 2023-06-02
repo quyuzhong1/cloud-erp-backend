@@ -477,15 +477,15 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         }
         //TODO 待加审核流程
 
-        //下推不能反审核
+        //有退货通知单不能反审核
         List<SoReturnNoticeEntity> soReturnNoticeEntities = soReturnNoticeFeign.listBySourceId(ids);
         if (CollectionUtils.isNotEmpty(soReturnNoticeEntities)) {
             throw new ServiceException(ApiError.ERROR_92012);
         }
-
+        //有退货签收单不能反审核
         List<SoReturnReceiveEntity> soReturnReceiveEntities = soReturnReceiveFeign.listBySourceId(ids);
         if (CollectionUtils.isNotEmpty(soReturnReceiveEntities)) {
-            throw new ServiceException(ApiError.ERROR_92012);
+            throw new ServiceException(ApiError.ERROR_92013);
         }
         //修改状态为待提交
         lambdaUpdate().set(SoReturnEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())

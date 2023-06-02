@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
@@ -10,17 +11,11 @@ import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDetailDTO;
-import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
-import com.erp.model.wms.entity.SoReturnInstockEntity;
-import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
-import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.server.wms.mapper.SoReturnInstockDetailMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.SoReturnInstockDetailService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
-import com.erp.server.wms.service.SoReturnReceiveDetailService;
-import com.erp.server.wms.service.SoReturnReceiveService;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -49,9 +44,18 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
     @Resource
     private OperateLogService operateLogService;
 
+    @Resource
+    private QcInfoService qcInfoService;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean add(SoReturnInstockDTO.Add dto, String id) {
+        if (dto.getSourceType().equals(SourceTypeEnum.QC_BILL.getCode())) {
+            QcInfoEntity qcInfoEntity = qcInfoService.getById(dto.getSourceId());
+            //签收单明细id
+            SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailService.getById(qcInfoEntity.getSourceDetailId());
+            dto.getDetailList().forEach(req -> req.setSourceDetailId(soReturnReceiveDetailEntity.getSourceDetailId()));
+        }
         //获取退货单详情表id
         List<String> returnDetailIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Add::getSourceDetailId).collect(Collectors.toList());
         List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(returnDetailIds);
@@ -60,6 +64,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = this.listDetailBySourceDetailIds(returnDetailIds);
         List<SoReturnInstockDetailEntity> list = new ArrayList<>();
         for (SoReturnInstockDetailDTO.Add detailDto : dto.getDetailList()) {
+
             SoReturnInstockDetailEntity detailEntity = new SoReturnInstockDetailEntity();
             SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soReturnDetailEntity)) {

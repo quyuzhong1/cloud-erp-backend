@@ -78,8 +78,6 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         //业务id
         resultMap.put("id", entity.getId());
-        //仓库名称
-        resultMap.put("name", entity.getName());
         //客户编号
         resultMap.put("code", entity.getCode());
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getUseOrgId()));

@@ -260,7 +260,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
 
         SoReturnReceiveEntity entity = new SoReturnReceiveEntity();
-        entity.setType(soReturnEntity.getCode());
+        entity.setType(soReturnEntity.getType());
         entity.setSalesOrgId(soReturnEntity.getSalesOrgId());
         entity.setSalesOrgName(soReturnEntity.getSalesOrgName());
         entity.setSalesDeptId(soReturnEntity.getSalesDeptId());

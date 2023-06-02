@@ -138,7 +138,6 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             resultMap.put("customerName", customerInfoEntity.getName());
             //平台类型
             resultMap.put("platformType", customerInfoEntity.getPlatformType().getKingdeeCode());
-
         }
         //销售部门
         if (ObjectUtil.isNotEmpty(dept)) {

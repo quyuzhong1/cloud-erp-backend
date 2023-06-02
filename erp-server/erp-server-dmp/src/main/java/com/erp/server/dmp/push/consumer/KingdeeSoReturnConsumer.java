@@ -43,11 +43,11 @@ public class KingdeeSoReturnConsumer implements RocketMQListener<Map<String, Obj
 
     public static void main(String[] args) {
         //模块类型
-        Integer type = ApiModuleTypeEnum.SO_OUTSTOCK.getCode();
+        Integer type = ApiModuleTypeEnum.SO_RETURN.getCode();
         KingdeeCommonService kingdeeCommonService = new KingdeeCommonServiceImpl();
         Map<String, Object> map = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_RETURNSTOCK.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FBillNo = '%s'", "XSCKD4062917"));
         String filterStr = String.join(" and ", queryFilters);
@@ -73,7 +73,7 @@ public class KingdeeSoReturnConsumer implements RocketMQListener<Map<String, Obj
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_RETURNSTOCK.getCode());
 
 
         //操作项

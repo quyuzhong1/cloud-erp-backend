@@ -88,6 +88,15 @@
         <if test="params.createTimeList != null and params.createTimeList.size > 0">
             and sri.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sri.create_time
         </if>
+        <if test="params.inventoryOrgIdList != null and params.inventoryOrgIdList.size != ''">
+            and sri.inventory_org_id in
+            <foreach collection="params.inventoryOrgIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.type != null and params.type != ''">
+            and sri.type = #{params.type}
+        </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
@@ -125,6 +134,7 @@
         srid.source_detail_id,
         sri.code,
         sri.source_code,
+        sri.so_code,
         sri.type,
         sri.customer_id,
         sri.customer_name,
@@ -141,7 +151,9 @@
         sri.bill_date,
         sri.approve_user_name,
         sri.create_user_name,
-        sri.create_time
+        sri.create_time,
+        sri.inventory_org_id,
+        sri.inventory_org_name
         FROM so_return_instock sri
         INNER JOIN so_return_instock_detail srid ON sri.id = srid.main_id AND sri.is_deleted = FALSE
         WHERE srid.is_deleted = FALSE
@@ -201,6 +213,15 @@
                 </if>
                 <if test="params.createTimeList != null and params.createTimeList.size > 0">
                     and sri.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sri.create_time
+                </if>
+                <if test="params.inventoryOrgIdList != null and params.inventoryOrgIdList.size != ''">
+                    and sri.inventory_org_id in
+                    <foreach collection="params.inventoryOrgIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.type != null and params.type != ''">
+                    and sri.type = #{params.type}
                 </if>
             </otherwise>
         </choose>

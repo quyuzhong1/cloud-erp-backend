@@ -1478,8 +1478,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
         List<SoReturnInstockDTO.GenerateSoReturnInstockView> list = baseMapper.generateSoReturnInstockView(ids);
         String finishQcCode = QcBillStatusEnum.FINISH_QC.getCode();
+        String exemptionCode = QcBillStatusEnum.EXEMPTION.getCode();
 
-        long count = list.stream().filter(f -> !f.getQcStatus().equals(finishQcCode)).count();
+        long count = list.stream().filter(f -> !f.getQcStatus().equals(finishQcCode) && !f.getQcStatus().equals(exemptionCode)).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98067);
         }

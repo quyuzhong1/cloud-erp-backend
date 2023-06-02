@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.InvoiceTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
@@ -14,14 +15,17 @@ import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.CustomerContactDTO;
 import com.erp.model.oms.dto.InvoiceDTO;
 import com.erp.model.oms.dto.SellerDTO;
-import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +35,7 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -47,7 +52,16 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeCustomerServic
     private SysUserFeign sysUserFeign;
 
     @Resource
+    private SoReturnDetailService soReturnDetailService;
+
+    @Resource
     private CustomerInfoService customerInfoService;
+
+    @Resource
+    private SoInfoService soInfoService;
+
+    @Resource
+    private SoDetailService soDetailService;
 
     @Resource
     private CustomerInvoiceService customerInvoiceService;
@@ -67,19 +81,91 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeCustomerServic
     @Resource
     private DictBasicService dictBasicService;
 
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
+
     @Override
-    public void syncDataToKingdee(CustomerInfoEntity entity, String operate) {
+    public void syncDataToKingdee(SoReturnEntity entity, String operate) {
+        //组织信息
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getSalesOrgId(), entity.getInventoryOrgId()));
+        //客户信息
+        List<CustomerInfoEntity> customerInfoEntitieList = customerInfoService.listByIds(Arrays.asList(entity.getCustomerId()));
+        //退货详情
+        List<SoReturnDetailEntity> returnDetailEntityList = soReturnDetailService.listDetailByMainId(entity.getId());
+        //销售单
+        SoInfoEntity soInfoEntity = soInfoService.getById(entity.getSourceId());
+        //销售单明细
+        List<SoDetailEntity> soDetailEntitieList = soDetailService.listSoDetailByMainIds(Arrays.asList(soInfoEntity.getId()));
+        //仓库
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(entity.getWarehouseId()));
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         //业务id
         resultMap.put("id", entity.getId());
-        //仓库名称
-        resultMap.put("name", entity.getName());
         //客户编号
         resultMap.put("code", entity.getCode());
+        //单据日期
+        resultMap.put("billDate", entity.getBillDate());
+        //组织
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            //销售组织
+            resultMap.put("salesOrgCode", salesOrgCode);
+            String inventoryOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInventoryOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            //库存组织
+            resultMap.put("inventoryOrgCode", inventoryOrgCode);
+        }
 
-
+        //客户
+        if (CollectionUtils.isNotEmpty(customerInfoEntitieList)) {
+            CustomerInfoEntity customerInfoEntity = customerInfoEntitieList.stream().filter(obj -> obj.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
+            resultMap.put("customerCode", customerInfoEntity.getCode());
+        }
+        //金蝶 FEntity:物料信息
+        List<Map<String,Object>> list = new ArrayList<>();
+        for (SoReturnDetailEntity detailEntity : returnDetailEntityList) {
+            SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            Map<String,Object> map = new HashMap<>();
+            //物料编码
+            map.put("skuNo", detailEntity.getSkuNo());
+            //退货数量
+            map.put("returnQty", detailEntity.getReturnQty());
+            //单价
+            map.put("price", soDetailEntity.getPrice());
+            //含税单价
+            BigDecimal flagTaxRate = MathUtil.divide(soDetailEntity.getTaxRate(), MathUtil.BigDecimal_100);
+            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
+            BigDecimal taxPrice = MathUtil.multiply(soDetailEntity.getPrice(), multiplyTax);
+            //含税单价
+            map.put("taxPrice", taxPrice);
+            //是否赠品
+            map.put("isGift", soDetailEntity.getIsGift());
+//            //税率
+//            map.put("isGift", flagTaxRate);
+            //退货类型
+            map.put("returnType", detailEntity.getReturnTypeDict());
+            //货主
+            map.put("salesOrgCode", resultMap.get("salesOrgCode"));
+            //仓库
+            if (CollectionUtils.isNotEmpty(warehouseList)) {
+                String warehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getWarehouseId())).map(WarehouseDTO.UpdateDTO::getKingdeeWarehouseCode).findFirst().orElse("");
+                //仓库
+                map.put("warehouseCode", warehouseCode);
+            }
+            //退货日期
+            map.put("billDate", entity.getBillDate());
+            //备注
+            map.put("remark", detailEntity.getRemark());
+            if (entity.getSourceType().equals(SourceTypeEnum.SO_INFO.getCode())) {
+                //原单类型
+                map.put("FSrcBillTypeID", "SAL_SaleOrder");
+                //原单编号
+                map.put("FSrcBillNo", soInfoEntity.getCode());
+            }
+            list.add(map);
+        }
+        resultMap.put("FEntityList", list);
         resultMap.put("operate", operate);
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {

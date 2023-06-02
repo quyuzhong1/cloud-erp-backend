@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -38,6 +39,10 @@ public class SoReturnInstockDTO {
          * 销售单号
          */
         private String sourceCode;
+        /**
+         * 库存组织
+         */
+        private List<String> inventoryOrgIdList;
         /**
          * 单据类型
          */
@@ -233,6 +238,7 @@ public class SoReturnInstockDTO {
         /**
          * 仓库id
          */
+        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
         /**
          * 仓管员
@@ -265,6 +271,7 @@ public class SoReturnInstockDTO {
         /**
          * 仓库id
          */
+        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
         /**
          * 仓管员
