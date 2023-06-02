@@ -568,24 +568,20 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String ingStatusName = ApproveStatusEnum.APPROVE_ING.getName();
         //意见
         String comment = dto.getComment();
-        Boolean result = true;
         String content = "";
         String userName = commonService.getUserInfo().getUserName();
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
-            String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus), userName);
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
-
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeeCustomerService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
-
         } else {
             //审核不通过
-            String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
-            result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(rejectStatus), userName);
+            approveStatus = ApproveStatusEnum.REJECT;
             content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
         }
+        Boolean result = this.updateApproveStatus(list, approveStatus, userName);
         if (result) {
             //添加日志
             List<Pair<String, String>> pairList = list.stream().

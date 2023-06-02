@@ -40,7 +40,6 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.TransferInMapper;
 import com.erp.server.wms.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -237,7 +236,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             TransferDirectionEnum transferDirection = item.getTransferDirection();
             item.setTransferDirectionName(transferDirection.getName());
             Boolean invalidStatus = item.getInvalidStatus();
-            String invalidStatusName = invalidStatus ? "作废" : "未作废";
+            String invalidStatusName = invalidStatus ? "已作废" : "未作废";
             item.setInvalidStatusName(invalidStatusName);
             String skuId = item.getSkuId();
             SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
@@ -328,19 +327,19 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         String ingStatusName = ApproveStatusEnum.APPROVE_ING.getName();
         //意见
         String comment = dto.getComment();
-        Boolean result = true;
         String content = "";
         LoginUser user = commonService.getUserInfo();
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
         if (dto.getType().equals(ApproveType.PASS)) {
             handleData(ids);
             //审核通
-            result = this.updateApproveInfo(list, ApproveStatusEnum.APPROVE, user.getUserName());
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
         } else {
             //审核不通过
-            result = this.updateApproveInfo(list, ApproveStatusEnum.REJECT, user.getUserName());
+            approveStatus = ApproveStatusEnum.REJECT;
             content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
         }
+        Boolean result = this.updateApproveInfo(list, approveStatus, user.getUserName());
         if (result) {
             //添加日志
             List<Pair<String, String>> pairList = list.stream().
@@ -348,7 +347,6 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "状态变更");
         }
         return result;
-
     }
 
     /**
@@ -449,7 +447,6 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean disApprove(BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<TransferInEntity> list = this.listByIds(ids);
@@ -479,7 +476,6 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         if (result) {
             InventoryBatchUnApproveDTO batchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.TRANSFER_IN, ids);
             inventoryTransCoreService.batchUnApprove(batchUnApproveDTO);
-
             //添加日志
             String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "状态变更");
@@ -515,7 +511,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         statusList.add(rejectStatus);
         long invalidCount = list.stream().filter(d -> !d.getInvalidStatus()).count();
         if (invalidCount != list.size()) {
-            throw new ServiceException(ApiError.ERROR_98061);
+            throw new ServiceException(ApiError.ERROR_98012);
         }
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
@@ -558,7 +554,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             TransferDirectionEnum transferDirection = item.getTransferDirection();
             item.setTransferDirectionName(transferDirection.getName());
             Boolean invalidStatus = item.getInvalidStatus();
-            String invalidStatusName = invalidStatus ? "作废" : "未作废";
+            String invalidStatusName = invalidStatus ? "已作废" : "未作废";
             item.setInvalidStatusName(invalidStatusName);
             String skuId = item.getSkuId();
             SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());

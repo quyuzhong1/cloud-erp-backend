@@ -1,7 +1,6 @@
 package com.erp.server.dmp.push.consumer;
 
 import cn.hutool.json.JSONObject;
-import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncKingdeeOperateEnum;
@@ -71,8 +70,6 @@ public class KingdeeSoConsumer implements RocketMQListener<Map<String, Object>> 
         String businessId = String.valueOf(map.get("id"));
         //业务编码
         String code = (String) map.get("code");
-        log.info("map=={}", JSON.toJSON(map));
-
         PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
