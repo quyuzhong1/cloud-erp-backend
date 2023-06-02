@@ -94,7 +94,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-28 11:49
      */
     @Override
-    @GlobalTransactional
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String add(PurchasePriceChangeDTO.AddDTO dto) {
         //采购价目表的id
         String priceId = dto.getPurchasePriceId();

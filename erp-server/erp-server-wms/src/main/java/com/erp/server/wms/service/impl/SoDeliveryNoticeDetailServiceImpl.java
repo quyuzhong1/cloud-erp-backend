@@ -235,6 +235,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
      */
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public void closeBySoDetailIds(List<String> soDetailIds) {
         if (CollectionUtils.isNotEmpty(soDetailIds)) {
             this.lambdaUpdate().set(SoDeliveryNoticeDetailEntity::getIsClose, Boolean.TRUE).
