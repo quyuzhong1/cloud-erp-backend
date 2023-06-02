@@ -131,21 +131,24 @@ public abstract class AbstractInventoryServiceImpl {
         ValidatorUtil.isTrue(CollUtil.isNotEmpty(txnFlows),()->new ServiceException(ApiError.ERROR_99040));
         // 先按交易时间升序排
         txnFlows = txnFlows.stream().sorted(Comparator.comparing(TransactionFlowEntity::getTradeTime).thenComparing(TransactionFlowEntity::getId)).collect(Collectors.toList());
-        String transactionNo = IdUtil.getSnowflake().nextIdStr(); // 关联交易号
+        // 关联交易号
+        String transactionNo = IdUtil.getSnowflake().nextIdStr();
         txnFlows.stream().forEach(txnFlow->{
             // 此处需注意：1.已经反审核过的单据不允许再次反审核，以免库存数据错乱（前面查询条件已过滤）；2.可能会出现负数，如入库后被出库了反审核后仓库数量不够反审核，增加验证不允许反审核
             // 登记反审核的交易流水（有可能一个操作产生多条，从多个库存明细中扣除）
             InOutStockCoreDTO param = InventoryUtils.convertInoutStockForTxn(txnFlow, InventoryOperationModeEnum.UN_APPROVE);
 
             InventoryBusinessTypeEnum inventoryBusinessType = InventoryBusinessTypeEnum.of(txnFlow.getDictBizType());// 取原交易流水的业务类型
-            Integer operationQty = Math.abs(txnFlow.getQty());// 原操作流水操作数量（取绝对值正数）
+            // 原操作流水操作数量（取绝对值正数）
+            Integer operationQty = Math.abs(txnFlow.getQty());
             TransactionFlowDTO transactionFlowDTO = InventoryUtils.wrapTransactionFlowInOutStock(param, txnFlow.getInventoryId(),inventoryBusinessType, txnFlow.getInventoryDetailId(), InventoryStatusEnum.of(txnFlow.getDictInventoryStatus()), txnFlow.getInstockBatchDate(), Math.abs(txnFlow.getQty()), txnFlow.getOrgId());
             transactionFlowDTO.setTransactionNo(transactionNo);
 
             // 按照仓库+SKU进行锁定，考虑库位，防止数据冲突
             String lockKey = StrUtil.format( "{}:{}:{}:{}",DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), txnFlow.getWarehouseId(), StrUtils.null2EmptyWithTrim(txnFlow.getWarehouseLocation()), txnFlow.getSkuId());
             RReadWriteLock rwLock = redisson.getReadWriteLock(lockKey);
-            RLock rlock = rwLock.writeLock();// 获取写锁
+            // 获取写锁
+            RLock rlock = rwLock.writeLock();
             boolean isLock;
             try {
                 isLock = rlock.tryLock(5, TimeUnit.SECONDS);
@@ -220,9 +223,10 @@ public abstract class AbstractInventoryServiceImpl {
                     throw new ServiceException(ApiError.Default);
                 }
             } finally {
-                //释放锁
-                if(rlock.isLocked() && rlock.isHeldByCurrentThread()){ // 锁是否存在，是当前执行线程的锁
-                    rlock.unlock(); // 释放锁
+                //释放锁  锁是否存在，是当前执行线程的锁
+                if(rlock.isLocked() && rlock.isHeldByCurrentThread()){
+                    // 释放锁
+                    rlock.unlock();
                 }
             }
             log.info("结束库存交易，耗时【{}】秒", stopwatch.elapsed(TimeUnit.SECONDS));
@@ -274,7 +278,8 @@ public abstract class AbstractInventoryServiceImpl {
             // 此处注意，入库传不传仓位都带仓位条件查询
             InventorySaveDTO inventorySaveDTO = inventoryService.addOrUpdate(warehouseId, orgId, warehouseLocation, skuId, skuNo, inventoryStatusEnum.getCode(), qty);
             String inventoryInfoId = inventorySaveDTO.getInventoryId();
-            Integer originInventoryQty = inventorySaveDTO.getQty();// 库存原数量
+            // 库存原数量
+            Integer originInventoryQty = inventorySaveDTO.getQty();
             Integer afterInventoryQty = originInventoryQty + qty;
             log.info("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】，实时库存原数量：【{}】，操作数量【{}】，操作后数量【{}】", inventoryStatusEnum.getName(), warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName(), originInventoryQty, qty, afterInventoryQty);
             log.info("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：{}, 来源单据：{}, 业务类型：【{}】，状态【{}】，单据日期：【{}】,库存表id：【{}】，新增或修改库存明细数据", inventoryStatusEnum.getName(), warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName(), billDate, inventoryInfoId);
@@ -297,9 +302,10 @@ public abstract class AbstractInventoryServiceImpl {
                 throw e;
             }
         } finally {
-            //释放锁
-            if(rlock.isLocked() && rlock.isHeldByCurrentThread()){ // 锁是否存在，是当前执行线程的锁
-                rlock.unlock(); // 释放锁
+            //释放锁  锁是否存在，是当前执行线程的锁
+            if(rlock.isLocked() && rlock.isHeldByCurrentThread()){
+                // 释放锁
+                rlock.unlock();
             }
         }
     }
@@ -359,20 +365,25 @@ public abstract class AbstractInventoryServiceImpl {
             }
             // 查询库存明细，排序，雪花算法id在单机上是严格递增的，但是在分布式环境下不是严格递增的（因为不同的机器的MAC地址/机器ID/数据中心不一样等等），此处改为按创建时间递增排序
             List<InventoryDetailEntity> inventoryDetails = inventoryDetailService.findListQtyGreatZero(inventory.getId());
-            // 循环扣减
-            Integer waitOutQty = qty; // 待出库数量
+            // 待出库数量
+            Integer waitOutQty = qty;
             Integer transactionInventoryQty = originQty;
+            // 循环扣减
             for(InventoryDetailEntity inventoryDetailEntity : inventoryDetails) {
-                if (waitOutQty == 0) { // 已经足额扣减完成
+                // 已经足额扣减完成
+                if (waitOutQty == 0) {
                     break;
                 }
                 // 扣减库存明细
                 Integer originDetailQty = inventoryDetailEntity.getQty();
-                Integer detailDeductQty; // 扣减数量
-                if(originDetailQty >= waitOutQty) { //库存明细足够扣减
+                // 扣减数量
+                Integer detailDeductQty;
+                //库存明细足够扣减
+                if(originDetailQty >= waitOutQty) {
                     detailDeductQty = waitOutQty;
                     waitOutQty = 0;
-                } else { // 不足够扣减，全部扣完库存明细
+                } else {
+                    // 不足够扣减，全部扣完库存明细
                     waitOutQty = waitOutQty - originDetailQty;
                     detailDeductQty = originDetailQty;
                 }
@@ -410,9 +421,10 @@ public abstract class AbstractInventoryServiceImpl {
                 throw e;
             }
         } finally {
-            //释放锁
-            if(rlock.isLocked() && rlock.isHeldByCurrentThread()){ // 锁是否存在，是当前执行线程的锁
-                rlock.unlock(); // 释放锁
+            //释放锁  锁是否存在，是当前执行线程的锁
+            if(rlock.isLocked() && rlock.isHeldByCurrentThread()){
+                // 释放锁
+                rlock.unlock();
             }
         }
     }

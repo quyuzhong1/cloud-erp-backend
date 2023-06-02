@@ -111,7 +111,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         RLock rlock = rwLock.readLock();
         boolean isLock;
         try {
-            isLock = rlock.tryLock(8, TimeUnit.SECONDS);// 防止一直等待，加最大等待时间
+            // 防止一直等待，加最大等待时间
+            isLock = rlock.tryLock(8, TimeUnit.SECONDS);
             log.info("仓库：【{}】，SKU ID：【{}】，是否获取到锁: {}", warehouseId, skuId, isLock);
             if (!isLock) {
                 throw new ServiceException(ApiError.ERROR_1026);
@@ -136,9 +137,10 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             log.error("仓库id：【{}】，SKU编号：【{}】，获取锁异常", warehouseId, skuId, e);
             throw new ServiceException(ApiError.ERROR_1026);
         } finally {
-            //释放锁
-            if (rlock.isLocked() && rlock.isHeldByCurrentThread()) { // 锁是否存在，是当前执行线程的锁
-                rlock.unlock(); // 释放锁
+            //释放锁  锁是否存在，是当前执行线程的锁
+            if (rlock.isLocked() && rlock.isHeldByCurrentThread()) {
+                // 释放锁
+                rlock.unlock();
             }
         }
     }
@@ -191,10 +193,11 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Override
     public Integer getUsableInventoryTotal(String warehouseId, String skuId, String warehouseLocationId) {
-        if(Objects.isNull(warehouseLocationId)) { // 查询仓库下面的SKU的可用库存
+        // 查询仓库下面的SKU的可用库存
+        if(Objects.isNull(warehouseLocationId)) {
             return this.getUsableInventoryTotal(warehouseId, skuId);
-        } else { // 查询仓库下面仓位的SKU可用库存
-            // 查询仓库组织
+        } else {
+            // 查询仓库下面仓位的SKU可用库存
             WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);
             Optional.ofNullable(warehouseEntity).orElseThrow(()->new ServiceException("仓库信息不存在"));
             return this.getInventoryTotal(warehouseEntity.getOrgId(), warehouseId, skuId, warehouseLocationId, InventoryStatusEnum.USABLE.getCode());
@@ -234,7 +237,6 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             inventory.setVersion(1);
             boolean save = super.save(inventory);
             ValidatorUtil.isTrue(save, () -> new ServiceException("库存数据保存失败"));
-            // 增加关联仓位
         } else {
             log.info("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】在库存实时表中存在数据，修改数据", inventoryStatus, warehouseId, orgId, warehouseLocation, skuId, skuNo);
             originInventoryQty = inventory.getQty();
