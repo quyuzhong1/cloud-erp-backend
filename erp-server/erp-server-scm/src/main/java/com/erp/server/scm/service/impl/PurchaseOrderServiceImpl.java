@@ -1454,7 +1454,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         records.forEach(obj -> {
             obj.setArrivalStatusName(ArrivalStatusEnum.getNameByCode(obj.getArrivalStatus()));
             Integer receiveQty = MathUtil.ZERO;
-            Integer qty = MathUtil.ZERO;
+            Integer deliveryQty = MathUtil.ZERO;
             Integer returnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
 
             if (CollectionUtils.isNotEmpty(receiveDetailList)) {
@@ -1462,11 +1462,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                         .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 //已到货数据待收货数量默认给0
                 if (!ArrivalStatusEnum.ARRIVED.getCode().equals(obj.getArrivalStatus())) {
-                     qty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()))
+                    Integer qty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()))
                             .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                    deliveryQty = obj.getPurchaseQty() + returnQty - qty;
                 }
             }
-            Integer deliveryQty = obj.getPurchaseQty() + returnQty - qty;
             obj.setReceiveQty(receiveQty);
             obj.setDeliveryQty(deliveryQty);
 
