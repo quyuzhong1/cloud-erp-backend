@@ -1246,7 +1246,10 @@ public class SoInfoDTO implements Serializable {
          * 退货日期
          */
         private LocalDate returnDate;
-
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
         /**
          * 备注
          */

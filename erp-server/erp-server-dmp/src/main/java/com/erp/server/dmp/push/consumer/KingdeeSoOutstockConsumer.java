@@ -61,7 +61,7 @@ public class KingdeeSoOutstockConsumer implements RocketMQListener<Map<String, O
     @Override
     public void onMessage(Map<String, Object> map) {
         //模块类型
-        Integer type = ApiModuleTypeEnum.CUSTOMER_INFO.getCode();
+        Integer type = ApiModuleTypeEnum.SO_OUTSTOCK.getCode();
 
         //业务id
         String  businessId = String.valueOf(map.get("id"));
@@ -74,7 +74,7 @@ public class KingdeeSoOutstockConsumer implements RocketMQListener<Map<String, O
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_CUSTOMER.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
 
 
         //操作项

@@ -207,6 +207,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public String add(SoReturnDTO.Add dto) {
         //获取销售单信息
         SoInfoEntity soInfoEntity = soInfoService.getById(dto.getSourceId());
@@ -244,14 +245,17 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnEntity.setBillDate(dto.getBillDate());
         soReturnEntity.setWarehouseId(dto.getWarehouseId());
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
-        WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-        soReturnEntity.setWarehouseName(updateDTO.getName());
-        soReturnEntity.setInventoryOrgId(updateDTO.getOrgId());
-        //获取核算公司
-        SysAccountingCompanyEntity companyEntity = sysUserFeign.getCompanyById(updateDTO.getOrgId());
-        if (ObjectUtil.isNotEmpty(companyEntity)) {
-            soReturnEntity.setInventoryOrgName(companyEntity.getCompanyName());
+        WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(updateDTO)) {
+            soReturnEntity.setWarehouseName(updateDTO.getName());
+            soReturnEntity.setInventoryOrgId(updateDTO.getOrgId());
+            //获取核算公司
+            SysAccountingCompanyEntity companyEntity = sysUserFeign.getCompanyById(updateDTO.getOrgId());
+            if (ObjectUtil.isNotEmpty(companyEntity)) {
+                soReturnEntity.setInventoryOrgName(companyEntity.getCompanyName());
+            }
         }
+
         this.save(soReturnEntity);
         //操作日志
         operateLogService.addModuleOperateLog(String.format("新增了一个销售退货入库单【%s】", code), ModuleTypeEnum.SO_RETURN.getCode(), soReturnEntity.getId(), "新增操作");
@@ -672,9 +676,11 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             SoReturnDTO.Add add = new SoReturnDTO.Add();
             add.setSourceId(soId);
             add.setSourceType(SourceTypeEnum.SO_INFO.getCode());
+
             List<SoInfoDTO.GenerateSoReturnView> viewList = list.stream().filter(req -> req.getSoId().equals(soId)).collect(Collectors.toList());
             List<SoReturnDetailDTO.Add> detailList = new ArrayList<>();
             for (SoInfoDTO.GenerateSoReturnView view : viewList) {
+                add.setWarehouseId(view.getWarehouseId());
                 SoReturnDetailDTO.Add detailAdd = new SoReturnDetailDTO.Add();
                 detailAdd.setReturnQty(view.getReturnQty());
                 detailAdd.setReturnTypeDict(view.getReturnTypeDict());

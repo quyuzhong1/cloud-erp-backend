@@ -232,6 +232,7 @@
         SELECT
             si.code AS soCode,
             si.customer_id,
+            si.warehouse_id,
             sd.id AS detailId,
             sd.main_id AS soId,
             sd.sku_id,
