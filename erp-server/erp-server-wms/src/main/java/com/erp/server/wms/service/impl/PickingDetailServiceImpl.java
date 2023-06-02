@@ -11,6 +11,7 @@ import com.erp.server.wms.mapper.PickingDetailMapper;
 import com.erp.server.wms.service.PickingDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Collections;
@@ -33,6 +34,7 @@ public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapp
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public void add(List<PickingDetailDTO.CommonDTO> detailList) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;

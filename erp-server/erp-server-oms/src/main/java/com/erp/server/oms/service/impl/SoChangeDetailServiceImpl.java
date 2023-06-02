@@ -427,6 +427,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
      */
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public void handleDb(List<SoChangeEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
