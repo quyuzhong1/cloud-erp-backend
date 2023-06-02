@@ -32,7 +32,7 @@ public class MyBatisGeneratorRun {
     // 当前环境是否Windows
     private static final boolean IS_WINDOWS = System.getProperty("os.name").trim().toLowerCase().contains("windows");
     // 数据库链接配置
-    static String MODEL = "wms";
+    static String MODEL = "sys";
     private static String DB_URL = StrUtil.format("jdbc:postgresql://172.16.100.12:5432/erp-{}?useSSL=false&serverTimezone=GMT%2B8", MODEL);
     private static final String USER_NAME = "postgres";
     private static final String PASSWORD = "admin@viji";
@@ -47,7 +47,7 @@ public class MyBatisGeneratorRun {
 
     private static final String SERVER_NAME = StrUtil.format("erp-server-{}", MODEL);
     //作者名
-    private static final String AUTHOR = "Cloud";
+    private static final String AUTHOR = "Lambda";
     // 输出路径(为空默认为项目路径)
     private static final String OUTPUT_DIR = "";
 
@@ -56,7 +56,7 @@ public class MyBatisGeneratorRun {
         String prefix = "";
 
         // 注意：会直接生成到项目路径，请注意防止覆盖
-        String[] tables = new String[]{"seata_test_stock"};
+        String[] tables = new String[]{"use_kingdee_post"};
         autoGenerator(prefix, tables);
     }
 

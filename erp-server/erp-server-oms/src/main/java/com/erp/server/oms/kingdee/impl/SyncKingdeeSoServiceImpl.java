@@ -105,7 +105,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             SysDepartmentDTO departmentDTO = sysUserFeign.getUserDeptById(salesDeptId);
             //销售部门
             if (!Objects.isNull(departmentDTO)) {
-                resultMap.put("deptCode", departmentDTO.getCode());
+                resultMap.put("deptCode", "BM000062");
             }
         }
         //获取员工

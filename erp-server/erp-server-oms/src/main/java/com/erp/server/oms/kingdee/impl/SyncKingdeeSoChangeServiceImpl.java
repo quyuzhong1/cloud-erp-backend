@@ -12,6 +12,7 @@ import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoChangeService;
 import com.erp.server.oms.service.SoChangeDetailService;
+import com.erp.server.oms.service.SoChangeService;
 import com.erp.server.oms.service.SoInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -49,6 +50,9 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
     @Resource
     private SoChangeDetailService soChangeDetailService;
 
+    @Resource
+    private SoChangeService soChangeService;
+
     /**
      * 销售变更单同步金碟
      *
@@ -75,18 +79,27 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         }
 
         //销售订单号
-        resultMap.put("soCode", soInfo.getCode());
+        resultMap.put("soCode", "XSD-20230411-35276");
         resultMap.put("soId", soInfo.getId());
         //单据类型
         resultMap.put("orderType", "XSDDBGD01_SYS");
         //单据日期
         resultMap.put("billDate", entity.getBillDate());
+        //客户
+        resultMap.put("customerCode", "CUST4786");
+
+        //销售员
+        resultMap.put("sellerCode", "0059_GW000047_1");
+
+
+        //变更原因
+        resultMap.put("remark", entity.getRemark());
         //销售组织
         String salesOrgId = soInfo.getSalesOrgId();
         if (StringUtils.isNotBlank(salesOrgId)) {
             List<BaseIdDTO.CodeDTO> salesOrgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
             if (CollectionUtils.isNotEmpty(salesOrgList)) {
-                resultMap.put("salesOrgCode", salesOrgList.get(0).getCode());
+                resultMap.put("salesOrgCode", "100");
             }
         }
 
@@ -96,28 +109,28 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         }
 
         List<JSONObject> list = new ArrayList<>(details.size());
-        for (SoChangeDetailDTO.ViewDTO item : details) {
+/*        for (SoChangeDetailDTO.ViewDTO item : details) {*/
             JSONObject jsonObject = new JSONObject();
-            jsonObject.set("skuNo", item.getSkuNo());
-            jsonObject.set("changeType", item.getChangeType().getCode());
-            jsonObject.set("oldQty", item.getOldQty());
-            jsonObject.set("qty", item.getQty());
-            jsonObject.set("price", item.getPrice());
-            jsonObject.set("oldPrice", item.getOldPrice());
-            jsonObject.set("isGift", item.getIsGift());
-            jsonObject.set("unit", item.getUnit());
+            jsonObject.set("skuNo", "1275");
+            jsonObject.set("changeType", "update");
+            jsonObject.set("oldQty", 50);
+            jsonObject.set("qty", 30);
+            jsonObject.set("price", 50);
+            jsonObject.set("oldPrice", 51.98);
+            jsonObject.set("isGift", false);
+            jsonObject.set("unit", "Pcs");
             list.add(jsonObject);
-        }
+  /*      }*/
 
-        resultMap.put("detailList", list);
+ //       resultMap.put("detailList", list);
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SO_INFO_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
+            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SO_CHANGE_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return soInfoService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "", entity.getSyncOperate());
+                return soChangeService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "", entity.getSyncOperate());
             }
             return Boolean.TRUE;
         });

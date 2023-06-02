@@ -47,17 +47,11 @@ public class KingdeeSoChangeConsumer implements RocketMQListener<Map<String, Obj
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER_CHANGE.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "XSD-20230403-35184_V001"));
+        queryFilters.add(String.format("FBillNo = '%s'", "XSDDBGD000475"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FBillTypeID.FNUMBER,FBillTypeID.FNAME,FChangeType";
+        String fieldKeys = "FORDERENTRYID";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 1);
         System.out.println(queryList);
-
-
-      /* LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("Number","CGDD-230413-8806");
-        JSONObject viewJson = apiUtils.getViewJson(JSONArray.toJSONString(viewMap));
-        System.out.println(viewJson);*/
 
     }
 

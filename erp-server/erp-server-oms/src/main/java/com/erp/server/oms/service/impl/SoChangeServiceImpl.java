@@ -14,6 +14,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -36,6 +37,7 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.oms.kingdee.SyncKingdeeSoChangeService;
 import com.erp.server.oms.mapper.SoChangeMapper;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +51,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -90,6 +93,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
     @Resource
     private CommonService commonService;
+
+    @Resource
+    private SyncKingdeeSoChangeService syncKingdeeSoChangeService;
 
     /**
      * 添加销售订单
@@ -706,6 +712,35 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     }
 
 
+
+    /**
+     * 更改销售订单金蝶推送的状态
+     *
+     * @param id
+     * @param syncKingdeeStatus
+     * @param syncKingdeeId
+     * @param syncOperate
+     * @return
+     * @author yl
+     * @date 2023-05-31 14:20
+     */
+    @Override
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+
+        if (StringUtils.isEmpty(id)) {
+            return Boolean.TRUE;
+        }
+        return this.lambdaUpdate()
+                .eq(SoChangeEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), SoChangeEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), SoChangeEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), SoChangeEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncOperate), SoChangeEntity::getSyncOperate, syncOperate)
+                .update();
+
+    }
+
+
     /**
      * 审核
      *
@@ -729,11 +764,13 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         String comment = dto.getComment();
         String content = "";
         LoginUser user = commonService.getUserInfo();
-        ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE_ING;
         if (dto.getType().equals(ApproveType.PASS)) {
             soChangeDetailService.handleDb(list);
             //审核通过
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
+            //审核通过发送金蝶
+            list.forEach(obj -> syncKingdeeSoChangeService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
         } else {
             approveStatus = ApproveStatusEnum.REJECT;
             //审核不通过

@@ -213,6 +213,11 @@ public enum RocketMqTagEnum {
      */
     KINGDEE_SO_RETURN_TAG(1021, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_so_return_tag"),
 
+    /**
+     *销售变更订单同步金蝶
+     */
+    KINGDEE_SO_CHANGE_TAG(1022, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_so_change_tag"),
+
 
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 
