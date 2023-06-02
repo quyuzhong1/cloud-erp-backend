@@ -23,6 +23,13 @@ public class SoReturnInstockDetailDTO {
         @Max(value = 999999999, message = "实退数量最大值为999999999")
         private Integer realQty;
         /**
+         * 签收数量
+         */
+        @NotNull(message = "签收数量不能为空")
+        @Min(value = 1, message = "签收数量最小值为1")
+        @Max(value = 999999999, message = "签收数量最大值为999999999")
+        private Integer receiveQty;
+        /**
          * 退货类型 wms/common/enumDropDown?type=ReturnType
          * 描述：refund 退货扣款 replenishment 退货补货
          */
@@ -63,6 +70,13 @@ public class SoReturnInstockDetailDTO {
         @Min(value = 1, message = "实退数量最小值为1")
         @Max(value = 999999999, message = "实退数量最大值为999999999")
         private Integer realQty;
+        /**
+         * 签收数量
+         */
+        @NotNull(message = "签收数量不能为空")
+        @Min(value = 1, message = "签收数量最小值为1")
+        @Max(value = 999999999, message = "签收数量最大值为999999999")
+        private Integer receiveQty;
         /**
          * 退货类型 wms/common/enumDropDown?type=ReturnType
          * 描述：refund 退货扣款 replenishment 退货补货
