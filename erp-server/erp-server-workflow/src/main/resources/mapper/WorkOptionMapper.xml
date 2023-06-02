@@ -3,13 +3,15 @@
 <mapper namespace="com.erp.server.workflow.mapper.WorkOptionMapper">
     <select id="listWaitDoMenu" resultType="com.erp.model.workflow.dto.WorkOptionDTO$WaitDoMenu">
         SELECT
-            wmrs.id,
-            wm.sys_classify AS sysClassify,
-            wm.module_classify AS moduleClassify,
-            db.name AS moduleStatusName
+        wm.id,
+        wmrs.id,
+        wm.sys_classify AS sysClassify,
+        wm.module_classify AS moduleClassify,
+        db.name AS moduleStatusName,
+        wmrs.module_status
         FROM work_menu wm
         LEFT JOIN work_menu_ref_status wmrs ON wm.id = wmrs.menu_id
-        LEFT JOIN dict_basic db ON wmrs.module_status = db."value"
+        LEFT JOIN dict_basic db ON wmrs.module_status = db."value" AND db."type" = 'moduleStatus'
         <where>
             <if test="sysClassify != '' and sysClassify != null">
                 AND wm.sys_classify = #{sysClassify}

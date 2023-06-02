@@ -156,18 +156,15 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             resultMap.put("carrierCode", supplierEntity.getCode());
         }
 
-        //————————————————————财务信息——————————————————————
-        Map<String, Object> subHeadEntity = new HashMap<>();
+        //————————————————————财务信息SubHeadEntity——————————————————————
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(soInfoById.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
-        subHeadEntity.put("currencyCode", viewDTO.getKingdeeCode());
+        resultMap.put("currencyCode", viewDTO.getKingdeeCode());
         //结算组织
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
             String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soInfoById.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
-            subHeadEntity.put("salesOrgCode", salesOrgCode);
+            resultMap.put("salesOrgCode", salesOrgCode);
         }
-
-        resultMap.put("subHeadEntity", subHeadEntity);
 
         //————————————————————物料信息——————————————————————
         List<Map<String, Object>> fEntityList = new ArrayList<>();
