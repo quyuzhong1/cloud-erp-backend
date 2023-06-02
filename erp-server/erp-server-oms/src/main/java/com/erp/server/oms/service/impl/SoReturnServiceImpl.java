@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
@@ -665,7 +666,10 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Override
     public List<SoReturnEntity> listSoReturnByApproveStatus() {
-        return lambdaQuery().eq(SoReturnEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus()).list();
+        LambdaQueryWrapper<SoReturnEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SoReturnEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus());
+        queryWrapper.orderByDesc(SoReturnEntity::getCode);
+        return baseMapper.selectList(queryWrapper);
     }
 
     @Override
