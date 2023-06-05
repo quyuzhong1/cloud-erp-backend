@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
  */
 @Getter
 @Setter
+@NoArgsConstructor
 @Accessors(chain = true)
 @TableName("dict_city")
 public class DictCityEntity extends BaseEntity<DictCityEntity> {
@@ -96,6 +98,9 @@ public class DictCityEntity extends BaseEntity<DictCityEntity> {
     @TableField("kingdee_code")
     private String kingdeeCode;
 
+    @TableField("code")
+    private String code;
+
 
     public static final String NAME = "name";
 
@@ -118,6 +123,16 @@ public class DictCityEntity extends BaseEntity<DictCityEntity> {
     public static final String INDEX = "index";
 
     public static final String DISABLED = "disabled";
+
+    public DictCityEntity(String provinceName, String code, String parentId, int level, String type, int index, String provinceCode) {
+        this.name = provinceName;
+        this.countryCode = code;
+        this.parentId = parentId;
+        this.level = level;
+        this.type = type;
+        this.index = index;
+        this.code = provinceCode;
+    }
 
     @Override
     public Serializable pkVal() {

@@ -67,110 +67,266 @@ public class DeliveryDetailsBean {
      * lack_reason : null
      */
 
-    @SerializedName("qty")
-    private BigDecimal qty;
-    @SerializedName("discount")
-    private BigDecimal discount;
-    @SerializedName("refund")
-    private Integer refund;
-    @SerializedName("itemCategoryName")
-    private String itemCategoryName;
-    @SerializedName("itemUnitName")
-    private String itemUnitName;
-    @SerializedName("barcode")
-    private String barcode;
-    @SerializedName("tariff")
-    private BigDecimal tariff;
-    @SerializedName("memo")
-    private String memo;
-    @SerializedName("picUrl")
-    private String picUrl;
+    /**
+     * 子订单号
+     */
     @SerializedName("oid")
     private String oid;
+    /**
+     * 数量
+     */
+    @SerializedName("qty")
+    private BigDecimal qty;
+    /**
+     * 折扣
+     */
+    @SerializedName("discount")
+    private BigDecimal discount;
+    /**
+     * 退款状态 0:未退款 1:退款成功 2:退款中
+     */
+    @SerializedName("refund")
+    private Integer refund;
+    /**
+     * 分类名称
+     */
+    @SerializedName("itemCategoryName")
+    private String itemCategoryName;
+    /**
+     * 单位名称
+     */
+    @SerializedName("itemUnitName")
+    private String itemUnitName;
+    /**
+     * 条形码
+     */
+    @SerializedName("barcode")
+    private String barcode;
+    /**
+     * 关税
+     */
+    @SerializedName("tariff")
+    private BigDecimal tariff;
+    /**
+     * 备注
+     */
+    @SerializedName("memo")
+    private String memo;
+    /**
+     * 图片地址
+     */
+    @SerializedName("picUrl")
+    private String picUrl;
+    /**
+     * 折扣金额
+     */
     @SerializedName("discount_fee")
     private String discountFee;
+    /**
+     * 让利后金额
+     */
     @SerializedName("amount_after")
     private String amountAfter;
+    /**
+     * 缺货数量
+     */
     @SerializedName("lack")
     private Integer lack;
+    /**
+     * 订单号
+     */
     @SerializedName("trade_code")
     private String tradeCode;
+    /**
+     * 原价
+     */
     @SerializedName("origin_price")
     private BigDecimal originPrice;
+    /**
+     * 原金额
+     */
     @SerializedName("origin_amount")
     private BigDecimal originAmount;
+    /**
+     * 平台商品名称
+     */
     @SerializedName("platform_item_name")
     private String platformItemName;
+    /**
+     * 平台sku名称
+     */
     @SerializedName("platform_sku_name")
     private String platformSkuName;
+    /**
+     * 商品id
+     */
     @SerializedName("item_id")
     private String itemId;
+    /**
+     * sku id
+     */
     @SerializedName("item_sku_id")
     private String itemSkuId;
+    /**
+     * 商品编码
+     */
     @SerializedName("item_code")
     private String itemCode;
+    /**
+     * 商品名称
+     */
     @SerializedName("item_name")
     private String itemName;
+    /**
+     * sku编码
+     */
     @SerializedName("sku_code")
     private String skuCode;
+    /**
+     * sku名称
+     */
     @SerializedName("sku_name")
     private String skuName;
+    /**
+     * sku备注
+     */
     @SerializedName("sku_note")
     private String skuNote;
+    /**
+     * 组合商品编码
+     */
     @SerializedName("combine_item_code")
     private String combineItemCode;
+    /**
+     * 仓库编码
+     */
     @SerializedName("location_code")
     private String locationCode;
+    /**
+     * 平台编码
+     */
     @SerializedName("platform_code")
     private String platformCode;
+    /**
+     * 税率
+     */
     @SerializedName("tax_rate")
     private BigDecimal taxRate;
+    /**
+     * 税额
+     */
     @SerializedName("tax_amount")
     private BigDecimal taxAmount;
+    /**
+     * 订单类型
+     */
     @SerializedName("order_type")
     private String orderType;
+    /**
+     * 平台标记
+     */
     @SerializedName("platform_flag")
     private Integer platformFlag;
+    /**
+     * 明细唯一标识
+     */
     @SerializedName("detail_unique")
     private String detailUnique;
+    /**
+     * 明细批次
+     */
     @SerializedName("detail_batch")
     private String detailBatch;
+    /**
+     * 是否赠品
+     */
     @SerializedName("is_gift")
-    private Integer isGift;
+    private Boolean isGift;
+    /**
+     * 商家名称
+     */
     @SerializedName("businessman_name")
     private String businessmanName;
+    /**
+     * 是否加属性
+     */
     @SerializedName("item_add_attribute")
     private Integer itemAddAttribute;
+    /**
+     * 赠品来源
+     */
     @SerializedName("gift_source_view")
     private String giftSourceView;
+    /**
+     * 币别代码
+     */
     @SerializedName("currency_code")
     private String currencyCode;
+    /**
+     * 币别名称
+     */
     @SerializedName("currency_name")
     private String currencyName;
+    /**
+     * 税号
+     */
     @SerializedName("tax_no")
     private String taxNo;
+    /**
+     * 物流成本
+     */
     @SerializedName("post_cost")
     private BigDecimal postCost;
+    /**
+     * 其他服务费
+     */
     @SerializedName("other_service_fee")
     private BigDecimal otherServiceFee;
     @SerializedName("total_cost_price")
     private BigDecimal totalCostPrice;
+    /**
+     * 实际单价
+     */
     @SerializedName("price")
     private BigDecimal price;
+    /**
+     * 实际金额
+     */
     @SerializedName("amount")
     private BigDecimal amount;
+    /**
+     * 物流费用
+     */
     @SerializedName("post_fee")
     private BigDecimal postFee;
+    /**
+     * 平台折扣金额
+     */
     @SerializedName("plat_discount_amount")
     private String platDiscountAmount;
+    /**
+     * 分销商物流费用
+     */
     @SerializedName("distribution_post_fee")
     private String distributionPostFee;
+    /**
+     * 销售单位名称
+     */
     @SerializedName("sale_unit_name")
     private String saleUnitName;
+    /**
+     * 汇率
+     */
     @SerializedName("exchange_rate")
     private String exchangeRate;
+    /**
+     * 缺货数量
+     */
     @SerializedName("lack_qty")
     private BigDecimal lackQty;
+    /**
+     * 缺货原因
+     */
     @SerializedName("lack_reason")
     private String lackReason;
 }
