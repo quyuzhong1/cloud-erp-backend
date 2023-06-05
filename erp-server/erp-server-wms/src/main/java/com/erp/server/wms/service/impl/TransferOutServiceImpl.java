@@ -190,14 +190,13 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         Map<String,ApproveStatusQtyDTO> statusMap = statusList.stream().collect(Collectors.toMap(ApproveStatusQtyDTO::getApproveStatus, Function.identity()));
         // 只返回待审核、已审核、审核不通过的数据
         List<TransferOutDTO.TabListDTO> resultList = Lists.newArrayListWithExpectedSize(3);
-        Map<PurchaseChangeListTypeEnum, ApproveStatusEnum> statusMapping = new LinkedHashMap<>();
-        statusMapping.put(PurchaseChangeListTypeEnum.TO_BE_APPROVE, ApproveStatusEnum.APPROVE_ING);
-        statusMapping.put(PurchaseChangeListTypeEnum.APPROVE, ApproveStatusEnum.APPROVE);
-        statusMapping.put(PurchaseChangeListTypeEnum.REJECT, ApproveStatusEnum.REJECT);
-
-        statusMapping.forEach((purchaseChangeType, approveStatus)->{
-            Integer qty = statusMap.getOrDefault(approveStatus.getStatus(), new ApproveStatusQtyDTO()).getCount();
-            TransferOutDTO.TabListDTO tab = new TransferOutDTO.TabListDTO(purchaseChangeType.getCode(), qty);
+        Arrays.asList(PurchaseChangeListTypeEnum.values()).stream().forEach(purchaseChangeType -> {
+            // 获取对应的业务单据状态
+            List<ApproveStatusEnum> approveStatusEnumList = purchaseChangeType.getApproveStatusList();
+            Integer statusQty = approveStatusEnumList.stream().mapToInt(approveStatus-> {
+                return statusMap.getOrDefault(approveStatus.getStatus(), new ApproveStatusQtyDTO()).getCount();
+            }).sum();
+            TransferOutDTO.TabListDTO tab = new TransferOutDTO.TabListDTO(purchaseChangeType.getCode(), statusQty);
             resultList.add(tab);
         });
         return resultList;
