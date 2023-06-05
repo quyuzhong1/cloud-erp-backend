@@ -126,7 +126,11 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
 
         //这是要添加的
         List<CustomerAddressDTO.ViewDTO> addList = addressList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
-
+        for (CustomerAddressDTO.ViewDTO viewDTO : addList) {
+            //生成单号
+            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.KHDZ, BusinessNoTypeEnum.CODE_KHDZ.getCode()));
+            viewDTO.setCode(code);
+        }
         //这个是要修改的实体
         List<CustomerAddressEntity> updateEntityList = BeanMapper.copyList(updateList, CustomerAddressEntity.class);
         //这个是要添加的
