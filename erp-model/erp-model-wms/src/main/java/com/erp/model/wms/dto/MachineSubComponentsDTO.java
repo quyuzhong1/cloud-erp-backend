@@ -86,5 +86,10 @@ public class MachineSubComponentsDTO implements Serializable {
          */
         private Integer curInventoryQty;
 
+        /**
+         * BOM套装的子件数量
+         */
+        private Integer itemQty;
+
     }
 }

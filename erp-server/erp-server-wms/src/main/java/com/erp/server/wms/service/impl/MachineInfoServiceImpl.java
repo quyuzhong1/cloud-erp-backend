@@ -47,6 +47,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeMachineInfoService;
 import com.erp.server.wms.mapper.MachineInfoMapper;
 import com.erp.server.wms.service.*;
+import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -59,6 +60,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -268,7 +270,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //主表信息
         MachineInfoEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99043);
+            throw new ServiceException(ApiError.ERROR_99052);
         }
         BeanMapperUtils.copy(entity, viewDTO);
         List<MachineDetailEntity> detailList = machineDetailService.listByMainId(id);
@@ -278,8 +280,10 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         List<MachineDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(MachineDetailDTO.ViewDTO.class, detailList);
 
         //产品信息
-        List<String> skuIds = detailList.stream().map(MachineDetailEntity::getSkuId).collect(Collectors.toList());
+        List<String> skuIds = detailList.stream().map(MachineDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        Map<String, List<MachineSubComponentsDTO.ViewDTO>> bomSubMap = Maps.newHashMap();
+        skuIds.stream().forEach(skuId-> bomSubMap.put(skuId, viewBomSubComponents(skuId)));
         for (MachineDetailDTO.ViewDTO viewDetailDTO : viewDetailList) {
             //产品名称
             if (CollectionUtils.isNotEmpty(skuList)) {
@@ -291,6 +295,12 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             viewDetailDTO.setCurInventoryQty(curInventoryQty);
             //明细子件
             List<MachineSubComponentsDTO.ViewDTO> subComponentsList = this.viewSubComponents(viewDetailDTO.getId());
+            List<MachineSubComponentsDTO.ViewDTO> subList = bomSubMap.get(viewDetailDTO.getSkuId());
+            Map<String,MachineSubComponentsDTO.ViewDTO> subMap = subList.stream().collect(Collectors.toMap(MachineSubComponentsDTO.ViewDTO::getSkuId, Function.identity()));
+            subComponentsList.stream().forEach(sub-> {
+                MachineSubComponentsDTO.ViewDTO subView = subMap.get(sub.getSkuId());
+                sub.setItemQty(subView.getQty());
+            });
             viewDetailDTO.setSubComponentsList(subComponentsList);
         }
         viewDTO.setDetailList(viewDetailList);

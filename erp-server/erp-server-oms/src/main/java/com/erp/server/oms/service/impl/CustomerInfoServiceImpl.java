@@ -822,15 +822,18 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         queryWrapper.select(CustomerInfoEntity::getId,
                 CustomerInfoEntity::getCode,
                 CustomerInfoEntity::getName,
+                CustomerInfoEntity::getApproveStatus,
                 CustomerInfoEntity::getDisabled);
         queryWrapper.eq(CustomerInfoEntity::getDisabled, Boolean.FALSE);
         List<CustomerInfoEntity> list = this.list(queryWrapper);
         List<CustomerDTO.InfoDTO> resultList = BeanMapper.copyList(list, CustomerDTO.InfoDTO.class);
-        ApproveStatusEnum status = ApproveStatusEnum.APPROVE;
-        for(CustomerDTO.InfoDTO item: resultList){
-             if(!item.getApproveStatus().equals(status)){
-                 item.setDisabled(true);
-             }
+        List<ApproveStatusEnum> statusList = new ArrayList<>(2);
+        statusList.add(ApproveStatusEnum.APPROVE);
+        statusList.add(ApproveStatusEnum.REJECT);
+        for (CustomerDTO.InfoDTO item : resultList) {
+            if (statusList.contains(item.getApproveStatus())) {
+                item.setDisabled(true);
+            }
         }
         return resultList;
     }
