@@ -50,12 +50,6 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean add(SoReturnInstockDTO.Add dto, String id) {
-        if (dto.getSourceType().equals(SourceTypeEnum.QC_BILL.getCode())) {
-            QcInfoEntity qcInfoEntity = qcInfoService.getById(dto.getSourceId());
-            //签收单明细id
-            SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailService.getById(qcInfoEntity.getSourceDetailId());
-            dto.getDetailList().forEach(req -> req.setSourceDetailId(soReturnReceiveDetailEntity.getSourceDetailId()));
-        }
         //获取退货单详情表id
         List<String> returnDetailIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Add::getSourceDetailId).collect(Collectors.toList());
         List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(returnDetailIds);
