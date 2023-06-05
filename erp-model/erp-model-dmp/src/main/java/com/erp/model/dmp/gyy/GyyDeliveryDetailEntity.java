@@ -83,126 +83,294 @@ public class GyyDeliveryDetailEntity {
 
     private String _id;
 
+    /**
+     * 制单时间
+     */
     @SerializedName("create_date")
     private String createDate;
+    /**
+     * 修改时间
+     */
     @SerializedName("modify_date")
     private String modifyDate;
+    /**
+     * 单据编号
+     */
     @SerializedName("code")
     private String code;
+    /**
+     * 商品总数
+     */
     @SerializedName("qty")
     private Double qty;
+    /**
+     * 支付时间
+     */
     @SerializedName("pay_time")
     private String payTime;
+    /**
+     * 是否货到付款
+     */
     @SerializedName("cod")
     private Boolean cod;
+    /**
+     * 是否退款 0:无退款 1:有退款
+     */
     @SerializedName("refund")
     private Integer refund;
+    /**
+     * 确认开票时间
+     */
     @SerializedName("invoiceDate")
     private String invoiceDate;
+    /**
+     * 大头笔
+     */
     @SerializedName("bigchar")
     private String bigchar;
+    /**
+     * 是否取消
+     */
     @SerializedName("cancel")
     private Boolean cancel;
+    /**
+     * 物流费用
+     */
     @SerializedName("post_fee")
     private BigDecimal postFee;
+    /**
+     * 货到付款服务费
+     */
     @SerializedName("cod_fee")
     private String codFee;
+    /**
+     * 优惠金额
+     */
     @SerializedName("discount_fee")
     private String discountFee;
+    /**
+     * 物流成本
+     */
     @SerializedName("post_cost")
     private String postCost;
+    /**
+     * 未付金额
+     */
     @SerializedName("unpaid_amount")
     private String unpaidAmount;
-    @SerializedName("pictureBill")
+    /**
+     * 是否多包裹 true：多包裹 false：单包裹
+     */
+    @SerializedName("picture_bill")
     private Boolean pictureBill;
+    /**
+     * 平台单号
+     */
     @SerializedName("platform_code")
     private String platformCode;
+    /**
+     * 预计发货时间
+     */
     @SerializedName("plan_delivery_date")
     private String planDeliveryDate;
+    /**
+     * 买家留言
+     */
     @SerializedName("buyer_memo")
     private String buyerMemo;
+    /**
+     * 卖家留言
+     */
     @SerializedName("seller_memo")
     private String sellerMemo;
+    /**
+     * 收货人姓名
+     */
     @SerializedName("receiver_name")
     private String receiverName;
+    /**
+     * 收货人电话
+     */
     @SerializedName("receiver_phone")
     private String receiverPhone;
+    /**
+     * 收货人手机
+     */
     @SerializedName("receiver_mobile")
     private String receiverMobile;
+    /**
+     * 收货人邮编
+     */
     @SerializedName("receiver_zip")
     private String receiverZip;
+    /**
+     * 收货人地址
+     */
     @SerializedName("receiver_address")
     private String receiverAddress;
+    /**
+     * 制单人
+     */
     @SerializedName("create_name")
     private String createName;
+    /**
+     * 快递单号
+     */
     @SerializedName("express_no")
     private String expressNo;
+    /**
+     * 会员名称
+     */
     @SerializedName("vip_name")
     private String vipName;
+    /**
+     * 店铺名称
+     */
     @SerializedName("shop_name")
     private String shopName;
+    /**
+     * 收货地区
+     */
     @SerializedName("area_name")
     private String areaName;
+    /**
+     * 仓库名称
+     */
     @SerializedName("warehouse_name")
     private String warehouseName;
+    /**
+     * 库位代码
+     */
+    @SerializedName("location_code")
+    private String locationCode;
+    /**
+     * 快递公司代码
+     */
     @SerializedName("express_code")
     private String expressCode;
+    /**
+     * 快递公司名称
+     */
     @SerializedName("express_name")
     private String expressName;
+    /**
+     * 订单标记名称
+     */
     @SerializedName("tag_name")
     private String tagName;
+    /**
+     * 二次备注
+     */
     @SerializedName("seller_memo_late")
     private String sellerMemoLate;
+    /**
+     * 格子号
+     */
     @SerializedName("shelf_no")
     private String shelfNo;
+    /**
+     * 单据状态信息
+     */
     @SerializedName("delivery_statusInfo")
     private DeliveryStatusInfoBean deliveryStatusInfo;
+    /**
+     * 会员代码
+     */
     @SerializedName("vip_code")
     private String vipCode;
+    /**
+     * 仓库代码
+     */
     @SerializedName("warehouse_code")
     private String warehouseCode;
+    /**
+     * 店铺代码
+     */
     @SerializedName("shop_code")
     private String shopCode;
+    /**
+     * 真实姓名
+     */
     @SerializedName("vip_real_name")
     private String vipRealName;
+    /**
+     * 会员身份证号
+     */
     @SerializedName("vip_id_card")
     private String vipIdCard;
+    /**
+     * 集包地代码
+     */
     @SerializedName("package_center_code")
     private String packageCenterCode;
+    /**
+     * 集包地名称
+     */
     @SerializedName("package_center_name")
     private String packageCenterName;
+    /**
+     * 数据同步状态 -1:同步失败 0:未同步 1:已同步
+     */
     @SerializedName("sync_status")
     private Integer syncStatus;
+    /**
+     * 数据同步备注
+     */
     @SerializedName("sync_memo")
     private String syncMemo;
+    /**
+     * 分销商名称
+     */
     @SerializedName("drp_tenant_name")
     private String drpTenantName;
+    /**
+     * 分销商手机号
+     */
     @SerializedName("drp_tenant_mobile")
     private String drpTenantMobile;
+    /**
+     * 已付金额
+     */
     @SerializedName("payment")
     private String payment;
+    /**
+     * 总金额
+     */
     @SerializedName("amount")
     private BigDecimal amount;
+    /**
+     * 门店名称
+     */
     @SerializedName("store_name")
     private String storeName;
+    /**
+     * 门店代码
+     */
     @SerializedName("store_code")
     private String storeCode;
-    @SerializedName("finance_approver")
-    private String financeApprover;
-    @SerializedName("appointment_no")
-    private String appointmentNo;
+    /**
+     * 保险金额
+     */
     @SerializedName("insure_amount")
     private Double insureAmount;
-    @SerializedName("sub_type_name")
-    private String subTypeName;
-    @SerializedName("distribution_channel")
-    private String distributionChannel;
+    /**
+     * 保险费
+     */
     @SerializedName("tax_amount_total")
     private String taxAmountTotal;
+    /**
+     *商品列表
+     */
     @SerializedName("details")
     private List<DeliveryDetailsBean> details;
+    /**
+     * 发票列表
+     */
     @SerializedName("invoices")
     private List<Object> invoices;
+    /**
+     * 附件列表
+     */
     @SerializedName("stock_location")
     private List<Object> stockLocation;
 
@@ -277,11 +445,7 @@ public class GyyDeliveryDetailEntity {
                 ", amount=" + amount +
                 ", storeName='" + storeName + '\'' +
                 ", storeCode='" + storeCode + '\'' +
-                ", financeApprover='" + financeApprover + '\'' +
-                ", appointmentNo='" + appointmentNo + '\'' +
                 ", insureAmount=" + insureAmount +
-                ", subTypeName='" + subTypeName + '\'' +
-                ", distributionChannel='" + distributionChannel + '\'' +
                 ", taxAmountTotal='" + taxAmountTotal + '\'' +
                 ", details=" + details +
                 '}';

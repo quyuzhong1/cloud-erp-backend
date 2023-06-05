@@ -20,14 +20,29 @@ public class ReturnOrderPayments {
      * pay_time : null
      */
 
+    /**
+     * 退款金额
+     */
     @SerializedName("payment")
     private BigDecimal payment;
+    /**
+     * 退款账号
+     */
     @SerializedName("account")
     private String account;
+    /**
+     * 备注
+     */
     @SerializedName("note")
     private String note;
+    /**
+     * 退款方式代码
+     */
     @SerializedName("pay_type_code")
     private String payTypeCode;
+    /**
+     * 退款时间
+     */
     @SerializedName("pay_time")
     private LocalDateTime payTime;
 }

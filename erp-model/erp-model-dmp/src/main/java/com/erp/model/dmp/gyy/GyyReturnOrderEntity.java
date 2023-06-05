@@ -78,89 +78,214 @@ public class GyyReturnOrderEntity {
      */
 
     private String _id;
-
+    /**
+     * 单据编号
+     */
     @SerializedName("code")
     private String code;
+    /**
+     * 平台退货原因 bug，如果有用户有修改备注，此部分会变为返回备注
+     */
     @SerializedName("reason")
     private String reason;
+    /**
+     * 备注
+     */
     @SerializedName("note")
     private String note;
+    /**
+     * 创建时间
+     */
     @SerializedName("create_date")
     private String createDate;
+    /**
+     * 审核时间
+     */
     @SerializedName("approve_date")
     private String approveDate;
+    /**
+     * 审核状态 0:未审核 1:已审核
+     */
     @SerializedName("approve")
     private Integer approve;
+    /**
+     * 入库时间
+     */
     @SerializedName("receive_date")
     private String receiveDate;
+    /**
+     * 是否取消
+     */
     @SerializedName("cancel")
     private Boolean cancel;
+    /**
+     * 是否已推送wms
+     */
     @SerializedName("wms")
     private Integer wms;
+    /**
+     * 店铺名称
+     */
     @SerializedName("shop_name")
     private String shopName;
+    /**
+     * 店铺编码
+     */
     @SerializedName("shop_code")
     private String shopCode;
+    /**
+     * 平台编码
+     */
     @SerializedName("platform_code")
     private String platformCode;
+    /**
+     * 会员编码
+     */
     @SerializedName("vip_code")
     private String vipCode;
+    /**
+     * 退入仓库代码
+     */
     @SerializedName("warehousein_code")
     private String warehouseinCode;
+    /**
+     * 退出仓库代码
+     */
     @SerializedName("warehouseout_code")
     private String warehouseoutCode;
+    /**
+     * 退入快递公司代码
+     */
     @SerializedName("express_code")
     private String expressCode;
+    /**
+     * 退入快递单号
+     */
     @SerializedName("express_num")
     private String expressNum;
+    /**
+     * 退货人手机
+     */
     @SerializedName("receiver_phone")
     private String receiverPhone;
+    /**
+     * 退货原因代码  系统退货原因
+     */
     @SerializedName("return_type")
     private String returnType;
+    /**
+     * 入库状态 0:未入库 1:入库成功
+     */
     @SerializedName("receive")
     private String receive;
+    /**
+     * 同意退货状态 0:未处理 1:同意 2:拒绝
+     */
     @SerializedName("agree_refuse")
     private Integer agreeRefuse;
+    /**
+     * 销售订单号
+     */
     @SerializedName("order_code")
     private String orderCode;
+    /**
+     * 修改时间
+     */
     @SerializedName("modify_date")
     private String modifyDate;
+    /**
+     * 业务员
+     */
     @SerializedName("business_man")
     private String businessMan;
+    /**
+     * 收货人
+     */
     @SerializedName("receiver_name")
     private String receiverName;
+    /**
+     * 收货人手机
+     */
     @SerializedName("receiver_mobile")
     private String receiverMobile;
+    /**
+     * 收货人邮编
+     */
     @SerializedName("receiver_zip")
     private String receiverZip;
+    /**
+     * 收货人地址
+     */
     @SerializedName("receiver_address")
     private String receiverAddress;
+    /**
+     * 收货人省市区
+     */
     @SerializedName("area_name")
     private String areaName;
+    /**
+     * 平台退款单号
+     */
     @SerializedName("platform_refund_id")
     private String platformRefundId;
+    /**
+     * 是否三无包装 true：三无包裹 false：非三无包裹
+     */
     @SerializedName("sanwu_package")
     private Boolean sanwuPackage;
+    /**
+     * 售后类型 1:退货 2:换货 3:补发 4:其他 5:维修
+     */
     @SerializedName("refund_type")
     private Integer refundType;
+    /**
+     * 售后阶段 1：买家确认收货前 2：买家确认收货后
+     */
     @SerializedName("refund_phase")
     private Integer refundPhase;
+    /**
+     * 退入快递名称
+     */
     @SerializedName("express_name")
     private String expressName;
+    /**
+     * 分销商名称
+     */
     @SerializedName("drp_tenant_name")
     private String drpTenantName;
+    /**
+     * 分销商手机号
+     */
     @SerializedName("drp_tenant_mobile")
     private String drpTenantMobile;
+    /**
+     * 作废日期
+     */
     @SerializedName("cancel_date")
     private String cancelDate;
+    /**
+     * 退入仓库名称
+     */
     @SerializedName("warehousein_name")
     private String warehouseinName;
+    /**
+     * 会员名称
+     */
     @SerializedName("vip_name")
     private String vipName;
+    /**
+     * 平台状态
+     */
     @SerializedName("platform_status")
     private String platformStatus;
+    /**
+     * 门店名称
+     */
     @SerializedName("store_name")
     private String storeName;
+    /**
+     * 门店编码
+     */
     @SerializedName("store_code")
     private String storeCode;
     @SerializedName("commodity_status")

@@ -10,6 +10,7 @@ import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor
@@ -58,86 +59,209 @@ public class GyySkuInfoEntity {
      * item_brand_name : null
      * goods_id : 399161562707
      */
-    @JsonProperty("id")
+    /**
+     * 商品id
+     */
+    @SerializedName("id")
     private String id;
+    /**
+     * 创建时间
+     */
     @SerializedName("create_date")
     private String createDate;
+    /**
+     * 修改时间
+     */
     @SerializedName("modify_date")
     private String modifyDate;
+    /**
+     * 商品编码
+     */
     @SerializedName("code")
     private String code;
+    /**
+     * 商品名称
+     */
     @SerializedName("name")
     private String name;
+    /**
+     * 商品备注
+     */
     @SerializedName("note")
     private String note;
+    /**
+     *  商品重量
+     */
     @SerializedName("weight")
     private BigDecimal weight;
+    /**
+     * 是否组合商品
+     */
     @SerializedName("combine")
     private Boolean combine;
+    /**
+     * 是否已停用
+     */
     @SerializedName("del")
     private Boolean del;
+    /**
+     * 商品长度
+     */
     @SerializedName("length")
     private BigDecimal length;
+    /**
+     * 商品宽度
+     */
     @SerializedName("width")
     private BigDecimal width;
+    /**
+     * 商品高度
+     */
     @SerializedName("height")
     private BigDecimal height;
+    /**
+     * 商品体积
+     */
     @SerializedName("volume")
     private BigDecimal volume;
+    /**
+     * 商品简称
+     */
     @SerializedName("simple_name")
     private String simpleName;
+    /**
+     * 分类代码
+     */
     @SerializedName("category_code")
     private Object categoryCode;
+    /**
+     * 分类名称
+     */
     @SerializedName("category_name")
     private Object categoryName;
+    /**
+     * 供应商代码
+     */
     @SerializedName("supplier_code")
     private Object supplierCode;
+    /**
+     * 商品单位代码
+     */
     @SerializedName("item_unit_code")
     private Object itemUnitCode;
+    /**
+     * 商品单位名称
+     */
     @SerializedName("item_unit_name")
     private Object itemUnitName;
+    /**
+     * 打包积分
+     */
     @SerializedName("package_point")
     private BigDecimal packagePoint;
+    /**
+     * 销售积分
+     */
     @SerializedName("sales_point")
     private BigDecimal salesPoint;
+    /**
+     * 标准售价
+     */
     @SerializedName("sales_price")
     private BigDecimal salesPrice;
+    /**
+     * 标准进价
+     */
     @SerializedName("purchase_price")
     private BigDecimal purchasePrice;
+    /**
+     * 代理售价
+     */
     @SerializedName("agent_price")
     private BigDecimal agentPrice;
+    /**
+     * 成本价
+     */
     @SerializedName("cost_price")
     private BigDecimal costPrice;
+    /**
+     * 库存状态代码
+     */
     @SerializedName("stock_status_code")
     private Object stockStatusCode;
+    /**
+     * 图片地址
+     */
     @SerializedName("pic_url")
     private Object picUrl;
+    /**
+     * 税号
+     */
     @SerializedName("tax_no")
     private Object taxNo;
+    /**
+     * 税率
+     */
     @SerializedName("tax_rate")
     private BigDecimal taxRate;
+    /**
+     * 原产地
+     */
     @SerializedName("origin_area")
     private Object originArea;
+    /**
+     * 供应商货号
+     */
     @SerializedName("supplier_outerid")
     private Object supplierOuterid;
+    /**
+     * 保质期
+     */
     @SerializedName("shelf_life")
     private Integer shelfLife;
+    /**
+     * 预警天数
+     */
     @SerializedName("warning_days")
     private Integer warningDays;
+    /**
+     * 自定义属性
+     */
     @SerializedName("custom_attr")
-    private CustomAttrBean customAttr;
+    private Map<Object,Object> customAttr;
+    /**
+     * 商品附加属性 0:普通商品 1:唯一码商品 2:批次商品
+     */
     @SerializedName("item_add_attribute")
     private Integer itemAddAttribute;
+    /**
+     * 商品品牌id
+     */
     @SerializedName("item_brand_id")
     private String itemBrandId;
+    /**
+     * 商品品牌编码
+     */
     @SerializedName("item_brand_code")
     private String itemBrandCode;
+    /**
+     * 商品品牌名称
+     */
     @SerializedName("item_brand_name")
     private String itemBrandName;
+    /**
+     * 商品id
+     */
     @SerializedName("goods_id")
     private Long goodsId;
+    /**
+     * 商品规格
+     */
     @SerializedName("skus")
-    private List<?> skus;
+    private List<Object> skus;
+    /**
+     * 组合明细
+     */
     @SerializedName("combine_items")
     private List<CombineItemsBean> combineItems;
     /**
