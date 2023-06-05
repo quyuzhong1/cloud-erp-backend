@@ -92,15 +92,20 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         //国家
         resultMap.put("countryCode", countryEntity.getKingdeeCode());
 
-        DictCityEntity province = sysUserFeign.getCityById(entity.getProvinceId());
-        if (ObjectUtil.isNotEmpty(province)) {
-            resultMap.put("province", province.getKingdeeCode());
+        if (StringUtils.isNotBlank(entity.getProvinceId())) {
+            DictCityEntity province = sysUserFeign.getCityById(entity.getProvinceId());
+            if (ObjectUtil.isNotEmpty(province)) {
+                resultMap.put("province", province.getKingdeeCode());
+            }
         }
 
-        DictCityEntity city = sysUserFeign.getCityById(entity.getCityId());
-        if (ObjectUtil.isNotEmpty(city)) {
-            resultMap.put("city", city.getKingdeeCode());
+        if (StringUtils.isNotBlank(entity.getCityId())) {
+            DictCityEntity city = sysUserFeign.getCityById(entity.getCityId());
+            if (ObjectUtil.isNotEmpty(city)) {
+                resultMap.put("city", city.getKingdeeCode());
+            }
         }
+
 
         List<InvoiceDTO.ViewDTO> viewDTOS = customerInvoiceService.listByMainId(entity.getId());
         if (CollectionUtils.isNotEmpty(viewDTOS)) {
