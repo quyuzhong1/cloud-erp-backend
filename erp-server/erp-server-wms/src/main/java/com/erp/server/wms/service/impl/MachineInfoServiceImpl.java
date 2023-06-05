@@ -270,7 +270,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //主表信息
         MachineInfoEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99043);
+            throw new ServiceException(ApiError.ERROR_99052);
         }
         BeanMapperUtils.copy(entity, viewDTO);
         List<MachineDetailEntity> detailList = machineDetailService.listByMainId(id);
@@ -297,7 +297,10 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             List<MachineSubComponentsDTO.ViewDTO> subComponentsList = this.viewSubComponents(viewDetailDTO.getId());
             List<MachineSubComponentsDTO.ViewDTO> subList = bomSubMap.get(viewDetailDTO.getSkuId());
             Map<String,MachineSubComponentsDTO.ViewDTO> subMap = subList.stream().collect(Collectors.toMap(MachineSubComponentsDTO.ViewDTO::getSkuId, Function.identity()));
-            subComponentsList.stream().forEach(sub-> sub.setItemQty(subMap.get(sub.getSkuId()).getItemQty()));
+            subComponentsList.stream().forEach(sub-> {
+                MachineSubComponentsDTO.ViewDTO subView = subMap.get(sub.getSkuId());
+                sub.setItemQty(subView.getQty());
+            });
             viewDetailDTO.setSubComponentsList(subComponentsList);
         }
         viewDTO.setDetailList(viewDetailList);
