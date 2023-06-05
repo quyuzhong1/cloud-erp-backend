@@ -2,6 +2,7 @@ package com.erp.server.sys.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.*;
@@ -65,4 +66,14 @@ public interface SysDepartmentUserService  extends IService<SysDepartmentUserEnt
      * @return
      */
     List<UserSuperiorDTO> listSuperiorByUserId(String userId);
+
+    
+    /**
+     * 根据部门id 获取部门员工
+     * @author yl
+     * @date 2023-06-05 12:07
+     * @param deptId
+     * @return java.util.List<com.common.business.dto.FindUserDTO>
+     */
+    List<FindUserDTO> listDeptUserByDeptId(String deptId);
 }

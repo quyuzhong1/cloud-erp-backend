@@ -1,6 +1,7 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -66,6 +67,21 @@ public class SysDepartmentUserController extends BaseController {
         SysDepartmentUserNumberDTO dto = sysDepartmentUserService.getDeptByUserId(userId);
         return success(dto);
     }
+
+    
+    /**
+     * 根据部门id获取员工信息
+     * @author yl
+     * @date 2023-06-05 12:02
+     * @param deptId
+     * @return 
+     */
+    @GetMapping("/listDeptUserByDeptId")
+    public ApiResult<List<FindUserDTO>> listDeptUserByDeptId(@RequestParam("deptId") String deptId) {
+        List<FindUserDTO>  resultList = sysDepartmentUserService.listDeptUserByDeptId(deptId);
+        return success(resultList);
+    }
+
 
 
 }

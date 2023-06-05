@@ -80,4 +80,18 @@
         AND sdu.user_id = #{userId}
         LIMIT 1
     </select>
+
+    <select id="listDeptUserByDeptId" resultType="com.common.business.dto.FindUserDTO">
+         SELECT
+            sui.uid AS userId,
+            sui.code,
+            sui.user_name,
+            sui.mobile
+         FROM sys_user_info sui
+         INNER JOIN sys_department_user sdu
+         ON sdu.user_id = sui.uid
+         WHERE sui.delete_state=1
+         AND sdu.department_id = #{deptId}
+
+    </select>
 </mapper>

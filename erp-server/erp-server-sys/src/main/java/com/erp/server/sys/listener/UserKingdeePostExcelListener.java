@@ -73,10 +73,11 @@ public class UserKingdeePostExcelListener extends AnalysisEventListener<UserKing
             errorList.add(excelDTO);
             return;
         }
-        UserKingdeePostEntity post = userKingdeePostList.stream().filter(p -> p.getUserId().equals(userName)).findFirst().orElse(new UserKingdeePostEntity());
+        UserKingdeePostEntity post = userKingdeePostList.stream().filter(p -> p.getUserId().equals(user.getUserId())).findFirst().orElse(new UserKingdeePostEntity());
         post.setKingdeePostCode(excelDTO.getKingdeePostCode());
         post.setKingdeeUserCode(excelDTO.getKingdeeUserCode());
         post.setUseOrgName(excelDTO.getUseOrgName());
+        post.setPostName(excelDTO.getPostName());
         post.setUserName(userName);
         post.setUserId(user.getUserId());
         addOrUpdateList.add(post);
@@ -94,5 +95,9 @@ public class UserKingdeePostExcelListener extends AnalysisEventListener<UserKing
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         userKingdeePostService.saveOrUpdateBatch(addOrUpdateList);
+    }
+
+    public List<UserKingdeePostImportExcelDTO> getErrorList() {
+        return errorList;
     }
 }

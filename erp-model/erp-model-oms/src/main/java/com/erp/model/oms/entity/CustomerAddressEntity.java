@@ -84,6 +84,13 @@ public class CustomerAddressEntity extends BaseEntity<CustomerAddressEntity> {
     private String type;
 
 
+    /**
+     * 金蝶对应的code
+     */
+    @TableField("kingdee_code")
+    private String kingdeeCode;
+
+
     public static final String MAIN_ID = "main_id";
 
     public static final String TEL_NUMBER = "tel_number";

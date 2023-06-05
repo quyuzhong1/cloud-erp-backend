@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
@@ -333,4 +332,14 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/city/getById")
     DictCityEntity getCityById(@RequestBody String id);
+
+    /**
+     * 根据用戶id 获取金蝶的对应岗位code
+     * @author yl
+     * @date 2023-06-05 10:08
+     * @param userId
+     * @return com.erp.model.sys.dto.KingdeePostDTO.UserKingdeePostInfoDTO
+     */
+    @PostMapping("feign/user/getUserKingdeePostByUserId")
+    KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePostByUserId(@RequestBody String userId);
 }

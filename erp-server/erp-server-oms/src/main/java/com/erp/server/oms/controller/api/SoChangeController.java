@@ -38,11 +38,6 @@ public class SoChangeController extends BaseController {
      * @return
      */
     @PostMapping("/tabList")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "oms:soChange:tabList",
-            tableAlias = "sc"
-    )
     public ApiResult<List<SoChangeDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         List<SoChangeDTO.TabListDTO> tabList = soChangeService.tabList(dto);
         return success(tabList);

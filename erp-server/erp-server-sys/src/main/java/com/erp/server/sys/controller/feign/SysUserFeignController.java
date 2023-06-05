@@ -53,6 +53,9 @@ public class SysUserFeignController extends BaseController {
     @Autowired
     private SysRoleMenuService sysRoleMenuService;
 
+    @Autowired
+    private UserKingdeePostService userKingdeePostService;
+
 
 
     @PostMapping("/accountLogin")
@@ -315,6 +318,19 @@ public class SysUserFeignController extends BaseController {
     @PostMapping("/getUserListByRoleIds")
     public List<FindUserDTO> getUserListByRoleIds(@RequestBody SysFeignDTO.ListByRoleIdsDTO dto) {
         return sysUserInfoService.getUserListByRoleIds(dto);
+    }
+
+
+    /**
+     * 根据用戶id 获取金蝶的对应岗位code
+     * @author yl
+     * @date 2023-06-05 10:08
+     * @param userId
+     * @return com.erp.model.sys.dto.KingdeePostDTO.UserKingdeePostInfoDTO
+     */
+    @PostMapping("/getUserKingdeePostByUserId")
+    public KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePostByUserId(@RequestBody String userId) {
+        return userKingdeePostService.getUserKingdeePostByUserId(userId);
     }
 
 }

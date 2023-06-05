@@ -1,18 +1,17 @@
 package com.erp.server.sys.service.impl;
 
-import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysDepartmentUserEntity;
-import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.server.sys.mapper.SysDepartmentUserMapper;
 import com.erp.server.sys.service.SysDepartmentService;
 import com.erp.server.sys.service.SysDepartmentUserService;
@@ -178,6 +177,19 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
             resultList = resultList.stream().filter(x -> !userId.equals(x.getUserId())).collect(Collectors.toList());
         }
         return resultList;
+    }
+
+
+    /**
+     * 根据部门id 获取部门员工
+     * @author yl
+     * @date 2023-06-05 12:07
+     * @param deptId
+     * @return java.util.List<com.common.business.dto.FindUserDTO>
+     */
+    @Override
+    public List<FindUserDTO> listDeptUserByDeptId(String deptId) {
+        return baseMapper.listDeptUserByDeptId(deptId);
     }
 
 

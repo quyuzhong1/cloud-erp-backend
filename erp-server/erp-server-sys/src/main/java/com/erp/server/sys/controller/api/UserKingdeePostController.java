@@ -22,7 +22,7 @@ import javax.servlet.http.HttpServletResponse;
  * @since 2023-06-02
  */
 @RestController
-@RequestMapping("/usekingdeePost")
+@RequestMapping("/userkingdeePost")
 public class UserKingdeePostController extends BaseController {
 
     @Resource

@@ -705,6 +705,8 @@ public class CustomerDTO implements Serializable {
          */
         private String name;
 
+        private ApproveStatusEnum approveStatus;
+
         /**
          * 是否禁用
          * false 没有
