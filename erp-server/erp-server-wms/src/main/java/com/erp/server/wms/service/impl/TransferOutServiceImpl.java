@@ -16,6 +16,7 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.validator.ValidList;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -59,6 +60,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -107,6 +109,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Autowired
     private TransferInDetailService transferInDetailService;
+
+    @Autowired
+    private CommonService commonService;
 
     @Override
     public List<TransferOutEntity> listBySourceIds(List<String> ids) {
@@ -302,7 +307,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             // TODO 中止当前审批流程
         }
         log.info("审核 开始修改分步式调出单状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        updateApproveStatus(ids, approveStatus.getStatus()); // 修改单据状态
+        updateForApprove(ids, approveStatus.getStatus()); // 修改单据状态
 
         //操作日志
         log.info("审核 开始修改分步式调出单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
@@ -529,6 +534,23 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         //更新审核状态
         lambdaUpdate().in(TransferOutEntity::getId, ids)
                 .set(TransferOutEntity::getApproveStatus, approveStatus)
+                .update();
+    }
+
+    /**
+     * 审核更新审核状态、审核人、审核时间
+     * @param ids
+     * @param approveStatus
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void updateForApprove(List<String> ids, String approveStatus) {
+        // 当前登录人
+        LoginUser userInfo = commonService.getUserInfo();
+        this.lambdaUpdate().in(TransferOutEntity::getId, ids)
+                .set(TransferOutEntity::getApproveUserId, userInfo.getUid())
+                .set(TransferOutEntity::getApproveUserName, userInfo.getUserName())
+                .set(TransferOutEntity::getApproveStatus, approveStatus)
+                .set(TransferOutEntity::getApproveTime, LocalDateTime.now())
                 .update();
     }
 
