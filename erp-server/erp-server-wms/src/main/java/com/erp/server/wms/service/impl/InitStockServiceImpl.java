@@ -290,16 +290,20 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void addAndSubmit(InitStockDTO.AddDTO dto) {
-        String id = this.add(dto); // 新增
-        this.submit(Lists.newArrayList(id));// 提交
+        // 新增
+        String id = this.add(dto);
+        // 提交
+        this.submit(Lists.newArrayList(id));
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateAndSubmit(InitStockDTO.UpdateDTO dto) {
-        this.update(dto);// 修改
-        this.submit(Lists.newArrayList(dto.getId()));// 提交
+        // 修改
+        this.update(dto);
+        // 提交
+        this.submit(Lists.newArrayList(dto.getId()));
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
