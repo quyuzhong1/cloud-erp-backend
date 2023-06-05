@@ -240,7 +240,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         // 判断状态是否允许操作（只有待提交且未作废的的才允许修改）
         ValidatorUtil.isTrue((Objects.equals(originInitStock.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || Objects.equals(originInitStock.getApproveStatus(), ApproveStatusEnum.REJECT.getStatus()) )
                 && Objects.equals(originInitStock.getInvalidStatus(),Boolean.FALSE),
-                ()->new ServiceException("只有待提交或审核不通过并且未作废数据支持提交"));
+                ()->new ServiceException("只有待提交或审核不通过并且未作废数据支持修改"));
 
         InitStockEntity nowInitStock =  BeanMapperUtils.map(InitStockEntity.class, dto);
         fillingAddOrUpdate(nowInitStock, dto.getWarehouseId());

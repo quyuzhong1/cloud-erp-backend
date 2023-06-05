@@ -208,7 +208,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         ValidatorUtil.isTrue(!Objects.equals(updateDTO.getInWarehouseId(), updateDTO.getOutWarehouseId()),()->new ServiceException("分布式调出单调入仓库和调出仓库不能一样"));
         ValidatorUtil.isTrue((Objects.equals(originTransferOutEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || Objects.equals(originTransferOutEntity.getApproveStatus(), ApproveStatusEnum.REJECT.getStatus()) )
                         && Objects.equals(originTransferOutEntity.getInvalidStatus(),Boolean.FALSE),
-                ()->new ServiceException("只有待提交或审核不通过并且未作废数据支持提交"));
+                ()->new ServiceException("只有待提交或审核不通过并且未作废数据支持修改"));
 
         TransferOutEntity nowTransferOutEntity =  BeanMapperUtils.map(TransferOutEntity.class, updateDTO);
 
