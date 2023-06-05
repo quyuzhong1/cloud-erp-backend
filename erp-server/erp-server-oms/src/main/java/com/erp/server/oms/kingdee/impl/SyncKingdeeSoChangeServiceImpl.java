@@ -7,10 +7,14 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
+import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoChangeEntity;
-import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.sys.dto.KingdeePostDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoChangeService;
+import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.SoChangeDetailService;
 import com.erp.server.oms.service.SoChangeService;
 import com.erp.server.oms.service.SoInfoService;
@@ -53,6 +57,9 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
     @Resource
     private SoChangeService soChangeService;
 
+    @Resource
+    private CustomerInfoService customerInfoService;
+
     /**
      * 销售变更单同步金碟
      *
@@ -73,33 +80,62 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         //编码
         resultMap.put("code", entity.getCode());
         String soId = entity.getSoId();
-        SoInfoEntity soInfo = soInfoService.getById(soId);
+        SoInfoDTO.CustomerDTO soInfo = soInfoService.getSoCustomer(soId);
         if (Objects.isNull(soInfo)) {
             return;
         }
+        String salesDeptId = soInfo.getSalesDeptId();
+        //获取部门id
+        if (StringUtils.isNotBlank(salesDeptId)) {
+            SysDepartmentDTO departmentDTO = sysUserFeign.getUserDeptById(salesDeptId);
+            //销售部门
+            if (!Objects.isNull(departmentDTO)) {
+                resultMap.put("deptCode", departmentDTO.getCode());
+            }
+        }
 
+        //客户id
+        String customerId = soInfo.getCustomerId();
         //销售订单号
-        resultMap.put("soCode", "XSD-20230411-35276");
+        resultMap.put("soCode", soInfo.getCode());
         resultMap.put("soId", soInfo.getId());
+        resultMap.put("soKingdeeId","181079");
         //单据类型
         resultMap.put("orderType", "XSDDBGD01_SYS");
         //单据日期
         resultMap.put("billDate", entity.getBillDate());
         //客户
-        resultMap.put("customerCode", "CUST4786");
+        if (StringUtils.isNotBlank(customerId)) {
+            CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
+            if (customerInfo != null) {
+                resultMap.put("customerCode", customerInfo.getCode());
+            }
+        }
 
-        //销售员
-        resultMap.put("sellerCode", "0059_GW000047_1");
 
 
         //变更原因
         resultMap.put("remark", entity.getRemark());
+
+        //销售员
+        String sellerId = soInfo.getSellerId();
+        //获取员工
+        if (StringUtils.isNotBlank(sellerId)) {
+            //获取员工 岗位信息
+            KingdeePostDTO.UserKingdeePostInfoDTO userDTO = sysUserFeign.getUserKingdeePostByUserId(sellerId);
+            //销售员
+            if (!Objects.isNull(userDTO)) {
+                resultMap.put("sellerCode",userDTO.getKingdeePostCode());
+                resultMap.put("seller", userDTO.getUserName());
+            }
+        }
+
         //销售组织
         String salesOrgId = soInfo.getSalesOrgId();
         if (StringUtils.isNotBlank(salesOrgId)) {
             List<BaseIdDTO.CodeDTO> salesOrgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
             if (CollectionUtils.isNotEmpty(salesOrgList)) {
-                resultMap.put("salesOrgCode", "100");
+                resultMap.put("salesOrgCode", salesOrgList.get(0).getCode());
             }
         }
 
@@ -109,20 +145,23 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         }
 
         List<JSONObject> list = new ArrayList<>(details.size());
-/*        for (SoChangeDetailDTO.ViewDTO item : details) {*/
+        for (SoChangeDetailDTO.ViewDTO item : details) {
             JSONObject jsonObject = new JSONObject();
-            jsonObject.set("skuNo", "1275");
-            jsonObject.set("changeType", "update");
-            jsonObject.set("oldQty", 50);
-            jsonObject.set("qty", 30);
-            jsonObject.set("price", 50);
-            jsonObject.set("oldPrice", 51.98);
+            jsonObject.set("skuNo", item.getSkuNo());
+            jsonObject.set("soDetailKingdeeId","279939");
+            jsonObject.set("changeType", item.getChangeType().getCode());
+            jsonObject.set("oldQty", item.getOldQty());
+            jsonObject.set("qty", item.getQty());
+            jsonObject.set("baseQty", item.getQty());
+            jsonObject.set("curInventoryQty", item.getQty());
+            jsonObject.set("price", item.getPrice());
+            jsonObject.set("oldPrice", item.getOldPrice());
             jsonObject.set("isGift", false);
             jsonObject.set("unit", "Pcs");
             list.add(jsonObject);
-  /*      }*/
+        }
 
- //       resultMap.put("detailList", list);
+        resultMap.put("detailList", list);
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
         //异步推送mq
