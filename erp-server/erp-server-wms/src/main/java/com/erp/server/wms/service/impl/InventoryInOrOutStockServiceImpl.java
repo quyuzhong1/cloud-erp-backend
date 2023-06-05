@@ -90,7 +90,7 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
     public <T extends InventoryStockBaseDTO> void stockHandler(List<T> paramLis, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams, String transactionNo) {
         for(InventoryStockBaseDTO baseParam : paramLis) {
             InOutStockDTO param = (InOutStockDTO)baseParam;
-            if(StrUtils.isNotEmpty(param.getWarehouseLocation())) {
+            if(Objects.nonNull(param.getWarehouseLocation())) {
                 param.setWarehouseLocation(StrUtils.null2EmptyWithTrim(param.getWarehouseLocation()));
             }
             this.singleHandler(param, businessType, transactionRuleParams, transactionNo);

@@ -122,10 +122,10 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl i
         for(InventoryStockBaseDTO baseParam : paramLis) {
             // 当前仓出入库业务处理
             TransferDTO param = (TransferDTO)baseParam;
-            if(StrUtils.isNotEmpty(param.getCurWarehouseLocation())) {
+            if(Objects.nonNull(param.getCurWarehouseLocation())) {
                 param.setCurWarehouseLocation(StrUtils.null2EmptyWithTrim(param.getCurWarehouseLocation()));
             }
-            if(StrUtils.isNotEmpty(param.getTargetWarehouseLocation())) {
+            if(Objects.nonNull(param.getTargetWarehouseLocation())) {
                 param.setTargetWarehouseLocation(StrUtils.null2EmptyWithTrim(param.getTargetWarehouseLocation()));
             }
             InOutStockTransformDTO curWareInOrOutStock = InventoryUtils.wrapInOutStockByTransfer(param, InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryOperationModeEnum.APPROVE);
