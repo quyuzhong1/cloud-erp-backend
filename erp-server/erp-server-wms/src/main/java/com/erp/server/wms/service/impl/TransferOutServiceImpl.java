@@ -367,7 +367,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         ids = ids.stream().distinct().collect(Collectors.toList());
         List<TransferOutEntity> list = super.listByIds(ids);
         Map<String, TransferOutEntity> transferOutEntityMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
-        //只有待提交的数据允许撤销
+        // 只有审核中的数据允许撤销
         ids.stream().forEach(id->{
             TransferOutEntity transferOutEntity = transferOutEntityMap.get(id);
             ValidatorUtil.isTrue(Objects.nonNull(transferOutEntity),()->new ServiceException("分步式调出单数据不存在"));
@@ -377,7 +377,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         workflowFeign.cancelProcess(ids);
 
         log.info("撤销 开始修改分布式调出单状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        updateForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        updateApproveStatus(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         //操作日志
         log.info("撤销 开始记录操作日志，id集合：【{}】", JSONObject.toJSONString(ids));

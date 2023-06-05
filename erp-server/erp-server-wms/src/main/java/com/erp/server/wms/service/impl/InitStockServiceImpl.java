@@ -431,7 +431,9 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         workflowFeign.cancelProcess(ids);
 
         log.info("撤销 开始修改期初库存状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        updateForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        lambdaUpdate().in(InitStockEntity::getId, ids)
+                .set(InitStockEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .update();
 
         //操作日志
         log.info("撤销 开始记录操作日志，id集合：【{}】", JSONObject.toJSONString(ids));
