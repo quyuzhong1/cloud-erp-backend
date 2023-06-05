@@ -157,7 +157,7 @@
         ism.create_time desc,isd.create_time asc
     </select>
     <select id="getTotalQty" resultType="java.lang.Integer">
-        select count(isd.qty) from init_stock_detail isd
+        select sum(isd.qty) from init_stock_detail isd
         inner join init_stock ini on ini.id = isd.main_id
         <where>
            ini.warehouse_id = #{params.warehouseId} and ini.approve_status = 'approve'
