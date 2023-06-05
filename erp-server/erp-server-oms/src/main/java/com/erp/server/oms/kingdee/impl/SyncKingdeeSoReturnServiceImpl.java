@@ -197,16 +197,9 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SO_RETURN_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return customerInfoService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"", operate);
+                return soReturnService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"", operate);
             }
             return Boolean.TRUE;
         });
-
-        /*
-        * FMaterialId,单据体“明细信息”第1行字段“物料编码”是必填项
-        * 0,FStockId,单据体实体【明细信息】第【1】行分录，【仓库】字段必录
-        * 0,FStockstatusId,单据体实体【明细信息】第【1】行分录，【库存状态】字段必录
-        * 0,,单据编号为“THDD23060200016”的销售退货单，第1行分录，库存基本数量为0，请检查单据数量换算可能有误！
-        * */
     }
 }
