@@ -1036,7 +1036,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 inOutStockDTO.setSkuNo(detail.getSkuNo());
                 inOutStockDTO.setQty(detail.getReplenishQty()); // 补货数量
                 inOutStockDTO.setWarehouseId(purchaseReturnOrderEntity.getReturnWarehouseId());
-                inOutStockDTO.setWarehouseLocation("");
+                inOutStockDTO.setWarehouseLocation(detail.getWarehouseLocation());
                 receiveMembers.add(inOutStockDTO);
             });
             receiveInventoryInOutStockDTO.setMembers(receiveMembers);
@@ -1067,7 +1067,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 inOutStockDTO.setSkuNo(detail.getSkuNo());
                 inOutStockDTO.setQty(detail.getDeductAmountQty()); // 扣款数量
                 inOutStockDTO.setWarehouseId(purchaseReturnOrderEntity.getReturnWarehouseId());
-                inOutStockDTO.setWarehouseLocation("");
+                inOutStockDTO.setWarehouseLocation(detail.getWarehouseLocation());
                 receiveMembers.add(inOutStockDTO);
             });
             receiveInventoryInOutStockDTO.setMembers(receiveMembers);
@@ -1099,7 +1099,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 inOutStockDTO.setSkuNo(detail.getSkuNo());
                 inOutStockDTO.setQty(detail.getReplenishQty()); // 补货数量
                 inOutStockDTO.setWarehouseId(purchaseReturnOrderEntity.getReturnWarehouseId());
-                inOutStockDTO.setWarehouseLocation("");
+                inOutStockDTO.setWarehouseLocation(detail.getWarehouseLocation());
                 receiveMembers.add(inOutStockDTO);
             });
             receiveInventoryInOutStockDTO.setMembers(receiveMembers);
