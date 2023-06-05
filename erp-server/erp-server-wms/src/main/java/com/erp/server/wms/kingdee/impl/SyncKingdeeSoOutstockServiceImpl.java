@@ -77,12 +77,6 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     private SoOutstockDetailService soOutstockDetailService;
 
     @Resource
-    private PurchaseReturnOrderService purchaseReturnOrderService;
-
-    @Resource
-    private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
-
-    @Resource
     private MQProducerService mQProducerService;
 
     @Resource
@@ -215,7 +209,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SO_OUTSTOCK_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return purchaseReturnOrderService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "", operate);
+                return soOutstockService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "", operate);
             }
             return Boolean.TRUE;
         });
