@@ -291,10 +291,9 @@ public class SoInfoDTO implements Serializable {
          * unShipped 未发货
          * partialShipment 部分发货
          * completeShipment 已发货
-         *来源
+         * 来源
          * http://172.16.100.11:3002/project/92/interface/api/9259
          * type=DeliveryStatus
-         *
          */
         private String deliveryStatus;
 
@@ -571,7 +570,6 @@ public class SoInfoDTO implements Serializable {
          * 电话
          */
         private String telNumber;
-
 
 
         /**
@@ -858,6 +856,8 @@ public class SoInfoDTO implements Serializable {
          */
         private String salesOrgName;
 
+        private String salesOrgId;
+
 
         /**
          * 销售部门id
@@ -1107,42 +1107,42 @@ public class SoInfoDTO implements Serializable {
         /**
          * 客户id
          */
-        private String  customerId;
+        private String customerId;
 
         /**
          * 客户名称
          */
-        private String  customerName;
+        private String customerName;
 
         /**
          * skuId
          */
-        private String  skuId;
+        private String skuId;
 
         /**
          * sku编号
          */
-        private String  skuNo;
+        private String skuNo;
 
         /**
          * 产品名称
          */
-        private String  productName;
+        private String productName;
 
         /**
          * 销售数量
          */
-        private Integer  salesQty;
+        private Integer salesQty;
 
         /**
          * 发货数量
          */
-        private Integer  deliveryQty;
+        private Integer deliveryQty;
 
         /**
          * 要货日期
          */
-        private LocalDate  requireDate;
+        private LocalDate requireDate;
 
         /**
          * 预计发货日期
@@ -1167,7 +1167,7 @@ public class SoInfoDTO implements Serializable {
         /**
          * 备注
          */
-        private String  remark;
+        private String remark;
     }
 
     /**

@@ -653,7 +653,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String comment = dto.getComment();
         String content = "";
         String userName = commonService.getUserInfo().getUserName();
-        String approveStatus =ApproveStatusEnum.APPROVE_ING.getStatus();
+        String approveStatus =ApproveStatusEnum.APPROVE.getStatus();
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
@@ -841,7 +841,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         statusList.add(rejectStatus);
         long invalidCount = list.stream().filter(d -> !d.getInvalidStatus()).count();
         if (invalidCount != list.size()) {
-            throw new ServiceException(ApiError.ERROR_98061);
+            throw new ServiceException(ApiError.ERROR_98012);
         }
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
