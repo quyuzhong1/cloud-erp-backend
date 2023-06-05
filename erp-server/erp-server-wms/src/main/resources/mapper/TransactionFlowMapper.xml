@@ -275,7 +275,7 @@
                 </if>
             </where>
             group by tf.warehouse_id, tf.sku_id
-            ) m ORDER BY m.sku_no asc
+            ) m ORDER BY m.warehouse_name asc,m.sku_no asc
     </select>
 
     <select id="exportSummaryList" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$InOutStockSummaryPagingViewDTO">
@@ -343,7 +343,7 @@
             </if>
         </where>
         group by tf.warehouse_id, tf.sku_id
-        ) m ORDER BY m.sku_no asc
+        ) m ORDER BY m.warehouse_name asc,m.sku_no asc
     </select>
 
 </mapper>
