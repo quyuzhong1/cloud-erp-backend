@@ -162,7 +162,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
           */
         String receiveAddressId = entity.getReceiveAddressId();
         CustomerAddressEntity addressEntity = customerAddressService.getById(receiveAddressId);
-        String receiveAddressCode = addressEntity != null ? addressEntity.getKingdeeCode() : "";
+        String receiveAddressCode = addressEntity != null ? addressEntity.getCode() : "";
         String receiveAddress = addressEntity != null ? addressEntity.getAddress() : "";
 
         //收货地址

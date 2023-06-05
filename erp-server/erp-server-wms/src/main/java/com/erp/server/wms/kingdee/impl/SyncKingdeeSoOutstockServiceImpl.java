@@ -147,7 +147,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         resultMap.put("trackNo", entity.getTrackNo());
         //发货组织
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
-            String warehouseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soInfoById.getWarehouseOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            String warehouseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getWarehouseOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
             resultMap.put("warehouseOrgCode", warehouseOrgCode);
         }
         //承运商
@@ -184,10 +184,11 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                         .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse(null);
                 map.put("warehouseCode", warehouseCode);
             }
+
             map.put("warehouseLocation", detailEntity.getWarehouseLocation());
             map.put("remark", detailEntity.getRemark());
-            map.put("FSrcType", "SAL_SaleOrder");
-            map.put("FSrcBillNo", soInfoById.getCode());
+     /*       map.put("FSrcType", "SAL_SaleOrder");
+            map.put("FSrcBillNo", soInfoById.getCode());*/
             fEntityList.add(map);
         }
         resultMap.put("FEntity", fEntityList);
