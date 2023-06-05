@@ -118,6 +118,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_GYY_REFUND, GyyRefundEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
+            insertList = insertList.stream().distinct().collect(Collectors.toList());
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_GYY_REFUND);
         }
         if (CollectionUtil.isEmpty(pushToMqList)){
@@ -128,6 +129,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
         List<DmpRefundInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
+                .distinct()
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
@@ -155,8 +157,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
      * 解析退款订单数据
      **/
     private DmpRefundInfoEntity initOrderInfoEntity(GyyRefundEntity gyyRefundEntity) {
-        GyyOrderInfoServiceImpl gyyOrderInfoService = new GyyOrderInfoServiceImpl();
-        if (gyyOrderInfoService.assertOrgIsVijim(gyyRefundEntity.getShopCode())){
+        if (assertOrgIsVijim(gyyRefundEntity.getShopCode())){
             return null;
         }
         DmpRefundInfoEntity dmpRefundInfoEntity = new DmpRefundInfoEntity();
@@ -278,5 +279,10 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
             orderItemList.add(dmpRefundItemEntity);
         });
         return orderItemList;
+    }
+
+    public boolean assertOrgIsVijim(String shopCode) {
+        DmpShopInfoEntity shopInfo = dmpShopInfoService.getShopByShopNo(shopCode, PlatformEnum.GYY.getDesc());
+        return null != shopInfo && (ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(shopInfo.getUseOrgId().toString()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(shopInfo.getUseOrgId().toString()));
     }
 }

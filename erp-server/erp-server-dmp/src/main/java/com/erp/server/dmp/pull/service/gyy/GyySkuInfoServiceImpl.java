@@ -30,6 +30,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 管易云商品信息
@@ -102,6 +103,7 @@ public class GyySkuInfoServiceImpl implements IReportSaveService<GyySkuInfoEntit
             mongoService.updateMongoData(orderMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_GYY_SKU, GyySkuInfoEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
+            insertList = insertList.stream().distinct().collect(Collectors.toList());
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_GYY_SKU);
         }
         //  不需要 推送到MQ

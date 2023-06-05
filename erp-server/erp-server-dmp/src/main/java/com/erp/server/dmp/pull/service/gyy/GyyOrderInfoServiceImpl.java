@@ -101,6 +101,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
+            insertList = insertList.stream().distinct().collect(Collectors.toList());
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_GYY_ORDER);
         }
 

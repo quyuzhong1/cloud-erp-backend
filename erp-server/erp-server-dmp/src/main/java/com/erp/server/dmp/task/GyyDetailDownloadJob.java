@@ -53,7 +53,7 @@ public class GyyDetailDownloadJob {
         if(CollectionUtil.isEmpty(orderEntityList)){
             return;
         }
-        orderEntityList.parallelStream().forEach(gyyOrderEntity -> {
+        orderEntityList.parallelStream().distinct().forEach(gyyOrderEntity -> {
             try {
                 gyyOrderInfoService.addOrderDetail(gyyOrderEntity);
             }catch (Exception e){

@@ -16,6 +16,8 @@ import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.common.message.enums.RocketMqTagEnum;
@@ -26,6 +28,7 @@ import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -59,6 +62,8 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
 
     @Resource
     private MQProducerService<DmpReturnOrderInfoEntity> mqProducerService;
+    @Resource
+    private DmpShopInfoService dmpShopInfoService;
 
     public static void main(String[] args) {
         GyyReturnOrderInfoServiceImpl gyyReturnOrderInfoService = new GyyReturnOrderInfoServiceImpl();
@@ -121,6 +126,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_GYY_RETURN_ORDER, GyyReturnOrderEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
+            insertList = insertList.stream().distinct().collect(Collectors.toList());
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_GYY_RETURN_ORDER);
         }
         if (CollectionUtil.isEmpty(pushToMqList)){
@@ -131,6 +137,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
         List<DmpReturnOrderInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
+                .distinct()
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
@@ -159,8 +166,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
      * 解析订单数据
      **/
     private DmpReturnOrderInfoEntity initOrderInfoEntity(GyyReturnOrderEntity gyyReturnOrderEntity) {
-        GyyOrderInfoServiceImpl gyyOrderInfoService = new GyyOrderInfoServiceImpl();
-        if (gyyOrderInfoService.assertOrgIsVijim(gyyReturnOrderEntity.getShopCode())){
+        if (assertOrgIsVijim(gyyReturnOrderEntity.getShopCode())){
             return null;
         }
         DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = new DmpReturnOrderInfoEntity();
@@ -290,6 +296,9 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
         });
        return orderItemList;
     }
-
+    public boolean assertOrgIsVijim(String shopCode) {
+        DmpShopInfoEntity shopInfo = dmpShopInfoService.getShopByShopNo(shopCode, PlatformEnum.GYY.getDesc());
+        return null != shopInfo && (ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(shopInfo.getUseOrgId().toString()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(shopInfo.getUseOrgId().toString()));
+    }
 
 }

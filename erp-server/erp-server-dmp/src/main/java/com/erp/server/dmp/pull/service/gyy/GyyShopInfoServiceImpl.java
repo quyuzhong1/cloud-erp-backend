@@ -101,6 +101,7 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
             mongoService.updateMongoData(orderMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_GYY_SHOP, GyyShopInfoEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
+            insertList = insertList.stream().distinct().collect(Collectors.toList());
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_GYY_SHOP);
         }
         if (CollectionUtil.isEmpty(pushToMqList)){
@@ -111,6 +112,7 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
         List<DmpShopInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
+                .distinct()
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
