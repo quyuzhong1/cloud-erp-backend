@@ -35,10 +35,7 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.model.wms.entity.SoReturnNoticeEntity;
-import com.erp.model.wms.entity.SoReturnReceiveEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -757,5 +754,16 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         return this.lambdaQuery().in(SoReturnEntity::getSourceId, soIds).
                 eq(SoReturnEntity::getInvalidStatus, Boolean.FALSE).
                 count();
+    }
+
+    @Override
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId,String operate) {
+        return  this.lambdaUpdate()
+                .eq(SoReturnEntity::getId,id)
+                .set(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(syncKingdeeStatus),SoReturnEntity::getSyncKingdeeStatus,syncKingdeeStatus)
+                .set(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(syncKingdeeStatus),SoReturnEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(syncKingdeeId),SoReturnEntity::getSyncKingdeeId,syncKingdeeId)
+                .set(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(operate),SoReturnEntity::getSyncOperate,operate)
+                .update();
     }
 }
