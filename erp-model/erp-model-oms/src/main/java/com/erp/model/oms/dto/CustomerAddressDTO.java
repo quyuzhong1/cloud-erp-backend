@@ -100,6 +100,10 @@ public class CustomerAddressDTO implements Serializable {
          */
         private String id;
         /**
+         * 编号
+         */
+        private String code;
+        /**
          * 地址
          */
         private String address;

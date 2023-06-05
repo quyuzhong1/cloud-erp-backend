@@ -1,5 +1,7 @@
 package com.erp.server.oms.service.impl;
 
+import com.common.business.constant.BusinessNoConstant;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -7,13 +9,17 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.CustomerAddressMapper;
 import com.erp.server.oms.service.CustomerAddressService;
 import com.erp.server.oms.service.OperateLogService;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -36,6 +42,9 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
 
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
     /**
      * 检查默认地址是否存在多个
      *
@@ -62,12 +71,19 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
      * @date 2023-05-12 15:56
      */
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public void saveBatchAddress(String mainId, List<CustomerAddressDTO.AddDTO> addressList) {
         if (CollectionUtils.isEmpty(addressList)) {
             return;
         }
         List<CustomerAddressEntity> addList = BeanMapper.copyList(addressList, CustomerAddressEntity.class);
-        addList.forEach(c -> c.setMainId(mainId));
+        for (CustomerAddressEntity addDTO : addList) {
+            addDTO.setMainId(mainId);
+            //生成单号
+            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.KHDZ, BusinessNoTypeEnum.CODE_KHDZ.getCode()));
+            addDTO.setCode(code);
+        }
         this.saveBatch(addList);
     }
 

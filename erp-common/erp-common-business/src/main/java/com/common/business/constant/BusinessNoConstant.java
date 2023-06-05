@@ -77,4 +77,6 @@ public interface BusinessNoConstant {
     String FBDR = "FBDR";
     //销售退货入库单
     String XSTH = "XSTH";
+    //客户地址编号
+    String KHDZ = "KHDZ";
 }

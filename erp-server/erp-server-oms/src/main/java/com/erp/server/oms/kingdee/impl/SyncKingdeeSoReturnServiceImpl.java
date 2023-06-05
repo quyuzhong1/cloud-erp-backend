@@ -24,6 +24,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
@@ -62,6 +63,9 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
     private SoInfoService soInfoService;
 
     @Resource
+    private SoReturnService soReturnService;
+
+    @Resource
     private SoDetailService soDetailService;
 
     @Resource
@@ -70,10 +74,15 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
     @Resource
     private WmsTaskFeign wmsTaskFeign;
 
+    @Resource
+    private DictBasicService dictBasicService;
+
     @Override
     public void syncDataToKingdee(SoReturnEntity entity, String operate) {
         //客户信息
         List<CustomerInfoEntity> customerInfoEntitieList = customerInfoService.listByIds(Arrays.asList(entity.getCustomerId()));
+        //退货单
+        SoReturnEntity soReturnEntity = soReturnService.getById(entity.getId());
         //退货详情
         List<SoReturnDetailEntity> returnDetailEntityList = soReturnDetailService.listDetailByMainId(entity.getId());
         //销售单
@@ -82,12 +91,15 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         List<SoDetailEntity> soDetailEntitieList = soDetailService.listSoDetailByMainIds(Arrays.asList(soInfoEntity.getId()));
         //仓库
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(entity.getWarehouseId()));
+        //部门信息
+        SysDepartmentDTO dept = sysUserFeign.getUserDeptById(soInfoEntity.getSalesDeptId());
         List<String> orgIdList = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).collect(Collectors.toList());
         orgIdList.add(entity.getSalesOrgId());
         orgIdList.add(entity.getInventoryOrgId());
         //组织信息
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIdList);
-
+        //获取币别信息
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(soInfoEntity.getCurrency()));
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -106,21 +118,42 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             //库存组织
             resultMap.put("inventoryOrgCode", inventoryOrgCode);
         }
-
+        //销售部门
+        if (ObjectUtil.isNotEmpty(dept)) {
+            resultMap.put("salesDeptCode", dept.getCode());
+        }
         //客户
         if (CollectionUtils.isNotEmpty(customerInfoEntitieList)) {
             CustomerInfoEntity customerInfoEntity = customerInfoEntitieList.stream().filter(obj -> obj.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             resultMap.put("customerCode", customerInfoEntity.getCode());
+            //收款条件
+            List<DictBasicDTO.ViewDTO> collectionTermsList = dictBasicService.getByKey("collectionTerms");
+            DictBasicDTO.ViewDTO viewDTO = collectionTermsList.stream().filter(req -> req.getValue().equals(customerInfoEntity.getCode())).findFirst().orElse(new DictBasicDTO.ViewDTO());
+            resultMap.put("collectionTerms", viewDTO.getRemark());
+        }
+        //结算币别
+        CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(soReturnEntity.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
+        resultMap.put("currencyCode", viewDTO.getKingdeeCode());
+        //结算组织
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soReturnEntity.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
+            resultMap.put("salesOrgCode", salesOrgCode);
         }
         //金蝶 FEntity:物料信息
         List<Map<String,Object>> list = new ArrayList<>();
         for (SoReturnDetailEntity detailEntity : returnDetailEntityList) {
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             Map<String,Object> map = new HashMap<>();
+            //退货原因
+            if (StringUtils.isNotBlank(detailEntity.getReturnReasonDict())) {
+                resultMap.put("returnReason", ReturnReasonEnum.getEnum(detailEntity.getReturnReasonDict()).getKingdeeCode());
+            }
+
             //物料编码
             map.put("skuNo", detailEntity.getSkuNo());
             //退货数量
             map.put("returnQty", detailEntity.getReturnQty());
+            map.put("salesQty", soDetailEntity.getQty());
             //单价
             map.put("price", soDetailEntity.getPrice());
             //含税单价
@@ -131,6 +164,8 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             map.put("taxPrice", taxPrice);
             //是否赠品
             map.put("isGift", soDetailEntity.getIsGift());
+            //金额
+            map.put("amount", soDetailEntity.getAmount());
 //            //税率
 //            map.put("isGift", flagTaxRate);
             //退货类型

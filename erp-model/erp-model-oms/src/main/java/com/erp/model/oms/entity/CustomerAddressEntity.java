@@ -36,6 +36,12 @@ public class CustomerAddressEntity extends BaseEntity<CustomerAddressEntity> {
     private String telNumber;
 
     /**
+     * 编号
+     */
+    @TableField("code")
+    private String code;
+
+    /**
      * 邮箱
      */
     @TableField("email")
