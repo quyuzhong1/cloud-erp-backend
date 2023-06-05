@@ -7,6 +7,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.common.message.enums.RocketMqTagEnum;
@@ -21,6 +22,7 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
@@ -38,6 +40,7 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -77,7 +80,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     private PurchaseReturnOrderService purchaseReturnOrderService;
 
     @Resource
-    private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
+    private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
 
     @Resource
     private MQProducerService mQProducerService;
@@ -102,7 +105,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         //销售单信息
         SoInfoEntity soInfoById = soInfoFeign.getSoInfoById(entity.getSoId());
         //销售单明细
-        List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByIds(Arrays.asList(soInfoById.getId()));
+        List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(soInfoById.getId()));
         //组织信息
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(soInfoById.getSalesOrgId(),entity.getWarehouseOrgId()));
         //客户信息
@@ -164,15 +167,26 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soInfoById.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
             resultMap.put("salesOrgCode", salesOrgCode);
         }
-
+        List<String> soDetailIds = soDetailEntitieList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
+        //发货通知详情id
+        List<SoOutstockDetailDTO.DeliveryQtyDTO> deliveryQtyDTOS = soOutstockDetailService.listDetailBySoDetailIds(soDetailIds);
         //————————————————————物料信息——————————————————————
         List<Map<String, Object>> fEntityList = new ArrayList<>();
         for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
             Map<String, Object> map = new HashMap<>();
             map.put("skuNo", detailEntity.getSkuNo());
             map.put("actualQty", detailEntity.getActualQty());
-            SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailEntity.getSoId())).findFirst().orElse(new SoDetailEntity());
+            SoOutstockDetailDTO.DeliveryQtyDTO deliveryQtyDTO = deliveryQtyDTOS.stream().filter(req -> req.getId().equals(detailEntity.getId())).findFirst().orElse(new SoOutstockDetailDTO.DeliveryQtyDTO());
+            SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(deliveryQtyDTO.getSoDetailId())).findFirst().orElse(new SoDetailEntity());
+            map.put("salesQty", soDetailEntity.getQty());
             map.put("price", soDetailEntity.getPrice());
+            //含税单价
+            BigDecimal flagTaxRate = MathUtil.divide(soDetailEntity.getTaxRate(), MathUtil.BigDecimal_100);
+            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
+            BigDecimal taxPrice = MathUtil.multiply(soDetailEntity.getPrice(), multiplyTax);
+            //含税单价
+            map.put("taxPrice", taxPrice);
+            map.put("amount", soDetailEntity.getAmount());
             map.put("isGift", soDetailEntity.getIsGift());
             if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
                 String warehouseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soInfoById.getWarehouseOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
