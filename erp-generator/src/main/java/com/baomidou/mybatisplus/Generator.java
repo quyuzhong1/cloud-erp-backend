@@ -51,6 +51,7 @@ public class Generator {
 
     public static void main(String[] args) {
         // 需要生成的表名（特别注意：请确保生成多个表时在同一个数据库，如果一次性生成多个，中间有异常不会中断后续生成）
+        // 现设置的是文件不覆盖，即生成时如果已经存在该文件则不会覆盖，设置成true灰覆盖，请参考
         String[] tableNames = {"transfer_application"};
         generateByTables(tableNames);
     }
@@ -74,7 +75,7 @@ public class Generator {
         config.setAuthor(AUTHOR)
                 .setActiveRecord(true)
                 .setOutputDir(filePath)
-                .setFileOverride(true) // 设置成false如果存在相同文件则不会生成
+                .setFileOverride(false) // 设置成false如果存在相同文件则不会生成
                 .setEnableCache(false)
                 .setSwagger2(false)
                 .setBaseResultMap(true)
@@ -164,7 +165,7 @@ public class Generator {
         StrategyConfig strategyConfig = new StrategyConfig();
         strategyConfig
                 .setCapitalMode(true)
-                .setDtoValidate(true)
+                .setDtoValidate(true) // 开启DTO实体验证
                 .setRestControllerStyle(true)
                 .setEntityLombokModel(true)
                 .setEntityTableFieldAnnotationEnable(true)

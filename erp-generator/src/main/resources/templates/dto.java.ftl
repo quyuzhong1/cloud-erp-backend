@@ -206,7 +206,9 @@ public class ${table.dtoName} implements Serializable {
         /**
         * 主键id
         */
+        <#if dtoValidate>
         @NotBlank(message = "主键id不能为空")
+        </#if>
         private String id;
 
     }
