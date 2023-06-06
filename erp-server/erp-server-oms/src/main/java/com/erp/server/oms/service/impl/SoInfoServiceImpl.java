@@ -413,7 +413,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
              */
             Integer availableQty = 0;
             if (!isGre) {
-                scarceQty = qty-curInventoryQty;
+                scarceQty = qty - curInventoryQty;
                 availableQty = curInventoryQty;
 
             } else {
@@ -653,7 +653,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String comment = dto.getComment();
         String content = "";
         String userName = commonService.getUserInfo().getUserName();
-        String approveStatus =ApproveStatusEnum.APPROVE.getStatus();
+        String approveStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
@@ -1301,7 +1301,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         checkIfPushDown(ids);
         List<SoInfoDTO.GenerateDeliveryView> viewList = baseMapper.generateDeliveryView(ids);
         long closeCount = viewList.stream().filter(s -> s.getIsClose()).count();
-        if(closeCount>0){
+        if (closeCount > 0) {
             throw new ServiceException(ApiError.ERROR_98068);
         }
         //获取sku的id集合
@@ -1388,6 +1388,23 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             return Boolean.FALSE;
         }
         long count = this.lambdaQuery().in(SoInfoEntity::getCustomerId, customerIds).count();
-        return count>0;
+        return count > 0;
+    }
+
+
+    /**
+     * 根据地址id 获取到对应 销售订单是否引用
+     *
+     * @param addressIds
+     * @return int
+     * @author yl
+     * @date 2023-06-06 11:13
+     */
+    @Override
+    public int getCountByAddressIds(List<String> addressIds) {
+        if (CollectionUtils.isEmpty(addressIds)) {
+            return 0;
+        }
+        return this.lambdaQuery().in(SoInfoEntity::getReceiveAddressId).count();
     }
 }

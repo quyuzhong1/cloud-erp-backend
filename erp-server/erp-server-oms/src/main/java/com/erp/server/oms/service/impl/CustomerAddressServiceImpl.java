@@ -14,6 +14,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.CustomerAddressMapper;
 import com.erp.server.oms.service.CustomerAddressService;
 import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.SoInfoService;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -39,12 +40,15 @@ import java.util.stream.Collectors;
 public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddressMapper, CustomerAddressEntity> implements CustomerAddressService {
 
 
-
     @Resource
     private OperateLogService operateLogService;
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private SoInfoService soInfoService;
+
     /**
      * 检查默认地址是否存在多个
      *
@@ -109,11 +113,12 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
 
     /**
      * 修改地址信息
-     * @author yl
-     * @date 2023-05-15 11:08
+     *
      * @param mainId
      * @param addressList
      * @return void
+     * @author yl
+     * @date 2023-05-15 11:08
      */
     @Override
     public void updateBatchAddress(String mainId, List<CustomerAddressDTO.ViewDTO> addressList) {
@@ -141,7 +146,13 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
         List<String> deleteIdList = getDeleteIds(updateList, dbList);
         //这是要删除的
         List<CustomerAddressEntity> removeList = dbList.stream().filter(r -> deleteIdList.contains(r.getId())).collect(Collectors.toList());
+
+
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
+            int count = soInfoService.getCountByAddressIds(deleteIdList);
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_92046);
+            }
             this.removeByIds(deleteIdList);
         }
         saveOrUpdateList.forEach(s -> s.setMainId(mainId));
@@ -155,22 +166,23 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
         for (CustomerAddressEntity update : updateEntityList) {
             String id = update.getId();
             CustomerAddressEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
-            if(old!=null){
-                operateLogService.addModuleOperateLogByObj(old,update, ModuleTypeEnum.CUSTOMER.getCode(),mainId,"","");
+            if (old != null) {
+                operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.CUSTOMER.getCode(), mainId, "", "");
             }
         }
         this.saveOrUpdateBatch(saveOrUpdateList);
 
     }
 
-    
+
     /**
      * 獲取刪除id
-     * @author yl
-     * @date 2023-05-15 11:14
+     *
      * @param addressList
      * @param dbList
      * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-05-15 11:14
      */
     private List<String> getDeleteIds(List<CustomerAddressDTO.ViewDTO> addressList, List<CustomerAddressEntity> dbList) {
         List<String> ids = addressList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).

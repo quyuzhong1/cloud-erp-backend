@@ -255,4 +255,13 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @date 2023-05-31 18:17
      */
     Boolean getIsUseCustomer(List<String> customerIds);
+
+    /**
+     * 根据地址id 获取到对应 销售订单是否引用
+     * @author yl
+     * @date 2023-06-06 11:13
+     * @param addressIds
+     * @return int
+     */
+    int getCountByAddressIds(List<String> addressIds);
 }

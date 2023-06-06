@@ -42,11 +42,6 @@ public class TransferInController extends BaseController {
      * @return
      */
     @PostMapping("/tabList")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:transfer:in:tabList",
-            tableAlias = "ti"
-    )
     public ApiResult<List<TransferInDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         List<TransferInDTO.TabListDTO> tabList = transferInService.tabList(dto);
         return success(tabList);

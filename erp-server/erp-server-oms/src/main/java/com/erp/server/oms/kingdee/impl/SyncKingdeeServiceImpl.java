@@ -4,6 +4,7 @@ import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.server.oms.kingdee.SyncKingdeeService;
 import com.erp.server.oms.service.CustomerGroupService;
 import com.erp.server.oms.service.CustomerInfoService;
+import com.erp.server.oms.service.SoChangeService;
 import com.erp.server.oms.service.SoInfoService;
 import com.erp.server.oms.service.SoReturnService;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,9 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
 
     @Resource
     private SoInfoService soInfoService;
+
+    @Resource
+    private SoChangeService soChangeService;
 
     @Resource
     private SoReturnService soReturnService;
@@ -60,7 +64,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         }
         //销售变更
         if (ApiModuleTypeEnum.SO_CHANGE.getCode().toString().equals(code)) {
-            soInfoService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+            soChangeService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
         }
     }
 }

@@ -12,7 +12,9 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoChangeService;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.SoChangeDetailService;
@@ -26,6 +28,7 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -59,6 +62,9 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
 
     @Resource
     private CustomerInfoService customerInfoService;
+
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
 
     /**
      * 销售变更单同步金碟
@@ -99,7 +105,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         //销售订单号
         resultMap.put("soCode", soInfo.getCode());
         resultMap.put("soId", soInfo.getId());
-        resultMap.put("soKingdeeId","181079");
+       // resultMap.put("soKingdeeId","100103");
         //单据类型
         resultMap.put("orderType", "XSDDBGD01_SYS");
         //单据日期
@@ -111,12 +117,8 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
                 resultMap.put("customerCode", customerInfo.getCode());
             }
         }
-
-
-
         //变更原因
         resultMap.put("remark", entity.getRemark());
-
         //销售员
         String sellerId = soInfo.getSellerId();
         //获取员工
@@ -130,34 +132,61 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             }
         }
 
+        String warehouseId = soInfo.getWarehouseId();
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
+        String kingdeeWarehouseCode = "";
+        if (CollectionUtils.isNotEmpty(warehouseList)) {
+            kingdeeWarehouseCode = warehouseList.get(0).getKingdeeWarehouseCode();
+        }
+
+
         //销售组织
         String salesOrgId = soInfo.getSalesOrgId();
-        if (StringUtils.isNotBlank(salesOrgId)) {
-            List<BaseIdDTO.CodeDTO> salesOrgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
-            if (CollectionUtils.isNotEmpty(salesOrgList)) {
-                resultMap.put("salesOrgCode", salesOrgList.get(0).getCode());
+        //库存组织
+        String warehouseOrgId = soInfo.getWarehouseOrgId();
+        List<String> orgIdList = new ArrayList<>(2);
+        orgIdList.add(warehouseOrgId);
+        orgIdList.add(salesOrgId);
+        String warehouseOrgCode = "";
+        if (CollectionUtils.isNotEmpty(orgIdList)) {
+            List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
+            String salesOrgCode = orgList.stream().filter(o -> o.getId().equals(salesOrgId)).
+                    map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
+            if (StringUtils.isNotBlank(salesOrgCode)) {
+                resultMap.put("salesOrgCode", salesOrgCode);
             }
+            warehouseOrgCode = orgList.stream().filter(o -> o.getId().equals(warehouseOrgId)).
+                    map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("100");
         }
+
 
         List<SoChangeDetailDTO.ViewDTO> details = soChangeDetailService.listDetailByMainId(id);
         if (CollectionUtils.isEmpty(details)) {
             return;
         }
-
+        //要货日期
+        LocalDate requireDate = soInfo.getRequireDate();
         List<JSONObject> list = new ArrayList<>(details.size());
         for (SoChangeDetailDTO.ViewDTO item : details) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.set("skuNo", item.getSkuNo());
-            jsonObject.set("soDetailKingdeeId","279939");
+      //      jsonObject.set("soDetailKingdeeId","100391");
             jsonObject.set("changeType", item.getChangeType().getCode());
+            jsonObject.set("requireDate", requireDate);
             jsonObject.set("oldQty", item.getOldQty());
             jsonObject.set("qty", item.getQty());
             jsonObject.set("baseQty", item.getQty());
+            jsonObject.set("stockBaseQty", item.getQty());
+            jsonObject.set("currentInventoryQty", item.getQty());
             jsonObject.set("curInventoryQty", item.getQty());
             jsonObject.set("price", item.getPrice());
             jsonObject.set("oldPrice", item.getOldPrice());
+            jsonObject.set("taxRate", item.getTaxRate());
+            jsonObject.set("oldTaxRate", item.getOldTaxRate());
             jsonObject.set("isGift", false);
             jsonObject.set("unit", "Pcs");
+            jsonObject.set("warehouseOrgCode", warehouseOrgCode);
+            jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
             list.add(jsonObject);
         }
 

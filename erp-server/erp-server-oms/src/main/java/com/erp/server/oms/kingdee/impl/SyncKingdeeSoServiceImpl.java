@@ -188,6 +188,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             jsonObject.set("unit", item.getUnit());
             jsonObject.set("warehouseOrgCode", warehouseOrgCode);
             jsonObject.set("curInventoryQty", item.getQty());
+            jsonObject.set("stockBaseQty", item.getQty());
             jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
             list.add(jsonObject);
         }

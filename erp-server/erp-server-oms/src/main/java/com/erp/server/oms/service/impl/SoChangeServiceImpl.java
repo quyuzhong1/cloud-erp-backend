@@ -764,7 +764,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         String comment = dto.getComment();
         String content = "";
         LoginUser user = commonService.getUserInfo();
-        ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE_ING;
         if (dto.getType().equals(ApproveType.PASS)) {
             soChangeDetailService.handleDb(list);
             //审核通过
