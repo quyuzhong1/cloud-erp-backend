@@ -78,7 +78,7 @@ public class KingdeeCustomerGroupConsumer implements RocketMQListener<Map<String
     @Override
     public void onMessage(Map<String, Object> map) {
         //模块类型
-        Integer type = ApiModuleTypeEnum.CUSTOMER_INFO.getCode();
+        Integer type = ApiModuleTypeEnum.CUSTOMER_GROUP.getCode();
 
         //业务id
         String  businessId = String.valueOf(map.get("id"));
@@ -104,7 +104,7 @@ public class KingdeeCustomerGroupConsumer implements RocketMQListener<Map<String
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.queryGroupInfo(apiUtils, String.valueOf(map.get("syncKingdeeId")));
+            model = kingdeeCommonService.queryGroupInfo(apiUtils, (String)map.get("syncKingdeeId"),String.valueOf(map.get("groupName")));
         } catch (Exception e) {
 
             //更新数据
@@ -112,5 +112,13 @@ public class KingdeeCustomerGroupConsumer implements RocketMQListener<Map<String
 
             return;
         }
+        String id = String.valueOf(model.get("FID")) ;
+        //主单据id
+        KingdeeUtils.makeFieldJson(json,"GroupPkId",".", id);
+        StringBuffer allKey = FastJsonUtil.getAllKey(json);
+        ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
+        param.setNeedUpDateFields(apiFieldList);
+        //更新数据
+        kingdeeCommonService.customerGroupSaveOrUpdate(platformEntity,map,apiUtils,json,param,type);
     }
 }

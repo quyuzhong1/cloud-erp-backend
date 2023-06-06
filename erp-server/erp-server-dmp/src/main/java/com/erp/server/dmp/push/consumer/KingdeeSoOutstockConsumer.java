@@ -50,9 +50,9 @@ public class KingdeeSoOutstockConsumer implements RocketMQListener<Map<String, O
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "XSCKD4064873"));
+        queryFilters.add(String.format("FBillNo = '%s'", "XSCKD4059542"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FSettleCurrID.FNumber";
+        String fieldKeys = "FBillTypeID.FNumber";
         map.put("FCustMatID.FNumber", "XSCKD01_SYS，XSCKD07_SYS");
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);
         System.out.println(queryList);
@@ -136,7 +136,14 @@ public class KingdeeSoOutstockConsumer implements RocketMQListener<Map<String, O
         try {
             model = kingdeeCommonService.view(apiUtils,(String)map.get("syncKingdeeId"),(String)map.get("code"));
         } catch (Exception e) {
+/*            Map<String, Object> pushMap = new HashMap<>();
+            pushMap.put("ids", Arrays.asList(map.get("soSyncKingdeeId")));
+            pushMap.put("Numbers", Arrays.asList(map.get("soCode")));
+            pushMap.put("RuleId", "4cd577aa-2c48-a50c-11ee-0387e3cd5475");
+            pushMap.put("TargetFormId", KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
+            pushMap.put("CustomParams", json);
             //更新数据
+            kingdeeCommonService.push(platformEntity,map,apiUtils,JSONUtil.parseObj(pushMap),param,type);*/
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
             return;
         }

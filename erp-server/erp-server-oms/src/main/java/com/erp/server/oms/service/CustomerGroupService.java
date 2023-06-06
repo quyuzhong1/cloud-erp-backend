@@ -45,4 +45,16 @@ public interface CustomerGroupService extends SuperService<CustomerGroupEntity> 
      * @return java.util.List<com.erp.model.oms.entity.CustomerGroupEntity>
      */
     List<CustomerGroupEntity> listById(String groupId);
+
+    /**
+     * 修改金蝶同步信息
+     * @Author Luo_WG
+     * @Date 2023/5/25 10:43
+     * @param id
+     * @param syncKingdeeStatus
+     * @param syncKingdeeId
+     * @param syncOperate
+     * @return java.lang.Boolean
+     **/
+    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
 }

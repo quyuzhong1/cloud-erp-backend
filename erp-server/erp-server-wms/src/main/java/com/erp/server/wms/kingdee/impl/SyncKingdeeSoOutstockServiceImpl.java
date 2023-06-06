@@ -142,6 +142,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
         //运输单号
         resultMap.put("trackNo", entity.getTrackNo());
+        //销售单号
+        resultMap.put("soCode", entity.getSoCode());
+        //销售单金蝶id
+        resultMap.put("soSyncKingdeeId", soInfoById.getSyncKingdeeId());
         //发货组织
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
             String warehouseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getWarehouseOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);

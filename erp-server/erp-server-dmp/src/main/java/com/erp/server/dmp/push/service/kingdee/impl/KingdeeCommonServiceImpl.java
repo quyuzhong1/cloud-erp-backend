@@ -162,8 +162,14 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     }
 
     @Override
-    public JSONObject queryGroupInfo(KingdeeApiUtils apiUtils, String id) {
-        JSONObject model = apiUtils.queryGroupInfo(id);
+    public JSONObject queryGroupInfo(KingdeeApiUtils apiUtils, String id, String code) {
+        String sign = "";
+        if (StringUtils.isNotBlank(id)) {
+            sign = id;
+        } else {
+            sign = code;
+        }
+        JSONObject model = apiUtils.queryGroupInfo(sign);
         return model;
     }
 
@@ -291,6 +297,12 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         submit(platformEntity, map,apiUtils,id,type);
 
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean push(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param, Integer type) {
+        apiUtils.push(json);
+        return null;
     }
 
     /**

@@ -2,6 +2,7 @@ package com.erp.server.oms.kingdee.impl;
 
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.server.oms.kingdee.SyncKingdeeService;
+import com.erp.server.oms.service.CustomerGroupService;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.SoInfoService;
 import com.erp.server.oms.service.SoReturnService;
@@ -20,6 +21,9 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
 
     @Resource
     private CustomerInfoService customerInfoService;
+
+    @Resource
+    private CustomerGroupService customerGroupService;
 
     @Resource
     private SoInfoService soInfoService;
@@ -41,6 +45,10 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //客户列表
         if (ApiModuleTypeEnum.CUSTOMER_INFO.getCode().toString().equals(code)) {
             customerInfoService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+        }
+        //客户分组
+        if (ApiModuleTypeEnum.CUSTOMER_GROUP.getCode().toString().equals(code)) {
+            customerGroupService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
         }
         //销售退货
         if (ApiModuleTypeEnum.SO_RETURN.getCode().toString().equals(code)) {

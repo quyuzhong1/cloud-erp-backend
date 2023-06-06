@@ -1,6 +1,7 @@
 package com.erp.server.oms.kingdee.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.utils.MathUtil;
@@ -50,7 +51,9 @@ public class SyncKingdeeCustomerGroupServiceImpl implements SyncKingdeeCustomerG
     public void syncDataToKingdee(CustomerGroupEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
-        resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
+        if (StringUtils.isNotBlank(entity.getSyncKingdeeId())) {
+            resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
+        }
         //业务id
         resultMap.put("id", entity.getId());
         CustomerGroupEntity groupEntity = customerGroupService.getById(entity.getId());
@@ -62,7 +65,7 @@ public class SyncKingdeeCustomerGroupServiceImpl implements SyncKingdeeCustomerG
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_CUSTOMER_GROUP_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return customerInfoService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"", operate);
+                return customerGroupService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"", operate);
             }
             return Boolean.TRUE;
         });

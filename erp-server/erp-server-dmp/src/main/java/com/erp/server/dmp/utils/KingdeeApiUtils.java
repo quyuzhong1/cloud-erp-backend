@@ -1,9 +1,11 @@
 package com.erp.server.dmp.utils;
 
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.kingdee.bos.webapi.entity.*;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import org.springframework.beans.factory.annotation.Value;
@@ -237,16 +239,22 @@ public class KingdeeApiUtils {
         try {
             LinkedHashMap<String,Object> viewMap =  new LinkedHashMap<>();
             viewMap.put("FormId", this.formId);
+            viewMap.put("Ids",id);
             viewMap.put("GroupPkIds",id);
 //            viewMap.put("GroupFieldKey","测试分组");
             String jsonData = JSONUtil.toJsonStr(viewMap);
             String view = client.queryGroupInfo(jsonData);
             JSONObject parse =  JSONUtil.parseObj(view);
             JSONObject result = JSONUtil.parseObj(parse.get("Result"));
+
             JSONObject responseStatus = (JSONObject)result.get("ResponseStatus");
-            json = (JSONObject)result.get("Result");
+            JSONArray list = JSONUtil.parseArray(JSONUtil.toJsonStr(result.get("NeedReturnData")));
+            json = (JSONObject)list.get(0);
             if(!(Boolean) responseStatus.get("IsSuccess")){
                 throw new RuntimeException("【查看单据】出错:"+ responseStatus.get("Errors"));
+            }
+            if (json == null) {
+                throw new RuntimeException("【客户分组】未查询到数据：" + view);
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -410,24 +418,27 @@ public class KingdeeApiUtils {
 
     /**
      * 下推单据
-     * @param idList    ID列表
+     * @param jsonDate jsonDate
      * @return
      */
-    public String push(List<String> idList){
-        // TODO 待测试
-        String result;
-        OperateParam param = new OperateParam();
-        param.setIds(String.join(",",idList));
-        String paramJson = JSONUtil.toJsonStr(param);
+    public String push(JSONObject jsonDate){
+        String result = "";
         try {
-            result = client.push(this.formId,paramJson);
-            System.out.println(result);
-//            if(!result.isSuccessfully()){
-//                throw new RuntimeException("【提交单据】出错:"+joinErrors("\r\n",result.getResult().getResponseStatus().getErrors()));
-//            }
+            String resultJson = client.push(this.formId, jsonDate.toString());
+            //用于记录结果
+            Gson gson = new Gson();
+            //对返回结果进行解析和校验
+            RepoRet repoRet = gson.fromJson(resultJson, RepoRet.class);
+            if (repoRet.getResult().getResponseStatus().isIsSuccess()) {
+                result = gson.toJson(repoRet.getResult());
+                return result;
+            } else {
+                System.err.println("【下推单据】出错:"+ gson.toJson(repoRet.getResult().getResponseStatus()));
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
         return result;
     }
 

@@ -69,6 +69,18 @@ public interface KingdeeCommonService {
     Boolean saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param,Integer type);
 
     /**
+     * @description: 下推
+     * @author Will
+     * @date: 2023/3/3 14:52
+     * @param platformEntity
+     * @param map
+     * @param apiUtils
+     * @param json
+     * @param param
+     */
+    Boolean push(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param,Integer type);
+
+    /**
      * 提交及审核
      * @author Will
      * @date: 2023/3/3 14:03
@@ -121,7 +133,7 @@ public interface KingdeeCommonService {
      * @param id
      * @return cn.hutool.json.JSONObject
      **/
-    JSONObject queryGroupInfo(KingdeeApiUtils apiUtils, String id);
+    JSONObject queryGroupInfo(KingdeeApiUtils apiUtils, String id, String code);
 
     /**
      * @description: 查询平台

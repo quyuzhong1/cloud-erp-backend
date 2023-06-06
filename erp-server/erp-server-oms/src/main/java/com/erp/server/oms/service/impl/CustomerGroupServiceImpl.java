@@ -8,6 +8,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.CustomerGroupDTO;
 import com.erp.model.oms.entity.CustomerGroupEntity;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerGroupService;
 import com.erp.server.oms.mapper.CustomerGroupMapper;
 import com.erp.server.oms.service.CustomerGroupService;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -68,11 +70,15 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             this.removeByIds(deleteIdList);
         }
-
+        for (CustomerGroupEntity groupEntity : batchGroupList) {
+            CustomerGroupEntity entity = dbList.stream().filter(req -> req.getId().equals(groupEntity.getId())).findFirst().orElse(new CustomerGroupEntity());
+            groupEntity.setSyncKingdeeId(entity.getSyncKingdeeId());
+        }
+        boolean flag = this.saveOrUpdateBatch(batchGroupList);
         //审核通过发送金蝶
         batchGroupList.forEach(obj -> syncKingdeeCustomerGroupService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
 
-        return this.saveOrUpdateBatch(batchGroupList);
+        return flag;
 
     }
 
@@ -156,4 +162,16 @@ public class CustomerGroupServiceImpl extends SuperServiceImpl<CustomerGroupMapp
         }
 
     }
+
+    @Override
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+        return this.lambdaUpdate()
+                .eq(CustomerGroupEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerGroupEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerGroupEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), CustomerGroupEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncOperate), CustomerGroupEntity::getSyncOperate, syncOperate)
+                .update();
+    }
+
 }
