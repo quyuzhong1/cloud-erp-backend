@@ -56,6 +56,11 @@ public class MachineDetailDTO implements Serializable {
          */
         @Size(max = 255,message = "备注不能大于255字符")
         private String remark;
+
+        /**
+         * 序号
+         */
+        private Integer index;
     }
 
     @Data

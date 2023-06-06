@@ -216,7 +216,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
             Integer qty = updateList.stream().filter(obj -> obj.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).map(MachineSubComponentsDTO.UpdateDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
             //如果子件明细合计数量 != 明细数量 * bom子件数量
             if (MathUtil.compareTo(qty,detail.getQty() * bomChildrenSkuDTO.getQuantity()) != MathUtil.ZERO) {
-                throw new ServiceException(ApiError.ERROR_99055.code, String.format(ApiError.ERROR_99057.msg, bomChildrenSkuDTO.getSkuNo(),detail.getQty() * bomChildrenSkuDTO.getQuantity()));
+                throw new ServiceException(ApiError.ERROR_99057.code, String.format(ApiError.ERROR_99057.msg,detail.getIndex(), bomChildrenSkuDTO.getSkuNo(),detail.getQty() * bomChildrenSkuDTO.getQuantity()));
             }
         }
     }

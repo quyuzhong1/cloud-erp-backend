@@ -76,6 +76,9 @@ public class MachineDetailEntity extends BaseEntity<MachineDetailEntity> {
     @TableField(exist = false)
     private List<MachineSubComponentsDTO.UpdateDTO> subComponentsList;
 
+    @TableField(exist = false)
+    private Integer index;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";
