@@ -848,6 +848,26 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         return new FindUserDTO();
     }
 
+    @Override
+    public List<FindUserDTO> listUserByUserNames(List<String> userNames) {
+        if (CollectionUtils.isEmpty(userNames)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<SysUserInfoEntity> list = lambdaQuery().in(SysUserInfoEntity::getUserName, userNames).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<FindUserDTO> resultList = new ArrayList<>();
+        for (SysUserInfoEntity entity : list) {
+            FindUserDTO userDTO = new FindUserDTO();
+            userDTO.setUserId(entity.getUid());
+            userDTO.setUserName(entity.getUserName());
+            userDTO.setIsMyState(0);
+            resultList.add(userDTO);
+        }
+        return resultList;
+    }
+
 
     /**
      * 获取所有用户所在的部门

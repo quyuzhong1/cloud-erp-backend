@@ -217,6 +217,17 @@ public class SysUserFeignController extends BaseController {
     }
 
     /**
+     * 根据用户名称获取用户
+     *
+     * @return
+     */
+    @PostMapping("/listUserByUserNames")
+    public List<FindUserDTO> listUserByUserNames(@RequestBody List<String> userNames) {
+        List<FindUserDTO> list = sysUserInfoService.listUserByUserNames(userNames);
+        return list;
+    }
+
+    /**
      * 获取所有用户所在的部门
      * @Author Luo_WG
      * @Date 2022/12/13 17:12
@@ -333,4 +344,8 @@ public class SysUserFeignController extends BaseController {
         return userKingdeePostService.getUserKingdeePostByUserId(userId);
     }
 
+    @PostMapping("/listUserKingdeePostByUserIds")
+    public List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByUserIds(@RequestBody List<String> userIds) {
+        return userKingdeePostService.listUserKingdeePostByUserIds(userIds);
+    }
 }

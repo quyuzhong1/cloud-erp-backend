@@ -57,6 +57,13 @@
             <artifactId>fastdfs-client-java</artifactId>
         </dependency>
 
+        <!-- 读取project文件 -->
+        <dependency>
+            <groupId>net.sf.mpxj</groupId>
+            <artifactId>mpxj</artifactId>
+            <version>9.7.0</version>
+        </dependency>
+
         <!-- ftp -->
         <dependency>
             <groupId>commons-net</groupId>

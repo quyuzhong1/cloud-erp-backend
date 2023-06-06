@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.IsConstant;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
@@ -11,7 +12,6 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectPhaseEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.SysTaskPhaseEntity;
-import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProjectPhaseMapper;
 import com.erp.server.plm.service.ProjectPhaseService;
@@ -115,6 +115,29 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
             //新增或编辑阶段
             this.saveOrUpdateBatch(saveList);
         }
+    }
+
+    @Override
+    public void batchSaveOrUpdatePhase(List<String> phaseNameList,String productId) {
+        if (CollectionUtils.isEmpty(phaseNameList)) {
+            return;
+        }
+        List<ProjectPhaseEntity> projectPhaseList = this.listByPhaseNames(phaseNameList, productId);
+        //需要新增的阶段
+        BatchTaskPhaseDTO batchTaskPhaseDTO = new BatchTaskPhaseDTO();
+        batchTaskPhaseDTO.setProductId(productId);
+        List<TaskPhaseDTO> taskPhases = new ArrayList<>();
+        for (String phaseName : phaseNameList) {
+            TaskPhaseDTO taskPhaseDTO = new TaskPhaseDTO();
+            taskPhaseDTO.setName(phaseName);
+            if (CollectionUtils.isNotEmpty(projectPhaseList)) {
+                String id = projectPhaseList.stream().filter(obj -> obj.getName().equals(phaseName)).map(ProjectPhaseEntity::getId).findFirst().orElse(null);
+                taskPhaseDTO.setId(id);
+            }
+            taskPhases.add(taskPhaseDTO);
+        }
+        batchTaskPhaseDTO.setTaskPhases(taskPhases);
+        projectPhaseService.batchSaveOrUpdate(batchTaskPhaseDTO);
     }
 
 

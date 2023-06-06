@@ -95,6 +95,7 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
     public List<MachineSubComponentsEntity> listByDetailId(String detailId) {
         return lambdaQuery()
                 .eq(MachineSubComponentsEntity::getDetailId, detailId)
+                .orderByAsc(MachineSubComponentsEntity::getSkuId)
                 .orderByAsc(MachineSubComponentsEntity::getIsChild)
                 .list();
     }
@@ -176,7 +177,7 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_99056);
                 }
-                operateLogService.addModuleOperateLogByObj(old,detail, ModuleTypeEnum.MACHINE_INFO.getCode(),detailId,"",String.format("【%s】",old.getSkuNo()));
+                operateLogService.addModuleOperateLogByObj(old,detail, ModuleTypeEnum.MACHINE_INFO.getCode(),detailId,"",String.format("子件【%s】",old.getSkuNo()));
             }
         }
         //添加操作日志

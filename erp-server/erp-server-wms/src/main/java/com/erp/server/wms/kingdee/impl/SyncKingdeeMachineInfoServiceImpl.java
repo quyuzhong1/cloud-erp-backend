@@ -2,13 +2,13 @@ package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.entity.BomInfoEntity;
+import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.wms.entity.MachineDetailEntity;
 import com.erp.model.wms.entity.MachineInfoEntity;
 import com.erp.model.wms.entity.MachineSubComponentsEntity;
@@ -86,8 +86,8 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
         //所有仓库
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIds);
 
-        //人员
-        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(entity.getWarehouseKeeperId(),entity.getReceiverId()));
+        //员工岗位
+        List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoList = sysUserFeign.listUserKingdeePostByUserIds(Arrays.asList(entity.getWarehouseKeeperId(), entity.getReceiverId()));
 
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -100,14 +100,14 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
         //出库日期
         resultMap.put("billDate", entity.getBillDate());
 
-        if (CollectionUtils.isNotEmpty(userList)) {
+        if (CollectionUtils.isNotEmpty(userKingdeePostInfoList)) {
             //仓管员
-            String warehouseKeeperCode = userList.stream().filter(obj -> obj.getUserId().equals(entity.getWarehouseKeeperId()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+            String warehouseKeeperCode = userKingdeePostInfoList.stream().filter(obj -> obj.getUserId().equals(entity.getWarehouseKeeperId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeePostCode())).orElse(null);
             resultMap.put("warehouseKeeperCode", warehouseKeeperCode);
             //领料人
-            String receiverCode = userList.stream().filter(obj -> obj.getUserId().equals(entity.getReceiverId()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+            String receiverCode = userKingdeePostInfoList.stream().filter(obj -> obj.getUserId().equals(entity.getReceiverId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeePostCode())).orElse(null);
             resultMap.put("receiverCode", receiverCode);
         }
 

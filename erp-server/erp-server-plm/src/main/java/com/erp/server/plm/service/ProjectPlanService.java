@@ -3,17 +3,14 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.plm.dto.ChangeTaskScheduleDTO;
-import com.erp.model.plm.dto.HandleTaskScheduleDTO;
-import com.erp.model.plm.dto.ProjectPlanTaskDTO;
-import com.erp.model.plm.dto.SearchPagingDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectPlanEntity;
 import com.erp.model.plm.vo.ProjectPlanDetailsVO;
 import com.erp.model.plm.vo.ProjectTaskPlanAutoVO;
 import com.erp.model.plm.vo.SchedulePagingVO;
 import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
-import com.erp.model.plm.dto.AuditParamDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -93,4 +90,14 @@ public interface ProjectPlanService  extends IService<ProjectPlanEntity> {
      * @return
      */
     ProjectTaskPlanAutoVO autoSchedule(ProjectPlanTaskDTO.AutoDTo dto);
+
+    /**
+     * @description: 导入project
+     * @author Will
+     * @date: 2023/6/2 9:04
+     * @param excelFile
+     * @param productId
+     * @return Boolean
+     */
+    Boolean importProjectSchedule(MultipartFile excelFile, String productId);
 }

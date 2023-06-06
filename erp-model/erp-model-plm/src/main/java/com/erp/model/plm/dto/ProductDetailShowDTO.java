@@ -282,4 +282,9 @@ public class ProductDetailShowDTO implements Serializable {
      * 单位
      */
     private String unitName;
+
+    /**
+     * 版本
+     */
+    private Integer version;
 }

@@ -3,9 +3,11 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
@@ -15,9 +17,12 @@ import com.common.business.enums.SkuApproveConfigureEnum;
 import com.common.business.enums.WorkflowBusinessEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.dto.ProjectImportDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.ProjectImportUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
@@ -35,17 +40,20 @@ import com.erp.server.plm.constant.SearchType;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProjectPlanMapper;
 import com.erp.server.plm.service.*;
+import net.sf.mpxj.Task;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 项目计划表(ProjectPlan)表服务实现类
@@ -90,6 +98,10 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     private ProjectTaskService projectTaskService;
     @Resource
     private TaskChargeDistributionService taskChargeDistributionService;
+
+    @Resource
+    private ProjectPhaseService projectPhaseService;
+
 
     /**
      * 提交项目计划
@@ -1017,6 +1029,116 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
        }
         return new ProjectTaskPlanAutoVO(errorList, sucessList);
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean importProjectSchedule(MultipartFile excelFile, String productId) {
+        List<Task> tasks = ProjectImportUtil.readMmpFile(excelFile);
+        if (CollectionUtils.isEmpty(tasks)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        List<ProjectImportDTO> list = new ArrayList<>();
+        Map<Integer,String> map = new LinkedHashMap<>();
+        map.put(10,"taskCharge");
+        ProjectImportUtil.getChildrenTask(tasks.get(0), list,map);
+
+        /**
+         * 1、第一级别数据无需处理
+         * 2、第二级别数据任务名称为阶段，如果有则引用，无则需要新增产品阶段
+         * 3、第三级别数据则属于任务，如果无任务则需要新增
+         * 4、新增任务后需要新增排期
+         */
+        //阶段信息
+        List<ProjectImportDTO> phaseList = list.stream().filter(obj -> MathUtil.TWO.equals(obj.getTaskOutlineLevel())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(phaseList)) {
+            throw new ServiceException(new ApiResult(ApiError.ERROR_1034.code, StrUtil.format(ApiError.ERROR_1034.msg,"二级")) );
+        }
+        List<String> phaseNameList = phaseList.stream().map(ProjectImportDTO::getTaskName).collect(Collectors.toList());
+
+        //新增阶段名称
+        projectPhaseService.batchSaveOrUpdatePhase(phaseNameList,productId);
+        //查询阶段
+        List<ProjectPhaseEntity> projectPhaseList = projectPhaseService.listByPhaseNames(phaseNameList, productId);
+        if (CollectionUtils.isEmpty(projectPhaseList)) {
+            throw new ServiceException(ApiError.ERROR_95041);
+        }
+
+        //任务信息
+        List<ProjectImportDTO> taskList = list.stream().filter(obj -> MathUtil.THREE.equals(obj.getTaskOutlineLevel())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(taskList)) {
+            throw new ServiceException(new ApiResult(ApiError.ERROR_1034.code, StrUtil.format(ApiError.ERROR_1034.msg,"三级")) );
+        }
+        //所有任务负责人
+        List<String> taskChargeList = taskList.stream().map(obj -> ObjectUtils.isEmpty(obj.getCustomFieldValues()) ? "" : obj.getCustomFieldValues().get("taskCharge")).flatMap(s -> {
+            // 将每个元素转换成一个stream
+            String[] split = s.split(",");
+            Stream<String> s2 = Arrays.stream(split);
+            return s2;
+        }).collect(Collectors.toList());
+        List<FindUserDTO> findUserList = sysUserFeign.listUserByUserNames(taskChargeList);
+        if (CollectionUtils.isEmpty(findUserList)) {
+            throw new ServiceException(new ApiResult(ApiError.ERROR_1036.code, StrUtil.format(ApiError.ERROR_1036.msg,"二级")) );
+        }
+        List<ProjectTaskDTO> projectTaskList = new ArrayList<>();
+        for (ProjectImportDTO projectImportDTO : taskList) {
+            ProjectTaskDTO projectTaskDTO = new ProjectTaskDTO();
+
+            //任务名称
+            if (StringUtils.isBlank(projectImportDTO.getTaskName())) {
+                throw new ServiceException(new ApiResult(ApiError.ERROR_1035.code, StrUtil.format(ApiError.ERROR_1035.msg,"二级")) );
+            }
+            //任务负责人
+            Map<String, String> customFieldValues = projectImportDTO.getCustomFieldValues();
+            if (ObjectUtils.isEmpty(customFieldValues) || StringUtils.isBlank(customFieldValues.get("taskCharge"))) {
+                throw new ServiceException(new ApiResult(ApiError.ERROR_1036.code, StrUtil.format(ApiError.ERROR_1036.msg,"二级")) );
+            }
+            String taskCharge = customFieldValues.get("taskCharge");
+            List<String> taskChargeNameList = Arrays.stream(taskCharge.split("\\/")).collect(Collectors.toList());
+            List<String> chargeIds = new ArrayList<>();
+            for (String taskChargeName : taskChargeNameList) {
+                String chargeId = findUserList.stream().filter(obj -> obj.getUserName().equals(taskChargeName)).map(FindUserDTO::getUserId).findFirst().orElse("");
+                if (StringUtils.isBlank(chargeId)) {
+                    throw new ServiceException(new ApiResult(ApiError.ERROR_1037.code, StrUtil.format(ApiError.ERROR_1037.msg,taskChargeName)) );
+                }
+                chargeIds.add(chargeId);
+            }
+
+            //任务阶段
+            String taskParentDefId = projectImportDTO.getTaskParentDefId();
+            String phaseName = phaseList.stream().filter(obj -> obj.getTaskId().equals(taskParentDefId)).map(ProjectImportDTO::getTaskName).findFirst().orElse("");
+            String phaseId = projectPhaseList.stream().filter(obj -> obj.getName().equals(phaseName)).map(ProjectPhaseEntity::getId).findFirst().orElse("");
+
+            //任务集合添加任务数据
+            projectTaskDTO.setId(IdWorker.getIdStr());
+            projectTaskDTO.setProjectTaskId(projectImportDTO.getTaskId());
+            projectTaskDTO.setName(projectImportDTO.getTaskName());
+            projectTaskDTO.setChargeIds(chargeIds);
+            projectTaskDTO.setPhaseId(phaseId);
+            projectTaskDTO.setPhaseName(phaseName);
+            projectTaskList.add(projectTaskDTO);
+
+        }
+        //新增任务
+        for (ProjectTaskDTO projectTaskDTO : projectTaskList) {
+            ProjectImportDTO projectImportDTO = taskList.stream().filter(obj -> obj.getTaskName().equals(projectTaskDTO.getName())).findFirst().orElse(null);
+            //前置任务
+            String preTask = projectImportDTO.getPreTask();
+            if (StringUtils.isNotBlank(preTask)) {
+                List<String> importPreTaskIds = Arrays.stream(preTask.split(",")).collect(Collectors.toList());
+                List<String> preTaskIdList = projectTaskList.stream().filter(obj -> importPreTaskIds.contains(obj.getProjectTaskId())).map(ProjectTaskDTO::getId).collect(Collectors.toList());
+                projectTaskDTO.setPreTaskIdList(preTaskIdList);
+            }
+            projectTaskService.save(projectTaskDTO);
+        }
+        List<String> taskIdList = projectTaskList.stream().map(ProjectTaskDTO::getId).collect(Collectors.toList());
+        HandleTaskScheduleDTO dto = new HandleTaskScheduleDTO();
+        dto.setProductId(productId);
+        dto.setTaskIdList(taskIdList);
+        //新增任务排期
+        Boolean flag = this.submitSchedule(dto);
+        return flag;
+    }
+
 
     /**
      * 递归处理子节点

@@ -68,7 +68,12 @@ public enum ApiError implements Serializable {
     ERROR_1029(1029, "只有待提交和审核不通过数据支持修改"),
     ERROR_1030(1030, "未找到来源单据"),
     ERROR_1031(1031, "未找到来源单据明细"),
-
+    ERROR_1032(1032, "导入文件格式错误，请使用mmp文件"),
+    ERROR_1033(1033, "导入文件解析失败"),
+    ERROR_1034(1034,"project导入{}任务不能为空"),
+    ERROR_1035(1035,"project导入{}任务名称不能为空"),
+    ERROR_1036(1036,"project导入{}级任务负责人不能为空"),
+    ERROR_1037(1037,"未找到用户【{}】"),
 
 
 
@@ -327,7 +332,10 @@ public enum ApiError implements Serializable {
     ERROR_95163(95163, "BOM信息不存在"),
     ERROR_95164(95164, "不可新增相同EAN码"),
 
-    ERROR_DOCS_NO(95157,"文档不存在"),
+    ERROR_DOCS_NO(95165,"文档不存在"),
+
+
+
     /**
      * bi 错误
      * 从97000 开始  以端口号

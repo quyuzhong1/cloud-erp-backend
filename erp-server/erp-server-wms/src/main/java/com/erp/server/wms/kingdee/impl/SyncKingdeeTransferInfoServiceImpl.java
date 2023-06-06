@@ -4,13 +4,13 @@ import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.wms.entity.TransferInfoDetailEntity;
 import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -74,10 +74,11 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(entity.getInWarehouseId(), entity.getOutWarehouseId()));
 
         if (StringUtils.isNotBlank(entity.getWarehouseKeeperId())) {
-            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getWarehouseKeeperId());
-            if (ObjectUtils.isNotEmpty(findUserDTO)) {
+            //员工岗位
+            List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoList = sysUserFeign.listUserKingdeePostByUserIds(Arrays.asList(entity.getWarehouseKeeperId()));
+            if (ObjectUtils.isNotEmpty(userKingdeePostInfoList)) {
                 //仓管员
-                resultMap.put("warehouseKeeperCode", findUserDTO.getCode());
+                resultMap.put("warehouseKeeperCode", userKingdeePostInfoList.get(0).getKingdeePostCode());
             }
         }
 

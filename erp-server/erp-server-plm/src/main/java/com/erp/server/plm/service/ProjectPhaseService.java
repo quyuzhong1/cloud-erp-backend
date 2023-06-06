@@ -27,6 +27,7 @@ public interface ProjectPhaseService extends IService<ProjectPhaseEntity> {
 
     void batchSaveOrUpdate(BatchTaskPhaseDTO list);
 
+    void batchSaveOrUpdatePhase(List<String> phaseNameList,String productId);
 
     String saveTaskPhase(String productId, String phaseName,Integer isSourceSys);
 
@@ -54,4 +55,5 @@ public interface ProjectPhaseService extends IService<ProjectPhaseEntity> {
      * @return com.erp.model.plm.entity.ProjectPhaseEntity
      **/
     ProjectPhaseEntity getProductPhaseByName(String productId, String name);
+
 }

@@ -110,6 +110,12 @@ public interface SysUserFeign {
     FindUserDTO getUserByUserName(@RequestBody String userName);
 
     /**
+     *  根据用户名称集合查询用户
+     */
+    @GetMapping("feign/user/listUserByUserNames")
+    List<FindUserDTO> listUserByUserNames(@RequestBody List<String> userNames);
+
+    /**
      *  根据userIds查询用户集合
      */
     @GetMapping("feign/user/getUserListByUserIds")
@@ -342,4 +348,13 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/user/getUserKingdeePostByUserId")
     KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePostByUserId(@RequestBody String userId);
+    /**
+     * @description: 根据用戶ids 获取金蝶的对应岗位code
+     * @author Will
+     * @date: 2023/6/6 10:44
+     * @param userIds
+     * @return List<UserKingdeePostInfoDTO>
+     */
+    @PostMapping("feign/user/listUserKingdeePostByUserIds")
+    List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByUserIds(@RequestBody List<String> userIds);
 }

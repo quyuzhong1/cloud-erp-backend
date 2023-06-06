@@ -2,9 +2,11 @@ package com.erp.server.sys.service.impl;
 
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.dto.excel.UserKingdeePostImportExcelDTO;
@@ -19,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -85,6 +88,18 @@ public class UserKingdeePostServiceImpl extends SuperServiceImpl<UserKingdeePost
             BeanMapper.copy(userKingdeePostEntity, result);
         }
         return result;
+    }
+
+    @Override
+    public List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByUserIds(List<String> userIds) {
+        List<UserKingdeePostEntity> list = lambdaQuery()
+                .in(UserKingdeePostEntity::getUserId, userIds)
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<KingdeePostDTO.UserKingdeePostInfoDTO> resultList = BeanMapperUtils.copyList(KingdeePostDTO.UserKingdeePostInfoDTO.class, list);
+        return resultList;
     }
 
     private UserKingdeePostEntity getByUserId(String userId) {
