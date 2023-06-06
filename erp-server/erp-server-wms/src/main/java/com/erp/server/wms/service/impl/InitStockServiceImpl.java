@@ -262,7 +262,6 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void submit(List<String> ids) {
-        ids = ids.stream().distinct().collect(Collectors.toList());
         // 判断id是否正确
         List<InitStockEntity> list = super.listByIds(ids);
         Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
@@ -311,7 +310,6 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     @Override
     public void approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();// 提交审核的单据id
-        ids = ids.stream().distinct().collect(Collectors.toList());
         List<InitStockEntity> list = super.listByIds(ids);
         ValidatorUtil.isTrue(CollUtil.isNotEmpty(list),()->new ServiceException("未找到期初库存数据"));
         Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
@@ -343,7 +341,6 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void delete(List<String> ids) {
-        ids = ids.stream().distinct().collect(Collectors.toList());
         List<InitStockEntity> list = super.listByIds(ids);
         Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
         //只有待提交的数据允许删除
@@ -369,7 +366,6 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void disApprove(List<String> ids) {
-        ids = ids.stream().distinct().collect(Collectors.toList());
         List<InitStockEntity> list = super.listByIds(ids);
         Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
         ids.stream().forEach(id->{
@@ -393,7 +389,6 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void invalid(List<String> ids, String remark) {
-        ids = ids.stream().distinct().collect(Collectors.toList());
         List<InitStockEntity> list = super.listByIds(ids);
         Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
         //只有待提交的数据允许作废
@@ -418,7 +413,6 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void cancel(List<String> ids) {
-        ids = ids.stream().distinct().collect(Collectors.toList());
         List<InitStockEntity> list = super.listByIds(ids);
         Map<String, InitStockEntity> initStockEntityMap = list.stream().collect(Collectors.toMap(InitStockEntity::getId, Function.identity()));
         //只有待提交的数据允许撤销

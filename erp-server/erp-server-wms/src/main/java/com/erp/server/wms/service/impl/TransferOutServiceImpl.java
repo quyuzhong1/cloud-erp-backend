@@ -243,7 +243,6 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void submit(List<String> ids) {
-        ids = ids.stream().distinct().collect(Collectors.toList());
         // 判断id是否正确
         List<TransferOutEntity> list = super.listByIds(ids);
         Map<String, TransferOutEntity> transferOutEntityMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
@@ -281,7 +280,6 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     @Override
     public void approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();// 提交审核的单据id
-        ids = ids.stream().distinct().collect(Collectors.toList());
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(baseApproveParamDTO.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(baseApproveParamDTO.getComment())) {
             throw new ServiceException("审核不通过请填写审核意见");
@@ -318,7 +316,6 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void delete(List<String> ids) {
-        ids = ids.stream().distinct().collect(Collectors.toList());
         List<TransferOutEntity> list = super.listByIds(ids);
         Map<String, TransferOutEntity> transferOutEntityMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
         //只有待提交的数据允许删除
@@ -343,7 +340,6 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void invalid(List<String> ids, String remark) {
-        ids = ids.stream().distinct().collect(Collectors.toList());
         List<TransferOutEntity> list = super.listByIds(ids);
         Map<String, TransferOutEntity> transferOutEntityMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
         //只有待提交的数据允许作废
@@ -368,7 +364,6 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void cancel(List<String> ids) {
-        ids = ids.stream().distinct().collect(Collectors.toList());
         List<TransferOutEntity> list = super.listByIds(ids);
         Map<String, TransferOutEntity> transferOutEntityMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
         // 只有审核中的数据允许撤销
@@ -392,7 +387,6 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void disApprove(List<String> ids) {
-        ids = ids.stream().distinct().collect(Collectors.toList());
         List<TransferOutEntity> list = super.listByIds(ids);
         Map<String, TransferOutEntity> transferOutEntityMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
         ids.stream().forEach(id->{
@@ -421,7 +415,6 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Override
     public List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransferIn(List<String> ids) {
-        ids = ids.stream().distinct().collect(Collectors.toList());
         List<TransferOutDTO.ViewGenerateTransferInDTO> dataList = this.baseMapper.viewGenerateTransfer(ids);
         if(CollUtil.isEmpty(dataList)) {
             return null;
