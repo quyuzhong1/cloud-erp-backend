@@ -175,6 +175,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                 .in(PurchaseOrderDetailEntity::getId,ids)
                 .set(PurchaseOrderDetailEntity::getArrivalStatus,arrivalStatus)
                 .set(PurchaseOrderDetailEntity::getArrivalTime, LocalDateTime.now())
+                .set(PurchaseOrderDetailEntity::getIsEndReceive,Boolean.TRUE)
                 .update();
     }
 

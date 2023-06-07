@@ -141,9 +141,9 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private String variantProperty;
 
     /**
-     * 结束收货数量
+     * 是否结束交货
      */
-    private Integer endReceiveQty;
+    private Boolean isEndReceive;
 
    /** 采购申请明细id(无需传值，后端使用)
     *
