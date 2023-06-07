@@ -3,7 +3,6 @@
 <mapper namespace="com.erp.server.workflow.mapper.WorkOptionMapper">
     <select id="listWaitDoMenu" resultType="com.erp.model.workflow.dto.WorkOptionDTO$WaitDoMenu">
         SELECT
-        wm.id,
         wmrs.id,
         wm.sys_classify AS sysClassify,
         wm.module_classify AS moduleClassify,
@@ -53,7 +52,7 @@
             wmrs.module_url AS moduleUrl,
             wmrs.module_param AS moduleParam
         FROM work_option wo
-        LEFT JOIN work_menu_ref_status wmrs ON wo.work_menu_id = wmrs.menu_id
+        LEFT JOIN work_menu_ref_status wmrs ON wo.work_menu_id = wmrs.id
         LEFT JOIN work_menu wm ON wm.id = wmrs.menu_id
         LEFT JOIN dict_basic db ON wmrs.module_status = db."value"
         WHERE wo.is_deleted = FALSE AND wo.type = '1' AND wm.module_code NOT IN ('qc_info')
@@ -73,7 +72,7 @@
         wmrs.module_url AS moduleUrl,
         wmrs.module_param AS moduleParam
         FROM work_option wo
-        LEFT JOIN work_menu_ref_status wmrs ON wo.work_menu_id =  wmrs.menu_id
+        LEFT JOIN work_menu_ref_status wmrs ON wo.work_menu_id =  wmrs.id
         LEFT JOIN work_menu wm ON wm.id = wmrs.menu_id
         LEFT JOIN dict_basic db ON wmrs.module_status = db."value"
         WHERE wo.is_deleted = FALSE AND wo.type = '2'

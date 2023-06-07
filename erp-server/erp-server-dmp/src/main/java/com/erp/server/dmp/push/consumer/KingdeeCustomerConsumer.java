@@ -45,12 +45,12 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils("BD_Customer");
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "CUST5450"));
+        queryFilters.add(String.format("FNumber = '%s'", "CUST23060500001"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "GroupFieldKey";
-//        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);
-//        System.out.println(queryList);
-        JSONObject entries = apiUtils.customerGroupDelete("");
+        String fieldKeys = "FInvoiceType";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);
+        System.out.println(queryList);
+       /* JSONObject entries = apiUtils.customerGroupDelete("");*/
 
 
       /* LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();

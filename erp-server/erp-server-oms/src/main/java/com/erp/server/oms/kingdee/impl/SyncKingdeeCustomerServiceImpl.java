@@ -20,6 +20,7 @@ import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictBasicDTO;
+import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -84,6 +85,13 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         String useOrgCode = accountingCompanyList.stream().filter(req -> req.getId().equals(entity.getUseOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
         //使用组织
         resultMap.put("useOrgCode", useOrgCode);
+        List<DictBasicDTO.ViewDTO> customerCompanyCategory = dictBasicService.getByKey("customerCompanyCategory");
+        if (CollectionUtils.isEmpty(customerCompanyCategory)) {
+            DictBasicDTO.ViewDTO viewDTO = customerCompanyCategory.stream().filter(req -> req.getValue().equals(entity.getCompanyCategoryDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
+            //公司类型
+            resultMap.put("companyCategory", viewDTO.getRemark());
+        }
+
         //客户名称
         resultMap.put("name", entity.getName());
         //简称
@@ -105,7 +113,18 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
                 resultMap.put("city", city.getKingdeeCode());
             }
         }
-
+        //结算方
+        if (StringUtils.isNotBlank(entity.getSettleCode())) {
+            CustomerInfoEntity customerInfoEntity = customerInfoService.getById(entity.getSettleCode());
+            resultMap.put("settleCode", customerInfoEntity.getCode());
+        }
+        //付款方
+        if (StringUtils.isNotBlank(entity.getPayCode())) {
+            //金蝶只能录入单个付款方，这里默认取第一条
+            String[] split = entity.getPayCode().split(",");
+            List<CustomerInfoEntity> customerInfoEntities = customerInfoService.listByIds(Arrays.asList(split));
+            resultMap.put("payCode", customerInfoEntities.get(0).getCode());
+        }
 
         List<InvoiceDTO.ViewDTO> viewDTOS = customerInvoiceService.listByMainId(entity.getId());
         if (CollectionUtils.isNotEmpty(viewDTOS)) {
@@ -114,13 +133,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
             resultMap.put("head", viewDTO.getHead());
             resultMap.put("bankName", viewDTO.getBankName());
             resultMap.put("bankAccount", viewDTO.getBankAccount());
-            if (InvoiceTypeEnum.INVOICE.getCode().equals(viewDTO.getType())) {
-                resultMap.put("FInvoiceType", InvoiceTypeEnum.INVOICE.getName());
-                resultMap.put("FInvoiceType", 1);
-            } else {
-                resultMap.put("FInvoiceType", "增值税专用发票");
-                resultMap.put("FInvoiceType", 2);
-            }
+            resultMap.put("FInvoiceType", viewDTO.getType());
         }
         List<CurrencyDTO.ViewDTO> viewDTOS1 = sysUserFeign.listByCurrency(Arrays.asList(entity.getCurrency()));
 
@@ -136,8 +149,10 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
                     resultMap.put("sellerDeptCode",dept.getCode());
                 }
             }
-            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(viewDTO.getSellerId());
-            resultMap.put("sellerUserCode",findUserDTO.getCode());
+            List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoDTOS = sysUserFeign.listUserKingdeePostByUserIds(Collections.singletonList(viewDTO.getSellerId()));
+            if (CollectionUtils.isNotEmpty(userKingdeePostInfoDTOS)) {
+                resultMap.put("sellerUserCode",userKingdeePostInfoDTOS.get(MathUtil.ZERO).getKingdeePostCode());
+            }
         }
         List<DictBasicDTO.ViewDTO> settleModeList = dictBasicService.getByKey("settleMode");
         DictBasicDTO.ViewDTO settleMode = settleModeList.stream().filter(req -> req.getValue().equals(entity.getSettleDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
