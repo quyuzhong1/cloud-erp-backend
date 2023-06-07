@@ -205,4 +205,14 @@ public interface KingdeeCommonService {
      * @return
      */
     String addKingdeeRecord(String orderNo, KingdeeApiUtils apiUtils, Integer modelType, String platformCode, Map<String, Object> dataMap);
+
+    
+    /**
+     * 生成销售变更单
+     * @author yl
+     * @date 2023-06-07 10:46
+     * @param paramMap
+     * @return cn.hutool.json.JSONObject
+     */
+    String createkingdeeSoChange(Map<String, Object> paramMap);
 }

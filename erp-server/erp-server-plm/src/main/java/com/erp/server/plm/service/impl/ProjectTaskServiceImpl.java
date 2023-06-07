@@ -4732,4 +4732,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         return true;
     }
+
+    @Override
+    public List<ProjectTaskEntity> listByTaskNames(String productId, List<String> taskNameList) {
+        List<ProjectTaskEntity> list = lambdaQuery().eq(ProjectTaskEntity::getProductId, productId)
+                .in(ProjectTaskEntity::getName, taskNameList)
+                .list();
+        return list;
+    }
 }

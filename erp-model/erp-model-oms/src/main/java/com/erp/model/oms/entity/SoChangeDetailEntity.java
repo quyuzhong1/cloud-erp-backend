@@ -147,6 +147,13 @@ public class SoChangeDetailEntity extends BaseEntity<SoChangeDetailEntity> {
     private String remark;
 
 
+    /**
+     * 对应金蝶详情id
+     */
+    @TableField("kingdee_detail_id")
+    private String kingdeeDetailId;
+
+
     public static final String MAIN_ID = "main_id";
 
     public static final String TYPE = "type";

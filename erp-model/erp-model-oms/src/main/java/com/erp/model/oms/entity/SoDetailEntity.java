@@ -110,8 +110,14 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField("remark")
     private String remark;
 
+    /**
+     * 对应金蝶详情id
+     */
+    @TableField("kingdee_detail_id")
+    private String kingdeeDetailId;
+
     @TableField(exist = false)
-    private String ApproveStatus;
+    private String approveStatus;
 
 
 

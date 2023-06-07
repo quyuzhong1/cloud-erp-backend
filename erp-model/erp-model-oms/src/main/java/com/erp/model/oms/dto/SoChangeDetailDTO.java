@@ -243,6 +243,8 @@ public class SoChangeDetailDTO implements Serializable {
         private String remark;
 
 
+        private String soDetailKingdeeId;
+
     }
 
 
@@ -388,9 +390,6 @@ public class SoChangeDetailDTO implements Serializable {
          * 备注
          */
         private String remark;
-
-
-
 
 
         /**

@@ -70,10 +70,11 @@ public enum ApiError implements Serializable {
     ERROR_1031(1031, "未找到来源单据明细"),
     ERROR_1032(1032, "导入文件格式错误，请使用mmp文件"),
     ERROR_1033(1033, "导入文件解析失败"),
-    ERROR_1034(1034,"project导入{}任务不能为空"),
-    ERROR_1035(1035,"project导入{}任务名称不能为空"),
+    ERROR_1034(1034,"project导入{}级任务不能为空"),
+    ERROR_1035(1035,"project导入{}级任务名称不能为空"),
     ERROR_1036(1036,"project导入{}级任务负责人不能为空"),
-    ERROR_1037(1037,"未找到用户【{}】"),
+    ERROR_1037(1037,"系统中未找到用户【{}】"),
+    ERROR_1038(1038,"系统中未找到project导入{}级任务负责人"),
 
 
 

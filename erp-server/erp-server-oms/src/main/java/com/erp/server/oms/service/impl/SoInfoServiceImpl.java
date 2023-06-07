@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.convert.Convert;
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -21,12 +22,11 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.KingdeeDTO;
+import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
-import com.erp.model.oms.entity.CustomerAddressEntity;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.SoChangeEntity;
-import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.CustomerAddressTypeEnum;
 import com.erp.model.oms.enums.DeliveryModeEnum;
@@ -42,6 +42,7 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
@@ -51,6 +52,7 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.mapper.SoInfoMapper;
 import com.erp.server.oms.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -76,6 +78,7 @@ import java.util.stream.Collectors;
  * @since 2023-05-10
  */
 @Service
+@Slf4j
 public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEntity> implements SoInfoService {
 
 
@@ -117,6 +120,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private SoChangeService soChangeService;
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @Value("${so.contract.company}")
     private String company;
@@ -653,7 +659,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String comment = dto.getComment();
         String content = "";
         String userName = commonService.getUserInfo().getUserName();
-        String approveStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
@@ -1361,16 +1367,51 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
-        if (StringUtils.isEmpty(id)) {
-            return Boolean.TRUE;
+        try {
+            if (StringUtils.isEmpty(id)) {
+                return Boolean.TRUE;
+            }
+            //同步成功
+            if (syncKingdeeStatus.equals("3")) {
+                KingdeeDTO dto = new KingdeeDTO();
+                dto.setId(syncKingdeeId);
+                dto.setNumber("");
+                dto.setKingdeePushModuleCode(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
+                JSONObject soJson = dmpTaskFeign.getByKingdeeId(dto);
+                List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainId(id);
+                List<Map<String, Object>> resultList = (List<Map<String, Object>>) soJson.get("SaleOrderEntry");
+                List<SoDetailEntity> updateList = new ArrayList<>(10);
+                if (CollectionUtils.isNotEmpty(resultList)) {
+                    for (int i = 0; i < resultList.size(); i++) {
+                        Map<String, Object> item = resultList.get(i);
+                        String KingdeeId = item.get("Id").toString();
+                        Map<String, Object> materialMap = (Map<String, Object>) item.get("MaterialId");
+                        String skuNo = materialMap.get("Number").toString();
+                        if (soDetailList.size() >= resultList.size()) {
+                            SoDetailEntity soDetail = soDetailList.get(i);
+                            if (soDetail.getSkuNo().equals(skuNo)) {
+                                soDetail.setKingdeeDetailId(KingdeeId);
+                                updateList.add(soDetail);
+                            }
+                        }
+                    }
+                }
+                if (updateList.size() > 0) {
+                    soDetailService.updateBatchById(updateList);
+                }
+            }
+
+            return this.lambdaUpdate()
+                    .eq(SoInfoEntity::getId, id)
+                    .set(StringUtils.isNotBlank(syncKingdeeStatus), SoInfoEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                    .set(StringUtils.isNotBlank(syncKingdeeStatus), SoInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
+                    .set(StringUtils.isNotBlank(syncKingdeeId), SoInfoEntity::getSyncKingdeeId, syncKingdeeId)
+                    .set(StringUtils.isNotBlank(syncOperate), SoInfoEntity::getSyncOperate, syncOperate)
+                    .update();
+        } catch (Exception e) {
+            log.error("同步状态出错=={}", e);
         }
-        return this.lambdaUpdate()
-                .eq(SoInfoEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SoInfoEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus), SoInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId), SoInfoEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), SoInfoEntity::getSyncOperate, syncOperate)
-                .update();
+        return Boolean.TRUE;
     }
 
 

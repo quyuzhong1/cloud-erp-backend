@@ -24,7 +24,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -43,15 +45,18 @@ public class KingdeeSoChangeConsumer implements RocketMQListener<Map<String, Obj
 
     public static void main(String[] args) {
 
-        Map<String, Object> resultMap = new LinkedHashMap<>();
-        //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER_CHANGE.getCode());
-        LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "XSD23060500001_V001"));
-        String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FDeliveryDate";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 1);
-        System.out.println(queryList);
+//        Map<String, Object> resultMap = new LinkedHashMap<>();
+//        //读取配置，初始化SDK
+//        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER_CHANGE.getCode());
+//        LinkedList<String> queryFilters = new LinkedList<>();
+//        queryFilters.add(String.format("FBillNo = '%s'", "XSD23060500001_V001"));
+//        String filterStr = String.join(" and ", queryFilters);
+//        String fieldKeys = "FDeliveryDate";
+//        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 1);
+//        System.out.println(queryList);
+
+
+
 
     }
 
@@ -75,6 +80,7 @@ public class KingdeeSoChangeConsumer implements RocketMQListener<Map<String, Obj
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
 
+
         //未配置发送字段
         if (CollectionUtils.isEmpty(json)) {
             log.error(ApiError.ERROR_97025.msg);
@@ -89,7 +95,6 @@ public class KingdeeSoChangeConsumer implements RocketMQListener<Map<String, Obj
         try {
             model = kingdeeCommonService.view(apiUtils, (String) map.get("syncKingdeeId"), (String) map.get("code"));
         } catch (Exception e) {
-
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
             return;

@@ -149,7 +149,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         String completeShipment = DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode();
 
         //已审核+未发货+部分发货的
-        int waitDeliveryCount = deliveryCountList.stream().filter(s->!completeShipment.equals(s.getType())).
+        int waitDeliveryCount = deliveryCountList.stream().filter(s -> !completeShipment.equals(s.getType())).
                 mapToInt(SoDetailDTO.TypeCountDTO::getCount).sum();
         waitDelivery.setCount(waitDeliveryCount);
         result.add(waitDelivery);
@@ -166,7 +166,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //已发货
         SoInfoDTO.TabListDTO delivery = new SoInfoDTO.TabListDTO();
         delivery.setSearchType(OmsConstant.DELIVERY);
-        int deliveryCount = (int) deliveryCountList.stream().filter(s ->  completeShipment.equals(s.getType())).findFirst().
+        int deliveryCount = (int) deliveryCountList.stream().filter(s -> completeShipment.equals(s.getType())).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         delivery.setCount(deliveryCount);
         result.add(delivery);
@@ -883,7 +883,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 if (deliveryQty < qty && deliveryQty != 0) {
                     item.setDeliveryStatus(DeliveryStatusEnum.PARTIAL_SHIPMENT.getCode());
                 }
-                if ( deliveryQty == 0) {
+                if (deliveryQty == 0) {
                     item.setDeliveryStatus(DeliveryStatusEnum.UN_SHIPPED.getCode());
                 }
             }
@@ -946,6 +946,22 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         return this.list(queryWrapper);
     }
 
+    /**
+     * 按照顺序排序
+     *
+     * @param soDetailIdList
+     * @return java.util.List<com.erp.model.oms.entity.SoDetailEntity>
+     * @author yl
+     * @date 2023-06-07 10:32
+     */
+    @Override
+    public List<SoDetailEntity> listByIdsSeq(List<String> soDetailIdList) {
+        if (CollectionUtils.isEmpty(soDetailIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(SoDetailEntity::getId,soDetailIdList).orderByDesc(SoDetailEntity::getId).list();
+    }
+
 
     /**
      * 根据sku id list 获取sku 的历史价格
@@ -965,7 +981,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
     @Override
     public List<SoDetailEntity> listBaseByMainId(String mainId) {
-        return this.lambdaQuery().eq(SoDetailEntity::getMainId, mainId).list();
+        return this.lambdaQuery().eq(SoDetailEntity::getMainId, mainId).orderByDesc(SoDetailEntity::getId).list();
 
     }
 
