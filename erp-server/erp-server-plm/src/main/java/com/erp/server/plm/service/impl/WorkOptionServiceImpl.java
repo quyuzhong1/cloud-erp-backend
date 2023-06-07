@@ -69,7 +69,11 @@ public class WorkOptionServiceImpl implements WorkOptionService {
 /*            pagingDTO.setPageSize(99999);
             pagingDTO.setParams(params);
             PagingVO<List<TaskPagingShowDTO>> listPagingVO = projectTaskService.assignToMePaging(pagingDTO);*/
-            return getCount(params);
+            if (tableNumDTO.getApproveStatus().equals("assignNotStarted") || tableNumDTO.getApproveStatus().equals("assignExecutable")) {
+                return getWaitFinishCount(params);
+            } else {
+                return getWaitAuditCount(params);
+            }
         }
         if (tableNumDTO.getTableName().equals("product_detail")) {
             Integer status = Integer.valueOf(tableNumDTO.getApproveStatus());
@@ -99,7 +103,7 @@ public class WorkOptionServiceImpl implements WorkOptionService {
     }
 
 
-    private Integer getCount(TaskSearchParamDTO searchParamDTO) {
+    private Integer getWaitAuditCount(TaskSearchParamDTO searchParamDTO) {
         LoginUser userInfo = commonService.getUserInfo();
         searchParamDTO.setPermissionSql(searchParamDTO.getPermissionSql());
         //"assignToMe", "myCreate", "all"
@@ -117,6 +121,19 @@ public class WorkOptionServiceImpl implements WorkOptionService {
         searchParamDTO.setSearchCategory(TaskSearchCategoryEnum.TOMEWAITAUDITPRODUCTTASKLIST.getCode());
         searchParamDTO.setProcessInstanceIds(processInstanceIds);
         List<TaskPagingShowDTO> taskPagingShowDTOS = workOptionMapper.listProductTaskBySearchCategory(notStateList, searchParamDTO);
+        return taskPagingShowDTOS.size();
+    }
+
+    private Integer getWaitFinishCount(TaskSearchParamDTO params) {
+        //"assignToMe", "myCreate", "all"
+        String taskProperty = TaskConstant.ASSIGN_TO_ME;
+        //任务条件 1 待完成  2 全部  3 待审核
+        Integer taskCondition = params.getTaskCondition();
+        //不在的 任务状态
+        List<Integer> notStateList = getAssignToMeNoExistState(taskProperty, taskCondition);
+        params.setGroupFlag("");
+        params.setSearchCategory(TaskSearchCategoryEnum.TOMEPRODUCTTASKLIST.getCode());
+        List<TaskPagingShowDTO> taskPagingShowDTOS = workOptionMapper.listProductTaskBySearchCategory(notStateList, params);
         return taskPagingShowDTOS.size();
     }
 

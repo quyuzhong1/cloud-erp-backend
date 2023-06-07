@@ -740,7 +740,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 for (PickingDetailDTO.CommonDTO addDTO : pickingDetailList) {
                     addDTO.setSourceId(entity.getId());
                     addDTO.setSourceCode(entity.getCode());
-                    addDTO.setSourceType(SourceTypeEnum.TRANSFER_APPLICATION.getCode());
+                    addDTO.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
                     addDTO.setSourceDetailId(detailEntity.getId());
                     addDTO.setUnit(productDetailEntity.getUnitName());
                     addDTO.setWarehouseName(entity.getWarehouseName());

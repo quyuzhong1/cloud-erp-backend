@@ -159,8 +159,8 @@
 
         <if test="params.sysClassifyList != null and params.sysClassifyList.size > 0">
             AND wm.sys_classify IN
-            <foreach collection="params.sysClassifyList" item="item" open="(" close=")">
-                AND wm.sys_classify = #{item}
+            <foreach collection="params.sysClassifyList" item="item" open="(" separator="," close=")">
+                 #{item}
             </foreach>
         </if>
         <if test="params.sourceCode != '' and  params.sourceCode != null">
