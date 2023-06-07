@@ -39,11 +39,6 @@ public class SoOutstockController extends BaseController {
      * @return
      */
     @PostMapping("/tabList")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:so:outstock:tabList",
-            tableAlias = "so"
-    )
     public ApiResult<List<SoOutstockDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         List<SoOutstockDTO.TabListDTO> tabList = soOutstockService.tabList(dto);
         return success(tabList);
@@ -93,7 +88,7 @@ public class SoOutstockController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:so:outstock:addAndSubmit",
+            menuCode = "wms:so:outstock:submit",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids"
     )
@@ -112,7 +107,7 @@ public class SoOutstockController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:so:outstock:addAndSubmit",
+            menuCode = "wms:so:outstock:add",
             serviceClass = SoOutstockService.class,
             keyIdName = "id"
     )
@@ -130,7 +125,7 @@ public class SoOutstockController extends BaseController {
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:so:outstock:view",
+            menuCode = "wms:so:outstock:view",
             serviceClass = SoOutstockService.class,
             keyIdName = "id"
     )
@@ -148,7 +143,7 @@ public class SoOutstockController extends BaseController {
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:so:outstock:update",
+            menuCode = "wms:so:outstock:update",
             serviceClass = SoOutstockService.class,
             keyIdName = "id"
     )
@@ -166,7 +161,7 @@ public class SoOutstockController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:so:outstock:updateAndSubmit",
+            menuCode = "wms:so:outstock:update",
             serviceClass = SoOutstockService.class,
             keyIdName = "id"
     )
@@ -185,7 +180,7 @@ public class SoOutstockController extends BaseController {
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:so:outstock:approve",
+            menuCode = "wms:so:outstock:approve",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids"
     )
@@ -200,7 +195,7 @@ public class SoOutstockController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:so:outstock:disApprove",
+            menuCode = "wms:so:outstock:disApprove",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids"
     )
@@ -219,7 +214,7 @@ public class SoOutstockController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:so:outstock:cancelProcess",
+            menuCode = "wms:so:outstock:cancelProcess",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -236,7 +231,7 @@ public class SoOutstockController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:so:outstock:delete",
+            menuCode = "wms:so:outstock:delete",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids")
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
@@ -255,7 +250,7 @@ public class SoOutstockController extends BaseController {
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:so:outstock:invalid",
+            menuCode = "wms:so:outstock:invalid",
             serviceClass = SoOutstockService.class,
             keyIdName = "ids")
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {

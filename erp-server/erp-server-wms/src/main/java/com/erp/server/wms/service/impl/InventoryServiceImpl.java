@@ -269,20 +269,22 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         // sku id去重
         skuIds = skuIds.stream().distinct().collect(Collectors.toList());
         LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(InventoryEntity::getWarehouseId, warehouseId)
-                .eq(InventoryEntity::getDictInventoryStatus, status)
-                .eq(InventoryEntity::getOrgId, warehouse.getOrgId())
-                .eq(InventoryEntity::getWarehouseLocation, StrUtils.null2EmptyWithTrim(warehouseLocationId))
-                .in(InventoryEntity::getSkuId, skuIds);
+        queryWrapper.eq(InventoryEntity::getWarehouseId, warehouseId);
+        queryWrapper.eq(InventoryEntity::getDictInventoryStatus, status);
+        queryWrapper.eq(InventoryEntity::getOrgId, warehouse.getOrgId());
+        if(warehouseLocationId!=null){
+            queryWrapper.eq(InventoryEntity::getWarehouseLocation, StrUtils.null2EmptyWithTrim(warehouseLocationId));
+        }
+        queryWrapper.in(InventoryEntity::getSkuId, skuIds);
 
         List<InventoryEntity> inventoryEntities = baseMapper.selectList(queryWrapper);
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = Lists.newArrayList();
-        Map<String, InventoryEntity> queryInventoryMap = inventoryEntities.stream().collect(Collectors.toMap(InventoryEntity::getSkuId, Function.identity()));
+        Map<String, Integer> queryInventoryMap = inventoryEntities.stream().collect(Collectors.groupingBy(InventoryEntity::getSkuId,Collectors.summingInt(InventoryEntity::getQty)));
         for (String skuId : skuIds) {
             InventoryQtyDTO.SkuInventoryTotalDTO skuInventoryTotalDTO = new InventoryQtyDTO.SkuInventoryTotalDTO();
             skuInventoryTotalDTO.setSkuId(skuId);
             if (queryInventoryMap.containsKey(skuId)) {
-                skuInventoryTotalDTO.setInventoryTotal(queryInventoryMap.get(skuId).getQty());
+                skuInventoryTotalDTO.setInventoryTotal(queryInventoryMap.get(skuId));
             } else {
                 skuInventoryTotalDTO.setInventoryTotal(0);
             }

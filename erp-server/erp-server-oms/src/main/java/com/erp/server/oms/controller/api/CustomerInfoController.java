@@ -112,7 +112,7 @@ public class CustomerInfoController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:customer:addAndSubmit",
+            menuCode = "oms:customer:add",
             serviceClass = CustomerInfoService.class,
             keyIdName = "id"
     )

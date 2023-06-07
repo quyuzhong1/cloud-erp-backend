@@ -22,8 +22,11 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
@@ -123,6 +126,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+
+    @Resource
+    private MQProducerService mqProducerService;
 
     @Value("${so.contract.company}")
     private String company;
@@ -397,8 +403,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             Integer curInventoryQty = skuInventoryTotalList.stream().filter(
                     s -> s.getSkuId().equals(skuId) &&
                             s.getWarehouseId().equals(warehouseId)
-            ).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+            ).mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
             /**
              * 缺货数量
              * 当可用即时库存数量小于销售数量时，
@@ -930,8 +935,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             Integer curInventoryQty = skuInventoryTotalList.stream().filter(
                     s -> s.getSkuId().equals(skuId) &&
                             s.getWarehouseId().equals(warehouseId)
-            ).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+            ).mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
             /**
              * 缺货数量
              * 当可用即时库存数量小于销售数量时，
@@ -1372,7 +1376,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 return Boolean.TRUE;
             }
             //同步成功
-            if (syncKingdeeStatus.equals("3")) {
+            if (syncKingdeeStatus.equals(SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode())) {
                 KingdeeDTO dto = new KingdeeDTO();
                 dto.setId(syncKingdeeId);
                 dto.setNumber("");
@@ -1396,6 +1400,20 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                         }
                     }
                 }
+                //同步失败
+                if (syncKingdeeStatus.equals(SyncKingdeeStatusEnum.FAILED_SYNC.getCode())) {
+                    WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+                    warnMsgInfo.setBizName("销售订单同步");
+                    warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
+                    warnMsgInfo.setTitle("销售订单同步失败");
+                    warnMsgInfo.setTableName("so_info");
+                    warnMsgInfo.setTableId(id);
+                    warnMsgInfo.setKeyInfo("");
+                    warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+                    mqProducerService.sendWarnMsg(warnMsgInfo);
+                }
+
+
                 if (updateList.size() > 0) {
                     soDetailService.updateBatchById(updateList);
                 }

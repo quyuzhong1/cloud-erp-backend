@@ -90,7 +90,7 @@ public class TransferInController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:transfer:in:addAndSubmit",
+            menuCode = "wms:transfer:in:submit",
             serviceClass = TransferInService.class,
             keyIdName = "ids"
     )
@@ -138,7 +138,7 @@ public class TransferInController extends BaseController {
     }
 
     /**
-     * 修改并提交tr
+     * 修改并提交
      *
      * @param dto
      * @return
@@ -146,7 +146,7 @@ public class TransferInController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:transfer:in:updateAndSubmit",
+            menuCode = "wms:transfer:in:update",
             serviceClass = TransferInService.class,
             keyIdName = "id"
     )

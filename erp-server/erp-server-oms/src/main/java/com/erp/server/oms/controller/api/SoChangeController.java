@@ -126,7 +126,7 @@ public class SoChangeController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:soChange:addAndSubmit",
+            menuCode = "oms:soChange:submit",
             serviceClass = SoChangeService.class,
             keyIdName = "id"
     )
@@ -144,7 +144,7 @@ public class SoChangeController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:soChange:addAndSubmit",
+            menuCode = "oms:soChange:add",
             serviceClass = SoChangeService.class,
             keyIdName = "id"
     )
@@ -162,7 +162,7 @@ public class SoChangeController extends BaseController {
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:soChange:submit",
+            menuCode = "oms:soChange:view",
             serviceClass = SoChangeService.class,
             keyIdName = "id"
     )
@@ -200,7 +200,7 @@ public class SoChangeController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:soChange:updateAndSubmit",
+            menuCode = "oms:soChange:update",
             serviceClass = SoChangeService.class,
             keyIdName = "id"
     )

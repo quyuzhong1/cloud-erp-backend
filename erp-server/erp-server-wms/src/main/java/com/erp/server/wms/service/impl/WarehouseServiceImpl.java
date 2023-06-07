@@ -93,23 +93,24 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Override
     public List<WarehouseDTO.ListDTO> listApproveWarehouse() {
-        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-        List<WarehouseEntity> list = lambdaQuery().
-                eq(WarehouseEntity::getApproveStatus, approveStatus).
-                list();
+        List<ApproveStatusEnum> statusList = new ArrayList<>(2);
+        statusList.add(ApproveStatusEnum.APPROVE);
+        statusList.add(ApproveStatusEnum.REJECT);
+        List<WarehouseEntity> list = this.list();
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
         }
         List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
-
         List<String> orgIds = list.stream().map(WarehouseEntity::getOrgId).collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
-        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
-            for (WarehouseDTO.ListDTO listDTO : resultList) {
-                String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse(null);
-                listDTO.setOrgName(orgName);
+        for (WarehouseDTO.ListDTO listDTO : resultList) {
+            String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
+            listDTO.setOrgName(orgName);
+            if (statusList.contains(listDTO.getApproveStatus())) {
+                listDTO.setDisabled(true);
             }
         }
+
         return resultList;
     }
 
