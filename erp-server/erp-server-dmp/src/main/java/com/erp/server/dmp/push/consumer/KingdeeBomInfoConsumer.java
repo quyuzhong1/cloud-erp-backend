@@ -100,10 +100,9 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
             String id = save.getResult().getId();
             //主单据id
             KingdeeUtils.makeFieldJson(json,"FId",".", id);
-            //需要修改字段添加二级类目
-            ArrayList<String> needUpDateFields = new ArrayList<>();
-            needUpDateFields.add("FNUMERATOR");
-            param.setNeedUpDateFields(needUpDateFields);
+            StringBuffer allKey = FastJsonUtil.getAllKey(json);
+            ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
+            param.setNeedUpDateFields(apiFieldList);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
             return;
