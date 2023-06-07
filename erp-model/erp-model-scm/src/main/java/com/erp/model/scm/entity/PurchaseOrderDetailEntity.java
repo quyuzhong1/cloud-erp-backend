@@ -11,7 +11,6 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * <p>
@@ -140,6 +139,11 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
      */
     @TableField("variant_property")
     private String variantProperty;
+
+    /**
+     * 结束收货数量
+     */
+    private Integer endReceiveQty;
 
    /** 采购申请明细id(无需传值，后端使用)
     *

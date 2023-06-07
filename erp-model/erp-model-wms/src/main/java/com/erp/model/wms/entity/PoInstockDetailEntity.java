@@ -70,11 +70,6 @@ public class PoInstockDetailEntity extends BaseEntity<PoInstockDetailEntity> {
     private Integer receiveQty;
 
     /**
-     * 结束收货数量
-     */
-    private Integer endReceiveQty;
-
-    /**
      * 仓位
      */
     @TableField("warehouse_location")
