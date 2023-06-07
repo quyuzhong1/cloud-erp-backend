@@ -95,7 +95,6 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     public List<WarehouseDTO.ListDTO> listApproveWarehouse() {
         List<ApproveStatusEnum> statusList = new ArrayList<>(2);
         statusList.add(ApproveStatusEnum.APPROVE);
-        statusList.add(ApproveStatusEnum.REJECT);
         List<WarehouseEntity> list = this.list();
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
@@ -106,7 +105,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         for (WarehouseDTO.ListDTO listDTO : resultList) {
             String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
             listDTO.setOrgName(orgName);
-            if (statusList.contains(listDTO.getApproveStatus())) {
+            if (!statusList.contains(listDTO.getApproveStatus())) {
                 listDTO.setDisabled(true);
             }
         }
