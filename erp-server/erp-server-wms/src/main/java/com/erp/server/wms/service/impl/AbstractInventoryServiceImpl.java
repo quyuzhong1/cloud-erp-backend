@@ -369,7 +369,7 @@ public abstract class AbstractInventoryServiceImpl {
             if(originQty < qty) {
                 throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), warehouseLocation, skuNo, inventoryStatusName));
             }
-            // 查询库存明细，排序，雪花算法id在单机上是严格递增的，但是在分布式环境下不是严格递增的（因为不同的机器的MAC地址/机器ID/数据中心不一样等等），此处改为按创建时间递增排序
+            // 查询库存明细，按入库批次日期降序排序
             List<InventoryDetailEntity> inventoryDetails = inventoryDetailService.findListQtyGreatZero(inventory.getId());
             // 待出库数量
             Integer waitOutQty = qty;
