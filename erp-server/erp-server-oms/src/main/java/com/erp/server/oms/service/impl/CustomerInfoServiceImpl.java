@@ -777,6 +777,15 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String finalContent = "[%s]," + content;
         operateLogService.batchAddModuleOperateLog(finalContent, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
 
+        customerList.forEach(req -> {
+            //发送金蝶
+            if (dto.getDisabled()) {
+                syncKingdeeCustomerService.syncDataToKingdee(req, SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode());
+            } else {
+                syncKingdeeCustomerService.syncDataToKingdee(req, SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode());
+            }
+        });
+
         return this.updateBatchById(customerList);
 
 

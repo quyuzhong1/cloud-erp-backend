@@ -42,7 +42,7 @@ public class SoDeliveryNoticeController extends BaseController {
      **/
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "seller_id",
+            tableField = "create_time",
             menuCode = "wms:soDeliveryNotice:paging",
             tableAlias = "sdn"
     )
@@ -61,7 +61,7 @@ public class SoDeliveryNoticeController extends BaseController {
      **/
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "seller_id",
+            tableField = "create_time",
             menuCode = "wms:soDeliveryNotice:paging",
             tableAlias = "sdn"
     )
@@ -94,7 +94,7 @@ public class SoDeliveryNoticeController extends BaseController {
      **/
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "create_time",
             menuCode = "wms:soDeliveryNotice:update",
             serviceClass = SoDeliveryNoticeService.class,
             keyIdName = "id")
@@ -113,7 +113,7 @@ public class SoDeliveryNoticeController extends BaseController {
      **/
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "receive_user_id",
+            tableField = "create_time",
             menuCode = "wms:soDeliveryNotice:view",
             serviceClass = SoDeliveryNoticeService.class,
             keyIdName = "id")
@@ -132,7 +132,7 @@ public class SoDeliveryNoticeController extends BaseController {
      **/
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "create_time",
             menuCode = "wms:soDeliveryNotice:submit",
             serviceClass = SoDeliveryNoticeService.class,
             keyIdName = "ids")
@@ -151,7 +151,7 @@ public class SoDeliveryNoticeController extends BaseController {
      **/
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "create_time",
             menuCode = "wms:soDeliveryNotice:add",
             serviceClass = SoDeliveryNoticeService.class,
             keyIdName = "id")
@@ -170,7 +170,7 @@ public class SoDeliveryNoticeController extends BaseController {
      **/
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "create_time",
             menuCode = "wms:soDeliveryNotice:update",
             serviceClass = SoDeliveryNoticeService.class,
             keyIdName = "id")
@@ -189,7 +189,7 @@ public class SoDeliveryNoticeController extends BaseController {
      **/
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "create_time",
             menuCode = "wms:soDeliveryNotice:approve",
             serviceClass = SoDeliveryNoticeService.class,
             keyIdName = "ids")
@@ -208,7 +208,7 @@ public class SoDeliveryNoticeController extends BaseController {
      **/
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "create_time",
             menuCode = "wms:soDeliveryNotice:disApprove",
             serviceClass = SoDeliveryNoticeService.class,
             keyIdName = "ids")
@@ -227,7 +227,7 @@ public class SoDeliveryNoticeController extends BaseController {
      **/
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "create_time",
             menuCode = "wms:soDeliveryNotice:cancelProcess",
             serviceClass = SoDeliveryNoticeService.class,
             keyIdName = "ids")
@@ -246,7 +246,7 @@ public class SoDeliveryNoticeController extends BaseController {
      **/
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id,receive_user_id",
+            tableField = "create_time",
             menuCode = "wms:soDeliveryNotice:invalid",
             serviceClass = SoDeliveryNoticeService.class,
             keyIdName = "ids")

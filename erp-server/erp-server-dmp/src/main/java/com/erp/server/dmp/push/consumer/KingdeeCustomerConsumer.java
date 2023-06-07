@@ -150,6 +150,7 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         if (ObjectUtils.isEmpty(disabled)) {
             return;
         }
+
         String code = (String) map.get("code");
         String operate = null;
         //启用

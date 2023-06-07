@@ -177,7 +177,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         if (ObjectUtil.isNotEmpty(globalAreaEntity)) {
             resultMap.put("globalAreaCode", globalAreaEntity.getKingdeeCode());
         }
-
+        resultMap.put("disabled", entity.getDisabled());
         resultMap.put("operate", operate);
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {
