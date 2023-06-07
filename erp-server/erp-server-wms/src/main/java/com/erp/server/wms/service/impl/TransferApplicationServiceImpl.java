@@ -19,6 +19,7 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -261,6 +262,13 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
+        //验证调出入仓库是否相同
+        for (TransferApplicationEntity entity : list) {
+            if (entity.getInWarehouseId().equals(entity.getOutWarehouseId())) {
+                throw new ServiceException(new ApiResult(ApiError.ERROR_98069.code,String.format(ApiError.ERROR_98069.msg,entity.getCode())));
+            }
+        }
+
         log.info("调拨申请单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
 
         //启动流程 TODO

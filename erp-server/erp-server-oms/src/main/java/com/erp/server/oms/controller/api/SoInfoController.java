@@ -130,7 +130,7 @@ public class SoInfoController extends BaseController {
 
 
     /**
-     * 批量提交
+     * 批量提交审核
      *
      * @param dto
      * @return
@@ -156,7 +156,7 @@ public class SoInfoController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:so:addAndSubmit",
+            menuCode = "oms:so:add",
             serviceClass = SoInfoService.class,
             keyIdName = "id"
     )
@@ -211,7 +211,7 @@ public class SoInfoController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:so:updateAndSubmit",
+            menuCode = "oms:so:update",
             serviceClass = SoInfoService.class,
             keyIdName = "id"
     )

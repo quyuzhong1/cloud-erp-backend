@@ -122,9 +122,23 @@
         GROUP BY wm.sys_classify
     </select>
 
+    <select id="getTaskCcCount" resultType="com.erp.model.workflow.dto.WorkOptionDTO$Module">
+        SELECT
+        count(*) AS quantity,
+        wm.sys_classify
+        FROM process_management pm
+        LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
+        LEFT JOIN work_menu wm ON pm.business_key = wm.module_code
+        INNER JOIN process_task_cc cc ON ptm.id = cc.task_management_id
+        WHERE 1 = 1
+        AND ptm.create_user_id = #{userId}
+        AND wm.sys_classify = #{sysClassify}
+        GROUP BY wm.sys_classify
+    </select>
+
     <select id="approveView" resultType="com.erp.model.workflow.dto.WorkOptionDTO$ApproveViewDTO">
         SELECT
-            pm.business_id AS id,
+            ptm.id AS id,
             wm.module_classify,
             pm.business_code,
             pm.business_name,
@@ -136,8 +150,8 @@
             pm.approve_status,
             concat(wm.detail_url,pm.business_id) as detail_url
         FROM process_management pm
-        LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
-        LEFT JOIN work_menu wm ON pm.business_key = wm.module_code
+        INNER JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
+        INNER JOIN work_menu wm ON pm.business_key = wm.module_code
         WHERE 1 = 1
         <if test="params.status == 'waitHandle'">
             AND pm.approve_status = 'approveIng'
@@ -148,9 +162,7 @@
             AND ptm.cur_approve_id = #{params.userId}
         </if>
         <if test="params.status == 'carbonCopy'">
-            <![CDATA[
-                AND 1 <> 1
-            ]]>
+            AND ptm.id IN (SELECT task_management_id FROM process_task_cc)
         </if>
         <if test="params.status == 'initiate'">
             AND ptm.cur_approve_id = #{params.userId}
@@ -163,7 +175,7 @@
             </foreach>
         </if>
         <if test="params.sourceCode != '' and  params.sourceCode != null">
-            AND pm.business_code = concat('%',#{params.sourceCode},'%')
+            AND pm.business_code ilike concat('%',#{params.sourceCode},'%')
         </if>
     </select>
 

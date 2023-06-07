@@ -152,6 +152,8 @@ public class WarehouseDTO implements Serializable {
          * true 禁用
          */
         private Boolean disabled;
+
+        private ApproveStatusEnum approveStatus;
     }
 
 

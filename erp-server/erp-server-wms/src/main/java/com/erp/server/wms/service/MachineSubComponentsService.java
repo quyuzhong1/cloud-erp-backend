@@ -22,15 +22,15 @@ public interface MachineSubComponentsService extends SuperService<MachineSubComp
      * @param addList
      * @param detailId
      */
-    void add(List<MachineSubComponentsDTO.AddDTO> addList, String detailId);
+    void add(List<MachineSubComponentsDTO.AddDTO> addList, String detailId,String mainId);
     /**
      * @description: 修改子件信息
      * @author Will
      * @date: 2023/5/17 14:52
      * @param addList
-     * @param id
+     * @param detailId
      */
-    void update(List<MachineSubComponentsDTO.UpdateDTO> addList, String id);
+    void update(List<MachineSubComponentsDTO.UpdateDTO> addList, String detailId,String mainId);
     /**
      * @description: 根据明细id查询子件明细
      * @author Will

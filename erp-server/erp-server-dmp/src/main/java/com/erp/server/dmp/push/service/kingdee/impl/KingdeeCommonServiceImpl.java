@@ -95,6 +95,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Value("${openApi.kingdee.serverUrl}")
     private String kingdeeServerUrl;
 
+
+
     @Override
     public JSONObject makeApiFieldJson(Map<String, Object> map, String apiPlatformId, Integer moduleType) {
 

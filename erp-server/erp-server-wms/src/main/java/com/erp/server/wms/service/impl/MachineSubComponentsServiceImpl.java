@@ -54,21 +54,21 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void add(List<MachineSubComponentsDTO.AddDTO> addList, String detailId) {
+    public void add(List<MachineSubComponentsDTO.AddDTO> addList, String detailId,String mainId) {
         if (CollectionUtils.isEmpty(addList)) {
             return;
         }
         List<MachineSubComponentsEntity> list = BeanMapperUtils.copyList(MachineSubComponentsEntity.class, addList);
 
         //处理明细数据
-        doOpHandleDetails(list,detailId,Boolean.FALSE);
+        doOpHandleDetails(list,detailId,mainId,Boolean.FALSE);
         //批量新增
         this.saveBatch(list);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void update(List<MachineSubComponentsDTO.UpdateDTO> updateList, String detailId) {
+    public void update(List<MachineSubComponentsDTO.UpdateDTO> updateList, String detailId,String mainId) {
         if (CollectionUtils.isEmpty(updateList)) {
             return;
         }
@@ -78,14 +78,14 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<MachineSubComponentsEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
-            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getDetailId(), obj.getSkuNo())).collect(Collectors.toList());
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("删除了一个子件SKU【%s】", ModuleTypeEnum.TRANSFER_INFO.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
         List<MachineSubComponentsEntity> newList = BeanMapperUtils.copyList(MachineSubComponentsEntity.class, updateList);
 
         //处理明细id及操作日志
-        doOpHandleDetails(newList,detailId,Boolean.TRUE);
+        doOpHandleDetails(newList,detailId,mainId,Boolean.TRUE);
 
         //新增或修改明细
         this.saveOrUpdateBatch(newList);
@@ -134,7 +134,7 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
     /**
      * 处理明细中的数据id
      */
-    private void doOpHandleDetails (List<MachineSubComponentsEntity> newList, String detailId, Boolean isUpdate) {
+    private void doOpHandleDetails (List<MachineSubComponentsEntity> newList, String detailId,String mainId, Boolean isUpdate) {
         //需要新增数据
         List<MachineSubComponentsEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
@@ -177,12 +177,12 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_99056);
                 }
-                operateLogService.addModuleOperateLogByObj(old,detail, ModuleTypeEnum.MACHINE_INFO.getCode(),detailId,"",String.format("子件【%s】",old.getSkuNo()));
+                operateLogService.addModuleOperateLogByObj(old,detail, ModuleTypeEnum.MACHINE_INFO.getCode(),mainId,"",String.format("子件【%s】",old.getSkuNo()));
             }
         }
         //添加操作日志
         if (CollectionUtils.isNotEmpty(addList) && isUpdate) {
-            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(detailId, obj.getSkuNo())).collect(Collectors.toList());
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("添加了一个子件SKU【%s】", ModuleTypeEnum.MACHINE_INFO.getCode(), addPairList, "编辑操作");
         }
     }
