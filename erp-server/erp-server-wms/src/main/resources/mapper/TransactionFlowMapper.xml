@@ -247,7 +247,7 @@
         left join product_detail pd on pd.id = tf.sku_id
         left join product_info pi on pd.product_id = pi.id
         <where>
-                tf.is_deleted = false
+                tf.is_deleted = false  and tf.operation_mode in ('approve', 'amend')
                 <if test="params.skuNoList != null and params.skuNoList.size != ''">
                     and tf.sku_no in
                     <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
@@ -315,7 +315,7 @@
         left join product_detail pd on pd.id = tf.sku_id
         left join product_info pi on pd.product_id = pi.id
         <where>
-            tf.is_deleted = false
+            tf.is_deleted = false and tf.operation_mode in ('approve', 'amend')
             <if test="params.skuNoList != null and params.skuNoList.size != ''">
                 and tf.sku_no in
                 <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
