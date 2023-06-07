@@ -215,4 +215,14 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @return java.util.List<com.erp.model.oms.entity.SoDetailEntity>
      */
     List<SoDetailEntity> listDetailBySoId(String soId, List<String> soDetailIds, Boolean hasContain);
+
+    
+    /**
+     * 按照顺序排序
+     * @author yl
+     * @date 2023-06-07 10:32
+     * @param soDetailIdList
+     * @return java.util.List<com.erp.model.oms.entity.SoDetailEntity>
+     */
+    List<SoDetailEntity> listByIdsSeq(List<String> soDetailIdList);
 }

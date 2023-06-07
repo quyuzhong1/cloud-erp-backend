@@ -670,8 +670,8 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());
     }
 
-
-    private List<SoChangeDetailEntity> listDetailDbByMainId(String mainId) {
-        return this.lambdaQuery().eq(SoChangeDetailEntity::getMainId, mainId).list();
+    @Override
+    public List<SoChangeDetailEntity> listDetailDbByMainId(String mainId) {
+        return this.lambdaQuery().eq(SoChangeDetailEntity::getMainId, mainId).orderByDesc(SoChangeDetailEntity::getId).list();
     }
 }

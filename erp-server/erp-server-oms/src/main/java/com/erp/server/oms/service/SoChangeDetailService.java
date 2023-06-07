@@ -100,4 +100,12 @@ public interface SoChangeDetailService extends SuperService<SoChangeDetailEntity
      * @return void
      */
     void handleDb(List<SoChangeEntity> list);
+
+
+    /**
+     * 根据主表id 获取详情
+     * @param mainId
+     * @return
+     */
+    List<SoChangeDetailEntity> listDetailDbByMainId(String mainId);
 }
