@@ -215,84 +215,86 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
         //发货通知单
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
+
         List<String> sourceDetailIdList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getSourceDetailId).collect(Collectors.toList());
         List<String> skuIdList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
         List<String> warehouseLocationList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getWarehouseLocation).collect(Collectors.toList());
         //这个是已出数量
         List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = this.listDetailBySoDetailIds(sourceDetailIdList);
         //发货通知到
-       if(soDeliveryNotice.equals(sourceType)){
-           //表示是发货通知单的
-           List<SoDeliveryNoticeDetailEntity> deliveryNoticeDetailList = CollectionUtils.isNotEmpty(sourceDetailIdList) ? soDeliveryNoticeDetailService.listByIds(sourceDetailIdList) : Collections.emptyList();
-           for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
-               String sourceDetailId = item.getSourceDetailId();
-               String id = item.getId();
-               Integer deliveryQty = deliveryNoticeDetailList.stream().filter(d -> d.getId().equals(sourceDetailId)).
-                       findFirst().flatMap(obj -> Optional.ofNullable(obj.getDeliveryQty())).orElse(0);
-               //实发数量
-               Integer actualQty = item.getActualQty();
-               //应发数量
-               Integer planQty = item.getPlanQty();
-               if (actualQty > planQty) {
-                   throw new ServiceException(ApiError.ERROR_92027);
-               }
-               if (!planQty.equals(deliveryQty)) {
-                   throw new ServiceException(ApiError.ERROR_92031);
-               }
+        if (soDeliveryNotice.equals(sourceType)) {
+            //表示是发货通知单的
+            List<SoDeliveryNoticeDetailEntity> deliveryNoticeDetailList = CollectionUtils.isNotEmpty(sourceDetailIdList) ? soDeliveryNoticeDetailService.listByIds(sourceDetailIdList) : Collections.emptyList();
+            for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
+                String sourceDetailId = item.getSourceDetailId();
+                String soDetailId=deliveryNoticeDetailList.stream().filter(d -> d.getId().equals(sourceDetailId)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getSourceDetailId())).orElse("s");
+                String id = item.getId();
+                Integer deliveryQty = deliveryNoticeDetailList.stream().filter(d -> d.getId().equals(sourceDetailId)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getDeliveryQty())).orElse(0);
+                //实发数量
+                Integer actualQty = item.getActualQty();
+                //应发数量
+                Integer planQty = item.getPlanQty();
+                if (actualQty > planQty) {
+                    throw new ServiceException(ApiError.ERROR_92027);
+                }
+                if (!planQty.equals(deliveryQty)) {
+                    throw new ServiceException(ApiError.ERROR_92031);
+                }
+                //这个是已出的数量
+                Integer outStockQty = soOutstockDetailList.stream().filter(s ->
+                        s.getSoDetailId().equals(soDetailId) &&
+                                !s.getId().equals(id)
+                ).mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
+                if (outStockQty + planQty > deliveryQty) {
+                    throw new ServiceException(ApiError.ERROR_92028);
+                }
+            }
+        } else {
+            InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
+            skuInventoryDTO.setSkuIdList(skuIdList);
+            skuInventoryDTO.setWarehouseIdList(Arrays.asList(warehouseId));
+            skuInventoryDTO.setWarehouseLocationIdList(warehouseLocationList);
+            skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+            //可用数量
+            List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
+            //这个是销售订单的
+            List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(sourceDetailIdList);
+            for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
+                String id = item.getId();
+                String skuId = item.getSkuId();
+                //库位
+                String warehouseLocation = item.getWarehouseLocation();
+                //实发数量
+                Integer actualQty = item.getActualQty();
+                //应发数量
+                Integer planQty = item.getPlanQty();
+                if (actualQty > planQty) {
+                    throw new ServiceException(ApiError.ERROR_92027);
+                }
 
-               //这个是已出的数量
-               Integer outStockQty = soOutstockDetailList.stream().filter(s ->
-                       s.getSoDetailId().equals(sourceDetailId) &&
-                               !s.getId().equals(id)
-               ).mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
-               if (outStockQty + planQty > deliveryQty) {
-                   throw new ServiceException(ApiError.ERROR_92031);
-               }
-           }
-       }else{
-           InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
-           skuInventoryDTO.setSkuIdList(skuIdList);
-           skuInventoryDTO.setWarehouseIdList(Arrays.asList(warehouseId));
-           skuInventoryDTO.setWarehouseLocationIdList(warehouseLocationList);
-           skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
-           //可用数量
-           List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryList = inventoryService.listSkuInventory(skuInventoryDTO);
-           //这个是销售订单的
-           List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(sourceDetailIdList);
-           for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
-               String id = item.getId();
-               String skuId = item.getSkuId();
-               //库位
-               String warehouseLocation = item.getWarehouseLocation();
-               //实发数量
-               Integer actualQty = item.getActualQty();
-               //应发数量
-               Integer planQty = item.getPlanQty();
-               if (actualQty > planQty) {
-                   throw new ServiceException(ApiError.ERROR_92027);
-               }
+                String sourceDetailId = item.getSourceDetailId();
+                //这个是销售数量
+                Integer soQty = soDetailList.stream().filter(s -> s.getId().equals(sourceDetailId)).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(0);
 
-               String sourceDetailId = item.getSourceDetailId();
-               //这个是销售数量
-               Integer soQty = soDetailList.stream().filter(s -> s.getId().equals(sourceDetailId)).findFirst().
-                       flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(0);
-
-               //这个是已出的数量 这个对应的就是销售订单的详情id
-               Integer outStockQty = soOutstockDetailList.stream().filter(s ->
-                       s.getSoDetailId().equals(sourceDetailId) &&
-                               !s.getId().equals(id)
-               ).mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
-               if (outStockQty + planQty > soQty) {
-                   throw new ServiceException(ApiError.ERROR_92028);
-               }
-               //即时库存
-               Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
-                       equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
-               if (planQty > inventory) {
-                   throw new ServiceException(ApiError.ERROR_92030);
-               }
-           }
-       }
+                //这个是已出的数量 这个对应的就是销售订单的详情id
+                Integer outStockQty = soOutstockDetailList.stream().filter(s ->
+                        s.getSoDetailId().equals(sourceDetailId) &&
+                                !s.getId().equals(id)
+                ).mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
+                if (outStockQty + planQty > soQty) {
+                    throw new ServiceException(ApiError.ERROR_92028);
+                }
+                //即时库存
+                Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
+                        equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+                if (planQty > inventory) {
+                    throw new ServiceException(ApiError.ERROR_92030);
+                }
+            }
+        }
     }
 
 
@@ -454,10 +456,10 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if (CollectionUtils.isEmpty(soDetailIds)) {
             return Collections.emptyList();
         }
-        //发货通知详情id
-        List<SoDeliveryNoticeDetailEntity> noticeDetailSourceDetailList = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(soDetailIds);
-        List<String> noticeDetailSourceDetailIdList = noticeDetailSourceDetailList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList());
-        soDetailIds.addAll(noticeDetailSourceDetailIdList);
+        //发货通知详情列表
+        List<SoDeliveryNoticeDetailEntity> noticeDetailSourceDetailList = soDeliveryNoticeDetailService.listByIds(soDetailIds);
+        List<String> noticeSourceDetailIdS = noticeDetailSourceDetailList.stream().map(SoDeliveryNoticeDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        soDetailIds.addAll(noticeSourceDetailIdS);
         List<SoOutstockDetailEntity> list = this.listBySourceDetailIds(soDetailIds);
         List<SoOutstockDetailDTO.DeliveryQtyDTO> resultList = new ArrayList<>(list.size());
         for (SoOutstockDetailEntity item : list) {

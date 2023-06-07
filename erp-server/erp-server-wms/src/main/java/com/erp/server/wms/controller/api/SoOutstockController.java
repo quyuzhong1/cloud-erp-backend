@@ -68,12 +68,6 @@ public class SoOutstockController extends BaseController {
      * @return
      */
     @PostMapping("/add")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:so:outstock:add",
-            serviceClass = SoOutstockService.class,
-            keyIdName = "id"
-    )
     public ApiResult add(@RequestBody @Validated SoOutstockDTO.AddDTO dto) {
         String id = soOutstockService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
@@ -105,12 +99,6 @@ public class SoOutstockController extends BaseController {
      * @return
      */
     @PostMapping("/addAndSubmit")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:so:outstock:add",
-            serviceClass = SoOutstockService.class,
-            keyIdName = "id"
-    )
     public ApiResult addAndSubmit(@RequestBody @Validated SoOutstockDTO.AddDTO dto) {
         Boolean result = soOutstockService.addAndSubmit(dto);
         return result ? success() : failure();

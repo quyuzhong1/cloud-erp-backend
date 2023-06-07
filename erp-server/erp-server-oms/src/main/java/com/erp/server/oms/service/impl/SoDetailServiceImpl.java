@@ -547,7 +547,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //sku的历史价格
         List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = this.listSkuPriceHistory(skuIdList);
         //从wms 获取到sku 的即时库存信息
-        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSkuInventoryTotalList(skuIdList, warehouseId);
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList =CollectionUtils.isNotEmpty(skuIdList)?listSkuInventoryTotalList(skuIdList, warehouseId):Collections.emptyList();
         for (SoDetailDTO.SkuDTO item : successList) {
             String skuId = item.getSkuId();
             //即时库存
@@ -572,7 +572,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
              *
              */
             Integer deliveryQty = 0;
-
             /**
              * 剩余数量
              * 销售数量-已出库数量

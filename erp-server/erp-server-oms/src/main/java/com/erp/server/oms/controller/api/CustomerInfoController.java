@@ -74,12 +74,6 @@ public class CustomerInfoController extends BaseController {
      * @return
      */
     @PostMapping("/add")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:customer:add",
-            serviceClass = CustomerInfoService.class,
-            keyIdName = "id"
-    )
     public ApiResult add(@RequestBody @Validated CustomerDTO.AddDTO dto) {
         String id = customerInfoService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
@@ -110,12 +104,6 @@ public class CustomerInfoController extends BaseController {
      * @return
      */
     @PostMapping("/addAndSubmit")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:customer:add",
-            serviceClass = CustomerInfoService.class,
-            keyIdName = "id"
-    )
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated CustomerDTO.AddDTO dto) {
         Boolean result = customerInfoService.addAndSubmit(dto);
         return result ? success() : failure();

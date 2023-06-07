@@ -106,12 +106,6 @@ public class SoChangeController extends BaseController {
      * @return
      */
     @PostMapping("/add")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soChange:add",
-            serviceClass = SoChangeService.class,
-            keyIdName = "id"
-    )
     public ApiResult add(@RequestBody @Validated SoChangeDTO.AddDTO dto) {
         String id = soChangeService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
@@ -142,12 +136,6 @@ public class SoChangeController extends BaseController {
      * @return
      */
     @PostMapping("/addAndSubmit")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:soChange:add",
-            serviceClass = SoChangeService.class,
-            keyIdName = "id"
-    )
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated SoChangeDTO.AddDTO dto) {
         Boolean result = soChangeService.addAndSubmit(dto);
         return result ? success() : failure();

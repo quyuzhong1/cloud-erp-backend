@@ -114,12 +114,6 @@ public class SoInfoController extends BaseController {
      * @return
      */
     @PostMapping("/add")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:so:add",
-            serviceClass = SoInfoService.class,
-            keyIdName = "id"
-    )
     public ApiResult add(@RequestBody @Validated({AddGroup.class}) SoInfoDTO.AddDTO dto) {
         String id = soInfoService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
@@ -148,18 +142,12 @@ public class SoInfoController extends BaseController {
     }
 
     /**
-     * 提交审核
+     * 新增并提交审核
      *
      * @param dto
      * @return
      */
     @PostMapping("/addAndSubmit")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:so:add",
-            serviceClass = SoInfoService.class,
-            keyIdName = "id"
-    )
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated({AddGroup.class}) SoInfoDTO.AddDTO dto) {
         Boolean result = soInfoService.addAndSubmit(dto);
         return result ? success() : failure();
