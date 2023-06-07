@@ -801,6 +801,11 @@ public class PurchaseOrderDTO implements Serializable {
          */
         @Size(max = 255, message = "备注最大255个字符")
         private String remark;
+
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
     }
 
     @Data
