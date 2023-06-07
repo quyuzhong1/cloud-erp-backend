@@ -47,9 +47,10 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FNumber = '%s'", "CUST5450"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FBillHead.FMobile";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);
-        System.out.println(queryList);
+        String fieldKeys = "GroupFieldKey";
+//        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);
+//        System.out.println(queryList);
+        JSONObject entries = apiUtils.customerGroupDelete("");
 
 
       /* LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();

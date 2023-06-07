@@ -493,9 +493,10 @@ public class KingdeeApiUtils {
         try {
             LinkedHashMap<String,Object> viewMap =  new LinkedHashMap<>();
             viewMap.put("FormId", this.formId);
-            viewMap.put("GroupFieldKey", "02");
+            viewMap.put("GroupFieldKey", "0");
             viewMap.put("GroupPkIds", "379804");
-            viewMap.put("FNumber", "测试分组");
+            viewMap.put("FID", "379804");
+            viewMap.put("FNumber", "测试1");
             //[{"FID":379804,"FNUMBER":"测试分组","FGROUPID":"66f39f43-f586-4ec7-9419-8e21cf5c7196","FPARENTID":0,"FFULLPARENTID":" ","FLEFT":0,"FRIGHT":0,"FNAME":"测试分组","FDESCRIPTION":" "}]}}
             String jsonData = JSONUtil.toJsonStr(viewMap);
             String view = client.groupDelete(jsonData);
