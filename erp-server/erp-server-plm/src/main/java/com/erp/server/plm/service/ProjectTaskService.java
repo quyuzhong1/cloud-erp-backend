@@ -1,11 +1,9 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectPlanTaskEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
@@ -14,7 +12,6 @@ import com.erp.model.plm.entity.TaskDocsNameEntity;
 import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.web.bind.annotation.PostMapping;
 
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -300,4 +297,6 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @return com.common.core.controller.vo.ApiResult
      **/
     Boolean removeBatch(List<String> ids);
+
+    List<ProjectTaskEntity> listByTaskNames(String productId, List<String> taskNameList);
 }

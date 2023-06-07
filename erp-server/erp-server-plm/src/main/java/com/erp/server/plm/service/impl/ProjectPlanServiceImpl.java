@@ -1039,6 +1039,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         }
         List<ProjectImportDTO> list = new ArrayList<>();
         Map<Integer,String> map = new LinkedHashMap<>();
+        //约定任务负责人字段采用的文本10
         map.put(10,"taskCharge");
         ProjectImportUtil.getChildrenTask(tasks.get(0), list,map);
 
@@ -1066,32 +1067,41 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         //任务信息
         List<ProjectImportDTO> taskList = list.stream().filter(obj -> MathUtil.THREE.equals(obj.getTaskOutlineLevel())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(taskList)) {
-            throw new ServiceException(new ApiResult(ApiError.ERROR_1034.code, StrUtil.format(ApiError.ERROR_1034.msg,"三级")) );
+            throw new ServiceException(new ApiResult(ApiError.ERROR_1034.code, StrUtil.format(ApiError.ERROR_1034.msg,"三")) );
         }
+        //任务负责人不能为空
+        long chargeCount = taskList.stream().filter(obj -> ObjectUtils.isEmpty(obj.getCustomFieldValues()) || StringUtils.isBlank(obj.getCustomFieldValues().get("taskCharge"))).count();
+        if (chargeCount > 0) {
+            throw new ServiceException(new ApiResult(ApiError.ERROR_1036.code, StrUtil.format(ApiError.ERROR_1036.msg,"二")) );
+        }
+
         //所有任务负责人
         List<String> taskChargeList = taskList.stream().map(obj -> ObjectUtils.isEmpty(obj.getCustomFieldValues()) ? "" : obj.getCustomFieldValues().get("taskCharge")).flatMap(s -> {
             // 将每个元素转换成一个stream
-            String[] split = s.split(",");
+            String[] split = s.split("\\/");
             Stream<String> s2 = Arrays.stream(split);
             return s2;
-        }).collect(Collectors.toList());
+        }).distinct().collect(Collectors.toList());
         List<FindUserDTO> findUserList = sysUserFeign.listUserByUserNames(taskChargeList);
         if (CollectionUtils.isEmpty(findUserList)) {
-            throw new ServiceException(new ApiResult(ApiError.ERROR_1036.code, StrUtil.format(ApiError.ERROR_1036.msg,"二级")) );
+            throw new ServiceException(new ApiResult(ApiError.ERROR_1038.code, StrUtil.format(ApiError.ERROR_1038.msg,"二")) );
         }
+
+        //产品下已存在的任务
+        List<String> taskNameList = taskList.stream().map(ProjectImportDTO::getTaskName).collect(Collectors.toList());
+        List<ProjectTaskEntity> projectTasList = projectTaskService.listByTaskNames(productId, taskNameList);
+
         List<ProjectTaskDTO> projectTaskList = new ArrayList<>();
+        List<String> notAddList = new ArrayList<>();
         for (ProjectImportDTO projectImportDTO : taskList) {
             ProjectTaskDTO projectTaskDTO = new ProjectTaskDTO();
 
             //任务名称
             if (StringUtils.isBlank(projectImportDTO.getTaskName())) {
-                throw new ServiceException(new ApiResult(ApiError.ERROR_1035.code, StrUtil.format(ApiError.ERROR_1035.msg,"二级")) );
+                throw new ServiceException(new ApiResult(ApiError.ERROR_1035.code, StrUtil.format(ApiError.ERROR_1035.msg,"二")) );
             }
             //任务负责人
             Map<String, String> customFieldValues = projectImportDTO.getCustomFieldValues();
-            if (ObjectUtils.isEmpty(customFieldValues) || StringUtils.isBlank(customFieldValues.get("taskCharge"))) {
-                throw new ServiceException(new ApiResult(ApiError.ERROR_1036.code, StrUtil.format(ApiError.ERROR_1036.msg,"二级")) );
-            }
             String taskCharge = customFieldValues.get("taskCharge");
             List<String> taskChargeNameList = Arrays.stream(taskCharge.split("\\/")).collect(Collectors.toList());
             List<String> chargeIds = new ArrayList<>();
@@ -1110,31 +1120,55 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
             //任务集合添加任务数据
             projectTaskDTO.setId(IdWorker.getIdStr());
+
+            //如果产品里面已存在任务则无需新增
+            if (CollectionUtils.isNotEmpty(projectTasList)) {
+                String taskId = projectTasList.stream().filter(obj -> obj.getName().equals(projectImportDTO.getTaskName())).map(ProjectTaskEntity::getId).findFirst().orElse("");
+                if (StringUtils.isNotBlank(taskId)) {
+                    projectTaskDTO.setId(taskId);
+                    notAddList.add(taskId);
+                }
+            }
+            projectTaskDTO.setProductId(productId);
             projectTaskDTO.setProjectTaskId(projectImportDTO.getTaskId());
             projectTaskDTO.setName(projectImportDTO.getTaskName());
             projectTaskDTO.setChargeIds(chargeIds);
             projectTaskDTO.setPhaseId(phaseId);
             projectTaskDTO.setPhaseName(phaseName);
+            projectTaskDTO.setPlanStartTime(projectImportDTO.getTaskStartDate());
+            projectTaskDTO.setPlanEndTime(projectImportDTO.getTaskFinishDate());
             projectTaskList.add(projectTaskDTO);
-
         }
+
         //新增任务
         for (ProjectTaskDTO projectTaskDTO : projectTaskList) {
+
+            //无需新增数据
+            if (CollectionUtils.isNotEmpty(notAddList)) {
+                long count = notAddList.stream().filter(obj -> notAddList.contains(projectTaskDTO.getId())).count();
+                if (count > 0) {
+                    continue;
+                }
+            }
+
             ProjectImportDTO projectImportDTO = taskList.stream().filter(obj -> obj.getTaskName().equals(projectTaskDTO.getName())).findFirst().orElse(null);
             //前置任务
             String preTask = projectImportDTO.getPreTask();
+            projectTaskDTO.setPreTaskIdList(Collections.emptyList());
             if (StringUtils.isNotBlank(preTask)) {
                 List<String> importPreTaskIds = Arrays.stream(preTask.split(",")).collect(Collectors.toList());
                 List<String> preTaskIdList = projectTaskList.stream().filter(obj -> importPreTaskIds.contains(obj.getProjectTaskId())).map(ProjectTaskDTO::getId).collect(Collectors.toList());
                 projectTaskDTO.setPreTaskIdList(preTaskIdList);
             }
+            projectTaskDTO.setType(MathUtil.ZERO);
             projectTaskService.save(projectTaskDTO);
         }
+
+        //新增任务排期
         List<String> taskIdList = projectTaskList.stream().map(ProjectTaskDTO::getId).collect(Collectors.toList());
         HandleTaskScheduleDTO dto = new HandleTaskScheduleDTO();
         dto.setProductId(productId);
         dto.setTaskIdList(taskIdList);
-        //新增任务排期
         Boolean flag = this.submitSchedule(dto);
         return flag;
     }
