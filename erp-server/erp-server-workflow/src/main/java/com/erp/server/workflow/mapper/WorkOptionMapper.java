@@ -58,6 +58,15 @@ public interface WorkOptionMapper extends BaseMapper<WorkOptionEntity> {
     List<WorkOptionDTO.Module> getCreateCount(@Param("userId") String userId, @Param("approveStatus") String approveStatus, @Param("sysClassify") String sysClassify);
 
     /**
+     * 根据用户获取抄送的任务数量
+     * @Author Luo_WG
+     * @Date 2023/5/11 14:42
+     * @param userId
+     * @return
+     **/
+    List<WorkOptionDTO.Module> getTaskCcCount(@Param("userId") String userId, @Param("approveStatus") String approveStatus, @Param("sysClassify") String sysClassify);
+
+    /**
      * 审核中心列表
      * @Author Luo_WG
      * @Date 2023/5/11 16:01

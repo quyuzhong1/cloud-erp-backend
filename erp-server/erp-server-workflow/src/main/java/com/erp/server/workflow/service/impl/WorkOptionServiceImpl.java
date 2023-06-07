@@ -387,11 +387,13 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 approveSearchOptionDTO.setModuleList(approveCount);
                 list.add(approveSearchOptionDTO);
             } else if (optionEnum.getCode().equals(ApproveSearchOptionEnum.CARBONCOPY.getCode())) {
-                //获取我的抄送我的数量
                 WorkOptionDTO.ApproveSearchOptionDTO approveSearchOptionDTO = new WorkOptionDTO.ApproveSearchOptionDTO();
+                //获取我的抄送我的数量
+                List<WorkOptionDTO.Module> approveCount = baseMapper.getTaskCcCount(userId, ApproveStatusEnum.APPROVE.getStatus(), optionEnum.getCode());
+                Integer quantity = approveCount.stream().map(WorkOptionDTO.Module::getQuantity).reduce(MathUtil.ZERO, Integer::sum);
                 approveSearchOptionDTO.setStatus(optionEnum.getCode());
                 approveSearchOptionDTO.setStatusName(ApproveSearchOptionEnum.getName(optionEnum.getCode()));
-                approveSearchOptionDTO.setQuantity(0);
+                approveSearchOptionDTO.setQuantity(quantity);
                 approveSearchOptionDTO.setModuleList(new ArrayList<>());
                 list.add(approveSearchOptionDTO);
             } else if (optionEnum.getCode().equals(ApproveSearchOptionEnum.INITIATE.getCode())) {
@@ -455,6 +457,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         BeanMapperUtils.copy(dto, paramDTO);
         paramDTO.setIds(Arrays.asList(dto.getId()));
         ProcessManagementEntity entity = processManagementService.getById(dto.getId());
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_94000);
+        }
         String sysClassifyByCode = workMenuService.getSysClassifyByCode(entity.getBusinessKey());
         switch (SysClassifyEnum.getEnumByCode(sysClassifyByCode)) {
             case PLM :
