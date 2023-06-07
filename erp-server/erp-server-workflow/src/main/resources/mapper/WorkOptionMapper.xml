@@ -138,7 +138,7 @@
 
     <select id="approveView" resultType="com.erp.model.workflow.dto.WorkOptionDTO$ApproveViewDTO">
         SELECT
-            pm.id AS id,
+            ptm.id AS id,
             wm.module_classify,
             pm.business_code,
             pm.business_name,
@@ -150,8 +150,8 @@
             pm.approve_status,
             concat(wm.detail_url,pm.business_id) as detail_url
         FROM process_management pm
-        LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
-        LEFT JOIN work_menu wm ON pm.business_key = wm.module_code
+        INNER JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
+        INNER JOIN work_menu wm ON pm.business_key = wm.module_code
         WHERE 1 = 1
         <if test="params.status == 'waitHandle'">
             AND pm.approve_status = 'approveIng'
