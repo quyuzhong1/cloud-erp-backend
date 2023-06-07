@@ -695,8 +695,8 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             String warehouseKeeperName = userList.stream().filter(obj -> obj.getUserId().equals(warehouseKeeperId)).map(FindUserDTO::getUserName).findFirst().orElse("");
             entity.setWarehouseKeeperName(warehouseKeeperName);
             //领料员
-            String receiveOrgName = userList.stream().filter(obj -> obj.getUserId().equals(receiveOrgId)).map(FindUserDTO::getUserName).findFirst().orElse("");
-            entity.setReceiverName(receiveOrgName);
+            String receiverName = userList.stream().filter(obj -> obj.getUserId().equals(receiverId)).map(FindUserDTO::getUserName).findFirst().orElse("");
+            entity.setReceiverName(receiverName);
         }
         //仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(warehouseId);

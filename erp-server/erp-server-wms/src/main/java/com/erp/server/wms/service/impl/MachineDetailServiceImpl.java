@@ -73,7 +73,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
             //新增子件明细
             for (MachineDetailEntity detailEntity : list) {
                 List<MachineSubComponentsDTO.AddDTO> addList = BeanMapperUtils.copyList(MachineSubComponentsDTO.AddDTO.class, detailEntity.getSubComponentsList());
-                machineSubComponentsService.add(addList,detailEntity.getId());
+                machineSubComponentsService.add(addList,detailEntity.getId(),mainId);
             }
         }
     }
@@ -104,7 +104,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
 
         //修改子件明细
         for (MachineDetailEntity detailEntity : newList) {
-            machineSubComponentsService.update(detailEntity.getSubComponentsList(),detailEntity.getId());
+            machineSubComponentsService.update(detailEntity.getSubComponentsList(),detailEntity.getId(),mainId);
         }
     }
 
