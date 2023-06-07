@@ -50,6 +50,8 @@ import ${package.Dto}.${table.dtoName};
 import com.common.core.enums.ApiError;
 import com.common.core.utils.*;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.utils.date.DateUtil;
 
 import javax.servlet.http.HttpServletResponse;
 <#if fieldMap["approveTime"]??>
@@ -134,6 +136,18 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
         }
         // 数据处理
         fillList(list);
+
+        // 导出数据
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/${entity?replace('Entity', '')?uncap_first}.xlsx";
+        String name = "${docName}导出";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date).append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
