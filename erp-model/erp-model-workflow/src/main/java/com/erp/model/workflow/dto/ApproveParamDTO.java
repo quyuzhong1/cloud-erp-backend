@@ -15,7 +15,7 @@ public class ApproveParamDTO extends PermissionsDTO {
     /**
      * 主键id
      */
-    @NotEmpty(message = "单据编号不能为空")
+    @NotBlank(message = "单据编号不能为空")
     private String id;
 
     /**

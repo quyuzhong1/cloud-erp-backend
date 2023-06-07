@@ -125,7 +125,7 @@
 
     <select id="approveView" resultType="com.erp.model.workflow.dto.WorkOptionDTO$ApproveViewDTO">
         SELECT
-            pm.id,
+            pm.business_id AS id,
             wm.module_classify,
             pm.business_code,
             pm.business_name,
