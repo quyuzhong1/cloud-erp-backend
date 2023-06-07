@@ -8,6 +8,7 @@ import com.common.core.security.HmacSHA256Utils;
 import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.UrlContant;
+import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.mabang.*;
 import com.erp.model.dmp.vo.ParamHeaderVO;
 import lombok.extern.slf4j.Slf4j;
@@ -210,18 +211,26 @@ public class MabangApiUtils {
      */
     public static List<SkuInfoEntity> querySkuList(String method, LocalDateTime startDate, LocalDateTime endDate) {
         // 当前每页条数，默认20，最大值为100
-        Integer pageSize = 100;
-        Integer pageIndex = 1;
-        //总页数
-        Integer pageCount = 1;
+        Integer pageSize = 1000;
+        String pageIndex = "1";
         List<SkuInfoEntity> infoArrayList = new ArrayList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-        while (pageIndex <= pageCount) {
+        while (StrUtil.isNotBlank(pageIndex)) {
             HashMap<String, Object> params = new HashMap<>(6);
             params.put("updateTimeStart", sdf.format(startDate));
             params.put("updateTimeEnd", sdf.format(endDate));
-            params.put("rowsPerPage", pageSize);
-            ParamHeaderVO paramVo = getParamMap(method, pageIndex, params);
+            if (StrUtil.isNotBlank(pageIndex) && !"1".equals(pageIndex)){
+                params.put("cursor", pageIndex);
+            }
+            params.put("maxRows", pageSize);
+//            params.put("stockSku", "JG-0085+0100+0199+0505+0559+0673+1108");
+            params.put("showMachining", 1);
+            params.put("showVirtualSku", 1);
+            params.put("showProvider",1);
+            params.put("showWarehouse", 1);
+            params.put("showLabel", 1);
+            params.put("showattributes", 1);
+            ParamHeaderVO paramVo = getParamMap(method, 0, params);
 
             JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
             if (!Objects.equals(responseMap.getInteger("code"), 200)) {
@@ -231,11 +240,10 @@ public class MabangApiUtils {
             }
             JSONObject jsonObject = JSONObject.parseObject(responseMap.getString("data"));
             List<SkuInfoEntity> dataList = JSONObject.parseArray(jsonObject.getString("data"), SkuInfoEntity.class);
-            pageCount = jsonObject.getInteger("totalPage");
+            pageIndex = jsonObject.getString("nextCursor");
             if(CollectionUtil.isNotEmpty(dataList)){
                 infoArrayList.addAll(dataList);
             }
-            pageIndex ++;
         }
         return infoArrayList;
     }
@@ -289,5 +297,11 @@ public class MabangApiUtils {
         return new ParamHeaderVO(paramStr, headerMap);
     }
 
+    public static void main(String[] args) {
+        LocalDateTime startDate = LocalDateTime.of(2021, 1, 1, 0, 0, 0);
+        LocalDateTime endDate = LocalDateTime.of(2023, 6, 7, 23, 59, 59);
+        List<SkuInfoEntity> skuInfoEntities = querySkuList("stock-do-search-sku-list-new", startDate, endDate);
+        System.out.println(skuInfoEntities);
+    }
 
 }

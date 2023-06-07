@@ -1,11 +1,13 @@
 package com.erp.model.dmp.mabang.item;
 
+import cn.hutool.json.JSONObject;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -63,5 +65,9 @@ public class ReturnOrderItemEntity {
      * 可退数量
      */
     private Integer quantity2;
+    /**
+     * 入库详情
+     */
+    private List<JSONObject> stockInItem;
 
 }

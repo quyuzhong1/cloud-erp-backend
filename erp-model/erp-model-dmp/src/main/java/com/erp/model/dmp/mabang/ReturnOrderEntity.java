@@ -1,5 +1,6 @@
 package com.erp.model.dmp.mabang;
 
+import cn.hutool.json.JSONObject;
 import com.erp.model.dmp.mabang.item.ReturnOrderItemEntity;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
@@ -144,6 +145,9 @@ public class ReturnOrderEntity {
      */
     @SerializedName("update_time")
     private String updateTime;
+
+    private JSONObject trackList;
+
     @SerializedName("item")
     private List<ReturnOrderItemEntity> item;
     /**
