@@ -730,6 +730,11 @@ public class PurchaseOrderDTO implements Serializable {
         private String productName;
 
         /**
+         * 交货仓库id
+         */
+        private String deliveryWarehouseId;
+
+        /**
          * 交货仓库名称
          */
         private String deliveryWarehouseName;
