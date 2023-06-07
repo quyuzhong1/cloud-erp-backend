@@ -96,6 +96,7 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         String orgId = warehouseDetail.getOrgId();
         instockForcastEntity.setCode(code);
         instockForcastEntity.setPurchaseOrderId(purchaseOrderId);
+        instockForcastEntity.setPurchaseOrderCode(dto.getPurchaseOrderCode());
         instockForcastEntity.setOrgId(orgId);
         instockForcastEntity.setWarehouseId(dto.getWarehouseId());
         instockForcastEntity.setBillDate(LocalDate.now());// 单据日期取采购订单日期

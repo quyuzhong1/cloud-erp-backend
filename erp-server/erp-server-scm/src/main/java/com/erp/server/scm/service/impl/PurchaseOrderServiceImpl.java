@@ -1503,6 +1503,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             InstockForcastDTO.AddDTO inventoryForcastDTO = new InstockForcastDTO.AddDTO();
             inventoryForcastDTO.setPurchaseOrderId(id);
+            inventoryForcastDTO.setPurchaseOrderCode(order.getCode());
             inventoryForcastDTO.setWarehouseId(order.getDeliveryWarehouseId());
 
             List<InstockForcastDetailDTO.AddDTO> details = Lists.newArrayListWithExpectedSize(detailList.size());
@@ -1511,6 +1512,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 member.setSkuId(detail.getSkuId());
                 member.setSkuNo(detail.getSkuNo());
                 member.setPurchaseOrderDetailId(detail.getId());
+
                 member.setQty(detail.getPurchaseQty());
                 member.setProductName(detail.getProductName());
 

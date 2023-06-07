@@ -37,6 +37,12 @@ public class InstockForcastDTO implements Serializable {
         private String purchaseOrderId;
 
         /**
+         * 采购订单编号
+         */
+        @NotEmpty(message = "采购订单编号不能为空")
+        private String purchaseOrderCode;
+
+        /**
          * 仓库id
          */
         @NotEmpty(message = "仓库不能为空")

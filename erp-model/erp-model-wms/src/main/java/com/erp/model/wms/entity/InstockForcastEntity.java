@@ -92,6 +92,12 @@ public class InstockForcastEntity extends BaseEntity<InstockForcastEntity> {
     @TableField("invalid_remark")
     private String invalidRemark;
 
+    /**
+     * 采购订单编号
+     */
+    @TableField("purchase_order_code")
+    private String purchaseOrderCode;
+
 
     public static final String CODE = "code";
 
@@ -114,6 +120,8 @@ public class InstockForcastEntity extends BaseEntity<InstockForcastEntity> {
     public static final String INVALID_STATUS = "invalid_status";
 
     public static final String INVALID_REMARK = "invalid_remark";
+
+    public static final String PURCHASE_ORDER_CODE = "purchase_order_code";
 
     @Override
     public Serializable pkVal() {
