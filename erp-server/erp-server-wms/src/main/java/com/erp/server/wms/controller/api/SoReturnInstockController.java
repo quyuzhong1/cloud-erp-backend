@@ -64,7 +64,7 @@ public class SoReturnInstockController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnInstock:listCount",
+            menuCode = "wms:soReturnInstock:paging",
             tableAlias = "sri"
     )
     public ApiResult<List<SoReturnInstockDTO.StatusCountDTO>> listCount(@RequestBody PermissionsDTO dto) {

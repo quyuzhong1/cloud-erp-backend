@@ -65,7 +65,7 @@ public class SoReturnReceiveController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:soReturnReceive:listCount",
+            menuCode = "wms:soReturnReceive:paging",
             tableAlias = "srr"
     )
     public ApiResult<List<SoReturnReceiveDTO.StatusCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
