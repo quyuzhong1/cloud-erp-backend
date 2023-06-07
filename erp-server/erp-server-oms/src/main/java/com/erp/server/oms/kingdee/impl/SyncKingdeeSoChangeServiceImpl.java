@@ -91,7 +91,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             String soId = entity.getSoId();
             SoInfoDTO.CustomerDTO soInfo = soInfoService.getSoCustomer(soId);
             //填充数据
-            fillDb(entity, soInfo.getCode());
+         //   fillDb(entity, soInfo.getCode());
             Map<String, Object> resultMap = new HashMap<>();
             //金蝶id
             resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
