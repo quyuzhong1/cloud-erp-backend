@@ -22,6 +22,7 @@
             sdn.require_date,
             sdn.plan_delivery_date,
             sdn.actual_delivery_date,
+            sdn.pack_date,
             sdn.approve_user_name,
             sdn.create_user_name,
             sdn.create_time
