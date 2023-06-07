@@ -224,7 +224,7 @@
         other_instock_qty, -- 其他入库
         sum(case when tf.dict_biz_type in ('12') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
         sale_return_qty, -- 销售退货入库
-        sum(case when tf.dict_biz_type in ('07','26') and tf.dict_inventory_status = 'usable'  then tf.qty -- 直接调拨单（新增）目的仓可用增加；直接调拨单（调拨申请单下推）目的仓可用增加
+        sum(case when tf.dict_biz_type in ('07','26') and tf.dict_inventory_status = 'usable' and ((tf.operation_mode in ('approve', 'amend') and tf.qty > 0) or (tf.operation_mode = 'unApprove' and tf.qty <![CDATA[<]]> 0) ) then tf.qty -- 直接调拨单（新增）目的仓可用增加；直接调拨单（调拨申请单下推）目的仓可用增加
         when tf.dict_biz_type in ('09') and tf.dict_inventory_status = 'usable' then tf.qty else 0 -- 分步式调拨调入目的仓可用增加
         end) as transfer_instock_qty, -- 调拨入库
         sum(case when tf.dict_biz_type in ('17','24') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
@@ -232,7 +232,7 @@
 
         sum(case when tf.dict_biz_type in('04','05') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
         purchase_return_qty, -- 采购退货出库
-        sum(case when tf.dict_biz_type in('07') and tf.dict_inventory_status = 'usable' then tf.qty -- 直接调拨单（新增）当前仓可用减少；
+        sum(case when tf.dict_biz_type in('07') and tf.dict_inventory_status = 'usable' and ((tf.operation_mode in ('approve', 'amend') and tf.qty <![CDATA[<]]> 0) or (tf.operation_mode = 'unApprove' and tf.qty > 0) )  then tf.qty -- 直接调拨单（新增）当前仓可用减少；
         when tf.dict_biz_type in('26','08') and tf.dict_inventory_status = 'frozen' then tf.qty else 0 end) as -- 直接调拨单（调拨申请单下推），分布式调拨调出当前仓冻结减少
         transfer_outstock_qty, -- 调拨出库（分布式调拨出库单，冻结减少）
         sum(case when tf.dict_biz_type in('11') and tf.dict_inventory_status = 'frozen' then tf.qty else 0 end) as
@@ -292,7 +292,7 @@
         other_instock_qty, -- 其他入库
         sum(case when tf.dict_biz_type in ('12') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
         sale_return_qty, -- 销售退货入库
-        sum(case when tf.dict_biz_type in ('07','26') and tf.dict_inventory_status = 'usable' then tf.qty
+        sum(case when tf.dict_biz_type in ('07','26') and tf.dict_inventory_status = 'usable' and ((tf.operation_mode in ('approve', 'amend') and tf.qty > 0) or (tf.operation_mode = 'unApprove' and tf.qty <![CDATA[<]]> 0) ) then tf.qty
         when tf.dict_biz_type in ('09') and tf.dict_inventory_status = 'usable' then tf.qty else 0
         end) as transfer_instock_qty, -- 调拨入库
         sum(case when tf.dict_biz_type in ('17','24') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
@@ -300,8 +300,8 @@
 
         sum(case when tf.dict_biz_type in('04','05') and tf.dict_inventory_status = 'usable' then tf.qty else 0 end) as
         purchase_return_qty, -- 采购退货出库
-        sum(case when tf.dict_biz_type in('07') and tf.dict_inventory_status = 'usable' then tf.qty
-        when tf.dict_biz_type in('26','08') and tf.dict_inventory_status = 'frozen' then tf.qty else 0 end) as
+        sum(case when tf.dict_biz_type in('07') and tf.dict_inventory_status = 'usable' and ((tf.operation_mode in ('approve', 'amend') and tf.qty <![CDATA[<]]> 0) or (tf.operation_mode = 'unApprove' and tf.qty > 0) )  then tf.qty
+        when tf.dict_biz_type in('26','08') and tf.dict_inventory_status = 'frozen' and ((tf.operation_mode in ('approve', 'amend') and tf.qty <![CDATA[<]]> 0) or (tf.operation_mode = 'unApprove' and tf.qty > 0) )  then tf.qty else 0 end) as
         transfer_outstock_qty, -- 调拨出库（分布式调拨出库单，冻结减少）
         sum(case when tf.dict_biz_type in('11') and tf.dict_inventory_status = 'frozen' then tf.qty else 0 end) as
         sale_outstock_qty, -- 销售出库（销售出库，冻结减少）

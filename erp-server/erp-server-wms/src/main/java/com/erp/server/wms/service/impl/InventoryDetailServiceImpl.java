@@ -51,8 +51,8 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
     public List<InventoryDetailEntity> findListQtyGreatZero(String inventoryInfoId) {
         List<InventoryDetailEntity> inventoryDetails = lambdaQuery().eq(InventoryDetailEntity::getInfoId, inventoryInfoId).gt(InventoryDetailEntity::getQty, 0).list();
         if(CollUtil.isNotEmpty(inventoryDetails)) {
-            // 先按时间排序，再按id排序，防止时间冲突
-            inventoryDetails = inventoryDetails.stream().sorted(Comparator.comparing(InventoryDetailEntity::getCreateTime).thenComparing(InventoryDetailEntity::getId)).collect(Collectors.toList());
+            // 先按入库批次时间排序，再按id排序，防止时间冲突
+            inventoryDetails = inventoryDetails.stream().sorted(Comparator.comparing(InventoryDetailEntity::getInstockBatchDate).thenComparing(InventoryDetailEntity::getId)).collect(Collectors.toList());
 
         }
         return inventoryDetails;
