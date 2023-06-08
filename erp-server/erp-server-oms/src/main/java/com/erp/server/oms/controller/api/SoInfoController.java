@@ -132,7 +132,7 @@ public class SoInfoController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "oms:so:addAndSubmit",
+            menuCode = "oms:so:submit",
             serviceClass = SoInfoService.class,
             keyIdName = "ids"
     )
