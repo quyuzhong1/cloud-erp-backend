@@ -1,14 +1,12 @@
 package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.enums.DistributedLockEnum;
-import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -28,13 +26,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -249,15 +244,13 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
      * @param num
      */
     public void updateNumByCode (String id,Integer num) {
-        /**
         LambdaUpdateWrapper<SysCodeEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(SysCodeEntity::getId,id);
         updateWrapper.set(SysCodeEntity::getNum,num + 1);
         updateWrapper.set(SysCodeEntity::getUpdateTime,new Date());
         this.update(updateWrapper);
-         */
-        LoginUser loginUser = commonService.getUserInfo();
-        this.baseMapper.updateNum(id, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
+        /*LoginUser loginUser = commonService.getUserInfo();
+        this.baseMapper.updateNum(id, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());*/
     }
 
 }
