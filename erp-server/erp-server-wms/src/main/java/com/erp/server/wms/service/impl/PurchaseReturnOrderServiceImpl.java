@@ -544,9 +544,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         lambdaUpdate().set(PurchaseReturnOrderEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
                 .in(PurchaseReturnOrderEntity::getId, ids)
                 .update();
-
+        List<PurchaseOrderDetailEntity> list = new ArrayList<>();
         for (PurchaseReturnOrderEntity purchaseReturnOrderEntity : purchaseReturnOrderEntityList) {
-            List<PurchaseOrderDetailEntity> list = new ArrayList<>();
             List<PurchaseReturnOrderDetailEntity> detailByMainId = purchaseReturnOrderDetailService.getDetailByMainId(purchaseReturnOrderEntity.getId());
             List<String> detailId = detailByMainId.stream().map(PurchaseReturnOrderDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
             //退料扣款
@@ -557,14 +556,12 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     purchaseOrderDetailEntity.setPurchaseAmount(purchaseOrderDetailEntity.getPurchaseAmount().add(returnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(returnOrderDetailEntity.getReturnQty())))));
                     list.add(purchaseOrderDetailEntity);
                 });
-                scmTaskFeign.updatePurchaseOrderDetailByIdBatch(list);
             }
             if (StringUtils.isNotBlank(purchaseReturnOrderEntity.getPurchaseOrderId())) {
                 updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId());
             }
-
         }
-
+        scmTaskFeign.updatePurchaseOrderDetailByIdBatch(list);
         unApproveInventory(purchaseReturnOrderEntityList); // 库存反审核操作
 
         //操作日志
