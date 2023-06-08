@@ -86,7 +86,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         //使用组织
         resultMap.put("useOrgCode", useOrgCode);
         List<DictBasicDTO.ViewDTO> customerCompanyCategory = dictBasicService.getByKey("customerCompanyCategory");
-        if (CollectionUtils.isEmpty(customerCompanyCategory)) {
+        if (CollectionUtils.isNotEmpty(customerCompanyCategory)) {
             DictBasicDTO.ViewDTO viewDTO = customerCompanyCategory.stream().filter(req -> req.getValue().equals(entity.getCompanyCategoryDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
             //公司类型
             resultMap.put("companyCategory", viewDTO.getRemark());
@@ -94,6 +94,8 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 
         //客户名称
         resultMap.put("name", entity.getName());
+        //客户分组
+        resultMap.put("groupName", entity.getGroupName());
         //简称
         resultMap.put("shortName", entity.getShortName());
         DictCountryEntity countryEntity = sysUserFeign.getCountryById(entity.getCountryId());
@@ -161,6 +163,9 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         DictBasicDTO.ViewDTO collectionTerms = collectionTermsList.stream().filter(req -> req.getValue().equals(entity.getConditionDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
         resultMap.put("collectionTermsCode",collectionTerms.getRemark());
         List<CustomerContactDTO.ViewDTO> customerContactList = customerContactService.listByMainId(entity.getId());
+        for (CustomerContactDTO.ViewDTO viewDTO : customerContactList) {
+            viewDTO.setDisabled(viewDTO.getDisabled() ? Boolean.FALSE : Boolean.TRUE);
+        }
         resultMap.put("customerContactList",customerContactList);
         resultMap.put("invoiceList", viewDTOS);
         List<CustomerAddressDTO.ViewDTO> customerAddressList = customerAddressService.listByMainId(entity.getId());

@@ -556,6 +556,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     PurchaseOrderDetailEntity entity = new PurchaseOrderDetailEntity ();
                     entity.setId(purchaseOrderDetailEntity.getId());
                     entity.setPurchaseAmount(purchaseOrderDetailEntity.getPurchaseAmount().add(returnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(returnOrderDetailEntity.getReturnQty())))));
+                    scmTaskFeign.updatePurchaseOrderDetailById(entity);
                     list.add(entity);
                 });
             }
@@ -563,7 +564,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId());
             }
         }
-        scmTaskFeign.updatePurchaseOrderDetailByIdBatch(list);
+
         unApproveInventory(purchaseReturnOrderEntityList); // 库存反审核操作
 
         //操作日志
