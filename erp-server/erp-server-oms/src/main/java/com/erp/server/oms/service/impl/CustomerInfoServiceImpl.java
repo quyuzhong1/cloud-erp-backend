@@ -753,6 +753,29 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     public Boolean updateStatus(UpdateStateDTO.BatchUpdateDTO dto) {
         List<String> ids = dto.getIds();
         List<CustomerInfoEntity> customerList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(customerList)) {
+            throw new ServiceException(ApiError.ERROR_92011);
+        }
+
+        Boolean disabled = dto.getDisabled();
+        long count = customerList.stream().filter(d -> !d.getDisabled() == disabled).count();
+        if (count != customerList.size()) {
+            throw new ServiceException(ApiError.ERROR_98027);
+        }
+        if (disabled) {
+            //客户是否有使用
+            Boolean isUseCustomer = soInfoService.getIsUseCustomer(ids);
+            if (isUseCustomer) {
+                throw new ServiceException(ApiError.ERROR_92044);
+            }
+        }
+        customerList.forEach(d -> d.setDisabled(disabled));
+        //添加日志
+        List<Pair<String, String>> pairList = customerList.stream().
+                map(obj -> new Pair<>(obj.getId(), obj.getName())).collect(Collectors.toList());
+        String content = String.format("启用状态[%s]变更为[%s]", disabled ? "启用" : "停用", disabled ? "停用" : "启用");
+        String finalContent = "[%s]," + content;
+        operateLogService.batchAddModuleOperateLog(finalContent, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
 
         customerList.forEach(req -> {
             //发送金蝶

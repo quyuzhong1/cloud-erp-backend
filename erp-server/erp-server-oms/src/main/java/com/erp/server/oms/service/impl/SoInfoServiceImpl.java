@@ -664,7 +664,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String comment = dto.getComment();
         String content = "";
         String userName = commonService.getUserInfo().getUserName();
-        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        String approveStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);

@@ -126,9 +126,6 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         //结算币别
         String currencyCode = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                 map(CurrencyDTO.ViewDTO::getKingdeeCode).orElse("");
-        if (StringUtils.isNotBlank(currencyCode)) {
-            resultMap.put("currencyCode", currencyCode);
-        }
         //银行手续费
         BigDecimal bankServiceFee = entity.getBankServiceFee();
         resultMap.put("bankServiceFee", bankServiceFee);
@@ -139,7 +136,11 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
 
         //是否含税
         Boolean isTax = entity.getIsTax();
-        resultMap.put("isTax", isTax);
+        Map<String, Object> finance = new HashMap<>();
+        finance.put("FExchangeRate", 1);
+        finance.put("FIsIncludedTax", isTax);
+        finance.put("FSettleCurrId.FNumber", currencyCode);
+        resultMap.put("finance", finance);
 
         //库存组织
         String warehouseOrgId = entity.getWarehouseOrgId();
@@ -214,6 +215,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             jsonObject.set("curInventoryQty", item.getQty());
             jsonObject.set("stockBaseQty", item.getQty());
             jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
+            jsonObject.set("remark", item.getRemark());
             list.add(jsonObject);
         }
 

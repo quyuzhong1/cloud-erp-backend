@@ -225,23 +225,20 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if (soDeliveryNotice.equals(sourceType)) {
             //表示是发货通知单的
             List<SoDeliveryNoticeDetailEntity> deliveryNoticeDetailList = CollectionUtils.isNotEmpty(sourceDetailIdList) ? soDeliveryNoticeDetailService.listByIds(sourceDetailIdList) : Collections.emptyList();
+            //发货通知单数量
+            Integer deliveryQty = deliveryNoticeDetailList.stream().mapToInt(SoDeliveryNoticeDetailEntity::getDeliveryQty).sum();
+
+            //应发数量
+            Integer planQty = detailList.stream().mapToInt(SoOutstockDetailDTO.UpdateDTO::getPlanQty).sum();
+            if (!planQty.equals(deliveryQty)) {
+                throw new ServiceException(ApiError.ERROR_92031);
+            }
+
             for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
                 String sourceDetailId = item.getSourceDetailId();
                 String soDetailId=deliveryNoticeDetailList.stream().filter(d -> d.getId().equals(sourceDetailId)).
-                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getSourceDetailId())).orElse("s");
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getSourceDetailId())).orElse("");
                 String id = item.getId();
-                Integer deliveryQty = deliveryNoticeDetailList.stream().filter(d -> d.getId().equals(sourceDetailId)).
-                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getDeliveryQty())).orElse(0);
-                //实发数量
-                Integer actualQty = item.getActualQty();
-                //应发数量
-                Integer planQty = item.getPlanQty();
-                if (actualQty > planQty) {
-                    throw new ServiceException(ApiError.ERROR_92027);
-                }
-                if (!planQty.equals(deliveryQty)) {
-                    throw new ServiceException(ApiError.ERROR_92031);
-                }
                 //这个是已出的数量
                 Integer outStockQty = soOutstockDetailList.stream().filter(s ->
                         s.getSoDetailId().equals(soDetailId) &&

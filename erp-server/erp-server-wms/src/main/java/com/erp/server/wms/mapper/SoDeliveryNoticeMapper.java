@@ -36,7 +36,7 @@ public interface SoDeliveryNoticeMapper extends BaseMapper<SoDeliveryNoticeEntit
      * @param idList
      * @return java.util.List<com.erp.model.wms.dto.SoOutstockDTO.GenerateSoOutstockViewDTO>
      */
-    List<SoOutstockDTO.GenerateSoOutstockViewDTO> listGenerateSoOutstockView(@Param("idList") List<String> idList);
+    List<SoOutstockDTO.GenerateSoOutstockViewDTO> listGenerateSoOutstockView(@Param("idList") List<String> idList,@Param("sourceType") String sourceType);
 
     /**
      * 销售单详情-单据关联-发货通知单

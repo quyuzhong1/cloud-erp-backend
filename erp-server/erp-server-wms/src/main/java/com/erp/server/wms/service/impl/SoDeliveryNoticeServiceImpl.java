@@ -681,16 +681,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             throw new ServiceException(ApiError.ERROR_98063);
         }
         //获取到销售退货单 下推列表
-        List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList = baseMapper.listGenerateSoOutstockView(idList);
+        String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
+        List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList = baseMapper.listGenerateSoOutstockView(idList, soDeliveryNotice);
         long closeCount = resultList.stream().filter(s -> s.getIsClose()).count();
         if (closeCount > 0) {
             throw new ServiceException(ApiError.ERROR_98068);
         }
         //详情id s
         List<String> detailIds = resultList.stream().map(SoOutstockDTO.GenerateSoOutstockViewDTO::getSourceDetailId).distinct().collect(Collectors.toList());
-        //通过详情id 获取拣货详情
-        List<PickingDetailEntity> pickingDetailList = pickingDetailService.listPickingDetailBySourceDetailIds(detailIds);
-        String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
+
         //附件信息
         List<WmsAttachmentDTO.UpdateDTO> attachmentDbList = wmsAttachmentService.getByBusinessIds(detailIds);
 
@@ -703,9 +702,6 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             List<String> attachmentUrlList = attachmentList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
             item.setAttachNameList(attachmentNameList);
             item.setAttachUrlList(attachmentUrlList);
-            String warehouseLocation = pickingDetailList.stream().filter(p -> p.getSourceDetailId().equals(detailId)).
-                    findFirst().map(PickingDetailEntity::getWarehouseLocation).orElse("");
-            item.setWarehouseLocation(warehouseLocation);
         }
         //销售出库单保存下推单据
         return soOutstockService.addPushDownNo(resultList);

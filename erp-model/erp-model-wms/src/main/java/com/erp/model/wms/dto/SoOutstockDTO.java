@@ -497,7 +497,7 @@ public class SoOutstockDTO implements Serializable {
         @NotNull(message = "发货数量不能为空")
         @DecimalMin(value = "1", message = "发货数最小值为1")
         @DecimalMax(value = "999999999", message = "发货数最大值为999999999")
-        private Integer deliveryQty;
+        private Integer qty;
 
 
         private String remark;
