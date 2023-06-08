@@ -68,7 +68,7 @@ public class DataPermissionAspect {
         if (controllerDataScope == null) {
             return;
         }
-        String userId = "";
+        String userId = "1631292025469009921";
         String userName = "";
         LoginUser userInfo = CommonInterceptor.threadLocal.get();
         if (Objects.isNull(userInfo)) {

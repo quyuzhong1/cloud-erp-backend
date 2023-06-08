@@ -1400,23 +1400,22 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                         }
                     }
                 }
-                //同步失败
-                if (syncKingdeeStatus.equals(SyncKingdeeStatusEnum.FAILED_SYNC.getCode())) {
-                    WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
-                    warnMsgInfo.setBizName("销售订单同步");
-                    warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-                    warnMsgInfo.setTitle("销售订单同步失败");
-                    warnMsgInfo.setTableName("so_info");
-                    warnMsgInfo.setTableId(id);
-                    warnMsgInfo.setKeyInfo("");
-                    warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
-                    mqProducerService.sendWarnMsg(warnMsgInfo);
-                }
-
-
                 if (updateList.size() > 0) {
                     soDetailService.updateBatchById(updateList);
                 }
+            }
+
+            //同步失败
+            if (syncKingdeeStatus.equals(SyncKingdeeStatusEnum.FAILED_SYNC.getCode())) {
+                WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+                warnMsgInfo.setBizName("销售订单同步");
+                warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
+                warnMsgInfo.setTitle("销售订单同步失败");
+                warnMsgInfo.setTableName("so_info");
+                warnMsgInfo.setTableId(id);
+                warnMsgInfo.setKeyInfo("");
+                warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+                mqProducerService.sendWarnMsg(warnMsgInfo);
             }
 
             return this.lambdaUpdate()

@@ -65,11 +65,11 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
     private OperateLogService operateLogService;
 
     /**
+     * @param sourceDetailIds
+     * @return List<PurchaseReturnOrderDetailEntity>
      * @description: 根据来源明细ids查询退货明细
      * @author Will
      * @date: 2023/4/14 11:54
-     * @param sourceDetailIds
-     * @return List<PurchaseReturnOrderDetailEntity>
      */
     @Override
     public List<PurchaseReturnOrderDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds) {
@@ -78,11 +78,12 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
 
     /**
      * 新增
+     *
+     * @param dto dto
+     * @param id  id:主表id
+     * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/4/13 14:43
-     * @param dto dto
-     * @param id id:主表id
-     * @return java.lang.Boolean
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -135,6 +136,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
                     purchaseReturnOrderDetailEntity.setCurrency(addDTO.getCurrency());
                     purchaseReturnOrderDetailEntity.setSourceDetailId(addDTO.getSourceDetailId());
                     purchaseReturnOrderDetailEntity.setWarehouseLocation(addDTO.getWarehouseLocation());
+                    purchaseReturnOrderDetailEntity.setWarehouseLocation(addDTO.getWarehouseLocation());
                 } else {
                     throw new ServiceException(ApiError.ERROR_99006);
                 }
@@ -150,10 +152,11 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
 
     /**
      * 无采购单新增
-     * @Author Luo_WG
-     * @Date 2023/4/25 14:39
+     *
      * @param dto id
      * @return void
+     * @Author Luo_WG
+     * @Date 2023/4/25 14:39
      **/
     private List<PurchaseReturnOrderDetailEntity> notProductOrderAdd(PurchaseReturnOrderDTO.AddDTO dto, String id, List<PurchaseReturnOrderDetailEntity> listDetail) {
         //遍历需要保存的采购收货单详情信息，并赋值采购单信息
@@ -206,10 +209,11 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
 
     /**
      * 修改
-     * @Author Luo_WG
-     * @Date 2023/4/13 15:22
+     *
      * @param dto dto
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/13 15:22
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -222,7 +226,7 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
             List<PurchaseReturnOrderDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(),pairList,"编辑操作");
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), pairList, "编辑操作");
             this.removeByIds(deleteIds);
         }
         Integer returnQty = 0;
@@ -296,10 +300,11 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
 
     /**
      * 无采购单新增
-     * @Author Luo_WG
-     * @Date 2023/4/25 14:39
+     *
      * @param dto id
      * @return void
+     * @Author Luo_WG
+     * @Date 2023/4/25 14:39
      **/
     private List<PurchaseReturnOrderDetailEntity> notProductOrderUpdate(PurchaseReturnOrderDTO.UpdateDTO dto, String id, List<PurchaseReturnOrderDetailEntity> listDetail) {
         //遍历需要保存的采购收货单详情信息，并赋值采购单信息
@@ -321,10 +326,11 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
 
     /**
      * 根据主表id删除
-     * @Author Luo_WG
-     * @Date 2023/4/6 19:29
+     *
      * @param mainIds mainIds
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:29
      **/
     @Override
     public Boolean delete(List<String> mainIds) {
@@ -335,10 +341,11 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
 
     /**
      * 根据主表id查询详情表信息
-     * @Author Luo_WG
-     * @Date 2023/4/13 17:44
+     *
      * @param mainId mainId
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/13 17:44
      **/
     @Override
     public List<PurchaseReturnOrderDetailEntity> getDetailByMainId(String mainId) {
@@ -354,6 +361,6 @@ public class PurchaseReturnOrderDetailServiceImpl extends SuperServiceImpl<Purch
 
     @Override
     public List<PurchaseReturnOrderDetailEntity> listByMainIds(List<String> mainIds) {
-        return lambdaQuery().in(PurchaseReturnOrderDetailEntity::getMainId,mainIds).list();
+        return lambdaQuery().in(PurchaseReturnOrderDetailEntity::getMainId, mainIds).list();
     }
 }

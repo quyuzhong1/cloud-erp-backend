@@ -1,6 +1,5 @@
 package com.erp.server.wms.service.impl;
 
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.vo.SkuVO;
@@ -10,6 +9,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.PickingDetailMapper;
 import com.erp.server.wms.service.PickingDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,7 +53,7 @@ public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapp
     public List<PickingDetailDTO.ListDTO> listPickingDetailBySourceId(PickingDetailDTO.SearchParamDTO dto) {
         List<PickingDetailEntity> list = lambdaQuery()
                 .eq(PickingDetailEntity::getSourceId, dto.getSourceId())
-                .in(CollectionUtils.isNotEmpty(dto.getSkuNoList()),PickingDetailEntity::getSkuNo,dto.getSkuNoList())
+                .in(CollectionUtils.isNotEmpty(dto.getSkuNoList()), PickingDetailEntity::getSkuNo, dto.getSkuNoList())
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
@@ -70,5 +70,22 @@ public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapp
             }
         }
         return resultList;
+    }
+
+
+    /**
+     * 根据明细id 即来源明细id 获取到拣货信息
+     *
+     * @param detailIds
+     * @return
+     * @author yl
+     * @date 2023-06-08 9:42
+     */
+    @Override
+    public List<PickingDetailEntity> listPickingDetailBySourceDetailIds(List<String> detailIds) {
+        if (CollectionUtils.isNotEmpty(detailIds)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(PickingDetailEntity::getSourceDetailId,detailIds).list();
     }
 }

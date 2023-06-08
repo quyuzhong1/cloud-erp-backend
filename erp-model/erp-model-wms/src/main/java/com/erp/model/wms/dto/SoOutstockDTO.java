@@ -474,7 +474,9 @@ public class SoOutstockDTO implements Serializable {
         @NotBlank(message = "sku no不能为空")
         private String skuNo;
 
-
+        /**
+         * 库位
+         */
         private String warehouseLocation;
 
 

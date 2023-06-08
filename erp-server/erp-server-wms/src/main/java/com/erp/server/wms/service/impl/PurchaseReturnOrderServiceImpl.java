@@ -958,6 +958,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 }
                 BeanMapperUtils.copy(detail, addDetailDTO);
                 addDetailDTO.setReturnQty(detail.getRealityReturnQty());
+                addDetailDTO.setWarehouseLocation(detail.getWarehouseLocation());
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setPurchasePriceDetailList(addDetailList);

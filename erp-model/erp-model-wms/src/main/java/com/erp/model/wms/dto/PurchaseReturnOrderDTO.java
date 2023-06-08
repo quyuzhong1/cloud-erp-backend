@@ -51,6 +51,11 @@ public class PurchaseReturnOrderDTO {
         private String returnWarehouseId;
 
         /**
+         * 退货仓库库位
+         */
+        private String warehouseLocation;
+
+        /**
          * 退货来源
          */
         @NotBlank(message = "退货来源不能为空")
@@ -804,7 +809,7 @@ public class PurchaseReturnOrderDTO {
         /**
          * 库位名称
          */
-        private String warehouseLocationName;
+        private String warehouseLocation;
 
         /**
          * 币种符号

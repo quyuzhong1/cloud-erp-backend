@@ -1,13 +1,14 @@
 package com.erp.model.oms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
  * @author Administrator
  */
 
-public enum CustomerAddressTypeEnum {
+public enum CustomerAddressTypeEnum  implements EnumMessage {
     FORWARDER("forwarder","货代地址"),
     DELIVER("receive","收货地址"),
     COMPANY("company","公司地址"),

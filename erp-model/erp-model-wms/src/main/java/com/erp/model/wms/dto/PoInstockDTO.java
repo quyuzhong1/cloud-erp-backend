@@ -433,6 +433,13 @@ public class PoInstockDTO implements Serializable {
          */
         private String purchaseOrderDetailId;
 
+
+        /**
+         * 库位
+         */
+        @NotBlank(message = "库位不能为空")
+        private String warehouseLocation;
+
         /**
          * 采购订单单号
          */
