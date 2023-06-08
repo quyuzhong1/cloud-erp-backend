@@ -50,13 +50,15 @@ public class KingdeeSoOutstockConsumer implements RocketMQListener<Map<String, O
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "XSCKD4059542"));
-        String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FBillTypeID.FNumber";
+        queryFilters.add(String.format("FBillNo = '%s'", "XSCKD4064944"));
+        String filterStr = String.join(" and ", queryFilters);//5814757
+        String fieldKeys = "FID,FSrcType,FMtoNo,FSALUNITQTY,FSALBASEQTY,FProjectNo,FSNUnitID,FSalBaseARJoinQty,FSOEntryId,FRowId,FParentRowId,FETHIRDBILLID,FBOMEntryId,FInStockBillno,FInStockEntryId";
         map.put("FCustMatID.FNumber", "XSCKD01_SYS，XSCKD07_SYS");
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);
         System.out.println(queryList);
     }
+//[{FID=5814813, FSrcType=SAL_SaleOrder, FMtoNo= , FSALUNITQTY=2.0, FSALBASEQTY=2.0, FProjectNo= , FSNUnitID=0, FSalBaseARJoinQty=0.0, FSOEntryId=279993, FRowId=e897dacb-3d81-80f4-11ee-05a091df2ca9, FParentRowId= , FETHIRDBILLID= , FBOMEntryId=0, FInStockBillno= , FInStockEntryId=0}, {FID=5814813, FSrcType=SAL_SaleOrder, FMtoNo= , FSALUNITQTY=10.0, FSALBASEQTY=10.0, FProjectNo= , FSNUnitID=0, FSalBaseARJoinQty=0.0, FSOEntryId=279994, FRowId=e897dacb-3d81-80f4-11ee-05a091df2caa, FParentRowId= , FETHIRDBILLID= , FBOMEntryId=0, FInStockBillno= , FInStockEntryId=0}]
+//[{FID=5814813, FSrcType=, FMtoNo= , FSALUNITQTY=0.0, FSALBASEQTY=0.0, FProjectNo= , FSNUnitID=0, FSalBaseARJoinQty=0.0, FSOEntryId=279993, FRowId=e897dacb-3d81-80f4-11ee-05c32c5b56db, FParentRowId= , FETHIRDBILLID= , FBOMEntryId=0, FInStockBillno= , FInStockEntryId=0}, {FID=5814813, FSrcType=SAL_OUTSTOCK, FMtoNo= , FSALUNITQTY=0.0, FSALBASEQTY=0.0, FProjectNo= , FSNUnitID=0, FSalBaseARJoinQty=0.0, FSOEntryId=279994, FRowId=e897dacb-3d81-80f4-11ee-05c32c5b56dc, FParentRowId= , FETHIRDBILLID= , FBOMEntryId=0, FInStockBillno= , FInStockEntryId=0}]
 
     @Override
     public void onMessage(Map<String, Object> map) {
@@ -136,15 +138,17 @@ public class KingdeeSoOutstockConsumer implements RocketMQListener<Map<String, O
         try {
             model = kingdeeCommonService.view(apiUtils,(String)map.get("syncKingdeeId"),(String)map.get("code"));
         } catch (Exception e) {
-/*            Map<String, Object> pushMap = new HashMap<>();
-            pushMap.put("ids", Arrays.asList(map.get("soSyncKingdeeId")));
-            pushMap.put("Numbers", Arrays.asList(map.get("soCode")));
-            pushMap.put("RuleId", "4cd577aa-2c48-a50c-11ee-0387e3cd5475");
+            Map<String, Object> pushMap = new HashMap<>();
+//            pushMap.put("ids", Arrays.asList(map.get("soSyncKingdeeId")));
+            pushMap.put("EntryIds", map.get("soKingdeeDetailIds"));
+            pushMap.put("RuleId", "SaleOrder-OutStock");
             pushMap.put("TargetFormId", KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
             pushMap.put("CustomParams", json);
+            //读取配置，初始化SDK
+            KingdeeApiUtils sourceApiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
             //更新数据
-            kingdeeCommonService.push(platformEntity,map,apiUtils,JSONUtil.parseObj(pushMap),param,type);*/
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            kingdeeCommonService.push(platformEntity,map,sourceApiUtils,apiUtils,JSONUtil.parseObj(pushMap),param,type,json);
+//            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
             return;
         }
         //查找到数据后，判断其审核状态

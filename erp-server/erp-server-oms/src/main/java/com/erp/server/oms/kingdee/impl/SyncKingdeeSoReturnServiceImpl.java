@@ -139,6 +139,9 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soReturnEntity.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
             resultMap.put("salesOrgCode", salesOrgCode);
         }
+        List<String> soKingdeeDetailIdList = soDetailEntitieList.stream().map(req -> req.getKingdeeDetailId()).collect(Collectors.toList());
+
+        resultMap.put("soKingdeeDetailIds", String.join(",", soKingdeeDetailIdList));
         //金蝶 FEntity:物料信息
         List<Map<String,Object>> list = new ArrayList<>();
         for (SoReturnDetailEntity detailEntity : returnDetailEntityList) {
@@ -148,7 +151,8 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             if (StringUtils.isNotBlank(detailEntity.getReturnReasonDict())) {
                 resultMap.put("returnReason", ReturnReasonEnum.getEnum(detailEntity.getReturnReasonDict()).getKingdeeCode());
             }
-
+            //销售订单金蝶id
+            map.put("soSyncKingdeeId", soInfoEntity.getSyncKingdeeId());
             //物料编码
             map.put("skuNo", detailEntity.getSkuNo());
             //退货数量

@@ -3,6 +3,7 @@ package com.erp.server.dmp.utils;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.google.gson.Gson;
 import com.kingdee.bos.webapi.entity.*;
@@ -420,8 +421,8 @@ public class KingdeeApiUtils {
      * @param jsonDate jsonDate
      * @return
      */
-    public String push(JSONObject jsonDate){
-        String result = "";
+    public RepoResult push(JSONObject jsonDate){
+        RepoResult result;
         try {
             String resultJson = client.push(this.formId, jsonDate.toString());
             //用于记录结果
@@ -429,16 +430,18 @@ public class KingdeeApiUtils {
             //对返回结果进行解析和校验
             RepoRet repoRet = gson.fromJson(resultJson, RepoRet.class);
             if (repoRet.getResult().getResponseStatus().isIsSuccess()) {
-                result = gson.toJson(repoRet.getResult());
+                result = repoRet.getResult();
+                ArrayList<SuccessEntity> successEntitys = result.getResponseStatus().getSuccessEntitys();
+                if (CollectionUtils.isEmpty(successEntitys)) {
+                    throw new RuntimeException("下推失败"+ successEntitys);
+                }
                 return result;
             } else {
-                System.err.println("【下推单据】出错:"+ gson.toJson(repoRet.getResult().getResponseStatus()));
+                throw new RuntimeException("【下推单据】出错:"+ gson.toJson(repoRet.getResult().getResponseStatus()));
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-        return result;
     }
 
     /**

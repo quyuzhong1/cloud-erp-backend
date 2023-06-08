@@ -74,11 +74,12 @@ public interface KingdeeCommonService {
      * @date: 2023/3/3 14:52
      * @param platformEntity
      * @param map
+     * @param sourceApiUtils
      * @param apiUtils
      * @param json
      * @param param
      */
-    Boolean push(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param,Integer type);
+    Boolean push(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils sourceApiUtils, KingdeeApiUtils apiUtils, JSONObject jsonMap, SaveParam param,Integer type, JSONObject json);
 
     /**
      * 提交及审核

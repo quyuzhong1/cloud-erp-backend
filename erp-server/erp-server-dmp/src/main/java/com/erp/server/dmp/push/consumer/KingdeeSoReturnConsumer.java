@@ -1,6 +1,7 @@
 package com.erp.server.dmp.push.consumer;
 
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -135,8 +136,17 @@ public class KingdeeSoReturnConsumer implements RocketMQListener<Map<String, Obj
         try {
             model = kingdeeCommonService.view(apiUtils,(String)map.get("syncKingdeeId"),(String)map.get("code"));
         } catch (Exception e) {
+            Map<String, Object> pushMap = new HashMap<>();
+//            pushMap.put("ids", Arrays.asList(map.get("soSyncKingdeeId")));
+            pushMap.put("EntryIds", map.get("soKingdeeDetailIds"));
+            pushMap.put("RuleId", "SaleOrder-SalReturnStock");
+            pushMap.put("TargetFormId", KingdeePushModuleEnum.SAL_RETURNSTOCK.getCode());
+            pushMap.put("CustomParams", json);
+            //读取配置，初始化SDK
+            KingdeeApiUtils sourceApiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            kingdeeCommonService.push(platformEntity,map,sourceApiUtils,apiUtils, JSONUtil.parseObj(pushMap),param,type,json);
+//            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
             return;
         }
         //查找到数据后，判断其审核状态
