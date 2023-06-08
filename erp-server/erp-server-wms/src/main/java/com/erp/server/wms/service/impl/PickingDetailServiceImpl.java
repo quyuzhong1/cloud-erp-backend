@@ -83,7 +83,7 @@ public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapp
      */
     @Override
     public List<PickingDetailEntity> listPickingDetailBySourceDetailIds(List<String> detailIds) {
-        if (CollectionUtils.isNotEmpty(detailIds)) {
+        if (CollectionUtils.isEmpty(detailIds)) {
             return Collections.emptyList();
         }
         return this.lambdaQuery().in(PickingDetailEntity::getSourceDetailId,detailIds).list();
