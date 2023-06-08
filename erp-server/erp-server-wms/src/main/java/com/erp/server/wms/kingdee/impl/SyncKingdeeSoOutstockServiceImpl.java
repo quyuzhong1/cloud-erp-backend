@@ -148,7 +148,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
         if (CollectionUtils.isNotEmpty(userKingdeePostInfoList)) {
             //仓管员
-            resultMap.put("warehouseKeeperCode", userKingdeePostInfoList.get(0).getKingdeePostCode());
+            resultMap.put("warehouseKeeperCode", userKingdeePostInfoList.get(0).getKingdeeUserCode());
         }
 
         //仓管员
