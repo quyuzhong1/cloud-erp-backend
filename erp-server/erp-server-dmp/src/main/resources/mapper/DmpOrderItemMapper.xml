@@ -15,7 +15,7 @@
         AND to_char(platform_create_time, 'yyyy') = #{year}
     </select>
 
-    <select id="getOrderListingTime" resultType="map">
+    <select id="getOrderListingTime" resultType="java.util.Map">
         SELECT
         poit.sku_no AS skuNo,
         min(to_char(platform_create_time, 'yyyy-MM-dd')) AS listingTime
