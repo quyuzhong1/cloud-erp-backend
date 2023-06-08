@@ -5,6 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
@@ -205,7 +206,7 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * @param PurchaseOrderId PurchaseOrderId
      * @return void
      **/
-    void updateArrivalState(String PurchaseOrderId);
+    void updateArrivalState(String PurchaseOrderId, List<PurchaseOrderDetailEntity> detailEntityList);
 
     
     /**

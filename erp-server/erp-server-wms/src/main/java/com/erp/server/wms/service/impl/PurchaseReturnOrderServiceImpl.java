@@ -485,16 +485,17 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     detailByMainId.forEach(returnOrderDetailEntity -> {
                         PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(returnOrderDetailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
                         if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
-                            purchaseOrderDetailEntity.setPurchaseAmount(purchaseOrderDetailEntity.getPurchaseAmount().subtract(returnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(returnOrderDetailEntity.getReturnQty())))));
-                            list.add(purchaseOrderDetailEntity);
+                            PurchaseOrderDetailEntity entity = new PurchaseOrderDetailEntity ();
+                            entity.setId(purchaseOrderDetailEntity.getId());
+                            entity.setPurchaseAmount(purchaseOrderDetailEntity.getPurchaseAmount().subtract(returnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(returnOrderDetailEntity.getReturnQty())))));
+                            list.add(entity);
                         }
 
                     });
-                    scmTaskFeign.updatePurchaseOrderDetailByIdBatch(list);
                 }
 
                 if (StringUtils.isNotBlank(purchaseReturnOrderEntity.getPurchaseOrderId())) {
-                    updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId());
+                    updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId(), list);
                 }
             }
 
@@ -546,6 +547,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 .update();
         List<PurchaseOrderDetailEntity> list = new ArrayList<>();
         for (PurchaseReturnOrderEntity purchaseReturnOrderEntity : purchaseReturnOrderEntityList) {
+
             List<PurchaseReturnOrderDetailEntity> detailByMainId = purchaseReturnOrderDetailService.getDetailByMainId(purchaseReturnOrderEntity.getId());
             List<String> detailId = detailByMainId.stream().map(PurchaseReturnOrderDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
             //退料扣款
@@ -556,12 +558,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     PurchaseOrderDetailEntity entity = new PurchaseOrderDetailEntity ();
                     entity.setId(purchaseOrderDetailEntity.getId());
                     entity.setPurchaseAmount(purchaseOrderDetailEntity.getPurchaseAmount().add(returnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(returnOrderDetailEntity.getReturnQty())))));
-                    scmTaskFeign.updatePurchaseOrderDetailById(entity);
                     list.add(entity);
                 });
             }
             if (StringUtils.isNotBlank(purchaseReturnOrderEntity.getPurchaseOrderId())) {
-                updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId());
+                updateArrivalState(purchaseReturnOrderEntity.getPurchaseOrderId(), list);
             }
         }
 
@@ -862,7 +863,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
      * @Date 2023/4/28 11:37
      **/
     @Override
-    public void updateArrivalState(String PurchaseOrderId) {
+    public void updateArrivalState(String PurchaseOrderId, List<PurchaseOrderDetailEntity> detailEntityList) {
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailByOrderId(PurchaseOrderId);
         List<String> podIds = purchaseOrderDetailEntities.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
         List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
@@ -894,6 +895,10 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             purchaseOrderDetailEntity.setId(orderDetailEntity.getId());
             purchaseOrderDetailEntity.setArrivalStatus(arrivalStatus);
             purchaseOrderDetailEntity.setArrivalTime(LocalDateTime.now());
+            if (CollectionUtils.isNotEmpty(detailEntityList)) {
+                PurchaseOrderDetailEntity entity = detailEntityList.stream().filter(req -> req.getId().equals(orderDetailEntity.getId())).findFirst().orElse(null);
+                purchaseOrderDetailEntity.setPurchaseAmount(entity.getPurchaseAmount());
+            }
             scmTaskFeign.updatePurchaseOrderDetailById(purchaseOrderDetailEntity);
         }
     }
