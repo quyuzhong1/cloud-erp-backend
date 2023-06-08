@@ -122,7 +122,7 @@ public class SoChangeController extends BaseController {
             tableField = "create_user_id",
             menuCode = "oms:soChange:submit",
             serviceClass = SoChangeService.class,
-            keyIdName = "id"
+            keyIdName = "ids"
     )
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = soChangeService.submit(dto.getIds());
@@ -208,7 +208,7 @@ public class SoChangeController extends BaseController {
             tableField = "create_user_id",
             menuCode = "oms:soChange:approve",
             serviceClass = SoChangeService.class,
-            keyIdName = "id"
+            keyIdName = "ids"
     )
     public ApiResult audit(@RequestBody @Validated BaseApproveParamDTO dto) {
         Boolean result = soChangeService.approve(dto);
@@ -227,7 +227,7 @@ public class SoChangeController extends BaseController {
             tableField = "create_user_id",
             menuCode = "oms:soChange:cancelProcess",
             serviceClass = SoChangeService.class,
-            keyIdName = "id"
+            keyIdName = "ids"
     )
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = soChangeService.cancelProcess(dto.getIds());
@@ -246,7 +246,7 @@ public class SoChangeController extends BaseController {
             tableField = "create_user_id",
             menuCode = "oms:soChange:delete",
             serviceClass = SoChangeService.class,
-            keyIdName = "id"
+            keyIdName = "ids"
     )
     public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean result = soChangeService.deleteByIds(dto.getIds());
@@ -266,7 +266,7 @@ public class SoChangeController extends BaseController {
             tableField = "create_user_id",
             menuCode = "oms:soChange:invalid",
             serviceClass = SoChangeService.class,
-            keyIdName = "id"
+            keyIdName = "ids"
     )
     public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         Boolean result = soChangeService.invalid(dto.getIds(), dto.getRemark());
