@@ -70,7 +70,7 @@ public class ${table.controllerName} {
     <#if dataPermission>
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "${modelName}<#if package.ModuleName??>:${package.ModuleName}</#if>:<#if controllerMappingHyphenStyle??>${controllerMappingHyphen}<#else>${table.entityPath}</#if>:tabList",
+            menuCode = "${modelName}<#if package.ModuleName??>:${package.ModuleName}</#if>:<#if controllerMappingHyphenStyle??>${controllerMappingHyphen}<#else>${table.entityPath}</#if>:paging",
             tableAlias = ""
     )
     </#if>

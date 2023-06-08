@@ -35,6 +35,11 @@ public class TransferOutController extends BaseController {
      * @return
      */
     @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "warehouse_keeper_id",
+            menuCode = "wms:transfer:out:paging",
+            tableAlias = "tfo"
+    )
     public ApiResult<List<TransferOutDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(transferOutService.listCount(dto));
     }
