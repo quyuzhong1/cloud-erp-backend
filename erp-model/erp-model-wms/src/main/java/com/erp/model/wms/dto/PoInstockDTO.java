@@ -378,6 +378,11 @@ public class PoInstockDTO implements Serializable {
         private SupplierDTO supplierDTO;
 
         /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
          * 明细
          */
         private List<PoInstockDetailDTO.ViewDTO> details;
