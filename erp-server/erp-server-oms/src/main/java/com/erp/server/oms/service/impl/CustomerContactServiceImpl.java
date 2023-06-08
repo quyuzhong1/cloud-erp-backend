@@ -102,9 +102,6 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateBatchContact(String mainId, List<CustomerContactDTO.ViewDTO> contactList) {
-        if (CollectionUtils.isEmpty(contactList)) {
-            return;
-        }
         List<CustomerContactEntity> saveOrUpdateList = new ArrayList<>(contactList.size());
         //这是修改的
         List<CustomerContactDTO.ViewDTO> updateList = contactList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
@@ -139,7 +136,9 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
                 operateLogService.addModuleOperateLogByObj(old,update, ModuleTypeEnum.CUSTOMER.getCode(),mainId,"","");
             }
         }
-        this.saveOrUpdateBatch(saveOrUpdateList);
+        if(CollectionUtils.isNotEmpty(saveOrUpdateList)){
+            this.saveOrUpdateBatch(saveOrUpdateList);
+        }
     }
 
     

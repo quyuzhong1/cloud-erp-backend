@@ -10,6 +10,7 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -28,6 +29,7 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -96,7 +98,6 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         resultMap.put("isCollectShippingFee", entity.getIsCollectShippingFee());
 
 
-
         String salesDeptId = entity.getSalesDeptId();
         //销售员
         String sellerId = entity.getSellerId();
@@ -114,12 +115,32 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             KingdeePostDTO.UserKingdeePostInfoDTO userDTO = sysUserFeign.getUserKingdeePostByUserId(sellerId);
             //销售员
             if (!Objects.isNull(userDTO)) {
-                resultMap.put("sellerCode",userDTO.getKingdeePostCode());
+                resultMap.put("sellerCode", userDTO.getKingdeePostCode());
                 resultMap.put("seller", userDTO.getUserName());
             }
         }
         //销售组织
         String salesOrgId = entity.getSalesOrgId();
+        String currency = entity.getCurrency();
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(currency));
+        //结算币别
+        String currencyCode = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
+                map(CurrencyDTO.ViewDTO::getKingdeeCode).orElse("");
+        if (StringUtils.isNotBlank(currencyCode)) {
+            resultMap.put("currencyCode", currencyCode);
+        }
+        //银行手续费
+        BigDecimal bankServiceFee = entity.getBankServiceFee();
+        resultMap.put("bankServiceFee", bankServiceFee);
+
+        //运费金额
+        BigDecimal shippingFee = entity.getShippingFee();
+        resultMap.put("shippingFee", shippingFee);
+
+        //是否含税
+        Boolean isTax = entity.getIsTax();
+        resultMap.put("isTax", isTax);
+
         //库存组织
         String warehouseOrgId = entity.getWarehouseOrgId();
         List<String> orgIdList = new ArrayList<>(2);
@@ -143,6 +164,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             if (customerInfo != null) {
                 resultMap.put("customerCode", customerInfo.getCode());
             }
+
         }
         String warehouseId = entity.getWarehouseId();
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
@@ -159,7 +181,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
          * 先写死
          * 收款账号
          * 收款方式
-          */
+         */
         String receiveAddressId = entity.getReceiveAddressId();
         CustomerAddressEntity addressEntity = customerAddressService.getById(receiveAddressId);
         String receiveAddressCode = addressEntity != null ? addressEntity.getCode() : "";
@@ -184,7 +206,9 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             jsonObject.set("baseQty", item.getQty());
             jsonObject.set("price", item.getPrice());
             jsonObject.set("taxPrice", item.getTaxPrice());
+            jsonObject.set("taxRate", item.getTaxRate());
             jsonObject.set("isGift", item.getIsGift());
+            jsonObject.set("amount", item.getAmount());
             jsonObject.set("unit", item.getUnit());
             jsonObject.set("warehouseOrgCode", warehouseOrgCode);
             jsonObject.set("curInventoryQty", item.getQty());
