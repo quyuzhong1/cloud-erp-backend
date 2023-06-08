@@ -14,6 +14,7 @@ import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.FastJsonUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.OkHttpUtils;
 import com.common.core.utils.date.DateUtil;
@@ -35,10 +36,7 @@ import com.erp.server.dmp.service.CfgApiFieldMapValueService;
 import com.erp.server.dmp.service.PlatformService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
-import com.kingdee.bos.webapi.entity.RepoRet;
-import com.kingdee.bos.webapi.entity.SaveParam;
-import com.kingdee.bos.webapi.entity.SaveResult;
-import com.kingdee.bos.webapi.entity.SuccessEntity;
+import com.kingdee.bos.webapi.entity.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -307,9 +305,31 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     }
 
     @Override
-    public Boolean push(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param, Integer type) {
-        apiUtils.push(json);
-        return null;
+    public Boolean push(PlatformEntity platformEntity, Map<String, Object> map,KingdeeApiUtils sourceApiUtils, KingdeeApiUtils apiUtils, JSONObject jsonMap, SaveParam param, Integer type, JSONObject json) {
+        RepoResult result;
+        String msg = "下推";
+        try {
+            result = sourceApiUtils.push(jsonMap);
+        } catch (Exception e) {
+            //新增失败时添加日志及定时任务
+            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(jsonMap), msg.concat("；").concat(e.getMessage()), type, ApiSendStatusEnum.FAILURE.getCode());
+            return Boolean.FALSE;
+        }
+        //数据id
+        String id = result.getResponseStatus().getSuccessEntitys().get(0).getId();
+        //金蝶id
+        map.put("syncKingdeeId", id);
+        //更新业务表中的金蝶id
+        updateBusinessSyncKingdeeStatus(type, String.valueOf(map.get("id")), "", id);
+        //新增成功操作日志
+        insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(json), msg, type, ApiSendStatusEnum.SUCCESS.getCode());
+        //给修改json对象赋值ID
+        KingdeeUtils.makeFieldJson(json,"FId",".", id);
+        StringBuffer allKey = FastJsonUtil.getAllKey(json);
+        ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
+        param.setNeedUpDateFields(apiFieldList);
+        saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+        return Boolean.TRUE;
     }
 
     /**

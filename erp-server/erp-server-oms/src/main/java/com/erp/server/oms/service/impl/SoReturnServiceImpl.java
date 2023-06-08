@@ -396,6 +396,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         lambdaUpdate().set(SoReturnEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
                 .in(SoReturnEntity::getId, ids)
                 .update();
+
         return Boolean.TRUE;
     }
 

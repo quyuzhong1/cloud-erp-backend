@@ -134,13 +134,13 @@ public class KingdeeReturnOrderConsumer implements RocketMQListener<Map<String, 
         } catch (Exception e) {
             Map<String, Object> pushMap = new HashMap<>();
 //            pushMap.put("ids", Arrays.asList(map.get("soSyncKingdeeId")));
-            pushMap.put("Numbers", Arrays.asList(map.get("soCode")));
+/*            pushMap.put("Numbers", Arrays.asList(map.get("soCode")));
             pushMap.put("RuleId", "4cd577aa-2c48-a50c-11ee-0387e3cd5475");
             pushMap.put("TargetFormId", KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
             pushMap.put("CustomParams", json);
             //更新数据
-            kingdeeCommonService.push(platformEntity,map,apiUtils,JSONUtil.parseObj(pushMap),param,type);
-//            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            kingdeeCommonService.push(platformEntity,map,apiUtils,JSONUtil.parseObj(pushMap),param,type);*/
+            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
             return;
         }
         //查找到数据后，判断其审核状态

@@ -77,6 +77,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     private SoOutstockDetailService soOutstockDetailService;
 
     @Resource
+    private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
+
+    @Resource
     private MQProducerService mQProducerService;
 
     @Resource
@@ -166,10 +169,15 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             resultMap.put("salesOrgCode", salesOrgCode);
         }
         List<String> soDetailIds = soDetailEntitieList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
+        List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(soDetailIds);
         //发货通知详情id
+        List<String> noticeDetailIds = noticeDetailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+        soDetailIds.addAll(noticeDetailIds);
         List<SoOutstockDetailDTO.DeliveryQtyDTO> deliveryQtyDTOS = soOutstockDetailService.listDetailBySoDetailIds(soDetailIds);
         //————————————————————物料信息——————————————————————
         List<Map<String, Object>> fEntityList = new ArrayList<>();
+        List<String> soKingdeeDetailIdList = soDetailEntitieList.stream().map(req -> req.getKingdeeDetailId()).collect(Collectors.toList());
+        resultMap.put("soKingdeeDetailIds", String.join(",", soKingdeeDetailIdList));
         for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
             Map<String, Object> map = new HashMap<>();
             map.put("skuNo", detailEntity.getSkuNo());
@@ -177,6 +185,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             SoOutstockDetailDTO.DeliveryQtyDTO deliveryQtyDTO = deliveryQtyDTOS.stream().filter(req -> req.getId().equals(detailEntity.getId())).findFirst().orElse(new SoOutstockDetailDTO.DeliveryQtyDTO());
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(deliveryQtyDTO.getSoDetailId())).findFirst().orElse(new SoDetailEntity());
             map.put("salesQty", soDetailEntity.getQty());
+            map.put("planQty", detailEntity.getPlanQty());
             map.put("price", soDetailEntity.getPrice());
             //含税单价
             BigDecimal flagTaxRate = MathUtil.divide(soDetailEntity.getTaxRate(), MathUtil.BigDecimal_100);
@@ -199,8 +208,11 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
 
             map.put("warehouseLocation", detailEntity.getWarehouseLocation());
             map.put("remark", detailEntity.getRemark());
-     /*       map.put("FSrcType", "SAL_SaleOrder");
-            map.put("FSrcBillNo", soInfoById.getCode());*/
+            //销售订单金蝶id
+            map.put("soSyncKingdeeId", soDetailEntity.getKingdeeDetailId());
+            map.put("FSrcType", "SAL_SaleOrder");
+            map.put("FSrcBillNo", soInfoById.getCode());
+            map.put("FSoorDerno", soInfoById.getCode());
             fEntityList.add(map);
         }
         resultMap.put("FEntity", fEntityList);

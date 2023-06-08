@@ -125,7 +125,8 @@
             sd.is_close,
             sd.remark,
             sd.delivery_status,
-            si.approve_status
+            si.approve_status,
+            sd.kingdee_detail_id
         FROM so_detail sd
         INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
         WHERE si.is_deleted = FALSE
