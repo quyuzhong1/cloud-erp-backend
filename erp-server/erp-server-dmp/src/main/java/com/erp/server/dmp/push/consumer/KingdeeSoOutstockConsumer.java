@@ -140,15 +140,15 @@ public class KingdeeSoOutstockConsumer implements RocketMQListener<Map<String, O
         } catch (Exception e) {
             Map<String, Object> pushMap = new HashMap<>();
 //            pushMap.put("ids", Arrays.asList(map.get("soSyncKingdeeId")));
-            pushMap.put("EntryIds", map.get("soKingdeeDetailIds"));
+/*            pushMap.put("EntryIds", map.get("soKingdeeDetailIds"));
             pushMap.put("RuleId", "SaleOrder-OutStock");
             pushMap.put("TargetFormId", KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
             pushMap.put("CustomParams", json);
             //读取配置，初始化SDK
             KingdeeApiUtils sourceApiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
             //更新数据
-            kingdeeCommonService.push(platformEntity,map,sourceApiUtils,apiUtils,JSONUtil.parseObj(pushMap),param,type,json);
-//            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            kingdeeCommonService.push(platformEntity,map,sourceApiUtils,apiUtils,JSONUtil.parseObj(pushMap),param,type,json);*/
+            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
             return;
         }
         //查找到数据后，判断其审核状态
