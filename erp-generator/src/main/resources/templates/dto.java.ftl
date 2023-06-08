@@ -239,10 +239,10 @@ public class ${table.dtoName} implements Serializable {
     <#if field.notNullField && field.propertyType == 'String'>
         @Size(max = ${field.maxLength},message = "${field.validComment}最大长度不能超过${field.maxLength}位")
     </#if>
-    <#if field.notNullField && field.propertyType == 'BigDecimal'  && field.maxPreciseLength = 0>
+    <#if field.notNullField && field.propertyType == 'BigDecimal' && field.maxPreciseLength??  && field.maxPreciseLength = 0>
         @Digits(integer = ${field.maxIntegerLength}, fraction = ${field.maxPreciseLength}, message = "${field.validComment}最大长度不能超过${field.maxIntegerLength}位")
     </#if>
-    <#if field.notNullField && field.propertyType == 'BigDecimal'  && field.maxPreciseLength gt 0>
+    <#if field.notNullField && field.propertyType == 'BigDecimal' && field.maxPreciseLength?? && field.maxPreciseLength gt 0>
         @Digits(integer = ${field.maxIntegerLength}, fraction = ${field.maxPreciseLength}, message = "${field.validComment}整数位不能超过${field.maxIntegerLength}位，小数位不能超过${field.maxPreciseLength}位")
     </#if>
         <#----------如果是业务单据类部分字段新增修改不展示------------------->
