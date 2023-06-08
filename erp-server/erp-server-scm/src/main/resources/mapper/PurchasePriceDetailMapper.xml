@@ -14,8 +14,8 @@
         ppd.max_qty as maxQty,
         ppd.delivery_day as deliveryDay
         from purchase_price pp
-        left join purchase_price_detail ppd on pp.id = ppd.purchase_price_id and ppd.is_deleted = false
-        left join supplier s on pp.supplier_id = s.id and s.is_deleted = false
+        inner join purchase_price_detail ppd on pp.id = ppd.purchase_price_id and ppd.is_deleted = false
+        inner join supplier s on pp.supplier_id = s.id and s.is_deleted = false
         <where>
             pp.is_deleted = false and pp.approve_status = 'approve' and ppd.disabled = false and now() >=
             ppd.effective_date and ppd.expire_date >= now()
