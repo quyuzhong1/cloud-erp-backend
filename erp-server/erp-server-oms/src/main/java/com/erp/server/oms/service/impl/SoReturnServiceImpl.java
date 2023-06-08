@@ -761,10 +761,10 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId,String operate) {
         return  this.lambdaUpdate()
                 .eq(SoReturnEntity::getId,id)
-                .set(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(syncKingdeeStatus),SoReturnEntity::getSyncKingdeeStatus,syncKingdeeStatus)
-                .set(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(syncKingdeeStatus),SoReturnEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(syncKingdeeId),SoReturnEntity::getSyncKingdeeId,syncKingdeeId)
-                .set(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(operate),SoReturnEntity::getSyncOperate,operate)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),SoReturnEntity::getSyncKingdeeStatus,syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus),SoReturnEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId),SoReturnEntity::getSyncKingdeeId,syncKingdeeId)
+                .set(StringUtils.isNotBlank(operate),SoReturnEntity::getSyncOperate,operate)
                 .update();
     }
 }

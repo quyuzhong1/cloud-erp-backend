@@ -20,6 +20,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -115,6 +116,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(soInfoById.getCurrency()));
         //仓库
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(entity.getWarehouseId()));
+        //员工岗位
+        List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoList = sysUserFeign.listUserKingdeePostByUserIds(Arrays.asList(entity.getWarehouseKeeperId()));
 
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -125,7 +128,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         //单据类型
         resultMap.put("orderType", entity.getOrderType());
         //单据日期
-        resultMap.put("billDate", entity.getCreateTime());
+        resultMap.put("billDate", entity.getActualDeliveryDate());
         //销售组织
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
             String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soInfoById.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
@@ -143,6 +146,13 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         if (ObjectUtil.isNotEmpty(dept)) {
             resultMap.put("salesDeptCode", dept.getCode());
         }
+        if (CollectionUtils.isNotEmpty(userKingdeePostInfoList)) {
+            //仓管员
+            resultMap.put("warehouseKeeperCode", userKingdeePostInfoList.get(0).getKingdeePostCode());
+        }
+
+        //仓管员
+        resultMap.put("trackNo", entity.getWarehouseKeeperId());
         //运输单号
         resultMap.put("trackNo", entity.getTrackNo());
         //销售单号

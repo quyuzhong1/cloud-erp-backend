@@ -18,6 +18,7 @@ import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictBasicDTO;
+import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -77,6 +78,9 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
     @Resource
     private DictBasicService dictBasicService;
 
+    @Resource
+    private CustomerSellerService customerSellerService;
+
     @Override
     public void syncDataToKingdee(SoReturnEntity entity, String operate) {
         //客户信息
@@ -91,8 +95,6 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         List<SoDetailEntity> soDetailEntitieList = soDetailService.listSoDetailByMainIds(Arrays.asList(soInfoEntity.getId()));
         //仓库
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(entity.getWarehouseId()));
-        //部门信息
-        SysDepartmentDTO dept = sysUserFeign.getUserDeptById(soInfoEntity.getSalesDeptId());
         List<String> orgIdList = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).collect(Collectors.toList());
         orgIdList.add(entity.getSalesOrgId());
         orgIdList.add(entity.getInventoryOrgId());
@@ -119,8 +121,20 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             resultMap.put("inventoryOrgCode", inventoryOrgCode);
         }
         //销售部门
-        if (ObjectUtil.isNotEmpty(dept)) {
-            resultMap.put("salesDeptCode", dept.getCode());
+        List<SellerDTO.ViewDTO> sellerList = customerSellerService.listByMainId(entity.getId());
+        if (CollectionUtils.isNotEmpty(sellerList)) {
+            SellerDTO.ViewDTO viewDTO = sellerList.get(MathUtil.ZERO);
+            String deptId = viewDTO.getDeptId();
+            if (StringUtils.isNotBlank(deptId)) {
+                SysDepartmentDTO dept = sysUserFeign.getUserDeptById(deptId);
+                if (dept != null) {
+                    resultMap.put("sellerDeptCode",dept.getCode());
+                }
+            }
+            List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoDTOS = sysUserFeign.listUserKingdeePostByUserIds(Collections.singletonList(viewDTO.getSellerId()));
+            if (CollectionUtils.isNotEmpty(userKingdeePostInfoDTOS)) {
+                resultMap.put("sellerUserCode",userKingdeePostInfoDTOS.get(MathUtil.ZERO).getKingdeePostCode());
+            }
         }
         //客户
         if (CollectionUtils.isNotEmpty(customerInfoEntitieList)) {

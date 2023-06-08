@@ -1135,7 +1135,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), SoOutstockEntity::getSyncKingdeeStatus, syncKingdeeStatus)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), SoOutstockEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId), SoOutstockEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncKingdeeId), SoOutstockEntity::getSyncOperate, syncOperate)
+                .set(StringUtils.isNotBlank(syncOperate), SoOutstockEntity::getSyncOperate, syncOperate)
                 .update();
     }
 
