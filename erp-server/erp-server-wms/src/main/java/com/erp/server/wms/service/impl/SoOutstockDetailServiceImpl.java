@@ -446,21 +446,21 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
     /**
      * 根据销售订单详情ids 获取对应的出库详情
      *
-     * @param soDetailIds
+     * @param detailIds
      * @return java.util.List<com.erp.model.wms.entity.SoOutstockDetailEntity>
      * @author yl
      * @date 2023-05-29 17:32
      */
     @Override
-    public List<SoOutstockDetailDTO.DeliveryQtyDTO> listDetailBySoDetailIds(List<String> soDetailIds) {
-        if (CollectionUtils.isEmpty(soDetailIds)) {
+    public List<SoOutstockDetailDTO.DeliveryQtyDTO> listDetailBySoDetailIds(List<String> detailIds) {
+        if (CollectionUtils.isEmpty(detailIds)) {
             return Collections.emptyList();
         }
         //发货通知详情列表
-        List<SoDeliveryNoticeDetailEntity> noticeDetailSourceDetailList = soDeliveryNoticeDetailService.listByIds(soDetailIds);
+        List<SoDeliveryNoticeDetailEntity> noticeDetailSourceDetailList = soDeliveryNoticeDetailService.listByIds(detailIds);
         List<String> noticeSourceDetailIdS = noticeDetailSourceDetailList.stream().map(SoDeliveryNoticeDetailEntity::getSourceDetailId).collect(Collectors.toList());
-        soDetailIds.addAll(noticeSourceDetailIdS);
-        List<SoOutstockDetailEntity> list = this.listBySourceDetailIds(soDetailIds);
+        detailIds.addAll(noticeSourceDetailIdS);
+        List<SoOutstockDetailEntity> list = this.listBySourceDetailIds(detailIds);
         List<SoOutstockDetailDTO.DeliveryQtyDTO> resultList = new ArrayList<>(list.size());
         for (SoOutstockDetailEntity item : list) {
             SoOutstockDetailDTO.DeliveryQtyDTO out = new SoOutstockDetailDTO.DeliveryQtyDTO();

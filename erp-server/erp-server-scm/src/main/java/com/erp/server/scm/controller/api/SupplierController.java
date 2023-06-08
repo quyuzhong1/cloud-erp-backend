@@ -64,12 +64,6 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/add")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id",
-            menuCode = "scm:supplier:add",
-            serviceClass = SupplierService.class,
-            keyIdName = "id"
-    )
     public ApiResult add(@RequestBody @Validated SupplierDTO.AddDTO dto) {
         String supplierId = supplierService.addSupplier(dto);
         return StringUtils.isNotBlank(supplierId) ? success() : failure();
@@ -83,12 +77,6 @@ public class SupplierController extends BaseController {
      * @return
      */
     @PostMapping("/addAndSubmit")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id",
-            menuCode = "scm:supplier:addAndSubmit",
-            serviceClass = SupplierService.class,
-            keyIdName = "id"
-    )
     public ApiResult addAndSubmit(@RequestBody @Validated SupplierDTO.AddDTO dto) {
         Boolean result = supplierService.addAndSubmit(dto);
         return result == true ? success() : failure();
@@ -122,7 +110,7 @@ public class SupplierController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
-            menuCode = "scm:supplier:updateAndSubmit",
+            menuCode = "scm:supplier:update",
             serviceClass = SupplierService.class,
             keyIdName = "id"
     )

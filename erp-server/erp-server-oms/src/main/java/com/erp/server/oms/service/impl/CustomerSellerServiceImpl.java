@@ -122,9 +122,6 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
      */
     @Override
     public void updateBatchSeller(String mainId, List<SellerDTO.ViewDTO> sellerList) {
-        if (CollectionUtils.isEmpty(sellerList)) {
-            return;
-        }
         List<CustomerSellerEntity> saveOrUpdateList = new ArrayList<>(sellerList.size());
         //这是修改的
         List<SellerDTO.ViewDTO> updateList = sellerList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
@@ -175,7 +172,9 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
                 operateLogService.addModuleOperateLogByObj(old,update, ModuleTypeEnum.CUSTOMER.getCode(),mainId,"","");
             }
         }
-        this.saveOrUpdateBatch(saveOrUpdateList);
+        if(CollectionUtils.isNotEmpty(saveOrUpdateList)){
+            this.saveOrUpdateBatch(saveOrUpdateList);
+        }
     }
 
 

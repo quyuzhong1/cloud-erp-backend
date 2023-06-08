@@ -122,9 +122,6 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
      */
     @Override
     public void updateBatchAddress(String mainId, List<CustomerAddressDTO.ViewDTO> addressList) {
-        if (CollectionUtils.isEmpty(addressList)) {
-            return;
-        }
         List<CustomerAddressEntity> saveOrUpdateList = new ArrayList<>(addressList.size());
         //这是修改的
         List<CustomerAddressDTO.ViewDTO> updateList = addressList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
@@ -170,7 +167,9 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
                 operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.CUSTOMER.getCode(), mainId, "", "");
             }
         }
-        this.saveOrUpdateBatch(saveOrUpdateList);
+        if(CollectionUtils.isNotEmpty(saveOrUpdateList)){
+            this.saveOrUpdateBatch(saveOrUpdateList);
+        }
 
     }
 

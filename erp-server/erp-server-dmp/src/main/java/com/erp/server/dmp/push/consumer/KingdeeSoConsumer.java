@@ -43,15 +43,15 @@ public class KingdeeSoConsumer implements RocketMQListener<Map<String, Object>> 
 
     public static void main(String[] args) {
 
-//        Map<String, Object> resultMap = new LinkedHashMap<>();
-//        //读取配置，初始化SDK
-//        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
-//        LinkedList<String> queryFilters = new LinkedList<>();
-//        queryFilters.add(String.format("FBillNo = '%s'", "XSD-20230606-35417"));
-//        String filterStr = String.join(" and ", queryFilters);
-//        String fieldKeys = "FPriceBaseQty";
-//        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 1);
-//        System.out.println(queryList);
+        Map<String, Object> resultMap = new LinkedHashMap<>();
+        //读取配置，初始化SDK
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FBillNo = '%s'", "XSD23060800018"));
+        String filterStr = String.join(" and ", queryFilters);
+        String fieldKeys = "FIsIncludedTax";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 1);
+        System.out.println(queryList);
 
 
 

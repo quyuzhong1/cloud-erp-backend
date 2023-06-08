@@ -96,9 +96,7 @@ public class CustomerInvoiceServiceImpl extends SuperServiceImpl<CustomerInvoice
      */
     @Override
     public void updateBatchInvoice(String mainId, List<InvoiceDTO.ViewDTO> invoiceList) {
-        if (CollectionUtils.isEmpty(invoiceList)) {
-            return;
-        }
+
         List<CustomerInvoiceEntity> saveOrUpdateList = new ArrayList<>(invoiceList.size());
         //这是修改的
         List<InvoiceDTO.ViewDTO> updateList = invoiceList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
@@ -133,7 +131,10 @@ public class CustomerInvoiceServiceImpl extends SuperServiceImpl<CustomerInvoice
                 operateLogService.addModuleOperateLogByObj(old,update, ModuleTypeEnum.CUSTOMER.getCode(),mainId,"","");
             }
         }
-        this.saveOrUpdateBatch(saveOrUpdateList);
+        if(CollectionUtils.isNotEmpty(saveOrUpdateList)){
+            this.saveOrUpdateBatch(saveOrUpdateList);
+        }
+
     }
 
     /**
