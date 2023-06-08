@@ -496,20 +496,6 @@ public class PurchaseReturnOrderDTO {
     }
 
     /**
-     * 修改采购单
-     */
-    @Data
-    @NoArgsConstructor
-    public static class updatePurchaseOrderAmount {
-        private String id;
-
-        /**
-         * 采购金额
-         */
-        private BigDecimal purchaseAmount;
-    }
-
-    /**
      * 分页参数
      */
     @Data
