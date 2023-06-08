@@ -553,8 +553,10 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
                 detailByMainId.forEach(returnOrderDetailEntity -> {
                     PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(returnOrderDetailEntity.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
-                    purchaseOrderDetailEntity.setPurchaseAmount(purchaseOrderDetailEntity.getPurchaseAmount().add(returnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(returnOrderDetailEntity.getReturnQty())))));
-                    list.add(purchaseOrderDetailEntity);
+                    PurchaseOrderDetailEntity entity = new PurchaseOrderDetailEntity ();
+                    entity.setId(purchaseOrderDetailEntity.getId());
+                    entity.setPurchaseAmount(purchaseOrderDetailEntity.getPurchaseAmount().add(returnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(returnOrderDetailEntity.getReturnQty())))));
+                    list.add(entity);
                 });
             }
             if (StringUtils.isNotBlank(purchaseReturnOrderEntity.getPurchaseOrderId())) {
