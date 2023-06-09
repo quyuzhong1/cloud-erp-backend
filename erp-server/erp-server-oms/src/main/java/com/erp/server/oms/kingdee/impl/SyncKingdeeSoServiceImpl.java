@@ -205,7 +205,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             jsonObject.set("requireDate", requireDate);
             jsonObject.set("qty", item.getQty());
             jsonObject.set("baseQty", item.getQty());
-            jsonObject.set("price", item.getPrice());
+            //对应金蝶含税单价
             jsonObject.set("taxPrice", item.getTaxPrice());
             jsonObject.set("taxRate", item.getTaxRate());
             jsonObject.set("isGift", item.getIsGift());
