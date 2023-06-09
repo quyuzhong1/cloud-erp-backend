@@ -20,6 +20,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.entity.CustomerContactEntity;
 import com.erp.model.oms.entity.CustomerGroupEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -27,6 +28,7 @@ import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.constant.OmsConstant;
+import com.erp.server.oms.kingdee.SyncKingdeeCustomerContactService;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.mapper.CustomerInfoMapper;
 import com.erp.server.oms.service.*;
@@ -92,6 +94,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Resource
     private SoInfoService soInfoService;
 
+    @Resource
+    private SyncKingdeeCustomerContactService syncKingdeeCustomerContactService;
     /**
      * 获取到分组的id 集合
      *
@@ -187,11 +191,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             String content = String.format("新增了一个{%s}-客户-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), id, "新增操作");
 
-            //批量保存联系人信息
-            customerContactService.saveBatchContact(id, contactList);
-
             //批量保存地址信息
             customerAddressService.saveBatchAddress(id, addressList);
+
+            //批量保存联系人信息
+            customerContactService.saveBatchContact(id, contactList);
 
             //批量保存发票信息
             customerInvoiceService.saveBatchInvoice(id, invoiceList);
@@ -560,6 +564,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     public Boolean approve(BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<CustomerInfoEntity> list = this.listByIds(ids);
+
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
@@ -576,6 +581,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeeCustomerService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+
+            for (String id : ids) {
+                List<CustomerContactEntity> contactEntities = customerContactService.listEntityByMainId(id);
+                //审核通过发送金蝶
+                contactEntities.forEach(obj -> syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            }
         } else {
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT;

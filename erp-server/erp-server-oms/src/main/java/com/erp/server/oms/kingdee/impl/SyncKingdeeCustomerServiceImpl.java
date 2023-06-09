@@ -17,6 +17,7 @@ import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.CustomerContactDTO;
 import com.erp.model.oms.dto.InvoiceDTO;
 import com.erp.model.oms.dto.SellerDTO;
+import com.erp.model.oms.entity.CustomerContactEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictBasicDTO;
@@ -27,6 +28,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.oms.kingdee.SyncKingdeeCustomerContactService;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -71,6 +73,9 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 
     @Resource
     private DictBasicService dictBasicService;
+
+    @Resource
+    private SyncKingdeeCustomerContactService syncKingdeeCustomerContactService;
 
     @Override
     public void syncDataToKingdee(CustomerInfoEntity entity, String operate) {
@@ -163,8 +168,11 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         List<DictBasicDTO.ViewDTO> collectionTermsList = dictBasicService.getByKey("collectionTerms");
         DictBasicDTO.ViewDTO collectionTerms = collectionTermsList.stream().filter(req -> req.getValue().equals(entity.getConditionDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
         resultMap.put("collectionTermsCode",collectionTerms.getRemark());
-        List<CustomerContactDTO.ViewDTO> customerContactList = customerContactService.listByMainId(entity.getId());
-
+        List<CustomerContactEntity> customerContactList = customerContactService.listEntityByMainId(entity.getId());
+        if (CollectionUtils.isNotEmpty(customerContactList)) {
+            List<CustomerContactEntity> collect = customerContactList.stream().sorted(Comparator.comparing(CustomerContactEntity::getIsDefault).reversed()).collect(Collectors.toList());
+            resultMap.put("defaultContact", collect.get(MathUtil.ZERO).getCode());
+        }
         resultMap.put("customerContactList",customerContactList);
         resultMap.put("invoiceList", viewDTOS);
         List<CustomerAddressDTO.ViewDTO> customerAddressList = customerAddressService.listByMainId(entity.getId());
@@ -190,6 +198,10 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         CompletableFuture.supplyAsync(() -> {
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_CUSTOMER_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
+                //同步好客户信息后再同步客户联系人
+                List<CustomerContactEntity> contactEntities = customerContactService.listEntityByMainId(entity.getId());
+                //审核通过发送金蝶
+                contactEntities.forEach(obj -> syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
                 //mq发送成更新业务表状态及时间
                 return customerInfoService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"", operate);
             }

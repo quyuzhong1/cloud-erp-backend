@@ -12,7 +12,6 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
-import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.kingdee.impl.KingdeeCommonServiceImpl;
@@ -38,47 +37,31 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_customer_group_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_CUSTOMER_GROUP)
-public class KingdeeCustomerGroupConsumer implements RocketMQListener<Map<String, Object>> {
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_customer_contact_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_CUSTOMER_CONTACT)
+public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
     private KingdeeCommonService kingdeeCommonService;
 
     public static void main(String[] args) {
         //模块类型
-        Integer type = ApiModuleTypeEnum.CUSTOMER_INFO.getCode();
+        Integer type = ApiModuleTypeEnum.CUSTOMER_CONTACT.getCode();
         KingdeeCommonService kingdeeCommonService = new KingdeeCommonServiceImpl();
         Map<String, Object> map = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.PUR_PAT.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_COMMONCONTACT.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "CGTJ23050500001"));
+        queryFilters.add(String.format("FBillNo = '%s'", ""));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FId,FPUR_PATENTRY_FEntryID,FMaterialId.FNumber,FSrcEntryID,FIsPriceListPush";
-        map.put("groupName", "测试分组");
-
-        PlatformEntity platformEntity = kingdeeCommonService.getPlatformEntity(map, type);
-        if (ObjectUtils.isEmpty(platformEntity)) {
-            return;
-        }
-
-        //根据录入值和字段配置生成JSONObject
-        JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
-        SaveParam param = new SaveParam(json);
-        Boolean aBoolean = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
-        System.out.println(aBoolean);
-
-       /* LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("Number","CGDD-230413-8806");
-        JSONObject viewJson = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
-        System.out.println(viewJson);
-*/
+        String fieldKeys = "FCONTACTID";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 2);
+        System.out.println(queryList);
     }
 
     @Override
     public void onMessage(Map<String, Object> map) {
         //模块类型
-        Integer type = ApiModuleTypeEnum.CUSTOMER_GROUP.getCode();
+        Integer type = ApiModuleTypeEnum.CUSTOMER_CONTACT.getCode();
 
         //业务id
         String  businessId = String.valueOf(map.get("id"));
@@ -88,7 +71,7 @@ public class KingdeeCustomerGroupConsumer implements RocketMQListener<Map<String
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_CUSTOMER.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_COMMONCONTACT.getCode());
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(), type);
@@ -104,21 +87,49 @@ public class KingdeeCustomerGroupConsumer implements RocketMQListener<Map<String
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.queryGroupInfo(apiUtils, (String)map.get("syncKingdeeId"),String.valueOf(map.get("groupName")));
+            model = kingdeeCommonService.view(apiUtils, (String)map.get("syncKingdeeId"),String.valueOf(map.get("code")));
         } catch (Exception e) {
 
             //更新数据
-            kingdeeCommonService.customerGroupSaveOrUpdate(platformEntity, map, apiUtils, json, param, type);
-
+            kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            //启用、禁用
+            excuteOperation(apiUtils,platformEntity,map,type);
             return;
         }
-        String id = String.valueOf(model.get("GroupPkId")) ;
+        String id = String.valueOf(model.get("FCONTACTID")) ;
         //主单据id
-        KingdeeUtils.makeFieldJson(json,"GroupPkId",".", id);
+        KingdeeUtils.makeFieldJson(json,"FCONTACTID",".", id);
         StringBuffer allKey = FastJsonUtil.getAllKey(json);
         ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
         param.setNeedUpDateFields(apiFieldList);
         //更新数据
         kingdeeCommonService.customerGroupSaveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+        //启用、禁用
+        excuteOperation(apiUtils,platformEntity,map,type);
+    }
+
+    /**
+     * 启用、禁用
+     */
+    private void excuteOperation(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+        //仓库状态 true禁用,false启用
+        Object disabled = map.get("disabled");
+        if (ObjectUtils.isEmpty(disabled)) {
+            return;
+        }
+
+        String code = (String) map.get("code");
+        String operate = null;
+        //启用
+        if (!(Boolean) disabled) {
+            operate = SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode();
+        }
+        //禁用
+        if ((Boolean) disabled) {
+            operate = SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode();
+        }
+        if (StringUtils.isNotBlank(operate)) {
+            kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
+        }
     }
 }

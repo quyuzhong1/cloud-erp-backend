@@ -56,9 +56,8 @@ public class SyncKingdeeCustomerGroupServiceImpl implements SyncKingdeeCustomerG
         }
         //业务id
         resultMap.put("id", entity.getId());
-        CustomerGroupEntity groupEntity = customerGroupService.getById(entity.getId());
         //分组名称
-        resultMap.put("groupName", groupEntity.getName());
+        resultMap.put("groupName", entity.getName());
 
         //异步推送mq
         CompletableFuture.supplyAsync(() -> {

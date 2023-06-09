@@ -43,7 +43,8 @@ public enum BusinessNoTypeEnum {
     CODE_FBDC(33, "fbdc","分步式调拨调出"),
     CODE_FBDR(34, "fbdr","分步式调拨调入"),
     CODE_XSTH(35, "xsth","销售退货入库单"),
-    CODE_KHDZ(35, "khdz","客户地址编号"),
+    CODE_KHDZ(36, "khdz","客户地址编号"),
+    CODE_KHLXR(37, "khlxr","客户联系人编号"),
     ;
 
 

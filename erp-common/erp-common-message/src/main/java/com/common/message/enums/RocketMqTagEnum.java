@@ -218,6 +218,11 @@ public enum RocketMqTagEnum {
      */
     KINGDEE_SO_CHANGE_TAG(1022, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_so_change_tag"),
 
+    /**
+     *客户联系人同步金蝶
+     */
+    KINGDEE_CUSTOMER_CONTACT_TAG(1023, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_customer_contact_tag"),
+
 
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 

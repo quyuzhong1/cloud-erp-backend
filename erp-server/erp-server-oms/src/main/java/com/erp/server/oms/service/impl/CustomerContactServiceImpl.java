@@ -1,12 +1,21 @@
 package com.erp.server.oms.service.impl;
 
+import com.common.business.constant.BusinessNoConstant;
+import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.CustomerContactDTO;
+import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerContactEntity;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.oms.kingdee.SyncKingdeeCustomerContactService;
+import com.erp.server.oms.kingdee.SyncKingdeeCustomerGroupService;
 import com.erp.server.oms.mapper.CustomerContactMapper;
 import com.erp.server.oms.service.CustomerContactService;
 import com.erp.server.oms.service.OperateLogService;
@@ -17,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -33,9 +43,11 @@ import java.util.stream.Collectors;
 @Service
 public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContactMapper, CustomerContactEntity> implements CustomerContactService {
 
-
     @Resource
     private OperateLogService operateLogService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
     /**
      * 检查客户默认联系人是否多个
      *
@@ -68,7 +80,12 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
             return;
         }
         List<CustomerContactEntity> addList = BeanMapper.copyList(contactList, CustomerContactEntity.class);
-        addList.forEach(c -> c.setMainId(mainId));
+        for (CustomerContactEntity addDTO : addList) {
+            addDTO.setMainId(mainId);
+            //生成单号
+            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.KHLXR, BusinessNoTypeEnum.CODE_KHLXR.getCode()));
+            addDTO.setCode(code);
+        }
         this.saveBatch(addList);
     }
 
@@ -91,6 +108,15 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
         return resultList;
     }
 
+    @Override
+    public List<CustomerContactEntity> listEntityByMainId(String mainId) {
+        List<CustomerContactEntity> dbList = this.listBaseByMainId(mainId);
+        if (CollectionUtils.isEmpty(dbList)) {
+            return Collections.emptyList();
+        }
+        return dbList;
+    }
+
     /**
      * 修改联系人信息
      * @author yl
@@ -111,6 +137,11 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
         List<CustomerContactEntity> updateEntityList = BeanMapper.copyList(updateList, CustomerContactEntity.class);
         //这个是要添加的
         List<CustomerContactEntity> addEntityList = BeanMapper.copyList(addList, CustomerContactEntity.class);
+        addEntityList.forEach(req -> {
+            //生成单号
+            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.KHLXR, BusinessNoTypeEnum.CODE_KHLXR.getCode()));
+            req.setCode(code);
+        });
         saveOrUpdateList.addAll(updateEntityList);
         saveOrUpdateList.addAll(addEntityList);
         List<CustomerContactEntity> dbList = this.listBaseByMainId(mainId);
@@ -160,5 +191,16 @@ public class CustomerContactServiceImpl extends SuperServiceImpl<CustomerContact
 
     private List<CustomerContactEntity> listBaseByMainId(String mainId) {
         return this.lambdaQuery().eq(CustomerContactEntity::getMainId, mainId).list();
+    }
+
+    @Override
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+        return this.lambdaUpdate()
+                .eq(CustomerContactEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerContactEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), CustomerContactEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), CustomerContactEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncOperate), CustomerContactEntity::getSyncOperate, syncOperate)
+                .update();
     }
 }

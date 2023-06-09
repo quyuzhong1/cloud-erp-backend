@@ -48,6 +48,15 @@ public interface CustomerContactService extends SuperService<CustomerContactEnti
      */
     List<CustomerContactDTO.ViewDTO> listByMainId(String mainId);
 
+    /**
+     * 获取联系人信息
+     * @Author Luo_WG
+     * @Date 2023/6/9 14:34
+     * @param mainId mainId
+     * @return java.util.List<com.erp.model.oms.entity.CustomerContactEntity>
+     **/
+    List<CustomerContactEntity> listEntityByMainId(String mainId);
+
     
     /**
      * 修改联系人信息
@@ -58,4 +67,15 @@ public interface CustomerContactService extends SuperService<CustomerContactEnti
      * @return void
      */
     void updateBatchContact(String mainId, List<CustomerContactDTO.ViewDTO> contactList);
+    /**
+     * 修改金蝶同步信息
+     * @Author Luo_WG
+     * @Date 2023/5/25 10:43
+     * @param id
+     * @param syncKingdeeStatus
+     * @param syncKingdeeId
+     * @param syncOperate
+     * @return java.lang.Boolean
+     **/
+    Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
 }
