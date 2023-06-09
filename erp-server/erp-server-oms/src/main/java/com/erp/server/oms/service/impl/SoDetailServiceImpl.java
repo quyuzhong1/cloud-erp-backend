@@ -547,7 +547,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //sku的历史价格
         List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = this.listSkuPriceHistory(skuIdList);
         //从wms 获取到sku 的即时库存信息
-        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList =CollectionUtils.isNotEmpty(skuIdList)?listSkuInventoryTotalList(skuIdList, warehouseId):Collections.emptyList();
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = CollectionUtils.isNotEmpty(skuIdList) ? listSkuInventoryTotalList(skuIdList, warehouseId) : Collections.emptyList();
         for (SoDetailDTO.SkuDTO item : successList) {
             String skuId = item.getSkuId();
             //即时库存
@@ -912,9 +912,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 int qty = item.getQty();
                 String skuId = item.getSkuId();
                 //即时库存
-                Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
-                        flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
-                if (qty >= curInventoryQty) {
+                Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                        mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
+                if (qty > curInventoryQty) {
                     String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                             flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
                     scarceSkuList.add(skuNo);
@@ -958,7 +958,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         if (CollectionUtils.isEmpty(soDetailIdList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(SoDetailEntity::getId,soDetailIdList).orderByDesc(SoDetailEntity::getId).list();
+        return this.lambdaQuery().in(SoDetailEntity::getId, soDetailIdList).orderByDesc(SoDetailEntity::getId).list();
     }
 
 
