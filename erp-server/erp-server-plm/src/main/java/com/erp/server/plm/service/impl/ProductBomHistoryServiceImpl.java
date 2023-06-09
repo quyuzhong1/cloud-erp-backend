@@ -50,7 +50,7 @@ public class ProductBomHistoryServiceImpl extends ServiceImpl<ProductBomHistoryM
             bomHistory.setBomId(bom.getId());
             bomHistory.setSerialNumber(bom.getSerialNumber());
             bomHistory.setType(bom.getType());
-            bomHistory.setVersion(bom.getVersion());
+            bomHistory.setVersion(bom.getBomVersion());
             boolean saveFlag = this.save(bomHistory);
             //当保存成功的时候
             if (saveFlag) {
