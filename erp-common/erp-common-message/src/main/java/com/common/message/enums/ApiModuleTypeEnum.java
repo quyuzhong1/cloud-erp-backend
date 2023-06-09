@@ -34,6 +34,7 @@ public enum ApiModuleTypeEnum {
     SO_OUTSTOCK(23, "soOutstock", "销售出库单","wms"),
     SO_RETURN(24, "soReturn", "销售退货单","oms"),
     CUSTOMER_GROUP(25, "customerGroup", "客户分组","oms"),
+    CUSTOMER_CONTACT(26, "customerContact", "客户联系人","oms"),
 
     ;
     private Integer code;

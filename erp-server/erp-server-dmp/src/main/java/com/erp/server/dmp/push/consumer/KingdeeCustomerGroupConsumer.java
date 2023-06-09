@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_customer_group_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_CUSTOMER_GROUP_INFO)
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_customer_group_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_CUSTOMER_GROUP)
 public class KingdeeCustomerGroupConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
@@ -112,7 +112,7 @@ public class KingdeeCustomerGroupConsumer implements RocketMQListener<Map<String
 
             return;
         }
-        String id = String.valueOf(model.get("FID")) ;
+        String id = String.valueOf(model.get("GroupPkId")) ;
         //主单据id
         KingdeeUtils.makeFieldJson(json,"GroupPkId",".", id);
         StringBuffer allKey = FastJsonUtil.getAllKey(json);

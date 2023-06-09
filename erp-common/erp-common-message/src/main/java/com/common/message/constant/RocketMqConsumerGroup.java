@@ -76,7 +76,12 @@ public class RocketMqConsumerGroup {
     /**
      * 客户分组
      */
-    public static final String SYNC_KINGDEE_CUSTOMER_GROUP_INFO = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_customer_group_info";
+    public static final String SYNC_KINGDEE_CUSTOMER_GROUP = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_customer_group";
+
+    /**
+     * 客户分组
+     */
+    public static final String SYNC_KINGDEE_CUSTOMER_CONTACT = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_customer_contact";
 
     /**
      * 其他出库

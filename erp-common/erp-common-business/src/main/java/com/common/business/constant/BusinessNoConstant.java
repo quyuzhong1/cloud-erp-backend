@@ -79,4 +79,6 @@ public interface BusinessNoConstant {
     String XSTH = "XSTH";
     //客户地址编号
     String KHDZ = "KHDZ";
+    //客户联系人编号
+    String KHLXR = "KHLXR";
 }

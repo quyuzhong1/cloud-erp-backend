@@ -690,6 +690,11 @@ public class WarehouseReceiveDTO {
         private String remark;
 
         /**
+         * 库位
+         */
+        private String warehouseLocation;
+
+        /**
          * 采购订单明细id
          */
         private String purchaseOrderDetailId;
@@ -757,6 +762,11 @@ public class WarehouseReceiveDTO {
          * 仓库表id
          */
         private String deliveryWarehouseId;
+
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
     }
 
     /**
