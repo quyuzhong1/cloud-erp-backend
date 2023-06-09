@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -14,9 +13,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * <p>
  * 委外订单请求响应实体
- * </p>
  *
  * @author will
  * @since 2023-06-08
@@ -130,7 +127,11 @@ public class SubcontractOrderDTO implements Serializable {
         private String  id;
 
         /**
-        * 审核状态 
+         * 明细id
+         */
+        private String detailId;
+        /**
+        * 审核状态
         */
         private String approveStatus;
         /**
@@ -142,30 +143,6 @@ public class SubcontractOrderDTO implements Serializable {
         */
         private LocalDate billDate;
         /**
-        * 收料组织id
-        */
-        private String receiveOrgId;
-        /**
-        * 收料组织名称
-        */
-        private String receiveOrgName;
-        /**
-        * 采购组织id
-        */
-        private String purchaseOrgId;
-        /**
-        * 采购组织名称
-        */
-        private String purchaseOrgName;
-        /**
-        * 采购员id
-        */
-        private String purchaserId;
-        /**
-        * 采购员名称
-        */
-        private String purchaserName;
-        /**
         * 采购部门id
         */
         private String deptId;
@@ -173,18 +150,6 @@ public class SubcontractOrderDTO implements Serializable {
         * 采购部门名称
         */
         private String deptName;
-        /**
-        * 委外组织id
-        */
-        private String subcontractOrgId;
-        /**
-        * 委外组织名称
-        */
-        private String subcontractOrgName;
-        /**
-        * 新品首批（false否,true是）
-        */
-        private Boolean isFirstMassProduct;
         /**
         * 作废状态（false未作废，true已作废）
         */
@@ -198,14 +163,6 @@ public class SubcontractOrderDTO implements Serializable {
         */
         private LocalDateTime approveTime;
         /**
-        * 审核人名称
-        */
-        private String approveUserName;
-        /**
-        * 审核人id
-        */
-        private String approveUserId;
-        /**
         * 来源id
         */
         private String sourceId;
@@ -217,7 +174,6 @@ public class SubcontractOrderDTO implements Serializable {
         * 来源编码
         */
         private String sourceCode;
-
         /**
         * 审核状态名称
         */
@@ -231,13 +187,44 @@ public class SubcontractOrderDTO implements Serializable {
         */
         private String skuId;
         /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
         * 产品名称
         */
         private String productName;
+
+        /**
+         * bom版本
+         */
+        private Integer bomVersion;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 审核名称
+         */
+        private String approveUserName;
+
+        /**
+         * 采购员
+         */
+        private String purchaserName;
+
         /**
         * 创建时间
         */
         private LocalDateTime createTime;
+
         /**
         * 创建人名称
         */
@@ -261,102 +248,32 @@ public class SubcontractOrderDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO {
+    public static class ViewDTO extends CommonDTO{
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 主键id
+         */
+        private String id;
 
         /**
-        * 审核状态 
-        */
-        private String approveStatus;
-        /**
-        * 单据编号
-        */
+         * 委外订单编号
+         */
         private String code;
-        /**
-        * 单据日期
-        */
-        private LocalDate billDate;
-        /**
-        * 收料组织id
-        */
-        private String receiveOrgId;
-        /**
-        * 收料组织名称
-        */
-        private String receiveOrgName;
-        /**
-        * 采购组织id
-        */
-        private String purchaseOrgId;
-        /**
-        * 采购组织名称
-        */
-        private String purchaseOrgName;
-        /**
-        * 采购员id
-        */
-        private String purchaserId;
-        /**
-        * 采购员名称
-        */
-        private String purchaserName;
-        /**
-        * 采购部门id
-        */
-        private String deptId;
-        /**
-        * 采购部门名称
-        */
-        private String deptName;
-        /**
-        * 委外组织id
-        */
-        private String subcontractOrgId;
-        /**
-        * 委外组织名称
-        */
-        private String subcontractOrgName;
-        /**
-        * 新品首批（false否,true是）
-        */
-        private Boolean isFirstMassProduct;
-        /**
-        * 作废状态（false未作废，true已作废）
-        */
-        private Boolean invalidStatus;
-        /**
-        * 作废时间
-        */
-        private LocalDateTime invalidTime;
-        /**
-        * 审核时间
-        */
-        private LocalDateTime approveTime;
-        /**
-        * 审核人名称
-        */
-        private String approveUserName;
-        /**
-        * 审核人id
-        */
-        private String approveUserId;
-        /**
-        * 来源id
-        */
-        private String sourceId;
-        /**
-        * 来源类型
-        */
-        private String sourceType;
-        /**
-        * 来源编码
-        */
-        private String sourceCode;
 
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 明细集合
+         */
+        private List<SubcontractOrderDetailDTO.ViewDTO> detailList;
     }
 
     /**
@@ -365,7 +282,10 @@ public class SubcontractOrderDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
+      /**
+       * 明细集合
+       */
+      private List<SubcontractOrderDetailDTO.AddDTO> detailList;
 
     }
 
@@ -382,6 +302,11 @@ public class SubcontractOrderDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+         * 明细集合
+         */
+        private List<SubcontractOrderDetailDTO.UpdateDTO> detailList;
+
     }
 
     @Data
@@ -389,94 +314,46 @@ public class SubcontractOrderDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 单据日期
-        */
-        private LocalDate billDate;
+         * 调拨日期
+         */
+        private  LocalDate  billDate;
         /**
-        * 收料组织id
-        */
-        @NotBlank(message = "收料组织id不能为空")
-        @Size(max = 19,message = "收料组织id最大长度不能超过19位")
-        private String receiveOrgId;
+         * 收料组织id
+         */
+        private String     receiveOrgId;
         /**
-        * 收料组织名称
-        */
-        @NotBlank(message = "收料组织名称不能为空")
-        @Size(max = 100,message = "收料组织名称最大长度不能超过100位")
-        private String receiveOrgName;
+         * 采购组织id
+         */
+        private String    purchaseOrgId;
         /**
-        * 采购组织id
-        */
-        @NotBlank(message = "采购组织id不能为空")
-        @Size(max = 19,message = "采购组织id最大长度不能超过19位")
-        private String purchaseOrgId;
+         * 采购员id
+         */
+        private String     purchaserId;
         /**
-        * 采购组织名称
-        */
-        @NotBlank(message = "采购组织名称不能为空")
-        @Size(max = 100,message = "采购组织名称最大长度不能超过100位")
-        private String purchaseOrgName;
+         * 采购部门id
+         */
+        private String     deptId;
         /**
-        * 采购员id
-        */
-        @NotBlank(message = "采购员id不能为空")
-        @Size(max = 19,message = "采购员id最大长度不能超过19位")
-        private String purchaserId;
+         * 委外组织id
+         */
+        private String   subcontractOrgId;
         /**
-        * 采购员名称
-        */
-        @NotBlank(message = "采购员名称不能为空")
-        @Size(max = 64,message = "采购员名称最大长度不能超过64位")
-        private String purchaserName;
-        /**
-        * 采购部门id
-        */
-        @NotBlank(message = "采购部门id不能为空")
-        @Size(max = 19,message = "采购部门id最大长度不能超过19位")
-        private String deptId;
-        /**
-        * 采购部门名称
-        */
-        @NotBlank(message = "采购部门名称不能为空")
-        @Size(max = 64,message = "采购部门名称最大长度不能超过64位")
-        private String deptName;
-        /**
-        * 委外组织id
-        */
-        @NotBlank(message = "委外组织id不能为空")
-        @Size(max = 19,message = "委外组织id最大长度不能超过19位")
-        private String subcontractOrgId;
-        /**
-        * 委外组织名称
-        */
-        @NotBlank(message = "委外组织名称不能为空")
-        @Size(max = 100,message = "委外组织名称最大长度不能超过100位")
-        private String subcontractOrgName;
-        /**
-        * 新品首批（false否,true是）
-        */
-        @NotNull(message = "新品首批（false否,true是）不能为空")
-        private Boolean isFirstMassProduct;
-        /**
-        * 作废时间
-        */
-        private LocalDateTime invalidTime;
+         * 新品首批（false否,true是）
+         */
+        private  Boolean   isFirstMassProduct;
         /**
         * 来源id
         */
-        @NotBlank(message = "来源id不能为空")
         @Size(max = 19,message = "来源id最大长度不能超过19位")
         private String sourceId;
         /**
         * 来源类型
         */
-        @NotBlank(message = "来源类型不能为空")
         @Size(max = 32,message = "来源类型最大长度不能超过32位")
         private String sourceType;
         /**
         * 来源编码
         */
-        @NotBlank(message = "来源编码不能为空")
         @Size(max = 50,message = "来源编码最大长度不能超过50位")
         private String sourceCode;
 
