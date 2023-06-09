@@ -113,6 +113,7 @@ public class ${table.dtoName} implements Serializable {
         */
         </#if>
         private ${field.propertyType} ${field.propertyName};
+
         </#list>
         <#------------  END 字段循环遍历  ---------->
 
@@ -120,27 +121,21 @@ public class ${table.dtoName} implements Serializable {
         * 审核状态名称
         */
         private String approveStatusName;
+
         <#if fieldMap["invalidStatus"]??>
         /**
         * 作废状态名称
         */
         private String invalidStatusName;
+
         </#if>
-        <#------------ 业务单据默认带上skuId吧------------->
-        /**
-        * sku id
-        */
-        private String skuId;
-        /**
-        * 产品名称
-        */
-        private String productName;
         <#------------ 如果包含approveStatus字段则展示createTime字段-------------->
         <#if fieldMap["approveStatus"]?? && fieldMap["code"]??>
         /**
         * 创建时间
         */
         private LocalDateTime createTime;
+
         /**
         * 创建人名称
         */
@@ -182,6 +177,7 @@ public class ${table.dtoName} implements Serializable {
         */
         </#if>
         private ${field.propertyType} ${field.propertyName};
+
         </#list>
 
     }
@@ -247,6 +243,7 @@ public class ${table.dtoName} implements Serializable {
     </#if>
         <#----------如果是业务单据类部分字段新增修改不展示------------------->
         private ${field.propertyType} ${field.propertyName};
+
         </#if>
 </#list>
 <#------------  END 字段循环遍历  ---------->
