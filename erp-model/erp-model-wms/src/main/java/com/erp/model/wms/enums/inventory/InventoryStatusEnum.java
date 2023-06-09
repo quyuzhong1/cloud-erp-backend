@@ -19,7 +19,7 @@ public enum InventoryStatusEnum {
     WAIT_QC("waitQc", "待检", Boolean.FALSE),
     ;
 
-    //实际库存=可用库存+冻结库存，待检库存和在途库存不计入。
+    // 实际库存=可用库存+冻结库存，待检库存和在途库存不计入。
     @JsonValue
     @EnumValue
     private String code;

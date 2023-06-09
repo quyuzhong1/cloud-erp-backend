@@ -43,7 +43,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
 import java.net.URLEncoder;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -189,7 +188,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<InventoryDTO.InOutStockSummaryPagingViewDTO> pageData = this.baseMapper.pagingList(query, pagingParamDTO.getParams());
-        fillTransactionSummary(pageData.getRecords(), pagingParamDTO.getParams().getDateList());
+        fillTransactionSummary(pageData.getRecords());
         return new PagingVO(pageData);
     }
 
@@ -197,11 +196,12 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     public void exportSummaryExcel(InventoryDTO.ExcelInOutStockSummarySearchParamDTO param, HttpServletResponse response) {
         OutputStream outputStream = null;
         List<InventoryDTO.InOutStockSummaryPagingViewDTO> dataList = this.baseMapper.exportSummaryList(param);
-        fillTransactionSummary(dataList, param.getDateList());
+        fillTransactionSummary(dataList);
         // 声明一个工作簿
         XSSFWorkbook wb = new XSSFWorkbook();
         XSSFCellStyle contentCellStyle = wb.createCellStyle();
-        contentCellStyle.setAlignment(HorizontalAlignment.LEFT); // 水平居左
+        // 水平居左
+        contentCellStyle.setAlignment(HorizontalAlignment.LEFT);
         contentCellStyle.setVerticalAlignment(VerticalAlignment.CENTER); //垂直居中
         contentCellStyle.setWrapText(true);//自动换行
         contentCellStyle.setBorderBottom(BorderStyle.THIN); //下边框
@@ -392,17 +392,13 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         });
     }
 
-    private void fillTransactionSummary(List<InventoryDTO.InOutStockSummaryPagingViewDTO> dataList, List<LocalDate> dateList) {
+    private void fillTransactionSummary(List<InventoryDTO.InOutStockSummaryPagingViewDTO> dataList) {
         if(CollUtil.isEmpty(dataList)) {
             return;
         }
         List<String> skuIds = dataList.stream().map(InventoryDTO.InOutStockSummaryPagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
         Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
-        // 如果dateList为空，则传值今天
-        if(CollUtil.isEmpty(dateList)) {
-            dateList = Lists.newArrayList(LocalDate.now(), LocalDate.now());
-        }
         Map<String,WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
         for(InventoryDTO.InOutStockSummaryPagingViewDTO data : dataList) {
             if(skuMap.containsKey(data.getSkuId())) {

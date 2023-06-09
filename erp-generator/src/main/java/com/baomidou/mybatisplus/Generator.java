@@ -20,38 +20,64 @@ import java.util.Map;
  */
 public class Generator {
 
-    // 模块名（需要更改）
-    static final String MODEL = "wms";
-    // 作者（需要更改）
-    static final String AUTHOR = "zhangchunlin";
-    // 项目路径
+    /**
+       模块名（需要更改）
+     */
+    private static final String MODEL = "wms";
+    /**
+     * 作者（需要更改）
+     */
+    private static final String AUTHOR = "zhangchunlin";
+    /**
+     * 项目路径
+     */
     private static final String PROJECT_PATH = System.getProperty("user.dir");
-    // 当前环境是否Windows
+    /**
+     * 当前环境是否Windows
+     */
     private static final boolean IS_WINDOWS = System.getProperty("os.name").trim().toLowerCase().contains("windows");
-    // 指定server包名
+    /**
+     * 指定server包名
+     */
     private static String BASE_PACKAGE_NAME = StrUtil.format("com.erp.server.{}", MODEL);
-    // 指定Model包名 如com.erp.model.wms
+    /**
+     * 指定Model包名 如com.erp.model.wms
+     */
     private static String BASE_PACKAGE_MODEL_NAME = StrUtil.format("com.erp.model.{}", MODEL);
     private static final String BASE_MODEl_PROJECT_NAME = "erp-model";
-    // 模块名
+    /**
+     * 模块名
+     */
     private static final String MODULE_NAME = StrUtil.format("erp-model-{}", MODEL);
-    // 服务名
+    /**
+     * 服务名
+     */
     private static final String SERVER_NAME = StrUtil.format("erp-server-{}", MODEL);
-    // 输出路径(为空默认为项目路径)
+    /**
+     * 输出路径(为空默认为项目路径)
+     */
     private static final String OUTPUT_DIR = "";
-    // Service接口是否带前缀I，设置成false -> UserService, 设置成true -> IUserService
+    /**
+     * Service接口是否带前缀I，设置成false -> UserService, 设置成true -> IUserService
+     */
     private static final boolean serviceNameStartWithI = false;
 
-    // 数据库链接
+    /**
+     * 数据库链接
+     */
     private static final String DB_URL = "jdbc:postgresql://172.16.100.12:5432/" + StrUtil.format( "erp-{}", MODEL) + "?useUnicode=true&characterEncoding=utf8&autoReconnect=true&useSSL=false";
-    // 数据库用户名
+    /**
+     * 数据库用户名
+     */
     private static final String DB_USER_NAME = "postgres";
-    // 数据库密码
+    /**
+     * 数据库密码
+     */
     private static final String DB_PASSWORD = "admin@viji";
 
     public static void main(String[] args) {
         // 需要生成的表名（特别注意：请确保生成多个表时在同一个数据库，如果一次性生成多个，中间有异常不会中断后续生成）
-        // 现设置的是文件不覆盖，即生成时如果已经存在该文件则不会覆盖，设置成true灰覆盖，请参考
+        // 现设置的是文件不覆盖，即生成时如果已经存在该文件则不会生成导致覆盖，设置成true覆盖，如果需要覆盖请将全局配置fileOverride设置成true
         String[] tableNames = {"transfer_application"};
         generateByTables(tableNames);
     }
@@ -75,17 +101,21 @@ public class Generator {
         config.setAuthor(AUTHOR)
                 .setActiveRecord(true)
                 .setOutputDir(filePath)
-                .setFileOverride(false) // 设置成false如果存在相同文件则不会生成
+                // 设置成false如果存在相同文件则不会生成
+                .setFileOverride(false)
                 .setEnableCache(false)
                 .setSwagger2(false)
                 .setBaseResultMap(true)
                 .setBaseColumnList(true)
-                .setModelName(MODEL) // 控制器数据权限注解生成需要用到
-                .setDataPermission(true);// 控制器是否生成数据权限注解信息（同时表包含approve_status和code字段时会生成权限注解信息）
+                // 控制器数据权限注解生成需要用到
+                .setModelName(MODEL)
+                // 控制器是否生成数据权限注解信息（同时表包含approve_status和code字段时会生成权限注解信息）
+                .setDataPermission(true);
         if (!serviceNameStartWithI) {
             config.setServiceName("%sService");
         }
-        config.setEntityName("%sEntity");// 实体名后带Entity
+        // 实体名后带Entity
+        config.setEntityName("%sEntity");
         new AutoGenerator().setGlobalConfig(config)
                 .setDataSource(dataSourceConfig())
                 .setStrategy(strategyConfig(tableNames))
@@ -129,7 +159,8 @@ public class Generator {
                 .setService("service")
                 .setServiceImpl("service.impl")
                 .setXml("mybatis.mappers")
-                .setDto("dto");// DTO包
+                // DTO包
+                .setDto("dto");
 
 
         // 自定义包名
@@ -156,7 +187,8 @@ public class Generator {
                 .setUsername(DB_USER_NAME)
                 .setPassword(DB_PASSWORD)
                 .setDriverName("org.postgresql.Driver")
-                .setTypeConvert(new PostgreSqlTypeConvert());// 类型转换
+                // 类型转换
+                .setTypeConvert(new PostgreSqlTypeConvert());
         return dataSourceConfig;
 
     }
@@ -165,7 +197,8 @@ public class Generator {
         StrategyConfig strategyConfig = new StrategyConfig();
         strategyConfig
                 .setCapitalMode(true)
-                .setDtoValidate(true) // 开启DTO实体验证
+                // 开启DTO实体验证
+                .setDtoValidate(true)
                 .setRestControllerStyle(true)
                 .setEntityLombokModel(true)
                 .setEntityTableFieldAnnotationEnable(true)
@@ -179,7 +212,7 @@ public class Generator {
                 .setSuperServiceClass("com.common.business.service.SuperService")
                 .setSuperServiceImplClass("com.common.business.service.SuperServiceImpl")
                 .setSuperControllerClass("com.common.core.controller.BaseController")
-                //公共字段
+                // 公共字段
                 .setSuperEntityColumns("id","create_time","update_time","version","is_deleted","create_user_id","create_user_name","update_user_id","update_user_name")
                 .setInclude(tableNames);
         return strategyConfig;
