@@ -579,8 +579,9 @@
         and pd.id not in (
         select DISTINCT parent_sku_id from product_bom_sku
         <where>
+            is_deleted = false
             <if test="bomId != null and bomId!=''">
-                bom_id != #{bomId}
+              and  bom_id != #{bomId}
             </if>
         </where>
         )
