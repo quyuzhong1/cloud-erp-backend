@@ -4,6 +4,7 @@ import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
@@ -69,17 +70,21 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(entity.getWarehouseId()));
 
         //员工岗位
-        List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoList = sysUserFeign.listUserKingdeePostByUserIds(Arrays.asList(entity.getWarehouseKeeperId(),entity.getReceiverId()));
+        List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoList = sysUserFeign.listUserKingdeePostByUserIds(Arrays.asList(entity.getReceiverId()));
 
         if (CollectionUtils.isNotEmpty(userKingdeePostInfoList)) {
-            //仓管员
-            String warehouseKeeperCode = userKingdeePostInfoList.stream().filter(obj -> obj.getUserId().equals(entity.getWarehouseKeeperId()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeePostCode())).orElse(null);
-            resultMap.put("warehouseKeeperCode", warehouseKeeperCode);
             //领料人
             String receiverCode = userKingdeePostInfoList.stream().filter(obj -> obj.getUserId().equals(entity.getReceiverId()))
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeePostCode())).orElse(null);
             resultMap.put("receiverCode", receiverCode);
+        }
+
+        //仓管员编码
+        if (StringUtils.isNotBlank(entity.getWarehouseKeeperId())) {
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getWarehouseKeeperId());
+            if (ObjectUtils.isNotEmpty(findUserDTO)) {
+                resultMap.put("warehouseKeeperCode", findUserDTO.getCode());
+            }
         }
 
         //库存方向

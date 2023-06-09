@@ -294,7 +294,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         operateLogService.addModuleOperateLog(String.format("新增了一个收货单【%s】", code), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), warehouseReceiveEntity.getId(), "新增操作");
 
         //修改到货状态
-        purchaseReturnOrderService.updateArrivalState(warehouseReceiveEntity.getPurchaseOrderId());
+        purchaseReturnOrderService.updateArrivalState(warehouseReceiveEntity.getPurchaseOrderId(), new ArrayList<>());
         return warehouseReceiveEntity.getId();
 
     }
@@ -332,7 +332,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         Boolean flag = warehouseReceiveDetailService.update(dto);
 
         if (StringUtils.isNotBlank(entity.getPurchaseOrderId())) {
-            purchaseReturnOrderService.updateArrivalState(entity.getPurchaseOrderId());
+            purchaseReturnOrderService.updateArrivalState(entity.getPurchaseOrderId(), new ArrayList<>());
         }
 
 
@@ -738,7 +738,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         operateLogService.batchAddModuleOperateLog("作废了一个收货单【%s】，作废原因：".concat(remark), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), pairList, "作废操作");
         warehouseReceiveList.forEach(req -> {
             //修改到货状态
-            purchaseReturnOrderService.updateArrivalState(req.getPurchaseOrderId());
+            purchaseReturnOrderService.updateArrivalState(req.getPurchaseOrderId(), new ArrayList<>());
         });
         return Boolean.TRUE;
     }
@@ -773,7 +773,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
         warehouseReceiveList.forEach(req -> {
             //修改到货状态
-            purchaseReturnOrderService.updateArrivalState(req.getPurchaseOrderId());
+            purchaseReturnOrderService.updateArrivalState(req.getPurchaseOrderId(), new ArrayList<>());
         });
 
         //删除主表

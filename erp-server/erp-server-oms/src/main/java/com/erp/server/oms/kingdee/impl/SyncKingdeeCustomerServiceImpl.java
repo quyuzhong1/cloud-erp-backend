@@ -128,7 +128,8 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
             resultMap.put("payCode", customerInfoEntities.get(0).getCode());
         }
 
-        List<InvoiceDTO.ViewDTO> viewDTOS = customerInvoiceService.listByMainId(entity.getId());
+        List<InvoiceDTO.ViewDTO> viewDTOList = customerInvoiceService.listByMainId(entity.getId());
+        List<InvoiceDTO.ViewDTO> viewDTOS = viewDTOList.stream().sorted(Comparator.comparing(InvoiceDTO.ViewDTO::getIsDefault).reversed()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(viewDTOS)) {
             InvoiceDTO.ViewDTO viewDTO = viewDTOS.get(MathUtil.ZERO);
             //发票抬头
@@ -163,9 +164,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         DictBasicDTO.ViewDTO collectionTerms = collectionTermsList.stream().filter(req -> req.getValue().equals(entity.getConditionDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
         resultMap.put("collectionTermsCode",collectionTerms.getRemark());
         List<CustomerContactDTO.ViewDTO> customerContactList = customerContactService.listByMainId(entity.getId());
-        for (CustomerContactDTO.ViewDTO viewDTO : customerContactList) {
-            viewDTO.setDisabled(viewDTO.getDisabled() ? Boolean.FALSE : Boolean.TRUE);
-        }
+
         resultMap.put("customerContactList",customerContactList);
         resultMap.put("invoiceList", viewDTOS);
         List<CustomerAddressDTO.ViewDTO> customerAddressList = customerAddressService.listByMainId(entity.getId());
@@ -174,6 +173,9 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
             resultMap.put("telNumber", collect.get(MathUtil.ZERO).getTelNumber());
             resultMap.put("person", collect.get(MathUtil.ZERO).getPerson());
             resultMap.put("address", collect.get(MathUtil.ZERO).getAddress());
+        }
+        for (CustomerAddressDTO.ViewDTO viewDTO : customerAddressList) {
+            viewDTO.setDisabled(viewDTO.getDisabled() ? Boolean.FALSE : Boolean.TRUE);
         }
         resultMap.put("customerAddressList", customerAddressList);
         resultMap.put("platformType", entity.getPlatformType().getKingdeeCode());
