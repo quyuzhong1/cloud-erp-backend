@@ -12,7 +12,7 @@ import java.util.Objects;
 public enum InventoryBusinessTypeEnum {
 
     /**
-     * 调用方需请传输code，不要传输type
+     * 调用方请传输code，不要传输type
      */
 
     INVENTORY_INIT("inventory_init", "00","期初库存"),

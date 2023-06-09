@@ -910,5 +910,41 @@ public class InventoryDTO {
 
     }
 
+    /**
+     * 在途查询 查询条件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TransportSearchParamDTO extends SortDTO {
+
+        /**
+         * sku编码
+         */
+        private List<String> skuNoList;
+
+        /**
+         * spu 接口地址：/wms/drop/down/product/spuNo/list（一次性返回所有）
+         */
+        private List<String> spuNoList;
+
+        /**
+         * 仓库  接口地址：/wms/warehouse/list
+         */
+        private List<String> warehouseIdList;
+
+        /**
+         * 销售状态 接口地址：/plm/common/enumDropDown?type=SaleState
+         */
+        private List<Integer> saleStatusList;
+
+        /**
+         * 库存组织 接口地址： /sys/company/list
+         */
+        private List<String> orgIdList;
+
+    }
+
+
+
 
 }

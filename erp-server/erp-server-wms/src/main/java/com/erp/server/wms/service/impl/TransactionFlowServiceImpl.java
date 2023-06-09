@@ -110,7 +110,13 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
         transactionFlowEntity.setWarehouseId(param.getWarehouseId());
         transactionFlowEntity.setWarehouseName(warehouse.getName());
-        transactionFlowEntity.setWarehouseLocation(param.getWarehouseLocation());
+        // 此处修复BUG，部分库存状态不需要控制库位
+        InventoryStatusEnum inventoryStatus = InventoryStatusEnum.of(param.getDictInventoryStatus());
+        if (Objects.equals(Boolean.FALSE, inventoryStatus.getControlLocation())) {
+            transactionFlowEntity.setWarehouseLocation("");
+        } else {
+            transactionFlowEntity.setWarehouseLocation(param.getWarehouseLocation());
+        }
         transactionFlowEntity.setDictInventoryStatus(param.getDictInventoryStatus());
         // 批次日期取库存明细表上关联的日期
         transactionFlowEntity.setInstockBatchDate(param.getInstockBatchDate());
