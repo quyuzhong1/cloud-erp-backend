@@ -228,6 +228,7 @@
                psi.supplier_name as supplierName,
                psid.sku_id as skuId,
                psid.sku_no as skuNo,
+               psi.delivery_warehouse_id as deliveryWarehouseId,
                psi.delivery_warehouse_name as deliveryWarehouseName,
                psid.stock_in_qty as stockInQty,
                psid.warehouse_location as warehouseLocation
