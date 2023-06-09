@@ -1135,6 +1135,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             if (purchaseOrder != null) {
                 dto.setSupplierName(purchaseOrder.getSupplierName());
                 dto.setDeliveryWarehouseName(purchaseOrder.getDeliveryWarehouseName());
+                dto.setDeliveryWarehouseId(purchaseOrder.getDeliveryWarehouseId());
             }
             Integer qty = stockInSkuList.stream().filter(s -> s.getSkuId().equals(dto.getSkuId()) &&
                     dto.getPurchaseOrderDetailId().equals(s.getPurchaseOrderDetailId())).
@@ -1249,6 +1250,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 BeanMapperUtils.copy(detail, addDetailDTO);
                 addDetailDTO.setPurchaseOrderDetailId(detail.getPurchaseOrderDetailId());
                 addDetailDTO.setReturnQty(detail.getRealityReturnQty());
+                addDetailDTO.setWarehouseLocation(detail.getWarehouseLocation());
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setReturnMode(purchaseReturnOrderDTO.getReturnMode());
