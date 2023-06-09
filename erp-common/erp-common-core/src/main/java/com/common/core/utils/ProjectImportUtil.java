@@ -26,7 +26,13 @@ import java.util.Map;
 @Slf4j
 public class ProjectImportUtil {
 
-
+    /**
+     * @description: project导入
+     * @author Will
+     * @date: 2023/6/1 17:14
+     * @param excelFile
+     * @return List<Task>
+     */
     public static List<Task> readMmpFile(MultipartFile excelFile) {
         //如果读取的是MultipartFile，那么直接使用获取InputStream即可
         try{
@@ -54,7 +60,12 @@ public class ProjectImportUtil {
     }
 
     /**
-     * 解析子级任务
+     * @description: 解析子集任务
+     * @author Will
+     * @date: 2023/6/1 19:40
+     * @param task 任务
+     * @param list 用于接收的集合
+     * @param customFields 自定义字段Map
      */
     public static void getChildrenTask (Task task , List<ProjectImportDTO> list, Map<Integer,String> customFields) {
         // 继续获取子任务
@@ -80,6 +91,7 @@ public class ProjectImportUtil {
      * @date: 2023/6/1 18:18
      * @param task
      * @param proList
+     * @param customFields
      */
     private static void generateProjectDTO (Task task, List <ProjectImportDTO> proList, Map<Integer,String> customFields){
         ProjectImportDTO pro = new ProjectImportDTO();
