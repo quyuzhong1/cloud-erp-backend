@@ -1,17 +1,17 @@
 package com.erp.model.scm.dto;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import com.common.business.dto.base.SortDTO;
-import java.util.List;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -57,6 +57,65 @@ public class SubcontractOrderDTO implements Serializable {
          */
          private String  searchType;
 
+         /**
+          * 委外订单编号
+          */
+         private String code;
+
+         /**
+          * sku编码
+          */
+         private List<String> skuNoList;
+
+         /**
+          * 供应商id
+          */
+         private List<String> supplierIdList;
+
+         /**
+          * 审核状态（waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
+          */
+         private List<String> approveStatusList;
+
+         /**
+          * 作废状态（false未作废，true已作废）
+          */
+         private Boolean invalidStatus;
+
+         /**
+          * 到货状态（0未到货，1部分到货，2已到货）
+          */
+         private List<String> arrivalStatusList;
+
+         /**
+          * 是否加急（false否，true是）
+          */
+         private Boolean isUrgent;
+
+         /**
+          * 仓库id
+          */
+         private List<String> warehouseIdList;
+
+         /**
+          * 创建时间
+          */
+         private List<LocalDate> createTimeList;
+
+         /**
+          * 审核时间
+          */
+         private List<LocalDate> approveTimeList;
+
+         /**
+          * 申请人id
+          */
+         private List<String> purchaseUserIdList;
+
+         /**
+          * 创建人id
+          */
+         private List<String> createUserIdList;
      }
     /**
     * 分页列表

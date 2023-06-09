@@ -1,14 +1,15 @@
 package com.erp.model.scm.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -93,7 +94,7 @@ public class SubcontractChangeOrderEntity extends BaseEntity<SubcontractChangeOr
     private String deptName;
 
     /**
-    * 变更原因
+    * 变更原因 字典（subcontractChangeReason）
     */
     @TableField("change_reason")
     private String changeReason;
