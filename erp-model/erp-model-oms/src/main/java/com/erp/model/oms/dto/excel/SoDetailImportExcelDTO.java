@@ -44,7 +44,7 @@ public class SoDetailImportExcelDTO {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "销售单价", index = 2)
-    @FieldValid(fieldName = "销售单价", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "销售单价", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String  price;
 
 
@@ -53,7 +53,7 @@ public class SoDetailImportExcelDTO {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "税率", index = 3)
-    @FieldValid(fieldName = "税率",formatPattern= FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "税率",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String taxRate;
 
 
@@ -78,7 +78,7 @@ public class SoDetailImportExcelDTO {
      */
     @ColumnWidth(10)
     @ExcelProperty(value = "是否关闭", index = 6)
-    @FieldValid(fieldName = "是否关闭",fieldValues = "是,否, ")
+    @FieldValid(fieldName = "是否关闭",fieldValues = "是,否")
     private String isClose;
 
 
