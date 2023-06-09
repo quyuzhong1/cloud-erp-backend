@@ -437,7 +437,6 @@ public class PoInstockDTO implements Serializable {
         /**
          * 库位
          */
-        @NotBlank(message = "库位不能为空")
         private String warehouseLocation;
 
         /**

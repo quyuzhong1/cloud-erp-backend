@@ -411,7 +411,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
              * 当可用即时库存数量大于销售数量时，缺货数量为0
              */
             Integer scarceQty = 0;
-            Boolean isGre = curInventoryQty > qty;
+            Boolean isGre = curInventoryQty >= qty;
 
             Boolean isScarce = !isGre;
 
