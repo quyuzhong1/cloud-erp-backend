@@ -1,8 +1,10 @@
 package com.erp.server.wms.controller.api;
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -34,6 +36,11 @@ public class InitStockController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:initStock:paging",
+            tableAlias = "ism"
+    )
     public ApiResult<PagingVO<InitStockDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<InitStockDTO.SearchParamDTO> dto) {
         return success(initStockService.paging(dto));
     }
@@ -44,6 +51,11 @@ public class InitStockController extends BaseController {
      * @return
      */
     @PostMapping("/add")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:initStock:add",
+            serviceClass = InitStockService.class,
+            keyIdName = "id")
     public ApiResult<Void> add(@RequestBody @Validated InitStockDTO.AddDTO dto) {
         initStockService.add(dto);
         return  success();
@@ -55,6 +67,11 @@ public class InitStockController extends BaseController {
      * @return
      */
     @PostMapping("/update")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:initStock:update",
+            serviceClass = InitStockService.class,
+            keyIdName = "id")
     public ApiResult<Void> update(@RequestBody @Validated InitStockDTO.UpdateDTO dto) {
         initStockService.update(dto);
         return  success();
@@ -66,6 +83,11 @@ public class InitStockController extends BaseController {
      * @return
      */
     @PostMapping("/addAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:initStock:add",
+            serviceClass = InitStockService.class,
+            keyIdName = "id")
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated InitStockDTO.AddDTO dto) {
         initStockService.addAndSubmit(dto);
         return  success();
@@ -77,6 +99,11 @@ public class InitStockController extends BaseController {
      * @return
      */
     @PostMapping("/updateAndSubmit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:initStock:update",
+            serviceClass = InitStockService.class,
+            keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated InitStockDTO.UpdateDTO dto) {
         initStockService.updateAndSubmit(dto);
         return  success();
@@ -89,6 +116,11 @@ public class InitStockController extends BaseController {
      * @return
      */
     @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:initStock:view",
+            serviceClass = InitStockService.class,
+            keyIdName = "id")
     public ApiResult<InitStockDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(initStockService.view(id));
     }
@@ -99,6 +131,11 @@ public class InitStockController extends BaseController {
      * @return
      */
     @PostMapping("/submit")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:initStock:submit",
+            serviceClass = InitStockService.class,
+            keyIdName = "ids")
     public ApiResult<Void> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         initStockService.submit(dto.getIds());
         return  success();
@@ -110,6 +147,11 @@ public class InitStockController extends BaseController {
      * @return
      */
     @PostMapping("/approve")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:initStock:approve",
+            serviceClass = InitStockService.class,
+            keyIdName = "ids")
     public ApiResult<Void> approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
         initStockService.approve(baseApproveParamDTO);
         return  success();
@@ -121,6 +163,11 @@ public class InitStockController extends BaseController {
      * @return
      */
     @PostMapping("/disApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:initStock:disApprove",
+            serviceClass = InitStockService.class,
+            keyIdName = "ids")
     public ApiResult<Void> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         initStockService.disApprove(dto.getIds());
         return  success();
@@ -132,6 +179,11 @@ public class InitStockController extends BaseController {
      * @return
      */
     @PostMapping("/cancel")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:initStock:cancel",
+            serviceClass = InitStockService.class,
+            keyIdName = "ids")
     public ApiResult cancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         initStockService.cancel(dto.getIds());
         return  success();
@@ -143,6 +195,11 @@ public class InitStockController extends BaseController {
      * @return
      */
     @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:initStock:invalid",
+            serviceClass = InitStockService.class,
+            keyIdName = "ids")
     public ApiResult<Void> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         initStockService.invalid(dto.getIds(), dto.getRemark());
         return success();
@@ -154,6 +211,11 @@ public class InitStockController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:initStock:delete",
+            serviceClass = InitStockService.class,
+            keyIdName = "ids")
     public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         initStockService.delete(dto.getIds());
         return success();
@@ -166,6 +228,11 @@ public class InitStockController extends BaseController {
      * @return
      */
     @PostMapping(value = "/exportExcel")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:initStock:paging",
+            tableAlias = "ism"
+    )
     public ApiResult<Void> exportExcel(@RequestBody InitStockDTO.ExportSearchParamDTO dto, HttpServletResponse response) {
         initStockService.exportExcel(dto, response);
         return null;
