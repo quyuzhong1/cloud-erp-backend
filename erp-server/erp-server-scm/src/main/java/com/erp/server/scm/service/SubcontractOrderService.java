@@ -1,12 +1,14 @@
 package com.erp.server.scm.service;
-import com.erp.model.scm.entity.SubcontractOrderEntity;
+
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
-
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
+import com.erp.model.scm.entity.SubcontractOrderEntity;
 
- import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -136,5 +138,20 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
     * @return
     */
     void exportList(SubcontractOrderDTO.ExportDTO dto, HttpServletResponse response);
-
+    /**
+     * 根据委外订单父级SKU明细id查询采购订单数据
+     * @author Will
+     * @date: 2023/6/9 16:20
+     * @param detailId
+     * @return List<PurchaseOrderListDTO>
+     */
+    List<SubcontractOrderDTO.PurchaseOrderListDTO> listPurchaseOrderByDetailId(String detailId);
+    /**
+     * @description: 结束交货
+     * @author Will
+     * @date: 2023/6/9 16:33
+     * @param ids
+     * @return Boolean
+     */
+    Boolean finishDelivery(List<String> ids);
 }

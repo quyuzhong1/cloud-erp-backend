@@ -1,10 +1,7 @@
 package com.erp.server.scm.controller.api;
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -60,6 +57,18 @@ public class SubcontractOrderController extends BaseController {
     )
     public ApiResult<PagingVO<SubcontractOrderDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SubcontractOrderDTO.PagingParamDTO> dto) {
         return success(subcontractOrderService.paging(dto));
+    }
+
+    /**
+     * 列表根据明细id查询采购订单
+     * @author Will
+     * @date: 2023/6/9 16:16
+     * @param dto
+     * @return ApiResult<PurchaseOrderListDTO>
+     */
+    @PostMapping("/listPurchaseOrderByDetailId")
+    public ApiResult<List<SubcontractOrderDTO.PurchaseOrderListDTO>> listPurchaseOrderByDetailId(@RequestBody @Validated BaseIdDTO dto) {
+        return success(subcontractOrderService.listPurchaseOrderByDetailId(dto.getId()));
     }
 
 
@@ -187,6 +196,24 @@ public class SubcontractOrderController extends BaseController {
     public ApiResult<Void> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         subcontractOrderService.disApprove(dto.getIds());
         return success();
+    }
+
+    /**
+     * 结束交货
+     * @author Will
+     * @date: 2023/6/9 16:33
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/finishDelivery")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "scm:subcontractOrder:finishDelivery",
+            serviceClass = SubcontractOrderService.class,
+            keyIdName = "ids")
+    public ApiResult finishDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = subcontractOrderService.finishDelivery(dto.getIds());
+        return result == true ? success() : failure();
     }
 
 

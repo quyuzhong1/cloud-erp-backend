@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.*;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author Will
@@ -91,5 +92,23 @@ public class MachineSubComponentsDTO implements Serializable {
          */
         private Integer itemQty;
 
+        /**
+         * bom版本
+         */
+        private Integer bomVersion;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class BomViewDTO  {
+        /**
+         * bom版本
+         */
+        private Integer bomVersion;
+
+        /**
+         * 集合
+         */
+        private List<ViewDTO> list;
     }
 }

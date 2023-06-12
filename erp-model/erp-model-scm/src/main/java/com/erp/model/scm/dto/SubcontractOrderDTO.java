@@ -231,6 +231,21 @@ public class SubcontractOrderDTO implements Serializable {
         private String createUserName;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseOrderListDTO {
+
+        /**
+         * 是否是父级SKU
+         */
+        private Boolean isParent;
+
+        /**
+         * 采购列表信息
+         */
+        private PurchaseOrderDTO.ListDTO purchaseOrderDTO;
+    }
+
     /**
     * 导出Excel
     */

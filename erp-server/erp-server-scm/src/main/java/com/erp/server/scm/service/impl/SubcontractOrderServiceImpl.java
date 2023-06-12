@@ -122,6 +122,16 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         }
     }
 
+    @Override
+    public List<SubcontractOrderDTO.PurchaseOrderListDTO> listPurchaseOrderByDetailId(String detailId) {
+        return null;
+    }
+
+    @Override
+    public Boolean finishDelivery(List<String> ids) {
+        return null;
+    }
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override

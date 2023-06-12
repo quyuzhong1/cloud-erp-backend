@@ -20,6 +20,11 @@ import java.io.Serializable;
 public class BomChildrenSkuDTO  implements Serializable {
 
     /**
+     * bom版本
+     */
+    private Integer bomVersion;
+
+    /**
      * 父级skuId
      */
     private String parentSkuId;
