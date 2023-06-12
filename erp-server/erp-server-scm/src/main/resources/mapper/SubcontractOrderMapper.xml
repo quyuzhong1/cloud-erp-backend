@@ -47,6 +47,7 @@
         so.approve_status as approveStatus,
         so.invalid_status as invalidStatus,
         sod.arrival_status as arrivalStatus,
+        sod.sku_id as skuId,
         sod.sku_no as skuNo,
         sod.bom_version as bomVersion,
         sod.qty,
@@ -63,7 +64,7 @@
         from subcontract_order so
         inner join subcontract_order_detail sod on so.id = sod.main_id and sod.is_deleted = false
         <where>
-            so.is_deleted = false
+            so.is_deleted = false and sod.parent_id = ''
             <if test="params.searchType != null and params.searchType != ''">
                 and so.approve_status like concat('%',#{params.searchType},'%')
             </if>
@@ -137,7 +138,7 @@
         so.create_time desc
     </select>
 
-    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+    <select id="listCount" resultType="java.lang.Integer">
         select
         count(distinct so.id)
         from subcontract_order so
