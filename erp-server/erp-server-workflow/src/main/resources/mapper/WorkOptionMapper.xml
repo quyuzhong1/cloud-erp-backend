@@ -160,7 +160,7 @@
             AND ptm.cur_approve_id = #{params.userId}
         </if>
         <if test="params.status == 'carbonCopy'">
-            AND cc.cc_user_id = #{params.userId})
+            AND cc.cc_user_id = #{params.userId}
         </if>
         <if test="params.status == 'initiate'">
             AND ptm.create_user_id = #{params.userId}
