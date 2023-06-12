@@ -1,14 +1,12 @@
 package com.erp.server.scm.mapper;
-import com.erp.model.scm.entity.SubcontractOrderEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
-import org.apache.ibatis.annotations.Mapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import org.apache.ibatis.annotations.Param;
-
 import com.erp.model.scm.dto.SubcontractOrderDTO;
-import com.common.business.dto.base.ApproveStatusQtyDTO;
+import com.erp.model.scm.entity.SubcontractOrderEntity;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -36,7 +34,7 @@ public interface SubcontractOrderMapper extends BaseMapper<SubcontractOrderEntit
     * @param params
     * @return
     */
-    List<ApproveStatusQtyDTO> listCount(@Param("params") SubcontractOrderDTO.PagingParamDTO params);
+    Integer listCount(@Param("params") SubcontractOrderDTO.PagingParamDTO params);
 
     /**
     * 导出Excel查询

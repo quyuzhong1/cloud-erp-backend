@@ -1,15 +1,16 @@
 package com.erp.model.scm.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -159,6 +160,12 @@ public class SubcontractOrderDetailEntity extends BaseEntity<SubcontractOrderDet
     @TableField("source_detail_id")
     private String sourceDetailId;
 
+    /**
+     * 是否结束交货
+     */
+    @TableField("is_end_receive")
+    private Boolean isEndReceive;
+
 
     public static final String MAIN_ID = "main_id";
 
@@ -203,6 +210,9 @@ public class SubcontractOrderDetailEntity extends BaseEntity<SubcontractOrderDet
     public static final String PARENT_ID = "parent_id";
 
     public static final String SOURCE_DETAIL_ID = "source_detail_id";
+
+    public static final String IS_END_RECEIVE = "is_end_receive";
+
 
     @Override
     public Serializable pkVal() {

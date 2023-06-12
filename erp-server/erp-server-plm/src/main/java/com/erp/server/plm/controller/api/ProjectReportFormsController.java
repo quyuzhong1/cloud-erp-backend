@@ -1,10 +1,10 @@
-package com.erp.server.scm.controller.api;
+package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
+import com.erp.model.plm.dto.ProjectReportFormsDTO;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,16 +14,15 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * 报表管理
+ * 项目报表
  * @Author Luo_WG
- * @Date 2023/6/12 17:31
+ * @Date 2023/6/12 19:10
  **/
 @RestController
-@RequestMapping("/ReportFormsManage")
-public class ReportFormsManageController extends BaseController {
-
+@RequestMapping("/ProjectReportForms")
+public class ProjectReportFormsController extends BaseController {
     /**
-     * 采购业务汇总表
+     * 项目报表
      * @Author Luo_WG
      * @Date 2023/6/12 18:24
      * @param dto dto
@@ -32,14 +31,14 @@ public class ReportFormsManageController extends BaseController {
     @PostMapping(value = "/purchaseBusinessGatherTable")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "scm:ReportFormsManage:purchaseBusinessGatherTable",
+            menuCode = "scm:ProjectReportForms:purchaseBusinessGatherTable",
             tableAlias = "pod")
-    public ApiResult<List<PurchaseBusinessGatherTableDTO.PagingViewDTO>> purchaseBusinessGatherTable(@RequestBody PurchaseBusinessGatherTableDTO.PagingParamDTO dto) {
+    public ApiResult<List<ProjectReportFormsDTO.PagingViewDTO>> projectReportFormsPaging(@RequestBody ProjectReportFormsDTO.PagingParamDTO dto) {
         return null;
     }
 
     /**
-     * 导出采购业务汇总表
+     * 导出项目报表
      * @Author Luo_WG
      * @Date 2023/6/12 18:27
      * @param dto
@@ -49,9 +48,27 @@ public class ReportFormsManageController extends BaseController {
     @PostMapping(value = "/exportExcelPurchaseBusiness")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "scm:ReportFormsManage:exportExcelPurchaseBusiness",
+            menuCode = "scm:ProjectReportForms:exportExcelProjectReportForms",
             tableAlias = "pod")
-    public ApiResult exportExcelPurchaseBusiness(@RequestBody PurchaseBusinessGatherTableDTO.PagingParamDTO dto, HttpServletResponse response) {
+    public ApiResult exportExcelProjectReportForms(@RequestBody ProjectReportFormsDTO.PagingParamDTO dto, HttpServletResponse response) {
+        Boolean flag = Boolean.TRUE;
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 导出项目任务明细
+     * @Author Luo_WG
+     * @Date 2023/6/12 18:27
+     * @param dto
+     * @param response
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/exportExcelTaskDetail")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "scm:ProjectReportForms:exportExcelProjectReportForms",
+            tableAlias = "pod")
+    public ApiResult exportExcelTaskDetail(@RequestBody ProjectReportFormsDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean flag = Boolean.TRUE;
         return flag == true ? success() : failure();
     }

@@ -4,13 +4,15 @@ import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.ApproveStatusQtyDTO;
+import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
@@ -19,19 +21,25 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
+import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
+import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.scm.enums.PageListTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PurchaseListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.SubcontractOrderMapper;
 import com.erp.server.scm.service.CommonService;
 import com.erp.server.scm.service.ModuleOperateLogService;
+import com.erp.server.scm.service.SubcontractOrderDetailService;
 import com.erp.server.scm.service.SubcontractOrderService;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +51,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 /**
  * <p>
@@ -59,10 +66,18 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Autowired
     private SysUserFeign sysUserFeign;
+
     @Autowired
     private ModuleOperateLogService operateLogService;
+
     @Autowired
     private CommonService commonService;
+
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
+
+    @Autowired
+    private SubcontractOrderDetailService subcontractOrderDetailService;
 
     @Override
     public PagingVO<SubcontractOrderDTO.ListDTO> paging(PagingDTO<SubcontractOrderDTO.PagingParamDTO> pagingParamDTO) {
@@ -81,25 +96,36 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Override
     public List<SubcontractOrderDTO.TabListDTO> tabList(PermissionsDTO param) {
-        SubcontractOrderDTO.PagingParamDTO searchParam = new SubcontractOrderDTO.PagingParamDTO();
-        searchParam.setPermissionSql(param.getPermissionSql());
-        List<ApproveStatusQtyDTO> statusList = this.baseMapper.listCount(searchParam);
-
-        // 根据状态转换成map
-        Map<String,ApproveStatusQtyDTO> statusMap = statusList.stream().collect(Collectors.toMap(ApproveStatusQtyDTO::getApproveStatus, Function.identity()));
-
-        // 只返回待审核、已审核、审核不通过的数据
-        List<SubcontractOrderDTO.TabListDTO> resultList = Lists.newArrayListWithExpectedSize(3);
-        Arrays.asList(PageListTypeEnum.values()).stream().forEach(purchaseChangeType -> {
-            // 获取对应的业务单据状态
-            List<ApproveStatusEnum> approveStatusEnumList = purchaseChangeType.getApproveStatusList();
-            Integer statusQty = approveStatusEnumList.stream().mapToInt(approveStatus-> {
-               return statusMap.getOrDefault(approveStatus.getStatus(), new ApproveStatusQtyDTO()).getCount();
-            }).sum();
-            SubcontractOrderDTO.TabListDTO tab = new SubcontractOrderDTO.TabListDTO(purchaseChangeType.getCode(), statusQty);
-            resultList.add(tab);
-        });
-        return resultList;
+        PurchaseListTypeEnum[] values = PurchaseListTypeEnum.values();
+        List<SubcontractOrderDTO.TabListDTO> list = new ArrayList<>();
+        for (PurchaseListTypeEnum item : values) {
+            SubcontractOrderDTO.PagingParamDTO searchParamDTO = new SubcontractOrderDTO.PagingParamDTO();
+            searchParamDTO.setPermissionSql(param.getPermissionSql());
+            SubcontractOrderDTO.TabListDTO resultDTO = new SubcontractOrderDTO.TabListDTO();
+            Integer count = MathUtil.ZERO;
+            if (PurchaseListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                count = this.baseMapper.listCount(searchParamDTO);
+            }
+            if (PurchaseListTypeEnum.TO_BE_CREATE.getCode().equals(item.getCode())) {
+                searchParamDTO.setArrivalStatusList(Arrays.asList(ArrivalStatusEnum.NON_ARRIVAL.getCode(), ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode()));
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                count = this.baseMapper.listCount(searchParamDTO);
+            }
+            if (PurchaseListTypeEnum.CREATED.getCode().equals(item.getCode())) {
+                searchParamDTO.setArrivalStatusList(Arrays.asList(ArrivalStatusEnum.ARRIVED.getCode()));
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                count = this.baseMapper.listCount(searchParamDTO);
+            }
+            if (PurchaseListTypeEnum.REJECT.getCode().equals(item.getCode())) {
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+                count = this.baseMapper.listCount(searchParamDTO);
+            }
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setSearchType(item.getCode());
+            list.add(resultDTO);
+        }
+        return list;
     }
 
     @Override
@@ -131,7 +157,20 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Override
     public Boolean finishDelivery(List<String> ids, String remark) {
-        return null;
+        List<SubcontractOrderDetailEntity> detailList = subcontractOrderDetailService.listByIds(ids);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_98070);
+        }
+        long count = detailList.stream().filter(obj -> !ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode().equals(obj.getArrivalStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98035);
+        }
+        //更新明细中的交货状态
+        subcontractOrderDetailService.updateArrivalStatusByIds(ArrivalStatusEnum.ARRIVED.getCode(), ids);
+        //操作日志
+        List<Pair<String, String>> pairList = detailList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("SKU【%s】结束交货", ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "结束交货操作");
+        return Boolean.TRUE;
     }
 
 
@@ -147,18 +186,17 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
         log.info("开始新增委外订单");
         // 生成单号
-        // TODO 此处的null需填写生成单号的分类和类型，category查看BusinessNoConstant，type查看BusinessNoTypeEnum枚举类
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(null, null));
+        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.SUB, BusinessNoTypeEnum.CODE_SUB.getCode()));
         subcontractOrderEntity.setCode(code);
         boolean save = super.save(subcontractOrderEntity);
         if(!save) {
            throw new ServiceException("委外订单保存失败");
         }
+        //新增明细
+        subcontractOrderDetailService.add(addDTO.getDetailList(),subcontractOrderEntity.getId());
 
         // 操作日志
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(String.format("新增了一个委外订单【%s】", code), null, subcontractOrderEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        operateLogService.addModuleOperateLog(String.format("新增了一个委外订单【%s】", code), ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), subcontractOrderEntity.getId(), "新增操作");
         return subcontractOrderEntity.getId();
     }
 
@@ -186,12 +224,12 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
            throw new ServiceException("委外订单保存失败");
         }
 
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        //新增明细
+        subcontractOrderDetailService.update(updateDTO.getDetailList(),subcontractOrderEntity.getId());
 
         // 记录主单操作日志
         log.info("编辑 开始记录委外订单日志数据，单号：【{}】", subcontractOrderEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, subcontractOrderEntity, null, subcontractOrderEntity.getId(), "", "");
+        operateLogService.addModuleOperateLogByObj(old, subcontractOrderEntity, ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), subcontractOrderEntity.getId(), "", "");
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -219,8 +257,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
        // 记录操作日志
        log.info("提交 开始记录委外订单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-       // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-       operateLogService.batchAddModuleOperateLog("提交了一个委外订单【%s】", null, pairList, "提交操作");
+       operateLogService.batchAddModuleOperateLog("提交了一个委外订单【%s】", ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "提交操作");
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -272,10 +309,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         updateForApprove(ids, approveStatus.getStatus());
 
         // 操作日志
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个委外订单", approveType.getName()).concat("【%s】").concat(StrUtils.isNotEmpty(dto.getComment()) ? String.format("，意见：%s", dto.getComment()) : ""),
-                            null, pairList, "审核操作");
+                ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "审核操作");
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -297,9 +333,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         updateForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("反审核了一个委外订单【%s】", null, pairList, "反审核操作");
+        operateLogService.batchAddModuleOperateLog("反审核了一个委外订单【%s】", ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "反审核操作");
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -318,7 +353,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
        log.info("删除 开始删除委外订单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
        operateLogService.removeByBusinessIds(ids);
 
-       // TODO 删除明细数据（如果有明细数据的话）
+       // 删除明细数据（如果有明细数据的话）
+       subcontractOrderDetailService.removeByMainIds(ids);
+
 
        // 删除主单数据
        log.info("删除 开始删除委外订单主单数据，id集合：【{}】", JSONObject.toJSONString(ids));
@@ -346,15 +383,16 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //操作日志
         log.info("撤销 开始记录操作日志，id集合：【{}】", JSONObject.toJSONString(ids));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.batchAddModuleOperateLog("委外订单【%s】取消流程", null, pairList, "取消流程操作");
+        operateLogService.batchAddModuleOperateLog("委外订单【%s】取消流程", ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "取消流程操作");
     }
 
     @Override
     public SubcontractOrderDTO.ViewDTO view(String id) {
         SubcontractOrderEntity subcontractOrderEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到委外订单数据"));
         SubcontractOrderDTO.ViewDTO data = BeanMapperUtils.map(SubcontractOrderDTO.ViewDTO.class, subcontractOrderEntity);
-        // TODO 查询明细数据（如果有的话）
+        //委外订单明细数据
+        subcontractOrderDetailService.listByMainId(id);
+
         return data;
     }
 
@@ -425,12 +463,22 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if(CollUtil.isEmpty(list)) {
            return;
         }
+        List<String> skuIds = list.stream().map(SubcontractOrderDTO.ListDTO::getSkuId).collect(Collectors.toList());
+
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
         // 属性赋值
         for(SubcontractOrderDTO.ListDTO data : list) {
+            //sku信息
+            if (CollectionUtils.isNotEmpty(skuList)) {
+                SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(data.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(skuVO)) {
+                    data.setProductName(skuVO.getSkuName());
+                }
+            }
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+            data.setArrivalStatusName(ArrivalStatusEnum.getNameByCode(data.getArrivalStatus()));
         }
     }
 

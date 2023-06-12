@@ -81,4 +81,10 @@ public interface BusinessNoConstant {
     String KHDZ = "KHDZ";
     //客户联系人编号
     String KHLXR = "KHLXR";
+
+    //委外订单单
+    String SUB = "SUB";
+
+    //委外变更单
+    String SUBCH = "SUBCH";
 }

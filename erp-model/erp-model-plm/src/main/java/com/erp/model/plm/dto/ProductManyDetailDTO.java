@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
 import com.erp.model.plm.entity.ProductVariantOptionEntity;
@@ -78,5 +79,9 @@ public class ProductManyDetailDTO {
      */
     private List<ProductAttestationDTO> productAttestationList;
 
+    /**
+     * 目的国海关编码信息
+     */
+    private List<ProductCustomsEntity> productCustomsList;
 
 }

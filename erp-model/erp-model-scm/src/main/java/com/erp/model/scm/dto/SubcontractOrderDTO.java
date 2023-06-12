@@ -171,6 +171,10 @@ public class SubcontractOrderDTO implements Serializable {
         private String arrivalStatusName;
 
         /**
+         * skuId
+         */
+        private String skuId;
+        /**
          * skuNo
          */
         private String skuNo;
