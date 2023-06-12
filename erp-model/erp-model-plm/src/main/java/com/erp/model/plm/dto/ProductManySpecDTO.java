@@ -85,4 +85,10 @@ public class ProductManySpecDTO {
      */
     @Valid
     private List<ProductAttestationDTO> productAttestationList;
+
+    /**
+     * 目的国海关编码信息
+     */
+    @Valid
+    private List<ProductCustomsDTO> productCustomsDTOList;
 }
