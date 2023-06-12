@@ -48,7 +48,8 @@ public enum InventoryBusinessTypeEnum {
 
     INSTOCK_FORCAST("instock_forcast", "21","入库预报"),
 
-    INVENTORY_ADJUST("inventory_adjust", "22","库存调整单"),// TODO 暂不确定是否需要该业务，无法确定状态
+    // TODO 暂不确定是否需要该业务，无法确定状态
+    INVENTORY_ADJUST("inventory_adjust", "22","库存调整单"),
 
     ASSEMBLE_IN_CHILDD("assemble_in_child", "23","加工单组装（子SKU减少）"),
     DISASSEMBLE_IN_CHILD("disassemble_in_child", "24","加工单拆卸（子SKU增加）"),

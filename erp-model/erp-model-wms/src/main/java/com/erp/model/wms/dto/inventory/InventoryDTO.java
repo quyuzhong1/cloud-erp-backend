@@ -18,7 +18,9 @@ import java.util.List;
  * @CreateTime: 2023-05-08  18:42
  * @Author: zhangchunlin
  */
-public class InventoryDTO {
+@Data
+@NoArgsConstructor
+public class InventoryDTO implements Serializable {
 
 
     /**

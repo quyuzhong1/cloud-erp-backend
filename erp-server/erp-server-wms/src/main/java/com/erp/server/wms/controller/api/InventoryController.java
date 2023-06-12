@@ -1,20 +1,20 @@
 package com.erp.server.wms.controller.api;
 
+import com.common.business.dto.base.BaseSelectDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
+import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.TransactionFlowService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * 库存报表管理
@@ -120,6 +120,67 @@ public class InventoryController extends BaseController {
     public ApiResult<Integer> getUsableInventoryTotal(@RequestBody @Validated InventoryDTO.UsableInventoryParamDTO dto) {
         Integer usableInventoryTotal = inventoryService.getUsableInventoryTotal(dto.getWarehouseId(), dto.getSkuId(), dto.getWarehouseLocation());
         return success(usableInventoryTotal);
+    }
+
+    /**
+     * 在途库存分页列表
+     * @param dto
+     * @return
+     */
+    @PostMapping("/transport/paging")
+    public ApiResult<PagingVO<InventoryReportDTO.TransportPagingDTO>> transportPaging(@RequestBody @Validated PagingDTO<InventoryReportDTO.TransportSearchParamDTO> dto) {
+        return success(null);
+    }
+
+    /**
+     * 在途库存导出
+     * @param dto
+     * @param response
+     * @return
+     */
+    @PostMapping(value = "/exportTransport")
+    public void exportTransport(@RequestBody InventoryReportDTO.ExportTransportSearchParamDTO dto, HttpServletResponse response) {
+
+    }
+
+    /**
+     * 在途库存单据明细单据类型tab
+     * @return
+     */
+    @GetMapping("/transport/sourceTypeTab")
+    public ApiResult<List<BaseSelectDTO>> transportSourceTypeTab( ) {
+        return success(null);
+    }
+
+    /**
+     * 在途库存单据明细分页列表
+     * @param dto
+     * @return
+     */
+    @PostMapping("/transport/list")
+    public ApiResult<PagingVO<InventoryReportDTO.ListTransportPagingDTO>> transportList(@RequestBody @Validated PagingDTO<InventoryReportDTO.ListTransportSearchParam> dto) {
+        return success(null);
+    }
+
+    /**
+     * 库龄计算表分页列表
+     * @param dto
+     * @return
+     */
+    @PostMapping("/inventoryAge/paging")
+    public ApiResult<PagingVO<InventoryReportDTO.InventoryAgePagingDTO>> inventoryAgePaging(@RequestBody @Validated PagingDTO<InventoryReportDTO.InventoryAgeSearchParamDTO> dto) {
+        return success(null);
+    }
+
+    /**
+     * 库龄计算表导出
+     * @param dto
+     * @param response
+     * @return
+     */
+    @PostMapping(value = "/exportInventoryAge")
+    public void exportInventoryAge(@RequestBody InventoryReportDTO.ExportInventoryAgeSearchParamDTO dto, HttpServletResponse response) {
+
     }
 
 }

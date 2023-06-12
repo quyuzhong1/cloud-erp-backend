@@ -40,7 +40,6 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 </#if>
 import com.common.business.enums.ApproveTypeEnum;
-import com.erp.model.scm.enums.PageListTypeEnum;
 <#if fieldMap["approveUserId"]?? && fieldMap["approveUserName"]??>
 import com.common.business.vo.LoginUser;
 </#if>
@@ -109,23 +108,8 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     public List<${table.dtoName}.TabListDTO> tabList(PermissionsDTO param) {
         ${table.dtoName}.PagingParamDTO searchParam = new ${table.dtoName}.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
-        List<ApproveStatusQtyDTO> statusList = this.baseMapper.listCount(searchParam);
 
-        // 根据状态转换成map
-        Map<String,ApproveStatusQtyDTO> statusMap = statusList.stream().collect(Collectors.toMap(ApproveStatusQtyDTO::getApproveStatus, Function.identity()));
-
-        // 只返回待审核、已审核、审核不通过的数据
-        List<${table.dtoName}.TabListDTO> resultList = Lists.newArrayListWithExpectedSize(3);
-        Arrays.asList(PurchaseChangeListTypeEnum.values()).stream().forEach(purchaseChangeType -> {
-            // 获取对应的业务单据状态
-            List<ApproveStatusEnum> approveStatusEnumList = purchaseChangeType.getApproveStatusList();
-            Integer statusQty = approveStatusEnumList.stream().mapToInt(approveStatus-> {
-               return statusMap.getOrDefault(approveStatus.getStatus(), new ApproveStatusQtyDTO()).getCount();
-            }).sum();
-            ${table.dtoName}.TabListDTO tab = new ${table.dtoName}.TabListDTO(purchaseChangeType.getCode(), statusQty);
-            resultList.add(tab);
-        });
-        return resultList;
+        return null;
     }
 
     @Override
