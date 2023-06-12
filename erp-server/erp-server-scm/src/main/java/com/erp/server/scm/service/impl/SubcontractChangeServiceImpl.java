@@ -83,21 +83,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         searchParam.setPermissionSql(param.getPermissionSql());
         List<ApproveStatusQtyDTO> statusList = this.baseMapper.listCount(searchParam);
 
-        // 根据状态转换成map
-        Map<String,ApproveStatusQtyDTO> statusMap = statusList.stream().collect(Collectors.toMap(ApproveStatusQtyDTO::getApproveStatus, Function.identity()));
-
-        // 只返回待审核、已审核、审核不通过的数据
-        List<SubcontractChangeDTO.TabListDTO> resultList = Lists.newArrayListWithExpectedSize(3);
-        Arrays.asList(PageListTypeEnum.values()).stream().forEach(purchaseChangeType -> {
-            // 获取对应的业务单据状态
-            List<ApproveStatusEnum> approveStatusEnumList = purchaseChangeType.getApproveStatusList();
-            Integer statusQty = approveStatusEnumList.stream().mapToInt(approveStatus-> {
-               return statusMap.getOrDefault(approveStatus.getStatus(), new ApproveStatusQtyDTO()).getCount();
-            }).sum();
-            SubcontractChangeDTO.TabListDTO tab = new SubcontractChangeDTO.TabListDTO(purchaseChangeType.getCode(), statusQty);
-            resultList.add(tab);
-        });
-        return resultList;
+        return null;
     }
 
     @Override

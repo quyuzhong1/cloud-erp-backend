@@ -48,6 +48,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.TransferOutMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -190,13 +191,17 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         Map<String,ApproveStatusQtyDTO> statusMap = statusList.stream().collect(Collectors.toMap(ApproveStatusQtyDTO::getApproveStatus, Function.identity()));
         // 只返回待审核、已审核、审核不通过的数据
         List<TransferOutDTO.TabListDTO> resultList = Lists.newArrayListWithExpectedSize(3);
-        Arrays.asList(PageListTypeEnum.values()).stream().forEach(purchaseChangeType -> {
+        Map<PageListTypeEnum, List<ApproveStatusEnum>> pageApproveStatusMap = Maps.newHashMap();
+        pageApproveStatusMap.put(PageListTypeEnum.TO_BE_APPROVE,  Lists.newArrayList(ApproveStatusEnum.APPROVE_ING));
+        pageApproveStatusMap.put(PageListTypeEnum.APPROVE,  Lists.newArrayList(ApproveStatusEnum.APPROVE));
+        pageApproveStatusMap.put(PageListTypeEnum.REJECT,  Lists.newArrayList(ApproveStatusEnum.REJECT));
+        Arrays.asList(PageListTypeEnum.values()).stream().forEach(pageListTypeEnum -> {
             // 获取对应的业务单据状态
-            List<ApproveStatusEnum> approveStatusEnumList = purchaseChangeType.getApproveStatusList();
+            List<ApproveStatusEnum> approveStatusEnumList = pageApproveStatusMap.get(pageListTypeEnum);
             Integer statusQty = approveStatusEnumList.stream().mapToInt(approveStatus-> {
                 return statusMap.getOrDefault(approveStatus.getStatus(), new ApproveStatusQtyDTO()).getCount();
             }).sum();
-            TransferOutDTO.TabListDTO tab = new TransferOutDTO.TabListDTO(purchaseChangeType.getCode(), statusQty);
+            TransferOutDTO.TabListDTO tab = new TransferOutDTO.TabListDTO(pageListTypeEnum.getCode(), statusQty);
             resultList.add(tab);
         });
         return resultList;

@@ -1535,8 +1535,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<String> podIds = details.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
         //收货信息
         List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
-        //退货数量
-        List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
 
         poMap.forEach((mainId, po)->{
             InstockForcastDTO.FinishDeliveryDTO inventoryDTO = new InstockForcastDTO.FinishDeliveryDTO();
@@ -1550,16 +1548,15 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 inventoryMember.setSkuNo(member.getSkuNo());
                 inventoryMember.setPurchaseOrderDetailId(member.getId());
                 Integer qty = MathUtil.ZERO;
-                Integer returnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(member.getId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (CollectionUtils.isNotEmpty(receiveDetailList)) {
                     //已到货数据待收货数量默认给0
                     if (!ArrivalStatusEnum.ARRIVED.getCode().equals(member.getArrivalStatus())) {
-                        // TODO 此处需过滤为审核通过的，只有审核通过的才占用库存数量
-                        qty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(member.getId()))
+                        // 此处收货单需过滤为审核通过的，只有审核通过的才占用库存数量
+                        qty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(member.getId()) && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
                                 .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                     }
                 }
-                Integer deliveryQty = member.getPurchaseQty() + returnQty - qty;
+                Integer deliveryQty = member.getPurchaseQty() - qty;
                 inventoryMember.setQty(deliveryQty);// 待交货量计算
                 inventoryMembers.add(inventoryMember);
             });
