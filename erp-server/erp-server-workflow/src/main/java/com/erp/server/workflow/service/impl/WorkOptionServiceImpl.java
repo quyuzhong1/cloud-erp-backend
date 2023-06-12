@@ -394,7 +394,10 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 approveSearchOptionDTO.setStatus(optionEnum.getCode());
                 approveSearchOptionDTO.setStatusName(ApproveSearchOptionEnum.getName(optionEnum.getCode()));
                 approveSearchOptionDTO.setQuantity(quantity);
-                approveSearchOptionDTO.setModuleList(new ArrayList<>());
+                for (WorkOptionDTO.Module module : approveCount) {
+                    module.setSysClassifyName(SysClassifyEnum.getName(module.getSysClassify()));
+                }
+                approveSearchOptionDTO.setModuleList(approveCount);
                 list.add(approveSearchOptionDTO);
             } else if (optionEnum.getCode().equals(ApproveSearchOptionEnum.INITIATE.getCode())) {
                 WorkOptionDTO.ApproveSearchOptionDTO approveSearchOptionDTO = new WorkOptionDTO.ApproveSearchOptionDTO();

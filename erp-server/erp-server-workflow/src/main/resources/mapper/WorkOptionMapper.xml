@@ -105,7 +105,6 @@
         WHERE 1 = 1
         AND (pm.approve_status = #{approveStatus} OR pm.approve_status = 'reject')
         AND ptm.cur_approve_id = #{userId}
-        AND wm.sys_classify = #{sysClassify}
         GROUP BY wm.sys_classify
     </select>
 
@@ -118,7 +117,6 @@
         LEFT JOIN work_menu wm ON pm.business_key = wm.module_code
         WHERE 1 = 1
         AND ptm.create_user_id = #{userId}
-        AND wm.sys_classify = #{sysClassify}
         GROUP BY wm.sys_classify
     </select>
 
@@ -127,12 +125,11 @@
         count(*) AS quantity,
         wm.sys_classify
         FROM process_management pm
-        LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
-        LEFT JOIN work_menu wm ON pm.business_key = wm.module_code
-        INNER JOIN process_task_cc cc ON ptm.id = cc.task_management_id
+        INNER JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
+        INNER JOIN work_menu wm ON pm.business_key = wm.module_code
+        LEFT JOIN process_task_cc cc ON cc.task_management_id = ptm.id
         WHERE 1 = 1
-        AND ptm.create_user_id = #{userId}
-        AND wm.sys_classify = #{sysClassify}
+        AND cc.cc_user_id = #{userId}
         GROUP BY wm.sys_classify
     </select>
 
@@ -152,6 +149,7 @@
         FROM process_management pm
         INNER JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
         INNER JOIN work_menu wm ON pm.business_key = wm.module_code
+        LEFT JOIN process_task_cc cc ON cc.task_management_id = ptm.id
         WHERE 1 = 1
         <if test="params.status == 'waitHandle'">
             AND pm.approve_status = 'approveIng'
@@ -162,10 +160,10 @@
             AND ptm.cur_approve_id = #{params.userId}
         </if>
         <if test="params.status == 'carbonCopy'">
-            AND ptm.id IN (SELECT task_management_id FROM process_task_cc)
+            AND cc.cc_user_id = #{params.userId})
         </if>
         <if test="params.status == 'initiate'">
-            AND ptm.cur_approve_id = #{params.userId}
+            AND ptm.create_user_id = #{params.userId}
         </if>
 
         <if test="params.sysClassifyList != null and params.sysClassifyList.size > 0">
