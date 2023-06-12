@@ -31,7 +31,7 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
+import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
@@ -405,22 +405,22 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
     @Override
     public List<ListStatusCountDTO.PurchaseChangeCountDTO> listCount(PermissionsDTO dto) {
-        PurchaseChangeListTypeEnum[] values = PurchaseChangeListTypeEnum.values();
+        PageListTypeEnum[] values = PageListTypeEnum.values();
         List<ListStatusCountDTO.PurchaseChangeCountDTO> list = new ArrayList<>();
-        for (PurchaseChangeListTypeEnum item: values) {
+        for (PageListTypeEnum item: values) {
             PurchaseChangeDTO.SearchParamDTO searchParamDTO = new PurchaseChangeDTO.SearchParamDTO();
             searchParamDTO.setPermissionSql(dto.getPermissionSql());
             ListStatusCountDTO.PurchaseChangeCountDTO resultDTO = new ListStatusCountDTO.PurchaseChangeCountDTO();
             Integer count = MathUtil.ZERO;
-            if (PurchaseChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
+            if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
                 searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(searchParamDTO);
             }
-            if (PurchaseChangeListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
+            if (PageListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
                 searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(searchParamDTO);
             }
-            if (PurchaseChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
+            if (PageListTypeEnum.REJECT.getCode().equals(item.getCode())) {
                 searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
                 count = this.baseMapper.listCount(searchParamDTO);
             }

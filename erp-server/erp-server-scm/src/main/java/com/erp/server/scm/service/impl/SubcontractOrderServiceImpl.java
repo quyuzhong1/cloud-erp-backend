@@ -22,7 +22,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
+import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.SubcontractOrderMapper;
@@ -88,7 +88,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
         // 只返回待审核、已审核、审核不通过的数据
         List<SubcontractOrderDTO.TabListDTO> resultList = Lists.newArrayListWithExpectedSize(3);
-        Arrays.asList(PurchaseChangeListTypeEnum.values()).stream().forEach(purchaseChangeType -> {
+        Arrays.asList(PageListTypeEnum.values()).stream().forEach(purchaseChangeType -> {
             // 获取对应的业务单据状态
             List<ApproveStatusEnum> approveStatusEnumList = purchaseChangeType.getApproveStatusList();
             Integer statusQty = approveStatusEnumList.stream().mapToInt(approveStatus-> {

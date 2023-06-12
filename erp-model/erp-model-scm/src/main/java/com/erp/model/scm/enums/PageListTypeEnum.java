@@ -11,7 +11,7 @@ import java.util.List;
  * @description: TODO
  * @date 2023/3/27 10:52
  */
-public enum PurchaseChangeListTypeEnum {
+public enum PageListTypeEnum {
 
     TO_BE_APPROVE("toBeApprove", "待审批", Lists.newArrayList(ApproveStatusEnum.APPROVE_ING)),
     APPROVE("approve", "审核通过", Lists.newArrayList(ApproveStatusEnum.APPROVE)),
@@ -24,12 +24,12 @@ public enum PurchaseChangeListTypeEnum {
     // 业务单据状态
     private List<ApproveStatusEnum> approveStatusList;
 
-    PurchaseChangeListTypeEnum(String code, String name) {
+    PageListTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
 
-    PurchaseChangeListTypeEnum(String code, String name, List<ApproveStatusEnum> approveStatusList) {
+    PageListTypeEnum(String code, String name, List<ApproveStatusEnum> approveStatusList) {
         this.code = code;
         this.name = name;
         this.approveStatusList = approveStatusList;

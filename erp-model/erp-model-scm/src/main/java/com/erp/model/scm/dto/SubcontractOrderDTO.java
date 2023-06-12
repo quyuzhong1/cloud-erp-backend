@@ -131,61 +131,44 @@ public class SubcontractOrderDTO implements Serializable {
          */
         private String detailId;
         /**
+         * 单据编号
+         */
+        private String code;
+        /**
+         * 来源编码
+         */
+        private String sourceCode;
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+        /**
         * 审核状态
         */
         private String approveStatus;
         /**
-        * 单据编号
-        */
-        private String code;
-        /**
-        * 单据日期
-        */
-        private LocalDate billDate;
-        /**
-        * 采购部门id
-        */
-        private String deptId;
-        /**
-        * 采购部门名称
-        */
-        private String deptName;
-        /**
-        * 作废状态（false未作废，true已作废）
-        */
-        private Boolean invalidStatus;
-        /**
-        * 作废时间
-        */
-        private LocalDateTime invalidTime;
-        /**
-        * 审核时间
-        */
-        private LocalDateTime approveTime;
-        /**
-        * 来源id
-        */
-        private String sourceId;
-        /**
-        * 来源类型
-        */
-        private String sourceType;
-        /**
-        * 来源编码
-        */
-        private String sourceCode;
-        /**
-        * 审核状态名称
-        */
+         * 审核状态名称
+         */
         private String approveStatusName;
         /**
-        * 作废状态名称
-        */
-        private String invalidStatusName;
+         * 作废状态（false未作废，true已作废）
+         */
+        private Boolean invalidStatus;
         /**
-        * sku id
-        */
-        private String skuId;
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+
+        /**
+         * 到货状态
+         */
+        private String arrivalStatus;
+
+        /**
+         * 到货状态名称
+         */
+        private String arrivalStatusName;
+
         /**
          * skuNo
          */
@@ -206,7 +189,12 @@ public class SubcontractOrderDTO implements Serializable {
         private Integer qty;
 
         /**
-         * 收货数量
+         * 领料数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 已收货数量
          */
         private Integer receiveQty;
 

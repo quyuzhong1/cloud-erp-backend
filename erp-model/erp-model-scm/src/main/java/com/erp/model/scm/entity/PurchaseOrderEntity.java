@@ -147,6 +147,24 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
     private String invalidRemark;
 
     /**
+     * 来源id
+     */
+    @TableField("source_id")
+    private String sourceId;
+
+    /**
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
+
+    /**
+     * 是否是委外
+     */
+    @TableField("is_subcontract")
+    private Boolean isSubcontract;
+
+    /**
      * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
      */
     @TableField("sync_kingdee_status")

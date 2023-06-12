@@ -25,7 +25,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
+import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.ExportTransferOutExcelDTO;
@@ -148,7 +148,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Override
     public PagingVO<TransferOutDTO.PagingViewDTO> paging(PagingDTO<TransferOutDTO.PagingParamDTO> pagingParamDTO) {
-        if(Objects.equals(pagingParamDTO.getParams().getSearchType(), PurchaseChangeListTypeEnum.TO_BE_APPROVE.getCode())) {
+        if(Objects.equals(pagingParamDTO.getParams().getSearchType(), PageListTypeEnum.TO_BE_APPROVE.getCode())) {
             pagingParamDTO.getParams().setSearchType(ApproveStatusEnum.APPROVE_ING.getStatus());
         }
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -190,7 +190,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         Map<String,ApproveStatusQtyDTO> statusMap = statusList.stream().collect(Collectors.toMap(ApproveStatusQtyDTO::getApproveStatus, Function.identity()));
         // 只返回待审核、已审核、审核不通过的数据
         List<TransferOutDTO.TabListDTO> resultList = Lists.newArrayListWithExpectedSize(3);
-        Arrays.asList(PurchaseChangeListTypeEnum.values()).stream().forEach(purchaseChangeType -> {
+        Arrays.asList(PageListTypeEnum.values()).stream().forEach(purchaseChangeType -> {
             // 获取对应的业务单据状态
             List<ApproveStatusEnum> approveStatusEnumList = purchaseChangeType.getApproveStatusList();
             Integer statusQty = approveStatusEnumList.stream().mapToInt(approveStatus-> {

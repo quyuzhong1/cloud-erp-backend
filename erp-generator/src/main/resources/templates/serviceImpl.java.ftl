@@ -40,7 +40,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 </#if>
 import com.common.business.enums.ApproveTypeEnum;
-import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
+import com.erp.model.scm.enums.PageListTypeEnum;
 <#if fieldMap["approveUserId"]?? && fieldMap["approveUserName"]??>
 import com.common.business.vo.LoginUser;
 </#if>
