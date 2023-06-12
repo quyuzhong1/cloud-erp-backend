@@ -238,7 +238,9 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             String arriveStatus = member.getArriveStatus();
             Integer changeQty = 0;
             InventoryModeEnum inventoryModeEnum;
-            if(Objects.equals(ArrivalStatusEnum.ARRIVED.getCode(), arriveStatus)) { // 已到货，直接为新数量
+            // 已到货（包括结束交货），如果存在收货单存在待检的情况下，需考虑扣除待检的数量
+            if(Objects.equals(ArrivalStatusEnum.ARRIVED.getCode(), arriveStatus)) {
+                // 此处需考虑待检的数量，因为数量被拆分成了在途和待检
                 changeQty = member.getQty();
                 inventoryModeEnum = InventoryModeEnum.IN_STOCK;
             } else {

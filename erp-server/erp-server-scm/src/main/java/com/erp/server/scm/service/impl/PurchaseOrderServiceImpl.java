@@ -1554,6 +1554,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 if (CollectionUtils.isNotEmpty(receiveDetailList)) {
                     //已到货数据待收货数量默认给0
                     if (!ArrivalStatusEnum.ARRIVED.getCode().equals(member.getArrivalStatus())) {
+                        // TODO 此处需过滤为审核通过的，只有审核通过的才占用库存数量
                         qty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(member.getId()))
                                 .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                     }
