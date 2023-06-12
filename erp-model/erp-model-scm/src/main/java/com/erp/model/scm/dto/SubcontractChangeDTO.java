@@ -21,7 +21,7 @@ import java.util.List;
 */
 @Data
 @NoArgsConstructor
-public class SubcontractChangeOrderDTO implements Serializable {
+public class SubcontractChangeDTO implements Serializable {
 
 
      /**
@@ -224,6 +224,11 @@ public class SubcontractChangeOrderDTO implements Serializable {
         * 创建人名称
         */
         private String createUserName;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
     /**
@@ -306,9 +311,19 @@ public class SubcontractChangeOrderDTO implements Serializable {
         private String deptName;
 
         /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
          * 变更明细
          */
-        private List<SubcontractChangeDetailOrderDTO.ViewDTO> detailList;
+        private List<SubcontractChangeDetailDTO.ViewDTO> detailList;
     }
 
     /**
@@ -321,7 +336,7 @@ public class SubcontractChangeOrderDTO implements Serializable {
         /**
          * 变更明细
          */
-        private List<SubcontractChangeDetailOrderDTO.AddDTO> detailList;
+        private List<SubcontractChangeDetailDTO.AddDTO> detailList;
     }
 
     /**
@@ -334,12 +349,11 @@ public class SubcontractChangeOrderDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
         /**
          * 变更明细
          */
-        private List<SubcontractChangeDetailOrderDTO.UpdateDTO> detailList;
+        private List<SubcontractChangeDetailDTO.UpdateDTO> detailList;
     }
 
     @Data

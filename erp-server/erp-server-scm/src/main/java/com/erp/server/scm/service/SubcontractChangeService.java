@@ -1,12 +1,14 @@
 package com.erp.server.scm.service;
-import com.erp.model.scm.entity.SubcontractChangeOrderEntity;
+
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
-
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.erp.model.scm.dto.SubcontractChangeOrderDTO;
+import com.erp.model.scm.dto.SubcontractChangeDTO;
+import com.erp.model.scm.entity.SubcontractChangeEntity;
 
- import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -17,7 +19,7 @@ import java.util.List;
  * @author will
  * @since 2023-06-08
  */
-public interface SubcontractChangeOrderService extends SuperService<SubcontractChangeOrderEntity> {
+public interface SubcontractChangeService extends SuperService<SubcontractChangeEntity> {
 
       /**
       * 分页列表查询
@@ -26,7 +28,7 @@ public interface SubcontractChangeOrderService extends SuperService<SubcontractC
       * @param pagingParamDTO
       * @return PagingVO<SubcontractChangeOrderDTO.ListDTO>>
       */
-      PagingVO<SubcontractChangeOrderDTO.ListDTO> paging(PagingDTO<SubcontractChangeOrderDTO.PagingParamDTO> pagingParamDTO);
+      PagingVO<SubcontractChangeDTO.ListDTO> paging(PagingDTO<SubcontractChangeDTO.PagingParamDTO> pagingParamDTO);
 
      /**
      * 状态统计
@@ -35,7 +37,7 @@ public interface SubcontractChangeOrderService extends SuperService<SubcontractC
      * @param dto
      * @return List<SubcontractChangeOrderDTO.TabListDTO>>
      */
-     List<SubcontractChangeOrderDTO.TabListDTO> tabList(PermissionsDTO dto);
+     List<SubcontractChangeDTO.TabListDTO> tabList(PermissionsDTO dto);
 
      /**
      * 详情
@@ -44,7 +46,7 @@ public interface SubcontractChangeOrderService extends SuperService<SubcontractC
      * @param id
      * @return
      */
-     SubcontractChangeOrderDTO.ViewDTO view(String id);
+     SubcontractChangeDTO.ViewDTO view(String id);
 
      /**
      * 新增
@@ -53,7 +55,7 @@ public interface SubcontractChangeOrderService extends SuperService<SubcontractC
      * @param dto
      * @return
      */
-     String add(SubcontractChangeOrderDTO.AddDTO dto);
+     String add(SubcontractChangeDTO.AddDTO dto);
 
      /**
      * 修改
@@ -62,7 +64,7 @@ public interface SubcontractChangeOrderService extends SuperService<SubcontractC
      * @param dto
      * @return
      */
-     void update(SubcontractChangeOrderDTO.UpdateDTO dto);
+     void update(SubcontractChangeDTO.UpdateDTO dto);
 
      /**
      * 新增并提交审核
@@ -71,7 +73,7 @@ public interface SubcontractChangeOrderService extends SuperService<SubcontractC
      * @param dto
      * @return
      */
-     void addAndSubmit(SubcontractChangeOrderDTO.AddDTO dto);
+     void addAndSubmit(SubcontractChangeDTO.AddDTO dto);
 
      /**
      * 修改并提交审核
@@ -80,7 +82,7 @@ public interface SubcontractChangeOrderService extends SuperService<SubcontractC
      * @param dto
      * @return
      */
-     void updateAndSubmit(SubcontractChangeOrderDTO.UpdateDTO dto);
+     void updateAndSubmit(SubcontractChangeDTO.UpdateDTO dto);
 
      /**
      * 提交审核
@@ -135,6 +137,6 @@ public interface SubcontractChangeOrderService extends SuperService<SubcontractC
     * @param response
     * @return
     */
-    void exportList(SubcontractChangeOrderDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(SubcontractChangeDTO.ExportDTO dto, HttpServletResponse response);
 
 }

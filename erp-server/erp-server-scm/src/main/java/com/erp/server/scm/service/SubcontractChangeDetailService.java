@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
-import com.erp.model.scm.entity.SubcontractChangeDetailOrderEntity;
+
 import com.common.business.service.SuperService;
+import com.erp.model.scm.entity.SubcontractChangeDetailEntity;
 
 
 /**
@@ -11,7 +12,7 @@ import com.common.business.service.SuperService;
  * @author will
  * @since 2023-06-08
  */
-public interface SubcontractChangeDetailOrderService extends SuperService<SubcontractChangeDetailOrderEntity> {
+public interface SubcontractChangeDetailService extends SuperService<SubcontractChangeDetailEntity> {
 
 
 }

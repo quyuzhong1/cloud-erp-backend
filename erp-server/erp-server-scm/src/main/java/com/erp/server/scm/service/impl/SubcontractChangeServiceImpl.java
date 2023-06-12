@@ -19,16 +19,16 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.scm.dto.SubcontractChangeOrderDTO;
-import com.erp.model.scm.entity.SubcontractChangeOrderEntity;
+import com.erp.model.scm.dto.SubcontractChangeDTO;
+import com.erp.model.scm.entity.SubcontractChangeEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.scm.mapper.SubcontractChangeOrderMapper;
+import com.erp.server.scm.mapper.SubcontractChangeMapper;
 import com.erp.server.scm.service.CommonService;
 import com.erp.server.scm.service.ModuleOperateLogService;
-import com.erp.server.scm.service.SubcontractChangeOrderService;
+import com.erp.server.scm.service.SubcontractChangeService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class SubcontractChangeOrderServiceImpl extends SuperServiceImpl<SubcontractChangeOrderMapper, SubcontractChangeOrderEntity> implements SubcontractChangeOrderService {
+public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractChangeMapper, SubcontractChangeEntity> implements SubcontractChangeService {
 
     @Autowired
     private SysUserFeign sysUserFeign;
@@ -63,10 +63,10 @@ public class SubcontractChangeOrderServiceImpl extends SuperServiceImpl<Subcontr
     private CommonService commonService;
 
     @Override
-    public PagingVO<SubcontractChangeOrderDTO.ListDTO> paging(PagingDTO<SubcontractChangeOrderDTO.PagingParamDTO> pagingParamDTO) {
+    public PagingVO<SubcontractChangeDTO.ListDTO> paging(PagingDTO<SubcontractChangeDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<SubcontractChangeOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        IPage<SubcontractChangeDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
            return new PagingVO(pageData);
         }
@@ -78,8 +78,8 @@ public class SubcontractChangeOrderServiceImpl extends SuperServiceImpl<Subcontr
     }
 
     @Override
-    public List<SubcontractChangeOrderDTO.TabListDTO> tabList(PermissionsDTO param) {
-        SubcontractChangeOrderDTO.PagingParamDTO searchParam = new SubcontractChangeOrderDTO.PagingParamDTO();
+    public List<SubcontractChangeDTO.TabListDTO> tabList(PermissionsDTO param) {
+        SubcontractChangeDTO.PagingParamDTO searchParam = new SubcontractChangeDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
         List<ApproveStatusQtyDTO> statusList = this.baseMapper.listCount(searchParam);
 
@@ -87,22 +87,22 @@ public class SubcontractChangeOrderServiceImpl extends SuperServiceImpl<Subcontr
         Map<String,ApproveStatusQtyDTO> statusMap = statusList.stream().collect(Collectors.toMap(ApproveStatusQtyDTO::getApproveStatus, Function.identity()));
 
         // 只返回待审核、已审核、审核不通过的数据
-        List<SubcontractChangeOrderDTO.TabListDTO> resultList = Lists.newArrayListWithExpectedSize(3);
+        List<SubcontractChangeDTO.TabListDTO> resultList = Lists.newArrayListWithExpectedSize(3);
         Arrays.asList(PageListTypeEnum.values()).stream().forEach(purchaseChangeType -> {
             // 获取对应的业务单据状态
             List<ApproveStatusEnum> approveStatusEnumList = purchaseChangeType.getApproveStatusList();
             Integer statusQty = approveStatusEnumList.stream().mapToInt(approveStatus-> {
                return statusMap.getOrDefault(approveStatus.getStatus(), new ApproveStatusQtyDTO()).getCount();
             }).sum();
-            SubcontractChangeOrderDTO.TabListDTO tab = new SubcontractChangeOrderDTO.TabListDTO(purchaseChangeType.getCode(), statusQty);
+            SubcontractChangeDTO.TabListDTO tab = new SubcontractChangeDTO.TabListDTO(purchaseChangeType.getCode(), statusQty);
             resultList.add(tab);
         });
         return resultList;
     }
 
     @Override
-    public void exportList(SubcontractChangeOrderDTO.ExportDTO param, HttpServletResponse response) {
-        List<SubcontractChangeOrderDTO.ListDTO> list = this.baseMapper.listExport(param);
+    public void exportList(SubcontractChangeDTO.ExportDTO param, HttpServletResponse response) {
+        List<SubcontractChangeDTO.ListDTO> list = this.baseMapper.listExport(param);
         if(CollUtil.isEmpty(list)) {
            return;
         }
@@ -125,28 +125,28 @@ public class SubcontractChangeOrderServiceImpl extends SuperServiceImpl<Subcontr
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public String add(SubcontractChangeOrderDTO.AddDTO addDTO) {
-        SubcontractChangeOrderEntity subcontractChangeOrderEntity = new SubcontractChangeOrderEntity();
-        BeanMapperUtils.copy(addDTO, subcontractChangeOrderEntity);
+    public String add(SubcontractChangeDTO.AddDTO addDTO) {
+        SubcontractChangeEntity subcontractChangeEntity = new SubcontractChangeEntity();
+        BeanMapperUtils.copy(addDTO, subcontractChangeEntity);
 
         // 数据处理
-        handleData(subcontractChangeOrderEntity);
+        handleData(subcontractChangeEntity);
 
         log.info("开始新增委外变更单");
         // 生成单号
         // TODO 此处的null需填写生成单号的分类和类型，category查看BusinessNoConstant，type查看BusinessNoTypeEnum枚举类
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(null, null));
-        subcontractChangeOrderEntity.setCode(code);
-        boolean save = super.save(subcontractChangeOrderEntity);
+        subcontractChangeEntity.setCode(code);
+        boolean save = super.save(subcontractChangeEntity);
         if(!save) {
            throw new ServiceException("委外变更单保存失败");
         }
 
         // 操作日志
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(String.format("新增了一个委外变更单【%s】", code), null, subcontractChangeOrderEntity.getId(), "新增操作");
+        operateLogService.addModuleOperateLog(String.format("新增了一个委外变更单【%s】", code), null, subcontractChangeEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
-        return subcontractChangeOrderEntity.getId();
+        return subcontractChangeEntity.getId();
     }
 
     /**
@@ -154,21 +154,21 @@ public class SubcontractChangeOrderServiceImpl extends SuperServiceImpl<Subcontr
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void update(SubcontractChangeOrderDTO.UpdateDTO updateDTO) {
-        SubcontractChangeOrderEntity old = super.getById(updateDTO.getId());
+    public void update(SubcontractChangeDTO.UpdateDTO updateDTO) {
+        SubcontractChangeEntity old = super.getById(updateDTO.getId());
         Optional.ofNullable(old).orElseThrow(()->new ServiceException("未找到委外变更单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(old.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
 
-        SubcontractChangeOrderEntity subcontractChangeOrderEntity =  BeanMapperUtils.map(SubcontractChangeOrderEntity.class, updateDTO);
+        SubcontractChangeEntity subcontractChangeEntity =  BeanMapperUtils.map(SubcontractChangeEntity.class, updateDTO);
 
         // 数据处理
-        handleData(subcontractChangeOrderEntity);
+        handleData(subcontractChangeEntity);
 
         log.info("编辑 开始修改委外变更单数据，单号：【{}】", old.getCode());
-        boolean save = super.updateById(subcontractChangeOrderEntity);
+        boolean save = super.updateById(subcontractChangeEntity);
         if(!save) {
            throw new ServiceException("委外变更单保存失败");
         }
@@ -176,9 +176,9 @@ public class SubcontractChangeOrderServiceImpl extends SuperServiceImpl<Subcontr
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
-        log.info("编辑 开始记录委外变更单日志数据，单号：【{}】", subcontractChangeOrderEntity.getCode());
+        log.info("编辑 开始记录委外变更单日志数据，单号：【{}】", subcontractChangeEntity.getCode());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, subcontractChangeOrderEntity, null, subcontractChangeOrderEntity.getId(), "", "");
+        operateLogService.addModuleOperateLogByObj(old, subcontractChangeEntity, null, subcontractChangeEntity.getId(), "", "");
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -187,7 +187,7 @@ public class SubcontractChangeOrderServiceImpl extends SuperServiceImpl<Subcontr
        if (CollUtil.isEmpty(ids)) {
           throw new ServiceException(ApiError.ERROR_98004);
        }
-       List<SubcontractChangeOrderEntity> list = super.listByIds(ids);
+       List<SubcontractChangeEntity> list = super.listByIds(ids);
        if (CollUtil.isEmpty(list)) {
           throw new ServiceException("未找到委外变更单数据");
        }
@@ -213,7 +213,7 @@ public class SubcontractChangeOrderServiceImpl extends SuperServiceImpl<Subcontr
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void addAndSubmit(SubcontractChangeOrderDTO.AddDTO dto) {
+    public void addAndSubmit(SubcontractChangeDTO.AddDTO dto) {
         // 新增
         String id = this.add(dto);
         // 提交
@@ -223,7 +223,7 @@ public class SubcontractChangeOrderServiceImpl extends SuperServiceImpl<Subcontr
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void updateAndSubmit(SubcontractChangeOrderDTO.UpdateDTO dto) {
+    public void updateAndSubmit(SubcontractChangeDTO.UpdateDTO dto) {
         // 修改
         this.update(dto);
         // 提交
@@ -238,7 +238,7 @@ public class SubcontractChangeOrderServiceImpl extends SuperServiceImpl<Subcontr
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
            throw new ServiceException("审核不通过请填写审核意见");
         }
-        List<SubcontractChangeOrderEntity> list = super.listByIds(ids);
+        List<SubcontractChangeEntity> list = super.listByIds(ids);
         if (CollUtil.isEmpty(list)) {
             throw new ServiceException("未找到委外变更单数据");
         }
@@ -269,7 +269,7 @@ public class SubcontractChangeOrderServiceImpl extends SuperServiceImpl<Subcontr
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void disApprove(List<String> ids) {
-        List<SubcontractChangeOrderEntity> list = super.listByIds(ids);
+        List<SubcontractChangeEntity> list = super.listByIds(ids);
         if (CollUtil.isEmpty(list)) {
             throw new ServiceException("未找到委外变更单数据");
         }
@@ -292,7 +292,7 @@ public class SubcontractChangeOrderServiceImpl extends SuperServiceImpl<Subcontr
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void delete(List<String> ids) {
-       List<SubcontractChangeOrderEntity> list = super.listByIds(ids);
+       List<SubcontractChangeEntity> list = super.listByIds(ids);
        if (CollUtil.isEmpty(list)) {
          throw new ServiceException("未找到委外变更单数据");
        }
@@ -318,7 +318,7 @@ public class SubcontractChangeOrderServiceImpl extends SuperServiceImpl<Subcontr
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void cancelProcess(List<String> ids) {
-        List<SubcontractChangeOrderEntity> list = super.listByIds(ids);
+        List<SubcontractChangeEntity> list = super.listByIds(ids);
         // 只有待提交的数据允许撤销
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
@@ -338,9 +338,9 @@ public class SubcontractChangeOrderServiceImpl extends SuperServiceImpl<Subcontr
     }
 
     @Override
-    public SubcontractChangeOrderDTO.ViewDTO view(String id) {
-        SubcontractChangeOrderEntity subcontractChangeOrderEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到委外变更单数据"));
-        SubcontractChangeOrderDTO.ViewDTO data = BeanMapperUtils.map(SubcontractChangeOrderDTO.ViewDTO.class, subcontractChangeOrderEntity);
+    public SubcontractChangeDTO.ViewDTO view(String id) {
+        SubcontractChangeEntity subcontractChangeEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到委外变更单数据"));
+        SubcontractChangeDTO.ViewDTO data = BeanMapperUtils.map(SubcontractChangeDTO.ViewDTO.class, subcontractChangeEntity);
         // TODO 查询明细数据（如果有的话）
         return data;
     }
@@ -353,11 +353,11 @@ public class SubcontractChangeOrderServiceImpl extends SuperServiceImpl<Subcontr
     public void updateForApprove(List<String> ids, String approveStatus) {
         //当前登录人
         LoginUser userInfo = commonService.getUserInfo();
-        this.lambdaUpdate().in(SubcontractChangeOrderEntity::getId, ids)
-            .set(SubcontractChangeOrderEntity::getApproveUserId, userInfo.getUid())
-            .set(SubcontractChangeOrderEntity::getApproveUserName, userInfo.getUserName())
-            .set(SubcontractChangeOrderEntity::getApproveStatus, approveStatus)
-            .set(SubcontractChangeOrderEntity::getApproveTime, LocalDateTime.now())
+        this.lambdaUpdate().in(SubcontractChangeEntity::getId, ids)
+            .set(SubcontractChangeEntity::getApproveUserId, userInfo.getUid())
+            .set(SubcontractChangeEntity::getApproveUserName, userInfo.getUserName())
+            .set(SubcontractChangeEntity::getApproveStatus, approveStatus)
+            .set(SubcontractChangeEntity::getApproveTime, LocalDateTime.now())
             .update();
      }
 
@@ -368,11 +368,11 @@ public class SubcontractChangeOrderServiceImpl extends SuperServiceImpl<Subcontr
     */
     @Transactional(rollbackFor = Exception.class)
     public void updateForDisApprove(List<String> ids, String approveStatus) {
-        this.lambdaUpdate().in(SubcontractChangeOrderEntity::getId, ids)
-            .set(SubcontractChangeOrderEntity::getApproveUserId, "")
-            .set(SubcontractChangeOrderEntity::getApproveUserName, "")
-            .set(SubcontractChangeOrderEntity::getApproveStatus, approveStatus)
-            .set(SubcontractChangeOrderEntity::getApproveTime, null)
+        this.lambdaUpdate().in(SubcontractChangeEntity::getId, ids)
+            .set(SubcontractChangeEntity::getApproveUserId, "")
+            .set(SubcontractChangeEntity::getApproveUserName, "")
+            .set(SubcontractChangeEntity::getApproveStatus, approveStatus)
+            .set(SubcontractChangeEntity::getApproveTime, null)
             .update();
         }
 
@@ -381,21 +381,21 @@ public class SubcontractChangeOrderServiceImpl extends SuperServiceImpl<Subcontr
     */
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(List<String> ids, String approveStatus) {
-        lambdaUpdate().in(SubcontractChangeOrderEntity::getId, ids)
-        .set(SubcontractChangeOrderEntity::getApproveStatus, approveStatus)
+        lambdaUpdate().in(SubcontractChangeEntity::getId, ids)
+        .set(SubcontractChangeEntity::getApproveStatus, approveStatus)
         .update();
     }
 
     /**
     * 分页查询、导出 数据处理
     */
-    private void fillList(List<SubcontractChangeOrderDTO.ListDTO> list) {
+    private void fillList(List<SubcontractChangeDTO.ListDTO> list) {
         if(CollUtil.isEmpty(list)) {
            return;
         }
 
         // 属性赋值
-        for(SubcontractChangeOrderDTO.ListDTO data : list) {
+        for(SubcontractChangeDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             // TODO 其他如需要显示名称的字段赋值
@@ -405,10 +405,10 @@ public class SubcontractChangeOrderServiceImpl extends SuperServiceImpl<Subcontr
     /**
     * 分页查询同一主单多行明细只有第一行显示主单字段，其他行赋空
     */
-    private void hideData(List<SubcontractChangeOrderDTO.ListDTO> list) {
+    private void hideData(List<SubcontractChangeDTO.ListDTO> list) {
         Set<String> mainIds = Sets.newHashSet();
         // 同一个主单的其他行明细，只显示第一行的主单字段
-        for(SubcontractChangeOrderDTO.ListDTO data : list) {
+        for(SubcontractChangeDTO.ListDTO data : list) {
             if (mainIds.contains(data.getId())) {
                 data.setCode(null);
                 data.setApproveStatus(null);
@@ -428,7 +428,7 @@ public class SubcontractChangeOrderServiceImpl extends SuperServiceImpl<Subcontr
     /**
     * 新增修改处理数据
     */
-    private void handleData(SubcontractChangeOrderEntity subcontractChangeOrderEntity) {
+    private void handleData(SubcontractChangeEntity subcontractChangeEntity) {
         // TODO 验证数据 & 数据赋值
     }
 

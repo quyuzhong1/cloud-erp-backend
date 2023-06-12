@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.SubcontractChangeMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.SubcontractChangeEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="code" property="code" />
+       <result column="bill_date" property="billDate" />
+       <result column="receive_org_id" property="receiveOrgId" />
+       <result column="receive_org_name" property="receiveOrgName" />
+       <result column="purchase_org_id" property="purchaseOrgId" />
+       <result column="purchase_org_name" property="purchaseOrgName" />
+       <result column="changer_id" property="changerId" />
+       <result column="changer_name" property="changerName" />
+       <result column="dept_id" property="deptId" />
+       <result column="dept_name" property="deptName" />
+       <result column="change_reason" property="changeReason" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="invalid_time" property="invalidTime" />
+       <result column="approve_time" property="approveTime" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_type" property="sourceType" />
+       <result column="source_code" property="sourceCode" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        sc.id,
+        sc.code,
+        sc.source_code as sourceCode,
+        s.name as supplierName,
+        sc.approve_status as approveStatus,
+        sc.invalid_status as invalidStatus,
+        scd.sku_no as skuNo,
+        scd.opt_type as optType,
+        scd.price,
+        scd.amount,
+        scd.qty,
+        scd.currency,
+        scd.currency_symbol as currencySymbol,
+        scd.warehouse_name as warehouseName,
+        scd.old_qty as oldQty,
+        scd.old_price as oldPrice,
+        scd.old_amount as oldAmount,
+        scd.remark,
+        sc.changer_name as changerName,
+        sc.approve_user_name as approveUserName,
+        sc.create_time as createTime,
+        sc.create_user_name as createUserName
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.scm.dto.SubcontractChangeDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+        from subcontract_change sc
+        inner join subcontract_change_detail scd on  sc.id = scd.main_id and scd.is_deleted = false
+        left join supplier s  on scd.supplier_id = s.id and s.is_deleted = false
+        <where>
+            sc.is_deleted = false
+            <if test="params.searchType != null and params.searchType != ''">
+                and sc.approve_status like concat('%',#{params.searchType},'%')
+            </if>
+            <if test="params.code != null and params.code != ''">
+                and sc.code like concat('%',#{params.code},'%')
+            </if>
+            <if test="params.invalidStatus != null ">
+                and sc.invalid_status = #{params.invalidStatus}
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                and scd.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and sc.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
+                and sc.warehouse_id in
+                <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+                and sc.create_user_id in
+                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                and sc.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sc.create_time
+            </if>
+            <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
+                and sc.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sc.approve_time
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sc.create_time desc
+
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from subcontract_change_order where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.scm.dto.SubcontractChangeDTO$ListDTO">
+        select
+        <include refid="Base_Column_List" />
+        from subcontract_change sc
+        inner join subcontract_change_detail scd on  sc.id = scd.main_id and scd.is_deleted = false
+        left join supplier s  on scd.supplier_id = s.id and s.is_deleted = false
+        <where>
+            sc.is_deleted = false
+            <if test="params.ids != null and params.ids.size > 0">
+                and po.id in
+                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.ids == null or params.ids.size == 0">
+                <if test="params.searchType != null and params.searchType != ''">
+                    and sc.approve_status like concat('%',#{params.searchType},'%')
+                </if>
+                <if test="params.code != null and params.code != ''">
+                    and sc.code like concat('%',#{params.code},'%')
+                </if>
+                <if test="params.invalidStatus != null ">
+                    and sc.invalid_status = #{params.invalidStatus}
+                </if>
+                <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                    and scd.sku_no in
+                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                    and sc.approve_status in
+                    <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
+                    and sc.warehouse_id in
+                    <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+                    and sc.create_user_id in
+                    <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                    and sc.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sc.create_time
+                </if>
+                <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
+                    and sc.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sc.approve_time
+                </if>
+                <if test="params.permissionSql != null and params.permissionSql != ''">
+                    ${params.permissionSql}
+                </if>
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sc.create_time desc
+    </select>
+
+</mapper>

@@ -23,8 +23,8 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("subcontract_change_order")
-public class SubcontractChangeOrderEntity extends BaseEntity<SubcontractChangeOrderEntity> {
+@TableName("subcontract_change")
+public class SubcontractChangeEntity extends BaseEntity<SubcontractChangeEntity> {
 
 
     /**

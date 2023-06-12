@@ -19,7 +19,7 @@ import java.util.List;
 */
 @Data
 @NoArgsConstructor
-public class SubcontractChangeDetailOrderDTO implements Serializable {
+public class SubcontractChangeDetailDTO implements Serializable {
 
 
 
