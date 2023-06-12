@@ -3,6 +3,7 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
@@ -11,6 +12,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -128,9 +130,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     }
 
     @Override
-    public Boolean finishDelivery(List<String> ids) {
+    public Boolean finishDelivery(List<String> ids, String remark) {
         return null;
     }
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -353,6 +356,25 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         SubcontractOrderDTO.ViewDTO data = BeanMapperUtils.map(SubcontractOrderDTO.ViewDTO.class, subcontractOrderEntity);
         // TODO 查询明细数据（如果有的话）
         return data;
+    }
+
+    @Override
+    public List<SubcontractOrderDTO.ViewGeneratePoDTO> viewGeneratePo(List<String> ids) {
+        return null;
+    }
+
+    @Override
+    public void generatePo(ValidList<SubcontractOrderDTO.GeneratePoDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+    }
+
+    @Override
+    public List<SubcontractOrderDTO.ViewAddDetailDTO> viewAddDetail(SubcontractOrderDTO.ViewAddDetailParamDTO dto) {
+
+
+        return null;
     }
 
     /**

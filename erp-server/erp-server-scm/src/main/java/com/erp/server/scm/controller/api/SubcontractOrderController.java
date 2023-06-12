@@ -3,6 +3,7 @@ package com.erp.server.scm.controller.api;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -211,8 +212,8 @@ public class SubcontractOrderController extends BaseController {
             menuCode = "scm:subcontractOrder:finishDelivery",
             serviceClass = SubcontractOrderService.class,
             keyIdName = "ids")
-    public ApiResult finishDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = subcontractOrderService.finishDelivery(dto.getIds());
+    public ApiResult finishDelivery(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        Boolean result = subcontractOrderService.finishDelivery(dto.getIds(),dto.getRemark());
         return result == true ? success() : failure();
     }
 
@@ -288,5 +289,49 @@ public class SubcontractOrderController extends BaseController {
         subcontractOrderService.exportList(dto, response);
     }
 
+
+    /**
+     * 下推采购单显示
+     * @author Will
+     * @date: 2023/6/12 14:00
+     * @param dto
+     * @return ApiResult<List<ViewGeneratePoDTO>>
+     */
+    @PostMapping(value = "/viewGeneratePo")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "scm:subcontractOrder:viewGeneratePo",
+            tableAlias = "so"
+    )
+    public ApiResult<List<SubcontractOrderDTO.ViewGeneratePoDTO>> viewGeneratePo(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<SubcontractOrderDTO.ViewGeneratePoDTO> list = subcontractOrderService.viewGeneratePo(dto.getIds());
+        return success(list);
+    }
+
+    /**
+     * 下推采购单保存
+     * @author Will
+     * @date: 2023/6/12 14:00
+     * @param list
+     * @return ApiResult<Void>
+     */
+    @PostMapping(value = "/generatePo")
+    public ApiResult<Void> generatePo(@RequestBody @Validated ValidList<SubcontractOrderDTO.GeneratePoDTO> list) {
+         subcontractOrderService.generatePo(list);
+        return success();
+    }
+
+    /**
+     * 添加已有产品显示
+     * @author Will
+     * @date: 2023/6/12 16:00
+     * @param dto
+     * @return ApiResult<List<ViewAddDetailDTO>>
+     */
+    @PostMapping(value = "/viewAddDetail")
+    public ApiResult<List<SubcontractOrderDTO.ViewAddDetailDTO>> viewAddDetail(@RequestBody @Validated SubcontractOrderDTO.ViewAddDetailParamDTO dto) {
+        List<SubcontractOrderDTO.ViewAddDetailDTO> list = subcontractOrderService.viewAddDetail(dto);
+        return success(list);
+    }
 
 }

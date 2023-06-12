@@ -57,6 +57,20 @@ public class SubcontractChangeDetailOrderDTO implements Serializable {
         private BigDecimal amount;
 
         /**
+         * 操作名称
+         */
+        private String optTypeName;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
         * 原采购数量
         */
         private Integer oldQty;

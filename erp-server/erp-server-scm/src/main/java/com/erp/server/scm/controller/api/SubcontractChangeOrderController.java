@@ -1,19 +1,19 @@
 package com.erp.server.scm.controller.api;
 
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.scm.dto.SubcontractChangeOrderDTO;
+import com.erp.server.scm.service.SubcontractChangeOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.common.core.controller.BaseController;
-import com.erp.server.scm.service.SubcontractChangeOrderService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.scm.dto.SubcontractChangeOrderDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -261,6 +261,5 @@ public class SubcontractChangeOrderController extends BaseController {
     public void exportList(@RequestBody @Validated SubcontractChangeOrderDTO.ExportDTO dto, HttpServletResponse response) {
         subcontractChangeOrderService.exportList(dto, response);
     }
-
 
 }

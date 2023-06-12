@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
@@ -151,7 +152,31 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @author Will
      * @date: 2023/6/9 16:33
      * @param ids
+     * @param remark
      * @return Boolean
      */
-    Boolean finishDelivery(List<String> ids);
+    Boolean finishDelivery(List<String> ids,String remark);
+    /**
+     * @description: 下推采购单显示
+     * @author Will
+     * @date: 2023/6/12 14:01
+     * @param ids
+     * @return List<ViewGeneratePoDTO>
+     */
+    List<SubcontractOrderDTO.ViewGeneratePoDTO> viewGeneratePo(List<String> ids);
+    /**
+     * 下推采购订单保存
+     * @author Will
+     * @date: 2023/6/12 14:16
+     * @param list
+     */
+    void generatePo(ValidList<SubcontractOrderDTO.GeneratePoDTO> list);
+    /**
+     * 添加已有产品显示
+     * @author Will
+     * @date: 2023/6/12 15:38
+     * @param dto
+     * @return List<ViewAddDetailDTO>
+     */
+    List<SubcontractOrderDTO.ViewAddDetailDTO> viewAddDetail(SubcontractOrderDTO.ViewAddDetailParamDTO dto);
 }

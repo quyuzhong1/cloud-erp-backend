@@ -281,9 +281,29 @@ public class SubcontractChangeOrderDTO implements Serializable {
         private String receiveOrgId;
 
         /**
+         * 收料组织名称
+         */
+        private String receiveOrgName;
+
+        /**
         * 采购组织id
         */
         private String purchaseOrgId;
+
+        /**
+         * 采购组织名称
+         */
+        private String purchaseOrgName;
+
+        /**
+         * 变更人名称
+         */
+        private String changerName;
+
+        /**
+         * 采购部门名称
+         */
+        private String deptName;
 
         /**
          * 变更明细

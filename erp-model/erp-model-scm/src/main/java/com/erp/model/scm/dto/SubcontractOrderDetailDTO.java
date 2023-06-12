@@ -23,15 +23,17 @@ import java.util.List;
 public class SubcontractOrderDetailDTO implements Serializable {
 
 
-
-
     /**
     * 详情
     */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO extends UpdateDTO {
+    public static class ViewDTO extends CommonDTO {
 
+        /**
+         * 主键id
+         */
+        private String id;
         /**
         * 变体信息
         */
@@ -115,12 +117,6 @@ public class SubcontractOrderDetailDTO implements Serializable {
         @NotBlank(message = "skuId不能为空")
         @Size(max = 19,message = "skuId最大长度不能超过19位")
         private String skuId;
-        /**
-        * sku编码
-        */
-        @NotBlank(message = "sku编码不能为空")
-        @Size(max = 32,message = "sku编码最大长度不能超过32位")
-        private String skuNo;
 
         /**
         * 供应商id
@@ -144,12 +140,13 @@ public class SubcontractOrderDetailDTO implements Serializable {
         @NotNull(message = "含税单价不能为空")
         @Digits(integer = 12, fraction = 4, message = "含税单价整数位不能超过12位，小数位不能超过4位")
         private BigDecimal price;
+
         /**
         * 币别
         */
-        @NotBlank(message = "币别不能为空")
         @Size(max = 20,message = "币别最大长度不能超过20位")
         private String currency;
+
         /**
         * 仓库id
         */
