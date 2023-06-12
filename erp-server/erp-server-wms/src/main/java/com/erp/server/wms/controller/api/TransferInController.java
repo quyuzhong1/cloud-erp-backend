@@ -55,7 +55,7 @@ public class TransferInController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "warehouse_keeper_id",
             menuCode = "wms:transfer:in:paging",
             tableAlias = "ti"
     )
@@ -89,7 +89,7 @@ public class TransferInController extends BaseController {
      */
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "warehouse_keeper_id",
             menuCode = "wms:transfer:in:submit",
             serviceClass = TransferInService.class,
             keyIdName = "ids"
@@ -108,7 +108,7 @@ public class TransferInController extends BaseController {
      */
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "warehouse_keeper_id",
             menuCode = "wms:transfer:in:view",
             serviceClass = TransferInService.class,
             keyIdName = "id"
@@ -126,7 +126,7 @@ public class TransferInController extends BaseController {
      */
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "warehouse_keeper_id",
             menuCode = "wms:transfer:in:update",
             serviceClass = TransferInService.class,
             keyIdName = "id"
@@ -145,7 +145,7 @@ public class TransferInController extends BaseController {
      */
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "warehouse_keeper_id",
             menuCode = "wms:transfer:in:update",
             serviceClass = TransferInService.class,
             keyIdName = "id"
@@ -164,7 +164,7 @@ public class TransferInController extends BaseController {
      */
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "warehouse_keeper_id",
             menuCode = "wms:transfer:in:approve",
             serviceClass = TransferInService.class,
             keyIdName = "ids"
@@ -184,7 +184,7 @@ public class TransferInController extends BaseController {
      */
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "warehouse_keeper_id",
             menuCode = "wms:transfer:in:cancelProcess",
             serviceClass = TransferInService.class,
             keyIdName = "ids"
@@ -199,7 +199,7 @@ public class TransferInController extends BaseController {
      */
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "warehouse_keeper_id",
             menuCode = "wms:transfer:in:disApprove",
             serviceClass = TransferInService.class,
             keyIdName = "ids"
@@ -217,7 +217,7 @@ public class TransferInController extends BaseController {
      */
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "warehouse_keeper_id",
             menuCode = "wms:transfer:in:delete",
             serviceClass = TransferInService.class,
             keyIdName = "ids"
@@ -238,7 +238,7 @@ public class TransferInController extends BaseController {
      */
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "warehouse_keeper_id",
             menuCode = "wms:transfer:in:invalid",
             serviceClass = TransferInService.class,
             keyIdName = "ids"

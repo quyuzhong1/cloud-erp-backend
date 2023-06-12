@@ -900,6 +900,8 @@ public class SoInfoDTO implements Serializable {
          * 库存组织名称
          */
         private String warehouseOrgName;
+
+        private String syncKingdeeId;
     }
 
 

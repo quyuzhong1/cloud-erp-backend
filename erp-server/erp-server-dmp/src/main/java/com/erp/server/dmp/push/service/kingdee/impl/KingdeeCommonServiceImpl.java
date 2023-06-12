@@ -16,7 +16,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastJsonUtil;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.OkHttpUtils;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
@@ -37,6 +36,8 @@ import com.erp.server.dmp.service.PlatformService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.*;
+import com.kingdee.bos.webapi.sdk.K3CloudApi;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -90,9 +91,11 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Resource
     private OmsTaskFeign omsTaskFeign;
 
-    @Value("${openApi.kingdee.serverUrl}")
-    private String kingdeeServerUrl;
+    @Value("${openApi.kingdee.authName}")
+    private String kingdeeUserName;
 
+    @Value("${openApi.kingdee.pwd}")
+    private String kingdeeUserPwd;
 
 
     @Override
@@ -305,7 +308,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     }
 
     @Override
-    public Boolean push(PlatformEntity platformEntity, Map<String, Object> map,KingdeeApiUtils sourceApiUtils, KingdeeApiUtils apiUtils, JSONObject jsonMap, SaveParam param, Integer type, JSONObject json) {
+    public Boolean push(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils sourceApiUtils, KingdeeApiUtils apiUtils, JSONObject jsonMap, SaveParam param, Integer type, JSONObject json) {
         RepoResult result;
         String msg = "下推";
         try {
@@ -324,7 +327,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         //新增成功操作日志
         insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(json), msg, type, ApiSendStatusEnum.SUCCESS.getCode());
         //给修改json对象赋值ID
-        KingdeeUtils.makeFieldJson(json,"FId",".", id);
+        KingdeeUtils.makeFieldJson(json, "FId", ".", id);
         StringBuffer allKey = FastJsonUtil.getAllKey(json);
         ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
         param.setNeedUpDateFields(apiFieldList);
@@ -620,17 +623,30 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     }
 
     /**
-     * 生成销售变更单
+     * 自动生成销售变更单
      *
      * @param paramMap
      * @return cn.hutool.json.JSONObject
      * @author yl
      * @date 2023-06-07 10:46
      */
+    @SneakyThrows
     @Override
     public String createkingdeeSoChange(Map<String, Object> paramMap) {
-        String url = kingdeeServerUrl + KingdeeUtils.SO_CHANGE_URL;
-        String result = OkHttpUtils.doPostJson(url, paramMap, new HashMap<>());
+        String authUrl = KingdeeUtils.AUTH_URL;
+        String userName = kingdeeUserName;
+        String userPwd = kingdeeUserPwd;
+
+        //读取配置，初始化SDK
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER_CHANGE.getCode());
+        K3CloudApi client = apiUtils.client;
+        RepoResult  repoResult= client.CheckAuthInfo();
+        repoResult.getId();
+        // String url = kingdeeServerUrl + KingdeeUtils.SO_CHANGE_URL;
+        String url = KingdeeUtils.SO_CHANGE_URL;
+        String paramStr = JSONUtil.toJsonStr(paramMap);
+        log.info("createkingdeeSoChange  paramStr==={}",paramStr);
+        String result = client.execute(url, new Object[]{paramStr});
         return result;
     }
 }

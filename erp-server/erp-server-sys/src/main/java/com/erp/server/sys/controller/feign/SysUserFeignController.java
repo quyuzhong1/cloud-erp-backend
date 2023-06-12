@@ -84,7 +84,7 @@ public class SysUserFeignController extends BaseController {
         if (Objects.isNull(info)) {
             return failure(ApiError.ERROR_9012, null);
         }
-        if (info.getUserState() == UserStateConstants.USER_DISABLE) {
+        if (UserStateConstants.USER_DISABLE.equals(info.getUserState())) {
             return failure(ApiError.ERROR_9016, null);
         }
         return success(info);

@@ -91,7 +91,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             String soId = entity.getSoId();
             SoInfoDTO.CustomerDTO soInfo = soInfoService.getSoCustomer(soId);
             //填充数据
-         //   fillDb(entity, soInfo.getCode());
+            fillDb(entity, soInfo.getSyncKingdeeId(),soInfo.getCode());
             Map<String, Object> resultMap = new HashMap<>();
             //金蝶id
             resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -180,7 +180,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             for (SoChangeDetailDTO.ViewDTO item : details) {
                 JSONObject jsonObject = new JSONObject();
                 //金蝶详情id
-                jsonObject.set("soDetailKingdeeId", item.getSoDetailKingdeeId());
+                jsonObject.set("kingdeeDetailId", item.getSoDetailKingdeeId());
                 jsonObject.set("skuNo", item.getSkuNo());
                 jsonObject.set("changeType", item.getChangeType().getCode());
                 jsonObject.set("soDetailId", item.getSoDetailId());
@@ -193,10 +193,14 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
                 jsonObject.set("curInventoryQty", item.getQty());
                 jsonObject.set("price", item.getPrice());
                 jsonObject.set("oldPrice", item.getOldPrice());
+                jsonObject.set("oldTaxPrice", item.getOldTaxPrice());
+                jsonObject.set("taxPrice", item.getTaxPrice());
                 jsonObject.set("taxRate", item.getTaxRate());
                 jsonObject.set("oldTaxRate", item.getOldTaxRate());
                 jsonObject.set("isGift", false);
                 jsonObject.set("unit", "Pcs");
+                jsonObject.set("remark", item.getRemark());
+
                 jsonObject.set("warehouseOrgCode", warehouseOrgCode);
                 jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
                 list.add(jsonObject);
@@ -229,7 +233,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
      * @author yl
      * @date 2023-06-07 14:08
      */
-    private SoChangeEntity fillDb(SoChangeEntity entity, String soCode) {
+    private SoChangeEntity fillDb(SoChangeEntity entity, String soKingdeeId,String soCode) {
         List<SoChangeDetailEntity> details = soChangeDetailService.listDetailDbByMainId(entity.getId());
         //订单详情的ids
         List<String> soDetailIdList = details.stream().map(SoChangeDetailEntity::getSoDetailId).collect(Collectors.toList());
@@ -237,14 +241,13 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         List<String> soKingdeeDetailIds = soDetailList.stream().map(SoDetailEntity::getKingdeeDetailId).collect(Collectors.toList());
         //表示是新增加审核
         if (StringUtils.isEmpty(entity.getSyncKingdeeId())) {
-            Map<String, Object> paramMap = new HashMap<>();
             Map<String, Object> map = new HashMap<>();
+            map.put("SaleOrderBillId", soKingdeeId);
             map.put("SaleOrderBillNo", soCode);
             map.put("BillNo", entity.getCode());
             map.put("SOEntryIds", soKingdeeDetailIds);
-            paramMap.put("saveXSaleOrderArgs", map);
             //自动生成变更单
-            String result = dmpTaskFeign.createkingdeeSoChange(paramMap);
+            String result = dmpTaskFeign.createkingdeeSoChange(map);
             log.info("json======{}",result);
             JSONObject json = JSONUtil.parseObj(result);
             Boolean isSuccess = (Boolean) json.get("IsSuccess");
@@ -274,7 +277,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
                 }
                 soChangeService.updateById(entity);
             }
-            if (updateList.size() > 1) {
+            if (updateList.size() > 0) {
                 soChangeDetailService.updateBatchById(updateList);
             }
         }
