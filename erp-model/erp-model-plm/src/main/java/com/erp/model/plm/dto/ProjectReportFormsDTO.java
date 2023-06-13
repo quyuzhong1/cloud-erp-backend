@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -19,7 +20,7 @@ public class ProjectReportFormsDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingViewDTO {
+    public static class PagingParam {
         /**
          * id
          */
@@ -43,19 +44,19 @@ public class ProjectReportFormsDTO implements Serializable {
         /**
          * 计划调研时间
          */
-        private List<String> planSurveyDateList;
+        private List<LocalDate> planSurveyDateList;
         /**
          * 计划立项时间
          */
-        private List<String> planProjectApprovalDateList;
+        private List<LocalDate> planProjectApprovalDateList;
         /**
          * 计划首批入库时间
          */
-        private List<String> planFirstMassStockInDateList;
+        private List<LocalDate> planFirstMassStockInDateList;
         /**
          * 计划上市时间
          */
-        private List<String> planListingTimeList;
+        private List<LocalDate> planListingTimeList;
     }
 
     /**
@@ -63,7 +64,7 @@ public class ProjectReportFormsDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO extends SortDTO {
+    public static class PagingView extends SortDTO {
         /**
          * 主键id
          */
@@ -163,14 +164,83 @@ public class ProjectReportFormsDTO implements Serializable {
         /**
          * 预计开始时间
          */
-        private String planStartDate;
+        private LocalDate planStartDate;
         /**
          * 预计结束时间
          */
-        private String planEndDate;
+        private LocalDate planEndDate;
         /**
          * 实际完成日期
          */
-        private String actualFinishDate;
+        private LocalDate actualFinishDate;
     }
+
+    /**
+     * 任务详情列表查询条件
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TaskDetailParam {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 任务名称
+         */
+        private String taskName;
+        /**
+         * 任务状态
+         */
+        private String taskState;
+        /**
+         * 本周开始日期
+         */
+        private LocalDate startDate;
+        /**
+         * 本周结束日期
+         */
+        private LocalDate endDate;
+    }
+
+    /**
+     * 任务详情列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class taskDetail {
+        /**
+         * 阶段名称
+         */
+        private String phaseName;
+        /**
+         * 任务名称
+         */
+        private String taskName;
+        /**
+         * 任务负责人
+         */
+        private String chargeName;
+        /**
+         * 计划开始日期
+         */
+        private LocalDate planStartDate;
+        /**
+         * 计划结束日期
+         */
+        private LocalDate planEndDate;
+        /**
+         * 实际开始日期
+         */
+        private LocalDate realityStartDate;
+        /**
+         * 实际结束日期
+         */
+        private LocalDate realityEndDate;
+        /**
+         * 任务状态
+         */
+        private String taskState;
+    }
+
 }
