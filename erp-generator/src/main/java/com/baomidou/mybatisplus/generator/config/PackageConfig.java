@@ -18,7 +18,6 @@ package com.baomidou.mybatisplus.generator.config;
 
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.sun.istack.internal.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -101,7 +100,6 @@ public class PackageConfig {
         return parent;
     }
 
-    @NotNull
     public Map<String, String> getPackageInfo() {
         if (this.packageInfo.isEmpty()) {
             this.packageInfo.put("ModuleName", this.getModuleName());
@@ -118,7 +116,6 @@ public class PackageConfig {
         return Collections.unmodifiableMap(this.packageInfo);
     }
 
-    @NotNull
     public String joinPackage(String subPackage) {
         String parent = this.getParent();
         return StringUtils.isEmpty(parent) ? subPackage : parent + "." + subPackage;
