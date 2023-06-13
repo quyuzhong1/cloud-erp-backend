@@ -2,7 +2,7 @@ package com.common.message.config;
 
 import com.common.message.service.MailService;
 import com.common.message.service.impl.MailServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.mail.MailProperties;
 import org.springframework.boot.autoconfigure.mail.MailSenderAutoConfiguration;
@@ -28,8 +28,14 @@ public class MailConfiguration  {
     @Resource
     private MailProperties mailProperties;
 
+    @Value("${spring.mail.nickname}")
+    private String nickname;
+
     @Bean
     public MailService mailService() {
-        return new MailServiceImpl(mailSender,mailProperties);
+        if(null== nickname || nickname.length()<1){
+            nickname = "唯迹ERP系统";
+        }
+        return new MailServiceImpl(mailSender,mailProperties, nickname);
     }
 }
