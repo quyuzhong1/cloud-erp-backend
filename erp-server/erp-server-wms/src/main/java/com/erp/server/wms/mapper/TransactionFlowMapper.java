@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
+import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.entity.TransactionFlowEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -72,5 +73,22 @@ public interface TransactionFlowMapper extends BaseMapper<TransactionFlowEntity>
      * @return
      */
     List<InventoryDTO.InOutStockSummaryPagingViewDTO> exportSummaryList(@Param("params") InventoryDTO.ExcelInOutStockSummarySearchParamDTO params);
+
+    /**
+     * 在途查询分页查询
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<InventoryReportDTO.TransportPagingDTO> transportPagingList(Page query, @Param("params") InventoryReportDTO.TransportSearchParamDTO params);
+
+
+    /**
+     * 在途查询导出查询
+     * @param params
+     * @return
+     */
+    List<InventoryReportDTO.TransportPagingDTO> exportTransport(@Param("params") InventoryReportDTO.ExportTransportSearchParamDTO params);
+
 
 }

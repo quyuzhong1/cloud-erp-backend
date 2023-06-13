@@ -345,5 +345,145 @@
         group by tf.warehouse_id, tf.sku_id
         ) m ORDER BY m.warehouse_name asc,m.sku_no asc
     </select>
+    <select id="transportPagingList"
+            resultType="com.erp.model.wms.dto.inventory.InventoryReportDTO$TransportPagingDTO">
+      select n.warehouse_id,n.org_id,n.warehouse_name,n.sku_id,n.sku_no,n.spu_no,n.sale_state,n.product_name,n.product_img_url,
+        n.purchase_qty,n.transfer_qty,n.transport_qty  from (
+        select
+            m.warehouse_id,m.org_id,m.warehouse_name,m.sku_id,m.sku_no,m.spu_no,m.sale_state,m.product_name,m.product_img_url,
+            case when m.purchase_qty <![CDATA[<]]> 0 then 0 else m.purchase_qty end as purchase_qty,
+            case when m.transfer_qty <![CDATA[<]]> 0 then 0 else m.transfer_qty end as transfer_qty,
+            purchase_qty + transfer_qty as transport_qty
+          from (
+            select
+            tf.warehouse_id,
+            tf.sku_id,
+            max(tf.warehouse_name) as warehouse_name,
+            max(tf.org_id) as org_id,
+            max(tf.sku_no) as sku_no ,
+            max(pi.spu_no) as spu_no,
+            max(ps.sale_state) as sale_state,
+            max(pd.name) as product_name,
+            max(pd.images_url) as product_img_url,
+            sum(case when tf.dict_biz_type in ('21','01','03','04','25','27','28') and tf.dict_inventory_status =
+            'inTransit' then tf.qty else 0 end) as purchase_qty, -- 采购在途
+            sum(case when tf.dict_biz_type in ('08','09') and tf.dict_inventory_status = 'inTransit' then tf.qty else 0 end) as transfer_qty -- 调拨在途
+            from transaction_flow tf
+            left join product_detail pd on pd.id = tf.sku_id
+            left join product_info pi on pd.product_id = pi.id
+            left join product_sale ps on ps.sku_id = pd.id
+            <where>
+                       tf.is_deleted = false
+                       <if test="params.skuNoList != null and params.skuNoList.size != ''">
+                            and tf.sku_no in
+                            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                                #{item}
+                            </foreach>
+                        </if>
+                        <if test="params.spuNoList != null and params.spuNoList.size != ''">
+                            and pi.spu_no in
+                            <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
+                                #{item}
+                            </foreach>
+                        </if>
+                        <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+                            and tf.warehouse_id in
+                            <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                                #{item}
+                            </foreach>
+                        </if>
+                        <if test="params.orgIdList != null and params.orgIdList.size != ''">
+                            and tf.org_id in
+                            <foreach collection="params.orgIdList" item="item" open="(" close=")" separator=",">
+                                #{item}
+                            </foreach>
+                        </if>
+                        <if test="params.saleStatusList != null and params.saleStatusList.size != ''">
+                            and ps.sale_state in
+                            <foreach collection="params.saleStatusList" item="item" open="(" close=")" separator=",">
+                                #{item}
+                            </foreach>
+                        </if>
+                        <if test="params.permissionSql != null and params.permissionSql != ''">
+                            ${params.permissionSql}
+                        </if>
+                    </where>
+                  group by tf.warehouse_id, tf.sku_id
+            ) m
+        ) n ORDER BY n.warehouse_name asc,n.transport_qty desc
+    </select>
+    <select id="exportTransport"
+            resultType="com.erp.model.wms.dto.inventory.InventoryReportDTO$TransportPagingDTO">
+        select n.warehouse_id,n.org_id,n.warehouse_name,n.sku_id,n.sku_no,n.spu_no,n.sale_state,n.product_name,n.product_img_url,
+        n.purchase_qty,n.transfer_qty,n.transport_qty  from (
+        select
+        m.warehouse_id,m.org_id,m.warehouse_name,m.sku_id,m.sku_no,m.spu_no,m.sale_state,m.product_name,m.product_img_url,
+        case when m.purchase_qty <![CDATA[<]]> 0 then 0 else m.purchase_qty end as purchase_qty,
+        case when m.transfer_qty <![CDATA[<]]> 0 then 0 else m.transfer_qty end as transfer_qty,
+        purchase_qty + transfer_qty as transport_qty
+        from (
+        select
+        tf.warehouse_id,
+        tf.sku_id,
+        max(tf.warehouse_name) as warehouse_name,
+        max(tf.org_id) as org_id,
+        max(tf.sku_no) as sku_no ,
+        max(pi.spu_no) as spu_no,
+        max(ps.sale_state) as sale_state,
+        max(pd.name) as product_name,
+        max(pd.images_url) as product_img_url,
+        sum(case when tf.dict_biz_type in ('21','01','03','04','25','27','28') and tf.dict_inventory_status =
+        'inTransit' then tf.qty else 0 end) as purchase_qty, -- 采购在途
+        sum(case when tf.dict_biz_type in ('08','09') and tf.dict_inventory_status = 'inTransit' then tf.qty else 0 end) as transfer_qty -- 调拨在途
+        from transaction_flow tf
+        left join product_detail pd on pd.id = tf.sku_id
+        left join product_info pi on pd.product_id = pi.id
+        left join product_sale ps on ps.sku_id = pd.id
+        <where>
+            tf.is_deleted = false
+            <if test="params.skuIdList != null and params.skuIdList.size != ''">
+                and tf.sku_id in
+                <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size != ''">
+                and tf.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.spuNoList != null and params.spuNoList.size != ''">
+                and pi.spu_no in
+                <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+                and tf.warehouse_id in
+                <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.orgIdList != null and params.orgIdList.size != ''">
+                and tf.org_id in
+                <foreach collection="params.orgIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.saleStatusList != null and params.saleStatusList.size != ''">
+                and ps.sale_state in
+                <foreach collection="params.saleStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by tf.warehouse_id, tf.sku_id
+        ) m
+        ) n ORDER BY n.warehouse_name asc,n.transport_qty desc
+    </select>
 
 </mapper>

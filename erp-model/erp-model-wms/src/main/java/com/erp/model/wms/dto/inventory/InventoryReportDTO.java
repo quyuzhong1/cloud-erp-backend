@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto.inventory;
 
 import com.common.business.dto.base.SortDTO;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -60,6 +61,12 @@ public class InventoryReportDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ExportTransportSearchParamDTO extends SortDTO {
+
+        /**
+         * sku id编码集合，不提供给前端使用
+         */
+        @JsonIgnore
+        private List<String> skuIdList;
 
         /**
          * sku编码

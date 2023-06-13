@@ -4,6 +4,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
+import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
 import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -60,6 +61,7 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
     /**
      * 导出出入库流水Excel
      * @param param
+     * @param response
      */
     void exportExcel(InventoryDTO.ExportInOutStockTransFlowSearchParamDTO param, HttpServletResponse response);
 
@@ -73,7 +75,22 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
     /**
      * 导出出入库列表Excel
      * @param param
+     * @param response
      */
     void exportSummaryExcel(InventoryDTO.ExcelInOutStockSummarySearchParamDTO param, HttpServletResponse response);
+
+    /**
+     * 在途查询分页查询
+     * @param pagingParamDTO
+     * @return
+     */
+    PagingVO<InventoryReportDTO.TransportPagingDTO> transportPagingList(PagingDTO<InventoryReportDTO.TransportSearchParamDTO> pagingParamDTO);
+
+    /**
+     * 在途查询导出
+     * @param pagingParamDTO
+     * @param response
+     */
+    void exportTransportExcel(InventoryReportDTO.ExportTransportSearchParamDTO pagingParamDTO, HttpServletResponse response);
 
 }

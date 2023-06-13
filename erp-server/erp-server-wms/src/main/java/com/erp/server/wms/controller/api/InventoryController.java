@@ -129,7 +129,7 @@ public class InventoryController extends BaseController {
      */
     @PostMapping("/transport/paging")
     public ApiResult<PagingVO<InventoryReportDTO.TransportPagingDTO>> transportPaging(@RequestBody @Validated PagingDTO<InventoryReportDTO.TransportSearchParamDTO> dto) {
-        return success(null);
+        return success(transactionFlowService.transportPagingList(dto));
     }
 
     /**
@@ -140,7 +140,7 @@ public class InventoryController extends BaseController {
      */
     @PostMapping(value = "/exportTransport")
     public void exportTransport(@RequestBody InventoryReportDTO.ExportTransportSearchParamDTO dto, HttpServletResponse response) {
-
+        transactionFlowService.exportTransportExcel(dto, response);
     }
 
     /**
