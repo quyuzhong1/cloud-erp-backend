@@ -145,21 +145,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         //数据处理
         doOpHandlePurchaseOrder(records);
-        List<String> list = new ArrayList<>();
-        for (PurchaseOrderDTO.ListDTO obj : records) {
-            boolean contains = list.contains(obj.getId());
-            if (contains) {
-                obj.setCode(null);
-                obj.setSupplierName(null);
-                obj.setDeliveryWarehouseName(null);
-                obj.setApproveStatusName(null);
-                obj.setInvalidStatus(null);
-                obj.setInvalidStatusName(null);
-                obj.setCreateUserName(null);
-                continue;
-            }
-            list.add(obj.getId());
-        }
         return new PagingVO(pageData);
     }
 
