@@ -19,6 +19,6 @@ MQ Tag为：RocketMqTagEnum.MSG_NOTICE_TAG.getName()
 # 4.提示：消息服务通过NoticeTypeEnum消息来源获取到需要发送的渠道、消息类型
 发送渠道定义在枚举类MessageChannelEnum；渠道应用配置在枚举类MessageChannelAppEnum
 配置在erp-sys库中的msg_config、msg_channel_config
-msg_config的主键id从NoticeTypeEnum取值
+msg_config的主键id从NoticeTypeEnum取值，如果需要发送多个渠道，msg_config表的channel用,隔开，如feishu,mail
 
         

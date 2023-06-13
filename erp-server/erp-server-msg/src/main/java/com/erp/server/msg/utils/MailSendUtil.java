@@ -23,7 +23,6 @@ public class MailSendUtil {
         account.setHost(mailConfigParam.getHost());
         account.setAuth(true);
         account.setFrom(mailConfigParam.getNickname()+'<' + mailConfigParam.getUsername() + '>');
-        //不要设置user属性
         account.setUser(mailConfigParam.getUsername());
         account.setPass(mailConfigParam.getPassword());
         if(Objects.equals(mailConfigParam.getUseSSl(),Boolean.TRUE)) {
