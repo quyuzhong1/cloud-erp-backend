@@ -257,7 +257,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
     @Override
     public PagingVO<List<ProductShowDTO>> paging(PagingDTO<ProductSearchDTO> dto) {
-        dto.getParams().setParam(dto.getParam());
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         ProductSearchDTO params = dto.getParams();
         IPage pageData = new Page();

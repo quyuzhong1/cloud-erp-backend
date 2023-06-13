@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.QcEffectivenessDTO;
 import com.erp.model.wms.dto.QcInfoDTO;
+import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.entity.QcInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -101,4 +102,13 @@ public interface QcInfoMapper extends BaseMapper<QcInfoEntity> {
      * @return java.util.List<com.erp.model.wms.dto.PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO>
      */
     List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(@Param("ids")List<String> ids);
+
+    /**
+     * 下推退货入库单-列表查询
+     * @Author Luo_WG
+     * @Date 2023/5/23 17:33
+     * @param ids ids
+     * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.GenerateSoReturnInstockView>
+     **/
+    List<SoReturnInstockDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(@Param("ids") List<String> ids);
 }

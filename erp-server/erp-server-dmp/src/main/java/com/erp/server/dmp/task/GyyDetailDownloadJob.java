@@ -2,7 +2,6 @@ package com.erp.server.dmp.task;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.erp.model.dmp.constant.MongoTableNameContant;
@@ -18,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -53,7 +51,7 @@ public class GyyDetailDownloadJob {
         if(CollectionUtil.isEmpty(orderEntityList)){
             return;
         }
-        orderEntityList.parallelStream().distinct().forEach(gyyOrderEntity -> {
+        orderEntityList.forEach(gyyOrderEntity -> {
             try {
                 gyyOrderInfoService.addOrderDetail(gyyOrderEntity);
             }catch (Exception e){
@@ -76,7 +74,7 @@ public class GyyDetailDownloadJob {
         if(CollectionUtil.isEmpty(orderEntityList)){
             return;
         }
-        orderEntityList.parallelStream().forEach(deliveryEntity -> {
+        orderEntityList.forEach(deliveryEntity -> {
             try {
                 gyyDeliveryDetailService.addOrderDetail(deliveryEntity);
             }catch (Exception e){

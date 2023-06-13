@@ -13,6 +13,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -121,7 +122,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
         String orgId = dto.getPurchaseOrgId();
         //获取组织
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
         if (CollectionUtils.isNotEmpty(orgList)) {
             purchasePrice.setPurchaseOrgName(orgList.get(0).getName());
         }
@@ -249,7 +250,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
         String orgId = dto.getPurchaseOrgId();
         //获取组织
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
         if (CollectionUtils.isNotEmpty(orgList)) {
             purchasePrice.setPurchaseOrgName(orgList.get(0).getName());
         }
@@ -482,7 +483,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Override
     public PagingVO<PurchasePriceDTO.PagingViewDTO> paging(PagingDTO<PurchasePriceDTO.PagingParamDTO> dto) {
         PurchasePriceDTO.PagingParamDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         String searchType = params.getSearchType();
         List<String> statusList = new ArrayList<>(1);
         //待我审核
@@ -596,12 +597,13 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId) {
+    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId,String syncOperate) {
         return this.lambdaUpdate()
                 .in(PurchasePriceEntity::getId, ids)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchasePriceEntity::getSyncKingdeeStatus, syncKingdeeStatus)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchasePriceEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId), PurchasePriceEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncOperate), PurchasePriceEntity::getSyncOperate,syncOperate)
                 .update();
     }
 
@@ -634,7 +636,13 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      */
     private Boolean updateApproveStatus(List<PurchasePriceEntity> list, ApproveStatusEnum statusEnum) {
         if (CollectionUtils.isNotEmpty(list)) {
-            list.forEach(s -> s.setApproveStatus(statusEnum));
+            list.stream().forEach(obj -> {
+                obj.setApproveStatus(statusEnum);
+                //审核通过更新金蝶推送状态为待同步
+                if (ApproveStatusEnum.APPROVE.equals(statusEnum)) {
+                    obj.setSyncKingdeeStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
+                }
+            });
             return this.updateBatchById(list);
         }
         return false;

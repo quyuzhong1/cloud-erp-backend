@@ -277,4 +277,14 @@ public class ProductDetailShowDTO implements Serializable {
      * 变体属性
      */
     private String variantProperty;
+
+    /**
+     * 单位
+     */
+    private String unitName;
+
+    /**
+     * 版本
+     */
+    private Integer version;
 }

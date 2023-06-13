@@ -273,7 +273,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public PagingVO<List<TaskPagingShowDTO>> paging(PagingDTO<TaskPagingDTO> dto) {
-        dto.getParams().setParam(dto.getParam());
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         TaskPagingDTO params = dto.getParams();
@@ -665,7 +665,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Integer IsFixed = entity.getIsFixed();
 
         //如果是固定任务
-        if (IsConstant.YES.equals(IsFixed) && !"admin".equals(loginUser.getUserAccount()) ) {
+        if (IsConstant.YES.equals(IsFixed) && !"admin".equals(loginUser.getUserAccount())) {
             throw new ServiceException(ApiError.ERROR_95014);
         }
         //检查是否是子任务
@@ -809,17 +809,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         planTime.append(" - ");
         if (detailsDTO.getPlanEndTime() != null) {
-            planTime.append(LocalDateTimeUtil.format(detailsDTO.getPlanEndTime(),  DateUtil.fmt_day));
+            planTime.append(LocalDateTimeUtil.format(detailsDTO.getPlanEndTime(), DateUtil.fmt_day));
         }
         detailsDTO.setPlanTime(planTime.toString());
 
         StringBuffer realityTime = new StringBuffer();
         if (detailsDTO.getRealityStartTime() != null) {
-            realityTime.append(LocalDateTimeUtil.format(detailsDTO.getRealityStartTime(),  DateUtil.fmt_day));
+            realityTime.append(LocalDateTimeUtil.format(detailsDTO.getRealityStartTime(), DateUtil.fmt_day));
         }
         realityTime.append(" - ");
         if (detailsDTO.getRealityEndTime() != null) {
-            realityTime.append(LocalDateTimeUtil.format(detailsDTO.getRealityEndTime(),  DateUtil.fmt_day));
+            realityTime.append(LocalDateTimeUtil.format(detailsDTO.getRealityEndTime(), DateUtil.fmt_day));
         }
         detailsDTO.setRealityTime(realityTime.toString());
         //前置任务id集合
@@ -1680,7 +1680,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         TaskSearchParamDTO params = searchParamDTO.getParams();
-        params.setParam(searchParamDTO.getParam());
+        params.setPermissionSql(searchParamDTO.getPermissionSql());
         Page query = new Page(searchParamDTO.getCurrPage(), searchParamDTO.getPageSize());
         //"assignToMe", "myCreate", "all"
         String taskProperty = TaskConstant.ALL;
@@ -1717,10 +1717,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
                 params.setStartTime(planTimeMap.get("startTime").toInstant()
-                        .atZone( ZoneId.systemDefault() )
+                        .atZone(ZoneId.systemDefault())
                         .toLocalDateTime());
                 params.setEndTime(planTimeMap.get("endTime").toInstant()
-                        .atZone( ZoneId.systemDefault() )
+                        .atZone(ZoneId.systemDefault())
                         .toLocalDateTime());
                 params.setSearchCategory(TaskSearchCategoryEnum.ALLPLANTIMETASKLIST.getCode());
                 //计划时间
@@ -1830,11 +1830,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public PagingVO<List<TaskPagingShowDTO>> assignToMePaging(PagingDTO<TaskSearchParamDTO> searchParamDTO) {
-        searchParamDTO.getParams().setParam(searchParamDTO.getParam());
+        searchParamDTO.getParams().setPermissionSql(searchParamDTO.getPermissionSql());
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         TaskSearchParamDTO params = searchParamDTO.getParams();
-        params.setParam(searchParamDTO.getParam());
+        params.setPermissionSql(searchParamDTO.getPermissionSql());
         Page query = new Page(searchParamDTO.getCurrPage(), searchParamDTO.getPageSize());
         //"assignToMe", "myCreate", "all"
         String taskProperty = TaskConstant.ASSIGN_TO_ME;
@@ -1871,10 +1871,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
                 params.setSearchCategory(TaskSearchCategoryEnum.TOMEPLANENDTIMETASKLIST.getCode());
                 params.setStartTime(planTimeMap.get("startTime").toInstant()
-                        .atZone( ZoneId.systemDefault() )
+                        .atZone(ZoneId.systemDefault())
                         .toLocalDateTime());
                 params.setEndTime(planTimeMap.get("endTime").toInstant()
-                        .atZone( ZoneId.systemDefault() )
+                        .atZone(ZoneId.systemDefault())
                         .toLocalDateTime());
                 //计划时间
                 pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
@@ -1985,11 +1985,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public PagingVO<List<TaskPagingShowDTO>> assignToMeWaitAuditPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO) {
-        searchParamDTO.getParams().setParam("");
+        searchParamDTO.getParams().setPermissionSql("");
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         TaskSearchParamDTO params = searchParamDTO.getParams();
-        params.setParam(searchParamDTO.getParam());
+        params.setPermissionSql(searchParamDTO.getPermissionSql());
         Page query = new Page(searchParamDTO.getCurrPage(), searchParamDTO.getPageSize());
         //"assignToMe", "myCreate", "all"
         String taskProperty = TaskConstant.ASSIGN_TO_ME;
@@ -2032,10 +2032,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
                 params.setSearchCategory(TaskSearchCategoryEnum.TOMEWAITAUDITPLANENDTIMETASKLIST.getCode());
                 params.setStartTime(planTimeMap.get("startTime").toInstant()
-                        .atZone( ZoneId.systemDefault() )
+                        .atZone(ZoneId.systemDefault())
                         .toLocalDateTime());
                 params.setEndTime(planTimeMap.get("endTime").toInstant()
-                        .atZone( ZoneId.systemDefault() )
+                        .atZone(ZoneId.systemDefault())
                         .toLocalDateTime());
                 params.setProcessInstanceIds(processInstanceIds);
                 //计划时间
@@ -2140,7 +2140,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         String productId = params.getProductId();
-        String param = params.getParam();
+        String param = params.getPermissionSql();
 
         List<ProductTaskCategoryCountDTO> list = new ArrayList<>();
         //这个是我完成的任务
@@ -2535,7 +2535,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public PagingVO<List<TaskPagingShowDTO>> myCreatePaging(PagingDTO<TaskSearchParamDTO> searchParamDTO) {
-        searchParamDTO.getParams().setParam(searchParamDTO.getParam());
+        searchParamDTO.getParams().setPermissionSql(searchParamDTO.getPermissionSql());
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
         TaskSearchParamDTO params = searchParamDTO.getParams();
@@ -2575,10 +2575,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
                 params.setSearchCategory(TaskSearchCategoryEnum.MYCREATEPLANENDTIMETASKLIST.getCode());
                 params.setStartTime(planTimeMap.get("startTime").toInstant()
-                        .atZone( ZoneId.systemDefault() )
+                        .atZone(ZoneId.systemDefault())
                         .toLocalDateTime());
                 params.setEndTime(planTimeMap.get("endTime").toInstant()
-                        .atZone( ZoneId.systemDefault() )
+                        .atZone(ZoneId.systemDefault())
                         .toLocalDateTime());
                 //计划时间
                 pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
@@ -4665,11 +4665,12 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     /**
      * 根据任务名称查询任务
+     *
+     * @param productId productId
+     * @param name      name
+     * @return com.erp.model.plm.entity.ProjectTaskEntity
      * @Author Luo_WG
      * @Date 2023/3/29 14:08
-     * @param productId productId
-     * @param name name
-     * @return com.erp.model.plm.entity.ProjectTaskEntity
      **/
     public ProjectTaskEntity getTaskByName(String productId, String name) {
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
@@ -4681,10 +4682,11 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     /**
      * 批量删除任务
-     * @Author Luo_WG
-     * @Date 2023/3/29 18:00
+     *
      * @param ids ids
      * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/3/29 18:00
      **/
     @Transactional
     public Boolean removeBatch(List<String> ids) {
@@ -4729,5 +4731,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             }
         }
         return true;
+    }
+
+    @Override
+    public List<ProjectTaskEntity> listByTaskNames(String productId, List<String> taskNameList) {
+        List<ProjectTaskEntity> list = lambdaQuery().eq(ProjectTaskEntity::getProductId, productId)
+                .in(ProjectTaskEntity::getName, taskNameList)
+                .list();
+        return list;
     }
 }

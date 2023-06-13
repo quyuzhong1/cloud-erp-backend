@@ -1,6 +1,8 @@
 package com.erp.server.plm.rocketmq.sync.dmp.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.utils.RedisUtil;
+import com.common.core.utils.ObjectUtils;
 import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -85,7 +87,9 @@ public class SyncProductServiceImpl implements SyncProductService {
         Map<String,List<NewProductDTO>> map = new HashMap<>();
         map.put("listingNotNullList", listingNotNullList);
         listingNotNullList.forEach(req -> {
-            redisUtil.hset(RedisKeyConstant.SKU_LISTING_TIME, req.getSkuNo(), req.getNewListingTime(), 30 * 24 * 3600);
+            if (ObjectUtil.isNotEmpty(redisUtil.hget(RedisKeyConstant.SKU_LISTING_TIME, req.getSkuNo()))) {
+                redisUtil.hset(RedisKeyConstant.SKU_LISTING_TIME, req.getSkuNo(), req.getNewListingTime(), 30 * 24 * 3600);
+            }
         });
         // 异步推送到MQ
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_LISTING_TAG.getName(), map, UUID.randomUUID().toString());

@@ -33,6 +33,9 @@
         <if test="null != params and params.createTimeList != null and params.createTimeList.size() == 2">
             and pd.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pd.create_time
         </if>
+        <if test="null != params and params.isDeploy != null">
+            and pd.is_deploy = #{params.isDeploy}
+        </if>
         order by pd.create_time desc
     </sql>
 
@@ -80,9 +83,9 @@
         LEFT JOIN work_menu wm on pb.business_key = wm.module_code and pb.is_deleted = false
         LEFT JOIN dict_basic db on db.value = pd.review_setting and db.is_deleted = false  and db.type = 'reviewSetting'
         where pd.is_deleted = false
-        <if test="null != params and params.id != null and params.id.size() > 0">
+        <if test="null != params and params.id != null and params.ids.size() > 0">
             and pd.id in
-            <foreach collection="params.id" item="item" open="(" separator="," close=")">
+            <foreach collection="params.ids" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
         </if>

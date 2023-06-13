@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
  * @Classname InitDataRunner
  * @Description 初始化数据
  * @Date 2023-04-14 11:46
- * @Created by zhangchunlin
+ * @author zhangchunlin
  */
 @Slf4j
 @Component

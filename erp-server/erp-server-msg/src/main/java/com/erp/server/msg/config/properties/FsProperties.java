@@ -23,6 +23,10 @@ public class FsProperties {
 
     public static final String PREFIX = "third.fs";
 
-    private Map<String, FeishuConfigParam> configs;
+    private Map<String, FeishuConfigParam> configs;// 飞书发送任务通知配置
+
+    private Map<String, String> warns;// 飞书发送预警通知配置
+
+    private Boolean warnSend;// 飞书发送预警通知开关，为false则不发送
 
 }

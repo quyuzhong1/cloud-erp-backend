@@ -22,4 +22,13 @@ public interface WorkMenuService extends SuperService<WorkMenuEntity> {
      * @return
      */
     List<DictBasicDTO.DropDownDTO> listByCode(String code);
+
+    /**
+     * 根据code获取模块分类
+     * @Author Luo_WG
+     * @Date 2023/5/17 10:16
+     * @param code
+     * @return java.lang.String
+     **/
+    String getSysClassifyByCode(String code);
 }

@@ -80,8 +80,8 @@
         </if>
 
         <!--权限-->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
 
         ORDER BY
@@ -178,8 +178,15 @@
         </choose>
 
         <!--权限-->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
+    </select>
+    <select id="listSupplierByCategoryType" resultType="com.common.business.dto.base.BaseIdDTO">
+        SELECT
+          id,name
+        FROM  supplier WHERE is_deleted=FALSE
+        AND category_id IN
+        (SELECT id FROM dict_basic WHERE is_deleted= FALSE AND type=#{type} AND value=#{value} )
     </select>
 </mapper>

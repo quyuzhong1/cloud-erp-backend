@@ -2,7 +2,6 @@ package com.erp.server.sys.generator;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.core.exceptions.MybatisPlusException;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.generator.AutoGenerator;
 import com.baomidou.mybatisplus.generator.config.*;
@@ -15,25 +14,23 @@ import com.common.business.service.SuperService;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.controller.BaseController;
 import com.common.core.entity.BaseEntity;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
 
 /**
  * 代码生成器
  * @author Cloud
  */
-@SpringBootTest
 @Slf4j
 public class MyBatisGeneratorRun {
     // 项目路径
     private static final String PROJECT_PATH = System.getProperty("user.dir").replace("\\erp-server-sys","");
     // 当前环境是否Windows
-    private static final boolean IS_WINDOWS = System.getProperty("os.name").startsWith("lambda");
+    private static final boolean IS_WINDOWS = System.getProperty("os.name").trim().toLowerCase().contains("windows");
     // 数据库链接配置
     static String MODEL = "sys";
     private static String DB_URL = StrUtil.format("jdbc:postgresql://172.16.100.12:5432/erp-{}?useSSL=false&serverTimezone=GMT%2B8", MODEL);
@@ -45,44 +42,22 @@ public class MyBatisGeneratorRun {
     //指定Model包名 com.erp.model.plm
     private static String BASE_PACKAGE_MODEL_NAME = StrUtil.format("com.erp.model.{}", MODEL);
     //模块名 如果有模块名，则需在模块名前加. 例：.log
+    private static final String BASE_MODEl_PROJECT_NAME = "erp-model";
     private static final String MODULE_NAME = StrUtil.format("erp-model-{}", MODEL);
 
     private static final String SERVER_NAME = StrUtil.format("erp-server-{}", MODEL);
     //作者名
-    private static final String AUTHOR = "lambda";
+    private static final String AUTHOR = "Lambda";
     // 输出路径(为空默认为项目路径)
     private static final String OUTPUT_DIR = "";
 
-    @Test
-    void run() {
+    public static void main(String[] args) {
         // 表前缀
         String prefix = "";
 
-        String[] tables = new String[]{"cfg_node_member"};
+        // 注意：会直接生成到项目路径，请注意防止覆盖
+        String[] tables = new String[]{"use_kingdee_post"};
         autoGenerator(prefix, tables);
-
-
-    }
-
-    @Test
-    void runByScanner() {
-        // 控制台输入
-        String tableNameStr = scanner("表名(多表逗号分隔)");
-        String[] tableNames = tableNameStr.split(",");
-        String tablePrefix = scanner("表前缀(无前缀输入#)").replaceAll("#", "");
-        autoGenerator(tablePrefix, tableNames);
-    }
-
-    private static String scanner(String tip) {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("请输入 " + tip + " : ");
-        if (scanner.hasNext()) {
-            String ipt = scanner.next();
-            if (StrUtil.isNotEmpty(ipt)) {
-                return ipt;
-            }
-        }
-        throw new MybatisPlusException("请输入正确的 " + tip + ". ");
     }
 
     /**
@@ -122,23 +97,33 @@ public class MyBatisGeneratorRun {
     /**
      * 设置包名
      */
+    @SneakyThrows
     private static PackageConfig packageConfig() {
-        String xmlPath = PROJECT_PATH + "/" + SERVER_NAME + "/src/main/resources/mapper/";
-//        String entityPath = PROJECT_PATH.replace("erp-server", "erp-model") + "/" + MODULE_NAME + "/src/main/java/com/erp/model/" + MODEL+"/entity";
+        String xmlPath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/resources/mapper/";
+        String entityPath = PROJECT_PATH.replace("erp-server", "erp-model") + "/" +  BASE_MODEl_PROJECT_NAME + "/" + MODULE_NAME + "/src/main/java/com/erp/model/" + MODEL+"/entity";
+        String controllerPath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/java/com/erp/server/" + MODEL + "/" + "controller/api";
+        String servicePath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/java/com/erp/server/" + MODEL + "/" + "service";
+        String serviceImplPath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/java/com/erp/server/" + MODEL + "/" + "service" + "/" + "impl";
+        String mapperPath = PROJECT_PATH + "/"  + "erp-server" + "/" + SERVER_NAME + "/src/main/java/com/erp/server/" + MODEL + "/" + "mapper";
         if (StringUtils.isNotBlank(OUTPUT_DIR)) {
             xmlPath = OUTPUT_DIR;
         }
         if (IS_WINDOWS) {
             xmlPath = xmlPath.replaceAll("/+|\\\\+", "\\\\");
-//            entityPath = entityPath.replaceAll("/+|\\\\+", "\\\\");
+            entityPath = entityPath.replaceAll("/+|\\\\+", "\\\\");
         } else {
             xmlPath = xmlPath.replaceAll("/+|\\\\+", "/");
-//            entityPath = entityPath.replaceAll("/+|\\\\+", "/");
+            entityPath = entityPath.replaceAll("/+|\\\\+", "/");
         }
         Map<OutputFile, String> pathInfo = new HashMap<>();
         // 自定义XML输出路径
-//        pathInfo.put(OutputFile.entity, entityPath);
+        pathInfo.put(OutputFile.entity, entityPath);
         pathInfo.put(OutputFile.mapperXml, xmlPath);
+        pathInfo.put(OutputFile.controller, controllerPath);
+        pathInfo.put(OutputFile.service, servicePath);
+        pathInfo.put(OutputFile.serviceImpl, serviceImplPath);
+        pathInfo.put(OutputFile.mapper, mapperPath);
+
         PackageConfig build = new PackageConfig.Builder()
                 .parent(BASE_PACKAGE_NAME)
                 .moduleName("")
@@ -150,6 +135,20 @@ public class MyBatisGeneratorRun {
                 .serviceImpl("service.impl")
                 .pathInfo(pathInfo)
                 .build();
+
+        // 自定义包名
+        Map<String, String> packageInfo = build.getPackageInfo();
+        Map<String, String> newPackageInfo = new HashMap<>();
+        newPackageInfo.putAll(packageInfo);
+        // 替换实体包名
+        newPackageInfo.put("Entity", BASE_PACKAGE_MODEL_NAME + "." + "entity" );
+        // 替换控制器包名
+        String controllerPackage = packageInfo.get("Controller");
+        newPackageInfo.put("Controller", controllerPackage + ".api");
+
+        Field packageInfoField = build.getClass().getDeclaredField("packageInfo");
+        packageInfoField.setAccessible(true);
+        packageInfoField.set(build, newPackageInfo);
         return build;
     }
 
@@ -157,7 +156,7 @@ public class MyBatisGeneratorRun {
      * 全局配置
      */
     private static GlobalConfig globalConfig() {
-        String filePath = PROJECT_PATH + "/" + SERVER_NAME + "/src/main/java/";
+        String filePath = PROJECT_PATH + "/" + "erp-server" + "/" + SERVER_NAME + "/src/main/java/";
         if (StringUtils.isNotBlank(OUTPUT_DIR)) {
             filePath = OUTPUT_DIR;
         }

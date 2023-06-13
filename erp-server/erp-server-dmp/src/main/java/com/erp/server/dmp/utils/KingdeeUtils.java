@@ -9,8 +9,17 @@ import java.util.Map;
 
 public class KingdeeUtils {
 
+
+    public static final String SO_CHANGE_URL="Kingdee.K3.SCM.WebApi.ServicesStub.SaveXSaleOrderWebApi.SaveXSaleOrder";
+
+    public static final String AUTH_URL="Kingdee.bos.webapi.ServicesStub.authservice.validateuser.common.kdsvc";
+
+
+
+
     /**
      * 列名称转换成map并赋值
+     *
      * @param fieldKeys
      * @param list
      */
@@ -49,20 +58,20 @@ public class KingdeeUtils {
         return map;
     }
 
-    public static JSONObject makeFieldJson(JSONObject jsonRoot, String pathStr, String splitStr, Object value){
-        if(null==jsonRoot){
+    public static JSONObject makeFieldJson(JSONObject jsonRoot, String pathStr, String splitStr, Object value) {
+        if (null == jsonRoot) {
             jsonRoot = new JSONObject();
         }
 
-        String[] fieldArr = pathStr.replace(splitStr,"||").split("\\|\\|");
+        String[] fieldArr = pathStr.replace(splitStr, "||").split("\\|\\|");
         JSONObject curNode = jsonRoot;
-        for(int i=0; i < fieldArr.length; i++){
+        for (int i = 0; i < fieldArr.length; i++) {
             String field = fieldArr[i];
-            if(i < fieldArr.length-1){
-                curNode.putIfAbsent(field,new JSONObject());
+            if (i < fieldArr.length - 1) {
+                curNode.putIfAbsent(field, new JSONObject());
                 curNode = curNode.getJSONObject(field);
-            }else{
-                curNode.putIfAbsent(fieldArr[fieldArr.length-1],value);
+            } else {
+                curNode.putIfAbsent(fieldArr[fieldArr.length - 1], value);
             }
         }
 

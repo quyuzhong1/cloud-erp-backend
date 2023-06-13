@@ -25,7 +25,7 @@ public class PoInstockDetailDTO implements Serializable {
          */
         @NotNull(message = "实收数量不能为空")
         @Min(value = 1,message = "实收数量最小值为1")
-        @Max(value = 99999999,message = "实收数量最大值为99999999")
+        @Max(value = 999999999,message = "实收数量最大值为999999999")
         private Integer stockInQty;
 
         /**
@@ -33,13 +33,13 @@ public class PoInstockDetailDTO implements Serializable {
          */
         @NotNull(message = "超收数量不能为空")
         @Min(value = 0,message = "超收数量最小值为0")
-        @Max(value = 99999999,message = "超收数量最大值为99999999")
+        @Max(value = 999999999,message = "超收数量最大值为999999999")
         private Integer exceedQty;
 
         /**
-         * 库位id
+         * 库位
          */
-        private String warehouseLocationId;
+        private String warehouseLocation;
 
         /**
          * 备注
@@ -104,13 +104,18 @@ public class PoInstockDetailDTO implements Serializable {
         private Integer receiveQty;
 
         /**
-         * 入库数量
+         * 有效入库数量
          */
-        private Integer hasStockInQty;
+        private Integer effectiveStockInQty;
 
         /**
          * 未入库数量
          */
        private Integer unStockInQty;
+
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
     }
 }

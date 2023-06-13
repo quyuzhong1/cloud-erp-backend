@@ -107,6 +107,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 //                    errorMsgList.add(ApiError.ERROR_95015.msg);
 //                }
 //            }
+
         } else {
             //sku重复
             if (productDetailService.checkSkuNo(dto.getSkuNo(), "")) {
@@ -242,6 +243,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
         ProductNoSpecDTO productNoSpecDTO = new ProductNoSpecDTO();
 
+
 /*        BasicCategoryEntity categoryByName = basicCategoryService.getCategoryByName(dto.getCategory());
         if (!ObjectUtils.isEmpty(categoryByName)) {
             productInfoDTO.setChargeId("产品类别Id");
@@ -250,6 +252,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productInfoDTO.setBrandId(productBrand.getId());
         productInfoDTO.setBrandName(productBrand.getValue());
         productInfoDTO.setApprovalStatus(0);
+
         productInfoDTO.setIsNoSpecAdd(MathUtil.ONE);
         if (!CollectionUtils.isEmpty(chargeNameList)) {
             productInfoDTO.setChargeName(chargeNameList.get(0).getUserName());

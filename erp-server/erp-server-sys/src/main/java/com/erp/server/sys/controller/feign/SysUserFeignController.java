@@ -53,6 +53,9 @@ public class SysUserFeignController extends BaseController {
     @Autowired
     private SysRoleMenuService sysRoleMenuService;
 
+    @Autowired
+    private UserKingdeePostService userKingdeePostService;
+
 
 
     @PostMapping("/accountLogin")
@@ -81,7 +84,7 @@ public class SysUserFeignController extends BaseController {
         if (Objects.isNull(info)) {
             return failure(ApiError.ERROR_9012, null);
         }
-        if (info.getUserState() == UserStateConstants.USER_DISABLE) {
+        if (UserStateConstants.USER_DISABLE.equals(info.getUserState())) {
             return failure(ApiError.ERROR_9016, null);
         }
         return success(info);
@@ -214,6 +217,17 @@ public class SysUserFeignController extends BaseController {
     }
 
     /**
+     * 根据用户名称获取用户
+     *
+     * @return
+     */
+    @PostMapping("/listUserByUserNames")
+    public List<FindUserDTO> listUserByUserNames(@RequestBody List<String> userNames) {
+        List<FindUserDTO> list = sysUserInfoService.listUserByUserNames(userNames);
+        return list;
+    }
+
+    /**
      * 获取所有用户所在的部门
      * @Author Luo_WG
      * @Date 2022/12/13 17:12
@@ -317,4 +331,21 @@ public class SysUserFeignController extends BaseController {
         return sysUserInfoService.getUserListByRoleIds(dto);
     }
 
+
+    /**
+     * 根据用戶id 获取金蝶的对应岗位code
+     * @author yl
+     * @date 2023-06-05 10:08
+     * @param userId
+     * @return com.erp.model.sys.dto.KingdeePostDTO.UserKingdeePostInfoDTO
+     */
+    @PostMapping("/getUserKingdeePostByUserId")
+    public KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePostByUserId(@RequestBody String userId) {
+        return userKingdeePostService.getUserKingdeePostByUserId(userId);
+    }
+
+    @PostMapping("/listUserKingdeePostByUserIds")
+    public List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByUserIds(@RequestBody List<String> userIds) {
+        return userKingdeePostService.listUserKingdeePostByUserIds(userIds);
+    }
 }

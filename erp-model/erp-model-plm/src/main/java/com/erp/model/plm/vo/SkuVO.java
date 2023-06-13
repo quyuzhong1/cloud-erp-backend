@@ -15,6 +15,10 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class SkuVO implements Serializable {
 
+    /**
+     * sku版本号
+     */
+    private Integer version;
 
     private String skuId;
 
@@ -83,4 +87,24 @@ public class SkuVO implements Serializable {
      * 产品等级
      */
     private String productGrade;
+
+    /**
+     * 产品品牌
+     */
+    private String brandName;
+
+    /**
+     * 销售状态 1.未销售 2.销售中 3.清仓中 4.已下架
+     */
+    private Integer saleState;
+
+    /**
+     * 单位
+     */
+    private String unitName;
+
+    /**
+     * 产品状态
+     */
+    private Integer status;
 }

@@ -37,8 +37,8 @@
            </foreach>
        </if>
         <!--权限-->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
         UNION
         SELECT d.id,d.docs_name deliveryDocsName ,d.task_id,
@@ -154,8 +154,8 @@
             </foreach>
         </if>
         <!--权限-->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
     </select>
 

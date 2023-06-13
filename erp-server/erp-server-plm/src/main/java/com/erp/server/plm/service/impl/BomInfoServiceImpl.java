@@ -120,7 +120,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         BomInfoEntity bom = new BomInfoEntity();
         String bomId = IdWorker.getIdStr();
         bom.setType(dto.getType());
-        bom.setVersion(dto.getVersion());
+        bom.setBomVersion(dto.getVersion());
         bom.setId(bomId);
         bom.setSerialNumber(serialNumber);
         String submitAudit = BomConstant.SUBMIT_AUDIT;
@@ -353,7 +353,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     @Override
     public PagingVO<List<BomPagingVO>> paging(PagingDTO<SearchPagingDTO> dto) {
         SearchPagingDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         String searchKeyword = params.getSearchKeyword();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         String searchType = params.getSearchType();
@@ -432,6 +432,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.ERROR_95095);
         }
         BeanMapper.copy(bom, result);
+        result.setVersion(bom.getBomVersion());
         String createUserName = commonService.getNameById(result.getCreateUserId());
         result.setCreateUserName(createUserName);
         List<BomSkuDTO> skuList = bomSkuService.getByBomId(id);
@@ -456,9 +457,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.ERROR_95095);
         }
         checkBomCanUpdate(bom.getState(), BomConstant.EDIT);
-        Integer bomVersion = bom.getVersion();
+        Integer bomVersion = bom.getBomVersion();
         List<BomSkuDTO> oldBomList = bomSkuService.getByBomId(id);
-        bom.setVersion(bomVersion + 1);
+        bom.setBomVersion(bomVersion + 1);
         Boolean result = this.updateById(bom);
         List<BomSkuDTO> bomSkuList = dto.getSkuList();
         if (result) {
@@ -1033,8 +1034,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         String bomId = bom.getId();
         BomInfoEntity bomEntity = this.getById(bomId);
         if (bomEntity != null) {
-            Integer bomVersion = bomEntity.getVersion();
-            bomEntity.setVersion(bomVersion + 1);
+            Integer bomVersion = bomEntity.getBomVersion();
+            bomEntity.setBomVersion(bomVersion + 1);
             bomEntity.setType(bom.getType());
             bomEntity.setSyncKingdeeStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
             List<BomSkuDTO> oldBomList = bomSkuService.getByBomId(bomId);

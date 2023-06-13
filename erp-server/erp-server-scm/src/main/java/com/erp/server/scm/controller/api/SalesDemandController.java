@@ -7,6 +7,7 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
@@ -339,6 +341,48 @@ public class SalesDemandController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 下推备货申请单保存
+     * @author Will
+     * @date: 2023/5/22 18:15
+     * @param list
+     * @return ApiResult
+     */
+    @PostMapping(value = "/generateSalesDemand")
+    public ApiResult generateSalesDemand(@RequestBody @Valid ValidList<SalesDemandDTO.GenerateSalesDemandDTO> list) {
+        Boolean flag = salesDemandService.generateSalesDemand(list);
+        return flag == true ? success() : failure();
+    }
 
+    /**
+     * 下推委外订单显示
+     * @author Will
+     * @date: 2023/6/12 15:00
+     * @param dto
+     * @return ApiResult<List<ViewGenerateSubcontractOrderDTO>>
+     */
+    @PostMapping(value = "/viewGenerateSubcontractOrder")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "scm:salesDemand:viewGenerateSubcontractOrder",
+            tableAlias = "so"
+    )
+    public ApiResult<List<SalesDemandDTO.ViewGenerateSubcontractOrderDTO>> viewGenerateSubcontractOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<SalesDemandDTO.ViewGenerateSubcontractOrderDTO> list = salesDemandService.viewGenerateSubcontractOrder(dto.getIds());
+        return success(list);
+    }
+
+    /**
+     * 下推委外订单保存
+     * @author Will
+     * @date: 2023/6/12 15:10
+     * @param list
+     * @return ApiResult<Void>
+     */
+    @PostMapping(value = "/generateSubcontractOrder")
+    public ApiResult<Void> generateSubcontractOrder(@RequestBody @Validated ValidList<SalesDemandDTO.GenerateSubcontractOrderDTO> list) {
+        salesDemandService.generateSubcontractOrder(list);
+        return success();
+    }
 
 }

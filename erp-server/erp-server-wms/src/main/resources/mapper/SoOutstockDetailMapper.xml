@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SoOutstockDetailMapper">
+
+    <select id="listSoOutstockBySourceDetailId" resultType="com.erp.model.wms.entity.SoOutstockDetailEntity">
+        SELECT
+            sod.id,
+            sod.main_id,
+            sod.sku_id,
+            sod.sku_no,
+            sod.plan_qty,
+            sod.actual_qty,
+            sod.warehouse_location,
+            sod.is_close,
+            sod.remark,
+            sod.source_detail_id,
+            so.approve_status,
+            so.invalid_status
+        FROM so_outstock_detail sod
+        INNER JOIN so_outstock so ON sod.main_id = so.id AND sod.is_deleted = FALSE
+        WHERE so.is_deleted = FALSE
+        <if test="sourceDetailIds != null and sourceDetailIds.size > 0">
+            AND sod.source_detail_id in
+            <foreach collection="sourceDetailIds" separator="," item="id" open="(" close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="listDetailBySoIds" resultType="com.erp.model.wms.entity.SoOutstockDetailEntity">
+        SELECT
+        sod.id,
+        sod.main_id,
+        sod.sku_id,
+        sod.sku_no,
+        sod.plan_qty,
+        sod.actual_qty,
+        sod.warehouse_location,
+        sod.is_close,
+        sod.remark,
+        sod.source_detail_id,
+        so.approve_status,
+        so.so_id
+        FROM so_outstock so
+        INNER JOIN so_outstock_detail sod ON sod.main_id = so.id AND so.is_deleted=FALSE
+        WHERE sod.is_deleted = FALSE
+        <if test="ids != null and ids.size > 0">
+            AND so.so_id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+</mapper>

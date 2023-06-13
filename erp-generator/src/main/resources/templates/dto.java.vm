@@ -1,0 +1,88 @@
+package ${package.Dto};
+
+#foreach($pkg in ${table.importPackages})
+import ${pkg};
+#end
+#if(${swagger2})
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+#end
+#if(${entityLombokModel})
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.io.Serializable;
+#end
+
+#if(${dtoValidate})
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
+#end
+
+#foreach($field in ${table.fields})
+    #if(${dtoValidate} && (${field.propertyType} == 'BigDecimal'))
+import javax.validation.constraints.Digits;
+        #break;
+    #end
+#end
+
+/**
+ * <p>
+ * $!{table.comment}请求实体
+ * </p>
+ *
+ * @author ${author}
+ * @since ${date}
+ */
+#if(${entityLombokModel})
+@Data
+@NoArgsConstructor
+#end
+#if(${swagger2})
+@ApiModel(value="${entity}请求对象", description="$!{table.comment}请求实体")
+#end
+public class ${table.dtoName} implements Serializable {
+
+#if(${entitySerialVersionUID})
+   private static final long serialVersionUID=1L;
+#end
+
+    @Data
+    @NoArgsConstructor
+    public static class CommonDTO {
+    ## ------ 此处不显示id -----
+    ## ----------  BEGIN 字段循环遍历  ----------
+    #foreach($field in ${table.fields})
+    #if("$!field.comment" != "")
+        /**
+         * ${field.comment}
+         */
+    #if(${dtoValidate})
+        #if(${field.notNullField} && (${field.propertyType} == 'Long' || ${field.propertyType} == 'LocalDateTime' || ${field.propertyType} == 'BigDecimal' || ${field.propertyType} == 'Integer'  || ${field.propertyType} == 'Boolean'))
+        @NotNull(message = "${field.validComment}不能为空")
+        #elseif(${field.notNullField} && ${field.propertyType} == 'String')
+        @NotEmpty(message = "${field.validComment}不能为空")
+        #end
+    #end
+        #if(${dtoValidate} && (${field.propertyType} == 'String'))
+        @Size(max = ${field.maxLength},message = "${field.validComment}最大长度不能超过${field.maxLength}位")
+        #end
+        #if(${dtoValidate} && (${field.propertyType} == 'BigDecimal' && ${field.maxPreciseLength} > 0))
+        @Digits(integer = ${field.maxIntegerLength}, fraction = ${field.maxPreciseLength}, message = "${field.validComment}整数位不能超过${field.maxIntegerLength}位，小数位不能超过${field.maxPreciseLength}位")
+        #end
+        #if(${dtoValidate} && (${field.propertyType} == 'BigDecimal' && ${field.maxPreciseLength} == 0))
+        @Digits(integer = ${field.maxIntegerLength}, message = "${field.validComment}最大长度不能超过${field.maxIntegerLength}位")
+        #end
+        #if(${swagger2})
+        @ApiModelProperty(value = "${field.comment}")
+        #else
+        #end
+    #end
+        private ${field.propertyType} ${field.propertyName};
+
+     #end
+     ## ----------  END 字段循环遍历  ----------
+    }
+
+
+}

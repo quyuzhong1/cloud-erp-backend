@@ -59,8 +59,8 @@
             <if test="params.orderTime_end != null ">
                 and droi.order_time &lt;= #{params.orderTime_end}::timestamp
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
             </if>
         </where>
     </select>
@@ -108,8 +108,8 @@
             <if test="params.orderTime_end != null ">
                 and droi.order_time &lt;= #{params.orderTime_end}::timestamp
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
             </if>
         </where>
     </select>

@@ -5,6 +5,7 @@ import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -296,34 +297,57 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
     @NoArgsConstructor
     public static class ApproveViewDTO {
         /**
+         * 单据id
+         */
+        private String id;
+        /**
          * 单据来源
          */
-        private String source;
-
+        private String moduleClassify;
+        /**
+         * 单据编号
+         */
+        private String businessCode;
         /**
          * 单据名称
          */
-        private String name;
-
+        private String businessName;
+        /**
+         * 单据来源id
+         */
+        private String businessId;
+        /**
+         * 电锯来源编号
+         */
+        private String businessKey;
         /**
          * 已审核时长
          */
         private String approveDuration;
-
         /**
-         * 申请人
+         * 申请人id
+         */
+        private String createUserId;
+        /**
+         * 申请人名称
          */
         private String createUserName;
-
         /**
          * 申请时间
          */
-        private String createTime;
-
+        private LocalDateTime createTime;
         /**
          * 审核状态
          */
-        private String status;
+        private String approveStatus;
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+        /**
+         * 详情地址
+         */
+        private String detailUrl;
     }
 
     /**
@@ -333,15 +357,24 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
     @NoArgsConstructor
     public static class ApproveViewParamDTO extends SortDTO {
         /**
-         * 单据名称
+         * 数据审核状态（代办、已办、抄送我、已发送）
          */
-        private String name;
+        private String status;
 
         /**
-         * 模块名称
+         * 系统分类 plm wms scm
          */
-        private String  moduleName;
+        private List<String> sysClassifyList;
 
+        /**
+         * 界面可不传默认登录人
+         */
+        private String userId;
+
+        /**
+         * 单据名称
+         */
+        private String sourceCode;
     }
 
     /**
@@ -354,6 +387,11 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          * 数据审核状态（代办、已办、已发送）
          */
         private String status;
+
+        /**
+         * 数据审核状态（代办、已办、已发送）
+         */
+        private String statusName;
 
         /**
          * 数量
@@ -370,20 +408,21 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
     @Data
     @NoArgsConstructor
     public static class Module {
+
         /**
-         * 模块表名
+         * 系统分类 plm wms scm
          */
-        private String tableName;
+        private String sysClassify;
+
+        /**
+         * 系统分类 plm wms scm
+         */
+        private String sysClassifyName;
 
         /**
          * 数量
          */
         private Integer quantity;
-
-        /**
-         * 数据表id集合
-         */
-        private List<String> ids;
     }
 
     /**
@@ -401,6 +440,11 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          * 状态
          */
         private String approveStatus;
+
+        /**
+         * 参数
+         */
+        private String moduleParam;
     }
 
 }

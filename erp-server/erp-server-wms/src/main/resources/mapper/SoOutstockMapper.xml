@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SoOutstockMapper">
+
+
+    <select id="paging" resultType="com.erp.model.wms.dto.SoOutstockDTO$PagingViewDTO">
+        SELECT
+        so.id,
+        so.code,
+        so.so_id,
+        so.so_code,
+        so.source_code,
+        so.source_type,
+        so.source_id,
+        so.order_type,
+        so.approve_status,
+        so.warehouse_org_name,
+        so.carrier_id,
+        so.invalid_status,
+        so.plan_delivery_date,
+        so.actual_delivery_date,
+        so.pack_date,
+        so.warehouse_id,
+        so.warehouse_name,
+        so.approve_user_name,
+        so.create_user_name,
+        so.create_time,
+        sod.sku_id,
+        sod.sku_no,
+        sod.plan_qty,
+        sod.actual_qty,
+        sod.source_detail_id,
+        sod.warehouse_location
+        FROM so_outstock so
+        INNER JOIN so_outstock_detail sod
+        ON so.id=sod.main_id AND sod.is_deleted=FALSE
+        WHERE so.is_deleted=FALSE
+        <if test="params.skuNoList !=null and params.skuNoList.size>0">
+            AND sod.sku_no IN
+            <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+        <if test="params.code !=null and params.code!=''">
+            AND so.code ILIKE concat('%', #{params.code} ,'%')
+        </if>
+        <if test="params.soCode !=null and params.soCode!=''">
+            AND so.so_code ILIKE concat('%', #{params.soCode} ,'%')
+        </if>
+        <if test="params.orderType !=null and params.orderType!=''">
+            AND so.order_type =#{params.orderType}
+        </if>
+        <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
+            AND so.approve_status IN
+            <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
+                #{approveStatus}
+            </foreach>
+        </if>
+        <if test="params.invalidStatus !=null ">
+            AND so.invalid_status =#{params.invalidStatus}
+        </if>
+        <if test="params.customerIdList !=null and params.customerIdList.size>0">
+            AND so.customer_id IN
+            <foreach collection="params.customerIdList" item="customerId" open="(" separator="," close=")">
+                #{customerId}
+            </foreach>
+        </if>
+        <if test="params.warehouseIdList !=null and params.warehouseIdList.size>0">
+            AND so.warehouse_id IN
+            <foreach collection="params.warehouseIdList" item="warehouseId" open="(" separator="," close=")">
+                #{warehouseId}
+            </foreach>
+        </if>
+        <if test="params.createTimeList !=null and params.createTimeList.size>0">
+            AND so.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > so.create_time
+        </if>
+        <if test="params.actualDeliveryDateList !=null and params.actualDeliveryDateList.size>0">
+            AND so.actual_delivery_date >= #{params.actualDeliveryDateList[0]} and
+            (#{params.actualDeliveryDateList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > so.actual_delivery_date
+        </if>
+        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+            AND so.create_user_id IN
+            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                #{createUserId}
+            </foreach>
+        </if>
+
+        <if test="approveList !=null and approveList.size>0">
+            AND so.approve_status IN
+            <foreach collection="approveList" item="approve" open="(" separator="," close=")">
+                #{approve}
+            </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY so.create_time DESC
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.wms.dto.SoOutstockDTO$PagingViewDTO">
+       SELECT
+           so.id,
+           so.code,
+           so.so_id,
+           so.so_code,
+           so.source_type,
+           so.order_type,
+           so.source_id,
+           so.source_code,
+           so.approve_status,
+           so.warehouse_org_name,
+           so.carrier_id,
+           so.invalid_status,
+           so.plan_delivery_date,
+           so.actual_delivery_date,
+           so.pack_date,
+           so.warehouse_id,
+           so.warehouse_name,
+           so.approve_user_name,
+           so.create_user_name,
+           so.create_time,
+           sod.sku_id,
+           sod.sku_no,
+           sod.plan_qty,
+           sod.actual_qty,
+           sod.source_detail_id,
+           sod.warehouse_location
+        FROM so_outstock so
+        INNER JOIN so_outstock_detail sod
+        ON so.id=sod.main_id AND  sod.is_deleted=FALSE
+        WHERE so.is_deleted=FALSE
+        <choose>
+            <when test="params.ids!=null and params.ids.size>0">
+                AND so.id IN
+                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </when>
+            <otherwise>
+                <if test="params.skuNoList !=null and params.skuNoList.size>0">
+                    AND sod.sku_no IN
+                    <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
+                        #{skuNo}
+                    </foreach>
+                </if>
+                <if test="params.code !=null and params.code!=''">
+                    AND so.code ILIKE concat('%', #{params.code} ,'%')
+                </if>
+                <if test="params.soCode !=null and params.soCode!=''">
+                    AND so.so_code ILIKE concat('%', #{params.soCode} ,'%')
+                </if>
+                <if test="params.orderType !=null and params.orderType!=''">
+                    AND so.order_type =#{params.orderType}
+                </if>
+                <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
+                    AND so.approve_status IN
+                    <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
+                        #{approveStatus}
+                    </foreach>
+                </if>
+                <if test="params.invalidStatus !=null ">
+                    AND so.invalid_status =#{params.invalidStatus}
+                </if>
+                <if test="params.customerIdList !=null and params.customerIdList.size>0">
+                    AND so.customer_id IN
+                    <foreach collection="params.customerIdList" item="customerId" open="(" separator="," close=")">
+                        #{customerId}
+                    </foreach>
+                </if>
+                <if test="params.warehouseIdList !=null and params.warehouseIdList.size>0">
+                    AND so.warehouse_id IN
+                    <foreach collection="params.warehouseIdList" item="warehouseId" open="(" separator="," close=")">
+                        #{warehouseId}
+                    </foreach>
+                </if>
+                <if test="params.createTimeList !=null and params.createTimeList.size>0">
+                    AND so.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+                    DAY' ) > so.create_time
+                </if>
+                <if test="params.actualDeliveryDateList !=null and params.actualDeliveryDateList.size>0">
+                    AND so.actual_delivery_date >= #{params.actualDeliveryDateList[0]} and
+                    (#{params.actualDeliveryDateList[1]}::TIMESTAMP + INTERVAL '1
+                    DAY' ) > so.actual_delivery_date
+                </if>
+                <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+                    AND so.create_user_id IN
+                    <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                        #{createUserId}
+                    </foreach>
+                </if>
+
+                <if test="approveList !=null and approveList.size>0">
+                    AND so.approve_status IN
+                    <foreach collection="approveList" item="approve" open="(" separator="," close=")">
+                        #{approve}
+                    </foreach>
+                </if>
+            </otherwise>
+        </choose>
+
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY so.create_time DESC
+
+    </select>
+
+
+    <select id="listInventoryInOut" resultType="com.erp.model.wms.dto.inventory.InOutStockDTO">
+        SELECT
+        so.warehouse_id,
+        so.id AS sourceId,
+        so.code AS sourceCode,
+        sod.id AS sourceDetailId,
+        sod.sku_id,sod.sku_no,
+        sod.warehouse_location,
+        sod.actual_qty AS qty
+        FROM so_outstock so
+        INNER JOIN so_outstock_detail sod  ON sod.main_id=so.id
+        AND  sod.is_deleted=FALSE
+        WHERE so.is_deleted=FALSE
+        <if test="ids!=null and ids.size>0">
+            AND so.id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+    <select id="listSoRefSoOutstockBySoId" resultType="com.erp.model.wms.dto.SoOutstockDTO$SoRefDTO">
+            SELECT
+              so.id,
+              so.code,
+              so.approve_status,
+              so.order_type,
+              so.warehouse_org_id,
+              so.warehouse_org_name,
+              so.warehouse_id,
+              so.warehouse_name,
+              so.plan_delivery_date,
+              so.pack_date,
+              so.actual_delivery_date,
+              so.create_time,
+              so.create_user_name,
+              so.customer_id,
+              sod.sku_id,
+              sod.sku_no,
+              sod.plan_qty,
+              sod.actual_qty
+            FROM so_outstock so
+            INNER JOIN so_outstock_detail sod  ON sod.main_id=so.id
+            AND  sod.is_deleted=FALSE
+            WHERE so.is_deleted=FALSE
+            AND so.so_id=#{soId}
+            ORDER BY so.create_time DESC
+    </select>
+    <select id="listApproveCount" resultType="com.erp.model.wms.dto.SoOutstockDTO$ApproveCountDTO">
+          SELECT
+            approve_status,
+	        count(*)
+	     FROM   so_outstock
+	     WHERE is_deleted=FALSE
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+         GROUP BY approve_status
+    </select>
+</mapper>

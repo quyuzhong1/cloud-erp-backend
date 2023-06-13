@@ -83,6 +83,11 @@ public class QcInfoDTO implements Serializable {
         private String sourceId;
 
         /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
          * 来源类型
          */
         private String sourceType;
@@ -697,5 +702,65 @@ public class QcInfoDTO implements Serializable {
 
         @NotBlank(message = "质检员不能为空")
         private String qcUserId;
+    }
+
+    /**
+     * 退货签收单下推质检单
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ReceiveGenerateQcView {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 主表id
+         */
+        private String mainId;
+        /**
+         * 退货通知单id
+         */
+        private String sourceId;
+        /**
+         * 退货通知单明细id
+         */
+        private String sourceDetailId;
+        /**
+         * 退货单号
+         */
+        private String sourceCode;
+        /**
+         * 单据编号
+         */
+        private String code;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * 签收数量
+         */
+        private Integer receiveQty;
+        /**
+         * 仓库
+         */
+        private String warehouseLocation;
+        /**
+         * 仓位
+         */
+        private String warehouseId;
+        /**
+         * 备注
+         */
+        private String remark;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
     }
 }

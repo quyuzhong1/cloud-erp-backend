@@ -1,6 +1,5 @@
 package com.erp.server.plm.service.impl;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -210,7 +209,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         //获取登录人信息
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         String uid = loginUser.getUid();
         String userName = loginUser.getUserName();
@@ -219,7 +218,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         //根据成员id集合查询
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(memberIdList);
         if (CollectionUtils.isEmpty(userList)) {
-            throw new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         membersEntityList.stream().forEach(obj -> {
             //成员数据处理
@@ -268,7 +267,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         //获取登录人信息
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         String uid = loginUser.getUid();
         String userName = loginUser.getUserName();
@@ -287,7 +286,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         BeanMapperUtils.copy(templateMembersDTO, templateMembersEntity);
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(templateMembersDTO.getMemberId());
         if (ObjectUtils.isEmpty(findUserDTO)) {
-            throw new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         templateMembersEntity.setMemberName(findUserDTO.getUserName());
         templateMembersEntity.setTemplateId(dto.getTemplateId());

@@ -23,7 +23,18 @@ public enum ApiModuleTypeEnum {
     WAREHOUSE_INFO(12, "warehouseManage", "仓库管理","wms"),
     SUPPLIER(13, "supplier", "供应商管理","scm"),
     PURCHASE_STOCK_IN(14, "purchaseStockIn", "入库单","wms"),
-    SYS_DEPARTMENT(15, "sys_department", "部门","sys"),
+    SYS_DEPARTMENT(15, "sysDepartment", "部门","sys"),
+    TRANSFER_INFO(16, "transferInfo", "直接调拨单","wms"),
+    CUSTOMER_INFO(17, "customerInfo", "客户","oms"),
+    OTHER_OUTSTOCK(18, "otherOutstock", "其他出库单","wms"),
+    OTHER_INSTOCK(19, "otherInstock", "其他入库单","wms"),
+    MACHINE_INFO(20, "machineInfo", "加工单","wms"),
+    SO_INFO(21, "soInfo", "销售订单","oms"),
+    SO_CHANGE(22, "soChange", "销售变更单","oms"),
+    SO_OUTSTOCK(23, "soOutstock", "销售出库单","wms"),
+    SO_RETURN(24, "soReturn", "销售退货单","oms"),
+    CUSTOMER_GROUP(25, "customerGroup", "客户分组","oms"),
+    CUSTOMER_CONTACT(26, "customerContact", "客户联系人","oms"),
 
     ;
     private Integer code;

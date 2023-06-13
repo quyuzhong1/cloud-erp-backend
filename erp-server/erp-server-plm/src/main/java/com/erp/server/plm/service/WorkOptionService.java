@@ -16,7 +16,7 @@ public interface WorkOptionService {
      * @Author Luo_WG
      * @Date 2023/4/21 15:34
      **/
-    Integer getTableNum(String tableName);
+    Integer getTableNum(WorkOptionDTO.TableNumDTO tableNumDTO);
 
     /**
      * 根据用户获取各任务阶段数量

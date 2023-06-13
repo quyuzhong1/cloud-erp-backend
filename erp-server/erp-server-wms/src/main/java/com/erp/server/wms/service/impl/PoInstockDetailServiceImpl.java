@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -14,7 +15,6 @@ import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PoInstockEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
-import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.PoInstockDetailMapper;
 import com.erp.server.wms.service.*;
@@ -130,6 +130,11 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
     }
 
     @Override
+    public List<PoInstockDetailEntity> listByMainIds(List<String> mainIds) {
+        return lambdaQuery().in(PoInstockDetailEntity::getMainId,mainIds).list();
+    }
+
+    @Override
     public List<PoInstockDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds) {
         return baseMapper.listDetailBySourceDetailIds(sourceDetailIds);
     }
@@ -138,18 +143,6 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
     @Override
     public  List<PoInstockDetailEntity> listDetailByPodIds(List<String> podIds) {
         return baseMapper.listDetailByPodIds(podIds);
-    }
-
-    /**
-     * 根据主表id查询明细
-     * @Author Luo_WG
-     * @Date 2023/4/25 16:41
-     * @param id id
-     * @return java.util.List<com.erp.model.wms.entity.PurchaseStockInDetailEntity>
-     **/
-    @Override
-    public List<PoInstockDetailEntity> listDetailByMainId(String id) {
-        return lambdaQuery().eq(PoInstockDetailEntity::getMainId, id).list();
     }
 
     /**
@@ -212,6 +205,8 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
             throw new ServiceException(ApiError.ERROR_98050);
         }
         //验证SKU是否重复
+        // 可以增加仓位，允许重复
+        /*
         Map<String, List<PoInstockDetailEntity>> map = list.stream().collect(Collectors.groupingBy(PoInstockDetailEntity::getSkuId));
         for (Map.Entry<String, List<PoInstockDetailEntity>> entry: map.entrySet()) {
             List<PoInstockDetailEntity> value = entry.getValue();
@@ -219,7 +214,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
                 throw new ServiceException(new ApiResult(1,"sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复")));
             }
         }
-
+         */
 
         //采购订单
         List<PurchaseOrderDetailEntity> details = scmTaskFeign.listPurchaseOrderDetailById(podIds);

@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.SubcontractOrderMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.SubcontractOrderEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="code" property="code" />
+       <result column="bill_date" property="billDate" />
+       <result column="receive_org_id" property="receiveOrgId" />
+       <result column="receive_org_name" property="receiveOrgName" />
+       <result column="purchase_org_id" property="purchaseOrgId" />
+       <result column="purchase_org_name" property="purchaseOrgName" />
+       <result column="purchaser_id" property="purchaserId" />
+       <result column="purchaser_name" property="purchaserName" />
+       <result column="dept_id" property="deptId" />
+       <result column="dept_name" property="deptName" />
+       <result column="subcontract_org_id" property="subcontractOrgId" />
+       <result column="subcontract_org_name" property="subcontractOrgName" />
+       <result column="is_first_mass_product" property="isFirstMassProduct" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="invalid_time" property="invalidTime" />
+       <result column="approve_time" property="approveTime" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_type" property="sourceType" />
+       <result column="source_code" property="sourceCode" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        so.id,
+        sod.id as detailId,
+        so.approve_status as approveStatus,
+        so.code,
+        so.source_code as  sourceCode,
+        so.bill_date as billDate,
+        so.approve_status as approveStatus,
+        so.invalid_status as invalidStatus,
+        sod.arrival_status as arrivalStatus,
+        sod.sku_id as skuId,
+        sod.sku_no as skuNo,
+        sod.bom_version as bomVersion,
+        sod.qty,
+        sod.delivery_qty as deliveryQty,
+        so.approve_user_name as approveUserName,
+        so.purchaser_name as purchaserName,
+        so.create_time as createTime,
+        so.create_user_name as createUserName
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.scm.dto.SubcontractOrderDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+        from subcontract_order so
+        inner join subcontract_order_detail sod on so.id = sod.main_id and sod.is_deleted = false
+        <where>
+            so.is_deleted = false and sod.parent_id = ''
+            <if test="params.searchType != null and params.searchType != ''">
+                and so.approve_status like concat('%',#{params.searchType},'%')
+            </if>
+            <if test="params.code != null and params.code != ''">
+                and so.code like concat('%',#{params.code},'%')
+            </if>
+            <if test="params.isUrgent != null ">
+                and sod.is_urgent = #{params.isUrgent}
+            </if>
+            <if test="params.invalidStatus != null ">
+                and so.invalid_status = #{params.invalidStatus}
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                and sod.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
+                and sod.supplier_id in
+                <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and so.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.arrivalStatusList != null and params.arrivalStatusList.size > 0">
+                and sod.arrival_status in
+                <foreach collection="params.arrivalStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
+                and so.warehouse_id in
+                <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.purchaseUserIdList != null and params.purchaseUserIdList.size > 0">
+                and so.purchase_user_id in
+                <foreach collection="params.purchaseUserIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+                and so.create_user_id in
+                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                and so.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > so.create_time
+            </if>
+            <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
+                and so.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > so.approve_time
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        so.create_time desc
+    </select>
+
+    <select id="listCount" resultType="java.lang.Integer">
+        select
+        count(distinct so.id)
+        from subcontract_order so
+        left join subcontract_order_detail sod on so.id = sod.main_id and sod.is_deleted = false
+        <where>
+            so.is_deleted = false
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and so.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.arrivalStatusList != null and params.arrivalStatusList.size > 0">
+                and sod.arrival_status in
+                <foreach collection="params.arrivalStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.scm.dto.SubcontractOrderDTO$ListDTO">
+        select
+        <include refid="Base_Column_List" />
+        from subcontract_order so
+        inner join subcontract_order_detail sod on so.id = sod.main_id and sod.is_deleted = false
+        <where>
+            so.is_deleted = false
+            <if test="params.ids != null and params.ids.size > 0">
+                and po.id in
+                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.ids == null or params.ids.size == 0">
+                <if test="params.searchType != null and params.searchType != ''">
+                    and so.approve_status like concat('%',#{params.searchType},'%')
+                </if>
+                <if test="params.code != null and params.code != ''">
+                    and so.code like concat('%',#{params.code},'%')
+                </if>
+                <if test="params.isUrgent != null ">
+                    and sod.is_urgent = #{params.isUrgent}
+                </if>
+                <if test="params.invalidStatus != null ">
+                    and so.invalid_status = #{params.invalidStatus}
+                </if>
+                <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                    and sod.sku_no in
+                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
+                    and sod.supplier_id in
+                    <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                    and so.approve_status in
+                    <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.arrivalStatusList != null and params.arrivalStatusList.size > 0">
+                    and sod.arrival_status in
+                    <foreach collection="params.arrivalStatusList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
+                    and so.warehouse_id in
+                    <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.purchaseUserIdList != null and params.purchaseUserIdList.size > 0">
+                    and so.purchase_user_id in
+                    <foreach collection="params.purchaseUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+                    and so.create_user_id in
+                    <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                    and so.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > so.create_time
+                </if>
+                <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
+                    and so.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > so.approve_time
+                </if>
+                <if test="params.permissionSql != null and params.permissionSql != ''">
+                    ${params.permissionSql}
+                </if>
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        so.create_time desc
+    </select>
+
+</mapper>

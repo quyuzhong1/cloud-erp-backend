@@ -5,22 +5,22 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.constant.EnumMessage;
-import com.common.core.utils.EnumsUtil;
+import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.utils.OperationLogUtil;
 import com.common.business.dto.base.PagingDTO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
+import com.common.business.utils.OperationLogUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.EnumMessage;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.EnumsUtil;
 import com.erp.model.plm.dto.SysLogSelectDTO;
 import com.erp.model.plm.dto.SysLogShowDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.SysLogEntity;
 import com.erp.model.plm.entity.SysLogFieldEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.common.business.constant.IsConstant;
 import com.erp.server.plm.mapper.SysLogMapper;
 import com.erp.server.plm.service.BasicDictService;
 import com.erp.server.plm.service.CommonService;
@@ -113,7 +113,7 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
                     throw new ServiceException(ApiError.ERROR_9028);
                 }
                 if (StringUtils.isNotBlank(oldValue)) {
-                    EnumMessage enumObject = EnumsUtil.getEnumObject(Integer.valueOf(oldValue), aClass);
+                    EnumMessage enumObject = EnumsUtil.getEnumObject(oldValue, aClass);
                     if (ObjectUtils.isNotEmpty(enumObject)) {
                         oldValue = enumObject.getName();
                     } else {
@@ -121,7 +121,7 @@ public class SysLogServiceImpl extends ServiceImpl<SysLogMapper, SysLogEntity> i
                     }
                 }
                 if (StringUtils.isNotBlank(newValue)) {
-                    EnumMessage enumObject = EnumsUtil.getEnumObject(Integer.valueOf(newValue), aClass);
+                    EnumMessage enumObject = EnumsUtil.getEnumObject(newValue, aClass);
                     if (ObjectUtils.isNotEmpty(enumObject)) {
                         newValue = enumObject.getName();
                     } else {

@@ -42,13 +42,11 @@ public class WarehouseReceiveDTO {
         /**
          * 收货人id
          */
-        @NotBlank(message = "收货人不能为空")
         private String receiveUserId;
 
         /**
          * 收货人部门id
          */
-        @NotBlank(message = "收货人部门不能为空")
         private String receiveDeptId;
 
         /**
@@ -60,6 +58,7 @@ public class WarehouseReceiveDTO {
         /**
          * 交货仓库id
          */
+        @NotNull(message = "交货仓库不能为空")
         private String deliveryWarehouseId;
 
         /**
@@ -83,6 +82,8 @@ public class WarehouseReceiveDTO {
          */
         @NotBlank(message = "签收单主表id不能为空")
         private String id;
+
+        private String purchaseOrderId;
 
         /**
          * 收货人id
@@ -689,6 +690,11 @@ public class WarehouseReceiveDTO {
         private String remark;
 
         /**
+         * 库位
+         */
+        private String warehouseLocation;
+
+        /**
          * 采购订单明细id
          */
         private String purchaseOrderDetailId;
@@ -756,6 +762,11 @@ public class WarehouseReceiveDTO {
          * 仓库表id
          */
         private String deliveryWarehouseId;
+
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
     }
 
     /**

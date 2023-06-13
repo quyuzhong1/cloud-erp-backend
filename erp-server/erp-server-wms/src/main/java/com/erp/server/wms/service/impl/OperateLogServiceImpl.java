@@ -112,7 +112,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
                 continue;
             }
             String content;
-            String concat = msg.concat("编辑了[").concat(fieldName).concat("]");
+            String concat = (StringUtils.isBlank(msg) ? "" : msg).concat("编辑了[").concat(fieldName).concat("]");
             if (StringUtils.isBlank(valuePair.getKey())) {
                 content = concat.concat("由空值变更为[").concat(newValue).concat("]");
             } else {
@@ -237,7 +237,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             throw new ServiceException(ApiError.ERROR_9028);
         }
         if (StringUtils.isNotBlank(valuePair.getKey())) {
-            EnumMessage enumObject = EnumsUtil.getEnumObject(Integer.valueOf(valuePair.getKey()), aClass);
+            EnumMessage enumObject = EnumsUtil.getEnumObject(valuePair.getKey(), aClass);
             if (ObjectUtils.isNotEmpty(enumObject)) {
                 oldValue = enumObject.getName();
             } else {
@@ -245,7 +245,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             }
         }
         if (StringUtils.isNotBlank(valuePair.getValue())) {
-            EnumMessage enumObject = EnumsUtil.getEnumObject(Integer.valueOf(valuePair.getValue()), aClass);
+            EnumMessage enumObject = EnumsUtil.getEnumObject(valuePair.getValue(), aClass);
             if (ObjectUtils.isNotEmpty(enumObject)) {
                 newValue = enumObject.getName();
             } else {

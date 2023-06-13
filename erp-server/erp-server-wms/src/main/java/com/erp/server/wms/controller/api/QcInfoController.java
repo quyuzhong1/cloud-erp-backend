@@ -11,10 +11,7 @@ import com.common.business.validator.UpdateGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.PoInstockDTO;
-import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
-import com.erp.model.wms.dto.QcInfoDTO;
-import com.erp.model.wms.dto.QcResultDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.server.wms.service.QcInfoService;
 import com.erp.server.wms.service.QcResultService;
 import org.springframework.validation.annotation.Validated;
@@ -333,5 +330,30 @@ public class QcInfoController extends BaseController {
         return success();
     }
 
+    /**
+     * 退货签收单下推质检单
+     * @Author Luo_WG
+     * @Date 2023/5/23 14:05
+     * @param ids ids
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/returnReceiveGenerateQCSave")
+    public ApiResult returnReceiveGenerateQCSave(@RequestBody List<String> ids) {
+        Boolean flag = qcInfoService.returnReceiveGenerateQCSave(ids);
+        return flag == Boolean.TRUE ? success() : failure();
+    }
+
+    /**
+     * 下推退货入库单-列表查询
+     * @Author Luo_WG
+     * @Date 2023/4/13 18:59
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping(value = "/generateSoReturnInstockView")
+    public ApiResult<List<SoReturnInstockDTO.GenerateSoReturnInstockView>> generateSoReturnInstockView(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<SoReturnInstockDTO.GenerateSoReturnInstockView> generateSoDeliveryViews = qcInfoService.generateSoReturnInstockView(dto.getIds());
+        return success(generateSoDeliveryViews);
+    }
 
 }

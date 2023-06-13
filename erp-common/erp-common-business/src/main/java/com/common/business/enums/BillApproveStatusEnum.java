@@ -1,0 +1,55 @@
+package com.common.business.enums;
+
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.fasterxml.jackson.annotation.JsonValue;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.Arrays;
+
+/**
+ * @author Will
+ * @version 1.0
+ * @description: TODO
+ * @date 2023/3/15 17:28
+ */
+public enum BillApproveStatusEnum {
+    DRAFT("draft", "暂存"),
+    WAIT_SUBMIT("waitSubmit", "待提交"),
+    APPROVE_ING("approveIng", "审核中"),
+    REJECT("reject", "审核不通过"),
+    APPROVE("approve", "已审核");
+
+    @EnumValue
+    @JsonValue
+    private String status;
+    private String name;
+
+    BillApproveStatusEnum(String status, String name) {
+        this.status = status;
+        this.name = name;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public static String getName(String state) {
+        if (StringUtils.isNotBlank(state)) {
+            for (BillApproveStatusEnum item : BillApproveStatusEnum.values()) {
+                if (state.equals(item.getStatus())) {
+                    return item.getName();
+                }
+            }
+        }
+        return "";
+    }
+
+    public static BillApproveStatusEnum getByStatus(String status){
+        return Arrays.stream(values()).filter(a -> a.getStatus().equals(status))
+                .findFirst().orElse(null);
+    }
+}

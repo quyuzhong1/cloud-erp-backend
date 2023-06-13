@@ -14,13 +14,12 @@
         <result column="version" property="version" />
         <result column="is_deleted" property="isDeleted" />
         <result column="process_instance_id" property="processInstanceId" />
-        <result column="current_node_id" property="currentNodeId" />
         <result column="task_id" property="taskId" />
-        <result column="current_approve_id" property="currentApproveId" />
+        <result column="cur_approve_id" property="curApproveId" />
         <result column="start_time" property="startTime" />
         <result column="task_status" property="taskStatus" />
-        <result column="timeout_warn_status" property="timeoutWarnStatus" />
-        <result column="timeout_warn_interval" property="timeoutWarnInterval" />
+        <result column="timeout_status" property="timeoutStatus" />
+        <result column="timeout_warn_time" property="timeoutWarnTime" />
 
     </resultMap>
 

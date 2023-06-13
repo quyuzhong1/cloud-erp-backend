@@ -47,16 +47,16 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.ENG_BOM.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "CGDD-230413-8806"));
+        queryFilters.add(String.format("FNumber = '%s'", "A011CNA1_5"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FId";
+        String fieldKeys = "FId,FTreeEntity_FEntryId";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
 
         LinkedHashMap<String,Object> viewMap = new LinkedHashMap<>();
-        viewMap.put("Number","CGDD-230413-8806");
+        viewMap.put("Number","A011CNA1_5");
         JSONObject viewJson = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
         System.out.println(queryList);
-        System.out.println(viewJson);
+        //System.out.println(viewJson);
 
     }
     @Override
@@ -100,7 +100,6 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
             String id = save.getResult().getId();
             //主单据id
             KingdeeUtils.makeFieldJson(json,"FId",".", id);
-            //需要修改字段添加二级类目
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
@@ -128,4 +127,5 @@ public class KingdeeBomInfoConsumer implements RocketMQListener<Map<String, Obje
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
         }
     }
+
 }

@@ -2,7 +2,9 @@ package com.erp.model.wms.dto.inventory;
 
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -15,6 +17,8 @@ import java.io.Serializable;
  * @Author: zhangchunlin
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class InventoryUnApproveDTO implements Serializable {
 
     @NotNull(message = "单据来源不能为空")

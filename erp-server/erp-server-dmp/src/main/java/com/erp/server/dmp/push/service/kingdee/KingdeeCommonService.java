@@ -69,6 +69,19 @@ public interface KingdeeCommonService {
     Boolean saveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param,Integer type);
 
     /**
+     * @description: 下推
+     * @author Will
+     * @date: 2023/3/3 14:52
+     * @param platformEntity
+     * @param map
+     * @param sourceApiUtils
+     * @param apiUtils
+     * @param json
+     * @param param
+     */
+    Boolean push(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils sourceApiUtils, KingdeeApiUtils apiUtils, JSONObject jsonMap, SaveParam param,Integer type, JSONObject json);
+
+    /**
      * 提交及审核
      * @author Will
      * @date: 2023/3/3 14:03
@@ -114,6 +127,16 @@ public interface KingdeeCommonService {
     JSONObject view (KingdeeApiUtils apiUtils,String id,String number);
 
     /**
+     * 查询客户分组
+     * @Author Luo_WG
+     * @Date 2023/5/26 16:05
+     * @param apiUtils
+     * @param id
+     * @return cn.hutool.json.JSONObject
+     **/
+    JSONObject queryGroupInfo(KingdeeApiUtils apiUtils, String id, String code);
+
+    /**
      * @description: 查询平台
      * @author Will
      * @date: 2023/4/7 11:39
@@ -147,6 +170,32 @@ public interface KingdeeCommonService {
      * @param number
      */
     void delete (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number);
+
+    /**
+     * 删除客户分组
+     * @Author Luo_WG
+     * @Date 2023/5/26 15:32
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     * @return void
+     **/
+    void customerGroupDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type);
+
+    /**
+     * 客户分组新增或修改
+     * @Author Luo_WG
+     * @Date 2023/5/26 15:46
+     * @param platformEntity
+     * @param map
+     * @param apiUtils
+     * @param json
+     * @param param
+     * @return java.lang.Boolean
+     **/
+    Boolean customerGroupSaveOrUpdate(PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, JSONObject json, SaveParam param,Integer type);
+
     /**
      * 保存到金蝶数据
      * @param orderNo
@@ -157,4 +206,14 @@ public interface KingdeeCommonService {
      * @return
      */
     String addKingdeeRecord(String orderNo, KingdeeApiUtils apiUtils, Integer modelType, String platformCode, Map<String, Object> dataMap);
+
+    
+    /**
+     * 生成销售变更单
+     * @author yl
+     * @date 2023-06-07 10:46
+     * @param paramMap
+     * @return cn.hutool.json.JSONObject
+     */
+    String createkingdeeSoChange(Map<String, Object> paramMap);
 }

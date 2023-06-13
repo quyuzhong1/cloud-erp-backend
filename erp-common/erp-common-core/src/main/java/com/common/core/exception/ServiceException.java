@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
 public class ServiceException extends RuntimeException {
 
@@ -50,10 +49,22 @@ public class ServiceException extends RuntimeException {
      *
      * @param
      */
-    public ServiceException(int code, String msg) {
+    public ServiceException(Integer code, String msg) {
         // 加上super，否则会显示null
         super(msg);
         this.code = code;
+        this.msg = msg;
+    }
+
+    /**
+     * 统一错误码，错误描述外部传入
+     *
+     * @param
+     */
+    public ServiceException(String msg) {
+        // 加上super，否则会显示null
+        super(msg);
+        this.code = ApiError.Default.code;
         this.msg = msg;
     }
 

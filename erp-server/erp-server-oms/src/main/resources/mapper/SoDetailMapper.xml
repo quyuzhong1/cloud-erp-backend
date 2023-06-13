@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.SoDetailMapper">
+
+    <select id="listAddDetailView" resultType="com.erp.model.oms.dto.SoDetailDTO$AddDetailView">
+        SELECT
+        sd.id,
+        sd.main_id,
+        sd.sku_id,
+        sd.sku_no,
+        si.warehouse_org_id AS inventoryOrgId,
+        si.warehouse_org_name AS inventoryOrgName,
+        sd.qty AS salesQty,
+        sd.amount AS salesAmount,
+        sd.is_gift,
+        sd.is_close,
+        sd.remark,
+        si.warehouse_id,
+        sd.currency,
+        sd.currency_symbol
+        FROM so_detail sd
+        INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
+        WHERE si.is_deleted = FALSE AND sd.is_close = FALSE
+        <if test="id != null and id != ''">
+            AND si.id = #{id}
+        </if>
+        <if test="skuNoList != null and skuNoList != ''">
+            AND sd.sku_no IN
+            <foreach collection="skuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="listSkuPriceHistory" resultType="com.erp.model.oms.dto.SoDetailDTO$SkuHistoryPriceDTO">
+         SELECT
+          MAX(price) AS maxPrice,
+          MIN(price) AS minPrice,
+          sku_id,
+          COUNT(sku_id) AS count,
+	      round( SUM ( price*qty ) / sum(qty), 2 ) avgPrice
+        FROM so_detail
+        WHERE is_deleted=FALSE
+        AND sku_id!='' and qty!=0
+        GROUP BY sku_id
+    </select>
+
+    <select id="listAllSoDetail" resultType="com.erp.model.oms.dto.SoDetailDTO$InfoDTO">
+         SELECT
+            sd.id,
+            sd.main_id,
+            sd.sku_id,
+            sd.sku_no,
+            sd.qty,
+            sd.is_gift,
+            sd.is_close,
+            sd.remark,
+            sd.delivery_status,
+            si.approve_status
+        FROM so_detail sd
+        INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
+        WHERE si.is_deleted=FALSE
+    </select>
+
+    <select id="listSoDetailByApprove" resultType="com.erp.model.oms.dto.SoDetailDTO$InfoDTO">
+        SELECT
+        sd.id,
+        sd.main_id,
+        sd.sku_id,
+        sd.sku_no,
+        sd.qty,
+        sd.is_gift,
+        sd.is_close,
+        sd.remark,
+        sd.delivery_status,
+        si.approve_status
+        FROM so_detail sd
+        INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
+        WHERE si.is_deleted=FALSE
+        <if test="approveList !=null and approveList.size>0">
+            AND si.approve_status IN
+            <foreach collection="approveList" item="approve" open="(" separator="," close=")">
+                #{approve}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="listSoDetailByDeliveryStatus" resultType="com.erp.model.oms.dto.SoDetailDTO$InfoDTO">
+        SELECT
+        sd.id,
+        sd.main_id,
+        sd.sku_id,
+        sd.sku_no,
+        sd.qty,
+        sd.is_gift,
+        sd.is_close,
+        sd.remark,
+        sd.delivery_status,
+        si.approve_status
+        FROM so_detail sd
+        INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
+        WHERE si.is_deleted=FALSE AND si.approve_status='approve'
+        <if test="deliveryStatusList !=null  and deliveryStatusList.size>0">
+            AND sd.delivery_status IN
+            <foreach collection="deliveryStatusList" item="deliveryStatus" open="(" separator="," close=")">
+                #{deliveryStatus}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="listSoDetailByMainIds" resultType="com.erp.model.oms.entity.SoDetailEntity">
+        SELECT
+            sd.id,
+            sd.main_id,
+            sd.sku_id,
+            sd.sku_no,
+            sd.qty,
+            sd.price,
+            sd.tax_rate,
+            sd.amount,
+            sd.currency,
+            sd.currency_symbol,
+            sd.is_gift,
+            sd.is_reissue,
+            sd.is_close,
+            sd.remark,
+            sd.delivery_status,
+            si.approve_status,
+            sd.kingdee_detail_id
+        FROM so_detail sd
+        INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
+        WHERE si.is_deleted = FALSE
+        <if test="mainIds !=null and mainIds.size>0">
+            AND si.id IN
+            <foreach collection="mainIds" item="mainId" open="(" separator="," close=")">
+                #{mainId}
+            </foreach>
+
+        </if>
+    </select>
+
+    <select id="listApproveCount" resultType="com.erp.model.oms.dto.SoDetailDTO$TypeCountDTO">
+        SELECT
+            si.approve_status AS type,
+	        count(sd.id)
+        FROM so_detail sd
+        INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
+        WHERE si.is_deleted=FALSE
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        GROUP BY si.approve_status
+    </select>
+
+    <select id="listDeliveryCount" resultType="com.erp.model.oms.dto.SoDetailDTO$TypeCountDTO">
+        SELECT
+          sd.delivery_status AS type,
+	      count(sd.id)
+        FROM so_detail sd
+        INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
+        WHERE si.is_deleted=FALSE AND si.approve_status='approve'
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+         GROUP BY sd.delivery_status
+    </select>
+</mapper>

@@ -1,27 +1,31 @@
 package com.erp.server.workflow.controller.api;
 
 
+import cn.hutool.json.JSONUtil;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.server.workflow.service.ProcessManagementService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+import java.util.List;
 
 /**
- * <p>
- *  前端控制器
- * </p>
+ * 流程管理
  *
  * @author Cloud
  * @since 2023-04-21
  */
+
+@Slf4j
 @RestController
 @RequestMapping("/process/management")
 public class ProcessManagementController extends BaseController {
@@ -41,23 +45,89 @@ public class ProcessManagementController extends BaseController {
     }
 
     /**
-     * 流程审核通过
+     * 流程审核
      * @param dto
      * @return
      */
     @PostMapping("/approve")
-    public ApiResult approveProcess(@RequestBody @Valid ProcessManagementDTO.ApproveDTO dto) {
-        processManagementService.approveProcess(dto);
-        return success();
+    public ApiResult<ProcessManagementDTO.ApproveResultDTO> approveProcess(@RequestBody @Valid ProcessManagementDTO.ApproveDTO dto) {
+        ProcessManagementDTO.ApproveResultDTO resultDTO = processManagementService.approveProcess(dto);
+        return success(resultDTO);
     }
 
     /**
      * 驳回流程
      * @param dto
      */
-    @PostMapping("/reject")
-    public ApiResult rejectProcess(@RequestBody @Valid ProcessManagementDTO.ApproveDTO dto) {
-        processManagementService.rollback(dto);
-        return success();
+    @PostMapping("/back")
+    public ApiResult<ProcessManagementDTO.BackResultDTO> backProcess(@RequestBody @Valid ProcessManagementDTO.BackDTO dto) {
+        ProcessManagementDTO.BackResultDTO resultDTO = processManagementService.back(dto);
+        return success(resultDTO);
     }
+
+    /**
+     * 撤回流程
+     *
+     */
+    @PostMapping("/revoke")
+    public ApiResult<ProcessManagementDTO.RevokeResultDTO> revokeProcess(@RequestBody @Valid ProcessManagementDTO.RevokeDTO dto) {
+        ProcessManagementDTO.RevokeResultDTO revokeResult = processManagementService.revoke(dto);
+        return success(revokeResult);
+    }
+
+
+    /**
+     * 批量-转办任务-流程管理
+     */
+    @PostMapping("/transfer/batch")
+    public ApiResult<Boolean> transferBatchProcess(@RequestBody @Valid ProcessManagementDTO.TransferBatchDTO dto) {
+        return success(processManagementService.transferBatch(dto));
+    }
+
+    /**
+     * 转办-业务流程
+     */
+    @PostMapping("/transfer")
+    public ApiResult<Boolean> transferProcess(@RequestBody @Valid ProcessManagementDTO.TransferDTO dto) {
+        return success(processManagementService.transfer(dto));
+    }
+
+    /**
+     * 历史流程节点 - 用于指定人驳回
+     */
+    @PostMapping("/history/activity")
+    public ApiResult<List<ProcessManagementDTO.HistoryActivityResultDTO>> historyActivity(@RequestBody @Valid ProcessManagementDTO.HistoryActivityDTO dto) {
+        List<ProcessManagementDTO.HistoryActivityResultDTO> resultList = processManagementService.historyActivity(dto);
+        return success(resultList);
+    }
+    /**
+     * 流程管理分页列表
+     */
+    @PostMapping("/paging")
+    public ApiResult<PagingVO<ProcessManagementDTO.PagingResultDTO>> paging(@RequestBody @Valid PagingDTO<ProcessManagementDTO.SearchDTO> dto) {
+        PagingVO<ProcessManagementDTO.PagingResultDTO> resultList = processManagementService.paging(dto);
+        return success(resultList);
+    }
+
+    /**
+     * 流程管理导出
+     */
+    @PostMapping("/export")
+    public void export(@RequestBody @Valid ProcessManagementDTO.ExportDTO dto, HttpServletResponse response) {
+        try {
+            processManagementService.export(dto, response);
+        } catch (Exception e) {
+            log.error("导出流程管理数据失败 dot = {}", JSONUtil.toJsonStr(dto), e);
+        }
+    }
+    /**
+     * 查看流程进度
+     */
+    @PostMapping("/progress")
+    public ApiResult<ProcessManagementDTO.ProcessResultDTO> progress(@RequestBody @Valid ProcessManagementDTO.ProgressDTO dto) {
+        return success(processManagementService.progress(dto));
+    }
+
+
+
 }

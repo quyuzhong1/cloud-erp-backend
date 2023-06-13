@@ -9,28 +9,25 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.WarehouseReceiveDetailMapper;
-import com.erp.server.wms.service.CommonService;
-import com.erp.server.wms.service.PurchaseReturnOrderDetailService;
-import com.erp.server.wms.service.WarehouseReceiveDetailService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -58,6 +55,9 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
 
     @Resource
     private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
+
+    @Resource
+    private OperateLogService operateLogService;
 
 
     /**
@@ -147,6 +147,8 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(WarehouseReceiveDTO.UpdateDTO dto) {
+        List<String> addList = dto.getWarehouseReceiveDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).map(WarehouseReceiveDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+
         //创建保存详情的集合
         List<WarehouseReceiveDetailEntity> listDetail = new ArrayList<>();
         //获取界面传过来的采购单详情表id集合
@@ -156,40 +158,68 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         //校验sku重复
         checkAddDetailsRepeatSku(purchaseOrderDetailEntities);
         List<WarehouseReceiveDetailDTO.UpdateDTO> warehouseReceiveDetailList = dto.getWarehouseReceiveDetailList();
-
         List<WarehouseReceiveDetailEntity> detailEntityList = listWarehouseReceiveByPodIds(orderDetailIds);
         List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(orderDetailIds);
+        List<WarehouseReceiveDetailEntity> receiveDetailEntities = this.listWarehouseReceiveByPodIds(orderDetailIds);
+
+        //原明细数据
+        List<WarehouseReceiveDetailEntity> oldList = this.listDetailByMainIds(Arrays.asList(dto.getId()));
+        List<String> deleteIds = getDeleteIds(dto.getWarehouseReceiveDetailList(), oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<WarehouseReceiveDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(),pairList,"编辑操作");
+            this.removeByIds(deleteIds);
+        }
         for (WarehouseReceiveDetailDTO.UpdateDTO updateDTO : warehouseReceiveDetailList) {
             WarehouseReceiveDetailEntity warehouseReceiveDetailEntity = new WarehouseReceiveDetailEntity();
+            warehouseReceiveDetailEntity.setMainId(updateDTO.getMain_id());
+            PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(updateDTO.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
+            warehouseReceiveDetailEntity.setSkuId(purchaseOrderDetailEntity.getSkuId());
+            warehouseReceiveDetailEntity.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
+            warehouseReceiveDetailEntity.setPlanDeliveryDate(purchaseOrderDetailEntity.getPlanDeliveryDate());
+            Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer receiveQty = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer purchaseQty = purchaseOrderDetailEntity.getPurchaseQty();
+            if ((receiveQty - returnQty) > purchaseQty) {
+                throw new ServiceException(ApiError.ERROR_99025.code, String.format(ApiError.ERROR_99025.msg, purchaseOrderDetailEntity.getSkuNo()));
+            }
             if (StringUtils.isNotBlank(updateDTO.getId())) {
                 warehouseReceiveDetailEntity.setId(updateDTO.getId());
-            }
-            warehouseReceiveDetailEntity.setMainId(updateDTO.getMain_id());
-            PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(updateDTO.getPurchaseOrderDetailId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
-                warehouseReceiveDetailEntity.setSkuId(purchaseOrderDetailEntity.getSkuId());
-                warehouseReceiveDetailEntity.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
-                warehouseReceiveDetailEntity.setPlanDeliveryDate(purchaseOrderDetailEntity.getPlanDeliveryDate());
-
-                Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-
-                Integer receiveQty = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-
-                Integer purchaseQty = purchaseOrderDetailEntity.getPurchaseQty();
-                if ((receiveQty - returnQty) > purchaseQty) {
-                    throw new ServiceException(ApiError.ERROR_99025.code, String.format(ApiError.ERROR_99025.msg, purchaseOrderDetailEntity.getSkuNo()));
-                }
-
-                warehouseReceiveDetailEntity.setReceiveQty(updateDTO.getReceiveQty());
-                warehouseReceiveDetailEntity.setExceedQty(updateDTO.getExceedQty());
-                warehouseReceiveDetailEntity.setRemark(updateDTO.getRemark());
-                warehouseReceiveDetailEntity.setPurchaseOrderDetailId(updateDTO.getPurchaseOrderDetailId());
             } else {
-                throw new ServiceException(ApiError.ERROR_99006);
+                Integer receive = receiveDetailEntities.stream().filter(obj -> obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderDetailId().equals(warehouseReceiveDetailEntity.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                if (purchaseOrderDetailEntity.getPurchaseQty() + returnQty - receive < updateDTO.getReceiveQty()) {
+                    throw new ServiceException(ApiError.ERROR_99054.code, String.format(ApiError.ERROR_99054.msg, purchaseOrderDetailEntity.getSkuNo()));
+                }
             }
+            warehouseReceiveDetailEntity.setReceiveQty(updateDTO.getReceiveQty());
+            warehouseReceiveDetailEntity.setExceedQty(updateDTO.getExceedQty());
+            warehouseReceiveDetailEntity.setRemark(updateDTO.getRemark());
+            warehouseReceiveDetailEntity.setPurchaseOrderDetailId(updateDTO.getPurchaseOrderDetailId());
             listDetail.add(warehouseReceiveDetailEntity);
+            //修改操作日志
+            if (StringUtils.isNotBlank(warehouseReceiveDetailEntity.getId())) {
+                WarehouseReceiveDetailEntity old = this.getById(warehouseReceiveDetailEntity.getId());
+                operateLogService.addModuleOperateLogByObj(old,warehouseReceiveDetailEntity, ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(),dto.getId(),"",String.format("【%s】",old.getSkuNo()));
+            }
         }
-        return this.saveOrUpdateBatch(listDetail);
+        boolean flag = this.saveOrUpdateBatch(listDetail);
+        //添加操作日志
+        if (CollectionUtils.isNotEmpty(addList)) {
+            List<WarehouseReceiveDetailEntity> receiveDetailEntityList = this.listByIds(addList);
+            List<Pair<String, String>> addPairList = receiveDetailEntityList.stream().map(obj -> new Pair<>(dto.getId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), addPairList, "编辑操作");
+        }
+        return flag;
+    }
+
+    private List<String> getDeleteIds(List<WarehouseReceiveDetailDTO.UpdateDTO> newList, List<WarehouseReceiveDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(WarehouseReceiveDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(WarehouseReceiveDetailEntity
+                ::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 
     /**

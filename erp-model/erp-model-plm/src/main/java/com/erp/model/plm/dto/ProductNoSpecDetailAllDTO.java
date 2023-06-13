@@ -1,9 +1,11 @@
 package com.erp.model.plm.dto;
 
+import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -54,8 +56,6 @@ public class ProductNoSpecDetailAllDTO {
      */
     private List<ProductCertificateShowDTO> productCertificateShowDTOList;
 
-
-
     /**
      * 产品包装辅料
      */
@@ -66,4 +66,8 @@ public class ProductNoSpecDetailAllDTO {
      */
     private List<ProductAttestationDTO> productAttestationList;
 
+    /**
+     * 目的国海关编码信息
+     */
+    private List<ProductCustomsEntity> productCustomsList;
 }

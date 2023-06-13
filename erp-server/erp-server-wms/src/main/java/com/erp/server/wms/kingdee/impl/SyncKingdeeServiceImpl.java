@@ -2,7 +2,7 @@ package com.erp.server.wms.kingdee.impl;
 
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.server.wms.kingdee.SyncKingdeeService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -20,6 +20,23 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     @Resource
     private WarehouseService warehouseService;
 
+    @Resource
+    private TransferInfoService transferInfoService;
+
+    @Resource
+    private OtherInstockService otherInstockService;
+
+    @Resource
+    private OtherOutstockService otherOutstockService;
+
+    @Resource
+    private PurchaseReturnOrderService purchaseReturnOrderService;
+
+    @Resource
+    private PoInstockService poInstockService;
+
+    @Resource
+    private SoOutstockService soOutstockService;
 
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
@@ -36,6 +53,29 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         if (ApiModuleTypeEnum.WAREHOUSE_INFO.getCode().toString().equals(code)) {
             warehouseService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId);
         }
-
+        //调拨申请单
+        if (ApiModuleTypeEnum.TRANSFER_INFO.getCode().toString().equals(code)) {
+            transferInfoService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
+        }
+        //其他入库单
+        if (ApiModuleTypeEnum.OTHER_INSTOCK.getCode().toString().equals(code)) {
+            otherInstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
+        }
+        //其他出库单
+        if (ApiModuleTypeEnum.OTHER_OUTSTOCK.getCode().toString().equals(code)) {
+            otherOutstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
+        }
+        //采购退货单
+        if (ApiModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode().toString().equals(code)) {
+            purchaseReturnOrderService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
+        }
+        //采购退货单
+        if (ApiModuleTypeEnum.PURCHASE_STOCK_IN.getCode().toString().equals(code)) {
+            poInstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
+        }
+        //销售出库单
+        if (ApiModuleTypeEnum.SO_OUTSTOCK.getCode().toString().equals(code)) {
+            soOutstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
+        }
     }
 }

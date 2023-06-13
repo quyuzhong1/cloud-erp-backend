@@ -5,7 +5,13 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.core.utils.IdUtils;
+import com.common.core.utils.ValidatorUtil;
+import com.common.message.constant.RocketMqTopic;
 import com.common.message.entity.MessageBody;
+import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.NoticeTypeEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.rocketmq.client.producer.SendCallback;
@@ -17,7 +23,9 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -31,7 +39,7 @@ public class MQProducerService<T> {
     @Autowired
     private RocketMQTemplate rocketMQTemplate;
 
-    private String activeProfile = SpringUtil.getActiveProfile();
+    private String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
 
 
 	private void sendMsg(MSG_TYPE msgType,String msgKey, String destination, Object payload, String msgSource){
@@ -84,7 +92,7 @@ public class MQProducerService<T> {
     public void syncSendMsg(String msgKey, String topic,String tag, Object payload, String msgSource){
         // 发送的消息体，消息体必须存在
         // 业务主键作为消息key
-        String destination = StrUtil.format("{}:{}", topic.replace("${spring.profiles.active}", activeProfile), tag);
+        String destination = StrUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag);
         syncSendMsg(msgKey, destination, payload, msgSource);
     }
     /**
@@ -113,7 +121,7 @@ public class MQProducerService<T> {
     public void oneWaySendMsg(String msgKey,String topic, String tag, Object payload, String msgSource){
         // 发送的消息体，消息体必须存在
         // 业务主键作为消息key
-        String destination = StrUtil.format("{}:{}", topic.replace("${spring.profiles.active}", activeProfile), tag);
+        String destination = StrUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag);
         oneWaySendMsg(msgKey, destination, payload,msgSource);
     }
 
@@ -131,7 +139,7 @@ public class MQProducerService<T> {
                         .setHeader(RocketMQHeaders.KEYS, IdUtil.getSnowflake())
                         .build())
                 .collect(Collectors.toList());
-        return rocketMQTemplate.syncSend(StrUtil.format("{}:{}", topic.replace("${spring.profiles.active}", activeProfile), tag), messageList);
+        return rocketMQTemplate.syncSend(StrUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag), messageList);
     }
 
     /**
@@ -146,7 +154,7 @@ public class MQProducerService<T> {
         Message<T> msg = MessageBuilder.withPayload(entity)
                 .setHeader(RocketMQHeaders.KEYS, key)
                 .build();
-        return rocketMQTemplate.syncSend(StrUtil.format("{}:{}", topic.replace("${spring.profiles.active}", activeProfile), tag), msg);
+        return rocketMQTemplate.syncSend(StrUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag), msg);
     }
 
     /**
@@ -160,7 +168,7 @@ public class MQProducerService<T> {
         Message<T> msg = MessageBuilder.withPayload(entity)
                 .setHeader(RocketMQHeaders.KEYS, key)
                 .build();
-        String destination = StrUtil.format("{}:{}", topic.replace("${spring.profiles.active}", activeProfile), tag);
+        String destination = StrUtil.format("{}:{}", topic.replace("${spring.cloud.nacos.discovery.namespace}", namespace), tag);
         rocketMQTemplate.asyncSend(destination, msg, new SendCallback() {
             @Override
             public void onSuccess(SendResult sendResult) {
@@ -172,4 +180,55 @@ public class MQProducerService<T> {
             }
         });
     }
+
+    /**
+     * 往消息中心发送MQ任务消息
+     * @param msgInfoDTO
+     * @param isSync（true为同步，其他则为异步）
+     * @return 同步时返回，异步返回null
+     */
+    public SendResult sendNoticeMsg(NoticeMsgInfoDTO msgInfoDTO, Boolean isSync) {
+        ValidatorUtil.validateEntity(msgInfoDTO);
+        String key = IdUtil.simpleUUID();
+        Message<NoticeMsgInfoDTO> msg = MessageBuilder.withPayload(msgInfoDTO)
+                .setHeader(RocketMQHeaders.KEYS, key)
+                .build();
+
+        NoticeTypeEnum noticeTypeEnum = msgInfoDTO.getNoticeTypeEnum();
+        String topic = RocketMqTopic.NOTICE_MSG_TOPIC.replace("${spring.cloud.nacos.discovery.namespace}", namespace);
+        String destination = StrUtil.format("{}:{}", topic , noticeTypeEnum.getMqTag());
+
+        if(Objects.equals(Boolean.TRUE, isSync)) {
+            return rocketMQTemplate.syncSend(destination, msgInfoDTO);
+        } else {
+            asyncClassMsg(topic, noticeTypeEnum.getMqTag(), (T) msgInfoDTO, key);
+            return null;
+        }
+    }
+
+    /**
+     * 往消息中心发送同步MQ消息
+     * @param msgInfoDTO
+     * @return 同步时返回，异步返回null
+     */
+    public SendResult sendNoticeMsg(NoticeMsgInfoDTO msgInfoDTO) {
+        return sendNoticeMsg(msgInfoDTO, Boolean.TRUE);
+    }
+
+    /**
+     * 往消息中心发送MQ预警消息
+     * @param msgInfoDTO
+     */
+    public void sendWarnMsg(WarnMsgInfoDTO msgInfoDTO) {
+        ValidatorUtil.validateEntity(msgInfoDTO);
+        String key = IdUtil.simpleUUID();
+        msgInfoDTO.setHappenTime(LocalDateTime.now());
+        String topic = RocketMqTopic.WARN_MSG_TOPIC.replace("${spring.cloud.nacos.discovery.namespace}", namespace);
+        try {
+            asyncClassMsg(topic, RocketMqTagEnum.MSG_WARN_TAG.getName(), (T) msgInfoDTO, key);
+        } catch (Exception e) {
+            log.error("异步发送MQ消息异常", e);
+        }
+    }
+
 }

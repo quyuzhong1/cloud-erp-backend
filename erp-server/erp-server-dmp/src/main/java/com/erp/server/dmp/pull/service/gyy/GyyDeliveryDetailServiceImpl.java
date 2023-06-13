@@ -2,30 +2,27 @@ package com.erp.server.dmp.pull.service.gyy;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.common.message.constant.RocketMqTopic;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
-import com.erp.model.dmp.constant.MongoTableNameContant;
+import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
-import com.erp.model.dmp.gyy.GyyOrderEntity;
 import com.erp.model.dmp.gyy.bean.DeliveryDetailsBean;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +36,10 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -290,7 +290,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
             //商品单位
             dmpReturnOrderItemEntity.setProductUnit(itemEntity.getItemUnitName());
             //是否是赠品 1. 是 2. 否
-            dmpReturnOrderItemEntity.setIsGift((null != itemEntity.getIsGift() && itemEntity.getIsGift() == 1) ? 1 : 2);
+            dmpReturnOrderItemEntity.setIsGift((null != itemEntity.getIsGift() && itemEntity.getIsGift()) ? 1 : 2);
             //属性
             dmpReturnOrderItemEntity.setSpecifics(itemEntity.getPlatformSkuName());
             //订单商品备注

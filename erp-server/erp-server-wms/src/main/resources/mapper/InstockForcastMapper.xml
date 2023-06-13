@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.InstockForcastMapper">
+
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.InstockForcastEntity">
+        <result column="id" property="id" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="code" property="code" />
+        <result column="purchase_order_id" property="purchaseOrderId" />
+        <result column="org_id" property="orgId" />
+        <result column="warehouse_id" property="warehouseId" />
+        <result column="bill_date" property="billDate" />
+        <result column="approve_status" property="approveStatus" />
+        <result column="approve_user_name" property="approveUserName" />
+        <result column="approve_user_id" property="approveUserId" />
+        <result column="approve_time" property="approveTime" />
+        <result column="invalid_status" property="invalidStatus" />
+        <result column="invalid_remark" property="invalidRemark" />
+    </resultMap>
+
+    <update id="updateDeletedById">
+        update instock_forcast set is_deleted = true where id = #{id}
+    </update>
+
+</mapper>

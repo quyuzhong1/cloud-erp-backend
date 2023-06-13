@@ -3,26 +3,22 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.scm.entity.*;
-import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
-import com.erp.model.wms.enums.SourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
@@ -30,9 +26,7 @@ import com.erp.server.wms.kingdee.SyncKingdeeReturnOrderService;
 import com.erp.server.wms.service.PurchaseReturnOrderDetailService;
 import com.erp.server.wms.service.PurchaseReturnOrderService;
 import com.erp.server.wms.service.WarehouseService;
-import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
@@ -88,8 +82,11 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         resultMap.put("id",entity.getId());
         //退货单号
         resultMap.put("code",entity.getCode());
+
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getReturnOrgId()));
+        String returnOrgCode = accountingCompanyList.stream().filter(req -> req.getId().equals(entity.getReturnOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
         //退料组织
-        resultMap.put("returnOrgName",entity.getReturnOrgName());
+        resultMap.put("returnOrgName", returnOrgCode);
 
         //获取用户部门id
         SysDepartmentUserNumberDTO departmentDTO = sysUserFeign.getDeptByUserId(entity.getPurchaseUserId());
@@ -200,7 +197,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PURCHASE_RETURN_ORDER_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return purchaseReturnOrderService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"");
+                return purchaseReturnOrderService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"", operate);
             }
             return Boolean.TRUE;
         });

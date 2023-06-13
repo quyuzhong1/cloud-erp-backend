@@ -1,14 +1,13 @@
 package com.erp.model.dmp.kingdee;
 
 import cn.hutool.core.annotation.Alias;
+import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import java.util.List;
 
 @Data
-@ToString
 @NoArgsConstructor
 public class KingdeeDeliveryDetailEntity{
 
@@ -86,4 +85,49 @@ public class KingdeeDeliveryDetailEntity{
     @Alias("FExchangeRate")
     private String fExchangeRate;
     private List<KingdeeDeliveryDetailItemEntity> kingdeeOutStockItemEntityList;
+    /**
+     * 清洗数据
+     */
+    private Boolean isClean;
+    @Override
+    public String toString() {
+        return "KingdeeDeliveryDetailEntity{" +
+                "fId='" + fId + '\'' +
+                ", fBillNo='" + fBillNo + '\'' +
+                ", fSoorDerno='" + fSoorDerno + '\'' +
+                ", fBillTypeID='" + fBillTypeID + '\'' +
+                ", fBillTypeName='" + fBillTypeName + '\'' +
+                ", fDate='" + fDate + '\'' +
+                ", fSaleOrgId='" + fSaleOrgId + '\'' +
+                ", fSaleOrgName='" + fSaleOrgName + '\'' +
+                ", fCustomerID='" + fCustomerID + '\'' +
+                ", fCustomerName='" + fCustomerName + '\'' +
+                ", fSaleDeptName='" + fSaleDeptName + '\'' +
+                ", FSalesManID='" + FSalesManID + '\'' +
+                ", FSalesManName='" + FSalesManName + '\'' +
+                ", fReceiverName='" + fReceiverName + '\'' +
+                ", fTransferBizTypeName='" + fTransferBizTypeName + '\'' +
+                ", f_ulz_BaseProperty2='" + f_ulz_BaseProperty2 + '\'' +
+                ", f_ulz_BaseProperty2Code='" + f_ulz_BaseProperty2Code + '\'' +
+                ", fLinkPhone='" + fLinkPhone + '\'' +
+                ", fLinkMan='" + fLinkMan + '\'' +
+                ", fBussinessType='" + fBussinessType + '\'' +
+                ", fDocumentStatus='" + fDocumentStatus + '\'' +
+                ", fNote='" + fNote + '\'' +
+                ", fReceiveAddress='" + fReceiveAddress + '\'' +
+                ", fCreatorName='" + fCreatorName + '\'' +
+                ", fCreateDate='" + fCreateDate + '\'' +
+                ", fModifierName='" + fModifierName + '\'' +
+                ", fModifyDate='" + fModifyDate + '\'' +
+                ", fApproverName='" + fApproverName + '\'' +
+                ", fApproveDate='" + fApproveDate + '\'' +
+                ", fCancelStatus='" + fCancelStatus + '\'' +
+                ", fGyDate='" + fGyDate + '\'' +
+                ", fLogisticsNos='" + fLogisticsNos + '\'' +
+                ", f_ulz_Text3='" + f_ulz_Text3 + '\'' +
+                ", fSettleCurrCode='" + fSettleCurrCode + '\'' +
+                ", fExchangeRate='" + fExchangeRate + '\'' +
+                ", kingdeeOutStockItemEntityList=" + kingdeeOutStockItemEntityList +
+                '}';
+    }
 }

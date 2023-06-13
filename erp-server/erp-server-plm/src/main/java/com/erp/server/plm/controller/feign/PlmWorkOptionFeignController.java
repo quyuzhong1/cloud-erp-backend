@@ -1,0 +1,141 @@
+package com.erp.server.plm.controller.feign;
+
+import com.common.business.annotation.DataPermission;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.plm.dto.AuditParamDTO;
+import com.erp.model.plm.dto.ProductDetailOperateDTO;
+import com.erp.model.plm.dto.TaskOperateDTO;
+import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.workflow.dto.WorkOptionDTO;
+import com.erp.server.plm.service.*;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
+
+@RestController
+@RequestMapping("feign/plmWorkOption")
+public class PlmWorkOptionFeignController {
+    @Resource
+    private WorkOptionService workOptionService;
+
+    @Resource
+    private BomInfoService bomInfoService;
+
+    @Resource
+    private ProductDetailService productDetailService;
+
+    @Resource
+    private ProjectTaskService taskService;
+
+    @Resource
+    private ProductChangeService productChangeService;
+
+    /**
+     * 根据入参查询单据数量
+     * @Author Luo_WG
+     * @Date 2023/4/21 15:34
+     **/
+    @PostMapping("/getTableNum")
+    public Integer getTableNum(@RequestBody WorkOptionDTO.TableNumDTO tableNumDTO) {
+        return workOptionService.getTableNum(tableNumDTO);
+    }
+
+    /**
+     * bom  审核 通过
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("/bomInfoApprovalPass")
+    public void bomInfoApprovalPass(@RequestBody @Validated AuditParamDTO dto) {
+        bomInfoService.approvalPass(dto);
+    }
+
+    /**
+     * bom  审核 不通过
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("/bomInfoApprovalNoPass")
+    public void bomInfoApprovalNoPass(@RequestBody @Validated AuditParamDTO dto) {
+        bomInfoService.approvalNoPass(dto);
+    }
+
+    /**
+     * 产品信息-状态操作-审核通过
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/productDetailApprovalPass")
+    public Boolean productDetailApprovalPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
+        Boolean result = productDetailService.approvalPass(dto);
+        return result;
+    }
+
+    /**
+     * 产品信息-状态操作-审核不通过
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/productDetailApprovalNoPass")
+    public Boolean productDetailApprovalNoPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
+        Boolean result = productDetailService.approvalReject(dto);
+        return result;
+    }
+
+    /**
+     * 项目任务-任务分页列表 -状态操作-审核通过
+     * @return
+     */
+    @PostMapping("/projectTaskApprovalPass")
+    public Boolean projectTaskApprovalPass(@RequestBody @Validated TaskOperateDTO dto) {
+        Boolean result = taskService.approvalPass(dto);
+        return result;
+    }
+
+    /**
+     * 项目任务-任务分页列表 -状态操作-审核不通过
+     * @return
+     */
+    @PostMapping("/projectTaskApprovalNoPass")
+    public Boolean projectTaskApprovalNoPass(@RequestBody @Validated TaskOperateDTO dto) {
+        Boolean result = taskService.approvalReject(dto);
+        return result;
+    }
+
+    /**
+     * 根据任务id获取产品id
+     * @return
+     */
+    @PostMapping("/getProductIdByTaskId")
+    public ProjectTaskEntity getProductIdByTaskId(@RequestBody String taskId) {
+        ProjectTaskEntity entity = taskService.getById(taskId);
+        return entity;
+    }
+
+    /**
+     * change 审核 通过
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("/productChangeApprovalPass")
+    public void productChangeApprovalPass(@RequestBody @Validated AuditParamDTO dto) {
+        productChangeService.approvalPass(dto);
+    }
+
+    /**
+     * change  审核 不通过
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("/productChangeApprovalNoPass")
+    public void productChangeApprovalNoPass(@RequestBody @Validated AuditParamDTO dto) {
+        productChangeService.approvalNoPass(dto);
+    }
+}

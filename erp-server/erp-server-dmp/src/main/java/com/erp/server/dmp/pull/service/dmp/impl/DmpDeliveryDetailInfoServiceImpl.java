@@ -9,6 +9,7 @@ import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
 import com.erp.server.dmp.pull.mapper.DmpDeliveryDetailInfoMapper;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpDeliveryDetailItemService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 /**
  * 货详情信息
  */
+@Slf4j
 @Service
 public class DmpDeliveryDetailInfoServiceImpl extends ServiceImpl<DmpDeliveryDetailInfoMapper, DmpDeliveryDetailInfoEntity>
     implements DmpDeliveryDetailInfoService {

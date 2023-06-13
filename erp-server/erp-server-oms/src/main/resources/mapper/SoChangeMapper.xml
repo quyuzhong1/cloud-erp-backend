@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.SoChangeMapper">
+
+
+    <select id="listApproveCount" resultType="com.erp.model.oms.dto.SoChangeDTO$ApproveCountDTO">
+         SELECT
+            approve_status,
+	        count(*)
+	     FROM   so_change
+	     WHERE is_deleted=FALSE
+         <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+         </if>
+         GROUP BY approve_status
+    </select>
+
+    <select id="paging" resultType="com.erp.model.oms.dto.SoChangeDTO$PagingViewDTO">
+        SELECT
+        sc.id,
+        sc.so_id,
+        sc.code,
+        sc.approve_status,
+        sc.invalid_status,
+        sc.approve_user_name,
+        sc.create_user_name,
+        sc.create_time,
+        si.code AS soCode,
+        si.customer_id,
+        si.order_type,
+        scd.sku_id,
+        scd.sku_no,
+        scd.qty,
+        scd.old_qty,
+        scd.amount,
+        scd.currency_symbol,
+        scd.old_currency_symbol,
+        scd.old_amount
+        FROM so_change sc
+        INNER JOIN so_info si ON si.id=sc.so_id AND si.is_deleted=FALSE
+        INNER JOIN so_change_detail scd ON sc.id=scd.main_id AND scd.is_deleted=FALSE
+        WHERE sc.is_deleted=FALSE
+        <if test="approveList !=null and approveList.size>0">
+            AND sc.approve_status IN
+            <foreach collection="approveList" item="approve" open="(" separator="," close=")">
+                #{approve}
+            </foreach>
+        </if>
+        <if test="params.skuNoList !=null and params.skuNoList.size>0">
+            AND scd.sku_no IN
+            <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+        <if test="params.code !=null and params.code!=''">
+            AND sc.code ILIKE concat('%', #{params.code} ,'%')
+        </if>
+        <if test="params.soCode !=null and params.soCode!=''">
+            AND si.code ILIKE concat('%', #{params.soCode} ,'%')
+        </if>
+        <if test="params.orderType !=null and params.orderType!=''">
+            AND si.order_type =#{params.orderType}
+        </if>
+        <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
+            AND sc.approve_status IN
+            <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
+                #{approveStatus}
+            </foreach>
+        </if>
+        <if test="params.invalidStatus !=null ">
+            AND sc.invalid_status =#{params.invalidStatus}
+        </if>
+        <if test="params.customerIdList !=null and params.customerIdList.size>0">
+            AND si.customer_id IN
+            <foreach collection="params.customerIdList" item="customerId" open="(" separator="," close=")">
+                #{customerId}
+            </foreach>
+        </if>
+        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+            AND sc.create_user_id IN
+            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                #{createUserId}
+            </foreach>
+        </if>
+        <if test="params.createTimeList !=null and params.createTimeList.size>0">
+            AND sc.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > sc.create_time
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY sc.create_time DESC
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.oms.dto.SoChangeDTO$PagingViewDTO">
+        SELECT
+        sc.id,
+        sc.so_id,
+        sc.code,
+        sc.approve_status,
+        sc.invalid_status,
+        sc.approve_user_name,
+        sc.create_user_name,
+        sc.create_time,
+        si.code AS soCode,
+        si.customer_id,
+        si.order_type,
+        scd.sku_id,
+        scd.sku_no,
+        scd.qty,
+        scd.old_qty,
+        scd.amount,
+        scd.currency_symbol,
+        scd.old_currency_symbol,
+        scd.old_amount
+        FROM so_change sc
+        INNER JOIN so_info si ON si.id=sc.so_id AND si.is_deleted=FALSE
+        INNER JOIN so_change_detail scd ON sc.id=scd.main_id AND scd.is_deleted=FALSE
+        WHERE sc.is_deleted=FALSE
+        <choose>
+            <when test="params.ids!=null and params.ids.size>0">
+                AND sc.id IN
+                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </when>
+            <otherwise>
+                <if test="approveList !=null and approveList.size>0">
+                    AND sc.approve_status IN
+                    <foreach collection="approveList" item="approve" open="(" separator="," close=")">
+                        #{approve}
+                    </foreach>
+                </if>
+                <if test="params.skuNoList !=null and params.skuNoList.size>0">
+                    AND scd.sku_no IN
+                    <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
+                        #{skuNo}
+                    </foreach>
+                </if>
+                <if test="params.code !=null and params.code!=''">
+                    AND sc.code ILIKE concat('%', #{params.code} ,'%')
+                </if>
+                <if test="params.soCode !=null and params.soCode!=''">
+                    AND si.code ILIKE concat('%', #{params.soCode} ,'%')
+                </if>
+                <if test="params.orderType !=null and params.orderType!=''">
+                    AND si.order_type =#{params.orderType}
+                </if>
+                <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
+                    AND sc.approve_status IN
+                    <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator=","
+                             close=")">
+                        #{approveStatus}
+                    </foreach>
+                </if>
+                <if test="params.invalidStatus !=null ">
+                    AND sc.invalid_status =#{params.invalidStatus}
+                </if>
+                <if test="params.customerIdList !=null and params.customerIdList.size>0">
+                    AND si.customer_id IN
+                    <foreach collection="params.customerIdList" item="customerId" open="(" separator="," close=")">
+                        #{customerId}
+                    </foreach>
+                </if>
+                <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
+                    AND sc.create_user_id IN
+                    <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
+                        #{createUserId}
+                    </foreach>
+                </if>
+                <if test="params.createTimeList !=null and params.createTimeList.size>0">
+                    AND sc.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
+                    INTERVAL '1
+                    DAY' ) > sc.create_time
+                </if>
+                <!--权限-->
+                <if test="params.permissionSql!=null and params.permissionSql!=''">
+                    ${params.permissionSql}
+                </if>
+            </otherwise>
+        </choose>
+        ORDER BY sc.create_time DESC
+    </select>
+    <select id="listSoRefSoChangeBySoId" resultType="com.erp.model.oms.dto.SoChangeDTO$SoRefDTO">
+       SELECT
+          sc.id,
+          sc.code,
+          sc.approve_status,
+          sc.approve_user_name,
+          sc.create_user_name,
+          sc.create_time,
+          scd.sku_id,
+          scd.sku_no,
+          scd.old_qty,
+          scd.qty,
+          scd.old_price,
+          scd.price,
+          scd.old_amount,
+          scd.amount,
+          scd.old_tax_rate,
+          scd.tax_rate,
+          scd.old_currency,
+          scd.currency,
+          scd.currency_symbol,
+          scd.old_currency_symbol,
+          scd.so_detail_id
+       FROM so_change sc
+       INNER JOIN so_change_detail scd
+       ON sc.id=scd.main_id AND  scd.is_deleted=FALSE
+       WHERE sc.is_deleted=FALSE AND sc.so_id=#{soId}
+       ORDER BY sc.create_time DESC
+    </select>
+
+</mapper>

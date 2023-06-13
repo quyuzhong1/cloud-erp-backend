@@ -137,10 +137,6 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateCredential(List<SupplierCredentialDTO.UpdateDTO> credentialList, String supplierId) {
-        if (CollectionUtils.isEmpty(credentialList)) {
-            return;
-        }
-
         //这是要添加的
         List<SupplierCredentialDTO.UpdateDTO> addList = credentialList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
@@ -199,7 +195,9 @@ public class SupplierCredentialServiceImpl extends SuperServiceImpl<SupplierCred
                 moduleOperateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.SUPPLIER.getCode(), supplierId, "", "");
             }
         }
-        this.saveOrUpdateBatch(saveOrUpdateList);
+        if(CollectionUtils.isNotEmpty(saveOrUpdateList)){
+            this.saveOrUpdateBatch(saveOrUpdateList);
+        }
         if(CollectionUtils.isNotEmpty(batchAttachmentList)){
             attachmentService.saveBatch(batchAttachmentList);
         }

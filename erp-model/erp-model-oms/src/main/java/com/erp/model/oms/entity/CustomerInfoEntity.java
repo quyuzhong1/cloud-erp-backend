@@ -1,0 +1,244 @@
+package com.erp.model.oms.entity;
+
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SalesPlatformEnum;
+import com.common.core.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+
+/**
+ * <p>
+ * 
+ * </p>
+ *
+ * @author lambda
+ * @since 2023-05-10
+ */
+@Getter
+@Setter
+@Accessors(chain = true)
+@TableName("customer_info")
+public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
+
+    /**
+     * code
+     */
+    @TableField("code")
+    private String code;
+
+    /**
+     * 审核状态
+     */
+    @TableField("approve_status")
+    private ApproveStatusEnum approveStatus;
+
+
+    @TableField("approve_user_name")
+    private String approveUserName;
+
+    /**
+     * 分组id
+     */
+    @TableField("group_id")
+    private String groupId;
+
+    /**
+     * 分组名
+     */
+    @TableField("group_name")
+    private String groupName;
+
+    /**
+     * 国家id
+     */
+    @TableField("country_id")
+    private String countryId;
+
+    /**
+     * 地区id
+     */
+    @TableField("area_id")
+    private String areaId;
+
+    /**
+     * 省id
+     */
+    @TableField("province_id")
+    private String provinceId;
+
+    /**
+     * 城市id
+     */
+    @TableField("city_id")
+    private String cityId;
+
+    /**
+     * 客户名称
+     */
+    @TableField("name")
+    private String name;
+
+    /**
+     * 使用组织id
+     */
+    @TableField("use_org_id")
+    private String useOrgId;
+
+    @TableField("use_org_name")
+    private String useOrgName;
+
+
+    /**
+     * 内部组织id
+     */
+    @TableField("inner_org_id")
+    private String innerOrgId;
+
+    /**
+     * 内部组织id
+     */
+    @TableField("inner_org_name")
+    private String innerOrgName;
+
+    /**
+     * 简称
+     */
+    @TableField("short_name")
+    private String shortName;
+
+    /**
+     * 平台类型
+     */
+    @TableField("platform_type")
+    private SalesPlatformEnum platformType;
+
+    /**
+     * 公司分类 从 oms_dict 获取
+     */
+    @TableField("company_category_dict")
+    private String companyCategoryDict;
+
+    /**
+     * 是否禁用 true 禁用 
+     */
+    @TableField("disabled")
+    private Boolean disabled;
+
+    /**
+     * 付款方
+     */
+    @TableField("pay_code")
+    private String payCode;
+
+    /**
+     * 结算方
+     */
+    @TableField("settle_code")
+    private String settleCode;
+
+    /**
+     * 结算方式   oms_dict 获取
+     */
+    @TableField("settle_dict")
+    private String settleDict;
+
+    /**
+     * 币种
+     */
+    @TableField("currency")
+    private String currency;
+
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
+    /**
+     * 占用状态
+     */
+    @TableField("occupy_status")
+    private Boolean occupyStatus;
+
+    /**
+     * 条件字典 oms_dict 获取
+     */
+    @TableField("condition_dict")
+    private String conditionDict;
+
+    /**
+     * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
+     */
+    @TableField("sync_kingdee_status")
+    private String syncKingdeeStatus;
+
+    /**
+     * 同步金蝶时间
+     */
+    @TableField("sync_kingdee_time")
+    private LocalDateTime syncKingdeeTime;
+
+    /**
+     * 同步金蝶id
+     */
+    @TableField("sync_kingdee_id")
+    private String syncKingdeeId;
+
+    /**
+     * 同步操作
+     */
+    @TableField("sync_operate")
+    private String syncOperate;
+
+    public static final String CODE = "code";
+
+    public static final String APPROVE_STATUS = "approve_status";
+
+    public static final String GROUP_ID = "group_id";
+
+    public static final String COUNTRY_ID = "country_id";
+
+    public static final String AREA_ID = "area_id";
+
+    public static final String PROVINCE_ID = "province_id";
+
+    public static final String CITY_ID = "city_id";
+
+    public static final String NAME = "name";
+
+    public static final String USE_ORG_ID = "use_org_id";
+
+    public static final String INNER_ORG_ID = "inner_org_id";
+
+    public static final String SHORT_NAME = "short_name";
+
+    public static final String PLATFORM_DICT = "platform_dict";
+
+    public static final String COMPANY_CATEGORY_DICT = "company_category_dict";
+
+    public static final String DISABLED = "disabled";
+
+    public static final String PAY_NAME = "pay_name";
+
+    public static final String SETTLE_NAME = "settle_name";
+
+    public static final String SETTLE_DICT = "settle_dict";
+
+    public static final String CURRENCY = "currency";
+
+    public static final String REMARK = "remark";
+
+    public static final String CONDITION_DICT = "condition_dict";
+
+    @Override
+    public Serializable pkVal() {
+        return null;
+    }
+
+}

@@ -20,7 +20,7 @@ import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
-import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailItemEntity;
+import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
@@ -104,7 +104,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_DELIVERY_ORDER_TAG.getName(),
                     msg, msg.getBillNo());
-            if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());

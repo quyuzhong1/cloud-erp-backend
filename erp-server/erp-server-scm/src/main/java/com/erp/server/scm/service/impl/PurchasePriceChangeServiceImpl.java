@@ -13,6 +13,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -93,7 +94,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-28 11:49
      */
     @Override
-    @GlobalTransactional
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String add(PurchasePriceChangeDTO.AddDTO dto) {
         //采购价目表的id
         String priceId = dto.getPurchasePriceId();
@@ -139,7 +141,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         Boolean isPass = getIsPass(dto.getPurchasePriceChangeDetailList());
 
         //获取组织
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
         if (CollectionUtils.isNotEmpty(orgList)) {
             changeEntity.setPurchaseOrgName(orgList.get(0).getName());
         }
@@ -340,7 +342,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         }
         String orgId = dto.getPurchaseOrgId();
         //获取组织
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
         if (CollectionUtils.isNotEmpty(orgList)) {
             priceChangeEntity.setPurchaseOrgName(orgList.get(0).getName());
         }
@@ -545,7 +547,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @Override
     public PagingVO<PurchasePriceChangeDTO.PagingViewDTO> paging(PagingDTO<PurchasePriceChangeDTO.PagingParamDTO> dto) {
         PurchasePriceChangeDTO.PagingParamDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
 
         String searchType = params.getSearchType();
@@ -628,12 +630,13 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId) {
+    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId,String syncOperate) {
         return  this.lambdaUpdate()
                 .in(PurchasePriceChangeEntity::getId,ids)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus),PurchasePriceChangeEntity::getSyncKingdeeStatus,syncKingdeeStatus)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus),PurchasePriceChangeEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId),PurchasePriceChangeEntity::getSyncKingdeeId,syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncOperate), PurchasePriceChangeEntity::getSyncOperate,syncOperate)
                 .update();
     }
 
@@ -648,7 +651,13 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      */
     private Boolean updateApproveStatus(List<PurchasePriceChangeEntity> list, ApproveStatusEnum statusEnum) {
         if (CollectionUtils.isNotEmpty(list)) {
-            list.forEach(s -> s.setApproveStatus(statusEnum));
+            list.stream().forEach(obj -> {
+                obj.setApproveStatus(statusEnum);
+                //审核通过更新金蝶推送状态为待同步
+                if (ApproveStatusEnum.APPROVE.equals(statusEnum)) {
+                    obj.setSyncKingdeeStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
+                }
+            });
             return this.updateBatchById(list);
         }
         return false;

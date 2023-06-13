@@ -194,6 +194,12 @@ public class PoInstockEntity extends BaseEntity<PoInstockEntity> {
     private String purchaseOrderCode;
 
     /**
+     * 是否是委外
+     */
+    @TableField("is_subcontract")
+    private Boolean isSubcontract;
+
+    /**
      * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
      */
     @TableField("sync_kingdee_status")
@@ -210,6 +216,12 @@ public class PoInstockEntity extends BaseEntity<PoInstockEntity> {
      */
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
+
+    /**
+     * 同步操作
+     */
+    @TableField("sync_operate")
+    private String syncOperate;
 
     public static final String CODE = "code";
 

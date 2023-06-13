@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.TransferInfoMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.TransferInfoEntity">
+        <result column="id" property="id" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="code" property="code" />
+        <result column="approve_status" property="approveStatus" />
+        <result column="bill_date" property="billDate" />
+        <result column="type" property="type" />
+        <result column="in_warehouse_id" property="inWarehouseId" />
+        <result column="in_warehouse_name" property="inWarehouseName" />
+        <result column="out_warehouse_id" property="outWarehouseId" />
+        <result column="out_warehouse_name" property="outWarehouseName" />
+        <result column="in_org_id" property="inOrgId" />
+        <result column="in_org_name" property="inOrgName" />
+        <result column="out_org_id" property="outOrgId" />
+        <result column="out_org_name" property="outOrgName" />
+        <result column="warehouse_keeper_id" property="warehouseKeeperId" />
+        <result column="warehouse_keeper_name" property="warehouseKeeperName" />
+        <result column="transfer_direction" property="transferDirection" />
+        <result column="invalid_status" property="invalidStatus" />
+        <result column="invalid_remark" property="invalidRemark" />
+        <result column="approve_time" property="approveTime" />
+        <result column="approve_user_name" property="approveUserName" />
+        <result column="approve_user_id" property="approveUserId" />
+        <result column="remark" property="remark" />
+    </resultMap>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.TransferInfoDTO$ListDTO">
+        select
+            ti.id,
+            ti.code,
+            ti.transfer_direction as transferDirection,
+            ti.approve_status as approveStatus,
+            ti.invalid_status as invalidStatus,
+            tid.sku_id as skuId,
+            tid.sku_no as skuNo,
+            ti.bill_date as billDate,
+            tid.qty,
+            tid.unit,
+            ti.in_warehouse_name as inWarehouseName,
+            ti.out_warehouse_name as outWarehouseName,
+            tid.remark,
+            ti.approve_user_name as approveUserName,
+            ti.create_user_name as createUserName,
+            ti.create_time as createTime,
+            tid.in_warehouse_location as inWarehouseLocation,
+            tid.out_warehouse_location as outWarehouseLocation
+        from transfer_info ti
+        inner join transfer_info_detail tid on ti.id = tid.main_id and tid.is_deleted = false
+        <where>
+            ti.is_deleted = false
+            <if test="params.searchType != null and params.searchType != ''">
+                AND ti.approve_status = #{params.searchType}
+            </if>
+            <if test="params.code != null and params.code != ''">
+                and ti.code like concat('%',#{params.code},'%')
+            </if>
+            <if test="params.invalidStatus != null ">
+                and ti.invalid_status = #{params.invalidStatus}
+            </if>
+            <if test="params.transferDirection != null ">
+                and ti.transfer_direction = #{params.transferDirection}
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                and tid.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and ti.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.inWarehouseIdList != null and params.inWarehouseIdList.size > 0">
+                and ti.in_warehouse_id in
+                <foreach collection="params.inWarehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.outWarehouseIdList != null and params.outWarehouseIdList.size > 0">
+                and ti.out_warehouse_id in
+                <foreach collection="params.outWarehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+                and ti.create_user_id in
+                <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                and ti.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ti.create_time
+            </if>
+            <if test="params.billDateList != null and params.billDateList.size > 0">
+                and ti.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ti.bill_date
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ti.id desc,tid.id desc
+    </select>
+
+    <select id="listCount" resultType="java.lang.Integer">
+        select
+        count(distinct ti.id)
+        from transfer_info ti
+        left join transfer_info_detail tid on ti.id = tid.main_id and tid.is_deleted = false
+        <where>
+            ti.is_deleted = false
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and ti.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
+
+    <select id="listExportExcel" resultType="com.erp.model.wms.dto.TransferInfoDTO$ListDTO">
+        select
+            ti.id,
+            ti.code,
+            ti.transfer_direction as transferDirection,
+            ti.approve_status as approveStatus,
+            ti.invalid_status as invalidStatus,
+            tid.sku_id as skuId,
+            tid.sku_no as skuNo,
+            ti.bill_date as billDate,
+            tid.qty,
+            tid.unit,
+            ti.in_warehouse_name as inWarehouseName,
+            ti.out_warehouse_name as outWarehouseName,
+            tid.remark,
+            ti.approve_user_name as approveUserName,
+            ti.create_user_name as createUserName,
+            ti.create_time as createTime,
+            tid.in_warehouse_location as inWarehouseLocation,
+            tid.out_warehouse_location as outWarehouseLocation
+        from transfer_info ti
+        inner join transfer_info_detail tid on ti.id = tid.main_id and tid.is_deleted = false
+        <where>
+            ti.is_deleted = false
+            <if test="params.ids != null and params.ids.size > 0">
+                and ti.id in
+                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.ids == null or params.ids.size == 0">
+                <if test="params.searchType != null and params.searchType != ''">
+                    AND ti.approve_status = #{params.searchType}
+                </if>
+                <if test="params.code != null and params.code != ''">
+                    and ti.code like concat('%',#{params.code},'%')
+                </if>
+                <if test="params.invalidStatus != null ">
+                    and ti.invalid_status = #{params.invalidStatus}
+                </if>
+                <if test="params.transferDirection != null ">
+                    and ti.transfer_direction = #{params.transferDirection}
+                </if>
+                <if test="params.skuNoList != null and params.skuNoList.size > 0">
+                    and tid.sku_no in
+                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                    and ti.approve_status in
+                    <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.inWarehouseIdList != null and params.inWarehouseIdList.size > 0">
+                    and ti.in_warehouse_id in
+                    <foreach collection="params.inWarehouseIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.outWarehouseIdList != null and params.outWarehouseIdList.size > 0">
+                    and ti.out_warehouse_id in
+                    <foreach collection="params.outWarehouseIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
+                    and ti.create_user_id in
+                    <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                    and ti.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ti.create_time
+                </if>
+                <if test="params.billDateList != null and params.billDateList.size > 0">
+                    and ti.bill_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > ti.bill_date
+                </if>
+                <if test="params.permissionSql != null and params.permissionSql != ''">
+                    ${params.permissionSql}
+                </if>
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ti.id desc,tid.id desc
+    </select>
+
+</mapper>

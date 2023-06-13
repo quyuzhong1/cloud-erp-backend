@@ -22,8 +22,7 @@
             psid.purchase_qty,
             psid.receive_qty,
             psid.exceed_qty,
-            psid.warehouse_location_id,
-            psid.warehouse_location_name,
+            psid.warehouse_location,
             psid.remark,
             psid.source_detail_id,
             psid.purchase_order_detail_id
@@ -53,8 +52,7 @@
             psid.purchase_qty,
             psid.receive_qty,
             psid.exceed_qty,
-            psid.warehouse_location_id,
-            psid.warehouse_location_name,
+            psid.warehouse_location,
             psid.remark,
             psid.source_detail_id,
             psid.purchase_order_detail_id

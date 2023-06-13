@@ -269,6 +269,4 @@ public class WarehouseController extends BaseController {
         List<WarehouseDTO.ListDTO> list = warehouseService.listApproveWarehouse();
         return success(list);
     }
-
-
 }

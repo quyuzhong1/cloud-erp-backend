@@ -3,4 +3,8 @@
 <mapper namespace="com.erp.server.sys.mapper.SysCodeMapper">
 
 
+    <update id="updateNum">
+        update sys_code set num = num + 1, update_time = #{updateTime}, update_user_id = #{updateUserId}, update_user_name = #{updateUserName}
+        where id = #{id}
+    </update>
 </mapper>

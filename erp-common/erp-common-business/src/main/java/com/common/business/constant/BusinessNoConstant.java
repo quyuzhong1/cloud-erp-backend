@@ -35,4 +35,56 @@ public interface BusinessNoConstant {
     String QC = "QC";
 
     String BM = "BM";
+
+    // 入库预报
+    String RKYB = "RKYB";
+
+    String DBSQ = "DBSQ";
+
+    String ZJDB = "ZJDB";
+
+    String ZZCX = "ZZCX";
+
+    String QTRK = "QTRK";
+
+    String QTCK = "QTCK";
+
+    String FHTZ = "FHTZ";
+    //客户
+    String CUST = "CUST";
+
+    // 期初库存
+    String QCKC = "QCKC";
+
+    String THDD = "THDD";
+
+    String THTZ = "THTZ";
+    //销售订单
+    String XSD = "XSD";
+
+    //销售订单变更
+    String XSBG = "XSBG";
+
+    String THQS = "THQS";
+
+    //销售出库
+    String XSCK = "XSCK";
+
+    //分布式调拨调出
+    String FBDC = "FBDC";
+
+    //分布式调拨调入
+    String FBDR = "FBDR";
+    //销售退货入库单
+    String XSTH = "XSTH";
+    //客户地址编号
+    String KHDZ = "KHDZ";
+    //客户联系人编号
+    String KHLXR = "KHLXR";
+
+    //委外订单单
+    String SUB = "SUB";
+
+    //委外变更单
+    String SUBCH = "SUBCH";
 }

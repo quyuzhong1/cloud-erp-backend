@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SoReturnInstockDetailMapper">
+
+    <select id="listDetailBySourceIds" resultType="com.erp.model.wms.entity.SoReturnInstockDetailEntity">
+        SELECT
+        srid.id,
+        srid.main_id,
+        srid.sku_id,
+        srid.sku_no,
+        srid.must_qty,
+        srid.receive_qty,
+        srid.real_qty,
+        srid.return_type_dict,
+        srid.return_reason_dict,
+        srid.warehouse_location,
+        srid.remark,
+        srid.source_detail_id,
+        sri.approve_Status
+        FROM so_return_instock_detail srid
+        INNER JOIN so_return_instock sri ON sri.id = srid.main_id AND srid.is_deleted = FALSE
+        WHERE sri.is_deleted = FALSE
+        AND sri.invalid_status = FALSE
+        <if test="ids != null and ids.size != ''">
+            and sri.source_id in
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="listDetailBySourceDetailIds" resultType="com.erp.model.wms.entity.SoReturnInstockDetailEntity">
+        SELECT
+        srid.id,
+        srid.main_id,
+        srid.sku_id,
+        srid.sku_no,
+        srid.must_qty,
+        srid.receive_qty,
+        srid.real_qty,
+        srid.return_type_dict,
+        srid.return_reason_dict,
+        srid.warehouse_location,
+        srid.remark,
+        srid.source_detail_id,
+        sri.approve_Status
+        FROM so_return_instock_detail srid
+        INNER JOIN so_return_instock sri ON sri.id = srid.main_id AND srid.is_deleted = FALSE
+        WHERE sri.is_deleted = FALSE
+        AND sri.invalid_status = FALSE
+        <if test="ids != null and ids.size != ''">
+            and srid.source_detail_id in
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+</mapper>

@@ -8,7 +8,7 @@
                b.id,
                b.type,
                b.serial_number,
-               b.version,
+               b.bom_version AS version,
                b.STATE,
                b.remark,
                b.create_time,
@@ -49,8 +49,8 @@
                 #{state}
             </foreach>
         </if>
-        <if test="params.param  !=null  and  params.param!='' ">
-            ${params.param}
+        <if test="params.permissionSql  !=null  and  params.permissionSql!='' ">
+            ${params.permissionSql}
         </if>
         ORDER BY b.create_time DESC
 
@@ -82,7 +82,7 @@
         b.id,
         b.type,
         b.serial_number,
-        b.version,
+        b.bom_version AS version,
         b.STATE,
         b.remark,
         b.create_time,

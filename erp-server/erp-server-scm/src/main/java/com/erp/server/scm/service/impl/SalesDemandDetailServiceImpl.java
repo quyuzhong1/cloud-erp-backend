@@ -5,14 +5,20 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.model.scm.entity.SalesDemandDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.SalesDemandDetailMapper;
 import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.SalesDemandDetailService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -32,11 +38,19 @@ import java.util.stream.Collectors;
  * @author will
  * @since 2023-03-16
  */
+@Slf4j
 @Service
 public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDetailMapper, SalesDemandDetailEntity> implements SalesDemandDetailService {
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private SoInfoFeign soInfoFeign;
+
     @Resource
     private ModuleOperateLogService moduleOperateLogService;
 
@@ -48,6 +62,8 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
         }
         List<SalesDemandDetailEntity> list = BeanMapperUtils.copyList(SalesDemandDetailEntity.class, details);
 
+
+        //处理关联数据
         doOpHandleDataId(list,salesDemandId);
         this.saveBatch(list);
     }
@@ -69,9 +85,64 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
             this.removeByIds(deleteIds);
         }
         List<SalesDemandDetailEntity> newList = BeanMapperUtils.copyList(SalesDemandDetailEntity.class, details);
+        //如果是下推单据则需要验证修改的数量
+        checkPlanStockQty(newList);
 
         doOpHandleDataId(newList,salesDemandId);
         this.saveOrUpdateBatch(newList);
+    }
+
+    /**
+     * @description: 验证下推数量
+     * @author Will
+     * @date: 2023/5/23 12:09
+     * @param newList
+     */
+    private void checkPlanStockQty (List<SalesDemandDetailEntity> newList) {
+        //明细ids
+        List<String> ids = newList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(SalesDemandDetailEntity::getId).collect(Collectors.toList());
+
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        //查询需要更新的数据，用于取来源明细id
+        List<SalesDemandDetailEntity> foundList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(foundList)) {
+            return;
+        }
+        List<String> sourceDetailIds = foundList.stream().map(SalesDemandDetailEntity::getSourceDetailId).collect(Collectors.toList());
+
+        if (CollectionUtils.isEmpty(sourceDetailIds)) {
+            return;
+        }
+        //来源单据明细id相同的其他备货申请单明细
+        List<SalesDemandDetailEntity> salesDemandDetailList = this.listBySourceDetailIds(sourceDetailIds);
+        //销售订单明细
+        List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(sourceDetailIds);
+
+        for (SalesDemandDetailEntity entity : newList) {
+            //来源明细id
+            String sourceDetailId = foundList.stream().filter(obj -> obj.getId().equals(entity.getId())).map(SalesDemandDetailEntity::getSourceDetailId).findFirst().orElse(null);
+
+            if (StringUtils.isBlank(sourceDetailId)) {
+                continue;
+            }
+
+            //销售数量
+            Integer qty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(soDetailList)) {
+                qty = soDetailList.stream().filter(obj -> obj.getId().equals(sourceDetailId)).map(SoDetailEntity::getQty).findFirst().orElse(MathUtil.ZERO);
+
+            }
+            //已下推数量
+            Integer refQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(salesDemandDetailList)) {
+                refQty = salesDemandDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(sourceDetailId) && !obj.getId().equals(entity.getId())).map(SalesDemandDetailEntity::getPlanStockQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            if (entity.getPlanStockQty().intValue() > qty.intValue() - refQty.intValue()) {
+                throw new ServiceException(ApiError.ERROR_98064.code,String.format(ApiError.ERROR_98064.msg,entity.getSkuNo(),qty.intValue() - refQty.intValue()));
+            }
+        }
     }
 
     /**
@@ -103,6 +174,11 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
         return lambdaQuery().eq(SalesDemandDetailEntity::getSalesDemandId,salesDemandId).eq(SalesDemandDetailEntity::getSkuId,skuId).one();
     }
 
+    @Override
+    public List<SalesDemandDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds) {
+        return baseMapper.listBySourceDetailIds(sourceDetailIds);
+    }
+
     /**
      * 处理明细中的数据id
      */
@@ -112,6 +188,13 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
         List<String> destWarehouseIdList = newList.stream().map(SalesDemandDetailEntity::getDestWarehouseId).collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(destWarehouseIdList);
 
+        //产品信息
+        List<String> skuIds = newList.stream().map(SalesDemandDetailEntity::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+
         //添加操作日志
         List<SalesDemandDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(addList)) {
@@ -120,10 +203,21 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
         }
         for (SalesDemandDetailEntity entity : newList) {
             entity.setSalesDemandId(salesDemandId);
+            //仓库
             if (CollectionUtils.isNotEmpty(warehouseList)) {
                 String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDestWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
                 entity.setDestWarehouseName(warehouseName);
             }
+            log.info("查询SKU【{}】信息",entity.getSkuNo());
+            //产品信息
+            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(entity.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(skuVO)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            entity.setProductName(skuVO.getSkuName());
+            entity.setUnitQty(skuVO.getUnitQty());
+            entity.setVariantProperty(skuVO.getVariantProperty());
+
             //修改操作日志
             if (StringUtils.isNotBlank(entity.getId())) {
                 SalesDemandDetailEntity old = this.getById(entity.getId());

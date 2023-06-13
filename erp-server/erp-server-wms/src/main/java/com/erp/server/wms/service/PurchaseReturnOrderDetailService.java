@@ -63,4 +63,11 @@ public interface PurchaseReturnOrderDetailService extends SuperService<PurchaseR
     List<PurchaseReturnOrderDetailEntity> getDetailByMainId(String mainId);
 
     List<PurchaseReturnOrderDetailEntity> listReturnOrderDetailByPodIds(List<String> purchaseDetailIds);
+
+    /**
+     * 根据主单查询明细信息（批量）
+     * @param mainIds
+     * @return
+     */
+    List<PurchaseReturnOrderDetailEntity> listByMainIds(List<String> mainIds);
 }

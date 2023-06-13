@@ -24,7 +24,7 @@ public class UpdateProductDTO  implements Serializable {
     private String productId;
 
     /**
-     * 产品id
+     * 产品名
      */
     private String productName;
 

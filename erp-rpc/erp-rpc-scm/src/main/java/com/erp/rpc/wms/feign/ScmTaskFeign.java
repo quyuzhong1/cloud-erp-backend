@@ -1,10 +1,12 @@
 package com.erp.rpc.wms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -167,4 +169,74 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/syncKingdee/updateBusinessSyncKingdeeStatus")
     void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params);
+
+    /**
+     * 审核
+     * @Author Luo_WG
+     * @Date 2023/5/16 14:35
+     * @param dto dto
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("feign/scmWorkOption/salesDemandApprove")
+    Boolean salesDemandApprove(@RequestBody @Validated BaseApproveParamDTO dto);
+
+    /**
+     * 审核
+     * @Author Luo_WG
+     * @Date 2023/5/16 14:35
+     * @param dto dto
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("feign/scmWorkOption/purchasePriceApprove")
+    Boolean purchasePriceApprove(@RequestBody @Validated BaseApproveParamDTO dto);
+
+    /**
+     * 审核
+     * @Author Luo_WG
+     * @Date 2023/5/16 14:48
+     * @param dto dto
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("feign/scmWorkOption/purchasePriceChangeApprove")
+    Boolean purchasePriceChangeApprove(@RequestBody @Validated BaseApproveParamDTO dto);
+
+    /**
+     * 审核
+     * @Author Luo_WG
+     * @Date 2023/5/16 14:48
+     * @param dto dto
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("feign/scmWorkOption/purchaseOrderApprove")
+    Boolean purchaseOrderApprove(@RequestBody @Validated BaseApproveParamDTO dto);
+
+    /**
+     * 审核
+     * @Author Luo_WG
+     * @Date 2023/5/16 14:48
+     * @param dto dto
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("feign/scmWorkOption/purchaseChangeApprove")
+    Boolean purchaseChangeApprove(@RequestBody @Validated BaseApproveParamDTO dto);
+
+    /**
+     * 审核
+     * @Author Luo_WG
+     * @Date 2023/5/16 14:48
+     * @param dto dto
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("feign/scmWorkOption/purchaseApplicationApprove")
+    Boolean purchaseApplicationApprove(@RequestBody @Validated BaseApproveParamDTO dto);
+
+    /**
+     * 根据来源id集合获取到下推数据
+     * @author yl
+     * @date 2023-05-29 16:43
+     * @param soIds
+     * @return java.lang.Integer
+     */
+    @PostMapping("feign/purchaseOrder/getPushDownBySourceIds")
+    Integer getPushDownBySourceIds(List<String> soIds);
 }

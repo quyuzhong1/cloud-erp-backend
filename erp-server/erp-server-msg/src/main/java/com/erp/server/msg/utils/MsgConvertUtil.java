@@ -1,12 +1,14 @@
 package com.erp.server.msg.utils;
 
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.MessageChannelEnum;
 import com.erp.model.msg.enums.NoticeMessageTypeEnum;
 import com.erp.server.msg.enums.MessageChannelAppEnum;
 import com.erp.server.msg.model.FeiShuSendBaseParam;
 import com.erp.server.msg.model.MsgSendChannelWrapParam;
 import com.erp.server.msg.model.NoticeMsgWrapInfoDTO;
+import com.erp.server.msg.model.WarnMsgContentDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +21,11 @@ import java.util.List;
  */
 public class MsgConvertUtil {
 
+    /**
+     * 任务通知填充卡片
+     * @param noticeMsgInfo
+     * @return
+     */
     public static FeiShuSendBaseParam.ContentDTO wrapTypicalCard(NoticeMsgWrapInfoDTO noticeMsgInfo) {
         FeiShuSendBaseParam.ContentDTO contentDTO = new FeiShuSendBaseParam.ContentDTO();
 
@@ -71,6 +78,39 @@ public class MsgConvertUtil {
         msgSendChannelWrapParam.setSourceMsgInfo(msgInfo);
 
         return msgSendChannelWrapParam;
+    }
+
+    /**
+     * 飞书预警信息填充卡片
+     * @param warnMsgContentDTO
+     * @return
+     */
+    public static FeiShuSendBaseParam.ContentDTO wrapTypicalCard(WarnMsgContentDTO warnMsgContentDTO) {
+        FeiShuSendBaseParam.ContentDTO contentDTO = new FeiShuSendBaseParam.ContentDTO();
+
+        FeiShuSendBaseParam.CardDTO.ConfigDTO  config = new FeiShuSendBaseParam.CardDTO.ConfigDTO();
+        config.setWideScreenMode(true);
+        contentDTO.setConfig(config);
+
+        FeiShuSendBaseParam.CardDTO.HeaderDTO header = new FeiShuSendBaseParam.CardDTO.HeaderDTO();
+        header.setTitle(new FeiShuSendBaseParam.CardDTO.HeaderDTO.TitleDTO("plain_text", warnMsgContentDTO.getTitle()));
+        contentDTO.setHeader(header);
+
+        List<FeiShuSendBaseParam.CardDTO.ElementsDTO> elements = new ArrayList<>();
+
+        FeiShuSendBaseParam.CardDTO.ElementsDTO fieldElementsDTO = new FeiShuSendBaseParam.CardDTO.ElementsDTO();
+        fieldElementsDTO.setTag("div");
+        List<FeiShuSendBaseParam.CardDTO.ElementsDTO.FieldsDTO> fields = new ArrayList<>();
+        FeiShuSendBaseParam.CardDTO.ElementsDTO.FieldsDTO fieldsDTO = new FeiShuSendBaseParam.CardDTO.ElementsDTO.FieldsDTO(true,
+                new FeiShuSendBaseParam.CardDTO.ElementsDTO.FieldsDTO.TextDTO("lark_md", warnMsgContentDTO.getContent()));
+        fields.add(fieldsDTO);
+        fieldElementsDTO.setFields(fields);
+        elements.add(fieldElementsDTO);
+
+        // 暂不填充按钮等
+
+        contentDTO.setElements(elements);
+        return contentDTO;
     }
 
 }

@@ -35,6 +35,7 @@ import com.erp.server.wms.mapper.WarehouseMapper;
 import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -92,14 +93,24 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Override
     public List<WarehouseDTO.ListDTO> listApproveWarehouse() {
-        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-        List<WarehouseEntity> list = lambdaQuery().
-                eq(WarehouseEntity::getApproveStatus, approveStatus).
-                list();
+        List<ApproveStatusEnum> statusList = new ArrayList<>(2);
+        statusList.add(ApproveStatusEnum.APPROVE);
+        List<WarehouseEntity> list = this.list();
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
         }
-        return BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
+        List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
+        List<String> orgIds = list.stream().map(WarehouseEntity::getOrgId).collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
+        for (WarehouseDTO.ListDTO listDTO : resultList) {
+            String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
+            listDTO.setOrgName(orgName);
+            if (!statusList.contains(listDTO.getApproveStatus())) {
+                listDTO.setDisabled(true);
+            }
+        }
+
+        return resultList;
     }
 
 
@@ -112,6 +123,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 10:17
      */
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String add(WarehouseDTO.AddDTO dto) {
         //检查名称
         checkName(null, dto.getName());
@@ -136,9 +149,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 11:08
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String updateWarehouse(WarehouseDTO.UpdateDTO dto) {
-        String redisKey = WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(dto.getId());
-        redisService.deleteObject(redisKey);
+        // 删除缓存
+        removeCache(Collections.singletonList(dto.getId()));
         //仓库id
         String warehouseId = dto.getId();
         WarehouseEntity warehouse = this.getById(warehouseId);
@@ -148,7 +162,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         String code = dto.getKingdeeWarehouseCode();
         String name = dto.getName();
         checkName(warehouseId, name);
-        checkKingdeeWarehouseCode(code, name);
+        checkKingdeeWarehouseCode(warehouseId,code);
         BeanMapper.copy(dto, warehouse);
         Boolean result = this.updateById(warehouse);
         if (result) {
@@ -167,6 +181,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 11:16
      */
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public Boolean addAndSubmit(WarehouseDTO.AddDTO dto) {
         String warehouseId = this.add(dto);
         if (StringUtils.isBlank(warehouseId)) {
@@ -186,10 +202,13 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 11:31
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean submit(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return false;
         }
+        // 删除缓存
+        removeCache(ids);
         List<WarehouseEntity> list = this.listByIds(ids);
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -221,10 +240,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 11:43
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateStatus(UpdateStateDTO dto) {
         // 删除缓存
-        String redisKey = WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(dto.getId());
-        redisService.deleteObject(redisKey);
+        removeCache(Collections.singletonList(dto.getId()));
         //仓库id
         String warehouseId = dto.getId();
         WarehouseEntity warehouse = this.getById(warehouseId);
@@ -252,12 +271,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 11:45
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean approve(BaseApproveParamDTO dto) {
         List<String> warehouseIds = dto.getIds();
         // 删除缓存
-        Collection<String> redisKeys = Lists.newArrayList();
-        warehouseIds.stream().forEach(warehouseId->redisKeys.add(WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(warehouseId)));
-        redisService.deleteObject(redisKeys);
+        removeCache(warehouseIds);
 
         List<WarehouseEntity> list = this.listByIds(warehouseIds);
         if (CollectionUtils.isEmpty(list)) {
@@ -296,11 +314,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 11:59
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean disApprove(List<String> warehouseIds) {
         // 删除缓存
-        Collection<String> redisKeys = Lists.newArrayList();
-        warehouseIds.stream().forEach(warehouseId->redisKeys.add(WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(warehouseId)));
-        redisService.deleteObject(redisKeys);
+        removeCache(warehouseIds);
 
         List<WarehouseEntity> list = this.listByIds(warehouseIds);
 
@@ -337,9 +354,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Transactional(rollbackFor = Exception.class)
     public Boolean deleteByIds(List<String> ids) {
         // 删除缓存
-        Collection<String> redisKeys = Lists.newArrayList();
-        ids.stream().forEach(warehouseId->redisKeys.add(WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(warehouseId)));
-        redisService.deleteObject(redisKeys);
+        removeCache(ids);
 
         List<WarehouseEntity> list = this.listByIds(ids);
         //待提交
@@ -385,7 +400,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Override
     public PagingVO<WarehouseDTO.PagingViewDTO> paging(PagingDTO<WarehouseDTO.PagingParamDTO> dto) {
         WarehouseDTO.PagingParamDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
         List<WarehouseDTO.PagingViewDTO> list = pageData.getRecords();
@@ -393,12 +408,12 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             return new PagingVO(pageData);
         }
         //获取到仓库类型
-        List<DictBasicDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+        List<DictBasicDTO.ListDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
         List<String> userIdList = list.stream().map(WarehouseDTO.PagingViewDTO::getChargeId).distinct().collect(Collectors.toList());
         //获取用户信息
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
         List<String> orgIdList = list.stream().map(WarehouseDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
 
         for (WarehouseDTO.PagingViewDTO item : list) {
             //类型id
@@ -441,12 +456,12 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<WarehouseExportExcelDTO> resultList = new ArrayList<>(viewList.size());
         if (CollectionUtils.isNotEmpty(viewList)) {
             //获取到仓库类型
-            List<DictBasicDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+            List<DictBasicDTO.ListDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
             List<String> userIdList = viewList.stream().map(WarehouseDTO.PagingViewDTO::getChargeId).distinct().collect(Collectors.toList());
             //获取用户信息
             List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
             List<String> orgIdList = viewList.stream().map(WarehouseDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
-            List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
+            List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
 
             for (WarehouseDTO.PagingViewDTO item : viewList) {
                 WarehouseExportExcelDTO excelDTO = new WarehouseExportExcelDTO();
@@ -528,11 +543,13 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-22 17:17
      */
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
         //获取到仓库类型
-        List<DictBasicDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+        List<DictBasicDTO.ListDTO> dictBasicList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
         List<FindUserDTO> userList = sysUserFeign.getUserList();
-        List<BaseIdDTO> orgList = sysUserFeign.getAccountingCompanyList(new ArrayList<>());
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(new ArrayList<>());
         List<WarehouseEntity> warehouseList = this.list();
         WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, dictBasicList, userList, orgList,warehouseList);
         try {
@@ -561,15 +578,12 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2023-03-28 11:17
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateAndSubmit(WarehouseDTO.UpdateDTO dto) {
         String id = this.updateWarehouse(dto);
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        // 删除缓存
-        String redisKey = WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(dto.getId());
-        redisService.deleteObject(redisKey);
-
         return this.submit(Arrays.asList(id));
 
     }
@@ -676,5 +690,15 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_DUPLICATION_NAME);
         }
+    }
+
+    private void removeCache(List<String> ids) {
+        List<String> redisKeys = Lists.newArrayList();
+        ids.stream().forEach(id->{
+            String redisKey = WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(id);
+            redisKeys.add(redisKey);
+        });
+
+        redisService.deleteObject(redisKeys);
     }
 }

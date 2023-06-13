@@ -2,15 +2,19 @@ package com.erp.server.msg.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.enums.ErpServerModuleEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.common.core.utils.StrUtils;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.MessageChannelEnum;
 import com.erp.model.msg.enums.NoticeMessageTypeEnum;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.sys.enums.ThirdPlatformEnums;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -26,10 +30,12 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -53,6 +59,8 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
     public MessageChannelEnum channel() {
         return MessageChannelEnum.FEISHU;
     }
+
+    private static final String EXCEPTION_KEY_WORLD = "系统预警";
 
     /**
      * 获取飞书tenantAccessToken
@@ -113,6 +121,11 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         return msgResult;
     }
 
+    @Override
+    public void doSendWarnMsg(WarnMsgInfoDTO msgInfo) {
+        this.sendWebhookMessage(msgInfo);
+    }
+
     /**
      * 发送单条消息
      * @return
@@ -144,6 +157,16 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             msgResult.setCode(ApiError.ERROR_LARK_TOKEN_IS_NULL.code);
             msgResult.setMsg(ApiError.ERROR_LARK_TOKEN_IS_NULL.msg);
             msgResult.setNeedReSend(false);
+
+            WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
+            warnMsgInfoDTO.setTitle("消息通知发送失败");
+            warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_MSG);
+            warnMsgInfoDTO.setBizName("飞书发送消息通知");
+            warnMsgInfoDTO.setTableName("");
+            warnMsgInfoDTO.setTableId("");
+            warnMsgInfoDTO.setKeyInfo(StrUtil.format("用户【{}】未绑定飞书信息", userId));
+            warnMsgInfoDTO.setHappenTime(LocalDateTime.now());
+            sendWebhookMessage(warnMsgInfoDTO);
             return msgResult;
         }
         String unionId = thirdUnionDTOs.get(0).getThirdUnionId();
@@ -173,6 +196,16 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             msgResult.setCode(ApiError.ERROR_LARK_SEND_MSG_FAIL.code);
             msgResult.setMsg(ApiError.ERROR_LARK_SEND_MSG_FAIL.msg);
             msgResult.setNeedReSend(true);
+
+            WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
+            warnMsgInfoDTO.setTitle("消息通知发送失败");
+            warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_MSG);
+            warnMsgInfoDTO.setBizName("飞书发送消息通知");
+            warnMsgInfoDTO.setTableName("");
+            warnMsgInfoDTO.setTableId("");
+            warnMsgInfoDTO.setKeyInfo(StrUtil.format("飞书响应结果【{}】", JSONObject.toJSONString(result)));
+            warnMsgInfoDTO.setHappenTime(LocalDateTime.now());
+            sendWebhookMessage(warnMsgInfoDTO);
             return msgResult;
         } else {
             msgResult.setCode(200);
@@ -219,6 +252,16 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             msgResult.setCode(ApiError.ERROR_LARK_TOKEN_IS_NULL.code);
             msgResult.setMsg(ApiError.ERROR_LARK_TOKEN_IS_NULL.msg);
             msgResult.setNeedReSend(false);
+
+            WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
+            warnMsgInfoDTO.setTitle("消息通知发送失败");
+            warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_MSG);
+            warnMsgInfoDTO.setBizName("飞书发送批量消息通知");
+            warnMsgInfoDTO.setTableName("");
+            warnMsgInfoDTO.setTableId("");
+            warnMsgInfoDTO.setKeyInfo(StrUtil.format("用户【{}】未绑定飞书信息", JSONObject.toJSONString(noticeMsgWrapInfoDTO.getReceiverUserIds())));
+            warnMsgInfoDTO.setHappenTime(LocalDateTime.now());
+            sendWebhookMessage(warnMsgInfoDTO);
             return msgResult;
         }
         List<String> unionIds = thirdUnionDTOs.stream().map(ThirdUnionDTO::getThirdUnionId).collect(Collectors.toList());
@@ -248,6 +291,16 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             msgResult.setCode(ApiError.ERROR_LARK_SEND_MSG_FAIL.code);
             msgResult.setMsg(ApiError.ERROR_LARK_SEND_MSG_FAIL.msg);
             msgResult.setNeedReSend(true);
+
+            WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
+            warnMsgInfoDTO.setTitle("消息通知发送失败");
+            warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_MSG);
+            warnMsgInfoDTO.setBizName("飞书发送批量消息通知");
+            warnMsgInfoDTO.setTableName("");
+            warnMsgInfoDTO.setTableId("");
+            warnMsgInfoDTO.setKeyInfo(StrUtil.format("飞书响应结果【{}】", JSONObject.toJSONString(result)));
+            warnMsgInfoDTO.setHappenTime(LocalDateTime.now());
+            sendWebhookMessage(warnMsgInfoDTO);
             return msgResult;
         } else {
             msgResult.setCode(200);
@@ -316,6 +369,49 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         }
         feiShuSendSingleParam.setContent(contentDTO);
         return feiShuSendSingleParam;
+    }
+
+    /**
+     * 发送系统异常信息至飞书群
+     */
+    public void sendWebhookMessage(WarnMsgInfoDTO warnMsgInfo) {
+        log.info("接收到系统异常预警消息：【{}】",JSONObject.toJSONString(warnMsgInfo));
+        Boolean warnSend = fsProperties.getWarnSend();
+        if(!warnSend) {
+            log.error("nacos配置飞书预警关闭，不发送预警通知");
+            return;
+        }
+        try {
+            WarnMsgTypeEnum warnMsgTypeEnum = warnMsgInfo.getWarnMsgTypeEnum();
+            Map<String, String> warns = fsProperties.getWarns();
+            if(!warns.containsKey(warnMsgTypeEnum.getCode())) {
+                log.error("nacos未配置飞书预警配置【{}】，不发送预警通知", warnMsgTypeEnum.getName());
+                return;
+            }
+            WarnMsgContentDTO warnMsgContentDTO = new WarnMsgContentDTO();
+            // 由于采用关键字（系统预警）
+            if(!StrUtils.null2EmptyWithTrim(warnMsgInfo.getTitle()).contains(EXCEPTION_KEY_WORLD)) {
+                warnMsgContentDTO.setTitle(EXCEPTION_KEY_WORLD + "：" + warnMsgInfo.getTitle());
+            }
+            // 组装预警内容
+            String msgContent = StrUtil.format("所属项目：{}\n业务名称：{}\n异常日志表名及表id：{} {}\n关键信息：{}\n发生时间：{}",
+                    warnMsgInfo.getErpServerModuleEnum().getCode(), StrUtils.null2EmptyWithTrim(warnMsgInfo.getBizName()),
+                    StrUtils.null2EmptyWithTrim(warnMsgInfo.getTableName()), StrUtils.null2EmptyWithTrim(warnMsgInfo.getTableId()),
+                    StrUtils.null2EmptyWithTrim(warnMsgInfo.getKeyInfo()), LocalDateTimeUtil.format(warnMsgInfo.getHappenTime(), "yyyy-MM-dd HH:mm:ss"));
+            warnMsgContentDTO.setContent(msgContent);
+
+            String fsToken = warns.get(warnMsgTypeEnum.getCode());
+            String requestUrl = StrUtil.format(FeishuConstant.FS_WARN_HOOK_URL, fsToken);
+            FeiShuSendBaseParam.ContentDTO param = MsgConvertUtil.wrapTypicalCard(warnMsgContentDTO);
+            Map<String, Object> bodyMap = new HashMap<>();
+            bodyMap.put("msg_type", FeishuMessageTypeEnum.INTERACTIVE.getCode());
+            bodyMap.put("card", param);
+            log.info("开始发送飞书预警消息，请求内容体参数=【{}】", JSONUtil.toJsonStr(bodyMap));
+            String resultStr = OkHttpUtils.doPostJson(requestUrl, bodyMap, null);
+            log.info("结束批量发送飞书预警消息，请求内容体参数=【{}】，响应内容=【{}】", JSONUtil.toJsonStr(bodyMap), resultStr);
+        } catch (Exception e) {
+            log.info("飞书发送预警信息异常", e);
+        }
     }
 
 }

@@ -2,7 +2,6 @@ package com.erp.server.bi.service.impl;
 
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -26,7 +25,6 @@ import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.bi.enums.ReturnOrderStatusEnum;
-import com.erp.server.bi.enums.SettleMethodEnum;
 import com.erp.server.bi.listener.DmpReturnOrderInfoExcelListener;
 import com.erp.server.bi.mapper.DmpReturnOrderInfoMapper;
 import com.erp.server.bi.service.DmpOrderInfoService;
@@ -70,7 +68,7 @@ public class DmpReturnOrderInfoServiceImpl extends ServiceImpl<DmpReturnOrderInf
     public PagingVO<DmpReturnOrderInfoDTO> paging(PagingDTO<DmpReturnOrderInfoSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         DmpReturnOrderInfoSearchDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         IPage<DmpReturnOrderInfoDTO> pageData = baseMapper.paging(query, params);
         if (CollectionUtils.isNotEmpty(pageData.getRecords())) {
             pageData.getRecords().forEach(obj -> obj.setStatusName(ReturnOrderStatusEnum.getName(obj.getStatus())));

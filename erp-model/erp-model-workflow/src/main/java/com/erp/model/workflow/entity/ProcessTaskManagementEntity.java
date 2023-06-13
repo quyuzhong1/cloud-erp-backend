@@ -1,15 +1,20 @@
 package com.erp.model.workflow.entity;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 
 import java.io.Serializable;
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 import com.erp.model.workflow.dto.CamundaDTO;
+import com.erp.model.workflow.enums.TimeoutStatusEnum;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -39,8 +44,8 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     /**
      * 当前节点ID
      */
-    @TableField("current_activity_id")
-    private String currentActivityId;
+    @TableField("cur_activity_id")
+    private String curActivityId;
 
     /**
      * 任务ID
@@ -51,8 +56,8 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     /**
      * 当前审批人ID
      */
-    @TableField("current_approve_id")
-    private String currentApproveId;
+    @TableField("cur_approve_id")
+    private String curApproveId;
 
     /**
      * 当前节点开始时间
@@ -69,20 +74,20 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     /**
      * 超时预警状态
      */
-    @TableField("timeout_warn_status")
-    private Integer timeoutWarnStatus;
+    @TableField("timeout_status")
+    private TimeoutStatusEnum timeoutStatus;
 
     /**
      * 超时预警时间
      */
-    @TableField("timeout_warn_interval")
-    private Integer timeoutWarnInterval;
+    @TableField("timeout_warn_time")
+    private LocalDateTime timeoutWarnTime;
 
     /**
      * 超时时间
      */
-    @TableField("timeout_interval")
-    private Integer timeoutInterval;
+    @TableField("timeout_handle_time")
+    private LocalDateTime timeoutHandleTime;
 
     /**
      * 超时处理方式
@@ -113,20 +118,22 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     @TableField("approve_id")
     private String approveId;
 
+    @TableField("cur_activity_name")
+    private String curActivityName;
+
+    @TableField("cur_approve_name")
+    private String curApproveName;
+
+    @TableField("approve_name")
+    private String approveName;
+
 
     public static final String PROCESS_INSTANCE_ID = "process_instance_id";
 
-    public static final String CURRENT_NODE_ID = "current_node_id";
-
     public static final String TASK_ID = "task_id";
-
-    public static final String CURRENT_APPROVE_ID = "current_approve_id";
-
-    public static final String CURRENT_TASK_START_TIME = "current_task_start_time";
-
     public static final String TASK_STATUS = "task_status";
 
-    public static final String TIMEOUT_WARN_STATUS = "timeout_warn_status";
+    public static final String TIMEOUT_STATUS = "timeout_status";
 
     public static final String TIMEOUT_WARN_INTERVAL = "timeout_warn_interval";
 
@@ -146,17 +153,32 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
 
 
 
-    public ProcessTaskManagementEntity(String processInstanceId, String activityId, String taskId, LocalDateTime startTime, ApproveStatusEnum approveStatus, CamundaDTO.PropertiesDTO propertiesDTO, String userId, String executionId) {
+    public ProcessTaskManagementEntity(String processInstanceId, String activityId, String taskId, LocalDateTime startTime, ApproveStatusEnum approveStatus, CamundaDTO.PropertiesDTO propertiesDTO, FindUserDTO findUserDTO, String executionId, String activityName) {
         this.processInstanceId = processInstanceId;
-        this.currentActivityId = activityId;
+        this.curActivityId = activityId;
         this.taskId = taskId;
         this.startTime = startTime;
         this.taskStatus = approveStatus;
-        this.timeoutInterval = StrUtil.isNotBlank(propertiesDTO.getTimeoutInterval()) ? Integer.parseInt(propertiesDTO.getTimeoutInterval()) : 0;
+        this.timeoutHandleTime = StrUtil.isNotBlank(propertiesDTO.getTimeoutInterval()) ? startTime.plusHours(Integer.parseInt(propertiesDTO.getTimeoutInterval())) : startTime;
         this.timeoutHandleType = propertiesDTO.getTimeoutHandling();
-        this.timeoutWarnInterval = StrUtil.isNotBlank(propertiesDTO.getTimeoutWarnInterval()) ? Integer.parseInt(propertiesDTO.getTimeoutWarnInterval()) : 0;
-        this.currentApproveId = userId;
+        this.timeoutWarnTime = StrUtil.isNotBlank(propertiesDTO.getTimeoutInterval()) ? startTime.plusHours(Integer.parseInt(propertiesDTO.getTimeoutWarnInterval())) : startTime;
+        this.curApproveId = findUserDTO.getUserId();
+        this.curApproveName = findUserDTO.getUserName();
         this.executionId = executionId;
+        this.curActivityName = activityName;
+    }
+
+    public static ProcessTaskManagementEntity getByEntity(ProcessTaskManagementEntity entity, String targetUserId, String targetUserName) {
+        ProcessTaskManagementEntity insertEntity = new ProcessTaskManagementEntity();
+        BeanUtil.copyProperties(entity, insertEntity, "id","createTime","updateTime","version");
+        insertEntity.setStartTime(LocalDateTime.now());
+        insertEntity.setCurApproveId(targetUserId);
+        insertEntity.setCurApproveName(targetUserName);
+        Duration warnDuration = Duration.between(entity.getStartTime(), entity.getTimeoutWarnTime());
+        insertEntity.setTimeoutWarnTime(insertEntity.getStartTime().plusHours(warnDuration.toHours()));
+        Duration duration = Duration.between(entity.getStartTime(), entity.getTimeoutHandleTime());
+        insertEntity.setTimeoutHandleTime(insertEntity.getStartTime().plusHours(duration.toHours()));
+        return insertEntity;
     }
 
     @Override

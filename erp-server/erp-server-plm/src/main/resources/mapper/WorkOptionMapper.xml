@@ -2,26 +2,174 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.plm.mapper.WorkOptionMapper">
 
-    <select id="getTableNum" resultType="integer">
-       SELECT 0
+    <select id="getTableNum" resultType="java.lang.Integer">
+        SELECT
+        COUNT(*)
+        FROM ${tableName}
+        where 1=1
+        AND approve_status = #{approveStatus}
     </select>
 
+    <select id="getProductDetailNum" resultType="java.lang.Integer">
+        SELECT
+        COUNT(*)
+        FROM product_detail
+        where 1=1
+        AND status = #{status}
+    </select>
+
+    <select id="getProductChangeNum" resultType="java.lang.Integer">
+        SELECT
+        COUNT(*)
+        FROM product_change
+        where 1=1
+        AND state = #{status}
+    </select>
+
+
+    <select id="getProductBomInfoNum" resultType="java.lang.Integer">
+        SELECT
+        COUNT(*)
+        FROM product_bom_info
+        where 1=1
+        AND state = #{status}
+    </select>
 
     <select id="stageView" resultType="com.erp.model.workflow.dto.WorkOptionDTO$StageViewDTO">
         SELECT
         COUNT(*),
-        pt.phase_name AS stageName
-        FROM
-        project_task pt
-        INNER JOIN project_info pi ON pt.product_id = pi.product_id AND pi.is_deleted = FALSE
-        LEFT JOIN project_phase pp ON pt.phase_id = pp."id" AND pt.is_deleted = FALSE
-        WHERE pi.project_status NOT IN (3) AND pp.is_deleted = FALSE
-        AND pt.product_id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted = FALSE)
-        <if test="optionUserId != null and optionUserId != ''">
-            AND pt.charge_id = #{optionUserId}
+        pph.name as stageName
+        FROM product_info p
+        LEFT JOIN project_info pi ON p.id = pi.product_id AND pi.is_deleted = FALSE
+        LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
+        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND ppe.is_deleted = FALSE
+        WHERE pt.is_deleted = FALSE
+        GROUP BY pt.product_id) pp on p.id = pp.product_id
+        LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
+        WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE AND pph.name IS NOT NULL
+        GROUP BY pph.name
+    </select>
+
+    <select id="listProductTaskBySearchCategory" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
+        SELECT
+        pt.id,
+        pt.pid,
+        pt.phase_id as phaseId,
+        pt.phase_name as phaseName,
+        pt.name,
+        pt.type,
+        pt.plan_start_time as planStartTime,
+        pt.plan_end_time as planEndTime,
+        pt.priority,
+        pt.status,
+        pt.schedule_status,
+        pt.is_fixed as isFixed,
+        pt.schedule_status,
+        pt.charge_name as chargeName,
+        pt.quote_sys_task_id as quoteSysTaskId,
+        pt.product_id as productId,
+        pt.charge_id as chargeId,
+        pt.process_id as processId,
+        pt.role_name as roleName,
+        pt.distribution_type as distributionType,
+        pt.related_sku_type as relatedSkuType,
+        pt.work_period AS workPeriod,
+        pdi.spu_no AS spu_no
+        FROM project_task pt
+        left join product_info pdi on pt.product_id = pdi.id AND pdi.is_deleted = FALSE
+        left join project_info pji on pdi.id = pji.product_id AND pji.is_deleted = FALSE
+        left join (select task_id,source,array_to_string(array_agg(charge_ids),',') as charge_ids from  task_charge_distribution WHERE is_deleted = FALSE group by task_id,source) tcd on pt.id = tcd.task_id and tcd.source = 3
+        where  (pdi.approval_status is null or pdi.approval_status != 4) and (pji.project_status is null or
+        pji.project_status != 4) AND pt.is_deleted = FALSE
+        <if test="params.searchCategory != null and (params.searchCategory == 1 or params.searchCategory == 3 or params.searchCategory == 5 or params.searchCategory == 7) ">
+            <if test="params.groupFlag != null  and params.groupFlag != ''">
+                AND pt.product_id = #{params.groupFlag}
+            </if>
+            <if test="params.searchCategory == 7">
+                <if test="params.processInstanceIds != null and params.processInstanceIds.size > 0">
+                    AND pt.process_id IN
+                    <foreach collection="params.processInstanceIds" item="processId" open="(" separator=","
+                             close=")">
+                        #{processId}
+                    </foreach>
+                </if>
+            </if>
         </if>
-        GROUP BY
-        pt.phase_name ,
-        pp.is_deleted
+        <if test="params.searchCategory != null and (params.searchCategory == 2 or params.searchCategory == 4 or params.searchCategory == 6 or params.searchCategory == 8)">
+            <if test="params.startTime != null ">
+                AND pt.plan_end_time &gt;= #{params.startTime}
+            </if>
+            <if test="params.endTime != null ">
+                AND pt.plan_end_time &lt;= #{params.endTime}
+            </if>
+            <if test="params.searchCategory == 8">
+                <if test="params.processInstanceIds != null and params.processInstanceIds.size > 0">
+                    AND pt.process_id IN
+                    <foreach collection="params.processInstanceIds" item="processId" open="(" separator=","
+                             close=")">
+                        #{processId}
+                    </foreach>
+                </if>
+            </if>
+        </if>
+        <if test="notStateList != null and notStateList.size>0">
+            AND pt.status NOT IN
+            <foreach collection="notStateList" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+        </if>
+        <if test="params.searchKeyword != null and params.searchKeyword!=''">
+            AND pt.name LIKE concat('%',#{params.searchKeyword},'%')
+        </if>
+        <if test="params.isExecutable != null  and params.isExecutable == 1 ">
+            AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id AND a.is_deleted = FALSE ) or not EXISTS (select
+            b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where a.is_deleted = false and (b.status != 4 and b.status != 5) and a.task_id
+            = pt.id ))
+        </if>
+        <if test="params.isExecutable != null  and params.isExecutable == 0 ">
+            AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where a.is_deleted = false and b.status in (0,1,2,3,7) and a.task_id = pt.id)
+        </if>
+        <if test="params.taskSearchDTO != null">
+            <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword!=''">
+                AND pt.name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
+            </if>
+            <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
+                AND pt.priority in
+                <foreach collection="params.taskSearchDTO.priority" item="priority" open="(" separator=","
+                         close=")">
+                    #{priority}
+                </foreach>
+            </if>
+            <if test="params.taskSearchDTO.chargeId != null and params.taskSearchDTO.chargeId.size > 0">
+                AND pt.charge_id in
+                <foreach collection="params.taskSearchDTO.chargeId" item="chargeId" open="(" separator=","
+                         close=")">
+                    #{chargeId}
+                </foreach>
+            </if>
+            <if test="params.taskSearchDTO.status != null and params.taskSearchDTO.status.size > 0 ">
+                AND pt.status in
+                <foreach collection="params.taskSearchDTO.status" item="status" open="(" separator="," close=")">
+                    #{status}
+                </foreach>
+            </if>
+            <if test="params.taskSearchDTO.startTime != null ">
+                AND pt.create_time &gt;= #{params.taskSearchDTO.startTime}
+            </if>
+            <if test="params.taskSearchDTO.endTime != null ">
+                AND pt.create_time &lt;= #{params.taskSearchDTO.endTime}
+            </if>
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pt.update_time desc
     </select>
 </mapper>

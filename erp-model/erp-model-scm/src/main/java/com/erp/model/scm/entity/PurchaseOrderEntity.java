@@ -147,6 +147,24 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
     private String invalidRemark;
 
     /**
+     * 来源id
+     */
+    @TableField("source_id")
+    private String sourceId;
+
+    /**
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
+
+    /**
+     * 是否是委外
+     */
+    @TableField("is_subcontract")
+    private Boolean isSubcontract;
+
+    /**
      * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
      */
     @TableField("sync_kingdee_status")
@@ -163,6 +181,12 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
      */
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
+
+    /**
+     * 同步操作
+     */
+    @TableField("sync_operate")
+    private String syncOperate;
 
 
     public static final String APPROVE_STATUS = "approve_status";
@@ -200,6 +224,14 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
     public static final String APPROVE_USER_NAME = "approve_user_name";
 
     public static final String INVALID_REMARK = "invalid_remark";
+
+    public static final String SYNC_KINGDEE_STATUS = "sync_kingdee_status";
+
+    public static final String SYNC_KINGDEE_TIME = "sync_kingdee_time";
+
+    public static final String SYNC_KINGDEE_ID = "sync_kingdee_id";
+
+    public static final String SYNC_OPERATE = "sync_operate";
 
     @Override
     public Serializable pkVal() {

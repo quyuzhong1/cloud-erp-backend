@@ -7,7 +7,7 @@
 
     <select id="getMonthSales" resultType="com.erp.model.bi.vo.SalesFlagVO">
         SELECT
-        EXTRACT( MONTH FROM o.${timeFlag}) AS flag,
+        to_char( o.${timeFlag}, 'MM' ) AS flag,
         <if test="settleRate !=null and settleRate!=''">
             round(SUM (i.amount_after * i.${settleRate}),2) AS sales
         </if>
@@ -16,91 +16,92 @@
         </if>
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.id
-        WHERE EXTRACT (YEAR FROM o.${timeFlag} ) = EXTRACT ( YEAR FROM NOW( ) )
-        <if test="params.timeType!=null and params.timeType==0">
-            <if test="params.startTime !=null">
-                AND o.platform_create_time &gt;= #{params.startTime}
+        <where>
+            <if test="params.timeType!=null and params.timeType==0">
+                <if test="params.startTime !=null">
+                    AND o.platform_create_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.platform_create_time &lt; #{params.endTime}
+                </if>
             </if>
-            <if test="params.endTime !=null">
-                AND o.platform_create_time &lt; #{params.endTime}
+            <!-- 发货时间 -->
+            <if test="params.timeType!=null and params.timeType==1">
+                <if test="params.startTime !=null">
+                    AND o.delivery_time &gt;= #{params.startTime}
+                </if>
+                <if test="params.endTime !=null">
+                    AND o.delivery_time &lt; #{params.endTime}
+                </if>
             </if>
-        </if>
-        <!-- 发货时间 -->
-        <if test="params.timeType!=null and params.timeType==1">
-            <if test="params.startTime !=null">
-                AND o.delivery_time &gt;= #{params.startTime}
+            <!-- 部门 -->
+            <if test="params.department!=null and params.department.size>0">
+                AND o.dept_id IN
+                <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
+                    #{deptId}
+                </foreach>
             </if>
-            <if test="params.endTime !=null">
-                AND o.delivery_time &lt; #{params.endTime}
+            <!-- 平台 -->
+            <if test="params.platform!=null and params.platform.size>0">
+                AND o.source_platform IN
+                <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
+                    #{platform}
+                </foreach>
             </if>
-        </if>
-        <!-- 部门 -->
-        <if test="params.department!=null and params.department.size>0">
-            AND o.dept_id IN
-            <foreach collection="params.department" item="deptId" open="(" separator="," close=")">
-                #{deptId}
-            </foreach>
-        </if>
-        <!-- 平台 -->
-        <if test="params.platform!=null and params.platform.size>0">
-            AND o.source_platform IN
-            <foreach collection="params.platform" item="platform" open="(" separator="," close=")">
-                #{platform}
-            </foreach>
-        </if>
-        <!-- 站点 -->
-        <if test="params.site!=null and params.site.size>0">
-            AND o.site IN
-            <foreach collection="params.site" item="site" open="(" separator="," close=")">
-                #{site}
-            </foreach>
-        </if>
-        <!-- 店铺 -->
-        <if test="params.shopName!=null and params.shopName.size>0">
-            AND o.shop_name IN
-            <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
-                #{shopName}
-            </foreach>
-        </if>
-        <!-- sku -->
-        <if test="params.sku!=null and params.sku.size>0">
-            AND i.sku_no IN
-            <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
-                #{sku}
-            </foreach>
-        </if>
-        <!-- 品类 -->
-        <if test="params.category!=null and params.category.size>0">
-            AND i.sku_no IN
-            ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-            pi.category IN
-            <foreach collection="params.category" item="category" open="(" separator="," close=")">
-                #{category}
-            </foreach>
-            )
-        </if>
-        <!-- 品牌 -->
-        <if test="params.brand!=null and params.brand.size>0">
-            AND i.sku_no IN
-            ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-            pi.brand_name IN
-            <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
-                #{brand}
-            </foreach>
-            )
-        </if>
-        <!-- 用户id -->
-        <if test="params.userId!=null and params.userId.size>0">
-            AND o.charge_id IN
-            <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
-                #{userId}
-            </foreach>
-        </if>
-        <!-- 权限 -->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
-        </if>
-        GROUP BY EXTRACT ( MONTH FROM o.${timeFlag} )
+            <!-- 站点 -->
+            <if test="params.site!=null and params.site.size>0">
+                AND o.site IN
+                <foreach collection="params.site" item="site" open="(" separator="," close=")">
+                    #{site}
+                </foreach>
+            </if>
+            <!-- 店铺 -->
+            <if test="params.shopName!=null and params.shopName.size>0">
+                AND o.shop_name IN
+                <foreach collection="params.shopName" item="shopName" open="(" separator="," close=")">
+                    #{shopName}
+                </foreach>
+            </if>
+            <!-- sku -->
+            <if test="params.sku!=null and params.sku.size>0">
+                AND i.sku_no IN
+                <foreach collection="params.sku" item="sku" open="(" separator="," close=")">
+                    #{sku}
+                </foreach>
+            </if>
+            <!-- 品类 -->
+            <if test="params.category!=null and params.category.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.category IN
+                <foreach collection="params.category" item="category" open="(" separator="," close=")">
+                    #{category}
+                </foreach>
+                )
+            </if>
+            <!-- 品牌 -->
+            <if test="params.brand!=null and params.brand.size>0">
+                AND i.sku_no IN
+                ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
+                pi.brand_name IN
+                <foreach collection="params.brand" item="brand" open="(" separator="," close=")">
+                    #{brand}
+                </foreach>
+                )
+            </if>
+            <!-- 用户id -->
+            <if test="params.userId!=null and params.userId.size>0">
+                AND o.charge_id IN
+                <foreach collection="params.userId" item="userId" open="(" separator="," close=")">
+                    #{userId}
+                </foreach>
+            </if>
+            <!-- 权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        GROUP BY flag
     </select>
 
     <select id="getBySku" resultType="com.erp.model.bi.vo.SalesVO">
@@ -198,8 +199,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY i.sku_no
@@ -303,8 +304,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY i.sku_no,o.${findTime}
@@ -405,8 +406,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY sku_no
@@ -507,8 +508,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
 
@@ -526,7 +527,7 @@
         </if>
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o
-        ON o.order_id = o.id
+        ON i.order_id = o.id
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
@@ -546,8 +547,8 @@
                 </if>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY source_platform
@@ -621,8 +622,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY o.shop_no
@@ -695,8 +696,8 @@
             </foreach>
         </if>
         <!-- 权限 -->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
 
         GROUP BY o.shop_no,o.${findTime}
@@ -755,8 +756,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY o.shop_no
@@ -851,8 +852,8 @@
             </foreach>
         </if>
         <!-- 权限 -->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
         GROUP BY
         o.shop_no,
@@ -957,8 +958,8 @@
             </foreach>
         </if>
         <!-- 权限 -->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
 
         GROUP BY o.shop_no,i.new_sign
@@ -1056,8 +1057,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY o.country_name_cn
@@ -1157,8 +1158,8 @@
             </foreach>
         </if>
         <!-- 权限 -->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
         GROUP BY i.sku_no,o.shop_no
     </select>
@@ -1166,7 +1167,7 @@
     <select id="byCategory" resultType="com.erp.model.bi.vo.SalesBaseVO">
         SELECT
         <if test="settleRate !=null and settleRate!=''">
-        round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
+            round(SUM (i.amount_after * i.${settleRate}),2) AS sales,
         </if>
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
@@ -1254,8 +1255,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY i.sku_no
@@ -1353,8 +1354,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY o.source_platform
@@ -1391,8 +1392,8 @@
             </if>
         </if>
         <!-- 权限 -->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
 
         GROUP BY country_name_cn
@@ -1490,8 +1491,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY o.charge_id
@@ -1590,8 +1591,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY o.dept_id
@@ -1689,8 +1690,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY i.new_sign
@@ -1789,8 +1790,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY i.new_sign,o.source_platform
@@ -1889,8 +1890,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY i.new_sign,i.sku_no
@@ -1989,8 +1990,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY o.shop_no
@@ -2087,8 +2088,8 @@
             </foreach>
         </if>
         <!-- 权限 -->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
         GROUP BY i.sku_no
         ORDER BY sales DESC LIMIT 20
@@ -2184,8 +2185,8 @@
             </foreach>
         </if>
         <!-- 权限 -->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
         GROUP BY i.sku_no
         ORDER BY sales DESC LIMIT 20
@@ -2319,8 +2320,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY pi.brand_name
@@ -2454,8 +2455,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY i.new_sign,o.charge_id
@@ -2473,7 +2474,7 @@
         </if>
         i.new_sign AS flag,COALESCE(o.dept_id,'无') AS name,SUM ( i.quantity ) AS salesQuantity,
         COUNT ( DISTINCT ( o.platform_order_id ) ) AS orderCount FROM
-        dmp_order_item i LEFT JOIN dmp_order_info o ON 	i.order_id = o.ID
+        dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
         <where>
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
@@ -2555,8 +2556,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY i.new_sign,o.dept_id
@@ -2570,13 +2571,11 @@
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
         </if>
-        EXTRACT(MONTH FROM o.${timeFlag}) flag,
+        to_char( o.${timeFlag}, 'MM' ) flag,
         COUNT ( DISTINCT ( o.platform_order_id ) ) AS orderCount,
         SUM ( i.quantity ) AS salesQuantity FROM
         dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
-        WHERE
-        EXTRACT ( YEAR FROM o.${timeFlag} ) = EXTRACT ( YEAR FROM NOW( ) )
-
+        WHERE  to_char(o.${timeFlag},'yyyy')=#{year}
         <!-- 部门 -->
         <if test="params.department!=null and params.department.size>0">
             AND o.dept_id IN
@@ -2640,12 +2639,10 @@
             </foreach>
         </if>
         <!-- 权限 -->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
-
-        GROUP BY
-        EXTRACT ( MONTH FROM o.${timeFlag} )
+        GROUP BY flag
     </select>
 
     <select id="byLastYear" resultType="com.erp.model.bi.vo.SalesFlagVO">
@@ -2656,12 +2653,11 @@
         <if test="settleRate ==null or settleRate==''">
             round(SUM (i.amount_after * 1),2) AS sales,
         </if>
-        EXTRACT(MONTH FROM o.${timeFlag}) flag,
+        to_char( o.${timeFlag}, 'MM' ) flag,
         COUNT ( DISTINCT ( o.platform_order_id ) ) AS orderCount,
         SUM ( i.quantity ) AS salesQuantity FROM
         dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
-        WHERE
-        EXTRACT ( YEAR FROM o.${timeFlag} ) = EXTRACT ( YEAR FROM NOW()-interval '1 years' )
+        WHERE  to_char(o.${timeFlag},'yyyy')=#{year}
         <!-- 部门 -->
         <if test="params.department!=null and params.department.size>0">
             AND o.dept_id IN
@@ -2725,12 +2721,11 @@
             </foreach>
         </if>
         <!-- 权限 -->
-        <if test="params.param!=null and params.param!=''">
-            ${params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
-
         GROUP BY
-        EXTRACT ( MONTH FROM o.${timeFlag} )
+        flag
     </select>
 
     <select id="byLastMonth" resultType="com.erp.model.bi.vo.SalesFlagVO">
@@ -2826,8 +2821,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         LIMIT 1
@@ -2873,8 +2868,8 @@
                 )
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY o.source_platform
@@ -2972,8 +2967,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         group by name order by name asc
@@ -3071,8 +3066,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         group by name order by name asc
@@ -3169,8 +3164,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         group by name order by name asc
@@ -3270,8 +3265,8 @@
                 </foreach>
             </if>
             <!-- 权限 -->
-            <if test="params.param!=null and params.param!=''">
-                ${params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
         </where>
         group by name order by name asc

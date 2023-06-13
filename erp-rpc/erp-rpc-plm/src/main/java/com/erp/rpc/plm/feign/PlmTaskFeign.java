@@ -1,14 +1,14 @@
 package com.erp.rpc.plm.feign;
 
-import com.erp.model.plm.dto.BasicCategoryDTO;
-import com.erp.model.plm.dto.CleanSkuDto;
-import com.erp.model.plm.dto.ProductDetailDTO;
-import com.erp.model.plm.dto.ProductInfoDTO;
+import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -123,4 +123,102 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/getRolePeople")
     List<ProductInfoDTO.ProductRolePeopleDTO> listProductRolePeople(@RequestBody List<String> skuIds);
+
+    /**
+     * 根据入参查询单据数量
+     * @Author Luo_WG
+     * @Date 2023/4/21 15:34
+     **/
+    @PostMapping("feign/plmWorkOption/getTableNum")
+    Integer getTableNum(@RequestBody WorkOptionDTO.TableNumDTO tableNumDTO);
+
+    /**
+     * bom  审核 通过
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("feign/plmWorkOption/bomInfoApprovalPass")
+    void bomInfoApprovalPass(@RequestBody @Validated AuditParamDTO dto);
+
+    /**
+     * bom  审核 不通过
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("feign/plmWorkOption/bomInfoApprovalNoPass")
+    void bomInfoApprovalNoPass(@RequestBody @Validated AuditParamDTO dto);
+
+    /**
+     * 产品信息-状态操作-审核通过
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("feign/plmWorkOption/productDetailApprovalPass")
+    Boolean productDetailApprovalPass(@RequestBody @Validated ProductDetailOperateDTO dto);
+
+    /**
+     * 产品信息-状态操作-审核不通过
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("feign/plmWorkOption/productDetailApprovalNoPass")
+    Boolean productDetailApprovalNoPass(@RequestBody @Validated ProductDetailOperateDTO dto);
+
+    /**
+     * 项目任务-任务分页列表 -状态操作-审核通过
+     * @return
+     */
+    @PostMapping("feign/plmWorkOption/projectTaskApprovalPass")
+    Boolean projectTaskApprovalPass(@RequestBody @Validated TaskOperateDTO dto);
+
+    /**
+     * 项目任务-任务分页列表 -状态操作-审核不通过
+     * @return
+     */
+    @PostMapping("feign/plmWorkOption/projectTaskApprovalNoPass")
+    Boolean projectTaskApprovalNoPass(@RequestBody @Validated TaskOperateDTO dto);
+
+    /**
+     * change 审核 通过
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("feign/plmWorkOption/productChangeApprovalPass")
+    void productChangeApprovalPass(@RequestBody @Validated AuditParamDTO dto);
+
+    /**
+     * change  审核 不通过
+     *
+     * @param
+     * @return 新增结果
+     */
+    @PostMapping("feign/plmWorkOption/productChangeApprovalNoPass")
+    void productChangeApprovalNoPass(@RequestBody @Validated AuditParamDTO dto);
+    /**
+     * @description: 查询bom子件信息
+     * @author Will
+     * @date: 2023/5/17 9:32
+     * @param skuIds
+     * @return List<BomChildrenSkuDTO>
+     */
+    @PostMapping("feign/bom/listBomChildBySkuIds")
+    List<BomChildrenSkuDTO> listBomChildBySkuIds(@RequestBody List<String> skuIds);
+
+    /**
+     * 根据任务id获取产品id
+     * @return
+     */
+    @PostMapping("feign/plmWorkOption/getProductIdByTaskId")
+    ProjectTaskEntity getProductIdByTaskId(@RequestBody String taskId);
+
+    /**
+     * @description: 根据父级skuIds查询BOM信息
+     * @author Will
+     * @date: 2023/5/31 10:57
+     * @param skuIds
+     * @return List<BomInfoEntity>
+     */
+    @PostMapping("feign/bom/listBomByParentSkuIds")
+    List<BomInfoEntity> listBomByParentSkuIds(List<String> skuIds);
 }

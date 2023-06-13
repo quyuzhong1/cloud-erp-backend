@@ -76,4 +76,8 @@ public class KingdeeEccShopEntity {
     private String fCreateDate;
     @Alias("FModifyDate")
     private String fModifyDate;
+    /**
+     * 清洗数据
+     */
+    private Boolean isClean;
 }

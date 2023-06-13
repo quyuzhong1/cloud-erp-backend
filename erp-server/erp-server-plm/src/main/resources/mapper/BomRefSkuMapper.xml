@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.BomRefSkuMapper">
+
+
+    <select id="listBomChildBySkuIds" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
+        select
+           pbi.bom_version as bomVersion,
+           pbs.parent_sku_id as parentSkuId,
+           pbs.sku_id as skuId,
+           pbs.sku_no as skuNo,
+           pbs.quantity as quantity,
+           pd.name as skuName,
+           pd.unit_name as unitName
+        from product_bom_info pbi
+        left join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
+        left join product_detail pd on pbs.sku_id = pd.id and pd.is_deleted = false
+        <where>
+            pbi.is_deleted = false and pbi.state = 4
+            and pbs.parent_sku_id in
+            <foreach collection="parentSkuIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+
+    <select id="listBomByParentSkuIds" resultType="com.erp.model.plm.entity.BomInfoEntity">
+        select
+            DISTINCT
+            pbi.version,
+            pbi.serial_number,
+            pbi.type,
+            pbi.state,
+            pbi.remark,
+            pbi.sync_kingdee_status,
+            pbi.sync_kingdee_time,
+            pbi.sync_kingdee_id,
+            pbs.parent_sku_id
+        from product_bom_info pbi
+        left join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
+        <where>
+            pbi.is_deleted = false and pbi.state = 4
+            and pbs.parent_sku_id in
+            <foreach collection="parentSkuIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+
+</mapper>

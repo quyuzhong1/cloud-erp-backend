@@ -46,6 +46,15 @@ public class  OrderMongoDTO {
     @Panno(findType = PannoEnum.EQ,field = "downloadStatus")
     private Integer downloadStatus;
 
+    @Panno(findType = PannoEnum.EQ,field = "isClean")
+    private Boolean isClean;
+
+    @Panno(findType = PannoEnum.EQ,field = "cleanToDelivery")
+    private Boolean cleanToDelivery;
+
+    @Panno(findType = PannoEnum.EXISTS,field = "cleanToDelivery")
+    private Boolean cleanToDeliveryExists;
+
     public OrderMongoDTO(String platformCode, String code) {
         this.platformCode = platformCode;
         this.code = code;
@@ -93,6 +102,23 @@ public class  OrderMongoDTO {
     public static OrderMongoDTO getByDownloadStatus(Integer status) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
         orderMongoDTO.setDownloadStatus(status);
+        return orderMongoDTO;
+    }
+
+    public static OrderMongoDTO getByIsClean(Boolean isClean) {
+        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+        orderMongoDTO.setIsClean(isClean);
+        return orderMongoDTO;
+    }
+
+    public static OrderMongoDTO getByCleanToDelivery(Boolean isClean, Boolean cleanToDelivery) {
+        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+        if(null != isClean){
+            orderMongoDTO.setCleanToDelivery(isClean);
+        }
+        if (null != cleanToDelivery){
+            orderMongoDTO.setCleanToDeliveryExists(cleanToDelivery);
+        }
         return orderMongoDTO;
     }
 }

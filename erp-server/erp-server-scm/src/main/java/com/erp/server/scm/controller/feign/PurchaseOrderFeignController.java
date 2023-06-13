@@ -40,6 +40,9 @@ public class PurchaseOrderFeignController {
     @Resource
     private SupplierContactService supplierContactService;
 
+    @Resource
+    private SalesDemandService salesDemandService;
+
     /**
      * 根据id查询采购订单
      *
@@ -90,7 +93,7 @@ public class PurchaseOrderFeignController {
      * @Date 2023/4/13 11:20
      **/
     @PostMapping("/getByOrderId")
-    public  PurchaseOrderDTO.GetOneDTO getByOrderId(@RequestBody String id) {
+    public PurchaseOrderDTO.GetOneDTO getByOrderId(@RequestBody String id) {
         return purchaseOrderService.getPurchaseOrder(id);
     }
 
@@ -104,14 +107,14 @@ public class PurchaseOrderFeignController {
      * @Date 2023/4/13 11:20
      **/
     @PostMapping("/getByOrderIds")
-    public  List<PurchaseOrderDTO.PurchaseOrderInfoDTO> getByOrderId(@RequestBody List<String> purchaseOrderIds) {
+    public List<PurchaseOrderDTO.PurchaseOrderInfoDTO> getByOrderId(@RequestBody List<String> purchaseOrderIds) {
         return purchaseOrderService.getPurchaseOrderByOrderIds(purchaseOrderIds);
     }
 
     /**
      * 根据采购订单详情id查询详情信息
      *
-     * @param  id：采购订单详情表id
+     * @param id：采购订单详情表id
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
      * @Author Luo_WG
      * @Date 2023/4/13 11:20
@@ -120,12 +123,13 @@ public class PurchaseOrderFeignController {
     public List<PurchaseOrderDetailEntity> listPurchaseOrderDetailById(@RequestBody List<String> id) {
         return purchaseOrderDetailService.listDetailByIds(id);
     }
+
     /**
+     * @param ids
+     * @return List<PurchaseOrderDetailEntity>
      * @description: 根据采购订单ids查询明细
      * @author Will
      * @date: 2023/4/24 19:43
-     * @param ids
-     * @return List<PurchaseOrderDetailEntity>
      */
     @PostMapping("/listByPurchaseOrderIds")
     public List<PurchaseOrderDetailEntity> listByPurchaseOrderIds(@RequestBody List<String> ids) {
@@ -133,10 +137,10 @@ public class PurchaseOrderFeignController {
     }
 
 
-
     /**
      * 根据采购订单id查询详情信息
-     * @param  id：采购订单表id
+     *
+     * @param id：采购订单表id
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
      * @Author Luo_WG
      * @Date 2023/4/13 11:20
@@ -189,10 +193,11 @@ public class PurchaseOrderFeignController {
 
     /**
      * 修改采购订单明细表
-     * @Author Luo_WG
-     * @Date 2023/4/20 18:51
+     *
      * @param entity entity
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/20 18:51
      **/
     @PostMapping("/updatePurchaseOrderDetailById")
     public Boolean updatePurchaseOrderDetailById(@RequestBody PurchaseOrderDetailEntity entity) {
@@ -201,13 +206,20 @@ public class PurchaseOrderFeignController {
 
     /**
      * 批量修改采购订单明细表
-     * @Author Luo_WG
-     * @Date 2023/4/20 18:51
+     *
      * @param entityList entityList
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/4/20 18:51
      **/
     @PostMapping("/updatePurchaseOrderDetailByIdBatch")
     public Boolean updatePurchaseOrderDetailByIdBatch(@RequestBody List<PurchaseOrderDetailEntity> entityList) {
         return purchaseOrderDetailService.updateBatchById(entityList);
     }
+
+    @PostMapping("/getPushDownBySourceIds")
+    public Integer getPushDownBySoIds(@RequestBody List<String> soIds) {
+        return salesDemandService.getPushDownBySourceIds(soIds);
+    }
+
 }

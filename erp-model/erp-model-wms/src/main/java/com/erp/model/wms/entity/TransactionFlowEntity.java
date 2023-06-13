@@ -60,13 +60,6 @@ public class TransactionFlowEntity extends BaseEntity<TransactionFlowEntity> imp
     private String warehouseLocation;
 
     /**
-     * 库位名称
-     */
-    @TableField("warehouse_location_name")
-    private String warehouseLocationName;
-
-
-    /**
      * 库存状态
      */
     @TableField("dict_inventory_status")

@@ -75,7 +75,9 @@
         pp.moq,
         pl.declare_model,
         pl.declare_chinese_name,
-        pd.variant_property
+        pd.variant_property,
+        pd.unit_name,
+        pd.version
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
@@ -232,8 +234,8 @@
             AND pd.create_time &lt;= #{params.endTime}
         </if>
 
-        <if test="params.param != '' and params.param != null">
-            ${params.param}
+        <if test="params.permissionSql != '' and params.permissionSql != null">
+            ${params.permissionSql}
         </if>
         ORDER BY pd.create_time DESC
     </select>
@@ -512,7 +514,8 @@
         pd.variant_property,
         pp.box_qty as unitQty,
         pl.declare_chinese_name as declareName,
-        pl.declare_model as declareModel
+        pl.declare_model as declareModel,
+        pd.unit_name
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_pack pp on pd.id = pp.sku_id AND pp.is_deleted = FALSE
@@ -599,6 +602,7 @@
 
     <select id="getSkuInfoBySkuIds" resultType="com.erp.model.plm.vo.SkuVO">
         SELECT
+        pd.version,
         pd.id AS skuId,
         pi.id AS productId,
         pi.spu_no,
@@ -612,10 +616,15 @@
         pl.product_property_id AS productPropertyId,
         pi.materials,
         pi.function_desc,
-        pi.grade AS productGrade
+        pi.grade AS productGrade,
+        pi.brand_name as brandName,
+        ps.sale_state as saleState,
+        pd.unit_name,
+        pd.status
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
+        left join product_sale ps on pd.id = ps.sku_id and ps.is_deleted = FALSE
         WHERE pi.delete_state = 0 AND pd.is_deleted = FALSE
         <if test="skuIds != null and skuIds.size>0">
             AND pd.id IN

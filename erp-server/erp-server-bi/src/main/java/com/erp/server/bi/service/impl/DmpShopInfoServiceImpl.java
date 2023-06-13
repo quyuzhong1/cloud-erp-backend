@@ -77,7 +77,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
     public PagingVO<DmpShopInfoShowDTO> paging(PagingDTO<DmpShopInfoSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         DmpShopInfoSearchDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         IPage<DmpShopInfoShowDTO> pageData = baseMapper.paging(query, params);
         if (CollectionUtils.isNotEmpty(pageData.getRecords())) {
             pageData.getRecords().forEach(obj -> obj.setStatusName(BiStateEnum.getName(obj.getStatus())));
@@ -155,7 +155,7 @@ public class DmpShopInfoServiceImpl extends ServiceImpl<DmpShopInfoMapper, DmpSh
         dmpShopInfoEntity.setChargeId(dto.getChargeId());
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getChargeId());
         if (ObjectUtils.isEmpty(findUserDTO)) {
-            throw new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         dmpShopInfoEntity.setChargeName(findUserDTO.getUserName());
         dmpShopInfoEntity.setEnableTime(dto.getEnableTime());

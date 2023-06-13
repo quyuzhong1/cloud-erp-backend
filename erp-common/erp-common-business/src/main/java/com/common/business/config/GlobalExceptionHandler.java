@@ -8,10 +8,13 @@ import com.common.core.exception.FeignServiceException;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
+import com.netflix.client.ClientException;
 import lombok.extern.slf4j.Slf4j;
+import ma.glasnost.orika.MappingException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -39,14 +42,15 @@ import java.util.List;
         "com.erp.server.auth.controller.api",
         "com.erp.server.bi.controller.api",
         "com.erp.server.plm.controller.api",
-        "com.erp.server.sys.controller.api"
+        "com.erp.server.sys.controller.api",
+        "com.erp.server.oms.controller.api"
 
 })
 public class GlobalExceptionHandler {
     @ExceptionHandler({ServiceException.class})
     @ResponseStatus(HttpStatus.OK)
     public ApiResult resolveException(ServiceException e) {
-        log.error("系统异常：{}", e.getMsg(), e);
+        log.error("系统异常：{}", e.getMsg());
         ApiResult result = new ApiResult();
         result.setCode(e.getCode());
         result.setMsg(e.getMsg());
@@ -93,9 +97,9 @@ public class GlobalExceptionHandler {
         List<ObjectError> fieldErrors = e.getBindingResult().getAllErrors();
         if (fieldErrors != null && fieldErrors.size() > 0) {
             ObjectError objectError = ValidatorUtil.getPermanentError(fieldErrors);
-            return ApiResult.error(ApiError.ERROR_400.code, objectError.getDefaultMessage());
+            return ApiResult.error(ApiError.ERROR_99999.code, objectError.getDefaultMessage());
         }
-        return ApiResult.error(ApiError.ERROR_400);
+        return ApiResult.error(ApiError.ERROR_99999);
     }
 
     @ExceptionHandler(value = DataIntegrityViolationException.class)
@@ -153,20 +157,29 @@ public class GlobalExceptionHandler {
         }
     }
 
+    @ExceptionHandler(value = NullPointerException.class)
+    public ApiResult resolveException(NullPointerException ex) {
+        log.error("系统异常:", ex);
+        return ApiResult.error(ApiError.Default);
+    }
 
+    @ExceptionHandler(value = ClientException.class)
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResult resolveException(ClientException ex) {
+        log.error("系统异常:", ex);
+        return ApiResult.error(ApiError.ERROR_1023);
+    }
 
-    /**
-     * 兜底的异常
-     *
-     * @param e
-     * @return
-     */
-//    @Profile(value = {"uat", "prod"})
-//    @ExceptionHandler(Exception.class)
-//    public ApiResult resolveException(Exception e) {
-//        log.error("系统异常：", e);
-//       return ApiResult.error(ApiError.Default);
-//    }
+    @ExceptionHandler(value = HttpMessageNotReadableException.class)
+    public ApiResult resolveException(HttpMessageNotReadableException e) {
+        log.error("系统异常：", e);
+        return ApiResult.error(ApiError.ERROR_600);
+    }
 
+    @ExceptionHandler(value = MappingException.class)
+    public ApiResult resolveException(MappingException e) {
+        log.error("系统异常：", e);
+        return ApiResult.error(ApiError.ERROR_COPY_ERROR);
+    }
 
 }

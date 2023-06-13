@@ -23,6 +23,7 @@
         <module>erp-model-scm</module>
         <module>erp-model-wms</module>
         <module>erp-model-msg</module>
+        <module>erp-model-oms</module>
     </modules>
 
     <dependencies>

@@ -114,7 +114,7 @@ public class WarehouseReceiveController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "receive_user_id",
             menuCode = "wms:warehouseReceive:view",
-            serviceClass = PurchaseReturnOrderService.class,
+            serviceClass = WarehouseReceiveService.class,
             keyIdName = "id")
     public ApiResult<WarehouseReceiveDTO.ViewDTO> view(@RequestParam("id") String id) {
         WarehouseReceiveDTO.ViewDTO dto = warehouseReceiveService.view(id);

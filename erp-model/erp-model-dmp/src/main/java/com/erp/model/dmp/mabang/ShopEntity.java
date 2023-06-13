@@ -27,17 +27,60 @@ public class ShopEntity {
      * ]
      */
     private String id;
+    /**
+     * 平台店铺账号
+     */
     private String accountUsername;
+    /**
+     * 平台店铺标识
+     */
     private String accountStoreName;
+    /**
+     * 店铺名
+     */
     private String name;
+    /**
+     * 店铺站点
+     */
     private String amazonsite;
+    /**
+     * 状态:1启用2停用
+     */
     private Integer status;
+    /**
+     * 店铺tokenid
+     */
     private String datacenter_tokenid;
+    /**
+     * 店长ID
+     */
     private String shopEmployeeId;
+    /**
+     * 财务编码
+     */
     private String financeCode;
+    /**
+     * 平台编号
+     */
     private String platformId;
+    /**
+     * 平台名称
+     */
     private String platformName;
+    /**
+     * 商家编号
+     */
     private String merchantid;
+    /**
+     * 令牌标志
+     */
     private String tokenflag;
+    /**
+     * fba标志
+     */
     private String fbaflag;
+    /**
+     * 清洗数据
+     */
+    private Boolean isClean;
 }

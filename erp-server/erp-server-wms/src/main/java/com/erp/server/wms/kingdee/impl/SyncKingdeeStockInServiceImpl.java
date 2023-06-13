@@ -156,10 +156,12 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             jsonObject.set("supplierName", supplierEntity.getName());
             //交货仓库
             jsonObject.set("deliveryWarehouseName", entity.getDeliveryWarehouseName());
-            //交货仓库
-            jsonObject.set("deliveryWarehouseCode", warehouseEntity.getKingdeeWarehouseCode());
+            if (ObjectUtil.isNotEmpty(warehouseEntity)) {
+                //交货仓库
+                jsonObject.set("deliveryWarehouseCode", warehouseEntity.getKingdeeWarehouseCode());
+            }
             //库位
-            jsonObject.set("warehouseLocationName", detail.getWarehouseLocationName());
+            jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
             //入库备注
             jsonObject.set("remark", detail.getRemark());
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(req -> req.getId().equals(detail.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
@@ -184,7 +186,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_PURCHASE_STOCK_IN_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return poInstockService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "");
+                return poInstockService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "", operate);
             }
             return Boolean.TRUE;
         });

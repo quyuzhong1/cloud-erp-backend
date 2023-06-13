@@ -125,8 +125,8 @@
             <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
                 and po.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.approve_time
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
             </if>
         </where>
         ORDER BY
@@ -238,8 +238,8 @@
                 <if test="params.approveTimeList != null and params.approveTimeList.size > 0">
                     and po.approve_time >= #{params.approveTimeList[0]} and  (#{params.approveTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.approve_time
                 </if>
-                <if test="params.param != null and params.param != ''">
-                    ${params.param}
+                <if test="params.permissionSql != null and params.permissionSql != ''">
+                    ${params.permissionSql}
                 </if>
             </if>
         </where>
@@ -271,8 +271,8 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
             </if>
         </where>
     </select>

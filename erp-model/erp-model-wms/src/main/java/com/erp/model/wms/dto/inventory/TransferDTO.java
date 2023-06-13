@@ -1,10 +1,7 @@
 package com.erp.model.wms.dto.inventory;
 
 import com.common.core.anno.StateEnumValue;
-import com.erp.model.wms.enums.inventory.InventoryModeEnum;
-import com.erp.model.wms.enums.inventory.InventoryOperationModeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
-import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
 
 import javax.validation.constraints.Min;
@@ -15,7 +12,7 @@ import java.time.LocalDate;
 
 /**
  * @Classname: InventoryTransferDTO
- * @Description: 调拨操作请求实体，一个操作会导致2个仓库的库存状态变化适合使用；暂只考虑一个仓只能有一种状态变更
+ * @Description: 调拨操作请求实体，一个操作会导致2个仓库的库存状态变化适合使用；只考虑一个仓只能有一种状态变更
  * @CreateTime: 2023-04-26  14:34
  * @Author: zhangchunlin
  */
@@ -23,46 +20,52 @@ import java.time.LocalDate;
 public class TransferDTO extends InventoryStockBaseDTO implements Serializable {
 
     /**
-     * 提示：远程调用需增加分布式锁 @GlobalTransactional(rollBack=Exception.class)
+     * 单据类型
      */
     @NotNull(message = "单据类型不能为空")
     @StateEnumValue(clazz = InventorySourceTypeEnum.class,message = "单据类型有误")
     private InventorySourceTypeEnum sourceType;
 
+    /**
+     * 单据id
+     */
     @NotEmpty(message = "单据id不能为空")
     private String sourceId;
 
+    /**
+     * 单据编号
+     */
     @NotEmpty(message = "单据编号不能为空")
     private String sourceCode;
 
+    /**
+     * 单据日期
+     */
     @NotNull(message = "单据日期不能为空")
     private LocalDate billDate;
 
     /**
-     * 可能没有单据明细id
+     * 单据明细id
+     * 有的话请务必传输
      */
     private String sourceDetailId;
 
-    @NotEmpty(message = "当前仓库组织不能为空")
-    private String curOrgId;
-
+    /**
+     * 当前仓库
+     */
     @NotEmpty(message = "当前仓库不能为空")
     private String curWarehouseId;
 
     /**
-     * 当前仓库位id（没有不用传输，某些单据不需要选择库位信息）
+     * 当前仓库位id
+     * （有的话请务必传输，没有不用传输，某些单据不需要选择库位信息）
      */
     private String curWarehouseLocation;
 
+
     /**
-     * 配置在规则中表的业务场景不要配置
-     * 需要修改的库存状态（可以不传，默认会从配置中读取；如果指定了则取指定的状态）
+     * 目的仓库
      */
-    private InventoryStatusEnum curInventoryStatus;
-
-    @NotEmpty(message = "目的仓库组织不能为空")
-    private String targetOrgId;
-
     @NotEmpty(message = "目的仓库不能为空")
     private String targetWarehouseId;
 
@@ -72,39 +75,25 @@ public class TransferDTO extends InventoryStockBaseDTO implements Serializable {
     private String targetWarehouseLocation;
 
     /**
-     * 需要修改的库存状态（可以不传）；配置在规则中表的业务场景不要配置
+     * sku id
      */
-    private InventoryStatusEnum targetCurInventoryStatus;
-
     @NotEmpty(message = "sku不能为空")
     private String skuId;
 
+    /**
+     * sku编码
+     */
     @NotEmpty(message = "sku编码不能为空")
     private String skuNo;
 
     /**
-     * 当前仓库存增加或减少（如果指定了库存状态，此字段必填）
-     * 从规则中配置的交易不用配置，特殊情况需要人工指定库存状态的则需要传输，库存增加或减少（如果指定了库存状态，此字段必填）
-     */
-    private InventoryModeEnum curInventoryMode;
-
-    /**
-     * 目的仓库存增加或减少（如果指定了库存状态，此字段必填）
-     * 从规则中配置的交易不用配置，特殊情况需要人工指定库存状态的则需要传输，库存增加或减少（如果指定了库存状态，此字段必填）
-     */
-    private InventoryModeEnum targetInventoryMode;
-
-    /**
+     * 库存交易数量
      * 增加或减少库存都传正数，程序判断正数或负数；当前仓和目的仓操作数量正反相等
      */
     @NotNull(message = "库存变更数量不能为空")
     @Min(value = 1,message = "库存变更数量不能小于1")
     private Integer qty;
 
-    /**
-     * 操作类型；默认为审核，后补单时需赋值，反审核有专门的方法入口
-     */
-    private InventoryOperationModeEnum operationMode =  InventoryOperationModeEnum.APPROVE;
 
 
 }

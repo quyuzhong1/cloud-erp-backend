@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SoReturnReceiveDetailMapper">
+    <select id="listDetailBySourceIds" resultType="com.erp.model.wms.entity.SoReturnReceiveDetailEntity">
+        SELECT
+        srrd.id,
+        srrd.main_id,
+        srrd.sku_id,
+        srrd.sku_no,
+        srrd.return_qty,
+        srrd.receive_qty,
+        srrd.return_type_dict,
+        srrd.return_reason_dict,
+        srrd.remark,
+        srrd.source_detail_id,
+        srr.approve_status
+        FROM so_return_receive_detail srrd
+        INNER JOIN so_return_receive srr ON srrd.main_id = srr.id AND srrd.is_deleted = FALSE
+        WHERE srr.is_deleted = FALSE
+        AND srr.invalid_status = FALSE
+        <if test="ids != null and ids.size != ''">
+            and srr.source_id in
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="listDetailByIds" resultType="com.erp.model.wms.entity.SoReturnReceiveDetailEntity">
+        SELECT
+        srrd.id,
+        srrd.main_id,
+        srrd.sku_id,
+        srrd.sku_no,
+        srrd.return_qty,
+        srrd.receive_qty,
+        srrd.return_type_dict,
+        srrd.return_reason_dict,
+        srrd.remark,
+        srrd.source_detail_id,
+        srr.approve_status
+        FROM so_return_receive_detail srrd
+        INNER JOIN so_return_receive srr ON srrd.main_id = srr.id AND srrd.is_deleted = FALSE
+        WHERE srr.is_deleted = FALSE
+        AND srr.invalid_status = FALSE
+        <if test="ids != null and ids.size != ''">
+            and srrd.id in
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+</mapper>

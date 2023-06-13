@@ -3,6 +3,7 @@ package com.erp.server.msg.reciver;
 import com.alibaba.fastjson.JSONObject;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.server.msg.config.MsgContext;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -27,13 +28,25 @@ public class MsgRocketMQConsumerReceiver {
 
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.NOTICE_MSG_TOPIC,
-            consumerGroup = "${spring.profiles.active}-erp_msg_group")
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-erp_msg_group")
     public class ConsumerNoticeMsg implements RocketMQListener<NoticeMsgInfoDTO> {
         @Override
         public void onMessage(NoticeMsgInfoDTO msgInfoDTO) {
             log.info("监听到消息发送消息通知，请求内容：{}", JSONObject.toJSONString(msgInfoDTO));
             // 此处需注意，如果内部抛异常可能会导致某个渠道发送正常重新发送
             msgContext.routeSend(msgInfoDTO);
+        }
+    }
+
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.WARN_MSG_TOPIC,
+            selectorExpression = "msg_warn_tag",
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-erp_warn_group")
+    public class ConsumerWarnMsg implements RocketMQListener<WarnMsgInfoDTO> {
+        @Override
+        public void onMessage(WarnMsgInfoDTO msgInfoDTO) {
+            log.info("监听到消息发送预警消息通知，请求内容：{}", JSONObject.toJSONString(msgInfoDTO));
+            msgContext.routeSendWarnMsg(msgInfoDTO);
         }
     }
 

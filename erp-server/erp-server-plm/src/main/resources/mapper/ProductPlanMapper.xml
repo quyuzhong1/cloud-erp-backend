@@ -81,8 +81,8 @@
             <if test="params.planListingDateEnd != null ">
                 and pp.plan_listing_date &lt;= #{params.planListingDateEnd}::timestamp
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
             </if>
         </where>
         ORDER BY
@@ -189,8 +189,8 @@
             <if test="params.planListingDateEnd != null ">
                 and pp.plan_listing_date &lt;= #{params.planListingDateEnd}::timestamp
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
             </if>
         </where>
         ORDER BY

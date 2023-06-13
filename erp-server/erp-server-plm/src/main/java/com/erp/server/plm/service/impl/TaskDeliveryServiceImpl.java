@@ -145,7 +145,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     public PagingVO<List<DeliveryDocsDTO>> paging(PagingDTO<BaseSearchDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
-        params.setParam(dto.getParam());
+        params.setPermissionSql(dto.getPermissionSql());
         DocsDTO.DeliveryDocsPowerDTO docsPower = listDeliveryDocs(params.getFlagId());
         IPage pageData = new Page();
         //包含
@@ -586,7 +586,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                 String deliveryDocsId = item.getId();
                 //未设置文档权限可以看所有
                 List<DocsPermissionEntity> permissionList = allPermissionDeliveryDocsList.stream().filter(p -> p.getDeliveryDocsId().equals(deliveryDocsId)).collect(Collectors.toList());
-                    //表示有权限
+                //表示有权限
                 if (CollectionUtils.isNotEmpty(permissionList)) {
                     for (DocsPermissionEntity permission : permissionList) {
                         if (userRoleIds.contains(permission.getQueryRoleId())) {
@@ -596,10 +596,10 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                             findDeliveryDocsIds.add(deliveryDocsId);
                         }
                     }
-                    } else {
-                        //没有设置权限 也应该看到
-                        findDeliveryDocsIds.add(deliveryDocsId);
-                    }
+                } else {
+                    //没有设置权限 也应该看到
+                    findDeliveryDocsIds.add(deliveryDocsId);
+                }
 
             }
 
@@ -662,12 +662,12 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                 //表示有权限
                 if (CollectionUtils.isNotEmpty(permissionList)) {
                     for (DocsPermissionEntity permission : permissionList) {
-                    if (userRoleIds.contains(permission.getQueryRoleId())) {
-                        containDocsPowerList.add(deliveryDocsId);
-                    }
-                    if (StringUtils.isBlank(permission.getQueryRoleId())) {
-                        noContainDocsPowerList.add(deliveryDocsId);
-                    }
+                        if (userRoleIds.contains(permission.getQueryRoleId())) {
+                            containDocsPowerList.add(deliveryDocsId);
+                        }
+                        if (StringUtils.isBlank(permission.getQueryRoleId())) {
+                            noContainDocsPowerList.add(deliveryDocsId);
+                        }
                     }
                 } else{
                     //没有设置权限 也应该看到

@@ -61,7 +61,7 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
             dto.getParams().setEndDate(dto.getParams().getEndDate().plusDays(1));
         }
 
-        IPage<ProjectTaskTimeRecordPageVO> recordPage  = baseMapper.pageTaskTimeRecord(query, dto.getParams(), dto.getParam());
+        IPage<ProjectTaskTimeRecordPageVO> recordPage  = baseMapper.pageTaskTimeRecord(query, dto.getParams(), dto.getPermissionSql());
         // 根据task id查询日期数据进行处理
         List<ProjectTaskTimeRecordPageVO> records = recordPage.getRecords();
         if(CollectionUtil.isEmpty(records)){
@@ -96,7 +96,7 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
 
     @Override
     public Boolean exportTaskTimeList(ProjectTaskTimeRecordDTO.PageRecordDto dto, HttpServletResponse response) {
-        List<ProjectTaskTimeRecordPageVO> projectTaskTimeRecordList  = baseMapper.pageTaskTimeRecord(dto, dto.getParam());
+        List<ProjectTaskTimeRecordPageVO> projectTaskTimeRecordList  = baseMapper.pageTaskTimeRecord(dto, dto.getPermissionSql());
         initPlanWorkTime(projectTaskTimeRecordList);
         String excelPath = "excel/taskTime.xlsx";
         String name = "工时统计";

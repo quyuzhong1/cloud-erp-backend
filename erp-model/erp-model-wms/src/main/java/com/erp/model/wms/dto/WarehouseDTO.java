@@ -143,10 +143,17 @@ public class WarehouseDTO implements Serializable {
 
 
         /**
+         * 组织名称
+         */
+        private String orgName;
+
+        /**
          * disabled
          * true 禁用
          */
         private Boolean disabled;
+
+        private ApproveStatusEnum approveStatus;
     }
 
 

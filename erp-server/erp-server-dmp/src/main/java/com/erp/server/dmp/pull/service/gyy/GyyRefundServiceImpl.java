@@ -6,10 +6,12 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.common.core.utils.date.EnumTimePattern;
-import com.common.message.constant.RocketMqTopic;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.utils.MapUtil;
+import com.common.core.utils.date.EnumTimePattern;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.GyyRefundDTO;
 import com.erp.model.dmp.dto.JobTaskDTO;
@@ -17,15 +19,12 @@ import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import com.erp.model.dmp.entity.DmpRefundItemEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
-import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.gyy.GyyRefundEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
@@ -136,7 +135,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
         entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_REFUND_ORDER_TAG.getName(),
                     msg, StrUtil.format("{}_{}", msg.getRefundCode() + msg.getPlatformOrderId()));
-            if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());

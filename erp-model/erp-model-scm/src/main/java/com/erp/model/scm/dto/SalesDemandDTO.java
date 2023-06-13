@@ -1,15 +1,15 @@
 package com.erp.model.scm.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -236,6 +236,21 @@ public class SalesDemandDTO implements Serializable {
         @Size(max = 255,message = "备货原因不能大于255字符")
         private String remark;
 
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
     }
 
 
@@ -283,6 +298,271 @@ public class SalesDemandDTO implements Serializable {
          * 审核状态
          */
         private String approveStatus;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class GenerateSalesDemandDTO {
+
+        /**
+         * 来源id
+         */
+        @NotBlank(message = "来源id不能为空")
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        @NotBlank(message = "来源编码不能为空")
+        private String sourceCode;
+
+        /**
+         * 来源明细id
+         */
+        @NotBlank(message = "来源明细id不能为空")
+        private String sourceDetailId;
+
+        /**
+         * 来源类型
+         */
+        @NotBlank(message = "来源类型不能为空")
+        @StateEnumValue(clazz = SourceTypeEnum.class, message = "来源类型有误")
+        private String sourceType;
+
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库id不能为空")
+        private String warehouseId;
+
+        /**
+         * skuId
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+
+        /**
+         * sku编号
+         */
+        @NotBlank(message = "sku编号不能为空")
+        private String skuNo;
+
+        /**
+         * 申请日期
+         */
+        @NotNull(message = "申请日期不能为空")
+        private LocalDate applyDate;
+
+        /**
+         * 新品首批不能为空
+         */
+        @NotNull(message = "新品首批不能为空")
+        private Boolean isFirstMassProduct;
+
+        /**
+         * 销售订单数量
+         */
+        @NotNull(message = "销售订单数量不能为空")
+        @Min(value = 1,message = "销售订单数量最小值为1")
+        @Max(value = 99999999,message = "销售订单数量最大值为99999999")
+        private Integer qty;
+
+        /**
+         * 备货数量
+         */
+        @NotNull(message = "备货数量不能为空")
+        @Min(value = 1,message = "备货数量最小值为1")
+        @Max(value = 99999999,message = "备货数量最大值为99999999")
+        private Integer planStockQty;
+
+        /**
+         * 备注
+         */
+        @Size(max = 255,message = "备注不能大于255字符")
+        private String remark;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewGenerateSubcontractOrderDTO {
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 来源编码
+         */
+        private String sourceCode;
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织名称
+         */
+        private String purchaseOrgName;
+
+        /**
+         * 收料组织id
+         */
+        private String receiveOrgId;
+
+        /**
+         * 收料组织名称
+         */
+        private String receiveOrgName;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 可下推数量
+         */
+        private Integer toPushdownQty;
+
+        /**
+         * 采购数量
+         */
+        private Integer qty;
+
+        /**
+         * 领料数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 子集
+         */
+        private List<ViewGenerateSubcontractOrderDTO> childList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class GenerateSubcontractOrderDTO {
+        /**
+         * 来源id
+         */
+        @NotBlank(message = "来源id不能为空")
+        @Size(max = 19,message = "来源id最大长度不能超过19位")
+        private String sourceId;
+        /**
+         * 来源类型
+         */
+        @NotBlank(message = "来源类型不能为空")
+        @StateEnumValue(clazz = SourceTypeEnum.class, message = "单据来源错误")
+        @Size(max = 32,message = "来源类型最大长度不能超过32位")
+        private String sourceType;
+        /**
+         * 来源编码
+         */
+        @NotBlank(message = "来源编码不能为空")
+        @Size(max = 50,message = "来源编码最大长度不能超过50位")
+        private String sourceCode;
+
+        /**
+         * 来源明细id
+         */
+        @NotBlank(message = "来源明细id不能为空")
+        @Size(max = 19,message = "来源id最大长度不能超过19位")
+        private String sourceDetailId;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 收料组织id
+         */
+        private String receiveOrgId;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 供应商id
+         */
+        @NotBlank(message = "供应商不能为空")
+        private String supplierId;
+
+        /**
+         * 采购数量
+         */
+        @NotNull(message = "采购数量不能为空")
+        @Min(value = 1,message = "采购数量最小值为1")
+        @Max(value = 99999999,message = "采购数量最大值为99999999")
+        private Integer qty;
+
+
+        /**
+         * 领料数量
+         */
+        @NotNull(message = "领料数量不能为空")
+        @Min(value = 1,message = "领料数量最小值为1")
+        @Max(value = 99999999,message = "领料数量最大值为99999999")
+        private Integer deliveryQty;
+
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 是否赠品
+         */
+        private Boolean isGift;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 是否自动生成采购订单
+         */
+        private Boolean isGeneratePo;
+
+        /**
+         * 子集
+         */
+        private List<GenerateSubcontractOrderDTO> childList;
     }
 
 }

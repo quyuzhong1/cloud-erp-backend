@@ -453,7 +453,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         BeanMapperUtils.copy(dto, entity);
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
 
         String notRelated = RelatedSkuTypeEnum.NOT_RELATED.getCode();

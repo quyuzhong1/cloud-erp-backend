@@ -100,9 +100,7 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
      */
     @Override
     public void updateAccount(List<SupplierAccountDTO.UpdateDTO> bankAccountList, String supplierId) {
-        if (CollectionUtils.isEmpty(bankAccountList)) {
-            return;
-        }
+
         //这是要添加的
         List<SupplierAccountDTO.UpdateDTO> addList = bankAccountList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
 
@@ -149,7 +147,10 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
             }
         }
 
-        this.saveOrUpdateBatch(saveOrUpdateList);
+        if(CollectionUtils.isNotEmpty(saveOrUpdateList)){
+            this.saveOrUpdateBatch(saveOrUpdateList);
+        }
+
 
     }
 

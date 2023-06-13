@@ -72,8 +72,8 @@
             <if test="params.deliveryTime_end != null ">
                 and doi.delivery_time &lt;= #{params.deliveryTime_end}::timestamp
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
             </if>
         </where>
 
@@ -145,8 +145,8 @@
             <if test="params.deliveryTime_end != null ">
                 and doi.delivery_time &lt;= #{params.deliveryTime_end}::timestamp
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
             </if>
         </where>
     </select>
@@ -200,8 +200,8 @@
             </foreach>
         </if>
         <!--权限-->
-        <if test="params.param!=null and params.param!=''">
-            #{params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            #{params.permissionSql}
         </if>
         GROUP BY doi.${groupName}
     </select>
@@ -282,8 +282,8 @@
             </foreach>
         </if>
         <!--权限-->
-        <if test="params.param!=null and params.param!=''">
-            #{params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            #{params.permissionSql}
         </if>
     </sql>
     <select id="sumSales" resultType="java.math.BigDecimal" parameterType="com.erp.model.bi.dto.BiFilterDTO">

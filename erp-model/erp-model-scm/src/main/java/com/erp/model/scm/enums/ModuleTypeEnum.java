@@ -19,7 +19,24 @@ public enum ModuleTypeEnum {
     WAREHOUSE_RECEIVE("8", "收货单"),
     PURCHASE_RETURN_ORDER("9", "采购退货单"),
     QC_ORDER("10", "质检单"),
-
+    TRANSFER_APPLICATION("11", "调拨申请单"),
+    SO_DELIVERY_NOTICE("12", "发货通知单"),
+    CUSTOMER("14", "客户"),
+    INIT_STOCK("13", "期初库存"),
+    SO_RETURN("15", "销售退货订单"),
+    TRANSFER_INFO("16", "直接调拨单"),
+    SO_RETURN_NOTICE("17", "销售退货通知单"),
+    SO("18", "销售订单"),
+    MACHINE_INFO("19", "加工单"),
+    OTHER_INSTOCK("20", "其他入库单"),
+    SO_RETURN_RECEIVE("21", "销售退货签收单"),
+    SO_OUT_STOCK("22", "销售出库单"),
+    OTHER_OUTSTOCK("23", "其他出库单"),
+    SO_RETURN_INSTOCK("24", "销售退货入库单"),
+    SO_CHANGE("25", "销售变更单"),
+    TRANSFER_OUT("26", "分步式调出单"),
+    TRANSFER_IN("27", "分步式调入单"),
+    SUBCONTRACT_ORDER("28", "委外订单"),
     ;
 
 

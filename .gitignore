@@ -33,7 +33,7 @@ build/
 *.env
 *.log
 *.jar
-*.xml
 erp-common/erp-common-business/mvnw
 erp-common/erp-common-business/mvnw.cmd
 erp-common/erp-common-business/.mvn/
+rebel.xml

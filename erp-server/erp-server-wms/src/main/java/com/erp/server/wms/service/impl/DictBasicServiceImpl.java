@@ -42,7 +42,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
      * @date 2023-03-17 12:21
      */
     @Override
-    public Boolean saveOrUpdateDict(List<DictBasicDTO> list) {
+    public Boolean saveOrUpdateDict(List<DictBasicDTO.ListDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return true;
         }
@@ -66,9 +66,9 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
      * @date 2023-03-17 14:16
      */
     @Override
-    public List<DictBasicDTO> getByKey(String key) {
+    public List<DictBasicDTO.ListDTO> getByKey(String key) {
         List<DictBasicEntity> list = listByKey(key);
-        List<DictBasicDTO> resultList = BeanMapper.copyList(list, DictBasicDTO.class);
+        List<DictBasicDTO.ListDTO> resultList = BeanMapper.copyList(list, DictBasicDTO.ListDTO.class);
         return resultList;
     }
 
@@ -88,6 +88,15 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         }
         List<DictBasicEntity> allList = this.lambdaQuery().in(DictBasicEntity::getType, keyList).list();
         return allList;
+    }
+
+    @Override
+    public List<DictBasicDTO.DropDownDTO> listByType(String type, String remark) {
+        List<DictBasicEntity> list = lambdaQuery().eq(DictBasicEntity::getType, type)
+                .eq("processCondition".equalsIgnoreCase(type), DictBasicEntity::getRemark, remark)
+                .list();
+        List<DictBasicDTO.DropDownDTO> result = list.stream().map(DictBasicDTO.DropDownDTO::new).collect(Collectors.toList());
+        return result;
     }
 
 

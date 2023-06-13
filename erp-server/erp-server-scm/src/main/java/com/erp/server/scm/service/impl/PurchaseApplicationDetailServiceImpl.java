@@ -138,7 +138,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
 
         purchaseOrgIds.addAll(receiveOrgIds);
 
-        List<BaseIdDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(purchaseOrgIds);
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(purchaseOrgIds);
 
         //添加操作日志
         List<PurchaseApplicationDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
@@ -162,11 +162,11 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
             }
 
             //采购组织名称
-            String purchaseOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId())).map(BaseIdDTO::getName).findFirst().orElse(null);
+            String purchaseOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse(null);
             entity.setPurchaseOrgName(purchaseOrgName);
 
             //收料组织名称
-            String receiveOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId())).map(BaseIdDTO::getName).findFirst().orElse(null);
+            String receiveOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse(null);
             entity.setReceiveOrgName(receiveOrgName);
 
             //修改操作日志

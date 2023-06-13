@@ -1,0 +1,178 @@
+package com.erp.server.wms.service;
+
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.SuperService;
+import com.common.business.validator.ValidList;
+import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.PickingDetailDTO;
+import com.erp.model.wms.dto.TransferApplicationDTO;
+import com.erp.model.wms.entity.TransferApplicationEntity;
+
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+
+/**
+ * <p>
+ *  服务类
+ * </p>
+ *
+ * @author lambda
+ * @since 2023-05-10
+ */
+public interface TransferApplicationService extends SuperService<TransferApplicationEntity> {
+    /**
+     * @description: 分页查询
+     * @author Will
+     * @date: 2023/5/10 18:52
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    PagingVO<TransferApplicationDTO.ListDTO> paging(PagingDTO<TransferApplicationDTO.SearchParamDTO> dto);
+    /**
+     * @description: 列表数据查询
+     * @author Will
+     * @date: 2023/5/10 18:52
+     * @param dto
+     * @return List<ListStatusCountDTO>
+     */
+    List<TransferApplicationDTO.ListStatusCountDTO> listCount(PermissionsDTO dto);
+    /**
+     * @description: 新增
+     * @author Will
+     * @date: 2023/5/10 18:55
+     * @param dto 
+     * @return String 
+     */
+    String add(TransferApplicationDTO.AddDTO dto);
+    /**
+     * @description: 新增并提交
+     * @author Will
+     * @date: 2023/5/10 18:55
+     * @param dto 
+     * @return String 
+     */
+    String addAndSubmit(TransferApplicationDTO.AddDTO dto);
+    /**
+     * @description: 修改
+     * @author Will
+     * @date: 2023/5/10 18:55
+     * @param dto 
+     * @return Boolean 
+     */
+    Boolean update(TransferApplicationDTO.UpdateDTO dto);
+    /**
+     * @description: 修改并提交
+     * @author Will
+     * @date: 2023/5/10 18:55
+     * @param dto 
+     * @return Boolean 
+     */
+    Boolean updateAndSubmit(TransferApplicationDTO.UpdateDTO dto);
+    /**
+     * @description: 提交
+     * @author Will
+     * @date: 2023/5/10 18:55
+     * @param ids 
+     * @return Boolean 
+     */
+    Boolean submit(List<String> ids);
+    /**
+     * @description: 查看详情
+     * @author Will
+     * @date: 2023/5/10 18:56
+     * @param id 
+     * @return ViewDTO 
+     */
+    TransferApplicationDTO.ViewDTO view(String id);
+    /**
+     * @description: 删除
+     * @author Will
+     * @date: 2023/5/10 18:56
+     * @param ids
+     * @return Boolean 
+     */
+    Boolean delete(List<String> ids);
+    /**
+     * @description: 作废
+     * @author Will
+     * @date: 2023/5/10 18:56
+     * @param ids
+     * @param remark
+     * @return Boolean
+     */
+    Boolean invalid(List<String> ids, String remark);
+    /**
+     * @description: 审核
+     * @author Will
+     * @date: 2023/5/10 18:56
+     * @param baseApproveParamDTO
+     */
+    void approve(BaseApproveParamDTO baseApproveParamDTO);
+    /**
+     * @description: 反审核
+     * @author Will
+     * @date: 2023/5/10 18:56
+     * @param ids
+     * @return Boolean
+     */
+    Boolean disApprove(List<String> ids);
+    /**
+     * @description: 取消流程
+     * @author Will
+     * @date: 2023/5/10 18:57
+     * @param ids
+     * @return Boolean
+     */
+    Boolean cancelProcess(List<String> ids);
+    /**
+     * @description: 导出
+     * @author Will
+     * @date: 2023/5/10 18:57
+     * @param dto
+     * @param response
+     * @return Boolean
+     */
+    Boolean exportExcel(TransferApplicationDTO.SearchParamDTO dto, HttpServletResponse response);
+    /**
+     * @description: 下推直接调拨单
+     * @author Will
+     * @date: 2023/5/10 18:57
+     * @param ids
+     * @return List<ViewGenerateTransferInfoDTO>
+     */
+    List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferInfo(List<String> ids);
+    /**
+     * @description: 下推分布式调出
+     * @author Will
+     * @date: 2023/5/10 18:57
+     * @param ids
+     * @return List<ViewGenerateTransferInfoDTO>
+     */
+    List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferOut(List<String> ids);
+    /**
+     * @description: 下推直接调拨单保存
+     * @author Will
+     * @date: 2023/5/12 10:53
+     * @param validList
+     * @return Boolean
+     */
+    Boolean generateTransferInfo(ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList);
+    /**
+     * @description: 下推分布式调出单保存
+     * @author Will
+     * @date: 2023/5/15 9:38
+     * @param validList
+     * @return Boolean
+     */
+    Boolean generateTransferOut(ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList);
+    /**
+     * @description: 查询拣货名称
+     * @author Will
+     * @date: 2023/5/16 12:09
+     * @param dto
+     * @return List<ListDTO>
+     */
+    List<PickingDetailDTO.ListDTO> listPickingDetail(PickingDetailDTO.SearchParamDTO dto);
+}

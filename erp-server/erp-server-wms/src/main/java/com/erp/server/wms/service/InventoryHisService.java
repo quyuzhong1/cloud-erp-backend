@@ -19,7 +19,7 @@ public interface InventoryHisService extends SuperService<InventoryHisEntity> {
      * @param billDate
      * @return
      */
-    InventoryHisEntity findByInfoIdAndBillDate(String infoId, LocalDate billDate);
+    InventoryHisEntity findInventory(String infoId, LocalDate billDate);
 
     /**
      * 修改库存历史表数量
@@ -29,5 +29,13 @@ public interface InventoryHisService extends SuperService<InventoryHisEntity> {
      * @return
      */
     int updateQtyById(String id, Integer qty, Integer version);
+
+    /**
+     * 新增或修改库存历史
+     * @param inventoryInfoId
+     * @param billDate
+     * @param qty
+     */
+    void addOrUpdate(String inventoryInfoId, LocalDate billDate, Integer qty);
 
 }

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomSkuDTO;
+import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.mapper.BomRefSkuMapper;
@@ -138,6 +139,16 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
     public List<BomSkuEntity> getByParentSkuId(String parentSkuId) {
         List<BomSkuEntity> list = lambdaQuery().eq(BomSkuEntity::getParentSkuId, parentSkuId).list();
         return list;
+    }
+
+    @Override
+    public List<BomChildrenSkuDTO> listBomChildBySkuIds(List<String> parentSkuIds) {
+        return baseMapper.listBomChildBySkuIds(parentSkuIds);
+    }
+
+    @Override
+    public List<BomInfoEntity> listBomByParentSkuIds(List<String> parentSkuIds) {
+        return baseMapper.listBomByParentSkuIds(parentSkuIds);
     }
 
     /**

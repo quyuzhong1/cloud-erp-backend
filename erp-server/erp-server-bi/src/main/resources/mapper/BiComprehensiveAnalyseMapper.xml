@@ -91,8 +91,8 @@
                 </foreach>
             </if>
             <!--权限-->
-            <if test="params.param!=null and params.param!=''">
-                #{params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                #{params.permissionSql}
             </if>
         GROUP BY sku.sku_no,sku.name_cn
     </select>
@@ -184,8 +184,8 @@
                 </foreach>
             </if>
             <!--权限-->
-            <if test="params.param!=null and params.param!=''">
-                #{params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                #{params.permissionSql}
             </if>
         GROUP BY shop.platform_shop_no,shop."name"
         ORDER BY sales
@@ -279,8 +279,8 @@
             </foreach>
         </if>
         <!--权限-->
-        <if test="params.param!=null and params.param!=''">
-            #{params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            #{params.permissionSql}
         </if>
         GROUP BY date_part('YEAR', doi.platform_create_time),shop.platform_shop_no,shop."name"
         ORDER BY shop."name",date_part('YEAR', doi.platform_create_time)
@@ -375,8 +375,8 @@
                 </foreach>
             </if>
             <!--权限-->
-            <if test="params.param!=null and params.param!=''">
-                #{params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                #{params.permissionSql}
             </if>
 
         GROUP BY sku.parent_category_name
@@ -476,8 +476,8 @@
                 </foreach>
             </if>
             <!--权限-->
-            <if test="params.param!=null and params.param!=''">
-                #{params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                #{params.permissionSql}
             </if>
 
         </where>
@@ -630,8 +630,8 @@
                 </foreach>
             </if>
             <!--权限-->
-            <if test="params.param!=null and params.param!=''">
-                #{params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                #{params.permissionSql}
             </if>
 
         </where>
@@ -749,8 +749,8 @@
             </foreach>
         </if>
         <!--权限-->
-        <if test="params.param!=null and params.param!=''">
-            #{params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            #{params.permissionSql}
         </if>
         GROUP BY dsi.charge_name
     </select>
@@ -867,8 +867,8 @@
                 </foreach>
             </if>
             <!--权限-->
-            <if test="params.param!=null and params.param!=''">
-                #{params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                #{params.permissionSql}
             </if>
 
         </where>
@@ -1063,8 +1063,8 @@
                 </foreach>
             </if>
             <!--权限-->
-            <if test="params.param!=null and params.param!=''">
-                #{params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                #{params.permissionSql}
             </if>
 
         </where>
@@ -1164,8 +1164,8 @@
                 </foreach>
             </if>
             <!--权限-->
-            <if test="params.param!=null and params.param!=''">
-                #{params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                #{params.permissionSql}
             </if>
         GROUP BY date
         ORDER BY date
@@ -1262,8 +1262,8 @@
                 </foreach>
             </if>
             <!--权限-->
-            <if test="params.param!=null and params.param!=''">
-                #{params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                #{params.permissionSql}
             </if>
         GROUP BY date
         ORDER BY date
@@ -1360,8 +1360,8 @@
                 </foreach>
             </if>
             <!--权限-->
-            <if test="params.param!=null and params.param!=''">
-                #{params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                #{params.permissionSql}
             </if>
 
         </where>
@@ -1460,8 +1460,8 @@
                 </foreach>
             </if>
             <!--权限-->
-            <if test="params.param!=null and params.param!=''">
-                #{params.param}
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                #{params.permissionSql}
             </if>
 
         </where>

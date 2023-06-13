@@ -138,7 +138,7 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         boolean flag = this.save(entity);
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
 
         return flag;
@@ -210,7 +210,7 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
         boolean flag = this.updateById(docsNameEntity);
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         String uid = loginUser.getUid();
         String userName =loginUser.getUserName();

@@ -673,7 +673,7 @@ public class PurchaseOrderDTO implements Serializable {
          */
         @NotNull(message = "收货数量不能为空")
         @Min(value = 1, message = "收货数量最小值为1")
-        @Max(value = 99999999, message = "收货数量最大值为99999999")
+        @Max(value = 999999999, message = "收货数量最大值为999999999")
         private Integer receiveQty;
 
         /**
@@ -728,6 +728,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+
+        /**
+         * 交货仓库id
+         */
+        private String deliveryWarehouseId;
 
         /**
          * 交货仓库名称
@@ -801,6 +806,11 @@ public class PurchaseOrderDTO implements Serializable {
          */
         @Size(max = 255, message = "备注最大255个字符")
         private String remark;
+
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
     }
 
     @Data

@@ -57,8 +57,8 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
     /**
      * 当前节点ID
      */
-    @TableField("current_node_id")
-    private String currentNodeId;
+    @TableField("cur_activity_id")
+    private String curActivityId;
 
     /**
      * 流程状态
@@ -101,6 +101,18 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
     @TableField("act_process_definition_id")
     private String actProcessDefinitionId;
 
+    /**
+     * 流程版本
+     */
+    @TableField("process_version")
+    private Integer processVersion;
+
+    /**
+     * 流程名称
+     */
+    @TableField("process_name")
+    private String processName;
+
 
     public static final String PROCESS_INSTANCE_ID = "process_instance_id";
 
@@ -110,7 +122,7 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
 
     public static final String BUSINESS_CODE = "business_code";
 
-    public static final String CURRENT_NODE_ID = "current_node_id";
+    public static final String CUR_ACTIVITY_ID = "cur_activity_id";
 
     public static final String PROCESS_STATUS = "process_status";
 
@@ -126,18 +138,20 @@ public class ProcessManagementEntity extends BaseEntity<ProcessManagementEntity>
 
     public static final String ACT_PROCESS_DEFINITION_ID = "act_process_definition_id";
 
-    public ProcessManagementEntity(String processInstanceId, ProcessManagementDTO.StartDTO dto, String activityId, LocalDateTime startTime, String processDefinitionId, String definitionId) {
-        this.processDefinitionId = processDefinitionId;
+    public ProcessManagementEntity(String processInstanceId, ProcessManagementDTO.StartDTO dto, String activityId, LocalDateTime startTime, ProcessDefinitionEntity processDefinition, String definitionId) {
+        this.processDefinitionId = processDefinition.getId();
         this.processInstanceId = processInstanceId;
         this.businessId = dto.getBusinessId();
         this.businessCode = dto.getBusinessCode();
-        this.currentNodeId = activityId;
+        this.curActivityId = activityId;
         this.startTime = startTime;
         this.processStatus = ProcessStatusEnum.RUNNING;
         this.approveStatus = ApproveStatusEnum.APPROVE_ING;
         this.businessName = dto.getBusinessName();
         this.businessKey = dto.getBusinessKey();
         this.actProcessDefinitionId = definitionId;
+        this.processVersion = processDefinition.getVersion();
+        this.processName = processDefinition.getProcessName();
     }
 
     @Override

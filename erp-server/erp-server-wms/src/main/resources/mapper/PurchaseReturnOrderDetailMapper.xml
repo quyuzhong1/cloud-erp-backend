@@ -15,7 +15,8 @@
             prod.currency,
             prod.remark,
             prod.source_detail_id,
-            prod.purchase_order_detail_id
+            prod.purchase_order_detail_id,
+            prod.warehouse_location
         from
         po_return pro
         inner join po_return_detail prod on pro.id = prod.main_id and prod.is_deleted = false

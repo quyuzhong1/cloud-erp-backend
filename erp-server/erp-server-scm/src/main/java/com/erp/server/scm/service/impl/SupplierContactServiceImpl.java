@@ -104,9 +104,6 @@ public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContact
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateSupplierContact(List<SupplierContactDTO.UpdateDTO> contactList, String supplierId) {
-        if (CollectionUtils.isEmpty(contactList)) {
-            return;
-        }
         List<SupplierContactEntity> saveOrUpdateList = new ArrayList<>(contactList.size());
         //这是修改的
         List<SupplierContactDTO.UpdateDTO> updateList = contactList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
@@ -143,9 +140,11 @@ public class SupplierContactServiceImpl extends SuperServiceImpl<SupplierContact
                 moduleOperateLogService.addModuleOperateLogByObj(old,update, ModuleTypeEnum.SUPPLIER.getCode(),supplierId,"","");
             }
         }
+        if(CollectionUtils.isNotEmpty(saveOrUpdateList)){
+            this.saveOrUpdateBatch(saveOrUpdateList);
+        }
 
 
-        this.saveOrUpdateBatch(saveOrUpdateList);
 
     }
 

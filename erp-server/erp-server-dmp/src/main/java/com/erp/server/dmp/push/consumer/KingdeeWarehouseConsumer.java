@@ -24,9 +24,7 @@ import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -78,9 +76,11 @@ public class KingdeeWarehouseConsumer implements RocketMQListener<Map<String, Ob
         } catch (Exception e) {
 
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
-            //启用、禁用
-            excuteOperation(apiUtils,platformEntity,map,type);
+            Boolean isSuccess = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            if (isSuccess) {
+                //启用、禁用
+                excuteOperation(apiUtils,platformEntity,map,type);
+            }
             return;
         }
 
@@ -99,9 +99,8 @@ public class KingdeeWarehouseConsumer implements RocketMQListener<Map<String, Ob
         }
 
         if (SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode().equals(operate) || SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode().equals(operate)) {
-            String code = (String)map.get("code");
             //启用、禁用
-            kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
+            excuteOperation(apiUtils,platformEntity,map,type);
             return;
         }
 
@@ -117,9 +116,11 @@ public class KingdeeWarehouseConsumer implements RocketMQListener<Map<String, Ob
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
-            //启用、禁用
-            excuteOperation(apiUtils,platformEntity,map,type);
+            Boolean isSuccess = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            if (isSuccess) {
+                //启用、禁用
+                excuteOperation(apiUtils,platformEntity,map,type);
+            }
         }
     }
 
@@ -133,15 +134,31 @@ public class KingdeeWarehouseConsumer implements RocketMQListener<Map<String, Ob
             return;
         }
         String code = (String) map.get("code");
+
+        String syncKingdeeId = (String) map.get("syncKingdeeId");
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FStockId = '%s'", syncKingdeeId));
+        String filterStr = String.join(" and ", queryFilters);
+        //查询子单据id
+        String fieldKeys = "FForbiderId";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 1);
+        if (CollectionUtils.isEmpty(queryList)) {
+            return;
+        }
+        Map<String, Object> queryMap = queryList.get(0);
+        //禁用人
+        String disablerId = (String)queryMap.get("FForbiderId");
+
         String operate = null;
         //启用
-        if (!(Boolean) disabled) {
+        if (!(Boolean) disabled && !StringUtils.equals("0",disablerId)) {
             operate = SyncKingdeeOperateEnum.OPERATE_ENABLE.getCode();
         }
         //禁用
-        if ((Boolean) disabled) {
+        if ((Boolean) disabled && StringUtils.equals("0",disablerId)) {
             operate = SyncKingdeeOperateEnum.OPERATE_DISABLE.getCode();
         }
+
         if (StringUtils.isNotBlank(operate)) {
             kingdeeCommonService.excuteOperation(apiUtils,platformEntity,map,type,code,operate);
         }

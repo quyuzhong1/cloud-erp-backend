@@ -174,8 +174,8 @@
                AND pt.create_time &lt;= #{params.taskSearchDTO.endTime}
             </if>
         </if>
-        <if test="params.param != null and params.param != ''">
-            ${params.param}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
             AND pt.name LIKE concat('%',#{params.searchKeyword},'%')
@@ -422,8 +422,8 @@
             <if test="params.isExecutable != null  and params.isExecutable == 0 ">
                 AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where a.is_deleted = false and b.status in (0,1,2,3,7) and a.task_id = t.id)
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
             </if>
         </where>
 
@@ -452,8 +452,8 @@
         <if test="params.isExecutable != null  and params.isExecutable == 0 ">
             AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where a.is_deleted = false and b.status in (0,1,2,3,7) and a.task_id = t.id)
         </if>
-        <if test="params.param != null and params.param != ''">
-            ${params.param}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
         GROUP BY t.plan_end_time
     </select>
@@ -480,8 +480,8 @@
             <if test="params.isExecutable != null  and params.isExecutable == 0 ">
                 AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where a.is_deleted = false and b.status in (0,1,2,3,7) and a.task_id = t.id)
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
             </if>
         </where>
 
@@ -510,8 +510,8 @@
         <if test="params.isExecutable != null  and params.isExecutable == 0 ">
             AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where a.is_deleted = false and b.status in (0,1,2,3,7) and a.task_id = t.id)
         </if>
-        <if test="params.param != null and params.param != ''">
-            ${params.param}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
         GROUP BY t.plan_end_time
     </select>
@@ -540,8 +540,8 @@
             <if test="params.isExecutable != null  and params.isExecutable == 0 ">
                 AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where a.is_deleted = false and b.status in (0,1,2,3,7) and a.task_id = t.id)
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
             </if>
         </where>
         GROUP BY t.product_id
@@ -569,15 +569,15 @@
         <if test="params.isExecutable != null  and params.isExecutable == 0 ">
             AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where a.is_deleted = false and b.status in (0,1,2,3,7) and a.task_id = t.id)
         </if>
-        <if test="params.param != null and params.param != ''">
-            ${params.param}
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
         GROUP BY t.plan_end_time
     </select>
 
     <select id="listProductTaskBySearchCategory" resultType="com.erp.model.plm.dto.TaskPagingShowDTO">
         SELECT
-        pt.id,
+               pt.id,
                pt.pid,
                pt.phase_id as phaseId,
                pt.phase_name as phaseName,
@@ -589,6 +589,7 @@
                pt.status,
                pt.schedule_status,
                pt.is_fixed as isFixed,
+               pt.schedule_status,
                pt.charge_name as chargeName,
                pt.quote_sys_task_id as quoteSysTaskId,
                pt.product_id as productId,
@@ -684,8 +685,8 @@
                    AND pt.create_time &lt;= #{params.taskSearchDTO.endTime}
                 </if>
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
             </if>
             ORDER BY
             <if test="params.sortList != null and params.sortList.size > 0">
@@ -770,8 +771,8 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="dto.param != '' and dto.param != null">
-                ${dto.param}
+            <if test="dto.permissionSql != '' and dto.permissionSql != null">
+                ${dto.permissionSql }
             </if>
         </where>
         order by t.charge_id desc, t.plan_end_time asc, t.taskId desc
@@ -838,8 +839,8 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="dto.param != '' and dto.param != null">
-                ${dto.param}
+            <if test="dto.permissionSql != '' and dto.permissionSql != null">
+                ${dto.permissionSql }
             </if>
         </where>
         order by t.create_time desc,t.productId asc, t.plan_end_time asc, t.taskId desc
@@ -909,8 +910,8 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="dto.param != '' and dto.param != null">
-                ${dto.param}
+            <if test="dto.permissionSql != '' and dto.permissionSql != null">
+                ${dto.permissionSql }
             </if>
         </where>
         order by t.create_time desc, t.phase_name asc, t.plan_end_time asc, t.taskId desc
@@ -965,8 +966,8 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="dto.param != '' and dto.param != null">
-                ${dto.param}
+            <if test="dto.permissionSql != '' and dto.permissionSql != null">
+                ${dto.permissionSql }
             </if>
         </where>
         order by t.plan_listing_time asc nulls last, t.skuId desc
@@ -1003,8 +1004,8 @@
         is_milepost,
         is_sku_change
         FROM project_task WHERE product_id = #{showDTO.productId} AND is_deleted = FALSE
-        <if test="showDTO.param != null and showDTO.param != ''">
-            ${showDTO.param}
+        <if test="showDTO.permissionSql != null and showDTO.permissionSql != ''">
+            ${showDTO.permissionSql }
         </if>
     </select>
 
@@ -1071,8 +1072,8 @@
                 #{taskId}
             </foreach>
         </if>
-        <if test="dto.param!=null and dto.param!=''">
-            ${dto.param}
+        <if test="dto.permissionSql!=null and dto.permissionSql!=''">
+            ${dto.permissionSql }
         </if>
         ORDER BY
         <if test="dto.sortList != null and dto.sortList.size > 0">

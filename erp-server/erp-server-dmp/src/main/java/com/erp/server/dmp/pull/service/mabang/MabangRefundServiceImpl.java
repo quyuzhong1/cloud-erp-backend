@@ -131,7 +131,7 @@ public class MabangRefundServiceImpl implements IReportSaveService<RefundOrderEn
         entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_REFUND_ORDER_TAG.getName(),
                     msg, StrUtil.format("{}_{}", msg.getRefundCode(), msg.getPlatformOrderId()));
-            if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());

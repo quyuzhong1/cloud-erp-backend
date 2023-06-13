@@ -17,10 +17,157 @@
         <result column="process_definition_id" property="processDefinitionId" />
         <result column="business_id" property="businessId" />
         <result column="business_code" property="businessCode" />
-        <result column="current_node_id" property="currentNodeId" />
         <result column="process_status" property="processStatus" />
         <result column="start_time" property="startTime" />
         <result column="end_time" property="endTime" />
     </resultMap>
+
+    <sql id="Get_Task_Management">
+        SELECT
+        pm.id as managementId,
+        pm.process_instance_id,
+        pm.process_definition_id,
+        pm.business_id,
+        pm.business_code,
+        pm.business_key,
+        pm.process_status,
+        pm.start_time,
+        pm.end_time,
+        pm.business_name,
+        pm.approve_status,
+        pm.act_process_definition_id,
+        ptm.id AS taskManagementId,
+        ptm.cur_activity_id,
+        ptm.task_id,
+        ptm.cur_approve_id,
+        ptm.cur_approve_name,
+        ptm.task_status,
+        ptm.timeout_status,
+        ptm.timeout_warn_time,
+        ptm.timeout_handle_type,
+        ptm.timeout_handle_time,
+        ptm.start_time AS taskStartTime,
+        ptm.approve_time,
+        ptm.approve_id,
+        ptm.approve_name,
+        ptm.remark,
+        ptm.pre_activity_id,
+        ptm.execution_id,
+        ptm.cur_activity_name
+        FROM process_management pm , process_task_management ptm
+        where pm.process_instance_id = ptm.process_instance_id
+    </sql>
+
+    <sql id="List_Process_Management">
+        SELECT
+            ptm.id,
+            pm.process_instance_id,
+            pm.process_definition_id,
+            pm.process_version ,
+            pm.process_status ,
+            pd.process_name ,
+            pm.business_id ,
+            pm.business_code ,
+            pm.business_name ,
+            pm.act_process_definition_id ,
+            ptm.cur_approve_id ,
+            ptm.cur_activity_id,
+            ptm.cur_activity_name,
+            ptm.task_id,
+            ptm.task_status,
+            ptm.cur_approve_name AS cur_approve_name,
+            concat(wm.detail_url,pm.business_id) as detail_url,
+            pm.create_time as create_time
+        FROM process_task_management AS ptm
+                 LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id
+                 LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code
+                 LEFT JOIN process_definition pd on pd.id = pm.process_definition_id
+        where ptm.task_status = 'approveIng'
+          <if test="null != param.processName and param.processName != ''">
+              and pd.process_name ilike concat('%', #{param.processName},'%')
+          </if>
+          <if test="null != param.businessNames and param.businessNames.size() > 0">
+              and pm.business_name in
+              <foreach collection="param.businessNames" item="businessName" open="(" separator="," close=")">
+                  #{businessName}
+              </foreach>
+          </if>
+          <if test="null != param.processVersion">
+              and pm.process_version = #{param.processVersion}
+          </if>
+          <if test="null != param.processStatus and param.processStatus.size() > 0">
+          and pm.process_status in
+            <foreach collection="param.processStatus" item="processStatus" open="(" separator="," close=")">
+                #{processStatus}
+            </foreach>
+          </if>
+
+    </sql>
+
+    <select id="getTaskByBusiness"
+            resultType="com.erp.model.workflow.dto.ProcessManagementDTO$ManagementTaskDTO">
+        <include refid="Get_Task_Management"/>
+        AND approve_status = 'approveIng'
+        AND pm.business_id = #{businessId} AND pm.business_key = #{businessKey} AND ptm.task_status = 'approveIng'
+        <if test="null != userId and userId != ''">
+            AND ptm.cur_approve_id = #{userId}
+        </if>
+        ORDER BY ptm.create_time ASC
+        LIMIT 1
+    </select>
+
+    <select id="listTaskByBusiness"
+            resultType="com.erp.model.workflow.dto.ProcessManagementDTO$ManagementTaskDTO">
+        <include refid="Get_Task_Management"/>
+        AND approve_status = 'approveIng'
+        AND pm.business_id = #{businessId} AND pm.business_key = #{businessKey} AND ptm.task_status = 'approveIng'
+        ORDER BY ptm.create_time ASC
+    </select>
+
+    <select id="listProcessTask"
+            resultType="com.erp.model.workflow.dto.ProcessManagementDTO$ManagementTaskDTO">
+        <include refid="Get_Task_Management"/>
+        <if test="null != timeoutStatus and timeoutStatus == 1">
+            AND ptm.timeout_warn_time &lt;= now()
+        </if>
+        <if test="null != timeoutStatus and timeoutStatus == 2">
+            AND ptm.timeout_handle_time &lt;= now()
+        </if>
+        <if test="null != taskId and taskId != ''">
+            AND ptm.task_id = #{taskId}
+        </if>
+        AND ptm.timeout_status = #{timeoutStatus}
+        AND ptm.task_status = 'approveIng'
+        ORDER BY ptm.create_time ASC
+        LIMIT 200
+    </select>
+
+    <select id="paging" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$PagingResultDTO">
+       <include refid="List_Process_Management"/>
+        order by ptm.create_time desc
+    </select>
+
+    <select id="export" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$PagingResultDTO">
+        <include refid="List_Process_Management"/>
+        <if test="null != param.ids and param.ids.size() > 0">
+            and ptm.id in
+            <foreach collection="param.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        order by ptm.create_time desc
+    </select>
+    <select id="listProcessTaskByIds"
+            resultType="com.erp.model.workflow.dto.ProcessManagementDTO$ManagementTaskDTO">
+        <include refid="Get_Task_Management"/>
+        AND approve_status = 'approveIng'AND ptm.task_status = 'approveIng'
+        <if test="null != ids and ids.size() > 0">
+            and ptm.id in
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        ORDER BY ptm.create_time ASC
+    </select>
 
 </mapper>

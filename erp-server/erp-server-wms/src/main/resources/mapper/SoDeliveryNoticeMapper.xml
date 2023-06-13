@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SoDeliveryNoticeMapper">
+    <select id="paging" resultType="com.erp.model.wms.dto.SoDeliveryNoticeDTO$PagingView">
+        SELECT
+            sdn.id,
+            sdn.source_id,
+            sdnd.source_detail_id,
+            sdn.code,
+            sdn.source_code,
+            sdn.customer_id,
+            sdn.customer_name,
+            sdn.approve_status,
+            sdn.invalid_status,
+            sdn.delivery_status,
+            sdn.warehouse_org_id,
+            sdn.warehouse_org_name,
+            sdnd.sku_id,
+            sdnd.sku_no,
+            sdnd.delivery_qty,
+            sdn.seller_name,
+            sdn.require_date,
+            sdn.plan_delivery_date,
+            sdn.actual_delivery_date,
+            sdn.pack_date,
+            sdn.approve_user_name,
+            sdn.create_user_name,
+            sdn.create_time
+        FROM so_delivery_notice sdn
+        INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
+        WHERE sdnd.is_deleted = FALSE
+        <if test="params.ids != null and params.ids.size != ''">
+            and sdn.id in
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.skuNoList != null and params.skuNoList.size != ''">
+            and sdnd.sku_no in
+            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.customerIdList != null and params.customerIdList.size != ''">
+            and sdn.customer_id in
+            <foreach collection="params.customerIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.code != null and params.code != ''">
+            and sdn.code = #{params.code}
+        </if>
+        <if test="params.sourceCode != null and params.sourceCode != ''">
+            and sdn.source_code = #{params.sourceCode}
+        </if>
+        <if test="params.sellerIdList != null and params.sellerIdList.size != ''">
+            and sdn.seller_id in
+            <foreach collection="params.sellerIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.approveStatusList != null and params.approveStatusList.size != ''">
+            and sdn.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.deliveryStatus != null">
+            and sdn.delivery_status = #{params.deliveryStatus}
+        </if>
+        <if test="params.invalidStatus != null">
+            and sdn.invalid_status = #{params.invalidStatus}
+        </if>
+        <if test="params.requireDateList != null and params.requireDateList.size > 0">
+            and sdn.require_date >= #{params.requireDateList[0]} and  (#{params.requireDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sdn.require_date
+        </if>
+        <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+            and sdn.warehouse_id in
+            <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.createUserIdList != null and params.createUserIdList.size != ''">
+            and sdn.create_user_id in
+            <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.createTimeList != null and params.createTimeList.size > 0">
+            and sdn.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sdn.create_time
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sdn.create_time desc
+    </select>
+
+    <select id="listCount" resultType="java.lang.Integer">
+        select
+        count(distinct sdn.id)
+        FROM so_delivery_notice sdn
+        INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
+        WHERE sdnd.is_deleted = FALSE
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and sdn.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.deliveryStatus != null">
+            and sdn.delivery_status = #{params.deliveryStatus}
+        </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
+    <select id="soDeliveryNoticeExportExcel" resultType="com.erp.model.wms.dto.SoDeliveryNoticeDTO$PagingView">
+        SELECT
+        sdn.id,
+        sdn.source_id,
+        sdnd.source_detail_id,
+        sdn.code,
+        sdn.source_code,
+        sdn.customer_id,
+        sdn.customer_name,
+        sdn.approve_status,
+        sdn.invalid_status,
+        sdn.delivery_status,
+        sdn.warehouse_org_id,
+        sdn.warehouse_org_name,
+        sdnd.sku_id,
+        sdnd.sku_no,
+        sdnd.delivery_qty,
+        sdn.seller_name,
+        sdn.require_date,
+        sdn.plan_delivery_date,
+        sdn.actual_delivery_date,
+        sdn.approve_user_name,
+        sdn.create_user_name,
+        sdn.create_time
+        FROM so_delivery_notice sdn
+        INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
+        WHERE sdnd.is_deleted = FALSE
+        <choose>
+            <when test="params.ids!=null and params.ids.size>0 ">
+                and sdn.id in
+                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </when>
+            <otherwise>
+                <if test="params.skuNoList != null and params.skuNoList.size != ''">
+                    and sdnd.sku_no in
+                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.customerIdList != null and params.customerIdList.size != ''">
+                    and sdn.customer_id in
+                    <foreach collection="params.customerIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.code != null and params.code != ''">
+                    and sdn.code = #{params.code}
+                </if>
+                <if test="params.sourceCode != null and params.sourceCode != ''">
+                    and sdn.source_code = #{params.sourceCode}
+                </if>
+                <if test="params.sellerIdList != null and params.sellerIdList.size != ''">
+                    and sdn.seller_id in
+                    <foreach collection="params.sellerIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.approveStatusList != null and params.approveStatusList.size != ''">
+                    and sdn.approve_status in
+                    <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.deliveryStatus != null">
+                    and sdn.delivery_status = #{params.deliveryStatus}
+                </if>
+                <if test="params.invalidStatus != null">
+                    and sdn.invalid_status = #{params.invalidStatus}
+                </if>
+                <if test="params.requireDateList != null and params.requireDateList.size > 0">
+                    and sdn.require_data >= #{params.requireDateList[0]} and  (#{params.requireDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sdn.require_data
+                </if>
+                <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+                    and sdn.warehouse_id in
+                    <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.createUserIdList != null and params.createUserIdList.size != ''">
+                    and sdn.create_user_id in
+                    <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.createTimeList != null and params.createTimeList.size > 0">
+                    and sdn.create_time >= #{params.createTimeList[0]} and  (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > sdn.create_time
+                </if>
+            </otherwise>
+        </choose>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sdn.create_time desc
+    </select>
+
+    <select id="listGenerateSoOutstockView" resultType="com.erp.model.wms.dto.SoOutstockDTO$GenerateSoOutstockViewDTO">
+      SELECT
+        sdn.id AS sourceId,
+        sdn.source_id AS soId,
+        sdn.code AS sourceCode,
+        sdn.warehouse_org_id,
+        sdn.warehouse_org_name,
+        sdn.plan_delivery_date,
+        sdn.carrier_id,
+        sdn.track_no,
+        sdn.warehouse_id,
+        sdn.warehouse_name,
+        sdn.type AS orderType,
+        sdnd.id AS sourceDetailId,
+        sdnd.sku_id,
+        sdnd.is_close,
+        sdnd.sku_no,
+        pd.qty,
+        pd.warehouse_location
+      FROM so_delivery_notice  sdn
+      INNER JOIN so_delivery_notice_detail sdnd
+      ON  sdn.id=sdnd.main_id AND  sdnd.is_deleted=FALSE
+      INNER JOIN picking_detail pd
+      ON  pd.source_detail_id=sdnd.id AND  pd.is_deleted=FALSE AND pd.source_type=#{sourceType}
+     WHERE sdn.is_deleted=FALSE
+      <if test="idList !=null and idList.size>0">
+          and sdn.id in
+          <foreach collection="idList" item="id" open="(" close=")" separator=",">
+              #{id}
+          </foreach>
+      </if>
+    </select>
+
+    <select id="listSoReturnDetailBySourceId" resultType="com.erp.model.wms.dto.SoDeliveryNoticeDTO$PagingView">
+        SELECT
+            sdn.id,
+            sdn.source_id,
+            sdnd.source_detail_id,
+            sdn.code,
+            sdn.source_code,
+            sdn.customer_id,
+            sdn.customer_name,
+            sdn.approve_status,
+            sdn.invalid_status,
+            sdn.delivery_status,
+            sdnd.sku_id,
+            sdnd.sku_no,
+            sdnd.delivery_qty,
+            sdn.seller_name,
+            sdn.require_date,
+            sdn.plan_delivery_date,
+            sdn.actual_delivery_date,
+            sdn.approve_user_name,
+            sdn.create_user_name,
+            sdn.warehouse_org_id,
+            sdn.warehouse_org_name,
+            sdn.create_time
+        FROM so_delivery_notice sdn
+        INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
+        WHERE sdnd.is_deleted = FALSE
+        <if test="sourceId !='' and sourceId != null">
+            AND sdn.source_id = #{sourceId}
+        </if>
+        ORDER BY sdn.create_time DESC
+    </select>
+
+</mapper>

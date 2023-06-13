@@ -52,7 +52,7 @@ public class SalesDemandDetailDTO implements Serializable {
          * 单箱数量
          */
         @Min(value = 0,message = "计划备货数量最小值为0")
-        @Max(value = 99999999,message = "计划备货数量最大值为99999999")
+        @Max(value = 999999999,message = "计划备货数量最大值为999999999")
         private Integer unitQty;
 
         /**
@@ -70,7 +70,7 @@ public class SalesDemandDetailDTO implements Serializable {
          */
         @NotNull(message = "计划备货数量不能为空")
         @Min(value = 1,message = "计划备货数量最小值为1")
-        @Max(value = 99999999,message = "计划备货数量最大值为99999999")
+        @Max(value = 999999999,message = "计划备货数量最大值为999999999")
         private Integer planStockQty;
 
         /**
@@ -89,6 +89,11 @@ public class SalesDemandDetailDTO implements Serializable {
          */
         @Size(max = 255,message = "备注不能大于255字符")
         private String remark;
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
 
     }
 

@@ -42,15 +42,15 @@ public class EnumsUtil {
      * 获取value返回枚举对象
      * @param value
      * @param clazz */
-    public static <T extends EnumMessage>  T getEnumObject(Integer value, Class<?> clazz){
+    public static <T extends EnumMessage>  T getEnumObject(Object value, Class<?> clazz){
         try {
             initialSingleEnumMap(clazz);
         } catch (Exception e){
             throw new ServiceException(ApiError.ERROR_9028);
         }
-        T retobj= (T)SINGLE_ENUM_MAP.get(value);
+        T  retobj = (T)SINGLE_ENUM_MAP.get(String.valueOf(value));
         if (ObjectUtils.isEmpty(retobj)) {
-            retobj= (T)SINGLE_ENUM_MAP.get(String.valueOf(value));
+            retobj = (T) SINGLE_ENUM_MAP.get(Integer.parseInt(String.valueOf(value)));
         }
 
         return retobj;

@@ -4,12 +4,14 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.enums.ErpServerModuleEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.server.msg.config.MsgContext;
 import lombok.extern.slf4j.Slf4j;
@@ -76,12 +78,48 @@ public class TestController extends BaseController {
         //noticeMsgInfoDTO.setSendChannels(CollUtil.newArrayList(MessageChannelEnum.FEISHU));
         noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.SCM_TASK);
         // 默认tag请指定为msg_notice_default_tag，可以根据不同业务自行指定
+        /*
         String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
                 noticeMsgInfoDTO, IdUtil.simpleUUID());
-        if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
+         */
+        SendResult sendResult = mqProducerService.sendNoticeMsg(noticeMsgInfoDTO, null);
+        return success();
+    }
+
+
+    /**
+     * 发送预警消息
+     */
+    @RequestMapping("/sendWarnMsg")
+    public ApiResult sendWarnMsg() {
+        WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
+        warnMsgInfoDTO.setTitle("销售出库单推送金蝶异常");
+        warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
+        warnMsgInfoDTO.setBizName("销售出库单推送金蝶");
+        warnMsgInfoDTO.setTableName("so_outstock");
+        warnMsgInfoDTO.setTableId("1661275939021000706");
+        warnMsgInfoDTO.setKeyInfo("单据编号: SO001002003");
+        msgContext.routeSendWarnMsg(warnMsgInfoDTO);
+        return success();
+    }
+
+    /**
+     * 发送预警消息MQ
+     */
+    @RequestMapping("/sendWarnMsgMQ")
+    public ApiResult sendWarnMsgMQ() {
+        WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
+        warnMsgInfoDTO.setTitle("销售出库单推送金蝶异常");
+        warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
+        warnMsgInfoDTO.setBizName("销售出库单推送金蝶");
+        warnMsgInfoDTO.setTableName("so_outstock");
+        warnMsgInfoDTO.setTableId("1661275939021000706");
+        warnMsgInfoDTO.setKeyInfo("单据编号: SO001002003");
+        mqProducerService.sendWarnMsg(warnMsgInfoDTO);
         return success();
     }
 
@@ -101,7 +139,7 @@ public class TestController extends BaseController {
         String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
                 noticeMsgInfoDTO, IdUtil.simpleUUID());
-        if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
         return success();

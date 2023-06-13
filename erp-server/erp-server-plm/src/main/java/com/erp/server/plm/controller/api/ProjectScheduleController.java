@@ -21,6 +21,7 @@ import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
@@ -169,6 +170,21 @@ public class ProjectScheduleController extends BaseController {
         ProjectTaskPlanAutoVO resultVO = projectPlanService.autoSchedule(dto);
         return success(resultVO);
     }
+
+    /**
+     * 导入project文件
+     * @author Will
+     * @date: 2023/6/2 9:13
+     * @param excelFile
+     * @param productId
+     * @return ApiResult
+     */
+    @PostMapping(value = "/importProjectSchedule")
+    public ApiResult importProjectSchedule(@RequestParam("excelFile") MultipartFile excelFile, @RequestParam(value = "productId") String  productId) {
+        Boolean flag = projectPlanService.importProjectSchedule(excelFile,productId);
+        return flag == true ? success() : failure();
+    }
+
 
 }
 

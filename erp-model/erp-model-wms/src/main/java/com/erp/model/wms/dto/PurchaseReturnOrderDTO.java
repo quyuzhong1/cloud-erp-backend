@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -49,6 +50,11 @@ public class PurchaseReturnOrderDTO {
          */
         @NotBlank(message = "退货仓库不能为空")
         private String returnWarehouseId;
+
+        /**
+         * 退货仓库库位
+         */
+        private String warehouseLocation;
 
         /**
          * 退货来源
@@ -482,8 +488,12 @@ public class PurchaseReturnOrderDTO {
          * 备注
          */
         private String remark;
-    }
 
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+    }
 
     /**
      * 分页参数
@@ -799,7 +809,7 @@ public class PurchaseReturnOrderDTO {
         /**
          * 库位名称
          */
-        private String warehouseLocationName;
+        private String warehouseLocation;
 
         /**
          * 币种符号

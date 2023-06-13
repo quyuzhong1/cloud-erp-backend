@@ -14,6 +14,7 @@
     <properties>
         <alibaba.druid.verison>1.2.15</alibaba.druid.verison>
         <seata.version>1.5.2</seata.version>
+        <xxl-job.version>2.3.0</xxl-job.version>
     </properties>
     <modules>
         <module>erp-server-auth</module>
@@ -26,6 +27,7 @@
         <module>erp-server-scm</module>
         <module>erp-server-wms</module>
         <module>erp-server-msg</module>
+        <module>erp-server-oms</module>
     </modules>
     <dependencies>
         <dependency>
@@ -40,26 +42,26 @@
             <optional>true</optional>
         </dependency>
         <!--seata-->
-<!--        <dependency>-->
-<!--            <groupId>com.alibaba.cloud</groupId>-->
-<!--            <artifactId>spring-cloud-starter-alibaba-seata</artifactId>-->
-<!--            <version>2021.1</version>-->
-<!--            <exclusions>-->
-<!--                <exclusion>-->
-<!--                    <artifactId>seata-all</artifactId>-->
-<!--                    <groupId>io.seata</groupId>-->
-<!--                </exclusion>-->
-<!--                <exclusion>-->
-<!--                    <groupId>io.seata</groupId>-->
-<!--                    <artifactId>seata-spring-boot-starter</artifactId>-->
-<!--                </exclusion>-->
-<!--            </exclusions>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>io.seata</groupId>-->
-<!--            <artifactId>seata-spring-boot-starter</artifactId>-->
-<!--            <version>${seata.version}</version>-->
-<!--        </dependency>-->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-seata</artifactId>
+            <version>2021.1</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>seata-all</artifactId>
+                    <groupId>io.seata</groupId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.seata</groupId>
+                    <artifactId>seata-spring-boot-starter</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>io.seata</groupId>
+            <artifactId>seata-spring-boot-starter</artifactId>
+            <version>${seata.version}</version>
+        </dependency>
     </dependencies>
 
 </project>

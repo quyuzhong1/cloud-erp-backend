@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
@@ -237,5 +238,14 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @author Will
      * @date: 2023/4/25 18:48
      */
-    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId);
+    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId,String syncOperate);
+
+    /**
+     * 根据供应商类型 获取对应供应商
+     * @author yl
+     * @date 2023-05-23 16:31
+     * @param categoryType
+     * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
+     */
+    List<BaseIdDTO> listSupplierByCategoryType(String categoryType);
 }

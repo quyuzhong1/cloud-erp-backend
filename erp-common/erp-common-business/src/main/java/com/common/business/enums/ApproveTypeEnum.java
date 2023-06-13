@@ -16,11 +16,8 @@ public enum ApproveTypeEnum {
 
     PASS("pass", "审核通过"),
     REJECT("reject", "审核不通过"),
+
     REJECT_PREVIOUS("reject_previous", "驳回上个节点"),
-    /**
-     * 驳回发起人
-     */
-    REJECT_START("reject_start", "驳回发起人"),
     /**
      * 驳回指定节点
      */

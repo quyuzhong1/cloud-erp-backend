@@ -125,7 +125,7 @@ public class ImlStockServiceImpl implements IReportSaveService {
         entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.IML_STOCK_INBOUND_ORDER_TAG.getName(),
                     msg, msg.getReceivingCode());
-            if (!SendStatus.SEND_OK .equals(result.getSendStatus())){
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());

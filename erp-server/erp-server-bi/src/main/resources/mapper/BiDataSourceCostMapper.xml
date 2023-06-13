@@ -21,8 +21,8 @@
             <if test="params.shopName != null and params.shopName != ''">
                 and bdsc.shop_name like concat('%',#{params.shopName},'%')
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
             </if>
         </where>
         order by bdsc.month,bdsc.id
@@ -46,8 +46,8 @@
             <if test="params.shopName != null and params.shopName != ''">
                 and bdsc.shop_name like concat('%',#{params.shopName},'%')
             </if>
-            <if test="params.param != null and params.param != ''">
-                ${params.param}
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
             </if>
         </where>
     </select>
@@ -107,8 +107,8 @@
             </foreach>
         </if>
         <!--权限-->
-        <if test="params.param!=null and params.param!=''">
-            #{params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            #{params.permissionSql}
         </if>
         GROUP BY bdsc.${groupName},cost_type
     </select>
@@ -174,8 +174,8 @@
             </foreach>
         </if>
         <!--权限-->
-        <if test="params.param!=null and params.param!=''">
-            #{params.param}
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            #{params.permissionSql}
         </if>
         GROUP BY bdsc.month,cost_type
     </select>

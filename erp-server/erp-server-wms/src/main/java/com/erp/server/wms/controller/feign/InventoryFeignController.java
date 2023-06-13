@@ -1,16 +1,16 @@
 package com.erp.server.wms.controller.feign;
 
 import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.inventory.InventoryInStockOrOutStockDTO;
-import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
-import com.erp.model.wms.dto.inventory.InventoryTransferRuleDTO;
-import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.dto.inventory.*;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.InventoryTransCoreService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+import java.util.List;
 
 /**
  * @Classname: InventoryFeignController
@@ -30,61 +30,57 @@ public class InventoryFeignController extends BaseController {
 
     /**
      * 出入库业务，按业务类型
+     *
      * @param dto
      */
     @PostMapping("/approveInOutStockByType")
-    public ApiResult<Void> approveInOutStockByType(@RequestBody @Validated InventoryInStockOrOutStockDTO dto) {
-        inventoryTransCoreService.approveInOutStockByType(dto);
-        return success();
+    public void approveInOutStockByType(@RequestBody @Validated InventoryInOutStockDTO dto) {
+        inventoryTransCoreService.approveByType(dto);
     }
 
     /**
      * 调拨业务，按业务类型
+     *
      * @param dto
      */
     @PostMapping("/approveTransferByType")
-    public ApiResult<Void> approveTransferByType(@RequestBody @Validated InventoryTransferDTO dto) {
-        inventoryTransCoreService.approveTransferByType(dto);
-        return success();
+    public void approveTransferByType(@RequestBody @Validated InventoryTransferDTO dto) {
+        inventoryTransCoreService.approveByType(dto);
     }
 
     /**
      * 调拨业务，自定义规则
+     *
      * @param dto
      */
     @PostMapping("/approveByRule")
-    public ApiResult<Void> approveByRule(@RequestBody @Validated InventoryTransferRuleDTO dto) {
+    public void approveByRule(@RequestBody @Validated InventoryTransferRuleDTO dto) {
         inventoryTransCoreService.approveByRule(dto);
-        return success();
+    }
+
+    /**
+     * 出入库业务，自定义规则
+     *
+     * @param dto
+     */
+    @PostMapping("/approveInOutStockByRule")
+    public void approveInOutStockByRule(@RequestBody @Validated InventoryInOutStockRuleDTO dto) {
+        inventoryTransCoreService.approveByRule(dto);
     }
 
     /**
      * 反审核
+     *
      * @param dto
      */
     @PostMapping("/unApprove")
-    public ApiResult<Void> unApprove(@RequestBody @Validated InventoryUnApproveDTO dto) {
+    public void unApprove(@RequestBody @Validated InventoryUnApproveDTO dto) {
         inventoryTransCoreService.unApprove(dto);
-        return success();
-    }
-
-
-    /**
-     * 根据组织、仓库、库位、状态获取可用库存数量；如果库位为空，则不判断库位
-     * @param orgId
-     * @param warehouseId
-     * @param skuId
-     * @param warehouseLocationId
-     * @return
-     */
-    @PostMapping("/getUsableInventoryTotal")
-    public ApiResult<Integer> getUsableInventoryTotal(@RequestParam(value = "orgId") String orgId, @RequestParam(value = "warehouseId") String warehouseId,
-                                           @RequestParam(value = "skuId") String skuId,@RequestParam(value = "warehouseLocationId", required = false)  String warehouseLocationId) {
-        return success(inventoryService.getUsableInventoryTotal(orgId, warehouseId, skuId, warehouseLocationId));
     }
 
     /**
-     * 根据组织、仓库、库位、状态获取库存数量；如果库位为空，则不判断库位
+     * 根据组织、仓库、库位、状态获取库存数量；特别注意：如果库位没传或者为空，则库位字段会赋值为空查询
+     *
      * @param orgId
      * @param warehouseId
      * @param skuId
@@ -92,10 +88,44 @@ public class InventoryFeignController extends BaseController {
      * @return
      */
     @PostMapping("/getInventoryTotal")
-    public ApiResult<Integer> getInventoryTotal(@RequestParam(value = "orgId") String orgId, @RequestParam(value = "warehouseId") String warehouseId,
-                                     @RequestParam(value = "skuId") String skuId,@RequestParam(value = "warehouseLocationId", required = false)  String warehouseLocationId,
+    public Integer getInventoryTotal(@RequestParam(value = "orgId") String orgId, @RequestParam(value = "warehouseId") String warehouseId,
+                                     @RequestParam(value = "skuId") String skuId, @RequestParam(value = "warehouseLocationId", required = false) String warehouseLocationId,
                                      @RequestParam(value = "status") String status) {
-        return success(inventoryService.getInventoryTotal(orgId, warehouseId, skuId, warehouseLocationId, status));
+        return inventoryService.getInventoryTotal(orgId, warehouseId, skuId, warehouseLocationId, status);
     }
+
+
+    /**
+     * 批量反审核
+     *
+     * @param dto
+     */
+    @PostMapping("/batchUnApprove")
+    public void batchUnApprove(@RequestBody @Validated InventoryBatchUnApproveDTO dto) {
+        inventoryTransCoreService.batchUnApprove(dto);
+    }
+
+
+    /**
+     * 获取sku 的即时库存（调用方传入状态）；特别注意：如果库位没传或者为空，则库位字段会赋值为空查询
+     *
+     * @param dto
+     * @return void
+     * @author yl
+     * @date 2023-05-16 17:20
+     */
+    @PostMapping("/listSkuInventory")
+    public List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventory(@RequestBody @Valid InventoryQtyDTO.FindSkuInventoryParamDTO dto) {
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> resultList = inventoryService.listSkuInventory(dto.getSkuIds(), dto.getWarehouseId(), dto.getWarehouseLocationId(), dto.getInventoryStatus());
+        return resultList;
+    }
+
+
+    @PostMapping("/listSkuInventoryByParam")
+    public List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventoryByParam(@RequestBody @Valid InventoryQtyDTO.SkuInventoryParamDTO dto) {
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> resultList = inventoryService.listSkuInventory(dto);
+        return resultList;
+    }
+
 
 }

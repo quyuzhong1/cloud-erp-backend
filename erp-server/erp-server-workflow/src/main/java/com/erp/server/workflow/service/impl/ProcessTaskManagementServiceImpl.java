@@ -2,21 +2,30 @@ package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.enums.NoticeTypeEnum;
+import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
+import com.erp.model.workflow.enums.TimeoutStatusEnum;
 import com.erp.server.workflow.mapper.ProcessTaskManagementMapper;
+import com.erp.server.workflow.service.ProcessTaskCcService;
 import com.erp.server.workflow.service.ProcessTaskManagementService;
 import com.common.business.service.SuperServiceImpl;
+import org.apache.rocketmq.client.producer.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -30,23 +39,53 @@ import java.util.stream.Collectors;
 @Service
 public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTaskManagementMapper, ProcessTaskManagementEntity> implements ProcessTaskManagementService {
 
+    @Resource
+    private ProcessTaskCcService processTaskCcService;
+    @Resource
+    private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
+
     @Override
-    public Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String comment) {
+    public Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String comment, String activityId, ProcessManagementEntity managementEntity) {
         ProcessTaskManagementEntity entity = getById(taskId);
-        // 更新任务审批状态
-        boolean update = lambdaUpdate()
-                .set(ProcessTaskManagementEntity::getTaskStatus, ApproveTypeEnum.PASS.equals(approveType) ? ApproveStatusEnum.APPROVE : ApproveStatusEnum.REJECT)
-                .set(ProcessTaskManagementEntity::getApproveTime, LocalDateTime.now())
-                .set(StrUtil.isNotBlank(comment), ProcessTaskManagementEntity::getRemark, comment)
-                .set(ProcessTaskManagementEntity::getApproveId, entity.getCurrentApproveId())
-                .eq(ProcessTaskManagementEntity::getExecutionId, entity.getExecutionId())
-                .eq(ProcessTaskManagementEntity::getTaskId, entity.getTaskId())
-                .eq(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE_ING)
-                .eq(ProcessTaskManagementEntity::getCurrentActivityId, entity.getCurrentActivityId())
-                .update();
+        boolean update;
+        if(ApproveTypeEnum.REJECT_APPOINT.equals(approveType)) {
+            // 驳回到指定节点
+            update = lambdaUpdate()
+                    .set(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.REJECT)
+                    .set(ProcessTaskManagementEntity::getApproveTime, LocalDateTime.now())
+                    .set(StrUtil.isNotBlank(comment), ProcessTaskManagementEntity::getRemark, comment)
+                    .set(ProcessTaskManagementEntity::getApproveId, entity.getCurApproveId())
+                    .set(ProcessTaskManagementEntity::getApproveName, entity.getCurApproveName())
+                    .eq(ProcessTaskManagementEntity::getProcessInstanceId, entity.getProcessInstanceId())
+                    .ne(ProcessTaskManagementEntity::getCurActivityId, activityId)
+                    .update();
+        }else {
+            // 更新任务审批状态
+            update = lambdaUpdate()
+                    .set(ProcessTaskManagementEntity::getTaskStatus, ApproveTypeEnum.PASS.equals(approveType) ? ApproveStatusEnum.APPROVE : ApproveStatusEnum.REJECT)
+                    .set(ProcessTaskManagementEntity::getApproveTime, LocalDateTime.now())
+                    .set(StrUtil.isNotBlank(comment), ProcessTaskManagementEntity::getRemark, comment)
+                    .set(ProcessTaskManagementEntity::getApproveId, entity.getCurApproveId())
+                    .set(ProcessTaskManagementEntity::getApproveName, entity.getCurApproveName())
+                    .eq(ProcessTaskManagementEntity::getExecutionId, entity.getExecutionId())
+                    .eq(ProcessTaskManagementEntity::getTaskId, entity.getTaskId())
+                    .eq(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE_ING)
+                    .eq(ProcessTaskManagementEntity::getCurActivityId, entity.getCurActivityId())
+                    .update();
+        }
         if (!update) {
             throw new RuntimeException("更新任务审批状态失败");
         }
+        // 发送抄送消息
+        NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
+        noticeMsgInfoDTO.setReceiverUserIds(new ArrayList<>(Arrays.asList("1645710077245652993")));
+        noticeMsgInfoDTO.setTitle(StrUtil.format("【流程管理中心】审批结果抄送"));
+        noticeMsgInfoDTO.setContent(StrUtil.format("**单据名称: **{}\n **审批人：** {} \n 审批结果：{}！", managementEntity.getProcessName(), entity.getCurApproveName(), approveType.getName()));
+        noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.FLW_TASK);
+        // 默认tag请指定为msg_notice_default_tag，可以根据不同业务自行指定
+        SendResult sendResult = mqProducerService.sendNoticeMsg(noticeMsgInfoDTO, Boolean.TRUE);
+        // 审批完成后发送抄送消息更新抄送状态
+        processTaskCcService.updateCcStatus(entity.getProcessInstanceId(), entity.getTaskId(), entity.getId());
         return Boolean.TRUE;
     }
 
@@ -61,28 +100,82 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
         if(CollectionUtil.isEmpty(list)){
             return new LinkedHashMap<>();
         }
-        LinkedHashMap<String, List<ProcessTaskManagementEntity>> nodeMap = list.stream()
-                .collect(Collectors.groupingBy(ProcessTaskManagementEntity::getCurrentActivityId, LinkedHashMap::new, Collectors.toList()));
-        return nodeMap;
+        return list.stream()
+                .collect(Collectors.groupingBy(ProcessTaskManagementEntity::getCurActivityId, LinkedHashMap::new, Collectors.toList()));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void saveProcessTask(ProcessTaskManagementEntity insertTask) {
+    public ProcessTaskManagementEntity saveProcessTask(ProcessTaskManagementEntity insertTask) {
         // 赋值上级节点id
         ProcessTaskManagementEntity entity = lambdaQuery()
                 .eq(ProcessTaskManagementEntity::getProcessInstanceId, insertTask.getProcessInstanceId())
                 .eq(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE)
-                .ne(ProcessTaskManagementEntity::getCurrentActivityId, insertTask.getCurrentActivityId())
+                .ne(ProcessTaskManagementEntity::getCurActivityId, insertTask.getCurActivityId())
                 .orderByDesc(ProcessTaskManagementEntity::getCreateTime)
                 .last("limit 1")
                 .one();
         if(null != entity){
-            insertTask.setPreActivityId(entity.getCurrentActivityId());
+            insertTask.setPreActivityId(entity.getCurActivityId());
         }
         boolean save = save(insertTask);
         if (!save) {
             throw new RuntimeException("保存流程任务失败");
+        }
+        return insertTask;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateTransfer(String taskId, String targetUserId, String targetUserName, String sourceUserId, String remark) {
+        List<ProcessTaskManagementEntity> entityList = lambdaQuery()
+                .eq(ProcessTaskManagementEntity::getTaskId, taskId)
+                .eq(StrUtil.isNotBlank(sourceUserId), ProcessTaskManagementEntity::getCurApproveId, sourceUserId)
+                .eq(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE_ING)
+                .list();
+        if(CollectionUtil.isEmpty(entityList)){
+            throw new ServiceException(ApiError.ERROR_TASK_AUDIT_STATUS);
+        }
+        // 关闭原有记录
+        for (ProcessTaskManagementEntity entity : entityList) {
+            boolean update = lambdaUpdate()
+                    .set(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE)
+                    .set(ProcessTaskManagementEntity::getApproveTime, LocalDateTime.now())
+                    .set(ProcessTaskManagementEntity::getApproveId, entity.getCurApproveId())
+                    .set(ProcessTaskManagementEntity::getRemark, StrUtil.format("【{}】已将任务转移给【{}】办理，备注：{}", entity.getCurApproveName(), targetUserName, remark))
+                    .eq(ProcessTaskManagementEntity::getId, entity.getId())
+                    .update();
+        }
+        // 新增审批记录
+        ProcessTaskManagementEntity insertEntity = ProcessTaskManagementEntity.getByEntity(entityList.get(0), targetUserId, targetUserName);
+        boolean save = save(insertEntity);
+        if (!save) {
+            throw new RuntimeException(" updateTransfer 任务转办 保存流程任务失败");
+        }
+        // 转移抄送关联数据
+        processTaskCcService.updateCcTransfer(entityList, insertEntity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void removeByProcessInstanceId(String processInstanceId) {
+        boolean remove = lambdaUpdate()
+                .eq(ProcessTaskManagementEntity::getProcessInstanceId, processInstanceId)
+                .remove();
+        if (!remove) {
+            throw new RuntimeException("删除流程任务失败");
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateTimeoutStatus(List<String> taskManagementIds, TimeoutStatusEnum timeoutStatusEnum) {
+        boolean update = lambdaUpdate()
+                .set(ProcessTaskManagementEntity::getTimeoutStatus, timeoutStatusEnum)
+                .in(ProcessTaskManagementEntity::getId, taskManagementIds)
+                .update();
+        if (!update) {
+            throw new RuntimeException("更新任务超时状态失败");
         }
     }
 }

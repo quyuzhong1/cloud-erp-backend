@@ -7,6 +7,9 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.*;
+import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.vo.*;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -107,6 +110,12 @@ public interface SysUserFeign {
     FindUserDTO getUserByUserName(@RequestBody String userName);
 
     /**
+     *  根据用户名称集合查询用户
+     */
+    @GetMapping("feign/user/listUserByUserNames")
+    List<FindUserDTO> listUserByUserNames(@RequestBody List<String> userNames);
+
+    /**
      *  根据userIds查询用户集合
      */
     @GetMapping("feign/user/getUserListByUserIds")
@@ -204,7 +213,7 @@ public interface SysUserFeign {
       * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
       */
     @PostMapping("feign/accountingCompany/getByIds")
-    List<BaseIdDTO> getAccountingCompanyList(@RequestBody List<String> ids);
+    List<BaseIdDTO.CodeDTO> getAccountingCompanyList(@RequestBody List<String> ids);
 
     /**
      * @description: 查询所有已启用组织
@@ -296,4 +305,56 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/notice/listNoticeReceiver")
     List<NoticeReceiverDTO.InfoDTO> listNoticeReceiverByNodeKey(@RequestBody String nodeKey);
+
+
+    /**
+     * 根据国家id获取到地区信息
+     * @author yl
+     * @date 2023-05-15 11:44
+     * @param countryIds
+     * @return java.util.List<com.erp.model.sys.dto.DictGlobalAreaDTO.InfoDTO>
+     */
+    @PostMapping("feign/dict/listGlobalAreaByCountryIds")
+    List<DictGlobalAreaDTO.InfoDTO> listGlobalAreaByCountryIds(@RequestBody List<String> countryIds);
+
+    /**
+     * 根据id获取国家信息
+     * @Author Luo_WG
+     * @Date 2023/5/26 10:45
+     * @param id
+     * @return java.util.List<com.erp.model.sys.entity.DictCountryEntity>
+     **/
+    @PostMapping("feign/dictCountry/getCountryById")
+    DictCountryEntity getCountryById(@RequestBody String id);
+
+    /**
+     * 根据id查询区域
+     */
+    @PostMapping("feign/globalArea/getById")
+    DictGlobalAreaEntity getGlobalAreaById(@RequestBody String id);
+
+    /**
+     * 根据id查询省/市
+     */
+    @PostMapping("feign/city/getById")
+    DictCityEntity getCityById(@RequestBody String id);
+
+    /**
+     * 根据用戶id 获取金蝶的对应岗位code
+     * @author yl
+     * @date 2023-06-05 10:08
+     * @param userId
+     * @return com.erp.model.sys.dto.KingdeePostDTO.UserKingdeePostInfoDTO
+     */
+    @PostMapping("feign/user/getUserKingdeePostByUserId")
+    KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePostByUserId(@RequestBody String userId);
+    /**
+     * @description: 根据用戶ids 获取金蝶的对应岗位code
+     * @author Will
+     * @date: 2023/6/6 10:44
+     * @param userIds
+     * @return List<UserKingdeePostInfoDTO>
+     */
+    @PostMapping("feign/user/listUserKingdeePostByUserIds")
+    List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByUserIds(@RequestBody List<String> userIds);
 }

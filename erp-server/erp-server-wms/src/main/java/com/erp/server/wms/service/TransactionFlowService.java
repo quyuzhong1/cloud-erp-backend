@@ -1,16 +1,20 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
 import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
  * @Classname: TransactionFlowService
- * @Description: TODO
+ * @Description:
  * @CreateTime: 2023-04-25  19:43
  * @Author: zhangchunlin
  */
@@ -35,7 +39,41 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
     /**
      * 记录库存交易流水
      */
-    void recordFlowTransaction(TransactionFlowDTO param, InventoryBusinessTypeEnum businessType,
+    void add(TransactionFlowDTO param, InventoryBusinessTypeEnum businessType,
                                       String transactionRuleId, Integer afterInventoryQty, InventoryModeEnum inventoryModeEnum);
+
+
+    /**
+     * 分页查询即时库存对应的流水
+     * @param pagingParamDTO
+     * @return
+     */
+    PagingVO<InventoryDTO.TransFlowPagingViewDTO> pagingForInv(PagingDTO<InventoryDTO.TransFlowSearchParamDTO> pagingParamDTO);
+
+    /**
+     * 分页查询出入库流水
+     * @param pagingParamDTO
+     * @return
+     */
+    PagingVO<InventoryDTO.InOutStockTransFlowPagingViewDTO> paging(PagingDTO<InventoryDTO.InOutStockTransFlowSearchParamDTO> pagingParamDTO);
+
+    /**
+     * 导出出入库流水Excel
+     * @param param
+     */
+    void exportExcel(InventoryDTO.ExportInOutStockTransFlowSearchParamDTO param, HttpServletResponse response);
+
+    /**
+     * 出入库列表分页查询
+     * @param pagingParamDTO
+     * @return
+     */
+    PagingVO<InventoryDTO.InOutStockSummaryPagingViewDTO> pagingSummary(PagingDTO<InventoryDTO.InOutStockSummarySearchParamDTO> pagingParamDTO);
+
+    /**
+     * 导出出入库列表Excel
+     * @param param
+     */
+    void exportSummaryExcel(InventoryDTO.ExcelInOutStockSummarySearchParamDTO param, HttpServletResponse response);
 
 }

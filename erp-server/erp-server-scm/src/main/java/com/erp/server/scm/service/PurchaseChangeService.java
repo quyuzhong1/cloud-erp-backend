@@ -76,7 +76,7 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @date: 2023/3/16 12:09
      * @param baseApproveParamDTO
      */
-    void approve(BaseApproveParamDTO baseApproveParamDTO);
+    Boolean approve(BaseApproveParamDTO baseApproveParamDTO);
 
     /**
      * @description: 导出

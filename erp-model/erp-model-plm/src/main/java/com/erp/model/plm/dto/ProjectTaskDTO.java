@@ -1,7 +1,6 @@
 package com.erp.model.plm.dto;
 
 import com.common.core.anno.StateEnumValue;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -33,7 +32,6 @@ public class ProjectTaskDTO  implements Serializable {
     /**
      * 项目id
      */
-    @NotBlank(message = "项目id不能为空")
     private String projectId;
 
 
@@ -210,4 +208,9 @@ public class ProjectTaskDTO  implements Serializable {
      * 工期
      */
     private Integer workPeriod;
+
+    /**
+     * 辅助字段：project导入任务ID
+     */
+    private String projectTaskId;
 }

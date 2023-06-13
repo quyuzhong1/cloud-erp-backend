@@ -36,22 +36,16 @@ public class WorkMenuEntity extends BaseEntity<WorkMenuEntity> {
     private String moduleClassify;
 
     /**
-     * 模块地址
-     */
-    @TableField("module_url")
-    private String moduleUrl;
-
-    /**
-     * 模块参数（预留）
-     */
-    @TableField("module_param")
-    private String moduleParam;
-
-    /**
      * 模块编码
      */
     @TableField("module_code")
     private String moduleCode;
+
+    /**
+     * 详情url
+     */
+    @TableField("detail_url")
+    private String detailUrl;
 
 
     public static final String SYS_CLASSIFY = "sys_classify";
@@ -63,6 +57,8 @@ public class WorkMenuEntity extends BaseEntity<WorkMenuEntity> {
     public static final String MODULE_PARAM = "module_param";
 
     public static final String MODULE_CODE = "module_code";
+
+    public static final String DETAIL_URL = "detail_url";
 
     @Override
     public Serializable pkVal() {

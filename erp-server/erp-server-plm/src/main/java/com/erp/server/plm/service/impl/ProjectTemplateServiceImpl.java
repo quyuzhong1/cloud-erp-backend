@@ -127,7 +127,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         //获取登录人信息
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         String uid = loginUser.getUid();
         String userName = loginUser.getUserName();
@@ -167,7 +167,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         //获取登录人信息
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         String uid = loginUser.getUid();
         String userName = loginUser.getUserName();
@@ -473,7 +473,7 @@ public class ProjectTemplateServiceImpl extends ServiceImpl<ProjectTemplateMappe
         //获取登录人信息
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (ObjectUtils.isEmpty(loginUser)) {
-            throw new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         String uid = loginUser.getUid();
         String userName = loginUser.getUserName();

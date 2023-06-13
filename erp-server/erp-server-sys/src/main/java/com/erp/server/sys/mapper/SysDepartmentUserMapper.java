@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
+import com.common.business.dto.FindUserDTO;
 import com.erp.model.sys.dto.DepartmentSearchDTO;
 import com.erp.model.sys.dto.SysDepartmentUserDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
@@ -36,4 +37,14 @@ public interface SysDepartmentUserMapper  extends BaseMapper<SysDepartmentUserEn
      * @return
      */
     List<UserSuperiorDTO> listSuperiorByUserId(@Param("userId") String userId);
+
+    
+    /**
+     * 根据部门id获取部门员工信息
+     * @author yl
+     * @date 2023-06-05 12:08
+     * @param deptId
+     * @return java.util.List<com.common.business.dto.FindUserDTO>
+     */
+    List<FindUserDTO> listDeptUserByDeptId(@Param("deptId") String deptId);
 }

@@ -201,7 +201,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //已审核
             pagingDTO.getParams().setStatusList(Arrays.asList(ProductDetailStatusEnum.APPROVAL_PASS.getCode()));
         }
-        pagingDTO.getParams().setParam(pagingDTO.getParam());
+        pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
 
 

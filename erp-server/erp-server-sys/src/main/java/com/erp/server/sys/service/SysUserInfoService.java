@@ -95,6 +95,8 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
 
     FindUserDTO getUserByUserName(String userName);
 
+    List<FindUserDTO> listUserByUserNames(List<String> userNames);
+
     List<FindUserDTO> getAuthorityUserList(BaseSearchDTO dto);
 
     List<SysUserDeptDTO> getUserDeptList();
@@ -182,5 +184,6 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @return java.util.List<com.common.business.dto.FindUserDTO>
      */
     List<FindUserDTO> listBySearchKeyword(String searchKeyword);
+
 }
 

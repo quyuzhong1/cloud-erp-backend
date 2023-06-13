@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.SalesDemandDTO;
@@ -69,7 +70,7 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @date: 2023/3/15 17:54
     * @param baseApproveParamDTO
      */
-    void approve(BaseApproveParamDTO baseApproveParamDTO);
+    Boolean approve(BaseApproveParamDTO baseApproveParamDTO);
     /**
      * @description: 取消流程
      * @author Will
@@ -144,4 +145,36 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @return List<SalesDemandCountDTO>
      */
     List<ListStatusCountDTO.SalesDemandCountDTO> listCount(PermissionsDTO dto);
+    /**
+     * @description: 下推备货申请单保存
+     * @author Will
+     * @date: 2023/5/22 18:17
+     * @param list
+     * @return Boolean
+     */
+    Boolean generateSalesDemand(ValidList<SalesDemandDTO.GenerateSalesDemandDTO> list);
+
+    /**
+     * 方法说明
+     * @author yl
+     * @date 2023-05-29 16:40
+     * @param soIds
+     * @return java.lang.Integer
+     */
+    Integer getPushDownBySourceIds(List<String> soIds);
+    /**
+     * @description: 下推委外订单显示
+     * @author Will
+     * @date: 2023/6/12 15:03
+     * @param ids
+     * @return List<ViewGenerateSubcontractOrderDTO>
+     */
+    List<SalesDemandDTO.ViewGenerateSubcontractOrderDTO> viewGenerateSubcontractOrder(List<String> ids);
+    /**
+     * @description: 下推委外订单保存
+     * @author Will
+     * @date: 2023/6/12 15:04
+     * @param list
+     */
+    void generateSubcontractOrder(ValidList<SalesDemandDTO.GenerateSubcontractOrderDTO> list);
 }

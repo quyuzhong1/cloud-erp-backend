@@ -24,7 +24,6 @@ public class BaseEntity<T extends BaseEntity<?>> extends Model<T> {
     @TableId(value = "id", type = IdType.ASSIGN_ID)
     private String id;
 
-
     /**
      * 创建人id
      */

@@ -135,4 +135,41 @@ public class ProductDetailDTO implements Serializable {
         private  Integer status;
 
     }
+
+    /**
+     * 采购员、供应商信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseSupplierInfoDTO {
+
+
+        /**
+         * SKU ID
+         */
+        private String skuId;
+
+        /**
+         * 采购员id
+         */
+        private  String purchaseUserId;
+
+        /**
+         * 采购员名称
+         */
+        private  String purchaseUserName;
+
+        /**
+         * 供应商id
+         */
+        private  String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private  String supplierName;
+
+
+    }
+
 }

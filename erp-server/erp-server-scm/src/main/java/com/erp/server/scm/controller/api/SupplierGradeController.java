@@ -48,7 +48,7 @@ public class SupplierGradeController extends BaseController {
      * @return
      */
     @GetMapping("/list")
-    public ApiResult<List<SupplierDTO.SupplierGradeDTO>> saveOrUpdate() {
+    public ApiResult<List<SupplierDTO.SupplierGradeDTO>> list() {
         List<SupplierGradeEntity> list = supplierGradeService.list();
         List<SupplierDTO.SupplierGradeDTO> result = BeanMapper.copyList(list, SupplierDTO.SupplierGradeDTO.class);
         return success(result);

@@ -151,7 +151,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         String uid = sysUserInfoDTO.getUid();
         SysUserInfoEntity entity = this.getById(uid);
         if (Objects.isNull(entity)) {
-            throw new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         //验证用户信息
         checkUserInfo(sysUserInfoDTO);
@@ -438,7 +438,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         SysUserInfoEntity userEntity = this.getById(entity.getUserId());
         if (Objects.isNull(userEntity)) {
-            throw new ServiceException(ApiError.ERROR_9011);
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         Integer userState = userEntity.getUserState();
         //表示禁用
@@ -802,6 +802,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             FindUserDTO userDTO = new FindUserDTO();
             userDTO.setUserId(item.getUid());
             userDTO.setUserName(item.getUserName());
+            userDTO.setCode(item.getCode());
             userDTO.setIsMyState(0);
             resultList.add(userDTO);
         }
@@ -819,6 +820,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             userDTO.setUserId(entity.getUid());
             userDTO.setUserName(entity.getUserName());
             userDTO.setCode(entity.getCode());
+            userDTO.setMobile(entity.getMobile());
             userDTO.setIsMyState(0);
             return userDTO;
         }
@@ -844,6 +846,26 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             return userDTO;
         }
         return new FindUserDTO();
+    }
+
+    @Override
+    public List<FindUserDTO> listUserByUserNames(List<String> userNames) {
+        if (CollectionUtils.isEmpty(userNames)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<SysUserInfoEntity> list = lambdaQuery().in(SysUserInfoEntity::getUserName, userNames).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<FindUserDTO> resultList = new ArrayList<>();
+        for (SysUserInfoEntity entity : list) {
+            FindUserDTO userDTO = new FindUserDTO();
+            userDTO.setUserId(entity.getUid());
+            userDTO.setUserName(entity.getUserName());
+            userDTO.setIsMyState(0);
+            resultList.add(userDTO);
+        }
+        return resultList;
     }
 
 

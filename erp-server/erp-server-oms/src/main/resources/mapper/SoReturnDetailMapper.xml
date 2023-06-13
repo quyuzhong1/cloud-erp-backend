@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.SoReturnDetailMapper">
+    <select id="listDetailBySourceId" resultType="com.erp.model.oms.entity.SoReturnDetailEntity">
+        SELECT
+            srd.id,
+            srd.main_id,
+            srd.sku_id,
+            srd.sku_no,
+            srd.sales_qty,
+            srd.return_qty,
+            srd.return_type_dict,
+            srd.remark,
+            srd.source_detail_id,
+            sr.approve_status
+        FROM so_return_detail srd
+        INNER JOIN so_return sr ON srd.main_id = sr.id AND srd.is_deleted = FALSE
+        WHERE sr.is_deleted = FALSE
+        AND sr.invalid_status = FALSE
+        <if test="ids != null and ids.size != ''">
+            and sr.source_id in
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="listDetailByIds" resultType="com.erp.model.oms.entity.SoReturnDetailEntity">
+        SELECT
+        srd.id,
+        srd.main_id,
+        srd.sku_id,
+        srd.sku_no,
+        srd.sales_qty,
+        srd.return_qty,
+        srd.return_type_dict,
+        srd.remark,
+        srd.source_detail_id,
+        sr.approve_status
+        FROM so_return_detail srd
+        INNER JOIN so_return sr ON srd.main_id = sr.id AND srd.is_deleted = FALSE
+        WHERE sr.is_deleted = FALSE
+        AND sr.invalid_status = FALSE
+        <if test="ids != null and ids.size != ''">
+            and srd.id in
+            <foreach collection="ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="listAddDetailView" resultType="com.erp.model.oms.dto.SoDetailDTO$AddDetailView">
+        SELECT
+        srd.id,
+        srd.main_id,
+        sr.source_id,
+        srd.sku_id,
+        srd.sku_no,
+        si.warehouse_org_id AS inventoryOrgId,
+        sd.qty AS salesQty,
+        sd.amount AS salesAmount,
+        sd.is_gift,
+        sd.is_close,
+        sd.remark,
+        si.warehouse_id,
+        sd.currency,
+        sd.currency_Symbol,
+        si.id AS soId,
+        srd.return_type_dict,
+        srd.return_reason_dict
+        FROM so_return sr
+        INNER JOIN so_return_detail srd ON srd.main_id = sr.id AND sr.is_deleted = FALSE
+        INNER JOIN so_info si ON sr.source_id = si.id AND srd.is_deleted = FALSE
+        INNER JOIN so_detail sd ON srd.source_detail_id = sd.id AND si.is_deleted = FALSE
+        WHERE sd.is_deleted = FALSE AND sd.is_close = FALSE
+        <if test="id != null and id != ''">
+            AND sr.id = #{id}
+        </if>
+        <if test="skuNoList != null and skuNoList != ''">
+            AND srd.sku_no IN
+            <foreach collection="skuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="listAddDetailViewById" resultType="com.erp.model.oms.dto.SoDetailDTO$AddDetailView">
+        SELECT
+        srd.id,
+        srd.main_id,
+        sr.source_id,
+        srd.sku_id,
+        srd.sku_no,
+        si.warehouse_org_id AS inventoryOrgId,
+        sd.qty AS salesQty,
+        sd.amount AS salesAmount,
+        sd.is_gift,
+        sd.is_close,
+        sd.remark,
+        si.warehouse_id,
+        sd.currency,
+        sd.currency_Symbol,
+        si.id AS soId,
+        srd.return_type_dict,
+        srd.return_reason_dict
+        FROM so_return sr
+        INNER JOIN so_return_detail srd ON srd.main_id = sr.id AND sr.is_deleted = FALSE
+        INNER JOIN so_info si ON sr.source_id = si.id AND srd.is_deleted = FALSE
+        INNER JOIN so_detail sd ON srd.source_detail_id = sd.id AND si.is_deleted = FALSE
+        WHERE sd.is_deleted = FALSE AND sd.is_close = FALSE
+        <if test="id != null and id != ''">
+            AND srd.id = #{id}
+        </if>
+    </select>
+</mapper>

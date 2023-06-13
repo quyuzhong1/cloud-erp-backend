@@ -31,22 +31,26 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.PurchaseChangeListTypeEnum;
+import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.dto.inventory.InstockForcastDTO;
+import com.erp.model.wms.dto.inventory.InstockForcastPoChangeDetailDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.mapper.PurchaseChangeMapper;
 import com.erp.server.scm.service.*;
+import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,6 +60,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -97,10 +103,13 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     @Resource
     private WmsTaskFeign wmsTaskFeign;
 
+    @Autowired
+    private InventoryFeign inventoryFeign;
+
 
     @Override
     public PagingVO<PurchaseChangeDTO.ListDTO> paging(PagingDTO<PurchaseChangeDTO.SearchParamDTO> pagingDTO) {
-        pagingDTO.getParams().setParam(pagingDTO.getParam());
+        pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<PurchaseChangeDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
         //清空明细数据
@@ -120,6 +129,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String add(PurchaseChangeDTO.AddDTO dto) {
         PurchaseChangeEntity entity = new PurchaseChangeEntity();
         BeanMapperUtils.copy(dto,entity);
@@ -219,8 +229,9 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public void approve(BaseApproveParamDTO baseApproveParamDTO) {
+    public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
         //根据ids查询
         List<PurchaseChangeEntity> list = getList(ids);
@@ -235,6 +246,11 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         //审核通过
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
             //审核通过 TODO
+
+            //查询原采购订单明细信息
+            List<PurchaseChangeDetailEntity> originPurchaseChangeDetailList = purchaseChangeDetailService.listByPurchaseChangeIds(ids);
+            List<String> purchaseOrderDetailIds = originPurchaseChangeDetailList.stream().map(PurchaseChangeDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+            List<PurchaseOrderDetailEntity> originPurchaseOrderDetailEntityList =  purchaseOrderDetailService.listByIds(purchaseOrderDetailIds);
 
             //更新单据状态(后面有流程了可删)
             updateApproveStatusForApprove(ids,ApproveStatusEnum.APPROVE.getStatus());
@@ -261,6 +277,9 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
                 }
                 approveArrivalState(returnQty, receiveQty, purchaseQty, req.getPurchaseOrderDetailId());
             });
+
+            // 更新库存信息
+            updateInventoryTransCore(purchaseChangeDetailList, originPurchaseOrderDetailEntityList);
         }
         //审核不通过
         if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
@@ -272,6 +291,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购变更单",ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_CHANGE.getCode(),pairList,"审核操作");
+        return Boolean.TRUE;
     }
 
     /**
@@ -385,22 +405,22 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
     @Override
     public List<ListStatusCountDTO.PurchaseChangeCountDTO> listCount(PermissionsDTO dto) {
-        PurchaseChangeListTypeEnum[] values = PurchaseChangeListTypeEnum.values();
+        PageListTypeEnum[] values = PageListTypeEnum.values();
         List<ListStatusCountDTO.PurchaseChangeCountDTO> list = new ArrayList<>();
-        for (PurchaseChangeListTypeEnum item: values) {
+        for (PageListTypeEnum item: values) {
             PurchaseChangeDTO.SearchParamDTO searchParamDTO = new PurchaseChangeDTO.SearchParamDTO();
-            searchParamDTO.setParam(dto.getParam());
+            searchParamDTO.setPermissionSql(dto.getPermissionSql());
             ListStatusCountDTO.PurchaseChangeCountDTO resultDTO = new ListStatusCountDTO.PurchaseChangeCountDTO();
             Integer count = MathUtil.ZERO;
-            if (PurchaseChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
+            if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
                 searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(searchParamDTO);
             }
-            if (PurchaseChangeListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
+            if (PageListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
                 searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(searchParamDTO);
             }
-            if (PurchaseChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
+            if (PageListTypeEnum.REJECT.getCode().equals(item.getCode())) {
                 searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
                 count = this.baseMapper.listCount(searchParamDTO);
             }
@@ -420,7 +440,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         if (StringUtils.isNotBlank(changeUserId)) {
             FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(changeUserId);
             if (ObjectUtils.isEmpty(purchaseUser)) {
-                throw new ServiceException(ApiError.ERROR_9011);
+                throw new ServiceException(ApiError.USER_NOT_EXIST);
             }
             entity.setChangeUserName(purchaseUser.getUserName());
         }
@@ -602,4 +622,32 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             purchaseOrderDetailService.updateCreatePoType(purchaseOrderId);
         }
     }
+
+    /**
+     * 采购变更单库存变更（需要计算差额，因为原采购订单已经增加了在途（没有待检的时候））
+     * @param purchaseChangeDetailList 变更单明细
+     */
+    public void updateInventoryTransCore(List<PurchaseChangeDetailEntity> purchaseChangeDetailList, List<PurchaseOrderDetailEntity> originPurchaseOrderDetailEntityList) {
+        Map<String,PurchaseOrderDetailEntity> detailOrderMap = originPurchaseOrderDetailEntityList.stream().collect(Collectors.toMap(PurchaseOrderDetailEntity::getId, Function.identity()));
+        for(PurchaseChangeDetailEntity purchaseChangeDetailEntity : purchaseChangeDetailList) {
+            InstockForcastDTO.PoChangeDTO dto = new InstockForcastDTO.PoChangeDTO();
+
+            String detailOrderId = purchaseChangeDetailEntity.getPurchaseOrderDetailId();
+            PurchaseOrderDetailEntity purchaseOrderDetailEntity = detailOrderMap.get(detailOrderId);
+            dto.setPurchaseOrderId(purchaseOrderDetailEntity.getPurchaseOrderId());
+            List<InstockForcastPoChangeDetailDTO.AddDTO> members = Lists.newArrayList();
+            InstockForcastPoChangeDetailDTO.AddDTO addDTO = new InstockForcastPoChangeDetailDTO.AddDTO();
+            addDTO.setPurchaseOrderDetailId(detailOrderId);
+            addDTO.setSkuId(purchaseChangeDetailEntity.getSkuId());
+            addDTO.setSkuNo(purchaseChangeDetailEntity.getSkuNo());
+            addDTO.setOriginQty(purchaseOrderDetailEntity.getPurchaseQty());
+            // 新的采购订单采购数量
+            addDTO.setQty(purchaseChangeDetailEntity.getQty());
+            addDTO.setArriveStatus(purchaseOrderDetailEntity.getArrivalStatus());
+            members.add(addDTO);
+            dto.setMembers(members);
+            inventoryFeign.poChange(dto);
+        }
+    }
+
 }

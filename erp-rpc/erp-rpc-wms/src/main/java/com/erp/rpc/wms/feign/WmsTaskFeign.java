@@ -1,6 +1,7 @@
 package com.erp.rpc.wms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -10,6 +11,7 @@ import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,7 +29,7 @@ import java.util.Map;
 public interface WmsTaskFeign {
 
     /**
-     * 根据userIds查询用户集合
+     * 根据仓库id
      */
     @PostMapping("feign/warehouse/listWarehouseByIds")
     List<WarehouseDTO.UpdateDTO> listWarehouseByIds(@RequestBody List<String> warehouseIds);
@@ -105,4 +107,65 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/syncKingdee/updateBusinessSyncKingdeeStatus")
     void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params);
+
+    /**
+     * 采购收货审核
+     * @Author Luo_WG
+     * @Date 2023/5/17 10:51
+     * @param baseApproveParamDTO
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("feign/wmsWorkOption/warehouseReceiveApprove")
+    Boolean warehouseReceiveApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 采购入库审核
+     * @author Will
+     * @date: 2023/4/11 20:11
+     * @param baseApproveParamDTO
+     * @return ApiResult
+     */
+    @PostMapping("feign/wmsWorkOption/poInstockApprove")
+    void poInstockApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 采购退货审核
+     * @Author Luo_WG
+     * @Date 2023/4/6 19:06
+     * @param baseApproveParamDTO baseApproveParamDTO
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("feign/wmsWorkOption/purchaseReturnOrderApprove")
+    Boolean purchaseReturnOrderApprove(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 根据销售 销售订单详情ids 获取是否有下推的单据
+     * @author yl
+     * @date 2023-05-25 10:27
+     * @param soDetailIdList
+     * @return java.lang.Integer
+     */
+    @PostMapping("feign/soDeliveryNotice/getPushDownBySoDetailIds")
+    Integer getPushDownBySoDetailIds(@RequestBody List<String> soDetailIdList);
+
+
+    /**
+     * 根据销售订单ids 获取是否有下推的单据
+     * @author yl
+     * @date 2023-05-25 10:27
+     * @param soIds
+     * @return java.lang.Integer
+     */
+    @PostMapping("feign/soDeliveryNotice/getPushDownBySourceIds")
+    Integer getPushDownBySourceIds(@RequestBody List<String> soIds);
+
+    /**
+     * 关闭关联单据的关闭状态
+     * @author yl
+     * @date 2023-05-25 19:25
+     * @param terminateSoDetailIds
+     * @return void
+     */
+    @PostMapping("feign/soDeliveryNotice/closeBySoDetailIds")
+    void closeBySoDetailIds(@RequestBody List<String> terminateSoDetailIds);
 }

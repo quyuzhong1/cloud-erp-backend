@@ -8,7 +8,6 @@ import lombok.ToString;
 import java.time.LocalDateTime;
 
 @Data
-@ToString
 @NoArgsConstructor
 public class KingdeeRefundOrderEntity {
 
@@ -65,4 +64,39 @@ public class KingdeeRefundOrderEntity {
     private String fSaleErId;
     @Alias("FSALEERName")
     private String fSaleErName;
+    /**
+     * 清洗数据
+     */
+    private Boolean isClean;
+    @Override
+    public String toString() {
+        return "KingdeeRefundOrderEntity{" +
+                "fId='" + fId + '\'' +
+                ", fBillTypeID='" + fBillTypeID + '\'' +
+                ", fBillTypeName='" + fBillTypeName + '\'' +
+                ", fBillTypeCode='" + fBillTypeCode + '\'' +
+                ", fBillNo='" + fBillNo + '\'' +
+                ", fDate=" + fDate +
+                ", fSettleRate='" + fSettleRate + '\'' +
+                ", fRefundAmountForH='" + fRefundAmountForH + '\'' +
+                ", fDocumentStatus='" + fDocumentStatus + '\'' +
+                ", fRectUnit='" + fRectUnit + '\'' +
+                ", fRectUnitName='" + fRectUnitName + '\'' +
+                ", fSettleCurCode='" + fSettleCurCode + '\'' +
+                ", fRealRefundAmountFor='" + fRealRefundAmountFor + '\'' +
+                ", fExchangeRate='" + fExchangeRate + '\'' +
+                ", fWrittenOffStatus='" + fWrittenOffStatus + '\'' +
+                ", fCancelStatus='" + fCancelStatus + '\'' +
+                ", fRemark='" + fRemark + '\'' +
+                ", fCreateDate=" + fCreateDate +
+                ", fModifyDate=" + fModifyDate +
+                ", fApproveDate=" + fApproveDate +
+                ", fWbSettleNo='" + fWbSettleNo + '\'' +
+                ", fCountry='" + fCountry + '\'' +
+                ", fSaleOrgName='" + fSaleOrgName + '\'' +
+                ", fSaleOrgId='" + fSaleOrgId + '\'' +
+                ", fSaleErId='" + fSaleErId + '\'' +
+                ", fSaleErName='" + fSaleErName + '\'' +
+                '}';
+    }
 }

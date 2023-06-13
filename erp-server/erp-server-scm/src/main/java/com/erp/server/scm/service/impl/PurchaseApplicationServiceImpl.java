@@ -113,7 +113,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     public PagingVO<PurchaseApplicationDTO.ListDTO> paging(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> pagingDTO) {
-        pagingDTO.getParams().setParam(pagingDTO.getParam());
+        pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<PurchaseApplicationDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
         List<PurchaseApplicationDTO.ListDTO> records = pageData.getRecords();
@@ -148,7 +148,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         List<ListStatusCountDTO.PurchaseApplicationCountDTO> list = new ArrayList<>();
         for (PurchaseListTypeEnum item: values) {
             PurchaseApplicationDTO.SearchParamDTO searchParamDTO = new PurchaseApplicationDTO.SearchParamDTO();
-            searchParamDTO.setParam(dto.getParam());
+            searchParamDTO.setPermissionSql(dto.getPermissionSql());
             ListStatusCountDTO.PurchaseApplicationCountDTO resultDTO = new ListStatusCountDTO.PurchaseApplicationCountDTO();
             Integer count = MathUtil.ZERO;
             if (PurchaseListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
@@ -178,6 +178,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public String add(PurchaseApplicationDTO.AddDTO dto) {
         PurchaseApplicationEntity entity = new PurchaseApplicationEntity();
         BeanMapperUtils.copy(dto,entity);
@@ -226,7 +227,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void approve(BaseApproveParamDTO baseApproveParamDTO) {
+    public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
         //根据ids查询
         List<PurchaseApplicationEntity> list = getList(ids);
@@ -255,6 +256,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购申请单",ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"审核操作");
+        return Boolean.TRUE;
     }
 
     @Override
@@ -668,7 +670,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (StringUtils.isNotBlank(applyUserId)) {
             FindUserDTO applyUser = sysUserFeign.getUserByUserId(applyUserId);
             if (ObjectUtils.isEmpty(applyUser)) {
-                throw new ServiceException(ApiError.ERROR_9011);
+                throw new ServiceException(ApiError.USER_NOT_EXIST);
             }
             entity.setApplyUserName(applyUser.getUserName());
         }

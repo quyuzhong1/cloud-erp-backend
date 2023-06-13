@@ -1,8 +1,10 @@
 package com.erp.server.workflow.service;
 
 import com.common.business.enums.ApproveTypeEnum;
+import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.workflow.enums.TimeoutStatusEnum;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,9 +25,11 @@ public interface ProcessTaskManagementService extends SuperService<ProcessTaskMa
      * @param taskId
      * @param approveType
      * @param comment
+     * @param activityId
+     * @param managementEntity
      * @return Boolean
      */
-    Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String comment);
+    Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String comment, String activityId, ProcessManagementEntity managementEntity);
 
     /**
      * 根据流程实例id查询历史任务
@@ -40,5 +44,28 @@ public interface ProcessTaskManagementService extends SuperService<ProcessTaskMa
      * 保存流程任务
      * @param insertTask
      */
-    void saveProcessTask(ProcessTaskManagementEntity insertTask);
+    ProcessTaskManagementEntity saveProcessTask(ProcessTaskManagementEntity insertTask);
+
+    /**
+     * 更新流程任务
+     *
+     * @param taskId
+     * @param targetUserId
+     * @param sourceUserId
+     * @param remark
+     */
+    void updateTransfer(String taskId, String targetUserId, String targetUserName, String sourceUserId, String remark);
+
+    /**
+     * 根据流程实例id删除流程任务
+     * @param processInstanceId
+     */
+    void removeByProcessInstanceId(String processInstanceId);
+
+    /**
+     * 更新超时状态
+     * @param taskManagementIds
+     * @param timeoutStatusEnum
+     */
+    void updateTimeoutStatus(List<String> taskManagementIds, TimeoutStatusEnum timeoutStatusEnum);
 }
