@@ -106,9 +106,13 @@ public class PurchaseBusinessGatherTableDTO extends PermissionsDTO implements Se
          */
         private List<String> billDateList;
         /**
+         * sku集合
+         */
+        private List<String> skuNoList;
+        /**
          * spu集合
          */
-        private List<String> spuList;
+        private List<String> spuIdList;
         /**
          * 仓库id
          */

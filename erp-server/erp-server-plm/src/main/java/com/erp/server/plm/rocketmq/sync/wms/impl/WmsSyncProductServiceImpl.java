@@ -43,9 +43,8 @@ public class WmsSyncProductServiceImpl implements WmsSyncProductService {
 
 
     @Override
-    public void syncProductSkuToWms() {
+    public void syncProductSkuToWms(List<ProductDetailEntity> list) {
         log.info("开始同步产品sku到wms系统");
-        List<ProductDetailEntity> list = productDetailService.getProductDetailAll();
         List<List<ProductDetailEntity>> partitionList = ListUtil.partition(list, 100);// 按100个拆分
         // 异步推送到MQ
         partitionList.forEach(req -> {

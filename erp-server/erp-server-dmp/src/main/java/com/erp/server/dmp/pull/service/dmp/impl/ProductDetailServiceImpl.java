@@ -1,12 +1,17 @@
 package com.erp.server.dmp.pull.service.dmp.impl;
 
 import cn.hutool.core.util.ObjectUtil;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.model.oms.dto.CustomerAddressDTO;
+import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.server.dmp.pull.mapper.ProductDetailMapper;
 import com.erp.server.dmp.pull.service.dmp.ProductDetailService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, ProductDetailEntity> implements ProductDetailService {
@@ -15,12 +20,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * 根据主键Id查询产品Sku表信息
      * @Author Luo_WG
      * @Date 2023/4/19 16:25
-     * @param id
+     * @param ids
      * @return com.erp.model.plm.entity.ProductInfoEntity
      **/
     @Override
-    public ProductDetailEntity getProductDetailById(String id) {
-        return baseMapper.getProductDetailById(id);
+    public List<ProductDetailEntity> ListProductDetailByIds(List<String> ids) {
+        return baseMapper.ListProductDetailByIds(ids);
     }
 
     /**
@@ -28,16 +33,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @Author Luo_WG
      * @Date 2023/4/19 16:05
      **/
-    public Boolean saveOrUpdateProductDetail(ProductDetailEntity productDetailEntity) {
-        ProductDetailEntity entity = getProductDetailById(productDetailEntity.getId());
-        //不存在需要新增，同时判断产品名称是否存在了,存在不同步
-        if (ObjectUtil.isNotEmpty(entity)) {
-            if (entity.getSkuNo().equals(productDetailEntity.getSkuNo())) {
-                return false;
-            }
-            return this.updateById(productDetailEntity);
-        } else {
-            return this.save(productDetailEntity);
-        }
+    public Boolean saveOrUpdateProductDetail(List<ProductDetailEntity> productDetailEntityList) {
+        List<String> detailIds = productDetailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+        List<ProductDetailEntity> detailEntityList = ListProductDetailByIds(detailIds);
+        List<String> ids = productDetailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+        List<String> dbIds = detailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+        List<String> existIdList = ids.stream().filter(s -> dbIds.contains(s)).collect(Collectors.toList());
+        List<String> notExistIdList = ids.stream().filter(s -> !dbIds.contains(s)).collect(Collectors.toList());
+        List<ProductDetailEntity> existDetailEntityList = ListProductDetailByIds(existIdList);
+        List<ProductDetailEntity> notExistDetailEntityList = ListProductDetailByIds(notExistIdList);
+        baseMapper.updateBatchSelective(existDetailEntityList);
+        this.saveBatch(notExistDetailEntityList);
+        return Boolean.TRUE;
     }
 }

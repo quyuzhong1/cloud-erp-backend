@@ -1,5 +1,9 @@
 package com.erp.server.plm.rocketmq.sync.wms;
 
+import com.erp.model.plm.entity.ProductDetailEntity;
+
+import java.util.List;
+
 /**
  * @Classname: WmsSyncProductService
  * @Description: TODO
@@ -13,7 +17,7 @@ public interface WmsSyncProductService {
      * @Author zhangchunlin
      * @Date 2023-05-11 18:41
      **/
-    void syncProductSkuToWms();
+    void syncProductSkuToWms(List<ProductDetailEntity> list);
 
     /**
      * 产品sku销售表同步到WMS仓储服务

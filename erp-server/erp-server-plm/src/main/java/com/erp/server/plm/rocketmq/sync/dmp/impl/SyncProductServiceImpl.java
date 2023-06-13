@@ -1,5 +1,7 @@
 package com.erp.server.plm.rocketmq.sync.dmp.impl;
 
+import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.utils.RedisUtil;
 import com.common.core.utils.ObjectUtils;
@@ -35,12 +37,6 @@ public class SyncProductServiceImpl implements SyncProductService {
     private MQProducerService mQProducerService;
 
     @Resource
-    private ProductInfoService productInfoService;
-
-    @Resource
-    private ProductDetailService productDetailService;
-
-    @Resource
     private ProductSaleService productSaleService;
 
     @Resource
@@ -52,11 +48,11 @@ public class SyncProductServiceImpl implements SyncProductService {
      * @Date 2023/4/19 14:03
      **/
     @Override
-    public void syncProductInfoToDmp() {
-        List<ProductInfoEntity> list = productInfoService.getProductInfoAll();
+    public void syncProductInfoToDmp(List<ProductInfoEntity> list) {
+        List<List<ProductInfoEntity>> partitionList = ListUtil.partition(list, 200);
         // 异步推送到MQ
-        list.forEach(req -> {
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_INFO_TAG.getName(),req, req.getId());
+        partitionList.forEach(req -> {
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_INFO_TAG.getName(),req, IdUtil.simpleUUID());
         });
     }
 
@@ -66,11 +62,11 @@ public class SyncProductServiceImpl implements SyncProductService {
      * @Date 2023/4/19 14:03
      **/
     @Override
-    public void syncProductSkuToDmp() {
-        List<ProductDetailEntity> list = productDetailService.getProductDetailAll();
+    public void syncProductSkuToDmp(List<ProductDetailEntity> list) {
+        List<List<ProductDetailEntity>> partitionList = ListUtil.partition(list, 200);
         // 异步推送到MQ
-        list.forEach(req -> {
-            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_SKU_TAG.getName(),req, req.getId());
+        partitionList.forEach(req -> {
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_DMP_PRODUCT_SKU_TAG.getName(),req, IdUtil.simpleUUID());
         });
     }
 

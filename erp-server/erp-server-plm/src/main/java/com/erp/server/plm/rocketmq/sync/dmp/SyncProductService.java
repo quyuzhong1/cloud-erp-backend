@@ -3,6 +3,8 @@ package com.erp.server.plm.rocketmq.sync.dmp;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
 
+import java.util.List;
+
 /**
  * 同步plm产品信息
  * @Author Luo_WG
@@ -15,14 +17,14 @@ public interface SyncProductService {
      * @Author Luo_WG
      * @Date 2023/4/19 14:03
      **/
-    void syncProductInfoToDmp();
+    void syncProductInfoToDmp(List<ProductInfoEntity> list);
 
     /**
      * 产品sku表同步到中台
      * @Author Luo_WG
      * @Date 2023/4/19 14:03
      **/
-    void syncProductSkuToDmp();
+    void syncProductSkuToDmp(List<ProductDetailEntity> list);
 
     /**
      * 产品是否新品同步到中台

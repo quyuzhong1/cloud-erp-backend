@@ -1,8 +1,13 @@
 package com.erp.server.plm.schedule;
 
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.plm.rocketmq.sync.dmp.SyncProductService;
+import com.erp.server.plm.rocketmq.sync.scm.ScmSyncProductService;
 import com.erp.server.plm.rocketmq.sync.wms.WmsSyncProductService;
 import com.erp.server.plm.service.NoticeMessageService;
+import com.erp.server.plm.service.ProductDetailService;
+import com.erp.server.plm.service.ProductInfoService;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +15,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.util.List;
 
 /**
  * 来源xxljob
@@ -33,6 +39,15 @@ public class PlmJob {
     @Autowired
     private WmsSyncProductService wmsSyncProductService;
 
+    @Autowired
+    private ProductDetailService productDetailService;
+
+    @Autowired
+    private ProductInfoService productInfoService;
+
+    @Autowired
+    private ScmSyncProductService scmSyncProductService;
+
 
     /**
      * 生成发送任务预警通知 每天17:00
@@ -43,22 +58,27 @@ public class PlmJob {
     }
 
     /**
-     * 产品信息同步到中台
+     * 产品信息同步到其他表冗余
      */
     @XxlJob("productInfoSyncDmp")
     public void productInfoSyncDmp() {
-        syncProductService.syncProductInfoToDmp();
+        List<ProductInfoEntity> list = productInfoService.getProductInfoAll();
+        syncProductService.syncProductInfoToDmp(list);
+        scmSyncProductService.syncProductInfoToScm(list);
     }
 
     /**
-     * 产品sku表同步到中台
+     * 产品sku表同步到其他表冗余
      */
     @XxlJob("productSkuSyncDmp")
     public void productSkuSyncDmp() {
         wmsSyncProductService.syncProductInfoToWms();
-        wmsSyncProductService.syncProductSkuToWms();
         wmsSyncProductService.syncProductSkuSaleToWms();
-        syncProductService.syncProductSkuToDmp();
+
+        List<ProductDetailEntity> list = productDetailService.getProductDetailAll();
+        syncProductService.syncProductSkuToDmp(list);
+        wmsSyncProductService.syncProductSkuToWms(list);
+        scmSyncProductService.syncProductSkuToScm(list);
     }
 
     /**
