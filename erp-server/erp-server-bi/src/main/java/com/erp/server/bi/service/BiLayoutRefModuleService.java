@@ -52,4 +52,13 @@ public interface BiLayoutRefModuleService  extends IService<BiLayoutRefModuleEnt
     Boolean deleteLayout(String layoutId);
 
     void copyLayoutRefModule(String newSubjectId, String newLayoutId, String copyLayoutId);
+
+    /**
+     * 根据布局id 获取到对应的模块id
+     * @author yl
+     * @date 2023-06-13 10:46
+     * @param layoutIdList
+     * @return java.util.List<com.erp.model.bi.dto.LayoutRefModuleDTO.LayoutRefModuleInfoDTO>
+     */
+    List<LayoutRefModuleDTO.LayoutRefModuleInfoDTO> listByLayoutIds(List<String> layoutIdList);
 }

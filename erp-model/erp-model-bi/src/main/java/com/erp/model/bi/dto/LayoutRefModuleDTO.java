@@ -60,4 +60,22 @@ public class LayoutRefModuleDTO implements Serializable {
      */
     private Boolean visible;
 
+
+
+    @Data
+    @NoArgsConstructor
+    public static class LayoutRefModuleInfoDTO{
+        /**
+         * 布局id
+         */
+        private String layoutId;
+
+        /**
+         * 模块id
+         */
+        private String moduleId;
+
+
+    }
+
 }

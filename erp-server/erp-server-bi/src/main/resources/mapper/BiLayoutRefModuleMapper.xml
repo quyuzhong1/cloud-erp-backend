@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.erp.server.bi.mapper.BiLayoutRefModuleMapper">
+
+    <select id="listByLayoutIds" resultType="com.erp.model.bi.dto.LayoutRefModuleDTO$LayoutRefModuleInfoDTO">
+        SELECT
+        layout_id,
+        module_id
+        FROM bi_layout_ref_module
+        <where>
+            <if test="layoutIdList!=null and layoutIdList.size>0">
+                layout_id IN
+                <foreach collection="layoutIdList" item="layoutId" open="(" separator="," close=")">
+                    #{layoutId}
+                </foreach>
+            </if>
+        </where>
+        GROUP BY layout_id,module_id
+    </select>
+</mapper>

@@ -1,11 +1,10 @@
 package com.erp.server.plm.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.ProjectTaskTimeRecordDTO;
 import com.erp.model.plm.entity.ProjectTaskTimeRecordEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.plm.vo.ProjectTaskTimeRecordPageVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -35,4 +34,5 @@ public interface ProjectTaskTimeRecordMapper extends BaseMapper<ProjectTaskTimeR
 
     List<ProjectTaskTimeRecordPageVO> pageTaskTimeRecord(@Param("params") ProjectTaskTimeRecordDTO.PageRecordDto dto, @Param("param") String param);
 
+    List<ProjectTaskTimeRecordDTO.TaskWorkTimeDTO> listByProductIds(@Param("productIdList") List<String> productIds);
 }

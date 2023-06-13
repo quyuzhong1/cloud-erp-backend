@@ -41,4 +41,14 @@ public interface ProjectTaskTimeRecordService extends IService<ProjectTaskTimeRe
      * @param taskList
      */
     Boolean saveOrUpdateByProjectTaskList(List<ProjectTaskEntity> taskList);
+
+    
+    /**
+     * 根据产品id 获取到工时信息
+     * @author yl
+     * @date 2023-06-12 18:28
+     * @param productIds
+     * @return java.util.List<com.erp.model.plm.dto.ProjectTaskTimeRecordDTO.TaskWorkTimeDTO>
+     */
+    List<ProjectTaskTimeRecordDTO.TaskWorkTimeDTO> listByProductIds(List<String> productIds);
 }

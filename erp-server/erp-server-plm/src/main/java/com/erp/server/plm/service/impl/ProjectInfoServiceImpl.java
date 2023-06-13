@@ -20,7 +20,6 @@ import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.entity.ProjectInfoEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.enums.*;
-import com.erp.model.plm.vo.ItemMemberVO;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.SourceType;
 import com.erp.server.plm.constant.TaskConstant;
@@ -200,7 +199,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
             if (StringUtils.isNotBlank(chargeId)) {
                 projectMembersService.saveByRoleAndMembers(productId, project.getId(), "项目经理", Arrays.asList(chargeId));
-                }
+            }
             //记录产品状态更新时间
             projectStatusTimeService.saveOrUpdateProjectStatusTime(dto.getProjectId(), dto.getProductId(), ProjectStateEnum.YES_START.getState());
             //更新产品规划的产品状态
@@ -267,28 +266,10 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         String userId = loginUser.getUid();
         //根据当前登录人id 获取收藏的列表
         List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(userId);
-
-        List<String> productIdList = params.getProductIds();
-        //如果productIds 不等于null 就是正常的搜索 ;
-        if (productIdList != null && productIdList.size() == 0) {
-            return new PagingVO(pageData);
-        }
-
         //分类id
         String categoryId = params.getCategoryId();
-
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
-
-
-        //如果是我的收藏
-        if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
-            if (CollectionUtils.isNotEmpty(myCollectProductIds)) {
-                pageData = baseMapper.myCollectPaging(query, params, myCollectProductIds, archiveProductIds, categoryIdList);
-            }
-        } else {
-            pageData = baseMapper.paging(query, params, archiveProductIds, categoryIdList);
-        }
-
+        pageData = baseMapper.paging(query, params, archiveProductIds, categoryIdList);
         Integer finish = TaskStateEnum.FINISH.getCode();
         Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
         List<ProductShowDTO> list = pageData.getRecords();
@@ -303,14 +284,8 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             //获取到所有出产品id
             List<String> productIds = list.stream().map(ProductShowDTO::getProductId).collect(Collectors.toList());
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductIds(productIds);
-
-            //根据产品id 获取项目成员 相关信息
-            List<ItemMemberVO> ItemMemberList = projectMembersService.getByProductIds(productIds);
-
             for (ProductShowDTO item : list) {
-
                 List<ProjectTaskEntity> productTaskList = taskList.stream().filter(t -> item.getProductId().equals(t.getProductId())).collect(Collectors.toList());
-
                 if (CollectionUtils.isNotEmpty(myCollectProductIds) && myCollectProductIds.contains(item.getProductId())) {
                     item.setIfAddProduct(true);
                 } else {
@@ -320,23 +295,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 if (ProductConstant.ITERATION_PRODUCT.equals(item.getType())) {
                     item.setIfIteration(true);
                 }
-
-                List<ItemMemberVO> itemMemberVOList = ItemMemberList.stream().filter(obj -> item.getProductId().equals(obj.getProductId())).collect(Collectors.toList());
-                item.setItemMemberList(itemMemberVOList);
-
-                Map<String, List<ItemMemberVO>> memberMap = itemMemberVOList.parallelStream().
-                        collect(Collectors.groupingBy(ItemMemberVO::getRoleId));
-
-                List<Map<String, Object>> itemMemberList = new ArrayList<>(memberMap.size());
-                for (Map.Entry<String, List<ItemMemberVO>> map : memberMap.entrySet()) {
-                    List<ItemMemberVO> memberList = map.getValue();
-                    Map<String, Object> roleMemberMap = new HashMap<>();
-                    String roleName = memberList.get(0).getRoleName();
-                    List<String> memberNameList = memberList.stream().map(ItemMemberVO::getMemberName).collect(Collectors.toList());
-                    roleMemberMap.put(roleName, memberNameList);
-                    itemMemberList.add(roleMemberMap);
-                }
-                item.setItemMember(itemMemberList);
                 String progressStatus = item.getProgressStatus();
                 item.setProgressStatusName(ProductProgressStatusEnum.getName(progressStatus));
                 //总的文档数
@@ -418,18 +376,8 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
-        //根据当前登录人id 获取收藏的列表
-        List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(userId);
-
         List<BasicDTO> list = new ArrayList<>();
-        //如果是我的收藏
-        if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
-            if (CollectionUtils.isNotEmpty(myCollectProductIds)) {
-                list = baseMapper.listMyCollectNotPaging(params, myCollectProductIds, archiveProductIds);
-            }
-        } else {
-            list = baseMapper.listNotPaging(params, archiveProductIds);
-        }
+        list = baseMapper.listNotPaging(params, archiveProductIds);
         return list;
     }
 
@@ -454,9 +402,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Override
     public void updateChargeByProductId(String productId, String projectChargeId) {
         String userName = commonService.getNameById(projectChargeId);
-        lambdaUpdate().eq(ProjectInfoEntity::getProductId,productId)
-                .set(ProjectInfoEntity::getChargeId,projectChargeId)
-                .set(ProjectInfoEntity::getChargeName,userName)
+        lambdaUpdate().eq(ProjectInfoEntity::getProductId, productId)
+                .set(ProjectInfoEntity::getChargeId, projectChargeId)
+                .set(ProjectInfoEntity::getChargeName, userName)
                 .update();
     }
 
@@ -621,7 +569,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         for (int i = days; i >= 0; i--) {
             Map<String, Object> finishTaskMap = new HashMap<>();
             Date date = LocalDateUtil.localDateTime2Date(dateTime.plusDays(-i));
-            long count = taskList.stream().filter(t -> t.getRealityEndTime() != null && DateUtils.isSameDay(date, Date.from( t.getRealityEndTime().atZone( ZoneId.systemDefault()).toInstant()))).count();
+            long count = taskList.stream().filter(t -> t.getRealityEndTime() != null && DateUtils.isSameDay(date, Date.from(t.getRealityEndTime().atZone(ZoneId.systemDefault()).toInstant()))).count();
             finishTaskMap.put("date", sdf.format(date.getTime()));
             finishTaskMap.put("quantity", count);
             finishTaskTrend.add(finishTaskMap);

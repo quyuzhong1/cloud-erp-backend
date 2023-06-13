@@ -14,9 +14,13 @@ import java.io.Serializable;
 public class CountDTO implements Serializable {
 
 
-    //任务id 或者产品id
+    /**
+     * 任务id 或者产品id
+     */
     private String flagId;
 
-    //数量
+    /**
+     *  数量
+     */
     private Integer count;
 }

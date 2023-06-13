@@ -34,6 +34,7 @@
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
         WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        AND P.id NOT IN (SELECT product_id  FROM product_archive WHERE is_deleted=FALSE)
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
             <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
@@ -41,10 +42,10 @@
             </foreach>
         </if>
         <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
-            AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
-            OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE
+            AND (P.name ILIKE concat('%',#{params.searchKeyword},'%')
+            OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE
             concat('%',#{params.searchKeyword},'%'))
-            OR p.spu_no LIKE concat('%',#{params.searchKeyword},'%'))
+            OR p.spu_no ILIKE concat('%',#{params.searchKeyword},'%'))
         </if>
         <if test="params.stateList !=null and params.stateList.size>0">
             AND P.approval_status IN
@@ -59,24 +60,16 @@
                 #{productId}
             </foreach>
         </if>
-
-        <if test="archiveProductIds!=null and archiveProductIds.size>0">
-            AND P.id NOT IN
-            <foreach collection="archiveProductIds" item="productId" open="(" separator="," close=")">
-                #{productId}
-            </foreach>
-        </if>
-
-        <if test="params.gradeList !=null and params.gradeList.size>0">
+        <if test="params.gradeIdList !=null and params.gradeIdList.size>0">
           AND p.grade_id IN
-            <foreach collection="params.gradeList" item="gradeId" open="(" separator="," close=")">
+            <foreach collection="params.gradeIdList" item="gradeId" open="(" separator="," close=")">
                 #{gradeId}
             </foreach>
         </if>
 
-        <if test="params.brandList !=null and params.brandList.size>0">
+        <if test="params.brandIdList !=null and params.brandIdList.size>0">
             AND p.brand_id IN
-            <foreach collection="params.brandList" item="brandId" open="(" separator="," close=")">
+            <foreach collection="params.brandIdList" item="brandId" open="(" separator="," close=")">
                 #{brandId}
             </foreach>
         </if>
@@ -96,9 +89,9 @@
         </if>
 
 
-        <if test="params.propertyList !=null and params.propertyList.size>0">
+        <if test="params.propertyIdList !=null and params.propertyIdList.size>0">
             AND p.property_id IN
-            <foreach collection="params.propertyList" item="propertyId" open="(" separator="," close=")">
+            <foreach collection="params.propertyIdList" item="propertyId" open="(" separator="," close=")">
                 #{propertyId}
             </foreach>
         </if>
@@ -117,14 +110,9 @@
             </foreach>
         </if>
 
-
-
-        <if test="params.startTime !=null">
-          AND p.create_time &gt;=#{params.startTime}
-        </if>
-
-        <if test="params.endTime !=null">
-            AND p.create_time &lt;= #{params.endTime}
+        <if test="params.createTimeList !=null and params.createTimeList.size>0">
+            AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > p.create_time
         </if>
 
         <if test="params.permissionSql!=null  and params.permissionSql!=''">
