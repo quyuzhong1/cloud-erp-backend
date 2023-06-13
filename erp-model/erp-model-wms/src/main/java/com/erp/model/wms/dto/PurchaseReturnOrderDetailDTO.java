@@ -64,6 +64,7 @@ public class PurchaseReturnOrderDetailDTO {
         /**
          * 退货单价
          */
+
         private BigDecimal returnPrice;
 
         /**

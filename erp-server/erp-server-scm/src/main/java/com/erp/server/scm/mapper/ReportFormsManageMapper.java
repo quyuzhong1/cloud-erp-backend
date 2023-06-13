@@ -11,6 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import javax.management.Query;
+import java.util.List;
 
 @Mapper
 public interface ReportFormsManageMapper extends BaseMapper<PurchaseOrderDetailEntity> {
@@ -23,4 +24,5 @@ public interface ReportFormsManageMapper extends BaseMapper<PurchaseOrderDetailE
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO.PagingViewDTO>
      **/
     IPage<PurchaseBusinessGatherTableDTO.PagingViewDTO> paging(Page query, @Param("params") PurchaseBusinessGatherTableDTO.PagingParamDTO param);
+
 }
