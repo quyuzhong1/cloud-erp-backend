@@ -152,7 +152,6 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
                 //高
                 packVO.setProductHeight(new BigDecimal(productSizes[2]));
             }
-
             //外箱大小
             String boxSize = item.getBoxSize();
             if (StringUtils.isNotBlank(boxSize)) {
