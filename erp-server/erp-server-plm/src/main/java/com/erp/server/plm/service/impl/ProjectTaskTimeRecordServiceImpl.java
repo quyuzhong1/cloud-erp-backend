@@ -25,6 +25,7 @@ import com.erp.server.plm.mapper.ProjectTaskTimeRecordMapper;
 import com.erp.server.plm.service.ProjectTaskService;
 import com.erp.server.plm.service.ProjectTaskTimeRecordService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +39,7 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- *  服务实现类
+ * 服务实现类
  * </p>
  *
  * @author Cloud
@@ -61,10 +62,10 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
             dto.getParams().setEndDate(dto.getParams().getEndDate().plusDays(1));
         }
 
-        IPage<ProjectTaskTimeRecordPageVO> recordPage  = baseMapper.pageTaskTimeRecord(query, dto.getParams(), dto.getPermissionSql());
+        IPage<ProjectTaskTimeRecordPageVO> recordPage = baseMapper.pageTaskTimeRecord(query, dto.getParams(), dto.getPermissionSql());
         // 根据task id查询日期数据进行处理
         List<ProjectTaskTimeRecordPageVO> records = recordPage.getRecords();
-        if(CollectionUtil.isEmpty(records)){
+        if (CollectionUtil.isEmpty(records)) {
             return new PagingVO(recordPage);
         }
         initPlanWorkTime(records);
@@ -96,7 +97,7 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
 
     @Override
     public Boolean exportTaskTimeList(ProjectTaskTimeRecordDTO.PageRecordDto dto, HttpServletResponse response) {
-        List<ProjectTaskTimeRecordPageVO> projectTaskTimeRecordList  = baseMapper.pageTaskTimeRecord(dto, dto.getPermissionSql());
+        List<ProjectTaskTimeRecordPageVO> projectTaskTimeRecordList = baseMapper.pageTaskTimeRecord(dto, dto.getPermissionSql());
         initPlanWorkTime(projectTaskTimeRecordList);
         String excelPath = "excel/taskTime.xlsx";
         String name = "工时统计";
@@ -133,12 +134,12 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
             ProjectTaskTimeRecordEntity projectTaskTimeRecordEntity = exitEntityMap.get(entity.getId());
             log.info("projectTaskTimeRecordEntity >>>{} exitEntityMap={}", JSONUtil.toJsonStr(projectTaskTimeRecordEntity), JSONUtil.toJsonStr(exitEntityMap));
             if (null == projectTaskTimeRecordEntity) {
-                insertList.add(new ProjectTaskTimeRecordEntity(entity,holidayDateList));
+                insertList.add(new ProjectTaskTimeRecordEntity(entity, holidayDateList));
             } else {
-                if(null == entity.getRealityStartTime()){
+                if (null == entity.getRealityStartTime()) {
                     entity.setRealityStartTime(projectTaskTimeRecordEntity.getRealityStartTime());
                 }
-                ProjectTaskTimeRecordEntity updateEntity = new ProjectTaskTimeRecordEntity(entity,holidayDateList);
+                ProjectTaskTimeRecordEntity updateEntity = new ProjectTaskTimeRecordEntity(entity, holidayDateList);
 
                 updateEntity.setId(projectTaskTimeRecordEntity.getId());
                 updateList.add(updateEntity);
@@ -153,9 +154,26 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
         if (CollectionUtil.isNotEmpty(updateList)) {
             if (!updateBatchById(updateList)) {
                 log.error("ProjectTaskTimeRecordServiceImpl>>>saveOrUpdateByProjectTaskList>>updateList更新/保存工时记录失败请重试！");
-            throw new RuntimeException("更新工时记录失败请重试！");
+                throw new RuntimeException("更新工时记录失败请重试！");
             }
         }
         return true;
+    }
+
+
+    /**
+     * 根据产品id 获取到工时信息
+     *
+     * @param productIds
+     * @return java.util.List<com.erp.model.plm.dto.ProjectTaskTimeRecordDTO.TaskWorkTimeDTO>
+     * @author yl
+     * @date 2023-06-12 18:28
+     */
+    @Override
+    public List<ProjectTaskTimeRecordDTO.TaskWorkTimeDTO> listByProductIds(List<String> productIds) {
+        if (CollectionUtils.isEmpty(productIds)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listByProductIds(productIds);
     }
 }

@@ -191,4 +191,22 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @return com.erp.model.plm.dto.ProductInfoDTO.ProductRolePeopleDTO
      */
     List<ProductInfoDTO.ProductRolePeopleDTO> getRolePeople(List<String>  skuIds);
+
+    /**
+     * 我的项目
+     * @author yl
+     * @date 2023-06-12 16:56
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.plm.dto.ProductShowDTO>
+     */
+    PagingVO<ProductShowDTO> myProject(PagingDTO<ProductSearchDTO> dto);
+
+    /**
+     * 收藏的项目
+     * @author yl
+     * @date 2023-06-12 16:58
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.plm.dto.ProductShowDTO>
+     */
+    PagingVO<ProductShowDTO> collect(PagingDTO<ProductSearchDTO> dto);
 }

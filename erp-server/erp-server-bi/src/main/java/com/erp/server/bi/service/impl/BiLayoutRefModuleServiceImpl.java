@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -52,9 +53,9 @@ public class BiLayoutRefModuleServiceImpl extends ServiceImpl<BiLayoutRefModuleM
                 refModule.setSubjectId(subjectId);
                 refModule.setLayoutId(layoutId);
                 refModule.setSerialNo(i + 1);
-                if(ref!=null){
+                if (ref != null) {
                     refModule.setModuleId(ref.getId());
-                }else {
+                } else {
                     refModule.setModuleId("");
                 }
                 addList.add(refModule);
@@ -154,6 +155,22 @@ public class BiLayoutRefModuleServiceImpl extends ServiceImpl<BiLayoutRefModuleM
             saveList.add(entity);
         }
         this.saveBatch(saveList);
+    }
+
+    /**
+     * 根据布局id 获取到对应的模块id
+     *
+     * @param layoutIdList
+     * @return java.util.List<com.erp.model.bi.dto.LayoutRefModuleDTO.LayoutRefModuleInfoDTO>
+     * @author yl
+     * @date 2023-06-13 10:46
+     */
+    @Override
+    public List<LayoutRefModuleDTO.LayoutRefModuleInfoDTO> listByLayoutIds(List<String> layoutIdList) {
+        if (CollectionUtils.isEmpty(layoutIdList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listByLayoutIds(layoutIdList);
     }
 
 

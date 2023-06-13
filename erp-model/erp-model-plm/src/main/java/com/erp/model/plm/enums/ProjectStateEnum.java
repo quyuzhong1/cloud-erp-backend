@@ -26,14 +26,17 @@ public enum ProjectStateEnum {
     public Integer getState() {
         return state;
     }
+
     public String getName() {
         return name;
     }
 
     public static String getName(Integer code) {
-        for (ProjectStateEnum state : ProjectStateEnum.values()) {
-            if (code.equals(state.getState())) {
-                return state.getName();
+        if (code != null) {
+            for (ProjectStateEnum state : ProjectStateEnum.values()) {
+                if (code.equals(state.getState())) {
+                    return state.getName();
+                }
             }
         }
         return "";
