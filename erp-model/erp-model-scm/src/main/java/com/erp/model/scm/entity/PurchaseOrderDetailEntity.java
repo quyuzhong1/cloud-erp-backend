@@ -145,8 +145,13 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
      */
     private Boolean isEndReceive;
 
-   /** 采购申请明细id(无需传值，后端使用)
-    *
+    /**
+     * 来源明细id
+     */
+    private String sourceDetailId;
+
+   /**
+    *   采购申请明细id(无需传值，后端使用)
     */
     @TableField(exist = false)
     private String purchaseApplicationDetailId;

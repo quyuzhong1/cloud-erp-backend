@@ -22,14 +22,12 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.entity.SubcontractChangeEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
-import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.SubcontractChangeMapper;
 import com.erp.server.scm.service.CommonService;
 import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.SubcontractChangeService;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +39,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 /**
  * <p>

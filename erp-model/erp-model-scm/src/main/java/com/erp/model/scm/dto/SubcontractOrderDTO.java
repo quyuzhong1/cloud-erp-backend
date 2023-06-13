@@ -33,7 +33,7 @@ public class SubcontractOrderDTO implements Serializable {
      public static class TabListDTO {
 
          /**
-         * 类型
+         * 类型 （toBeApprove 待审批 toBeCreate 待到货 created 已到货 reject 不通过）
          */
          private String searchType;
 
@@ -187,6 +187,11 @@ public class SubcontractOrderDTO implements Serializable {
          * bom版本
          */
         private Integer bomVersion;
+
+        /**
+         * 是否加急（false否，true是）
+         */
+        private Boolean isUrgent;
 
         /**
          * 数量

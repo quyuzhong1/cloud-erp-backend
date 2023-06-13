@@ -73,4 +73,12 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return com.erp.model.wms.dto.PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO
      */
     List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(@Param("purchaseOrderIds") List<String> ids);
+    /**
+     * @description: 根据来源明细ids查询
+     * @author Will
+     * @date: 2023/6/13 15:38
+     * @param sourceDetailIds
+     * @return List<ListDTO>
+     */
+    List<PurchaseOrderDTO.ListDTO> listBySourceDetailIds(@Param("sourceDetailIds") List<String> sourceDetailIds);
 }

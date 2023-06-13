@@ -242,5 +242,20 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      */
     List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(List<String> ids);
 
+    /**
+     * @description: 根据来源明细ids查询
+     * @author Will
+     * @date: 2023/6/13 15:36
+     * @param sourceDetailIds
+     * @return List<ListDTO>
+     */
+    List<PurchaseOrderDTO.ListDTO> listBySourceDetailIds(List<String> sourceDetailIds);
 
+    /**
+     * @description: 列表数据处理
+     * @author Will
+     * @date: 2023/6/13 15:57
+     * @param records
+     */
+    void doOpHandlePurchaseOrder(List<PurchaseOrderDTO.ListDTO> records);
 }

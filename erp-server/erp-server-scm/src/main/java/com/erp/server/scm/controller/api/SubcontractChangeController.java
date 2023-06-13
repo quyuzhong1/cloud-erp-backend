@@ -19,9 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * <p>
  * 委外变更单
- * </p>
  *
  * @author will
  * @since 2023-06-08
@@ -58,7 +56,7 @@ public class SubcontractChangeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "scm:subcontractChangeOrder:paging",
-            tableAlias = ""
+            tableAlias = "sc"
     )
     public ApiResult<PagingVO<SubcontractChangeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SubcontractChangeDTO.PagingParamDTO> dto) {
         return success(subcontractChangeService.paging(dto));
@@ -256,7 +254,7 @@ public class SubcontractChangeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "scm:subcontractChangeOrder:export",
-            tableAlias = ""
+            tableAlias = "sc"
     )
     public void exportList(@RequestBody @Validated SubcontractChangeDTO.ExportDTO dto, HttpServletResponse response) {
         subcontractChangeService.exportList(dto, response);
