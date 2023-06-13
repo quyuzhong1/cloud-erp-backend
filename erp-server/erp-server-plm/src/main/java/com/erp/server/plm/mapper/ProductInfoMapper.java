@@ -23,6 +23,24 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
 
     IPage<ProductShowDTO> paging(Page query, @Param("params") ProductSearchDTO params,@Param("categoryIdList") List<String> categoryIdList);
 
+    /**
+     * 我的项目
+     * @param query
+     * @param params
+     * @param categoryIdList
+     * @return
+     */
+    IPage<ProductShowDTO> myProjectPaging(Page query, @Param("params")ProductSearchDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId") String userId);
+
+    /**
+     * 收藏的项目
+     * @param query
+     * @param params
+     * @param categoryIdList
+     * @return
+     */
+    IPage<ProductShowDTO> collect(Page query, @Param("params") ProductSearchDTO params, @Param("categoryIdList")List<String> categoryIdList);
+
     List<BasicDTO> listNotPaging(@Param("params") ProductSearchDTO params,@Param("archiveProductIds") List<String> archiveProductIds,@Param("categoryIdList") List<String> categoryIdList);
 
     List<ProductExcelDTO> getExportProduct(@Param("productIds") List<String> productIds);
@@ -57,4 +75,6 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
      * @return com.erp.model.plm.dto.ProductInfoDTO.ProductRolePeopleDTO
      */
     List<ProductInfoDTO.ProductRolePeopleDTO> getRolePeopleBySkuId(@Param("skuIdList") List<String> skuIdList);
+
+
 }

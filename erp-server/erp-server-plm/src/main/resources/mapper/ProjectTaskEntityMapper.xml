@@ -39,7 +39,7 @@
             AND pt.name LIKE concat('%',#{params.searchKeyword},'%')
         </if>
         <if test="userId !=null and userId!=''">
-            AND strpos (pt.charge_id,#{userId})>0
+            AND string_to_array( charge_id,',') &amp;&amp;  string_to_array(#{userId}, ',')
         </if>
         <if test="params.statusList != null and params.statusList.size > 0">
             AND pt.status IN
@@ -97,7 +97,7 @@
         SELECT count(0) FROM project_task
         WHERE product_id = #{productId} AND is_deleted = FALSE
         <if test="userId !=null and userId!=''">
-            AND strpos (charge_id,#{userId})>0
+            string_to_array(charge_id,',') &amp;&amp;  string_to_array(#{userId}, ',')
         </if>
         <if test="statusList !=null and statusList.size>0">
             AND status IN
@@ -1166,6 +1166,11 @@
                 #{taskId}
             </foreach>
         </if>
+    </select>
+
+    <select id="listProductIdByTaskChargeId" resultType="java.lang.String">
+        SELECT distinct product_id FROM  project_task
+        WHERE string_to_array( charge_id,',') &amp;&amp;  string_to_array(#{chargeId}, ',')
     </select>
 
 

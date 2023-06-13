@@ -507,7 +507,21 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
-        return null;
+        String userId = commonService.getUserInfo().getUid();
+
+        //这个是获取到任务负责人是自己的产品id
+        List<String> taskProductIdList = projectTaskService.listProductIdByTaskChargeId(userId);
+        if (productIdList == null) {
+            productIdList = new ArrayList<>();
+            productIdList.addAll(taskProductIdList);
+            params.setProductIds(productIdList);
+        }
+        //我的项目
+        IPage pageData = baseMapper.myProjectPaging(query, params, categoryIdList,userId);
+        //填充分页数据
+        fillPagingDb(pageData.getRecords());
+        return new PagingVO(pageData);
+
     }
 
     /**
@@ -520,7 +534,23 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public PagingVO<ProductShowDTO> collect(PagingDTO<ProductSearchDTO> dto) {
-        return null;
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        ProductSearchDTO params = dto.getParams();
+        //这个是点击左侧分类获取到的产品id
+        List<String> productIdList = params.getProductIds();
+        //如果productIds 不等于null 就是正常的搜索 ;
+        if (productIdList != null && productIdList.size() == 0) {
+            return new PagingVO(new Page());
+        }
+        //分类id
+        String categoryId = params.getCategoryId();
+        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+        //我的项目
+        IPage pageData = baseMapper.collect(query, params, categoryIdList);
+        //填充分页数据
+        fillPagingDb(pageData.getRecords());
+        return new PagingVO(pageData);
+
     }
 
 

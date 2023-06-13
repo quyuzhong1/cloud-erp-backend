@@ -4740,4 +4740,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 .list();
         return list;
     }
+
+    /**
+     * 根据用户id获取到任务负责人是自己的 产品id
+     * @author yl
+     * @date 2023-06-13 11:19
+     * @param userId
+     * @return java.util.List<java.lang.String>
+     */
+    @Override
+    public List<String> listProductIdByTaskChargeId(String userId) {
+        return baseMapper.listProductIdByTaskChargeId(userId);
+    }
 }

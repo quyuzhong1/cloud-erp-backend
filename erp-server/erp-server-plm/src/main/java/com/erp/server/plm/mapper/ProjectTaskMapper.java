@@ -164,5 +164,12 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
     List<ChangeScheduleExportVO> getExportChangeScheduleTask(@Param("dto") HandleTaskScheduleDTO dto);
 
     Boolean removeBatch(@Param("ids") List<String> ids);
+
+    /**
+     * 根据负责人id 获取到产品id
+     * @param userId
+     * @return
+     */
+    List<String> listProductIdByTaskChargeId(@Param("chargeId") String userId);
 }
 
