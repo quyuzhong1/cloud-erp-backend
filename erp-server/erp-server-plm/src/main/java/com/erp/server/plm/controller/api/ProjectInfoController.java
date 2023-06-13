@@ -115,21 +115,5 @@ public class ProjectInfoController extends BaseController {
         });
         return success(list);
     }
-
-
-    /**
-     * 项目报表
-     * @Author Luo_WG
-     * @Date 2023/6/12 19:08
-     * @param [productId]
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-    @PostMapping("/projectReportForms")
-    //@RequestPermissions("plm:project:archive")
-    public ApiResult projectReportForms(@RequestParam(value = "productId") String productId) {
-        boolean flag = projectInfoService.archive(productId);
-        return flag == true ? success() : failure();
-    }
-
 }
 
