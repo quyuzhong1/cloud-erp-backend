@@ -82,7 +82,7 @@ public class MyCenterController extends BaseController {
 
     @RequestMapping("/sedEmail")
     public ApiResult sedEmail(@RequestBody EmailVerifyCodeDTO dto) {
-        sysUserInfoService.sedEmail(dto);
+        sysUserInfoService.sendEmail(dto);
         return success();
     }
 

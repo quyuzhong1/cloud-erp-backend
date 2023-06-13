@@ -90,6 +90,41 @@ public class ProductInfoController extends BaseController {
     }
 
     /**
+     * 所有项目的统计【PLM1.3】
+     * @param
+     * @return
+     */
+    @GetMapping("/allCount")
+    public ApiResult<ProductDTO.ProductCountDTO> allCount() {
+        ProductDTO.ProductCountDTO productCount = productInfoService.allCount();
+        return success(productCount);
+    }
+
+    /**
+     * 我的项目的统计【PLM1.3】
+     * @param
+     * @return
+     */
+    @GetMapping("/myProjectCount")
+    public ApiResult<ProductDTO.ProductCountDTO> myProjectCount() {
+        ProductDTO.ProductCountDTO productCount = productInfoService.myProjectCount();
+        return success(productCount);
+    }
+
+    /**
+     * 收藏的统计【PLM1.3】
+     * @param
+     * @return
+     */
+    @GetMapping("/collectCount")
+    public ApiResult<ProductDTO.ProductCountDTO> collectCount() {
+        ProductDTO.ProductCountDTO productCount = productInfoService.collectCount();
+        return success(productCount);
+    }
+
+
+
+    /**
      * 产品列表-无分页
      *
      * @param dto

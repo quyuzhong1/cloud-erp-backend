@@ -42,5 +42,5 @@ public interface MailService{
 
 
 
-    Boolean sedVerifyCode(EmailDTO<EmailVerifyCodeDTO> dto);
+    Boolean sendVerifyCode(EmailDTO<EmailVerifyCodeDTO> dto);
 }

@@ -38,6 +38,7 @@ public class MailServiceImpl implements MailService {
 
     private final MailProperties mailProperties;
 
+    private final String nickname;
 
     /**
      * 发送文本邮件
@@ -50,7 +51,7 @@ public class MailServiceImpl implements MailService {
     @Override
     public void sendSimpleMail(String to, String subject, String content, String... cc) {
         SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(mailProperties.getUsername());
+        message.setFrom(nickname +'<' + mailProperties.getUsername() + '>');
         message.setTo(to);
         message.setSubject(subject);
         message.setText(content);
@@ -107,7 +108,7 @@ public class MailServiceImpl implements MailService {
      */
     private MimeMessageHelper buildHelper(String to, String subject, String content, MimeMessage message, String[] cc) throws MessagingException {
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
-        helper.setFrom(mailProperties.getUsername());
+        helper.setFrom(nickname +'<' + mailProperties.getUsername() + '>');
         helper.setTo(to);
         helper.setSubject(subject);
         helper.setText(content, true);
@@ -131,7 +132,7 @@ public class MailServiceImpl implements MailService {
      */
     private MimeMessageHelper buildHelper(String[] to, String subject, String content, MimeMessage message, String[] cc) throws MessagingException {
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
-        helper.setFrom(mailProperties.getUsername());
+        helper.setFrom(nickname +'<' + mailProperties.getUsername() + '>');
         helper.setTo(to);
         helper.setSubject(subject);
         helper.setText(content, true);
@@ -152,7 +153,7 @@ public class MailServiceImpl implements MailService {
      */
 
     @Override
-    public Boolean sedVerifyCode(EmailDTO<EmailVerifyCodeDTO> dto) {
+    public Boolean sendVerifyCode(EmailDTO<EmailVerifyCodeDTO> dto) {
         Boolean flag = true;
         EmailVerifyCodeDTO emailDTO = dto.getData();
         //读取邮件模板

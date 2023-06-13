@@ -50,6 +50,7 @@
         sod.sku_id as skuId,
         sod.sku_no as skuNo,
         sod.bom_version as bomVersion,
+        sod.
         sod.qty,
         sod.delivery_qty as deliveryQty,
         so.approve_user_name as approveUserName,

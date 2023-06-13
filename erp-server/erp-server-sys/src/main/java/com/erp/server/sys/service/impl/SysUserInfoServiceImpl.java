@@ -545,7 +545,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      */
 
     @Override
-    public void sedEmail(EmailVerifyCodeDTO dto) {
+    public void sendEmail(EmailVerifyCodeDTO dto) {
         String email = dto.getEmail();
         boolean result = redisService.setNx(email, 1, 1, TimeUnit.MINUTES);
         if (!result) {
@@ -570,7 +570,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         emailDTO.setRecipients(recipients);
         emailDTO.setSubject("验证码");
         emailDTO.setTemplate(EmailTemplate.VERIFY_CODE);
-        Boolean sendResult = mailService.sedVerifyCode(emailDTO);
+        Boolean sendResult = mailService.sendVerifyCode(emailDTO);
         if (sendResult) {
             redisService.setCacheObject(RedisKeyUtil.getEmailCodeCacheKey(email), code, RedisCacheConstants.EMAIL_CODE_EXPIRATION, TimeUnit.MINUTES);
         }
@@ -652,6 +652,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             FindUserDTO userDTO = new FindUserDTO();
             userDTO.setUserId(item.getUid());
             userDTO.setUserName(item.getUserName());
+            userDTO.setRealName(item.getRealName());
             userDTO.setIsMyState(0);
             resultList.add(userDTO);
         }
@@ -1088,7 +1089,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         EmailVerifyCodeDTO dto = new EmailVerifyCodeDTO();
         dto.setEmail(sysUserInfoEntity.getEmail());
-        sedEmail(dto);
+        sendEmail(dto);
         Map<String, Object> map = new HashMap<>();
         map.put("msg", String.format("已给<'%s'>成功发送验证码，请在邮箱查看", sysUserInfoEntity.getEmail()));
         return map;
@@ -1169,7 +1170,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         emailDTO.setRecipients(recipients);
         emailDTO.setSubject(subject);
         emailDTO.setTemplate(EmailTemplate.RESETTING_PASSWORD);
-        Boolean sendResult = mailService.sedVerifyCode(emailDTO);
+        Boolean sendResult = mailService.sendVerifyCode(emailDTO);
         return sendResult;
     }
 }

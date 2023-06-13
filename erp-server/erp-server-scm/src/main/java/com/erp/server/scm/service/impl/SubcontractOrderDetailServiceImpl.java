@@ -1,15 +1,31 @@
 package com.erp.server.scm.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SubcontractOrderDetailDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.scm.mapper.SubcontractOrderDetailMapper;
+import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.SubcontractOrderDetailService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -22,6 +38,12 @@ import java.util.List;
 @Slf4j
 @Service
 public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<SubcontractOrderDetailMapper, SubcontractOrderDetailEntity> implements SubcontractOrderDetailService {
+
+    @Resource
+    private ModuleOperateLogService moduleOperateLogService;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
 
     @Override
@@ -43,16 +65,149 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
 
     @Override
     public void add(List<SubcontractOrderDetailDTO.AddDTO> detailList, String mainId) {
-
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        List<SubcontractOrderDetailEntity> list = new ArrayList<>();
+        for (SubcontractOrderDetailDTO.AddDTO addDTO : detailList) {
+            SubcontractOrderDetailEntity entity = BeanMapperUtils.map(SubcontractOrderDetailEntity.class, addDTO);
+            List<SubcontractOrderDetailDTO.AddDTO> addList = addDTO.getChildList();
+            List<SubcontractOrderDetailDTO.UpdateDTO> updateList = BeanMapperUtils.copyList(SubcontractOrderDetailDTO.UpdateDTO.class, addList);
+            entity.setChildList(updateList);
+        }
+        //处理父子级数据
+        List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId);
+        this.saveBatch(resultList);
     }
 
     @Override
     public void update(List<SubcontractOrderDetailDTO.UpdateDTO> detailList, String mainId) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        List<SubcontractOrderDetailEntity> list = BeanMapperUtils.copyList(SubcontractOrderDetailEntity.class, detailList);
 
+        //原明细数据
+        List<SubcontractOrderDetailEntity> oldList = this.listParentByMainId(mainId);
+        List<String> deleteIds = getDeleteIds(detailList, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<SubcontractOrderDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+            moduleOperateLogService.batchAddModuleOperateLog("删除了一个父级SKU【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(),pairList,"编辑操作");
+            this.removeByIds(deleteIds);
+        }
+        //处理父子级数据
+        List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId);
+
+        this.saveOrUpdateBatch(resultList);
     }
 
     @Override
-    public void listByMainId(String mainId) {
+    public List<SubcontractOrderDetailEntity> listByMainId(String mainId) {
+       return lambdaQuery().eq(SubcontractOrderDetailEntity::getMainId,mainId).list();
+    }
 
+    @Override
+    public List<SubcontractOrderDetailEntity> listByParentId(String detailId) {
+        return lambdaQuery()
+                .eq(SubcontractOrderDetailEntity::getParentId,detailId)
+                .list();
+    }
+
+    private List<SubcontractOrderDetailEntity> listParentByMainId(String mainId) {
+        return lambdaQuery()
+                .eq(SubcontractOrderDetailEntity::getMainId,mainId)
+                .eq(SubcontractOrderDetailEntity::getParentId,"")
+                .list();
+    }
+
+    /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<SubcontractOrderDetailDTO.UpdateDTO> newList, List<SubcontractOrderDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(SubcontractOrderDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(SubcontractOrderDetailEntity::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
+
+
+    /**
+     * 处理明细中的数据id
+     */
+    private List<SubcontractOrderDetailEntity> generateResultDetail (List<SubcontractOrderDetailEntity> newList, String mainId) {
+        List<SubcontractOrderDetailEntity> resultList = new ArrayList<>();
+        List<String> skuIds = new ArrayList<>();
+        newList.forEach(obj -> {
+            skuIds.add(obj.getSkuId());
+            List<String> skuIdList = obj.getChildList().stream().map(SubcontractOrderDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
+            skuIds.addAll(skuIdList);
+        });
+
+        //BOM信息
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        if (CollectionUtils.isEmpty(bomChildrenList)) {
+            throw new ServiceException(ApiError.ERROR_95163);
+        }
+        //产品信息
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+
+        for (SubcontractOrderDetailEntity detailEntity : newList) {
+            //bom信息
+            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            //父级SKU信息
+            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(skuVO)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            //新增数据手动添加ID
+            if (StringUtils.isBlank(detailEntity.getId())) {
+                detailEntity.setId(IdWorker.getIdStr());
+                detailEntity.setIsAdd(Boolean.TRUE);
+            }
+            detailEntity.setMainId(mainId);
+            detailEntity.setVariantProperty(skuVO.getVariantProperty());
+            detailEntity.setSkuNo(skuVO.getSkuNo());
+            detailEntity.setBomVersion(bomChildrenSkuDTO.getBomVersion());
+            //子集SKU信息
+            List<SubcontractOrderDetailEntity>   childList = BeanMapperUtils.copyList(SubcontractOrderDetailEntity.class, detailEntity.getChildList());
+            for (SubcontractOrderDetailEntity childEntity : childList) {
+                //产品信息
+                SkuVO childSkuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(childEntity.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(childSkuVO)) {
+                    throw new ServiceException(ApiError.ERROR_95084);
+                }
+                childEntity.setId(IdWorker.getIdStr());
+                childEntity.setMainId(mainId);
+                childEntity.setParentId(detailEntity.getId());
+                childEntity.setVariantProperty(childSkuVO.getVariantProperty());
+                childEntity.setSkuNo(childSkuVO.getSkuNo());
+                childEntity.setBomVersion(bomChildrenSkuDTO.getBomVersion());
+            }
+            resultList.add(detailEntity);
+            resultList.addAll(childList);
+
+        }
+        //添加修改操作日志
+        for (SubcontractOrderDetailEntity resultEntity : resultList) {
+            SubcontractOrderDetailEntity old = this.getById(resultEntity.getId());
+            if (ObjectUtils.isNotEmpty(old)) {
+                moduleOperateLogService.addModuleOperateLogByObj(old,resultEntity, ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(),mainId,"",String.format("【%s】",old.getSkuNo()));
+            }
+        }
+        //新增SKU添加操作日志
+        List<SubcontractOrderDetailEntity> addList = newList.stream().filter(c ->c.getIsAdd()).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(addList)) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+            moduleOperateLogService.batchAddModuleOperateLog("新增了一条父级SKU【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(), addPairList, "编辑操作");
+        }
+        return resultList;
     }
 }

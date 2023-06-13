@@ -77,7 +77,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
 
     void bindingEmail(EmailVerifyCodeDTO dto);
 
-    void sedEmail(EmailVerifyCodeDTO dto);
+    void sendEmail(EmailVerifyCodeDTO dto);
 
     void removeEmail();
 

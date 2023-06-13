@@ -209,4 +209,31 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @return com.common.business.vo.PagingVO<com.erp.model.plm.dto.ProductShowDTO>
      */
     PagingVO<ProductShowDTO> collect(PagingDTO<ProductSearchDTO> dto);
+
+    /**
+     * 获取所有项目的统计
+     * @author yl
+     * @date 2023-06-13 14:51
+     * @param
+     * @return com.erp.model.plm.dto.ProductDTO.ProductCountDTO
+     */
+    ProductDTO.ProductCountDTO allCount();
+
+    /**
+     * 我的项目统计
+     * @author yl
+     * @date 2023-06-13 14:51
+     * @param
+     * @return com.erp.model.plm.dto.ProductDTO.ProductCountDTO
+     */
+    ProductDTO.ProductCountDTO myProjectCount();
+
+    /**
+     * 收藏的项目
+     * @author yl
+     * @date 2023-06-13 16:34
+     * @param
+     * @return com.erp.model.plm.dto.ProductDTO.ProductCountDTO
+     */
+    ProductDTO.ProductCountDTO collectCount();
 }

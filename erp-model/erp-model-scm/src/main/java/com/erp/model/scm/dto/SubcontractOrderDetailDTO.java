@@ -34,6 +34,12 @@ public class SubcontractOrderDetailDTO implements Serializable {
          * 主键id
          */
         private String id;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
         /**
         * 变体信息
         */
@@ -71,7 +77,7 @@ public class SubcontractOrderDetailDTO implements Serializable {
         /**
          * 子件集合
          */
-        private List<ViewDTO> detailList;
+        private List<ViewDTO> childList;
     }
 
     /**
@@ -157,6 +163,12 @@ public class SubcontractOrderDetailDTO implements Serializable {
         * 预计交货日期
         */
         private LocalDate planDeliveryDate;
+
+        /**
+         * 是否是赠品（false否，true是）
+         */
+        private Boolean isGift;
+
         /**
         * 是否加急（false否，true是）
         */

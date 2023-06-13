@@ -181,6 +181,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
     }
 
     @Data

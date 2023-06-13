@@ -54,5 +54,13 @@ public interface SubcontractOrderDetailService extends SuperService<SubcontractO
      * @date: 2023/6/12 18:39
      * @param mainId
      */
-    void listByMainId(String mainId);
+    List<SubcontractOrderDetailEntity> listByMainId(String mainId);
+    /**
+     * @description: 根据父级id查询
+     * @author Will
+     * @date: 2023/6/13 15:25
+     * @param detailId
+     * @return List<SubcontractOrderDetailEntity>
+     */
+    List<SubcontractOrderDetailEntity> listByParentId(String detailId);
 }

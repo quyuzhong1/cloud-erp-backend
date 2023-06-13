@@ -299,4 +299,13 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     Boolean removeBatch(List<String> ids);
 
     List<ProjectTaskEntity> listByTaskNames(String productId, List<String> taskNameList);
+
+    /**
+     * 根据用户id获取到任务负责人是自己的 产品id
+     * @author yl
+     * @date 2023-06-13 11:19
+     * @param userId
+     * @return java.util.List<java.lang.String>
+     */
+    List<String> listProductIdByTaskChargeId(String userId);
 }

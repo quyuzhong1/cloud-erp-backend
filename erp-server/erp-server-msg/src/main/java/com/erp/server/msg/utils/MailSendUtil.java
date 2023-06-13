@@ -22,8 +22,9 @@ public class MailSendUtil {
         MailAccount account = new MailAccount();
         account.setHost(mailConfigParam.getHost());
         account.setAuth(true);
+        account.setFrom(mailConfigParam.getNickname()+'<' + mailConfigParam.getUsername() + '>');
         //不要设置user属性
-        account.setFrom(mailConfigParam.getUsername());
+        account.setUser(mailConfigParam.getUsername());
         account.setPass(mailConfigParam.getPassword());
         if(Objects.equals(mailConfigParam.getUseSSl(),Boolean.TRUE)) {
             // 使用SSL安全连接

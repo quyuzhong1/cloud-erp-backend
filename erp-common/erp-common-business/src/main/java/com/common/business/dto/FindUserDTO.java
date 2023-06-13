@@ -20,6 +20,8 @@ public class FindUserDTO implements Serializable {
 
     private String userName;
 
+    private String realName;
+
 
     private String mobile;
 
