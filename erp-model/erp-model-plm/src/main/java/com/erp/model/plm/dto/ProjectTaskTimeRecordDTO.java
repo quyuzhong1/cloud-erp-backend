@@ -18,7 +18,7 @@ public class ProjectTaskTimeRecordDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class PageRecordDto extends PermissionsDTO{
+    public static class PageRecordDto extends PermissionsDTO {
         /**
          * 产品名称/SPU型号
          */
@@ -35,6 +35,30 @@ public class ProjectTaskTimeRecordDTO implements Serializable {
          * 负责人id
          */
         private List<String> chargeId;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class TaskWorkTimeDTO {
+
+        /**
+         * 产品id
+         */
+        private String productId;
+
+
+        /**
+         * 任务id
+         */
+        private String taskId;
+
+        /**
+         * 工时 小时 每天8 小时
+         */
+        private Integer taskTime;
+
+
     }
 
 }

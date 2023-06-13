@@ -407,19 +407,19 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         //获取到布局id
         List<String> layoutIdList = list.stream().map(LayoutDetailsDTO::getId).collect(Collectors.toList());
 
-        List<BiLayoutRefModuleEntity> layoutRefModuleList = layoutRefModuleService.getByLayoutIds(layoutIdList);
-        List<String> moduleIdList = layoutRefModuleList.stream().map(BiLayoutRefModuleEntity::getModuleId).collect(Collectors.toList());
+        List<LayoutRefModuleDTO.LayoutRefModuleInfoDTO> layoutRefModuleList = layoutRefModuleService.listByLayoutIds(layoutIdList);
+        List<String> moduleIdList = layoutRefModuleList.stream().map(LayoutRefModuleDTO.LayoutRefModuleInfoDTO::getModuleId).collect(Collectors.toList());
         List<BiModuleEntity> moduleList = moduleService.getByIds(moduleIdList);
         //用户可见的模块id
         List<String> visibleModuleIdList = modulePermissionService.getModuleIdsByUserId(userId);
         for (LayoutDetailsDTO item : list) {
             //布局id
             String layoutId = item.getId();
-            List<BiLayoutRefModuleEntity> moduleIds = layoutRefModuleList.stream().
+            List<LayoutRefModuleDTO.LayoutRefModuleInfoDTO> moduleIds = layoutRefModuleList.stream().
                     filter(l -> l.getLayoutId().equals(layoutId)).
                     collect(Collectors.toList());
             List<LayoutRefModuleDTO> layoutRefList = new ArrayList<>();
-            for (BiLayoutRefModuleEntity ref : moduleIds) {
+            for (LayoutRefModuleDTO.LayoutRefModuleInfoDTO ref : moduleIds) {
                 String moduleId = ref.getModuleId();
                 LayoutRefModuleDTO refModule = new LayoutRefModuleDTO();
                 BiModuleEntity module = moduleList.stream().filter(m -> m.getId().equals(moduleId)).

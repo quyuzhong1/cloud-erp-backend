@@ -1536,14 +1536,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 Integer qty = MathUtil.ZERO;
                 if (CollectionUtils.isNotEmpty(receiveDetailList)) {
                     // 此处收货单需过滤为审核通过的，只有审核通过的才占用库存数量
-                    qty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(member.getId()) && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
+                    qty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(member.getId())
+                            && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
                             .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
                 Integer poQty = MathUtil.ZERO;
                 if(CollectionUtils.isNotEmpty(poInstockDetailList)) {
-                    // 采购入库单（无收货单）已扣减的在途数量
+                    // 采购入库单，只有审核通过的才占用库存数量
                     poQty = poInstockDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(member.getId())
-                            && Objects.equals(e.getSourceDetailId(), member.getId())
                             && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
                             .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                 }

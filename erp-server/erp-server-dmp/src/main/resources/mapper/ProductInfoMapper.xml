@@ -3,7 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.dmp.pull.mapper.ProductInfoMapper">
-    <select id="getProductInfoById" resultType="com.erp.model.plm.entity.ProductInfoEntity">
+    <select id="ListProductInfoByIds" resultType="com.erp.model.plm.entity.ProductInfoEntity">
         SELECT
             id,
             name,
@@ -52,7 +52,480 @@
             is_deleted,
             version
         FROM product_info
-        WHERE id = #{id}
+        where id in
+        <foreach close=")" collection="ids" item="id" open="(" separator=", ">
+            #{id}
+        </foreach>
     </select>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.erp.model.plm.entity.ProductInfoEntity">
+        <!--@mbg.generated-->
+        update product_info
+        <set>
+            <if test="name != null">
+                "name" = #{name,jdbcType=VARCHAR},
+            </if>
+            <if test="category != null">
+                category = #{category,jdbcType=VARCHAR},
+            </if>
+            <if test="property != null">
+                property = #{property,jdbcType=VARCHAR},
+            </if>
+            <if test="chargeName != null">
+                charge_name = #{chargeName,jdbcType=LONGVARCHAR},
+            </if>
+            <if test="chargeId != null">
+                charge_id = #{chargeId,jdbcType=LONGVARCHAR},
+            </if>
+            <if test="grade != null">
+                grade = #{grade,jdbcType=VARCHAR},
+            </if>
+            <if test="brandName != null">
+                brand_name = #{brandName,jdbcType=VARCHAR},
+            </if>
+            <if test="approvalStatus != null">
+                approval_status = #{approvalStatus,jdbcType=SMALLINT},
+            </if>
+            <if test="sysField != null">
+                sys_field = #{sysField,jdbcType=LONGVARCHAR},
+            </if>
+            <if test="propertyId != null">
+                property_id = #{propertyId,jdbcType=VARCHAR},
+            </if>
+            <if test="brandId != null">
+                brand_id = #{brandId,jdbcType=VARCHAR},
+            </if>
+            <if test="categoryId != null">
+                category_id = #{categoryId,jdbcType=VARCHAR},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="type != null">
+                "type" = #{type,jdbcType=SMALLINT},
+            </if>
+            <if test="deleteState != null">
+                delete_state = #{deleteState,jdbcType=SMALLINT},
+            </if>
+            <if test="spuNo != null">
+                spu_no = #{spuNo,jdbcType=VARCHAR},
+            </if>
+            <if test="sellSpot != null">
+                sell_spot = #{sellSpot,jdbcType=VARCHAR},
+            </if>
+            <if test="functionDesc != null">
+                function_desc = #{functionDesc,jdbcType=LONGVARCHAR},
+            </if>
+            <if test="usageDesc != null">
+                usage_desc = #{usageDesc,jdbcType=VARCHAR},
+            </if>
+            <if test="pirateRisk != null">
+                pirate_risk = #{pirateRisk,jdbcType=SMALLINT},
+            </if>
+            <if test="materials != null">
+                materials = #{materials,jdbcType=VARCHAR},
+            </if>
+            <if test="specType != null">
+                spec_type = #{specType,jdbcType=SMALLINT},
+            </if>
+            <if test="saleMethod != null">
+                sale_method = #{saleMethod,jdbcType=VARCHAR},
+            </if>
+            <if test="relevanceProductId != null">
+                relevance_product_id = #{relevanceProductId,jdbcType=VARCHAR},
+            </if>
+            <if test="gradeId != null">
+                grade_id = #{gradeId,jdbcType=VARCHAR},
+            </if>
+            <if test="createUserId != null">
+                create_user_id = #{createUserId,jdbcType=VARCHAR},
+            </if>
+            <if test="createUserName != null">
+                create_user_name = #{createUserName,jdbcType=VARCHAR},
+            </if>
+            <if test="updateUserId != null">
+                update_user_id = #{updateUserId,jdbcType=VARCHAR},
+            </if>
+            <if test="updateUserName != null">
+                update_user_name = #{updateUserName,jdbcType=VARCHAR},
+            </if>
+            <if test="isFinishedProductDev != null">
+                is_finished_product_dev = #{isFinishedProductDev,jdbcType=SMALLINT},
+            </if>
+            <if test="approvalTime != null">
+                approval_time = #{approvalTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="productVersion != null">
+                product_version = #{productVersion,jdbcType=SMALLINT},
+            </if>
+            <if test="entrustedDevelopCost != null">
+                entrusted_develop_cost = #{entrustedDevelopCost,jdbcType=NUMERIC},
+            </if>
+            <if test="moldCost != null">
+                mold_cost = #{moldCost,jdbcType=NUMERIC},
+            </if>
+            <if test="sampleFee != null">
+                sample_fee = #{sampleFee,jdbcType=NUMERIC},
+            </if>
+            <if test="isCustomized != null">
+                is_customized = #{isCustomized,jdbcType=SMALLINT},
+            </if>
+            <if test="salesChannel != null">
+                sales_channel = #{salesChannel,jdbcType=VARCHAR},
+            </if>
+            <if test="nameEn != null">
+                name_en = #{nameEn,jdbcType=VARCHAR},
+            </if>
+            <if test="imageUrl != null">
+                image_url = #{imageUrl,jdbcType=VARCHAR},
+            </if>
+            <if test="progressStatus != null">
+                progress_status = #{progressStatus,jdbcType=VARCHAR},
+            </if>
+            <if test="projectChargeId != null">
+                project_charge_id = #{projectChargeId,jdbcType=VARCHAR},
+            </if>
+            <if test="templateId != null">
+                template_id = #{templateId,jdbcType=VARCHAR},
+            </if>
+            <if test="isDeleted != null">
+                is_deleted = #{isDeleted,jdbcType=BOOLEAN},
+            </if>
+            <if test="version != null">
+                version = #{version,jdbcType=SMALLINT},
+            </if>
+        </set>
+        where id = #{id,jdbcType=VARCHAR}
+    </update>
+
+    <update id="updateBatchSelective" parameterType="java.util.List">
+        <!--@mbg.generated-->
+        update product_info
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="&quot;name&quot; = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.name != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.name,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="category = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.category != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.category,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="property = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.property != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.property,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="charge_name = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.chargeName != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.chargeName,jdbcType=LONGVARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="charge_id = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.chargeId != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.chargeId,jdbcType=LONGVARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="grade = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.grade != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.grade,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="brand_name = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.brandName != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.brandName,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="approval_status = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.approvalStatus != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.approvalStatus,jdbcType=SMALLINT}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="sys_field = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.sysField != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.sysField,jdbcType=LONGVARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="property_id = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.propertyId != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.propertyId,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="brand_id = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.brandId != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.brandId,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="category_id = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.categoryId != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.categoryId,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="create_time = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.createTime != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.createTime,jdbcType=TIMESTAMP}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="update_time = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.updateTime != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.updateTime,jdbcType=TIMESTAMP}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="&quot;type&quot; = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.type != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.type,jdbcType=SMALLINT}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="delete_state = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.deleteState != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.deleteState,jdbcType=SMALLINT}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="spu_no = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.spuNo != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.spuNo,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="sell_spot = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.sellSpot != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.sellSpot,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="function_desc = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.functionDesc != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.functionDesc,jdbcType=LONGVARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="usage_desc = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.usageDesc != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.usageDesc,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="pirate_risk = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.pirateRisk != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.pirateRisk,jdbcType=SMALLINT}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="materials = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.materials != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.materials,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="spec_type = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.specType != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.specType,jdbcType=SMALLINT}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="sale_method = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.saleMethod != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.saleMethod,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="relevance_product_id = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.relevanceProductId != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.relevanceProductId,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="grade_id = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.gradeId != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.gradeId,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="create_user_id = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.createUserId != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.createUserId,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="create_user_name = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.createUserName != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.createUserName,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="update_user_id = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.updateUserId != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.updateUserId,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="update_user_name = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.updateUserName != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.updateUserName,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="is_finished_product_dev = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.isFinishedProductDev != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.isFinishedProductDev,jdbcType=SMALLINT}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="approval_time = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.approvalTime != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.approvalTime,jdbcType=TIMESTAMP}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="product_version = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.productVersion != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.productVersion,jdbcType=SMALLINT}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="entrusted_develop_cost = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.entrustedDevelopCost != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.entrustedDevelopCost,jdbcType=NUMERIC}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="mold_cost = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.moldCost != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.moldCost,jdbcType=NUMERIC}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="sample_fee = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.sampleFee != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.sampleFee,jdbcType=NUMERIC}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="is_customized = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.isCustomized != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.isCustomized,jdbcType=SMALLINT}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="sales_channel = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.salesChannel != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.salesChannel,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="name_en = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.nameEn != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.nameEn,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="image_url = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.imageUrl != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.imageUrl,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="progress_status = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.progressStatus != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.progressStatus,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="project_charge_id = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.projectChargeId != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.projectChargeId,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="template_id = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.templateId != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.templateId,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="is_deleted = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.isDeleted != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.isDeleted,jdbcType=BOOLEAN}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="version = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.version != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.version,jdbcType=SMALLINT}
+                    </if>
+                </foreach>
+            </trim>
+        </trim>
+        where id in
+        <foreach close=")" collection="list" item="item" open="(" separator=", ">
+            #{item.id,jdbcType=VARCHAR}
+        </foreach>
+    </update>
+
 
 </mapper>

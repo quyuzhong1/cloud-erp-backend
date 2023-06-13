@@ -1,5 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.scm.mapper.ReportFormsManageMapper">
+    <select id="paging" resultType="com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO$PagingViewDTO">
+        SELECT
+            po.purchase_org_name,
+            pos.supplier_name,
+            pod.sku_no,
+            round(SUM(pod.purchase_amount) / COUNT(pod.id)::numeric ,4) AS avgPrice,
+            COUNT(pod.id) AS orderQty,
+            SUM(pod.purchase_amount) AS orderAmount
+        FROM purchase_order_detail pod
+        LEFT JOIN purchase_order po ON pod.purchase_order_id = po.id AND pod.is_deleted = FALSE
+        LEFT JOIN purchase_order_supplier pos ON pos.purchase_order_id = po.id AND po.is_deleted = FALSE
+        WHERE pos.is_deleted = FALSE
+        <if test="params.billDateList">
 
+        </if>
+        <if test="params.billDateList != null and params.billDateList.size > 0">
+            and po.purchase_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >= po.purchase_date
+        </if>
+        GROUP BY
+        po.purchase_org_name,
+        pos.supplier_name,
+        pod.sku_no
+    </select>
 </mapper>

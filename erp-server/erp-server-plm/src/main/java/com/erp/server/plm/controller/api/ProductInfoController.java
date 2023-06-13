@@ -43,7 +43,7 @@ public class ProductInfoController extends BaseController {
     private SysCodeService sysCodeService;
 
     /**
-     * 产品列表-普通分页【优化3】
+     * 所有项目【PLM1.3】
      *
      * @param dto
      * @return com.common.core.vo.ApiResult<com.erp.common.vo.PagingVO < com.erp.model.plm.dto.ProductShowDTO>>
@@ -51,9 +51,41 @@ public class ProductInfoController extends BaseController {
      * @date 2022-10-09 10:17
      */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:paging", tableAlias = "pt")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "plm:product:paging",
+            tableAlias = "pt"
+    )
     public ApiResult<PagingVO<ProductShowDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.paging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 我的项目【PLM1.3】
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO < com.erp.model.plm.dto.ProductShowDTO>>
+     * @author yl
+     * @date 2023-06-12 14:54
+     */
+    @PostMapping("/myProject")
+    public ApiResult<PagingVO<ProductShowDTO>> myProject(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
+        PagingVO<ProductShowDTO> pagingVO = productInfoService.myProject(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 收藏的项目【PLM1.3】
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO < com.erp.model.plm.dto.ProductShowDTO>>
+     * @author yl
+     * @date 2023-06-12 14:54
+     */
+    @PostMapping("/collect")
+    public ApiResult<PagingVO<ProductShowDTO>> collect(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
+        PagingVO<ProductShowDTO> pagingVO = productInfoService.collect(dto);
         return success(pagingVO);
     }
 
@@ -230,24 +262,26 @@ public class ProductInfoController extends BaseController {
 
     /**
      * 设置产品进度
+     *
      * @param dto
      * @return
      */
     @PostMapping("/setProgressStatus")
     public ApiResult setProgressStatus(@RequestBody @Validated SetProductProgressStatusDTO dto) {
-        Boolean result=productInfoService.setProgressStatus(dto);
-        return result==true?success():failure();
+        Boolean result = productInfoService.setProgressStatus(dto);
+        return result == true ? success() : failure();
     }
 
     /**
      * 设置产品示意图
+     *
      * @param dto
      * @return
      */
     @PostMapping("/setSchematicImageUrl")
     public ApiResult setSchematicImageUrl(@RequestBody @Validated SetSchematicImageUrlDTO dto) {
-        Boolean result=productInfoService.setSchematicImageUrl(dto);
-        return result==true?success():failure();
+        Boolean result = productInfoService.setSchematicImageUrl(dto);
+        return result == true ? success() : failure();
     }
 
 

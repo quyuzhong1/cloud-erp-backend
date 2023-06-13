@@ -235,15 +235,6 @@ public enum RocketMqTagEnum {
      * 拉取艾姆勒入库单
      */
     IML_STOCK_INBOUND_ORDER_TAG(2002,RocketMqTagEnum.STOCK,"iml_stock_inbound_order_tag"),
-
-    /**
-     * 同步产品信息到中台dmp
-     */
-    SYNC_DMP_PRODUCT_INFO_TAG(2003,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_info_tag"),
-    /**
-     * 同步产品sku到中台dmp
-     */
-    SYNC_DMP_PRODUCT_SKU_TAG(2004,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_sku_tag"),
     /**
      * 同步产品sku变更新老品
      */
@@ -265,8 +256,6 @@ public enum RocketMqTagEnum {
      * 汇率更新
      */
     CHANGE_CURRENCY_TAG(2009, RocketMqTagEnum.SYNC_DMP,"change_currency_tag"),
-
-
     //-----------------------------plm数据更新编码从3001开始---------------------------------------------------------------
     /**
      * 修改上市时间
@@ -288,6 +277,25 @@ public enum RocketMqTagEnum {
      */
     SYNC_WMS_PRODUCT_INFO_TAG(3004,RocketMqTagEnum.SYNC_WMS,"sync_wms_product_info_tag"),
 
+    /**
+     * 同步产品信息到中台dmp
+     */
+    SYNC_DMP_PRODUCT_INFO_TAG(3005,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_info_tag"),
+
+    /**
+     * 同步产品sku到中台dmp
+     */
+    SYNC_DMP_PRODUCT_SKU_TAG(3006,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_sku_tag"),
+
+    /**
+     * 同步产品信息到中台scm
+     */
+    SYNC_SCM_PRODUCT_INFO_TAG(3007,RocketMqTagEnum.SYNC_DMP,"sync_scm_product_info_tag"),
+
+    /**
+     * 同步产品sku到中台scm
+     */
+    SYNC_SCM_PRODUCT_SKU_TAG(3008,RocketMqTagEnum.SYNC_DMP,"sync_scm_product_sku_tag"),
     //-----------------------------公共信息编码从9001开始------------------------------------------------------------------
 
     /**

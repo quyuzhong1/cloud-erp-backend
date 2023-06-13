@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.erp.model.plm.vo.ItemMemberVO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -8,7 +7,6 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @Classname ProductShowDTO
@@ -34,6 +32,11 @@ public class ProductShowDTO implements Serializable {
      * 产品名称
      */
     private String name;
+
+    /**
+     * spuNo
+     */
+    private String spuNo;
 
     /**
      * 产品等级
@@ -79,7 +82,6 @@ public class ProductShowDTO implements Serializable {
      * 项目负责人
      */
     private String projectChargeName;
-
 
 
     private String projectChargeId;
@@ -137,6 +139,26 @@ public class ProductShowDTO implements Serializable {
      */
     private Integer taskCount;
 
+    /**
+     * 任务完成的总数
+     */
+    private Integer finishedCount;
+
+
+    /**
+     * 我的任务总数
+     */
+    private Integer myTaskTotalCount;
+
+    /**
+     * 我完成的任务总数
+     */
+    private Integer myTaskFinishedCount;
+
+    /**
+     * 计划工时
+     */
+    private Integer planWorkHour;
 
     /**
      * 是否收藏 产品 true  收藏 false 没有
@@ -205,18 +227,6 @@ public class ProductShowDTO implements Serializable {
     private String category;
 
 
-    /**
-     * spu no
-     *
-     */
-    private String spuNo;
 
-
-    /**
-     * 项目成员
-     */
-    private List<ItemMemberVO> itemMemberList;
-
-    private List<Map<String,Object>> itemMember;
 
 }

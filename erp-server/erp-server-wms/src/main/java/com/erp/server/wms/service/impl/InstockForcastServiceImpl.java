@@ -7,12 +7,15 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.InstockForcastDetailEntity;
 import com.erp.model.wms.entity.InstockForcastEntity;
+import com.erp.model.wms.entity.PoInstockDetailEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.InstockForcastMapper;
@@ -20,6 +23,7 @@ import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,6 +60,12 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
 
     @Autowired
     private InstockForcastMapper instockForcastMapper;
+
+    @Autowired
+    private WarehouseReceiveDetailService warehouseReceiveDetailService;
+
+    @Autowired
+    private PoInstockDetailService poInstockDetailService;
 
     @Autowired
     private WarehouseService warehouseService;
@@ -223,29 +233,56 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             InstockForcastDetailEntity instockForcastDetailEntity = instockForcastDetailService.find(instockForcastEntity.getId(), member.getPurchaseOrderDetailId());
             Optional.ofNullable(instockForcastDetailEntity).orElseThrow(()->new ServiceException("未找到入库预报明细信息"));
             // 更新入库预报明细数量
-            instockForcastDetailService.updateQtyByPoChange(instockForcastEntity.getId(), member.getQty());
+            instockForcastDetailService.updateQtyByPoChange(instockForcastDetailEntity.getId(), member.getQty());
 
             inOutStockDTO.setSourceDetailId(instockForcastDetailEntity.getId());
             inOutStockDTO.setSkuId(member.getSkuId());
             inOutStockDTO.setSkuNo(member.getSkuNo());
             inOutStockDTO.setQty(member.getQty());
 
-            Integer inventoryQty = member.getQty() - member.getOriginQty();// 变更的数量
+            // 变更的数量（新旧采购订单数量对比）
+            Integer inventoryQty = member.getQty() - member.getOriginQty();
             if(inventoryQty == 0) {
                 log.info("SKU【{}】采购订单变更单没有发生数量改变，不处理", member.getSkuNo());
                 continue;
             }
+            // 采购订单明细id
+            String purchaseOrderDetailId = member.getPurchaseOrderDetailId();
+            // 获取原采购订单明细的收货信息
+            List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(Lists.newArrayList(purchaseOrderDetailId));
+            // 获取原采购订单明细的入库信息
+            List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listDetailByPodIds(Lists.newArrayList(purchaseOrderDetailId));
+
             String arriveStatus = member.getArriveStatus();
             Integer changeQty = 0;
             InventoryModeEnum inventoryModeEnum;
+
+            Integer qty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(receiveDetailList)) {
+                // 此处收货单需过滤为审核通过的，只有审核通过的才占用库存数量
+                qty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(purchaseOrderDetailId)
+                        && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
+                        .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            Integer poQty = MathUtil.ZERO;
+            if(CollectionUtils.isNotEmpty(poInstockDetailList)) {
+                // 采购入库单，只有审核通过的才占用库存数量
+                poQty = poInstockDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(purchaseOrderDetailId)
+                        && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
+                        .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+
+            // 新的采购订单数量、原在途、待检数量综合计算得出
             // 已到货（包括结束交货），如果存在收货单存在待检的情况下，需考虑扣除待检的数量
             if(Objects.equals(ArrivalStatusEnum.ARRIVED.getCode(), arriveStatus)) {
                 // 此处需考虑待检的数量，因为数量被拆分成了在途和待检
-                changeQty = member.getQty();
-                inventoryModeEnum = InventoryModeEnum.IN_STOCK;
+                changeQty = member.getQty() - qty - poQty;
+                inventoryModeEnum = changeQty > 0 ? InventoryModeEnum.IN_STOCK : InventoryModeEnum.OUT_STOCK;
+                changeQty = Math.abs(changeQty);
             } else {
-                changeQty = Math.abs(inventoryQty);
-                inventoryModeEnum = inventoryQty > 0 ? InventoryModeEnum.IN_STOCK : InventoryModeEnum.OUT_STOCK;
+                changeQty = member.getQty() - member.getOriginQty();
+                inventoryModeEnum = changeQty > 0 ? InventoryModeEnum.IN_STOCK : InventoryModeEnum.OUT_STOCK;
+                changeQty = Math.abs(changeQty);
             }
             inOutStockDTO.setQty(changeQty);
             inventorySkus.add(inOutStockDTO);

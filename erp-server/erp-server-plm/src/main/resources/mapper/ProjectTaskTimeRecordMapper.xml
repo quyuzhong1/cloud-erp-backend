@@ -62,4 +62,22 @@
         ORDER BY pi.create_time DESC
     </select>
 
+    <select id="listByProductIds" resultType="com.erp.model.plm.dto.ProjectTaskTimeRecordDTO$TaskWorkTimeDTO">
+        SELECT
+          ptr.task_time,
+          ptr.project_task_id AS taskId,
+          pt.product_id
+        FROM project_task_time_record ptr
+        LEFT JOIN project_task  pt on pt.id= ptr.project_task_id
+        AND pt.is_deleted = FALSE
+        WHERE ptr.is_deleted = FALSE
+        <if test="productIdList!=null and productIdList.size>0">
+            AND pt.product_id IN
+            <foreach collection="productIdList" item="productId"  open="(" separator="," close=")">
+                #{productId}
+            </foreach>
+        </if>
+
+    </select>
+
 </mapper>

@@ -1,7 +1,6 @@
 package com.erp.model.plm.dto;
 
 import com.common.business.dto.base.PermissionsDTO;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -9,6 +8,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
+ * @author Lambda
  * @Classname ProductSearchDTO
  * @Description TODO
  * @Date 2022-09-17 14:41
@@ -20,11 +20,6 @@ public class ProductSearchDTO extends PermissionsDTO {
 
 
     /**
-     * 我的收藏 true 是
-     */
-    private Boolean isMyCollect;
-
-    /**
      * 搜索关键字
      */
     private String searchKeyword;
@@ -34,11 +29,16 @@ public class ProductSearchDTO extends PermissionsDTO {
      */
     private String categoryId;
 
+    /**
+     * 在点击分类可以获取到产品id
+     */
+    private List<String> productIds;
 
-    private String phaseName;
+
+
 
     /**
-     * 阶段名称
+     * 阶段集合
      */
     private List<String> phaseNameList;
 
@@ -48,24 +48,22 @@ public class ProductSearchDTO extends PermissionsDTO {
      */
     private List<Integer> stateList;
 
-    //产品id 集合
-    private List<String> productIds;
 
 
     /**
      * 产品等级
      */
-    private List<String> gradeList;
+    private List<String> gradeIdList;
 
     /**
-     * 产品 品牌
+     * 产品 品牌id 集合
      */
-    private List<String> brandList;
+    private List<String> brandIdList;
 
     /**
      * 产品 属性
      */
-    private List<String> propertyList;
+    private List<String> propertyIdList;
 
 
     /**
@@ -87,14 +85,8 @@ public class ProductSearchDTO extends PermissionsDTO {
 
 
     /**
-     * 开始时间
+     * 创建时间
      */
-    private LocalDate startTime;
-
-    /**
-     * 结束时间
-     */
-    private LocalDate endTime;
-
+    private List<LocalDate> createTimeList;
 
 }

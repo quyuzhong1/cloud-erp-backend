@@ -1,15 +1,18 @@
 package com.erp.server.scm.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
+import com.erp.server.scm.service.ReportFormsManageService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -21,21 +24,24 @@ import java.util.List;
 @RestController
 @RequestMapping("/ReportFormsManage")
 public class ReportFormsManageController extends BaseController {
+    @Resource
+    private ReportFormsManageService reportFormsManageService;
 
     /**
-     * 采购业务汇总表
+     * 采购业务汇总表列表查询
      * @Author Luo_WG
      * @Date 2023/6/12 18:24
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO.PagingViewDTO>>
      **/
-    @PostMapping(value = "/purchaseBusinessGatherTable")
+    @PostMapping(value = "/purchaseBusinessGatherTablePaging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "scm:ReportFormsManage:purchaseBusinessGatherTable",
+            menuCode = "scm:ReportFormsManage:purchaseBusinessGatherTablePaging",
             tableAlias = "pod")
-    public ApiResult<List<PurchaseBusinessGatherTableDTO.PagingViewDTO>> purchaseBusinessGatherTable(@RequestBody PurchaseBusinessGatherTableDTO.PagingParamDTO dto) {
-        return null;
+    public ApiResult<List<PurchaseBusinessGatherTableDTO.PagingViewDTO>> purchaseBusinessGatherTablePaging(@RequestBody PagingDTO<PurchaseBusinessGatherTableDTO.PagingParamDTO> dto) {
+        List<PurchaseBusinessGatherTableDTO.PagingViewDTO> list = reportFormsManageService.purchaseBusinessGatherTablPaginge(dto);
+        return success(list);
     }
 
     /**

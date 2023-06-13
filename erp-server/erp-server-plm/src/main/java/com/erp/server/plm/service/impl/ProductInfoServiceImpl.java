@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.RedisService;
@@ -25,9 +26,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
-import com.erp.model.plm.vo.ItemMemberVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.constant.TaskConstant;
@@ -35,6 +34,7 @@ import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.BeanUtils;
@@ -178,6 +178,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     @Autowired
     private SysUserFeign sysUserFeign;
+
+    @Autowired
+    private ProjectTaskTimeRecordService projectTaskTimeRecordService;
 
     //任务审核人
     @Autowired
@@ -466,59 +469,88 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public PagingVO paging(PagingDTO<ProductSearchDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = new Page();
         ProductSearchDTO params = dto.getParams();
+        //这个是点击左侧分类获取到的产品id
         List<String> productIdList = params.getProductIds();
         //如果productIds 不等于null 就是正常的搜索 ;
         if (productIdList != null && productIdList.size() == 0) {
-            return new PagingVO(pageData);
+            return new PagingVO(new Page());
         }
-
-        //获取到归档的产品id
-        List<String> archiveProductIds = archiveService.getArchiveProductIds();
-        //如果是我的收藏
-        LoginUser loginUser = commonService.getUserInfo();
-        String userId = loginUser.getUid();
-        //根据当前登录人id 获取收藏的列表
-        List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(userId);
-
         //分类id
         String categoryId = params.getCategoryId();
-
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+        IPage pageData = baseMapper.paging(query, params, categoryIdList);
+        //填充分页数据
+        fillPagingDb(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
 
-        //如果是我的收藏
-        if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
-            if (CollectionUtils.isNotEmpty(myCollectProductIds)) {
-                pageData = baseMapper.myCollectPaging(query, params, myCollectProductIds, archiveProductIds, categoryIdList);
-            }
-        } else {
-            pageData = baseMapper.paging(query, params, archiveProductIds, categoryIdList);
+
+    /**
+     * 我的项目
+     *
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.plm.dto.ProductShowDTO>
+     * @author yl
+     * @date 2023-06-12 16:56
+     */
+    @Override
+    public PagingVO<ProductShowDTO> myProject(PagingDTO<ProductSearchDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        ProductSearchDTO params = dto.getParams();
+        //这个是点击左侧分类获取到的产品id
+        List<String> productIdList = params.getProductIds();
+        //如果productIds 不等于null 就是正常的搜索 ;
+        if (productIdList != null && productIdList.size() == 0) {
+            return new PagingVO(new Page());
         }
-        List<ProductShowDTO> list = pageData.getRecords();
-        Integer finish = TaskStateEnum.FINISH.getCode();
-        Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
+        //分类id
+        String categoryId = params.getCategoryId();
+        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+        return null;
+    }
 
+    /**
+     * 收藏的项目
+     *
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.plm.dto.ProductShowDTO>
+     * @author yl
+     * @date 2023-06-12 16:58
+     */
+    @Override
+    public PagingVO<ProductShowDTO> collect(PagingDTO<ProductSearchDTO> dto) {
+        return null;
+    }
+
+
+    /**
+     * 分页填充数据
+     */
+    private List<ProductShowDTO> fillPagingDb(List<ProductShowDTO> list) {
         if (CollectionUtils.isNotEmpty(list)) {
+            //如果是我的收藏
+            LoginUser loginUser = commonService.getUserInfo();
+            String userId = loginUser.getUid();
+            //根据当前登录人id 获取收藏的列表
+            List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(userId);
             List<FindUserDTO> userList = sysUserFeign.getUserList();
-
             //获取到所有出产品id
             List<String> productIds = list.stream().map(ProductShowDTO::getProductId).collect(Collectors.toList());
-
-            //根据产品id 获取项目成员 相关信息
-            List<ItemMemberVO> ItemMemberList = projectMembersService.getByProductIds(productIds);
-
-
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductIds(productIds);
+            //工时统计
+            List<ProjectTaskTimeRecordDTO.TaskWorkTimeDTO> taskTimeList = projectTaskTimeRecordService.listByProductIds(productIds);
+
 
             //根据产品id 获取到对应的要交付的文档数
             List<CountDTO> productDocs = taskDeliveryService.getTaskDocsCountByProductId();
             //根据产品id 获取到对应完成的文档数
             List<CountDTO> productFinishDocs = finishService.getTaskDocsCountByProductId();
-            //   获取到 产品迭代的数量
+            //获取到 产品迭代的数量
             List<CountDTO> productRelevance = this.getProductRelevanceList();
 
-
+            //完成的任务的状态
+            List<Integer> finishedList = Arrays.asList(TaskStateEnum.FINISH.getCode(), TaskStateEnum.APPROVAL_PASS.getCode());
             for (ProductShowDTO item : list) {
                 if (CollectionUtils.isNotEmpty(myCollectProductIds) && myCollectProductIds.contains(item.getProductId())) {
                     item.setIfAddProduct(true);
@@ -526,87 +558,74 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 if (ProductConstant.ITERATION_PRODUCT.equals(item.getType())) {
                     item.setIfIteration(true);
                 }
-                List<ItemMemberVO> itemMemberVOList = ItemMemberList.stream().filter(obj -> item.getProductId().equals(obj.getProductId())).collect(Collectors.toList());
-                item.setItemMemberList(itemMemberVOList);
-
-                Map<String, List<ItemMemberVO>> memberMap = itemMemberVOList.parallelStream().
-                        collect(Collectors.groupingBy(ItemMemberVO::getRoleId));
-
-                List<Map<String, Object>> itemMemberList = new ArrayList<>(memberMap.size());
-                for (Map.Entry<String, List<ItemMemberVO>> map : memberMap.entrySet()) {
-                    List<ItemMemberVO> memberList = map.getValue();
-                    Map<String, Object> roleMemberMap = new HashMap<>();
-                    String roleName = memberList.get(0).getRoleName();
-                    List<String> memberNameList = memberList.stream().map(ItemMemberVO::getMemberName).collect(Collectors.toList());
-                    roleMemberMap.put(roleName, memberNameList);
-                    itemMemberList.add(roleMemberMap);
-                }
-
-
-                item.setItemMember(itemMemberList);
-
+                //产品id
+                String productId = item.getProductId();
                 String progressStatus = item.getProgressStatus();
                 item.setProgressStatusName(ProductProgressStatusEnum.getName(progressStatus));
                 //总的文档数
-                CountDTO totalDocsDTO = productDocs.stream().filter(p -> item.getProductId().equals(p.getFlagId())).findFirst().orElse(null);
-                if (totalDocsDTO != null) {
-                    item.setTotalDocsCount(totalDocsDTO.getCount());
-                } else {
-                    item.setTotalDocsCount(0);
-                }
+                Integer totalDocsCount = productDocs.stream().filter(p -> productId.equals(p.getFlagId())).findFirst().
+                        map(CountDTO::getCount).orElse(0);
+                item.setTotalDocsCount(totalDocsCount);
                 //完成的
-                CountDTO finishDocsDTO = productFinishDocs.stream().filter(p -> item.getProductId().equals(p.getFlagId())).findFirst().orElse(null);
-                if (finishDocsDTO != null) {
-                    item.setFinishDocsCount(finishDocsDTO.getCount());
-                } else {
-                    item.setFinishDocsCount(0);
-                }
+                Integer finishDocsCount = productFinishDocs.stream().filter(p -> productId.equals(p.getFlagId())).findFirst().
+                        map(CountDTO::getCount).orElse(0);
+                item.setFinishDocsCount(finishDocsCount);
                 //迭代数
-                CountDTO relevanceDTO = productRelevance.stream().filter(p -> item.getProductId().equals(p.getFlagId())).findFirst().orElse(null);
-                if (relevanceDTO != null) {
-                    item.setIterateCount(relevanceDTO.getCount());
-                } else {
-                    item.setIterateCount(0);
-                }
+                Integer iterateCount = productRelevance.stream().filter(p -> productId.equals(p.getFlagId())).findFirst().
+                        map(CountDTO::getCount).orElse(0);
+                item.setIterateCount(iterateCount);
+                //项目经理id
                 String projectChargeId = item.getProjectChargeId();
                 if (StringUtils.isNotBlank(projectChargeId)) {
                     item.setProjectChargeId(projectChargeId);
                 }
+                //项目经理名
                 String projectChargeName = userList.stream().filter(u -> u.getUserId().equals(projectChargeId)).
                         findFirst().flatMap(obj -> Optional.ofNullable(obj.getUserName())).orElse("");
-
                 item.setProjectChargeName(projectChargeName);
+                //产品经理
                 String productChargeId = item.getProductChargeId();
                 if (StringUtils.isNotBlank(productChargeId)) {
-                    item.setProductChargeIdList(Arrays.asList(productChargeId.split(",")));
+                    List<String> productChargeIdList = Arrays.asList(productChargeId.split(","));
+                    item.setProductChargeIdList(productChargeIdList);
+                    String productChargeName = commonService.getNameByIds(productChargeIdList);
+                    item.setProductChargeName(productChargeName);
                 }
                 Integer approvalStatus = item.getApprovalStatus();
                 item.setApprovalStatusName(ApprovalStatusEnum.getName(approvalStatus));
                 Integer projectStatus = item.getProjectStatus();
-                if (projectStatus != null) {
-                    item.setProjectStatusName(ProjectStateEnum.getName(projectStatus));
-                } else {
-                    item.setProjectStatusName("");
-                }
-
-                List<ProjectTaskEntity> productTaskList = taskList.stream().filter(t -> item.getProductId().equals(t.getProductId())).collect(Collectors.toList());
+                item.setProjectStatusName(ProjectStateEnum.getName(projectStatus));
+                List<ProjectTaskEntity> productTaskList = taskList.stream().filter(t -> productId.equals(t.getProductId())).collect(Collectors.toList());
                 //这是立项任务
                 int approvalTaskCount = productTaskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
                 item.setApprovalTaskCount(approvalTaskCount);
                 //这是立项完成任务
-                int approvalFinishTaskCount = productTaskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty()) && (finish.equals(t.getStatus()) || approvalPass.equals(t.getStatus())))
+                int approvalFinishTaskCount = productTaskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty()) && finishedList.contains(t.getStatus()))
                         .collect(Collectors.toList()).size();
                 item.setApprovalFinishTaskCount(approvalFinishTaskCount);
                 //这是项目任务
                 int projectTaskCount = productTaskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty())).collect(Collectors.toList()).size();
-                int projectFinishTaskCount = productTaskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty()) && (finish.equals(t.getStatus()) || approvalPass.equals(t.getStatus()))).
+                int projectFinishTaskCount = productTaskList.stream().filter(t -> TaskConstant.PROJECT_TASK.equals(t.getProperty()) && finishedList.contains(t.getStatus())).
                         collect(Collectors.toList()).size();
 
                 item.setProjectTaskCount(projectTaskCount);
                 item.setProjectFinishTaskCount(projectFinishTaskCount);
                 //总的任务数
-                int taskCount = approvalTaskCount + projectTaskCount;
+                int taskCount = productTaskList.size();
                 item.setTaskCount(taskCount);
+                //总任务完成数
+                Long finishedCount = productTaskList.stream().filter(f -> finishedList.contains(f.getStatus())).count();
+                item.setFinishedCount(Math.toIntExact(finishedCount));
+                //我的总任务数
+                List<ProjectTaskEntity> myTaskList = productTaskList.stream().filter(m -> ArrayUtils.contains(m.getChargeId().split(","), userId)).collect(Collectors.toList());
+                int myTaskTotalCount = myTaskList.size();
+                item.setMyTaskTotalCount(myTaskTotalCount);
+                //我完成的
+                long myTaskFinishedCount = myTaskList.stream().filter(f -> finishedList.contains(f.getStatus())).count();
+                item.setMyTaskFinishedCount((int) myTaskFinishedCount);
+                Integer planWorkHour = taskTimeList.stream().filter(t -> t.getProductId().equals(productId)).
+                        mapToInt(ProjectTaskTimeRecordDTO.TaskWorkTimeDTO::getTaskTime).sum();
+                item.setPlanWorkHour(planWorkHour);
                 double approvalProgress = 0;
                 double projectProgress = 0;
                 //立项任务完成
@@ -623,7 +642,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 item.setProjectProgress(projectProgress);
             }
         }
-        return new PagingVO(pageData);
+        return list;
     }
 
     @Override
@@ -633,21 +652,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String userId = loginUser.getUid();
         //获取到归档的产品id
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
-        //根据当前登录人id 获取收藏的列表
-        List<String> myCollectProductIds = userAddProductService.getMyCollectProductIds(userId);
-
         //分类id
         String categoryId = params.getCategoryId();
-
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
-
-        if (params.getIsMyCollect() != null && params.getIsMyCollect()) {
-            if (CollectionUtils.isNotEmpty(myCollectProductIds)) {
-                dataList = baseMapper.listMyCollectNotPaging(params, myCollectProductIds, archiveProductIds, categoryIdList);
-            }
-        } else {
-            dataList = baseMapper.listNotPaging(params, archiveProductIds, categoryIdList);
-        }
+        dataList = baseMapper.listNotPaging(params, archiveProductIds, categoryIdList);
         return dataList;
     }
 
@@ -1555,4 +1563,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         }
         return resultList;
     }
+
+
 }
