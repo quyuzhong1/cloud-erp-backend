@@ -124,7 +124,7 @@ public class ProjectInfoController extends BaseController {
      * @param [productId]
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @PostMapping("/archive")
+    @PostMapping("/projectReportForms")
     //@RequestPermissions("plm:project:archive")
     public ApiResult projectReportForms(@RequestParam(value = "productId") String productId) {
         boolean flag = projectInfoService.archive(productId);
