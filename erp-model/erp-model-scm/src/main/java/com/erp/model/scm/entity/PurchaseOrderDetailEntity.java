@@ -207,9 +207,9 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     public static final String VARIANT_PROPERTY = "variant_property";
 
 
-    @Override
-    public Serializable pkVal() {
-        return null;
+    public PurchaseOrderDetailEntity() {
+        this.taxRate = BigDecimal.ZERO;
+        this.purchaseAmount = BigDecimal.ZERO;
     }
 
 }

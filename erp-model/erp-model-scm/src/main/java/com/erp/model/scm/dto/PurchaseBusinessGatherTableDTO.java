@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -19,8 +20,11 @@ public class PurchaseBusinessGatherTableDTO extends PermissionsDTO implements Se
      * 分页信息
      */
     @Data
-    @NoArgsConstructor
     public static class PagingViewDTO {
+        /**
+         * id
+         */
+        private String id;
         /**
          * 采购组织
          */
@@ -29,6 +33,10 @@ public class PurchaseBusinessGatherTableDTO extends PermissionsDTO implements Se
          * 供应商名称
          */
         private String supplierName;
+        /**
+         * 产品图片
+         */
+        private String imagesUrl;
         /**
          * sku
          */
@@ -44,52 +52,74 @@ public class PurchaseBusinessGatherTableDTO extends PermissionsDTO implements Se
         /**
          * 平均价格
          */
-        private String avgPrice;
+        private BigDecimal avgPrice;
         /**
          * 订单数量
          */
-        private String orderQty;
+        private Integer orderQty;
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
         /**
          * 订单金额
          */
-        private String orderAmount;
+        private BigDecimal orderAmount;
         /**
          * 收货数量
          */
-        private String receiveQty;
+        private Integer receiveQty;
         /**
-         * 赠品数量
+         * 收货赠品数量
          */
-        private String giftQty;
+        private Integer receiveGiftQty;
         /**
          * 收货金额
          */
-        private String receiveAmount;
+        private BigDecimal receiveAmount;
         /**
          * 入库数量
          */
-        private String stockInQty;
+        private Integer stockInQty;
         /**
-         * 超收数量
+         * 入库赠品数量
          */
-        private String exceedQty;
+        private Integer stockInGiftQty;
         /**
          * 入库金额
          */
-        private String stockInAmount;
+        private BigDecimal stockInAmount;
         /**
          * 退货扣款数量
          */
-        private String refundQty;
+        private Integer refundQty;
         /**
          * 退货补货数量
          */
-        private String replenishQty;
+        private Integer replenishQty;
         /**
          * 退货金额
          */
-        private String returnAmount;
+        private BigDecimal returnAmount;
+
+        public PagingViewDTO() {
+            this.avgPrice = BigDecimal.ZERO;
+            this.taxPrice = BigDecimal.ZERO;
+            this.orderAmount = BigDecimal.ZERO;
+            this.receiveQty = 0;
+            this.orderQty = 0;
+            this.receiveGiftQty = 0;
+            this.receiveAmount = BigDecimal.ZERO;
+            this.stockInQty = 0;
+            this.stockInGiftQty = 0;
+            this.stockInAmount = BigDecimal.ZERO;
+            this.refundQty = 0;
+            this.replenishQty = 0;
+            this.returnAmount = BigDecimal.ZERO;
+        }
     }
+
+
 
     /**
      * 分页参数

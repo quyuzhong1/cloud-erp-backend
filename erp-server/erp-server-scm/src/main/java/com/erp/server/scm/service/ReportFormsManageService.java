@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
 
 import java.util.List;
@@ -13,5 +14,5 @@ public interface ReportFormsManageService {
      * @param dto
      * @return java.util.List<com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO.PagingViewDTO>
      **/
-    List<PurchaseBusinessGatherTableDTO.PagingViewDTO> purchaseBusinessGatherTablPaginge(PagingDTO<PurchaseBusinessGatherTableDTO.PagingParamDTO> dto);
+    PagingVO<List<PurchaseBusinessGatherTableDTO.PagingViewDTO>> purchaseBusinessGatherTablPaginge(PagingDTO<PurchaseBusinessGatherTableDTO.PagingParamDTO> dto);
 }

@@ -4,16 +4,16 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
-import com.erp.model.scm.entity.PurchasePriceEntity;
-import com.erp.model.workflow.dto.WorkOptionDTO;
+import com.erp.server.scm.service.PurchaseOrderDetailService;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import javax.management.Query;
 
 @Mapper
-public interface ReportFormsManageMapper extends BaseMapper<PurchaseOrderEntity> {
+public interface ReportFormsManageMapper extends BaseMapper<PurchaseOrderDetailEntity> {
     /**
      * 分页查询
      * @Author Luo_WG

@@ -3,6 +3,7 @@ package com.erp.server.scm.controller.api;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
@@ -22,7 +23,7 @@ import java.util.List;
  * @Date 2023/6/12 17:31
  **/
 @RestController
-@RequestMapping("/ReportFormsManage")
+@RequestMapping("/reportFormsManage")
 public class ReportFormsManageController extends BaseController {
     @Resource
     private ReportFormsManageService reportFormsManageService;
@@ -39,9 +40,9 @@ public class ReportFormsManageController extends BaseController {
             tableField = "create_user_id",
             menuCode = "scm:ReportFormsManage:purchaseBusinessGatherTablePaging",
             tableAlias = "pod")
-    public ApiResult<List<PurchaseBusinessGatherTableDTO.PagingViewDTO>> purchaseBusinessGatherTablePaging(@RequestBody PagingDTO<PurchaseBusinessGatherTableDTO.PagingParamDTO> dto) {
-        List<PurchaseBusinessGatherTableDTO.PagingViewDTO> list = reportFormsManageService.purchaseBusinessGatherTablPaginge(dto);
-        return success(list);
+    public ApiResult<PagingVO<List<PurchaseBusinessGatherTableDTO.PagingViewDTO>>> purchaseBusinessGatherTablePaging(@RequestBody PagingDTO<PurchaseBusinessGatherTableDTO.PagingParamDTO> dto) {
+        PagingVO<List<PurchaseBusinessGatherTableDTO.PagingViewDTO>> listPagingVO = reportFormsManageService.purchaseBusinessGatherTablPaginge(dto);
+        return success(listPagingVO);
     }
 
     /**
