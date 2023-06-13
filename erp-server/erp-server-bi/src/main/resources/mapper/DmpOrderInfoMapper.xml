@@ -134,10 +134,10 @@
                 and doi.order_state = #{params.orderState}
             </if>
             <if test="params.createTime_begin != null ">
-                and doi.create_time &gt;= #{params.createTime_begin}::timestamp
+                and doi.platform_create_time &gt;= #{params.createTime_begin}::timestamp
             </if>
             <if test="params.createTime_end != null ">
-                and doi.create_time &lt;= #{params.createTime_end}::timestamp
+                and doi.platform_create_time &lt;= #{params.createTime_end}::timestamp
             </if>
             <if test="params.deliveryTime_begin != null ">
                 and doi.delivery_time &gt;= #{params.deliveryTime_begin}::timestamp
