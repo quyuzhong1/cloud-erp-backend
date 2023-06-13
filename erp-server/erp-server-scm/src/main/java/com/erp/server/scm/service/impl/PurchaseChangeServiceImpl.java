@@ -624,7 +624,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     }
 
     /**
-     * 采购变更单库存变更（需要计算差额，因为原采购订单已经增加了在途（没有待检的时候））
+     * 采购变更单库存变更（需要计算差额，原采购订单已经增加了在途（没有待检的时候））
      * @param purchaseChangeDetailList 变更单明细
      */
     public void updateInventoryTransCore(List<PurchaseChangeDetailEntity> purchaseChangeDetailList, List<PurchaseOrderDetailEntity> originPurchaseOrderDetailEntityList) {
@@ -641,7 +641,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             addDTO.setSkuId(purchaseChangeDetailEntity.getSkuId());
             addDTO.setSkuNo(purchaseChangeDetailEntity.getSkuNo());
             addDTO.setOriginQty(purchaseOrderDetailEntity.getPurchaseQty());
-            // 新的采购订单采购数量
+            // 新的采购订单明细采购数量
             addDTO.setQty(purchaseChangeDetailEntity.getQty());
             addDTO.setArriveStatus(purchaseOrderDetailEntity.getArrivalStatus());
             members.add(addDTO);
