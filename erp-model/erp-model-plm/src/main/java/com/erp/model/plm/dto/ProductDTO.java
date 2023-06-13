@@ -29,7 +29,7 @@ public class ProductDTO implements Serializable {
      * 产品名称
      */
     @NotBlank(message = "产品名不能为空")
-    @Size(max = 50,message = "最大50字符")
+    @Size(max = 50, message = "最大50字符")
     private String name;
 
 
@@ -43,7 +43,6 @@ public class ProductDTO implements Serializable {
      * 产品分类id
      */
     private String categoryId;
-
 
 
     /**
@@ -67,31 +66,31 @@ public class ProductDTO implements Serializable {
      * 产品负责人id
      */
     @NotNull(message = "产品负责人id不能为空")
-    @Size(min=1,message = "产品负责人id 不能为空")
+    @Size(min = 1, message = "产品负责人id 不能为空")
     private List<String> chargeIds;
 
 
     /**
      * 产品等级
      */
-    private String  grade;
+    private String grade;
 
     /**
      * 产品等级id
      */
     @NotBlank(message = "产品等级不能为空")
-    private String  gradeId;
+    private String gradeId;
 
     /**
      * 产品品牌
      */
     @NotBlank(message = "产品品牌不能为空")
-    private String  brandName;
+    private String brandName;
 
     /**
      * 产品品牌id
      */
-    private String  brandId;
+    private String brandId;
 
 
     /**
@@ -111,10 +110,10 @@ public class ProductDTO implements Serializable {
     private String relevanceProductName;
 
     //产品分类id集合
-    private List<String>   categoryIdList;
+    private List<String> categoryIdList;
 
     /**
-     *禁止修改的字段
+     * 禁止修改的字段
      */
     private List<String> disableFieldList;
 
@@ -151,7 +150,85 @@ public class ProductDTO implements Serializable {
     private String templateName;
 
 
+    /**
+     * 产品统计信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductCountDTO {
 
+        /**
+         * 新项目数
+         */
+        private Integer totalCount;
+
+        /**
+         * 未立项数
+         */
+        private Integer notApprovalCount;
+
+        /**
+         * 已立项数
+         */
+        private Integer approvalCount;
+
+
+        /**
+         * 启动的数
+         */
+        private Integer startCount;
+
+        /**
+        * 进行中的数
+         */
+        private Integer doingCount;
+
+
+        /**
+         * 完成的数
+         */
+        private Integer finishCount;
+
+        /**
+         * 暂停的数
+         */
+        private Integer suspendCount;
+
+        /**
+         * 终止的数
+         */
+        private Integer terminateCount;
+
+
+        /**
+         * 延期的数
+         */
+        private Integer delayCount;
+
+
+
+    }
+
+    /**
+     * 产品统计信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CountBaseDTO {
+
+        /**
+         * 状态
+         */
+        private Integer status;
+
+        /**
+         *数量
+         */
+        private Integer count;
+
+
+
+    }
 
 
 }

@@ -3,14 +3,12 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.plm.dto.BasicDTO;
-import com.erp.model.plm.dto.ProductSearchDTO;
-import com.erp.model.plm.dto.ProductShowDTO;
-import com.erp.model.plm.dto.StartItemSourceDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -33,4 +31,8 @@ public interface ProjectInfoMapper extends BaseMapper<ProjectInfoEntity> {
     List<BasicDTO> listMyCollectNotPaging(@Param("params") ProductSearchDTO params, @Param("productIds") List<String> productIds,@Param("archiveProductIds") List<String> archiveProductIds);
 
     List<BasicDTO> listNotPaging(@Param("params") ProductSearchDTO params,@Param("archiveProductIds") List<String> archiveProductIds);
+
+    List<ProductDTO.CountBaseDTO> listStatusCount(@Param("productIdList") List<String> productIdList);
+
+    int getDelayCount(@Param("productIdList") List<String> productIdList,@Param("nowDate") LocalDateTime nowDate);
 }

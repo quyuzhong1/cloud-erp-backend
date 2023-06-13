@@ -408,6 +408,33 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 .update();
     }
 
+
+    /**
+     * 统计
+     * @author yl
+     * @date 2023-06-13 15:18
+     * @param productIdList
+     * @return java.util.List<com.erp.model.plm.dto.ProductDTO.CountBaseDTO>
+     */
+    @Override
+    public List<ProductDTO.CountBaseDTO> listStatusCount(List<String> productIdList) {
+        return baseMapper.listStatusCount(productIdList);
+    }
+
+
+    /**
+     * 获取到延期的数量
+     * @author yl
+     * @ate 2023-06-13 15:50
+     * @param productIdList
+     * @return int
+     */
+    @Override
+    public int getDelayCount(List<String> productIdList) {
+        LocalDateTime nowDate=LocalDateUtil.getStartTime(LocalDateTime.now());
+        return baseMapper.getDelayCount(productIdList,nowDate);
+    }
+
     /**
      * 检查项目是否完成
      *

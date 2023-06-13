@@ -517,7 +517,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             params.setProductIds(productIdList);
         }
         //我的项目
-        IPage pageData = baseMapper.myProjectPaging(query, params, categoryIdList,userId);
+        IPage pageData = baseMapper.myProjectPaging(query, params, categoryIdList, userId);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
         return new PagingVO(pageData);
@@ -551,6 +551,119 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         fillPagingDb(pageData.getRecords());
         return new PagingVO(pageData);
 
+    }
+
+    /**
+     * 获取所有的数据统计
+     *
+     * @param
+     * @return com.erp.model.plm.dto.ProductDTO.ProductCountDTO
+     * @author yl
+     * @date 2023-06-13 14:54
+     */
+    @Override
+    public ProductDTO.ProductCountDTO allCount() {
+        //产品的统计
+        List<ProductDTO.CountBaseDTO> productCountList = baseMapper.listStatusCount(new ArrayList<>());
+        //项目的统计
+        List<ProductDTO.CountBaseDTO> projectCountList = projectInfoService.listStatusCount(new ArrayList<>());
+        return getProductCount(productCountList, projectCountList);
+    }
+
+
+    /**
+     * 我的项目统计
+     *
+     * @param
+     * @return com.erp.model.plm.dto.ProductDTO.ProductCountDTO
+     * @author yl
+     * @date 2023-06-13 16:10
+     */
+    @Override
+    public ProductDTO.ProductCountDTO myProjectCount() {
+        String userId = commonService.getUserInfo().getUid();
+        //这个是获取到任务负责人是自己的产品id
+        List<String> taskProductIdList = projectTaskService.listProductIdByTaskChargeId(userId);
+        List<String> productIdList = baseMapper.listProductIdByUserId(userId);
+        taskProductIdList.addAll(productIdList);
+        List<String> findProductIdList = taskProductIdList.stream().distinct().collect(Collectors.toList());
+        //产品的统计
+        List<ProductDTO.CountBaseDTO> productCountList = baseMapper.listStatusCount(findProductIdList);
+        //项目的统计
+        List<ProductDTO.CountBaseDTO> projectCountList = projectInfoService.listStatusCount(findProductIdList);
+        return getProductCount(productCountList, projectCountList);
+    }
+
+
+    /**
+     * 收藏的项目
+     *
+     * @param
+     * @return com.erp.model.plm.dto.ProductDTO.ProductCountDTO
+     * @author yl
+     * @date 2023-06-13 16:34
+     */
+    @Override
+    public ProductDTO.ProductCountDTO collectCount() {
+        List<UserAddProductEntity> userAddProductList = userAddProductService.list();
+        List<String> productIdList = userAddProductList.stream().map(UserAddProductEntity::getProductId).collect(Collectors.toList());
+        //产品的统计
+        List<ProductDTO.CountBaseDTO> productCountList = baseMapper.listStatusCount(productIdList);
+        //项目的统计
+        List<ProductDTO.CountBaseDTO> projectCountList = projectInfoService.listStatusCount(productIdList);
+        return getProductCount(productCountList, projectCountList);
+
+    }
+
+
+    /**
+     * 获取统计的值
+     *
+     * @return
+     */
+    private ProductDTO.ProductCountDTO getProductCount(List<ProductDTO.CountBaseDTO> productCountList, List<ProductDTO.CountBaseDTO> projectCountList) {
+        ProductDTO.ProductCountDTO result = new ProductDTO.ProductCountDTO();
+        //产品的是状态
+        Integer approval = ApprovalStatusEnum.APPROVAL.getCode();
+        //项目状态
+        Integer startStatus = ProjectStateEnum.YES_START.getState();
+        //进行中
+        Integer ingStatus = ProjectStateEnum.ING.getState();
+        //完成
+        Integer finishStatus = ProjectStateEnum.FINISH.getState();
+        //终止
+        Integer stopStatus = ProjectStateEnum.STOP.getState();
+        //总的数
+        int totalCount = productCountList.stream().mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
+        result.setTotalCount(totalCount);
+        //已立项
+        int approvalCount = productCountList.stream().filter(p -> approval.equals(p.getStatus())).
+                mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
+        result.setApprovalCount(approvalCount);
+        //未立项
+        int notApprovalCount = productCountList.stream().filter(p -> !approval.equals(p.getStatus())).
+                mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
+        result.setNotApprovalCount(notApprovalCount);
+        //启动的数
+        int startCount = projectCountList.stream().filter(p -> startStatus.equals(p.getStatus())).
+                mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
+        result.setStartCount(startCount);
+        //进行中
+        int doingCount = projectCountList.stream().filter(p -> ingStatus.equals(p.getStatus())).
+                mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
+        result.setDoingCount(doingCount);
+        //完成
+        int finishCount = projectCountList.stream().filter(p -> finishStatus.equals(p.getStatus())).
+                mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
+        result.setFinishCount(finishCount);
+        //终止
+        int terminateCount = projectCountList.stream().filter(p -> stopStatus.equals(p.getStatus())).
+                mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
+        result.setTerminateCount(terminateCount);
+        //延期的数量
+        int delayCount = projectInfoService.getDelayCount(new ArrayList<>());
+        result.setDelayCount(delayCount);
+        return result;
     }
 
 

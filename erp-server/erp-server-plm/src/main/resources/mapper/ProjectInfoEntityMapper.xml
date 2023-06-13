@@ -336,4 +336,34 @@
         ORDER BY  pi.create_time DESC
     </select>
 
+    <select id="listStatusCount" resultType="com.erp.model.plm.dto.ProductDTO$CountBaseDTO">
+        SELECT
+        project_status AS status ,
+        count(*)
+        FROM  project_info
+        WHERE is_deleted=FALSE
+        <if test="productIdList!=null and productIdList.size>0">
+            AND product_id IN
+            <foreach collection="productIdList" item="productId" open="(" separator="," close=")">
+                #{productId}
+            </foreach>
+        </if>
+        GROUP BY project_status
+    </select>
+
+    <select id="getDelayCount" resultType="java.lang.Integer">
+        SELECT
+            count(*)
+        FROM  project_info
+        WHERE is_deleted=FALSE
+         AND end_time &lt; #{nowDate}
+        <if test="productIdList!=null and productIdList.size>0">
+            AND product_id IN
+            <foreach collection="productIdList" item="productId" open="(" separator="," close=")">
+                #{productId}
+            </foreach>
+        </if>
+
+    </select>
+
 </mapper>

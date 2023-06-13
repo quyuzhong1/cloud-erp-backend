@@ -63,7 +63,7 @@ public class UserKingdeePostExcelListener extends AnalysisEventListener<UserKing
         }
         //用户名
         String userName = excelDTO.getUserName();
-        FindUserDTO user = userList.stream().filter(u -> u.getUserName().equals(userName)).findFirst().orElse(null);
+        FindUserDTO user = userList.stream().filter(u -> u.getRealName().equals(userName)).findFirst().orElse(null);
         if (Objects.isNull(user)) {
             errorMsgList.add("用户不存在ERP");
         }

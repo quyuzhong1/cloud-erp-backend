@@ -652,6 +652,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             FindUserDTO userDTO = new FindUserDTO();
             userDTO.setUserId(item.getUid());
             userDTO.setUserName(item.getUserName());
+            userDTO.setRealName(item.getRealName());
             userDTO.setIsMyState(0);
             resultList.add(userDTO);
         }

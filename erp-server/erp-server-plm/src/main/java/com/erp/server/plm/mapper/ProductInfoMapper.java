@@ -77,4 +77,7 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
     List<ProductInfoDTO.ProductRolePeopleDTO> getRolePeopleBySkuId(@Param("skuIdList") List<String> skuIdList);
 
 
+    List<ProductDTO.CountBaseDTO> listStatusCount(@Param("productIdList") List<String> productIdList);
+
+    List<String> listProductIdByUserId(@Param("userId")String userId);
 }

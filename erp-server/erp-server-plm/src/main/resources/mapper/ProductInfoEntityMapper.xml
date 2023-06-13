@@ -159,7 +159,8 @@
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
         WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
-        AND (string_to_array( p.charge_id,',') &amp;&amp;  string_to_array(#{userId}, ',') or p.project_charge_id=#{userId})
+        AND (string_to_array( p.charge_id,',') &amp;&amp; string_to_array(#{userId}, ',') or
+        p.project_charge_id=#{userId})
         AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
@@ -788,6 +789,28 @@
         </foreach>
     </select>
 
+    <select id="listStatusCount" resultType="com.erp.model.plm.dto.ProductDTO$CountBaseDTO">
+        SELECT
+        approval_status AS status,
+        count(*)
+        FROM product_info
+        WHERE is_deleted=FALSE
+        <if test="productIdList!=null and productIdList.size>0">
+            AND id IN
+            <foreach collection="productIdList" item="productId" open="(" separator="," close=")">
+                #{productId}
+            </foreach>
+        </if>
+        GROUP BY approval_status
+    </select>
+
+    <select id="listProductIdByUserId" resultType="java.lang.String">
+        SELECT
+            id
+        FROM product_info p
+        WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        AND (string_to_array( p.charge_id,',') &amp;&amp;  string_to_array(#{userId}, ',') or p.project_charge_id=#{userId})
+    </select>
 
 
 </mapper>
