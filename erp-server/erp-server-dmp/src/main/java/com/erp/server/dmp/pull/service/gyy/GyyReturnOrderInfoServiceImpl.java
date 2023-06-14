@@ -106,7 +106,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
         List<GyyReturnOrderEntity> insertList = new ArrayList<>();
         List<GyyReturnOrderEntity> pushToMqList = new ArrayList<>();
         for (GyyReturnOrderEntity entity : entityList) {
-            OrderMongoDTO orderMongoDTO = new OrderMongoDTO(entity.getOrderCode(), entity.getCode());
+            OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByCode(entity.getCode());
             List<GyyReturnOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_RETURN_ORDER, GyyReturnOrderEntity.class);
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
