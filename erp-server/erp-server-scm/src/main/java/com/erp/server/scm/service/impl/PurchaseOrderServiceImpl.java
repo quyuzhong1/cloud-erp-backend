@@ -1153,6 +1153,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         });
     }
 
+    @Override
+    public List<PurchaseOrderEntity> findByCodes(List<String> codes) {
+        return lambdaQuery().in(PurchaseOrderEntity::getCode, codes).list();
+    }
 
 
     /**

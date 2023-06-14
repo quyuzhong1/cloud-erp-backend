@@ -133,4 +133,11 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
      */
     List<TransferOutDTO.ChooseListDTO> listTransferOut(TransferOutDTO.SearchParamDTO param);
 
+    /**
+     * 根据分步式调出单单号获取信息
+     * @param codes
+     * @return
+     */
+    List<TransferOutEntity> findByCodes(List<String> codes);
+
 }

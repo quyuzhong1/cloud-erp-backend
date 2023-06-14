@@ -222,4 +222,13 @@ public class PurchaseOrderFeignController {
         return salesDemandService.getPushDownBySourceIds(soIds);
     }
 
+    /**
+     * 根据采购订单编号获取采购订单信息
+     * @param codes
+     * @return
+     */
+    @PostMapping("/getPurchaseOrderByCodes")
+    List<PurchaseOrderEntity> getPurchaseOrderByCodes(@RequestBody List<String> codes) {
+        return purchaseOrderService.findByCodes(codes);
+    }
 }

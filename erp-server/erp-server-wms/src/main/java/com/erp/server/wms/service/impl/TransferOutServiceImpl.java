@@ -523,6 +523,11 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         return transferOutDetailService.listChoose(param, transferOutEntity);
     }
 
+    @Override
+    public List<TransferOutEntity> findByCodes(List<String> codes) {
+        return lambdaQuery().in(TransferOutEntity::getCode, codes).list();
+    }
+
     /**
      * 更新审核状态
      */

@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
@@ -19,6 +18,7 @@ import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.ExportTransactionFlowDTO;
@@ -27,15 +27,13 @@ import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
 import com.erp.model.wms.entity.TransactionFlowEntity;
+import com.erp.model.wms.entity.TransferOutEntity;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.TransactionFlowMapper;
-import com.erp.server.wms.service.CommonService;
-import com.erp.server.wms.service.InitStockService;
-import com.erp.server.wms.service.TransactionFlowService;
-import com.erp.server.wms.service.WarehouseService;
-import com.google.common.collect.Lists;
+import com.erp.server.wms.service.*;
 import com.google.common.collect.Maps;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.ss.usermodel.*;
@@ -81,6 +79,12 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Autowired
     private InitStockService initStockService;
+
+    @Autowired
+    private TransferOutService transferOutService;
+
+    @Autowired
+    private ScmTaskFeign scmTaskFeign;
 
     @Override
     public List<TransactionFlowEntity> getUnApprovedTxnFlows(String sourceType, String sourceId) {
@@ -512,18 +516,50 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         if (CollUtil.isEmpty(list)) {
             return;
         }
+        // 采购订单单号
+        List<String> purchaseCodeList = list.stream().filter(r->Objects.equals(r.getSourceType(), InventoryTransportTypeEnum.PURCHASE.getCode()) && StrUtils.isNotEmpty(r.getSourceCode()))
+                .map(InventoryReportDTO.ListTransportPagingDTO::getSourceCode).distinct().collect(Collectors.toList());
+        Map<String, PurchaseOrderEntity> purchaseOrderMap = Maps.newHashMap();
+        if(CollUtil.isNotEmpty(purchaseCodeList)) {
+            List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.getPurchaseOrderByCodes(purchaseCodeList);
+            purchaseOrderMap = purchaseOrderList.stream().collect(Collectors.toMap(PurchaseOrderEntity::getCode,Function.identity()));
+        }
+
+        // 调拨出库单单号
+        List<String> transferCodeList = list.stream().filter(r->Objects.equals(r.getSourceType(), InventoryTransportTypeEnum.TRANSFER.getCode()) && StrUtils.isNotEmpty(r.getSourceCode()))
+                .map(InventoryReportDTO.ListTransportPagingDTO::getSourceCode).distinct().collect(Collectors.toList());
+        Map<String,TransferOutEntity> transferOutMap = Maps.newHashMap();
+        if(CollUtil.isNotEmpty(transferCodeList)) {
+            List<TransferOutEntity> transferOutList = transferOutService.findByCodes(transferCodeList);
+            transferOutMap = transferOutList.stream().collect(Collectors.toMap(TransferOutEntity::getCode,Function.identity()));
+        }
+
         // 此处优化，取最新的产品名称和产品图片，防止数据没同步过来，销售状态和SPU则不取最新的，防止查询和显示不一样
         List<String> skuIds = list.stream().map(InventoryReportDTO.ListTransportPagingDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
         Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
-        list.stream().forEach(data -> {
+        for(InventoryReportDTO.ListTransportPagingDTO data : list) {
             if (skuMap.containsKey(data.getSkuId())) {
                 // 产品名称
                 data.setProductName(skuMap.getOrDefault(data.getSkuId(), new SkuVO()).getSkuName());
             }
             // 单据名称
             data.setSourceTypeName(InventoryTransportTypeEnum.getNameByCode(data.getSourceType()));
-        });
+            // 分步式调出单
+            if(Objects.equals(data.getSourceType(), InventoryTransportTypeEnum.TRANSFER.getCode())) {
+                TransferOutEntity transferOutEntity = transferOutMap.getOrDefault(data.getSourceCode(),new TransferOutEntity());
+                data.setBillDate(transferOutEntity.getBillDate());
+                data.setCreateUserId(transferOutEntity.getCreateUserId());
+                data.setCreateUserName(transferOutEntity.getCreateUserName());
+                data.setCreateTime(transferOutEntity.getCreateTime());
+            } else if (Objects.equals(data.getSourceType(), InventoryTransportTypeEnum.PURCHASE.getCode())) {
+                PurchaseOrderEntity purchaseOrderEntity = purchaseOrderMap.getOrDefault(data.getSourceCode(),new PurchaseOrderEntity());
+                data.setBillDate(purchaseOrderEntity.getPurchaseDate());
+                data.setCreateUserId(purchaseOrderEntity.getCreateUserId());
+                data.setCreateUserName(purchaseOrderEntity.getCreateUserName());
+                data.setCreateTime(purchaseOrderEntity.getCreateTime());
+            }
+        }
     }
 
 }
