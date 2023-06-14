@@ -183,6 +183,11 @@ public class PurchaseOrderDTO implements Serializable {
         private LocalDateTime createTime;
 
         /**
+         * 是否是父级SKU
+         */
+        private Boolean isParent;
+
+        /**
          * 来源明细id
          */
         private String sourceDetailId;
@@ -310,6 +315,19 @@ public class PurchaseOrderDTO implements Serializable {
          */
         @NotNull(message = "新品首批不能为空")
         private Boolean isFirstMassProduct;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 来源编码
+         */
+        private String sourceCode;
     }
 
     @Data

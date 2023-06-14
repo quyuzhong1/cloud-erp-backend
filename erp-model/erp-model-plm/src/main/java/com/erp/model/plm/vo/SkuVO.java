@@ -107,4 +107,9 @@ public class SkuVO implements Serializable {
      * 产品状态
      */
     private Integer status;
+
+    /**
+     * 最小起订量
+     */
+    private Integer moq;
 }

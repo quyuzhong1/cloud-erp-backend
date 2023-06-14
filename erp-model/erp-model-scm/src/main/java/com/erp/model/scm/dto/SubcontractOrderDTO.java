@@ -229,21 +229,6 @@ public class SubcontractOrderDTO implements Serializable {
         private String createUserName;
     }
 
-    @Data
-    @NoArgsConstructor
-    public static class PurchaseOrderListDTO {
-
-        /**
-         * 是否是父级SKU
-         */
-        private Boolean isParent;
-
-        /**
-         * 采购列表信息
-         */
-        private PurchaseOrderDTO.ListDTO purchaseOrderDTO;
-    }
-
     /**
     * 导出Excel
     */
@@ -416,6 +401,11 @@ public class SubcontractOrderDTO implements Serializable {
         private String sourceDetailId;
 
         /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
          * sku编码
          */
         private String skuNo;
@@ -471,6 +461,11 @@ public class SubcontractOrderDTO implements Serializable {
         private Integer deliveryDay;
 
         /**
+         * 采购数量
+         */
+        private Integer qty;
+
+        /**
          * 待申请数量
          */
         private Integer applyQty;
@@ -483,27 +478,27 @@ public class SubcontractOrderDTO implements Serializable {
          * 来源id
          */
         @NotBlank(message = "来源id不能为空")
-        @Size(max = 19,message = "来源id最大长度不能超过19位")
+        @Size(max = 19, message = "来源id最大长度不能超过19位")
         private String sourceId;
         /**
          * 来源类型
          */
         @NotBlank(message = "来源类型不能为空")
         @StateEnumValue(clazz = SourceTypeEnum.class, message = "单据来源错误")
-        @Size(max = 32,message = "来源类型最大长度不能超过32位")
+        @Size(max = 32, message = "来源类型最大长度不能超过32位")
         private String sourceType;
         /**
          * 来源编码
          */
         @NotBlank(message = "来源编码不能为空")
-        @Size(max = 50,message = "来源编码最大长度不能超过50位")
+        @Size(max = 50, message = "来源编码最大长度不能超过50位")
         private String sourceCode;
 
         /**
          * 来源明细id
          */
         @NotBlank(message = "来源明细id不能为空")
-        @Size(max = 19,message = "来源id最大长度不能超过19位")
+        @Size(max = 19, message = "来源id最大长度不能超过19位")
         private String sourceDetailId;
 
         /**
@@ -516,15 +511,94 @@ public class SubcontractOrderDTO implements Serializable {
          * 采购数量
          */
         @NotNull(message = "采购数量不能为空")
-        @Min(value = 1,message = "采购数量最小值为1")
-        @Max(value = 99999999,message = "采购数量最大值为99999999")
+        @Min(value = 1, message = "采购数量最小值为1")
+        @Max(value = 99999999, message = "采购数量最大值为99999999")
         private Integer qty;
 
         /**
          * 是否赠品
          */
         private Boolean isGift;
+
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class GeneratePoAddDTO extends GeneratePoDTO{
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 是否加急（false否，true是）
+         */
+        private Boolean isUrgent;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
+         * 报关型号
+         */
+        private String declareModel;
+
+        /**
+         * 报关名称
+         */
+        private String declareName;
+
+        /**
+         * 仓库id
+         */
+        private String deliveryWarehouseId;
+
+        /**
+         * 是否是父级SKU
+         */
+        private Boolean isParent;
+
+        /**
+         * 采购员id
+         */
+        private String purchaseUserId;
+
+        /**
+         * 采购部门id
+         */
+        private String purchaseDeptId;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 收料组织id
+         */
+        private String receiveOrgId;
+
+
+        /**
+         * 新品首批（false否,true是）
+         */
+        private Boolean isFirstMassProduct;
+
+    }
+
 
     @Data
     @NoArgsConstructor
@@ -547,22 +621,14 @@ public class SubcontractOrderDTO implements Serializable {
     public static class ViewAddDetailDTO {
 
         /**
-         * 来源id
-         */
-        private String sourceId;
-        /**
-         * 来源类型
-         */
-        private String sourceType;
-        /**
-         * 来源编码
-         */
-        private String sourceCode;
-
-        /**
          * 来源明细id
          */
         private String sourceDetailId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
 
         /**
          * sku编码
@@ -580,49 +646,34 @@ public class SubcontractOrderDTO implements Serializable {
         private String variantProperty;
 
         /**
-         * 采购组织id
+         * 委外数量
          */
-        private String purchaseOrgId;
+        private Integer qty;
 
         /**
-         * 采购组织名称
+         * 有效收货数量
          */
-        private String purchaseOrgName;
+        private Integer receiveQty;
 
         /**
-         * 收料组织id
+         * 有效入库数量
          */
-        private String receiveOrgId;
+        private Integer instockQty;
 
         /**
-         * 收料组织名称
+         * 是否自动生成采购单
          */
-        private String receiveOrgName;
+        private Boolean isGeneratePo;
 
         /**
-         * 仓库id
+         * 备注
          */
-        private String warehouseId;
+        private String remark;
 
         /**
-         * 仓库名称
+         * 子件信息
          */
-        private String warehouseName;
-
-        /**
-         * 最小起订量
-         */
-        private Integer moq;
-
-        /**
-         * 采购交期
-         */
-        private Integer deliveryDay;
-
-        /**
-         * 待申请数量
-         */
-        private Integer applyQty;
+        private List<ViewAddDetailDTO> childList;
     }
 
 }
