@@ -202,6 +202,9 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
      * @Date 2022/11/14 18:57
      **/
     public DmpDeliveryDetailInfoEntity initOrderInfoEntity(GyyDeliveryDetailEntity gyyDeliveryDetailEntity){
+        if (GyyOrderInfoServiceImpl.assertOrgIsVijim(gyyDeliveryDetailEntity.getShopName())){
+            return null;
+        }
         DmpDeliveryDetailInfoEntity deliveryDetailInfoEntity = new DmpDeliveryDetailInfoEntity();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         //单据编号

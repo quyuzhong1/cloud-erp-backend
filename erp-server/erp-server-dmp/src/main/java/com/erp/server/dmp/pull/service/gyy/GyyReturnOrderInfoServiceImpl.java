@@ -203,7 +203,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
      * 解析订单数据
      **/
     private DmpReturnOrderInfoEntity initOrderInfoEntity(GyyReturnOrderEntity gyyReturnOrderEntity) {
-        if (assertOrgIsVijim(gyyReturnOrderEntity.getShopCode())){
+        if (assertOrgIsVijim(gyyReturnOrderEntity.getShopName())){
             return null;
         }
         DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = new DmpReturnOrderInfoEntity();
@@ -334,8 +334,9 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
        return orderItemList;
     }
     private boolean assertOrgIsVijim(String shopCode) {
-        DmpShopInfoEntity shopInfo = dmpShopInfoService.getShopByShopNo(shopCode, PlatformEnum.GYY.getDesc());
-        return null != shopInfo && (ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(shopInfo.getUseOrgId().toString()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(shopInfo.getUseOrgId().toString()));
+        return StrUtil.isNotBlank(shopCode) && (shopCode.contains("小隼") || shopCode.contains("优至胜"));
+//        DmpShopInfoEntity shopInfo = dmpShopInfoService.getShopByShopNo(shopCode, PlatformEnum.GYY.getDesc());
+//        return null != shopInfo && (ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(shopInfo.getUseOrgId().toString()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(shopInfo.getUseOrgId().toString()));
     }
 
 }
