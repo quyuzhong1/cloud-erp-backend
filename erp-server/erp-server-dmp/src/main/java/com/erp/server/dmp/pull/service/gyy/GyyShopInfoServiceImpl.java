@@ -147,9 +147,6 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
      * 解析店铺数据
      **/
     private DmpShopInfoEntity initOrderInfoEntity(GyyShopInfoEntity shopInfoEntity) {
-        if (GyyOrderInfoServiceImpl.assertOrgIsVijim(shopInfoEntity.getName())){
-            return null;
-        }
         DmpShopInfoEntity dmpShopInfoEntity = new DmpShopInfoEntity();
         //平台店铺编号
         dmpShopInfoEntity.setPlatformShopNo(shopInfoEntity.getCode());
