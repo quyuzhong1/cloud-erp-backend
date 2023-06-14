@@ -185,9 +185,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         project.setChargeName(chargeName);
 
         //开始时间
-        project.setStartTime(LocalDateTimeUtil.of(dto.getStartTime()));
+        project.setStartTime(dto.getStartTime());
         //结束时间
-        project.setEndTime(LocalDateTimeUtil.of(dto.getEndTime()));
+        project.setEndTime(dto.getEndTime());
         project.setDescribe(dto.getDescribe());
         project.setProjectStatus(ProjectStateEnum.YES_START.getState());
         boolean flag = updateById(project);
