@@ -2,6 +2,7 @@ package com.erp.server.dmp.pull.service.gyy;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -135,7 +136,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
             return;
         }
         // 异步推送到MQ
-        List<DmpDeliveryDetailInfoEntity> collect = entityToMqlist.stream().peek(msg -> {
+        List<DmpDeliveryDetailInfoEntity> collect = entityToMqlist.stream().filter(ObjectUtil::isNotEmpty).peek(msg -> {
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_DELIVERY_ORDER_TAG.getName(),
                     msg, StrUtil.format("{}_{}", msg.getBillNo(), msg.getOrderNo()));
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
@@ -165,6 +166,9 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
      * @Date 2022/11/14 18:57
      **/
     public DmpDeliveryDetailInfoEntity initOrderInfoEntity(GyyDeliveryDetailEntity gyyDeliveryDetailEntity){
+        if (GyyOrderInfoServiceImpl.assertOrgIsVijim(gyyDeliveryDetailEntity.getShopName())) {
+            return null;
+        }
         DmpDeliveryDetailInfoEntity deliveryDetailInfoEntity = new DmpDeliveryDetailInfoEntity();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         //单据编号

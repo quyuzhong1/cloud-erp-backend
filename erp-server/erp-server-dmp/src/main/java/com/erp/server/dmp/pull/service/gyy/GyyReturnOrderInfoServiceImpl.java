@@ -166,7 +166,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
      * 解析订单数据
      **/
     private DmpReturnOrderInfoEntity initOrderInfoEntity(GyyReturnOrderEntity gyyReturnOrderEntity) {
-        if (assertOrgIsVijim(gyyReturnOrderEntity.getShopCode())){
+        if (GyyOrderInfoServiceImpl.assertOrgIsVijim(gyyReturnOrderEntity.getShopName())){
             return null;
         }
         DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = new DmpReturnOrderInfoEntity();

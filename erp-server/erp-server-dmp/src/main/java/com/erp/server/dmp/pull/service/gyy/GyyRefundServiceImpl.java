@@ -283,6 +283,7 @@ public class GyyRefundServiceImpl implements IReportSaveService<GyyRefundEntity>
 
     public boolean assertOrgIsVijim(String shopCode) {
         DmpShopInfoEntity shopInfo = dmpShopInfoService.getShopByShopNo(shopCode, PlatformEnum.GYY.getDesc());
-        return null != shopInfo && (ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(shopInfo.getUseOrgId().toString()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(shopInfo.getUseOrgId().toString()));
+//        return null != shopInfo && (ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(shopInfo.getUseOrgId().toString()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(shopInfo.getUseOrgId().toString()));
+        return null != shopInfo && StrUtil.isNotBlank(shopInfo.getName()) && (shopInfo.getName().contains("小隼") || shopInfo.getName().contains("优至胜"));
     }
 }
