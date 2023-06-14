@@ -96,6 +96,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
     @Resource
     private SyncKingdeeCustomerContactService syncKingdeeCustomerContactService;
+
     /**
      * 获取到分组的id 集合
      *
@@ -881,12 +882,17 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             base.setPerson(contact.getPerson());
             base.setTelNumber(contact.getTelNumber());
         }
-
         List<CustomerAddressDTO.ViewDTO> addressList = customerAddressService.listByMainId(customerId);
         CustomerAddressDTO.ViewDTO address = addressList.stream().filter(c -> c.getIsDefault()).findFirst().orElse(null);
         if (address != null) {
             base.setAddress(address.getAddress());
             base.setAddressId(address.getId());
+            base.setAddressType(address.getType());
+        }
+        List<SellerDTO.ViewDTO> sellerList = customerSellerService.listByMainId(customerId);
+        if (CollectionUtils.isNotEmpty(sellerList)) {
+            SellerDTO.ViewDTO seller = sellerList.get(0);
+            base.setSellerId(seller.getSellerId());
         }
         return base;
     }

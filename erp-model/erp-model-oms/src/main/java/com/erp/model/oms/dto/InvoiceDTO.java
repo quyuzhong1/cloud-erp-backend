@@ -45,7 +45,6 @@ public class InvoiceDTO implements Serializable {
         /**
          * 开户银行
          */
-        @NotBlank(message = "开户银行不能为空")
         @Size(max = 50, message = "开户银行最大50字符")
         private String bankName;
 

@@ -194,6 +194,6 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
     }
 
     private List<CustomerSellerEntity> listBaseByMainId(String mainId) {
-        return this.lambdaQuery().eq(CustomerSellerEntity::getMainId, mainId).list();
+        return this.lambdaQuery().eq(CustomerSellerEntity::getMainId, mainId).orderByDesc(CustomerSellerEntity::getId).list();
     }
 }

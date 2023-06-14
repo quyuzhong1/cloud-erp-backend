@@ -752,6 +752,22 @@ public class CustomerDTO implements Serializable {
          */
         private String addressId;
 
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 地址类型
+         */
+        private String addressType;
+
+        /**
+         * 销售员
+         */
+        private String sellerId;
+
+
     }
 
     @Data

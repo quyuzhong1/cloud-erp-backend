@@ -34,13 +34,15 @@
 
     <select id="listSkuPriceHistory" resultType="com.erp.model.oms.dto.SoDetailDTO$SkuHistoryPriceDTO">
          SELECT
-          MAX(price) AS maxPrice,
-          MIN(price) AS minPrice,
-          sku_id,
-          COUNT(sku_id) AS count,
-	      round( SUM ( price*qty ) / sum(qty), 2 ) avgPrice
-        FROM so_detail
-        WHERE is_deleted=FALSE
+          MAX(sd.price) AS maxPrice,
+          MIN(sd.price) AS minPrice,
+          sd.sku_id,
+          COUNT(sd.sku_id) AS count,
+	      round( SUM (sd.price*qty ) / sum(sd.qty), 2 ) avgPrice
+        FROM so_detail sd
+        INNER JOIN so_info si ON sd.main_id = si.id
+        AND sd.is_deleted = FALSE
+        WHERE is_deleted=FALSE AND si.approve_status=#{approveStatus}
         AND sku_id!='' and qty!=0
         GROUP BY sku_id
     </select>
@@ -110,23 +112,23 @@
 
     <select id="listSoDetailByMainIds" resultType="com.erp.model.oms.entity.SoDetailEntity">
         SELECT
-            sd.id,
-            sd.main_id,
-            sd.sku_id,
-            sd.sku_no,
-            sd.qty,
-            sd.price,
-            sd.tax_rate,
-            sd.amount,
-            sd.currency,
-            sd.currency_symbol,
-            sd.is_gift,
-            sd.is_reissue,
-            sd.is_close,
-            sd.remark,
-            sd.delivery_status,
-            si.approve_status,
-            sd.kingdee_detail_id
+        sd.id,
+        sd.main_id,
+        sd.sku_id,
+        sd.sku_no,
+        sd.qty,
+        sd.price,
+        sd.tax_rate,
+        sd.amount,
+        sd.currency,
+        sd.currency_symbol,
+        sd.is_gift,
+        sd.is_reissue,
+        sd.is_close,
+        sd.remark,
+        sd.delivery_status,
+        si.approve_status,
+        sd.kingdee_detail_id
         FROM so_detail sd
         INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
         WHERE si.is_deleted = FALSE
@@ -141,8 +143,8 @@
 
     <select id="listApproveCount" resultType="com.erp.model.oms.dto.SoDetailDTO$TypeCountDTO">
         SELECT
-            si.approve_status AS type,
-	        count(sd.id)
+        si.approve_status AS type,
+        count(sd.id)
         FROM so_detail sd
         INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
         WHERE si.is_deleted=FALSE
@@ -154,14 +156,14 @@
 
     <select id="listDeliveryCount" resultType="com.erp.model.oms.dto.SoDetailDTO$TypeCountDTO">
         SELECT
-          sd.delivery_status AS type,
-	      count(sd.id)
+        sd.delivery_status AS type,
+        count(sd.id)
         FROM so_detail sd
         INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
         WHERE si.is_deleted=FALSE AND si.approve_status='approve'
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
-         GROUP BY sd.delivery_status
+        GROUP BY sd.delivery_status
     </select>
 </mapper>

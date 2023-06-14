@@ -635,6 +635,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      */
     @Override
     public SoDetailDTO.SkuDTO getSkuInfoBySkuNo(String skuNo, String warehouseId) {
+        if (StringUtils.isEmpty(warehouseId)) {
+            throw new ServiceException(ApiError.ERROR_99001);
+        }
         SoDetailDTO.SkuDTO result = new SoDetailDTO.SkuDTO();
         List<String> skuIdList = new ArrayList<>(1);
         Map<String, String> param = new HashMap<>();
@@ -974,7 +977,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         if (CollectionUtils.isEmpty(skuIdList)) {
             return Collections.emptyList();
         }
-        return baseMapper.listSkuPriceHistory(skuIdList);
+        String status = ApproveStatusEnum.APPROVE.getStatus();
+        return baseMapper.listSkuPriceHistory(skuIdList,status);
     }
 
 
