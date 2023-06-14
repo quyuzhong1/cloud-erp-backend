@@ -125,6 +125,13 @@ public class DmpDeliveryDetailInfoServiceImpl extends ServiceImpl<DmpDeliveryDet
         dmpDeliveryDetailItemService.batchAdd(itemList);
         return deliveryDetailId;
     }
+
+    @Override
+    public DmpDeliveryDetailInfoEntity getByPlatformOrderId(String platformOrderId) {
+        LambdaQueryWrapper<DmpDeliveryDetailInfoEntity> lambdaQueryWrapper = new LambdaQueryWrapper();
+        lambdaQueryWrapper.eq(DmpDeliveryDetailInfoEntity::getPlatformOrderId, platformOrderId);
+        return this.getOne(lambdaQueryWrapper);
+    }
 }
 
 

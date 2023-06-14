@@ -51,4 +51,11 @@ public interface DmpDeliveryDetailInfoService extends IService<DmpDeliveryDetail
      * @return void
      **/
     String checkOrder(DmpDeliveryDetailInfoEntity dmpDeliveryDetailInfoEntity);
+
+    /**
+     * 根据平台订单编号查询发货详情信息
+     * @param platformOrderId
+     * @return
+     */
+    DmpDeliveryDetailInfoEntity getByPlatformOrderId(String platformOrderId);
 }
