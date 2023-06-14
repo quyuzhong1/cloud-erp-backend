@@ -150,6 +150,7 @@ public class GyyOrderInfoServiceImpl implements IReportSaveService<GyyOrderEntit
         String value = cfgSettingService.getValue(SettingEnum.CLEAN_JOB_DELAY_MINUTE);
         Integer delayMinute = null != value ? NumberUtil.parseInt(value) : 0;
         OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsClean(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
+        orderMongoDTO.setDownloadStatus(1);
         List<GyyOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
         if (CollectionUtil.isEmpty(mongoData)) {
             return;

@@ -79,15 +79,13 @@ public class KingdeeCustomerServiceImpl implements IReportSaveService<KingdeeSho
                 continue;
             }
             KingdeeShopEntity mongoDatum = mongoData.get(0);
-            String id = mongoDatum.get_id();
-            mongoDatum.set_id(null);
             // 比较数据是否相同
             if (mongoDatum.toString().equals(entity.toString())) {
                 continue;
             }
             pushToMqList.add(entity);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
-            KingdeeShopMongoDTO updateDto = new KingdeeShopMongoDTO(id);
+            KingdeeShopMongoDTO updateDto = new KingdeeShopMongoDTO(mongoDatum.get_id());
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_SHOP, KingdeeShopEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
