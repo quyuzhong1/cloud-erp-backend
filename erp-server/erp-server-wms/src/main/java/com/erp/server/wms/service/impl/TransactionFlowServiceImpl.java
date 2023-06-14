@@ -544,7 +544,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
                 data.setProductName(skuMap.getOrDefault(data.getSkuId(), new SkuVO()).getSkuName());
             }
             // 单据名称
-            data.setSourceTypeName(InventoryTransportTypeEnum.getNameByCode(data.getSourceType()));
+            data.setSourceTypeName(InventoryTransportTypeEnum.getLabelByCode(data.getSourceType()));
             // 分步式调出单
             if(Objects.equals(data.getSourceType(), InventoryTransportTypeEnum.TRANSFER.getCode())) {
                 TransferOutEntity transferOutEntity = transferOutMap.getOrDefault(data.getSourceCode(),new TransferOutEntity());
