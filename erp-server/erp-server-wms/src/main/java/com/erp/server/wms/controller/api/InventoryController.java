@@ -1,6 +1,5 @@
 package com.erp.server.wms.controller.api;
 
-import com.common.business.dto.base.BaseSelectDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -14,7 +13,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 
 /**
  * 库存报表管理
@@ -150,7 +148,7 @@ public class InventoryController extends BaseController {
      */
     @PostMapping("/transport/list")
     public ApiResult<PagingVO<InventoryReportDTO.ListTransportPagingDTO>> transportList(@RequestBody @Validated PagingDTO<InventoryReportDTO.ListTransportSearchParam> dto) {
-        return success(null);
+        return success(transactionFlowService.transportList(dto));
     }
 
     /**

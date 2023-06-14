@@ -386,6 +386,15 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         }
     }
 
+    @Override
+    public PagingVO<InventoryReportDTO.ListTransportPagingDTO> transportList(PagingDTO<InventoryReportDTO.ListTransportSearchParam> pagingParamDTO) {
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        // 在途库存大于0的才查询出来
+        IPage<InventoryReportDTO.ListTransportPagingDTO> pageData = this.baseMapper.transportList(query, pagingParamDTO.getParams());
+        fillTransportListData(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
     /**
      * 填充即时库存查看交易流水其他字段值
      * @param dataList
@@ -496,6 +505,24 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             }
             // 销售状态名称
             data.setSaleStateName(SaleStateEnum.getNameByCode(data.getSaleState()));
+        });
+    }
+
+    private void fillTransportListData(List<InventoryReportDTO.ListTransportPagingDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        // 此处优化，取最新的产品名称和产品图片，防止数据没同步过来，销售状态和SPU则不取最新的，防止查询和显示不一样
+        List<String> skuIds = list.stream().map(InventoryReportDTO.ListTransportPagingDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        list.stream().forEach(data -> {
+            if (skuMap.containsKey(data.getSkuId())) {
+                // 产品名称
+                data.setProductName(skuMap.getOrDefault(data.getSkuId(), new SkuVO()).getSkuName());
+            }
+            // 单据名称
+            data.setSourceTypeName(InventoryTransportTypeEnum.getNameByCode(data.getSourceType()));
         });
     }
 

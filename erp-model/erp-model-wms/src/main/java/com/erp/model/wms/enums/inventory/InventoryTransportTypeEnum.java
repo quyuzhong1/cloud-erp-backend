@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @Classname: InventorySourceTypeEnum
@@ -48,6 +49,11 @@ public enum InventoryTransportTypeEnum {
 
     public static InventoryTransportTypeEnum of(String code) {
         return Arrays.stream(InventoryTransportTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
+    }
+
+    public static String getNameByCode(String code) {
+        InventoryTransportTypeEnum inventoryTransportTypeEnum = of(code);
+        return Optional.ofNullable(inventoryTransportTypeEnum).map(InventoryTransportTypeEnum::getName).orElse("");
     }
 
 }
