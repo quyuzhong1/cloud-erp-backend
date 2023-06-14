@@ -410,7 +410,7 @@
                     </where>
                   group by tf.warehouse_id, tf.sku_id
             ) m
-        ) n ORDER BY n.warehouse_name asc,n.transport_qty desc
+        ) n where n.transport_qty > 0 ORDER BY n.warehouse_name asc,n.transport_qty desc
     </select>
     <select id="exportTransport"
             resultType="com.erp.model.wms.dto.inventory.InventoryReportDTO$TransportPagingDTO">
@@ -483,7 +483,7 @@
         </where>
         group by tf.warehouse_id, tf.sku_id
         ) m
-        ) n ORDER BY n.warehouse_name asc,n.transport_qty desc
+        ) n where n.transport_qty > 0 ORDER BY n.warehouse_name asc,n.transport_qty desc
     </select>
 
 </mapper>

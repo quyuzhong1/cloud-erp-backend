@@ -144,15 +144,6 @@ public class InventoryController extends BaseController {
     }
 
     /**
-     * 在途库存单据明细单据类型tab
-     * @return
-     */
-    @GetMapping("/transport/sourceTypeTab")
-    public ApiResult<List<BaseSelectDTO>> transportSourceTypeTab( ) {
-        return success(null);
-    }
-
-    /**
      * 在途库存单据明细分页列表
      * @param dto
      * @return
