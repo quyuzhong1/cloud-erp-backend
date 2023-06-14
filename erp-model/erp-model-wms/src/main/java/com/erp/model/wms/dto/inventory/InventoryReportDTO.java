@@ -253,6 +253,11 @@ public class InventoryReportDTO implements Serializable {
         private String sourceTypeName;
 
         /**
+         * 单据编号
+         */
+        private String sourceCode;
+
+        /**
          * sku id
          */
         private String skuId;

@@ -14,6 +14,7 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.InstockForcastMapper;
@@ -290,8 +291,9 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             }
             Integer returnQty = MathUtil.ZERO;
             if(CollUtil.isNotEmpty(returnOrderDetailList)) {
-                // 退货单
+                // 退货单（退货补货的才会导致在途数量变化）
                 returnQty = returnOrderDetailList.stream().filter(e -> Objects.equals(e.getPurchaseOrderDetailId(), purchaseOrderDetailId)
+                        && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode())
                         && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
                         .map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             }
