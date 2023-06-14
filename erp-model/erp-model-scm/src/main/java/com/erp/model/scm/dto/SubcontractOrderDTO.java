@@ -333,7 +333,7 @@ public class SubcontractOrderDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-         * 调拨日期
+         * 单据日期
          */
         private LocalDate billDate;
         /**

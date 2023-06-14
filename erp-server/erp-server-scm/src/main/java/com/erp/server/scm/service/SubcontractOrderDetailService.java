@@ -72,4 +72,12 @@ public interface SubcontractOrderDetailService extends SuperService<SubcontractO
      * @return List<SubcontractOrderDetailEntity>
      */
     List<SubcontractOrderDetailEntity> listByMainIdAndSku(String mainId, List<String> skuNoList);
+    /**
+     * @description: 根据来源明细ids查询有效明细
+     * @author Will
+     * @date: 2023/6/14 15:06
+     * @param sourceDetailIds
+     * @return List<SubcontractOrderDetailEntity>
+     */
+    List<SubcontractOrderDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds);
 }

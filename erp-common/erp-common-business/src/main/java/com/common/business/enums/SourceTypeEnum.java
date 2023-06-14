@@ -11,8 +11,12 @@ import java.util.Objects;
 public enum SourceTypeEnum {
     SELF_ADD("selfAdd", "手动新增"),
 
-    //WMS
+    //SCM
     PURCHASE_ORDER("purchaseOrder", "采购订单"),
+    PURCHASE_APPLICATION("purchaseApplication", "采购申请单"),
+
+
+    //WMS
     PURCHASE_STOCK_IN("purchaseStockIn", "采购入库单"),
     QC_BILL("qcBill", "质检单"),
     PURCHASE_RETURN_ORDER("purchaseReturnOrder", "采购退货单"),

@@ -6,14 +6,17 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.SubcontractOrderDetailDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.scm.mapper.SubcontractOrderDetailMapper;
 import com.erp.server.scm.service.ModuleOperateLogService;
+import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.SubcontractOrderDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -44,6 +47,10 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private PurchasePriceDetailService purchasePriceDetailService;
+
 
 
     @Override
@@ -123,6 +130,11 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 .list();
     }
 
+    @Override
+    public List<SubcontractOrderDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds) {
+        return  baseMapper.listBySourceDetailIds(sourceDetailIds);
+    }
+
     private List<SubcontractOrderDetailEntity> listParentByMainId(String mainId) {
         return lambdaQuery()
                 .eq(SubcontractOrderDetailEntity::getMainId,mainId)
@@ -184,6 +196,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             detailEntity.setVariantProperty(skuVO.getVariantProperty());
             detailEntity.setSkuNo(skuVO.getSkuNo());
             detailEntity.setBomVersion(bomChildrenSkuDTO.getBomVersion());
+            handleSupplierTaxPrice(detailEntity,Boolean.FALSE);
             //子集SKU信息
             List<SubcontractOrderDetailEntity>   childList = BeanMapperUtils.copyList(SubcontractOrderDetailEntity.class, detailEntity.getChildList());
             for (SubcontractOrderDetailEntity childEntity : childList) {
@@ -192,12 +205,12 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 if (ObjectUtils.isEmpty(childSkuVO)) {
                     throw new ServiceException(ApiError.ERROR_95084);
                 }
-                childEntity.setId(IdWorker.getIdStr());
                 childEntity.setMainId(mainId);
                 childEntity.setParentId(detailEntity.getId());
                 childEntity.setVariantProperty(childSkuVO.getVariantProperty());
                 childEntity.setSkuNo(childSkuVO.getSkuNo());
                 childEntity.setBomVersion(bomChildrenSkuDTO.getBomVersion());
+                handleSupplierTaxPrice(childEntity,Boolean.TRUE);
             }
             resultList.add(detailEntity);
             resultList.addAll(childList);
@@ -217,5 +230,30 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             moduleOperateLogService.batchAddModuleOperateLog("新增了一条父级SKU【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(), addPairList, "编辑操作");
         }
         return resultList;
+    }
+
+    /**
+     * @description: 处理供应商报价
+     * @author Will
+     * @date: 2023/6/14 17:07
+     * @param entity
+     * @param isChild
+     */
+    private void handleSupplierTaxPrice(SubcontractOrderDetailEntity entity,Boolean isChild) {
+        //供应商报价信息
+        PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+        searchDTO.setSkuId(entity.getSkuId());
+        searchDTO.setSupplierId(entity.getSupplierId());
+        searchDTO.setPurchaseQty(entity.getQty());
+        searchDTO.setSkuNo(entity.getSkuNo());
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(searchDTO);
+        PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
+        entity.setCurrency(viewDTO.getCurrency());
+        entity.setCurrencySymbol(viewDTO.getCurrencySymbol());
+        //子件SKU默认取供应商报价
+        if (isChild) {
+            entity.setPrice(viewDTO.getTaxPrice());
+        }
+        entity.setAmount(MathUtil.multiply(entity.getPrice(),entity.getQty()));
     }
 }

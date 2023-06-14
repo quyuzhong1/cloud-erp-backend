@@ -75,6 +75,7 @@ public enum ApiError implements Serializable {
     ERROR_1036(1036,"project导入{}级任务负责人不能为空"),
     ERROR_1037(1037,"系统中未找到用户【{}】"),
     ERROR_1038(1038,"系统中未找到project导入{}级任务负责人"),
+    ERROR_1039(1039,"单据【{}】未审核完成，不支持下推"),
 
 
 
@@ -334,7 +335,7 @@ public enum ApiError implements Serializable {
     ERROR_MSG_ID_OR_UNION_ID_IS_NULL(95161, "消息ID或者用户绑定ID为空，发送加急信息失败"),
 
     ERROR_BUSINESS_NOT_EXIT(95162, "业务类型不存在，请检查"),
-    ERROR_95163(95163, "BOM信息不存在"),
+    ERROR_95163(95163, "未找到选择的BOM信息"),
     ERROR_95164(95164, "不可新增相同EAN码"),
     ERROR_DOCS_NO(95165,"文档不存在"),
 	ERROR_95166(95166, "未找到BOM子件"),
@@ -343,6 +344,8 @@ public enum ApiError implements Serializable {
     ERROR_95169(95169,"变体类型值不存在，或已被删除"),
     ERROR_95170(95170,"变体类型不存在，或已被删除"),
     ERROR_95171(95171,"产品单位以被关联，不可删除"),
+    ERROR_95172(95172, "未找到BOM子件"),
+    ERROR_95173(95173, "父级SKU【{}】未找到BOM子件"),
 
 
 

@@ -247,5 +247,38 @@
         </where>
     </select>
 
+    <select id="viewGenerateSubcontractOrder"
+            resultType="com.erp.model.scm.dto.PurchaseApplicationDTO$ViewGenerateSubcontractOrderDTO">
+        select
+        pa.id as sourceId,
+        pa.code as sourceCode,
+        pa.approve_status as approveStatus,
+        pad.id as sourceDetailId,
+        pad.sku_id as skuId,
+        pad.sku_no as skuNo,
+        pad.product_name as productName,
+        pad.variant_property as variantProperty,
+        pad.purchase_org_id as purchaseOrgId,
+        pad.purchase_org_name as purchaseOrgName,
+        pad.receive_org_id as receiveOrgId,
+        pad.receive_org_name as receiveOrgName,
+        pad.dest_warehouse_id as warehouseId,
+        pad.dest_warehouse_name as warehouseName,
+        pad.apply_qty as qty,
+        pad.apply_qty as deliveryQty
+        from purchase_application pa
+        left join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = false
+        <where>
+            pa.is_deleted = false
+            <if test="ids != null and ids.size > 0">
+                and pa.id in
+                <foreach collection="ids" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+
+    </select>
+
 
 </mapper>

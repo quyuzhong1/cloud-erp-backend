@@ -353,36 +353,4 @@ public class SalesDemandController extends BaseController {
         Boolean flag = salesDemandService.generateSalesDemand(list);
         return flag == true ? success() : failure();
     }
-
-    /**
-     * 下推委外订单显示
-     * @author Will
-     * @date: 2023/6/12 15:00
-     * @param dto
-     * @return ApiResult<List<ViewGenerateSubcontractOrderDTO>>
-     */
-    @PostMapping(value = "/viewGenerateSubcontractOrder")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "scm:salesDemand:viewGenerateSubcontractOrder",
-            tableAlias = "so"
-    )
-    public ApiResult<List<SalesDemandDTO.ViewGenerateSubcontractOrderDTO>> viewGenerateSubcontractOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<SalesDemandDTO.ViewGenerateSubcontractOrderDTO> list = salesDemandService.viewGenerateSubcontractOrder(dto.getIds());
-        return success(list);
-    }
-
-    /**
-     * 下推委外订单保存
-     * @author Will
-     * @date: 2023/6/12 15:10
-     * @param list
-     * @return ApiResult<Void>
-     */
-    @PostMapping(value = "/generateSubcontractOrder")
-    public ApiResult<Void> generateSubcontractOrder(@RequestBody @Validated ValidList<SalesDemandDTO.GenerateSubcontractOrderDTO> list) {
-        salesDemandService.generateSubcontractOrder(list);
-        return success();
-    }
-
 }

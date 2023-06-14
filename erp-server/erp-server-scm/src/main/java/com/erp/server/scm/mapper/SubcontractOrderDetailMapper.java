@@ -1,8 +1,11 @@
 package com.erp.server.scm.mapper;
-import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -16,5 +19,12 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface SubcontractOrderDetailMapper extends BaseMapper<SubcontractOrderDetailEntity> {
 
-
+    /**
+     * @description: 根据来源明细ids查询有效数据
+     * @author Will
+     * @date: 2023/6/14 15:08
+     * @param sourceDetailIds
+     * @return List<SubcontractOrderDetailEntity>
+     */
+    List<SubcontractOrderDetailEntity> listBySourceDetailIds(@Param("sourceDetailIds") List<String> sourceDetailIds);
 }

@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -16,7 +17,9 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -26,12 +29,14 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchaseApplicationExportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
+import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SupplierContactEntity;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -63,10 +68,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -110,6 +112,13 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Resource
     private SupplierContactService supplierContactService;
+
+    @Resource
+    private SubcontractOrderDetailService subcontractOrderDetailService;
+
+    @Resource
+    private SubcontractOrderService subcontractOrderService;
+
 
     @Override
     public PagingVO<PurchaseApplicationDTO.ListDTO> paging(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> pagingDTO) {
@@ -623,6 +632,110 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         return this.submit(Arrays.asList(dto.getId()));
     }
 
+    @Override
+    public List<PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO> viewGenerateSubcontractOrder(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        List<PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO> list = baseMapper.viewGenerateSubcontractOrder(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        //未审核完成数据
+        List<PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO> foundList = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(foundList)) {
+            String sourceCodes = foundList.stream().map(PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO::getSourceCode).collect(Collectors.joining());
+            log.error("单据【{}】未审核完成，不支持下推",sourceCodes);
+            throw new ServiceException(new ApiResult(ApiError.ERROR_1039.code, StrUtil.format(ApiError.ERROR_1039.msg,sourceCodes)));
+        }
+        //已下推信息
+        List<String> sourceDetailIds = list.stream().map(PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO::getSourceDetailId).collect(Collectors.toList());
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = subcontractOrderDetailService.listBySourceDetailIds(sourceDetailIds);
+        
+        //查询bom信息填充子件信息
+        List<String> skuIds = list.stream().map(PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        if (CollectionUtils.isEmpty(bomChildList)) {
+            throw new ServiceException(ApiError.ERROR_95163);
+        }
+        for (PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO viewDTO : list) {
+            //已下推数量
+            Integer pushdownQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(subcontractOrderDetailList)) {
+                pushdownQty = subcontractOrderDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(viewDTO.getSourceDetailId()) && StringUtils.isBlank(obj.getParentId())).map(SubcontractOrderDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //可下推数量
+            viewDTO.setToPushdownQty(viewDTO.getQty() - pushdownQty);
+            viewDTO.setSourceType(SourceTypeEnum.PURCHASE_APPLICATION.getCode());
+
+            //填充BOM子件信息
+            List<BomChildrenSkuDTO> childList = bomChildList.stream().filter(obj -> obj.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(childList)) {
+                throw new ServiceException(new ApiResult(ApiError.ERROR_95167.code,StrUtil.format(ApiError.ERROR_95167.msg,viewDTO.getSkuNo())));
+            }
+            List<PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO> generateChildList = new ArrayList<>();
+            for (BomChildrenSkuDTO childrenSkuDTO : childList) {
+                PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO viewGenerateDTO = new PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO();
+                BeanMapperUtils.copy(viewDTO,viewGenerateDTO);
+                viewGenerateDTO.setSkuId(childrenSkuDTO.getSkuId());
+                viewGenerateDTO.setSkuNo(childrenSkuDTO.getSkuNo());
+                viewGenerateDTO.setProductName(childrenSkuDTO.getSkuName());
+                generateChildList.add(viewGenerateDTO);
+            }
+            viewDTO.setChildList(generateChildList);
+        }
+        return list;
+    }
+
+    @Override
+    public void generateSubcontractOrder(ValidList<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> validList) {
+        List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> list = validList.getList();
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        List<String> sourceIds = list.stream().map(PurchaseApplicationDTO.GenerateSubcontractOrderDTO::getSourceId).collect(Collectors.toList());
+        List<PurchaseApplicationEntity> purchaseApplicationList = this.listByIds(sourceIds);
+        String codes = purchaseApplicationList.stream().filter(obj -> !ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(PurchaseApplicationEntity::getCode).collect(Collectors.joining());
+        if (StringUtils.isNotBlank(codes)) {
+            log.error("单据【{}】未审核完成，不支持下推",codes);
+            throw new ServiceException(new ApiResult(ApiError.ERROR_1039.code, StrUtil.format(ApiError.ERROR_1039.msg,codes)));
+        }
+
+        Map<String, List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO>> map = list.stream().collect(Collectors.groupingBy(PurchaseApplicationDTO.GenerateSubcontractOrderDTO::getSourceId));
+        for (Map.Entry<String, List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO>> entry :  map.entrySet()) {
+            List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> value = entry.getValue();
+            PurchaseApplicationDTO.GenerateSubcontractOrderDTO subcontractOrderDTO = entry.getValue().get(0);
+            //采购申请单
+            PurchaseApplicationEntity purchaseApplicationEntity = purchaseApplicationList.stream().filter(obj -> obj.getId().equals(subcontractOrderDTO.getSourceId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(purchaseApplicationEntity)) {
+                throw new ServiceException(ApiError.ERROR_98016);
+            }
+
+            //委外订单主表数据
+            SubcontractOrderDTO.AddDTO addDTO = BeanMapperUtils.map(SubcontractOrderDTO.AddDTO.class, subcontractOrderDTO);
+            addDTO.setBillDate(LocalDate.now());
+            addDTO.setIsFirstMassProduct(purchaseApplicationEntity.getIsFirstMassProduct());
+
+            //委外订单明细数据
+            List<SubcontractOrderDetailDTO.AddDTO> detailList = new ArrayList<>();
+            for (PurchaseApplicationDTO.GenerateSubcontractOrderDTO generateDetailDTO :  value) {
+                //委外订单父级SKU
+                SubcontractOrderDetailDTO.AddDTO detail = BeanMapperUtils.map(SubcontractOrderDetailDTO.AddDTO.class, generateDetailDTO);
+
+                //委外订单子件SKU
+                List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> generateChildList = generateDetailDTO.getChildList();
+                List<SubcontractOrderDetailDTO.AddDTO> childList = new ArrayList<>();
+                for (PurchaseApplicationDTO.GenerateSubcontractOrderDTO generateChild : generateChildList) {
+                    SubcontractOrderDetailDTO.AddDTO child = BeanMapperUtils.map(SubcontractOrderDetailDTO.AddDTO.class, generateChild);
+                    childList.add(child);
+                }
+                detail.setChildList(childList);
+                detailList.add(detail);
+            }
+            addDTO.setDetailList(detailList);
+            subcontractOrderService.add(addDTO);
+        }
+    }
 
     /**
      * 更新审核状态

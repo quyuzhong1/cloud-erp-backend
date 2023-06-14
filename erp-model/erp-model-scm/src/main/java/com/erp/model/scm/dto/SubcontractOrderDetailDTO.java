@@ -148,12 +148,6 @@ public class SubcontractOrderDetailDTO implements Serializable {
         private BigDecimal price;
 
         /**
-        * 币别
-        */
-        @Size(max = 20,message = "币别最大长度不能超过20位")
-        private String currency;
-
-        /**
         * 仓库id
         */
         @NotBlank(message = "仓库id不能为空")

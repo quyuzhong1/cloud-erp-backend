@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
@@ -156,4 +157,20 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @return Boolean
      */
     Boolean updateAndSubmit(PurchaseApplicationDTO.UpdateDTO dto);
+
+    /**
+     * @description: 下推委外订单显示
+     * @author Will
+     * @date: 2023/6/12 15:03
+     * @param ids
+     * @return List<ViewGenerateSubcontractOrderDTO>
+     */
+    List<PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO> viewGenerateSubcontractOrder(List<String> ids);
+    /**
+     * @description: 下推委外订单保存
+     * @author Will
+     * @date: 2023/6/12 15:04
+     * @param list
+     */
+    void generateSubcontractOrder(ValidList<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> list);
 }
