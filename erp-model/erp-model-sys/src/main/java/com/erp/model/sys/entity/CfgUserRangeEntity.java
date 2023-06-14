@@ -25,6 +25,12 @@ public class CfgUserRangeEntity extends BaseEntity<CfgUserRangeEntity> {
 
 
     /**
+     * 名称
+     */
+    @TableField("name")
+    private String name;
+
+    /**
     * 区间类型
     */
     @TableField("type")
@@ -48,6 +54,7 @@ public class CfgUserRangeEntity extends BaseEntity<CfgUserRangeEntity> {
     @TableField("user_id")
     private String userId;
 
+    public static final String NAME = "name";
 
     public static final String TYPE = "type";
 
