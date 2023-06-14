@@ -6,6 +6,7 @@ import com.common.business.enums.SalesPlatformEnum;
 import com.common.business.enums.SeasonEnum;
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
+import com.erp.model.plm.enums.ProductSalesPlatformEnum;
 import com.erp.model.plm.enums.ProductStyleEnum;
 import com.erp.model.plm.enums.ThreeGenerationPlanningEnum;
 import lombok.Data;
@@ -160,7 +161,7 @@ public class ProductPlanExcelDTO implements Serializable {
      * 销售平台/渠道
      */
     @ExcelProperty(value = "销售平台/渠道", index = 20)
-    @FieldValid(fieldName = "销售平台/渠道",enumClass = SalesPlatformEnum.class)
+    @FieldValid(fieldName = "销售平台/渠道",enumClass = ProductSalesPlatformEnum.class)
     private String salesPlatformName;
 
     /**

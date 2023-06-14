@@ -33,16 +33,6 @@ public class ProductImagesServiceImpl extends ServiceImpl<ProductImagesMapper, P
     public Boolean insertProductImage(ProductImagesDTO productImagesDTO) {
         ProductImagesEntity productImagesEntity = new ProductImagesEntity();
         BeanMapper.copy(productImagesDTO, productImagesEntity);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (ObjectUtils.isNotEmpty(loginUser)) {
-            if (StringUtils.isBlank(productImagesDTO.getId())) {
-                productImagesEntity.setCreateUserId(loginUser.getUid());
-                productImagesEntity.setCreateUserName(loginUser.getUserName());
-            } else {
-                productImagesEntity.setUpdateUserId(loginUser.getUid());
-                productImagesEntity.setUpdateUserName(loginUser.getUserName());
-            }
-        }
         return this.save(productImagesEntity);
     }
 

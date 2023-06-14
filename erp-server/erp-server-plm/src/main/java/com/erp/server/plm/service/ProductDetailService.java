@@ -1,7 +1,9 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
@@ -113,15 +115,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return java.lang.Boolean
      **/
     Boolean deleteByProductId(String id);
-
-    /**
-     * @Description 删除多规格sku信息-批量
-     * @Author Luo_WG
-     * @Date 2022/9/22 11:32
-     * @param skuIds:产品sku表主键id
-     * @return java.lang.Boolean
-     **/
-    Boolean deleteBatch(List<String> skuIds);
 
     /**
      * @Description 根据产品主键id查询sku明细
@@ -462,4 +455,49 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return void
      */
     void updateProductStateByProductIdList(List<String> productIds, Integer code);
+
+ /**
+     * 提交
+     * @Author Luo_WG
+     * @Date 2023/6/14 15:36
+     * @param ids
+     * @return java.lang.Boolean
+     **/
+    Boolean submit(List<String> ids);
+
+    /**
+     * 批量审核
+     * @Author Luo_WG
+     * @Date 2023/6/14 16:38
+     * @param baseApproveParamDTO
+     * @return java.lang.Boolean
+     **/
+    Boolean approve(BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 批量反审核
+     * @Author Luo_WG
+     * @Date 2023/6/14 17:18
+     * @param ids
+     * @return java.lang.Boolean
+     **/
+    Boolean disApprove(List<String> ids);
+
+    /**
+     * 取消流程
+     * @Author Luo_WG
+     * @Date 2023/6/14 17:28
+     * @param ids
+     * @return java.lang.Boolean
+     **/
+    Boolean cancelProcess(List<String> ids);
+
+    /**
+     * 批量删除
+     * @Author Luo_WG
+     * @Date 2023/6/14 17:42
+     * @param ids
+     * @return java.lang.Boolean
+     **/
+    Boolean deleteBatch(List<String> ids);
 }

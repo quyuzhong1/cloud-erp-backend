@@ -1699,6 +1699,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     }
 
     @Override
+    public List<ProjectTaskEntity> listByProductIds(List<String> productIds) {
+        LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(ProjectTaskEntity::getProductId, productIds);
+        List<ProjectTaskEntity> list = this.list(queryWrapper);
+        return list;
+    }
+
+    @Override
     public PagingVO<List<TaskPagingShowDTO>> expertPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO) {
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();

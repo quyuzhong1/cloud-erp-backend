@@ -96,7 +96,7 @@ public class ProductSaleEntity extends BaseEntity implements Serializable {
     private BigDecimal targetSalesQty;
 
     /**
-     * 销售平台(SalesPlatformEnum枚举)
+     * 销售平台(ProductSalesPlatformEnum枚举)
      */
     @TableField(value = "sales_platform")
     private String salesPlatform;

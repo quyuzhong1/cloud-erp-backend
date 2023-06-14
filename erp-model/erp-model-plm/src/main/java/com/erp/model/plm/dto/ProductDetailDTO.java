@@ -37,6 +37,12 @@ public class ProductDetailDTO implements Serializable {
     private String name;
 
     /**
+     * 产品sku名称(英文)
+     */
+    @Size(max = 500, message = "产品名称最大500字符")
+    private String nameEn;
+
+    /**
      * 变体属性
      */
     private String variantProperty;

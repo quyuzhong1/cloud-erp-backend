@@ -9,11 +9,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.SkuApproveConfigureEnum;
-import com.common.business.enums.SyncKingdeeOperateEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.*;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -43,6 +43,7 @@ import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -164,6 +165,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Autowired
     private ProductArchiveService archiveService;
+
+    @Autowired
+    private ProductUnitService productUnitService;
+
+    @Autowired
+    private ProductVariantPropertyService productVariantPropertyService;
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -552,15 +559,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public String saveOrUpdate(ProductSkuBaseInfoDTO productSkuBaseInfoDTO) {
         ProductDetailEntity detailEntity = new ProductDetailEntity();
         BeanMapper.copy(productSkuBaseInfoDTO, detailEntity);
-        LoginUser loginUser = commonService.getUserInfo();
-        if (StringUtils.isBlank(detailEntity.getId())) {
-            detailEntity.setCreateUserId(loginUser.getUid());
-            detailEntity.setCreateUserName(loginUser.getUserName());
-        } else {
-            detailEntity.setUpdateUserId(loginUser.getUid());
-            detailEntity.setUpdateUserName(loginUser.getUserName());
-        }
         detailEntity.setIsChange(IsConstant.NO);
+        productUnitService.setupOccupy(Arrays.asList(detailEntity.getUnitId()));
         this.saveOrUpdate(detailEntity);
         return detailEntity.getId();
     }
@@ -575,19 +575,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public Boolean saveOrUpdateBatch(List<ProductDetailDTO> productDetailList) {
         List<ProductDetailEntity> list = BeanMapper.copyList(productDetailList, ProductDetailEntity.class);
-        LoginUser loginUser = commonService.getUserInfo();
         list.forEach(req -> {
-            if (ObjectUtils.isNotEmpty(loginUser)) {
-                if (StringUtils.isBlank(req.getId())) {
-                    req.setCreateUserId(loginUser.getUid());
-                    req.setCreateUserName(loginUser.getUserName());
-                } else {
-                    req.setUpdateUserId(loginUser.getUid());
-                    req.setUpdateUserName(loginUser.getUserName());
-                }
-            }
             req.setIsChange(IsConstant.NO);
         });
+        List<String> unitList = list.stream().map(ProductDetailEntity::getUnitId).collect(Collectors.toList());
+        productUnitService.setupOccupy(unitList);
         return this.saveOrUpdateBatch(list);
     }
 
@@ -632,6 +624,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //1.修改产品表 主表信息
         productSpuBaseInfoDTO.setIsNoSpecAdd(MathUtil.ONE);
+
         String id = productInfoService.updateSpec(productSpuBaseInfoDTO);
 
         //2.修改/新增 sku信息
@@ -1036,6 +1029,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productVariantOptionEntity.setProductId(id);
             productVariantOptionEntity.setVariantType(req.getPropertyType());
             productVariantOptionEntity.setVariantValue(JSONObject.toJSONString(req.getVarianList()));
+            productVariantService.setupOccupy(Arrays.asList(req.getPropertyType()));
+            productVariantPropertyService.setupOccupy(req.getVarianList(), Arrays.asList(req.getPropertyType()));
             productVariantOptionService.saveOrUpdateOptionEntity(productVariantOptionEntity);
             List<String> varianList = req.getVarianList();
             for (String varian : varianList) {
@@ -1154,37 +1149,32 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional
     public Boolean delete(String skuId) {
+        List<String> idList = Arrays.asList(skuId);
         //1.删除证书信息
-        productCertificateService.removeCertificate(skuId);
+        productCertificateService.removeCertificate(idList);
         //2.删除包装信息
-        productPackService.removePack(skuId);
+        productPackService.removePack(idList);
         //3.删除物流信息
-        productLogisticsService.removeLogistics(skuId);
+        productLogisticsService.removeLogistics(idList);
         //4.删除销售信息
-        productSaleService.removeSale(skuId);
+        productSaleService.removeSale(idList);
         //5.删除采购信息
-        productPurchaseService.removePurchase(skuId);
+        productPurchaseService.removePurchase(idList);
         //6.删除成本信息
-        productCostService.removeCost(skuId);
-
+        productCostService.removeCost(idList);
         //7.删除任务关联sku 信息
-        taskRefSkuConfigService.removeTaskRefSku(skuId);
-
+        taskRefSkuConfigService.removeTaskRefSku(idList);
         //8.删除sku信息
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductDetailEntity::getId, skuId);
-
         ProductDetailEntity productDetailEntity = this.getById(skuId);
-
         if (ObjectUtils.isNotEmpty(productDetailEntity)) {
             ProductInfoEntity productInfoEntity = productInfoService.getById(productDetailEntity.getProductId());
             List<ProductDetailEntity> skuListByProductId = this.getSkuListByProductId(productDetailEntity.getProductId());
             if (ObjectUtils.isNotEmpty(productInfoEntity)) {
-
                 if (skuListByProductId.size() == 1 && productInfoEntity.getIsFinishedProductDev() == null) {
                     productInfoService.removeById(productInfoEntity.getId());
                 }
-
                 //添加操作日志
                 SysLogEntity sysLogEntity = new SysLogEntity().setClassPath(SPUCLASSPATH).setBusinessId(productInfoEntity.getId()).setPid(productInfoEntity.getId()).setOperation("删除信息").setContent("删除了一个SKU：[" + productDetailEntity.getSkuNo() + "]");
                 sysLogService.addSysLogByOther(sysLogEntity);
@@ -1207,35 +1197,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductDetailEntity::getProductId, id);
         List<ProductDetailEntity> list = this.list(queryWrapper);
-        list.forEach(req -> {
-            //1.删除证书信息
-            productCertificateService.removeCertificate(req.getSkuNo());
-            //2.删除包装信息
-            productPackService.removePack(req.getSkuNo());
-            //3.删除物流信息
-            productLogisticsService.removeLogistics(req.getSkuNo());
-            //4.删除销售信息
-            productSaleService.removeSale(req.getSkuNo());
-            //5.删除采购信息
-            productPurchaseService.removePurchase(req.getSkuNo());
-            //6.删除成本信息
-            productCostService.removeCost(req.getSkuNo());
-        });
-        return this.remove(queryWrapper);
-    }
-
-    /**
-     * @param skuId:产品sku表主键id
-     * @return java.lang.Boolean
-     * @Description 删除多规格sku信息-批量
-     * @Author Luo_WG
-     * @Date 2022/9/22 11:32
-     **/
-    @Override
-    @Transactional
-    public Boolean deleteBatch(List<String> skuId) {
-        LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.in(ProductDetailEntity::getId, skuId);
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.FALSE;
+        }
+        List<String> skuIds = list.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+        //1.删除证书信息
+        productCertificateService.removeCertificate(skuIds);
+        //2.删除包装信息
+        productPackService.removePack(skuIds);
+        //3.删除物流信息
+        productLogisticsService.removeLogistics(skuIds);
+        //4.删除销售信息
+        productSaleService.removeSale(skuIds);
+        //5.删除采购信息
+        productPurchaseService.removePurchase(skuIds);
+        //6.删除成本信息
+        productCostService.removeCost(skuIds);
         return this.remove(queryWrapper);
     }
 
@@ -1733,12 +1710,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //重新启动流程
         //TODO 2023-03-30 暂时取消审核流程 只改状态
 //        this.productDetailStartProcess(entity);
-        entity.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
+        entity.setStatus(ProductDetailStatusEnum.APPROVAL_ING.getCode());
         //反审核后更新是否申请变更
         entity.setIsChange(IsConstant.NO);
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(entity.getProductId())
-                .setBusinessId(entity.getId()).setOperation("状态变更").setContent("反审核SKU[" + entity.getSkuNo() + "],操作[" + statusName + "]为[" + ProductDetailStatusEnum.WAIT_CONFIRM.getName() + "]"));
+                .setBusinessId(entity.getId()).setOperation("状态变更").setContent("反审核SKU[" + entity.getSkuNo() + "],操作[" + statusName + "]为[" + ProductDetailStatusEnum.APPROVAL_ING.getName() + "]"));
         //反审核后用新的流程审核人员审核
         return this.updateById(entity);
     }
@@ -1749,12 +1726,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
-        if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus())) {
+        if (!ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_95088);
         }
         //TODO 2023-03-30 暂时取消审核流程 只改状态
 //        this.productDetailStartProcess(entity);
-        entity.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
+        entity.setStatus(ProductDetailStatusEnum.APPROVAL_ING.getCode());
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
                 .setOperation("重启审核流程").setContent("SKU[" + entity.getSkuNo() + "]重启审核流程"));
@@ -1865,7 +1842,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //启动流程
 //        productDetailStartProcess(productDetailEntity);
-        productDetailEntity.setStatus(ProductDetailStatusEnum.WAIT_CONFIRM.getCode());
+        productDetailEntity.setStatus(ProductDetailStatusEnum.APPROVAL_ING.getCode());
         return this.updateById(productDetailEntity);
     }
 
@@ -2003,6 +1980,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isEmpty(productDetailEntity.getProductState())) {
             str.append("产品开发状态不能为空");
         }
+        return str.toString();
+    }
+
+    private String checkRequiredDataList(List<ProductDetailEntity> productDetailEntityList) {
+        StringBuffer str = new StringBuffer();
+        productDetailEntityList.forEach(req -> {
+            if (StringUtils.isBlank(req.getSkuNo())) {
+                str.append("[" + req.getName() + "] sku编号不能为空");
+            }
+            if (StringUtils.isBlank(req.getChargeId())) {
+                str.append("[" + req.getSkuNo() + "]产品经理不能为空");
+            }
+            if (StringUtils.isBlank(req.getName())) {
+                str.append("[" + req.getSkuNo() + "]产品名称(品名)不能为空");
+            }
+            if (ObjectUtils.isEmpty(req.getProductState())) {
+                str.append("[" + req.getSkuNo() + "]产品开发状态不能为空");
+            }
+        });
         return str.toString();
     }
 
@@ -2387,7 +2383,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }*/
         String businessKey = BusinessProcessEnum.PRODUCT_DETAIL.getBusinessKey();
         //初始状态为待审核
-        Integer waitConfirmCode = ProductDetailStatusEnum.WAIT_CONFIRM.getCode();
+        Integer waitConfirmCode = ProductDetailStatusEnum.APPROVAL_ING.getCode();
         BusinessProcessEntity processEntity = businessProcessService.getProcessByBusinessKey(businessKey);
         if (!Objects.isNull(processEntity)) {
             StartProcessDTO startProcess = new StartProcessDTO();
@@ -2630,5 +2626,199 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     set(ProductDetailEntity::getProductState, productState).update();
         }
 
+    }
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean submit(List<String> ids) {
+        List<ProductDetailEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(entityList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+
+        //待提交、审核不通过才可以提交
+        long count = entityList.stream().filter(entity ->
+                entity.getStatus().equals(ProductDetailStatusEnum.WAIT_COMMIT.getCode())
+                || entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode())
+        ).count();
+
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_95117);
+        }
+        //验证必填信息
+        String str = checkRequiredDataList(entityList);
+        if (StringUtils.isNotBlank(str)) {
+            throw new ServiceException(new ApiResult(1, str));
+        }
+        List<String> productIds = entityList.stream().map(ProductDetailEntity::getProductId).collect(Collectors.toList());
+        List<ProjectTaskEntity> taskAllList = projectTaskService.listByProductIds(productIds);
+        //存在关联任务并且含配置表单的任务需要验证是否完成
+        if (CollectionUtils.isNotEmpty(taskAllList)) {
+            List<String> taskIdList = taskAllList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+            //配置表单信息
+            List<TaskRefSkuConfigEntity> configList = taskRefSkuConfigService.getByTaskIds(taskIdList);
+            if (CollectionUtils.isNotEmpty(configList)) {
+                List<TaskRefSkuConfigEntity> hasConfigList = configList.stream().filter(obj -> StringUtils.isNotBlank(obj.getFieldJson())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(hasConfigList)) {
+                    List<String> configTaskIds = hasConfigList.stream().map(TaskRefSkuConfigEntity::getTaskId).collect(Collectors.toList());
+                    //验证关联任务是否已全部完成
+                    long relatedCount = taskAllList.stream().filter(obj -> !RelatedSkuTypeEnum.NOT_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId())).count();
+                    if (relatedCount > 0) {
+                        throw new ServiceException(ApiError.ERROR_95083);
+                    }
+                }
+            }
+        }
+        //启动流程
+//        productDetailStartProcess(productDetailEntity);
+        return lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.APPROVAL_ING.getCode())
+                .in(ProductDetailEntity::getId, ids)
+                .update();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
+        List<String> ids = baseApproveParamDTO.getIds();
+        List<ProductDetailEntity> deliveryNoticeEntityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(deliveryNoticeEntityList)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //判断是否是审核中的状态
+        long count = deliveryNoticeEntityList.stream().filter(entity ->
+                entity.getStatus().equals(ProductDetailStatusEnum.WAIT_CONFIRM.getCode())
+                || entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_ING.getCode())
+        ).count();
+
+        if (count != deliveryNoticeEntityList.size()) {
+            throw new ServiceException(ApiError.ERROR_95038);
+        }
+        LoginUser userInfo = commonService.getUserInfo();
+        //TODO 待加审核流程
+
+        Integer approveStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
+        if (ApproveTypeEnum.PASS.getStatus().equals(baseApproveParamDTO.getType())) {
+            approveStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
+
+            //workflowFeign.taskPass(approveProcess);
+            deliveryNoticeEntityList.forEach(obj -> {
+                //新增操作日志
+                sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(obj.getProductId())
+                        .setBusinessId(obj.getId()).setOperation("状态变更").setContent("审核SKU[" + obj.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]，审批意见：" + baseApproveParamDTO.getComment()));
+                //审核通过发送金蝶
+                syncKingdeeProductDetailService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+            });
+        } else {
+            approveStatus = ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode();
+            //新增审核不通过意见
+            List<ProductDetailCommentEntity> commentEntityList = new ArrayList<>();
+            deliveryNoticeEntityList.forEach(obj -> {
+                sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(obj.getProductId())
+                        .setBusinessId(obj.getId()).setOperation("状态变更").setContent("审核SKU[" + obj.getSkuNo() + "]操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_NO_PASS.getName() + "]，原因：" + baseApproveParamDTO.getComment()));
+                //新增审核不通过意见
+                ProductDetailCommentEntity commentEntity = new ProductDetailCommentEntity();
+                commentEntity.setComment("[审核结果-审核不通过]" + baseApproveParamDTO.getComment());
+                commentEntity.setProductDetailId(obj.getId());
+                commentEntityList.add(commentEntity);
+            });
+            productDetailCommentService.saveBatch(commentEntityList);
+        }
+        return lambdaUpdate().set(ProductDetailEntity::getStatus, approveStatus)
+                .set(ProductDetailEntity::getUpdateUserId, userInfo.getUid())
+                .set(ProductDetailEntity::getUpdateUserName, userInfo.getUserName())
+                .in(ProductDetailEntity::getId, ids)
+                .update();
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean disApprove(List<String> ids) {
+        List<ProductDetailEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(entityList)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //已审核支持反审核
+        long count = entityList.stream().filter(entity ->
+                entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())
+        ).count();
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_99003);
+        }
+        entityList.forEach(obj -> {
+            //新增操作日志
+            sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(obj.getProductId())
+                    .setBusinessId(obj.getId()).setOperation("状态变更").setContent("反审核SKU[" + obj.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_ING.getName() + "]"));
+        });
+        //修改状态为审核中
+        return lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.APPROVAL_ING.getCode())
+                .in(ProductDetailEntity::getIsChange, IsConstant.NO)
+                .in(ProductDetailEntity::getId, ids)
+                .update();
+    }
+
+    @Override
+    public Boolean cancelProcess(List<String> ids) {
+        List<ProductDetailEntity> entityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(entityList)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //审核中可以撤销
+        long count = entityList.stream().filter(entity ->
+                entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_ING.getCode())
+        ).count();
+
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        //TODO 撤销现有流程
+
+        entityList.forEach(obj -> {
+            //新增操作日志
+            sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(obj.getProductId())
+                    .setBusinessId(obj.getId()).setOperation("状态变更").setContent("取消流程SKU[" + obj.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.WAIT_CONFIRM.getName() + "]"));
+        });
+        //修改状态为待提交
+        return lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.WAIT_CONFIRM.getCode())
+                        .set(ProductDetailEntity::getProcessId, "")
+                        .in(ProductDetailEntity::getId, ids)
+                        .update();
+    }
+
+    @Override
+    public Boolean deleteBatch(List<String> ids) {
+        //1.删除证书信息
+        productCertificateService.removeCertificate(ids);
+        //2.删除包装信息
+        productPackService.removePack(ids);
+        //3.删除物流信息
+        productLogisticsService.removeLogistics(ids);
+        //4.删除销售信息
+        productSaleService.removeSale(ids);
+        //5.删除采购信息
+        productPurchaseService.removePurchase(ids);
+        //6.删除成本信息
+        productCostService.removeCost(ids);
+        //7.删除任务关联sku 信息
+        taskRefSkuConfigService.removeTaskRefSku(ids);
+        //8.删除sku信息
+        LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.in(ProductDetailEntity::getId, ids);
+        List<ProductDetailEntity> productDetailEntityList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(productDetailEntityList)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        for (ProductDetailEntity productDetailEntity : productDetailEntityList) {
+            ProductInfoEntity productInfoEntity = productInfoService.getById(productDetailEntity.getProductId());
+            List<ProductDetailEntity> skuListByProductId = this.getSkuListByProductId(productDetailEntity.getProductId());
+            if (ObjectUtils.isNotEmpty(productInfoEntity)) {
+                if (skuListByProductId.size() == 1 && productInfoEntity.getIsFinishedProductDev() == null) {
+                    productInfoService.removeById(productInfoEntity.getId());
+                }
+                //添加操作日志
+                SysLogEntity sysLogEntity = new SysLogEntity().setClassPath(SPUCLASSPATH).setBusinessId(productInfoEntity.getId()).setPid(productInfoEntity.getId()).setOperation("删除信息").setContent("删除了一个SKU：[" + productDetailEntity.getSkuNo() + "]");
+                sysLogService.addSysLogByOther(sysLogEntity);
+            }
+        }
+        return this.remove(queryWrapper);
     }
 }

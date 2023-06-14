@@ -52,16 +52,6 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
     public Boolean saveOrUpdate(ProductLogisticsDTO productLogisticsDTO) {
         ProductLogisticsEntity logisticsEntity = new ProductLogisticsEntity();
         BeanMapper.copy(productLogisticsDTO, logisticsEntity);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (ObjectUtils.isNotEmpty(loginUser)) {
-            if (StringUtils.isBlank(productLogisticsDTO.getId())) {
-                logisticsEntity.setCreateUserId(loginUser.getUid());
-                logisticsEntity.setCreateUserName(loginUser.getUserName());
-            } else {
-                logisticsEntity.setUpdateUserId(loginUser.getUid());
-                logisticsEntity.setUpdateUserName(loginUser.getUserName());
-            }
-        }
         return this.saveOrUpdate(logisticsEntity);
     }
 
@@ -82,13 +72,13 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
      * @Description 删除产品物流信息
      * @Author Luo_WG
      * @Date 2022/9/26 18:42
-     * @param skuId 产品sku明细表id
+     * @param skuIds 产品sku明细表id
      * @return java.lang.Boolean
      **/
     @Override
-    public Boolean removeLogistics(String skuId) {
+    public Boolean removeLogistics(List<String> skuIds) {
         LambdaQueryWrapper<ProductLogisticsEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(ProductLogisticsEntity::getSkuId, skuId);
+        queryWrapper.in(ProductLogisticsEntity::getSkuId, skuIds);
         return this.remove(queryWrapper);
     }
 

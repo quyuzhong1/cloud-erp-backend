@@ -1,8 +1,12 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
@@ -34,18 +38,6 @@ public class ProductUnitServiceImpl extends ServiceImpl<ProductUnitMapper, Produ
     @Override
     public Boolean saveOrUpdateBatch(List<ProductUnitDTO> productUnitList) {
         List<ProductUnitEntity> productUnitEntities = BeanMapper.copyList(productUnitList, ProductUnitEntity.class);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (ObjectUtils.isNotEmpty(loginUser)) {
-            for (ProductUnitEntity productUnitEntity : productUnitEntities) {
-                if (StringUtils.isBlank(productUnitEntity.getId())) {
-                    productUnitEntity.setCreateUserId(loginUser.getUid());
-                    productUnitEntity.setCreateUserName(loginUser.getUserName());
-                } else {
-                    productUnitEntity.setUpdateUserId(loginUser.getUid());
-                    productUnitEntity.setUpdateUserName(loginUser.getUserName());
-                }
-            }
-        }
         return this.saveOrUpdateBatch(productUnitEntities);
     }
 
@@ -69,6 +61,10 @@ public class ProductUnitServiceImpl extends ServiceImpl<ProductUnitMapper, Produ
      **/
     @Override
     public Boolean delete(String id){
+        ProductUnitEntity entity = this.getById(id);
+        if (entity.getOccupyStatus()) {
+            throw new ServiceException(ApiError.ERROR_95168);
+        }
         LambdaQueryWrapper<ProductUnitEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductUnitEntity::getId, id);
         return this.remove(queryWrapper);
@@ -87,6 +83,21 @@ public class ProductUnitServiceImpl extends ServiceImpl<ProductUnitMapper, Produ
         queryWrapper.eq(ProductUnitEntity::getName, name);
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
+    }
+
+    /**
+     * 设置占用
+     * @Author Luo_WG
+     * @Date 2023/6/14 11:36
+     * @param ids
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean setupOccupy(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Boolean.TRUE;
+        }
+        return lambdaUpdate().set(ProductUnitEntity::getOccupyStatus, Boolean.TRUE).in(ProductUnitEntity::getId, ids).update();
     }
 }
 

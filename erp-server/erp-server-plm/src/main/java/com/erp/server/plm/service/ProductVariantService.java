@@ -47,4 +47,13 @@ public interface ProductVariantService extends IService<ProductVariantEntity> {
      * @return java.lang.Boolean
      **/
     Boolean deleteVariant(String variantId);
+
+    /**
+     * 设置占用
+     * @Author Luo_WG
+     * @Date 2023/6/14 11:36
+     * @param propertyTypeList
+     * @return java.lang.Boolean
+     **/
+    Boolean setupOccupy(List<String> propertyTypeList);
 }

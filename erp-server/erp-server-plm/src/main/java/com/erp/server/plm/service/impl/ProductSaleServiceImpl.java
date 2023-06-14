@@ -65,16 +65,6 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
     public Boolean saveOrUpdate(ProductSaleDTO productSaleDTO){
         ProductSaleEntity saleEntity = new ProductSaleEntity();
         BeanMapper.copy(productSaleDTO, saleEntity);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (ObjectUtils.isNotEmpty(loginUser)) {
-            if (StringUtils.isBlank(productSaleDTO.getId())) {
-                saleEntity.setCreateUserId(loginUser.getUid());
-                saleEntity.setCreateUserName(loginUser.getUserName());
-            } else {
-                saleEntity.setUpdateUserId(loginUser.getUid());
-                saleEntity.setUpdateUserName(loginUser.getUserName());
-            }
-        }
         return this.saveOrUpdate(saleEntity);
     }
 
@@ -95,13 +85,13 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
      * @Description 删除产品销售信息
      * @Author Luo_WG
      * @Date 2022/9/26 18:42
-     * @param skuId 产品sku明细表id
+     * @param skuIds 产品sku明细表id
      * @return java.lang.Boolean
      **/
     @Override
-    public Boolean removeSale(String skuId) {
+    public Boolean removeSale(List<String> skuIds) {
         LambdaQueryWrapper<ProductSaleEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(ProductSaleEntity::getSkuId, skuId);
+        queryWrapper.in(ProductSaleEntity::getSkuId, skuIds);
         return this.remove(queryWrapper);
     }
 

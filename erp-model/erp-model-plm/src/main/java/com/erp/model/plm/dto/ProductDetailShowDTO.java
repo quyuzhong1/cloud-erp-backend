@@ -48,6 +48,11 @@ public class ProductDetailShowDTO implements Serializable {
     private String name;
 
     /**
+     * 产品名称(英文)
+     */
+    private String nameEN;
+
+    /**
      * 首批到货量
      */
     private String actualArrivalQty;
