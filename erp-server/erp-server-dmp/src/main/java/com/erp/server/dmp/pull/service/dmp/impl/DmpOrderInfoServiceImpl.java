@@ -249,7 +249,7 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
             }*/
         }
         //查询发货详情获取发货时间，同步到订单信息
-        DmpDeliveryDetailInfoEntity deliveryDetailOrderNo = dmpDeliveryDetailInfoService.getDeliveryDetailOrderNo(dmpOrderInfoEntity.getPlatformOrderId());
+        DmpDeliveryDetailInfoEntity deliveryDetailOrderNo = dmpDeliveryDetailInfoService.getByPlatformOrderId(dmpOrderInfoEntity.getPlatformOrderId());
         if (null != deliveryDetailOrderNo) {
             updateWrapper.set(DmpOrderInfoEntity::getDeliveryTime, deliveryDetailOrderNo.getDeliveryDate());
             deliveryTimeTag = true;

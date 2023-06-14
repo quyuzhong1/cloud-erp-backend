@@ -185,6 +185,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         deliveryDetailInfoEntity.setBillNo(kingdeeOutStockEntity.getFBillNo());
         //订单编号
         deliveryDetailInfoEntity.setOrderNo(kingdeeOutStockEntity.getFSoorDerno());
+        deliveryDetailInfoEntity.setPlatformOrderId(kingdeeOutStockEntity.getFSoorDerno());
         //物流单号
         deliveryDetailInfoEntity.setLogisticsNo(kingdeeOutStockEntity.getFLogisticsNos());
         //客户名称
