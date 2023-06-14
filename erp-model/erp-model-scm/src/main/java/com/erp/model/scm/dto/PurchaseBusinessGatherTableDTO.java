@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -134,7 +135,7 @@ public class PurchaseBusinessGatherTableDTO extends PermissionsDTO implements Se
         /**
          * 单据日期范围
          */
-        private List<String> billDateList;
+        private List<LocalDate> billDateList;
         /**
          * sku集合
          */

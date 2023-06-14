@@ -3,71 +3,91 @@
 <mapper namespace="com.erp.server.scm.mapper.ReportFormsManageMapper">
     <select id="paging" resultType="com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO$PagingViewDTO">
         SELECT
-        array_to_string(array_agg(pod.id), ',') AS id,
-        po.purchase_org_name,
-        pos.supplier_name,
-        pd.images_url,
-        pod.sku_no,
-        pd."name" AS productName,
-        pi.spu_no,
-        avg(pod.tax_price) AS tax_price,
-        round(SUM(pod.purchase_amount) / COUNT(pod.id)::numeric ,4) AS avgPrice,
-        COUNT(po.id) AS orderQty,
-        SUM(pod.purchase_amount) AS orderAmount,
-        max(po.create_time) AS createTime
-        FROM purchase_order_detail pod
-        LEFT JOIN purchase_order po ON pod.purchase_order_id = po.id
-        LEFT JOIN purchase_order_supplier pos ON pos.purchase_order_id = po.id
-        LEFT JOIN product_detail pd ON pod.sku_id = pd.id
-        LEFT JOIN product_info pi ON pi.id = pd.product_id
-        WHERE pod.is_deleted = FALSE
-        AND po.is_deleted = FALSE
-        AND pos.is_deleted = FALSE
-        AND pd.is_deleted = FALSE
-        AND pi.is_deleted = FALSE
-<!--        AND pod.sku_no = 'M009CNA1' AND po.purchase_org_name = '核算公司CC1' AND pos.supplier_name = '验证1' AND pi.spu_no = 'MA09'-->
-        <if test="params.billDateList != null and params.billDateList.size > 0">
-            AND po.purchase_date >= #{params.billDateList[0]} AND (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >= po.purchase_date
-        </if>
-        <if test="params.spuIdList != null and params.skuNoList.size != ''">
-            AND pod.sku_no IN
-            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
+        array_to_string(array_agg(t.pid), ',') AS id,
+        purchase_org_name,
+        supplier_name,
+        images_url,
+        sku_no,
+        productName,
+        spu_no,
+        avg(tax_price) AS tax_price,
+        round(SUM(orderAmount) / COUNT(t.id)::numeric ,4) AS avgPrice,
+        COUNT(t.id) AS orderQty,
+        SUM(orderAmount) AS orderAmount,
+        max(createTime) AS createTime
+        FROM (
+            SELECT
+                pod.id AS pid,
+                po.purchase_org_name,
+                pos.supplier_name,
+                pd.images_url,
+                pod.sku_no,
+                pd."name" AS productName,
+                pi.spu_no,
+                pod.tax_price AS tax_price,
+                po.id AS id,
+                pod.purchase_amount AS orderAmount,
+                po.create_time AS createTime,
+                po.purchase_date
+            FROM purchase_order_detail pod
+            LEFT JOIN purchase_order po ON pod.purchase_order_id = po.id
+            LEFT JOIN purchase_order_supplier pos ON pos.purchase_order_id = po.id
+            LEFT JOIN product_detail pd ON pod.sku_id = pd.id
+            LEFT JOIN product_info pi ON pi.id = pd.product_id
+            WHERE pod.is_deleted = FALSE
+            AND po.is_deleted = FALSE
+            AND pos.is_deleted = FALSE
+            AND pd.is_deleted = FALSE
+            AND pi.is_deleted = FALSE
+            <!--        AND pod.sku_no = 'M009CNA1' AND po.purchase_org_name = '核算公司CC1' AND pos.supplier_name = '验证1' AND pi.spu_no = 'MA09'-->
+            <if test="params.billDateList != null and params.billDateList.size > 0">AND po.purchase_date >=
+                #{params.billDateList[0]} AND (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >= po.purchase_date
+            </if>
+            <if test="params.spuIdList != null and params.skuNoList.size != ''">
+                AND pod.sku_no IN
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
 
-        <if test="params.spuIdList != null and params.skuNoList.size != ''">
-            AND pod.sku_no IN
-            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-        <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
-            AND po.delivery_warehouse_id in
-            <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-        <if test="params.purchaseOrgIdList != null and params.purchaseOrgIdList.size != ''">
-            AND po.purchase_org_id in
-            <foreach collection="params.purchaseOrgIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
-        <if test="params.supplierIdList != null and params.supplierIdList.size != ''">
-            AND pos.supplier_id in
-            <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
-                #{item}
-            </foreach>
-        </if>
+            <if test="params.spuIdList != null and params.skuNoList.size != ''">
+                AND pi.id IN
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+                AND po.delivery_warehouse_id in
+                <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.purchaseOrgIdList != null and params.purchaseOrgIdList.size != ''">
+                AND po.purchase_org_id in
+                <foreach collection="params.purchaseOrgIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.supplierIdList != null and params.supplierIdList.size != ''">
+                AND pos.supplier_id in
+                <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY po.purchase_org_name, pos.supplier_name, po.create_time DESC
+        )t
         GROUP BY
-        po.purchase_org_name,
-        pos.supplier_name,
-        pd.images_url,
-        pod.sku_no,
-        pd."name",
-        pi.spu_no
-        ORDER BY po.purchase_org_name, pos.supplier_name, max(po.create_time)  DESC
+        purchase_org_name,
+        supplier_name,
+        images_url,
+        sku_no,
+        productName,
+        spu_no
+
     </select>
 
     <select id="exportExcel" resultType="com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO$PagingViewDTO">

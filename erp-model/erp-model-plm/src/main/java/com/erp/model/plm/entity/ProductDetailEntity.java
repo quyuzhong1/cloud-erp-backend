@@ -33,10 +33,16 @@ public class ProductDetailEntity extends BaseEntity implements Serializable {
     private String skuNo;
 
     /**
-     * 品名
+     * 产品品名
      */
     @TableField(value = "name")
     private String name;
+
+    /**
+     * 产品品名(英文)
+     */
+    @TableField(value = "name_en")
+    private String nameEn;
 
     /**
      * 属性
