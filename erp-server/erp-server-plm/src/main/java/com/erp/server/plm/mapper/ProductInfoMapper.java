@@ -80,4 +80,11 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
     List<ProductDTO.CountBaseDTO> listStatusCount(@Param("productIdList") List<String> productIdList);
 
     List<String> listProductIdByUserId(@Param("userId")String userId);
+
+    /**
+     * 获取概览的基本信息
+     * @param productId
+     * @return
+     */
+    ProductOverviewDTO.InfoDTO overviewBase(@Param("productId")String productId);
 }

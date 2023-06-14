@@ -1,6 +1,5 @@
 package com.erp.server.plm.service.impl;
 
-import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -34,6 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -211,6 +211,79 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         }
 
         return flag;
+    }
+
+    /**
+     * 批量启动项目
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-06-14 18:14
+     */
+    @Override
+    public Boolean batchStartProject(StartProjectDTO.BatchStartProjectDTO dto) {
+        LoginUser loginUser = commonService.getUserInfo();
+        //项目id
+        List<String> projectIdList = dto.getProjectIdList();
+        List<ProjectInfoEntity> projectList = this.listByIds(projectIdList);
+        if (CollectionUtils.isEmpty(projectList)) {
+            throw new ServiceException(ApiError.ERROR_95026);
+        }
+        List<String> productIdList = projectList.stream().map(ProjectInfoEntity::getProductId).collect(Collectors.toList());
+        List<ProductInfoEntity> productList = productInfoService.listByIds(productIdList);
+        //检查是否有SKU生成
+        List<ProductDetailEntity> skuList = productDetailService.listSkuByProductIds(productIdList);
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95067);
+        }
+        for (String productId : productIdList) {
+            long productSku = skuList.stream().filter(s -> s.getProductId().equals(productId)).count();
+            if (productSku == 0) {
+                throw new ServiceException(ApiError.ERROR_95067);
+            }
+        }
+
+        String chargeId = dto.getChargeId();
+        String chargeName = commonService.getNameById(chargeId);
+        LocalDate startTime = dto.getStartTime();
+        LocalDate endTime = dto.getEndTime();
+        String describe = dto.getDescribe();
+        Integer start = ProjectStateEnum.YES_START.getState();
+        for (ProjectInfoEntity item : projectList) {
+            //负责人id
+            item.setChargeId(chargeId);
+            item.setChargeName(chargeName);
+            //开始时间
+            item.setStartTime(startTime);
+            //结束时间
+            item.setEndTime(endTime);
+            item.setDescribe(describe);
+            item.setProjectStatus(start);
+        }
+        boolean flag = updateBatchById(projectList);
+        if (flag) {
+            if (CollectionUtils.isNotEmpty(productList)) {
+                productList.stream().forEach(p -> p.setProjectChargeId(chargeId));
+                productInfoService.updateBatchById(productList);
+            }
+            for (ProjectInfoEntity item : projectList) {
+                String productId = item.getProductId();
+                String projectId = item.getId();
+                //异步启动消息
+                noticeMessageService.startProjectNotice(loginUser.getUserName(), productId);
+                if (StringUtils.isNotBlank(chargeId)) {
+                    projectMembersService.saveByRoleAndMembers(productId, projectId, "项目经理", Arrays.asList(chargeId));
+                }
+                //记录产品状态更新时间
+                projectStatusTimeService.saveOrUpdateProjectStatusTime(projectId, productId, start);
+                //更新产品规划的产品状态
+                productPlanService.updateProductPlanStatus(productId, start, MathUtil.TWO);
+            }
+
+        }
+        return flag;
+
     }
 
 
@@ -461,7 +534,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         Integer suspend = ProjectStateEnum.SUSPEND.getState();
         long count = projectInfoList.stream().filter(p -> !suspend.equals(p.getProjectStatus())).count();
         if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_95158);
+            throw new ServiceException(ApiError.ERROR_95174);
         }
         for (ProjectInfoEntity item : projectInfoList) {
             Integer suspendBeforeStatus = item.getSuspendBeforeStatus();
@@ -522,7 +595,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         Integer stopState = ProjectStateEnum.STOP.getState();
         long stopStateCount = projectInfoList.stream().filter(p -> stopState.equals(p.getProjectStatus())).count();
         if (stopStateCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95159);
+            throw new ServiceException(ApiError.ERROR_95175);
         }
         Integer suspend = ProjectStateEnum.SUSPEND.getState();
         for (ProjectInfoEntity item : projectInfoList) {
@@ -541,7 +614,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             Integer terminateCode = ApprovalStatusEnum.TERMINATE.getCode();
             long terminateCount = productInfoList.stream().filter(p -> terminateCode.equals(p.getApprovalStatus())).count();
             if (terminateCount > 0) {
-                throw new ServiceException(ApiError.ERROR_95159);
+                throw new ServiceException(ApiError.ERROR_95175);
             }
             Integer productSuspend = ApprovalStatusEnum.SUSPEND.getCode();
             for (ProductInfoEntity item : productInfoList) {
@@ -604,7 +677,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         Integer stopState = ProjectStateEnum.STOP.getState();
         long stopStateCount = projectInfoList.stream().filter(p -> stopState.equals(p.getProjectStatus())).count();
         if (stopStateCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95159);
+            throw new ServiceException(ApiError.ERROR_95175);
         }
 
         List<String> productIds = projectInfoList.stream().map(ProjectInfoEntity::getProductId).collect(Collectors.toList());
@@ -664,7 +737,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         }
         return flag;
     }
-
 
 
     /**

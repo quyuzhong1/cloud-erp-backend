@@ -119,4 +119,12 @@ public interface ProjectInfoService extends IService<ProjectInfoEntity> {
     Boolean batchArchive(List<String> productIdList);
 
 
+    /**
+     * 批量启动项目
+     * @author yl
+     * @date 2023-06-14 18:14
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean batchStartProject(StartProjectDTO.BatchStartProjectDTO dto);
 }

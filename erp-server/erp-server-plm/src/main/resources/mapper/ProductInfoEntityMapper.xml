@@ -818,5 +818,27 @@
         AND (string_to_array( p.charge_id,',') &amp;&amp;  string_to_array(#{userId}, ',') or p.project_charge_id=#{userId})
     </select>
 
+    <select id="overviewBase" resultType="com.erp.model.plm.dto.ProductOverviewDTO$InfoDTO">
+       SELECT
+         p.id,p.name,p.image_url,
+         p.name_en AS spuEn,
+         j.charge_id AS projectChargeId,
+         J.charge_name AS projectChargeName,
+         P.charge_id AS productChargeId,
+         P.charge_name AS productChargeName,
+         P.approval_status AS productStatus,
+         j.start_time AS planStartTime,
+         j.end_time  AS planEndTime,
+         p.grade AS productGrade,
+         j.id AS projectId,
+         p.category_id
+       FROM product_info p
+       LEFT JOIN project_info j
+       ON p.id=j.product_id and is_deleted=false
+       WHERE p.id=#{productId}
+
+
+    </select>
+
 
 </mapper>

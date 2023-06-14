@@ -17,7 +17,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class ProjectOverviewDTO implements Serializable {
+public class ProductOverviewDTO implements Serializable {
 
 
     /**
@@ -28,6 +28,17 @@ public class ProjectOverviewDTO implements Serializable {
     public class BaseInfoDTO {
 
         /**
+         * 产品id
+         */
+        private String id;
+
+
+        /**
+         * 项目id
+         */
+        private String projectId;
+
+        /**
          * 名称
          */
         private String name;
@@ -36,6 +47,11 @@ public class ProjectOverviewDTO implements Serializable {
          * 示意图
          */
         private String imageUrl;
+
+        /**
+         * 分类id
+         */
+        private String categoryId;
 
         /**
          * 英文名

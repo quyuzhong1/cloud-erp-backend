@@ -215,7 +215,7 @@ public class ProductInfoController extends BaseController {
     }
 
     /**
-     * 旧概述
+     * 旧概览
      * 先保留
      */
     @PostMapping("/info")
@@ -226,6 +226,17 @@ public class ProductInfoController extends BaseController {
     )
     public ApiResult<ProjectInfoDTO> projectInfo(@RequestBody ProductTaskCountShowDTO productTaskCountShowDTO) {
         ProjectInfoDTO info = projectInfoService.projectInfo(productTaskCountShowDTO);
+        return success(info);
+    }
+
+
+    /**
+     * 新概览
+     *
+     */
+    @PostMapping("/overview")
+    public ApiResult<ProductOverviewDTO.InfoDTO> overview(@RequestBody BaseIdDTO dto) {
+        ProductOverviewDTO.InfoDTO info = productInfoService.overview(dto.getId());
         return success(info);
     }
 

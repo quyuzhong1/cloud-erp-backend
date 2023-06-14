@@ -4,8 +4,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * @Classname ProjectDTO
@@ -23,6 +26,7 @@ public class StartProjectDTO implements Serializable {
      */
     @NotBlank(message = "负责人id不能为空")
     private String  chargeId;
+
 
 
     /**
@@ -50,11 +54,56 @@ public class StartProjectDTO implements Serializable {
      */
     private LocalDate endTime;
 
-    //
+
     /**
      * 描述
      */
     private String describe;
+
+
+    /**
+     * 批量启动项目
+     */
+    @Data
+    @NoArgsConstructor
+    public static class BatchStartProjectDTO{
+
+        /**
+         * 负责人id集合
+         */
+        @NotBlank(message = "负责人id不能为空")
+        private String  chargeId;
+
+
+
+
+        /**
+         * 项目id
+         */
+        @NotNull(message = "项目不能为空")
+        @Size(min = 1, message = "项目不能为空")
+        private List<String> projectIdList;
+
+
+
+        /**
+         * 开始时间
+         */
+        private LocalDate startTime;
+
+
+        /**
+         * 结束时间
+         */
+        private LocalDate endTime;
+
+
+        /**
+         * 描述
+         */
+        private String describe;
+
+    }
 
 
 

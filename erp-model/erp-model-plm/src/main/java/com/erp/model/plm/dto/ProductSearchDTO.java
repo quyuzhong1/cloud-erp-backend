@@ -20,6 +20,14 @@ public class ProductSearchDTO extends PermissionsDTO {
 
 
     /**
+     * 我的任务类型
+     * all 全部  finished 完成的  unfinished 未完成的
+     *
+     */
+    private String myTaskType;
+
+
+    /**
      * 搜索关键字
      */
     private String searchKeyword;

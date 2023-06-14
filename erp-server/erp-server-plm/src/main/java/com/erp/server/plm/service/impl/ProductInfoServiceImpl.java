@@ -408,6 +408,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 throw new ServiceException(ApiError.ERROR_95009);
             }
             entity.setDeleteState(IsConstant.YES);
+            entity.setIsDeleted(Boolean.TRUE);
             flag = this.updateById(entity);
             //当保存成功 就要去删除对应的任务了
             if (flag) {
@@ -694,7 +695,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //终止
         int productTerminateCount = productCountList.stream().filter(p -> ApprovalStatusEnum.TERMINATE.getCode().equals(p.getStatus())).
                 mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
-        result.setTerminateCount(projectTerminateCount+productTerminateCount);
+        result.setTerminateCount(projectTerminateCount + productTerminateCount);
         //项目暂停数
         int projectSuspendCount = projectCountList.stream().filter(p -> projectSuspend.equals(p.getStatus())).
                 mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
@@ -1756,7 +1757,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         Integer terminateCode = ApprovalStatusEnum.TERMINATE.getCode();
         long terminateCount = productInfoList.stream().filter(p -> terminateCode.equals(p.getApprovalStatus())).count();
         if (terminateCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95159);
+            throw new ServiceException(ApiError.ERROR_95175);
         }
         /**
          * 表示改成已立项 就要去检查该该产品下的 所有的立项任务
@@ -1781,7 +1782,20 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
         return result;
 
+    }
 
+    /**
+     * 产品概览
+     *
+     * @param productId
+     * @return com.erp.model.plm.dto.ProductOverviewDTO.InfoDTO
+     * @author yl
+     * @date 2023-06-14 17:44
+     */
+    @Override
+    public ProductOverviewDTO.InfoDTO overview(String productId) {
+        ProductOverviewDTO.InfoDTO info = baseMapper.overviewBase(productId);
+        return null;
     }
 
 

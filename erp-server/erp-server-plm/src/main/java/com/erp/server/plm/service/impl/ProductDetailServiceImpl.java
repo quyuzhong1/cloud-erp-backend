@@ -11,9 +11,11 @@ import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.*;
+import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.SkuApproveConfigureEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -43,7 +45,6 @@ import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -2614,7 +2615,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * 更改产品状态
      *
      * @param productIds
-     * @param code
+     * @param
      * @return void
      * @author yl
      * @date 2023-06-14 11:12
@@ -2626,6 +2627,23 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     set(ProductDetailEntity::getProductState, productState).update();
         }
 
+    }
+
+
+    /**
+     * 根据产品id 集合获取数据
+     *
+     * @param productIdList
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     * @author yl
+     * @date 2023-06-14 18:33
+     */
+    @Override
+    public List<ProductDetailEntity> listSkuByProductIds(List<String> productIdList) {
+        if (CollectionUtils.isEmpty(productIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(ProductDetailEntity::getProductId,productIdList).list();
     }
     @Override
     @Transactional(rollbackFor = Exception.class)

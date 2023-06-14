@@ -52,6 +52,19 @@ public class ProjectInfoController extends BaseController {
 
 
     /**
+     * 产品开发管理-项目启动  【PLM1.3】
+     *
+     * @param dto
+     * @return
+     */
+
+    @PostMapping("/batchStartProject")
+    public ApiResult batchStartProject(@RequestBody @Validated StartProjectDTO.BatchStartProjectDTO dto) {
+        Boolean flag = projectInfoService.batchStartProject(dto);
+        return flag ? success() : failure();
+    }
+
+    /**
      * 启动项目时候 来源树形结构
      *
      * @return

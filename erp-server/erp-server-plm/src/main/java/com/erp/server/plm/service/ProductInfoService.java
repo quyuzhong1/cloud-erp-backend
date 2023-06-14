@@ -250,4 +250,13 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @return
      */
     Boolean batchEstablish(List<String> productIdList);
+
+    /**
+     * 产品概览
+     * @author yl
+     * @date 2023-06-14 17:44
+     * @param id
+     * @return com.erp.model.plm.dto.ProductOverviewDTO.InfoDTO
+     */
+    ProductOverviewDTO.InfoDTO overview(String id);
 }
