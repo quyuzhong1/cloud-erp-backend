@@ -168,6 +168,12 @@ public class SubcontractOrderDetailEntity extends BaseEntity<SubcontractOrderDet
     @TableField("is_end_receive")
     private Boolean isEndReceive;
 
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
     @TableField(exist = false)
     private Boolean isAdd;
 

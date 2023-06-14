@@ -671,7 +671,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             //填充BOM子件信息
             List<BomChildrenSkuDTO> childList = bomChildList.stream().filter(obj -> obj.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(childList)) {
-                throw new ServiceException(new ApiResult(ApiError.ERROR_95167.code,StrUtil.format(ApiError.ERROR_95167.msg,viewDTO.getSkuNo())));
+                throw new ServiceException(new ApiResult(ApiError.ERROR_95173.code,StrUtil.format(ApiError.ERROR_95173.msg,viewDTO.getSkuNo())));
             }
             List<PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO> generateChildList = new ArrayList<>();
             for (BomChildrenSkuDTO childrenSkuDTO : childList) {

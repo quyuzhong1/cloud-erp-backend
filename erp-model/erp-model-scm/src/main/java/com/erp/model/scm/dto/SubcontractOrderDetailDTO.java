@@ -172,6 +172,7 @@ public class SubcontractOrderDetailDTO implements Serializable {
         /**
          * 备注
          */
+        @Size(max = 255,message = "备注不能大于255字符")
         private String remark;
 
         /**
