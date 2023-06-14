@@ -44,10 +44,10 @@ public interface ProductCostService extends IService<ProductCostEntity> {
      * @Description 删除产品成本信息
      * @Author Luo_WG
      * @Date 2022/9/26 18:42
-     * @param skuId 产品sku明细表id
+     * @param skuIds 产品sku明细表id
      * @return java.lang.Boolean
      **/
-    Boolean removeCost(String skuId);
+    Boolean removeCost(List<String> skuIds);
     /**
      * @description: 根据skuId查询
      * @author Will

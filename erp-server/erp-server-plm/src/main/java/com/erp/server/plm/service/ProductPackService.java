@@ -45,10 +45,10 @@ public interface ProductPackService extends IService<ProductPackEntity> {
      * @Description 删除产品包装信息
      * @Author Luo_WG
      * @Date 2022/9/26 18:42
-     * @param skuId 产品sku明细表id
+     * @param skuIds 产品sku明细表id
      * @return java.lang.Boolean
      **/
-    Boolean removePack(String skuId);
+    Boolean removePack(List<String> skuIds);
     /**
      * @description: 根据skuId查询
      * @author Will

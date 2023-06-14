@@ -1,14 +1,18 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.erp.model.plm.dto.ProductVariantDTO;
 import com.erp.model.plm.dto.ProductVariantPropertyDTO;
 import com.erp.model.plm.entity.ProductVariantEntity;
+import com.erp.model.plm.entity.ProductVariantOptionEntity;
 import com.erp.model.plm.entity.ProductVariantPropertyEntity;
 import com.erp.server.plm.mapper.ProductVariantMapper;
 import com.erp.server.plm.service.ProductVariantService;
@@ -75,16 +79,6 @@ public class ProductVariantServiceImpl extends ServiceImpl<ProductVariantMapper,
     public Boolean saveOrUpdate(ProductVariantDTO productVariantDTO) {
         ProductVariantEntity variantEntity = new ProductVariantEntity();
         BeanMapper.copy(productVariantDTO, variantEntity);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (ObjectUtils.isNotEmpty(loginUser)) {
-            if (StringUtils.isBlank(productVariantDTO.getId())) {
-                variantEntity.setCreateUserId(loginUser.getUid());
-                variantEntity.setCreateUserName(loginUser.getUserName());
-            } else {
-                variantEntity.setUpdateUserId(loginUser.getUid());
-                variantEntity.setUpdateUserName(loginUser.getUserName());
-            }
-        }
         //编辑变体类型
         boolean flag = this.saveOrUpdate(variantEntity);
 
@@ -113,9 +107,30 @@ public class ProductVariantServiceImpl extends ServiceImpl<ProductVariantMapper,
      **/
     @Override
     public Boolean deleteVariant(String variantId) {
+        ProductVariantEntity entity = this.getById(variantId);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_95170);
+        }
+        if (entity.getOccupyStatus()) {
+            throw new ServiceException(ApiError.ERROR_95167);
+        }
         LambdaQueryWrapper<ProductVariantEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductVariantEntity::getId, variantId);
         return this.remove(queryWrapper);
+    }
+    /**
+     * 设置占用
+     * @Author Luo_WG
+     * @Date 2023/6/14 11:36
+     * @param propertyTypeList
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean setupOccupy(List<String> propertyTypeList) {
+        if (CollectionUtils.isEmpty(propertyTypeList)) {
+            return Boolean.TRUE;
+        }
+        return lambdaUpdate().set(ProductVariantEntity::getOccupyStatus, Boolean.TRUE).in(ProductVariantEntity::getPropertyType, propertyTypeList).update();
     }
 }
 

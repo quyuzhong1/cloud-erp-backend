@@ -41,6 +41,7 @@
         pi.spu_no,
         pd.sku_no,
         pd.name,
+        pd.name_en,
         pp.actual_arrival_qty,
         pp.arrival_state,
         pi.pirate_risk,
@@ -248,6 +249,7 @@
         pi.spu_no,
         pd.sku_no,
         pd.name,
+        pd.name_en,
         pp.actual_arrival_qty,
         pp.arrival_state,
         pi.pirate_risk,
@@ -299,7 +301,7 @@
         pd.sku_no,
         pd.product_state,
         pd.name,
-        pd.nameEn,
+        pd.name_en,
         pi.name as spuName,
         pi.name_en as spuNameEn,
         pi.charge_name,
@@ -371,6 +373,7 @@
 
     <select id="getExportSkuExcel" resultType="com.erp.model.plm.dto.ProductDetailExcelDTO">
         SELECT
+        pi.spu_no as spuNo,
         pd.sku_no as skuNo,
         pi.category,
         pi.sale_method as saleMethod,
@@ -380,6 +383,7 @@
         CASE WHEN pi.pirate_risk = 1 THEN '是' ELSE '否' END pirate_risk,
         pi.materials,
         pd.name,
+        pd.name_en,
         pi.brand_name as brandName,
         pi.property,
         to_char(pd.plan_listing_time, 'YYYY/MM/dd') as planListingTimeStr,

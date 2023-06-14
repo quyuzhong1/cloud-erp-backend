@@ -14,10 +14,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProductUnitEntity;
-import com.erp.model.plm.enums.BasicDictTypeEnum;
-import com.erp.model.plm.enums.ProductDetailStateEnum;
-import com.erp.model.plm.enums.PurchaseStateEnum;
-import com.erp.model.plm.enums.SaleStateEnum;
+import com.erp.model.plm.enums.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.BasicDictService;
@@ -80,14 +77,20 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             errorMsgList.addAll(msgList);
         }
         ProductDetailShowDTO productBy = productDetailService.getProductBy("", dto.getSkuNo());
-        //根据产品名称查询产品信息
-        ProductDetailShowDTO productDetailShow = productDetailService.getProductBy(dto.getName(), "");
         ProductInfoDTO productInfoDTO = new ProductInfoDTO();
         //sku信息
         ProductSkuBaseInfoDTO productSkuBaseInfoDTO = new ProductSkuBaseInfoDTO();
 
         // 判断是修改还是新增 1：新增 2：修改
         if (importType == 2) {
+            if (ObjectUtils.isEmpty(productBy)) {
+                errorMsgList.add("sku不存在，请选择导入新增");
+            }
+            if (ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(productBy.getStatus())
+                || ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(productBy.getStatus())
+                || ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productBy.getStatus())) {
+                errorMsgList.add("仅{待提交，审核不通过}的状态下可导入修改");
+            }
             if (ObjectUtils.isEmpty(productBy)) {
                 errorMsgList.add("sku不存在，请选择导入新增");
             }

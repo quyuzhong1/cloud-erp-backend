@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
@@ -28,10 +29,10 @@ public class SysUserPagingSearchDTO   {
     private String searchKeyword;
 
     //开始时间
-    private Date startTime;
+    private LocalDate startTime;
 
     //结束时间
-    private Date endTime;
+    private LocalDate endTime;
 
     //状态 1 正常  0 不正常
     private Integer state;

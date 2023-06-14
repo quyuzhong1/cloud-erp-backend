@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -47,13 +48,13 @@ public class ProjectInfoEntity extends BaseEntity implements Serializable {
      * 项目计划开始时间
      */
     @TableField("start_time")
-    private LocalDateTime startTime;
+    private LocalDate startTime;
 
     /**
      * 计划结束时间
      */
     @TableField("end_time")
-    private LocalDateTime endTime;
+    private LocalDate endTime;
 
     /**
       *项目状态 0 未启动 1 ;已启动 2 进行中 3 已完成  4 已终止

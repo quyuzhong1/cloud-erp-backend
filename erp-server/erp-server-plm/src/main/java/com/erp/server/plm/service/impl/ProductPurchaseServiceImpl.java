@@ -58,16 +58,6 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
         BeanMapper.copy(purchaseDTO, purchaseEntity);
         //验证数据
         checkProductPurchase(purchaseEntity);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (ObjectUtils.isNotEmpty(loginUser)) {
-            if (StringUtils.isBlank(purchaseDTO.getId())) {
-                purchaseEntity.setCreateUserId(loginUser.getUid());
-                purchaseEntity.setCreateUserName(loginUser.getUserName());
-            } else {
-                purchaseEntity.setUpdateUserId(loginUser.getUid());
-                purchaseEntity.setUpdateUserName(loginUser.getUserName());
-            }
-        }
         return this.saveOrUpdate(purchaseEntity);
     }
 
@@ -100,13 +90,13 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
      * @Description 删除产品采购信息
      * @Author Luo_WG
      * @Date 2022/9/26 18:42
-     * @param skuId 产品sku明细表id
+     * @param skuIds 产品sku明细表id
      * @return java.lang.Boolean
      **/
     @Override
-    public Boolean removePurchase(String skuId) {
+    public Boolean removePurchase(List<String> skuIds) {
         LambdaQueryWrapper<ProductPurchaseEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(ProductPurchaseEntity::getSkuId, skuId);
+        queryWrapper.in(ProductPurchaseEntity::getSkuId, skuIds);
         return this.remove(queryWrapper);
     }
 

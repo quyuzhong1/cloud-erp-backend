@@ -81,13 +81,13 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
      * @Description 删除产品采购信息
      * @Author Luo_WG
      * @Date 2022/9/26 18:42
-     * @param skuId 产品sku明细表id
+     * @param skuIds 产品sku明细表id
      * @return java.lang.Boolean
      **/
     @Override
-    public Boolean removeCost(String skuId) {
+    public Boolean removeCost(List<String> skuIds) {
         LambdaQueryWrapper<ProductCostEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(ProductCostEntity::getSkuId, skuId);
+        queryWrapper.in(ProductCostEntity::getSkuId, skuIds);
         return this.remove(queryWrapper);
     }
 

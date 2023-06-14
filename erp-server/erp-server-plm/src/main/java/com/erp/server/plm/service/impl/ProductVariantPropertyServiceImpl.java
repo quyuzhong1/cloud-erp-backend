@@ -1,18 +1,28 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
+import com.erp.model.plm.dto.ProductVariantDTO;
 import com.erp.model.plm.dto.ProductVariantPropertyDTO;
+import com.erp.model.plm.entity.ProductVariantEntity;
+import com.erp.model.plm.entity.ProductVariantOptionEntity;
 import com.erp.model.plm.entity.ProductVariantPropertyEntity;
 import com.erp.server.plm.mapper.ProductVariantPropertyMapper;
 import com.erp.server.plm.service.ProductVariantPropertyService;
+import com.erp.server.plm.service.ProductVariantService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @Description 产品变体值服务类
@@ -22,6 +32,9 @@ import java.util.List;
 @Service
 public class ProductVariantPropertyServiceImpl extends ServiceImpl<ProductVariantPropertyMapper, ProductVariantPropertyEntity>
     implements ProductVariantPropertyService {
+
+    @Resource
+    private ProductVariantService productVariantService;
 
     /**
      * @Description 产品变体值查询列表
@@ -48,16 +61,6 @@ public class ProductVariantPropertyServiceImpl extends ServiceImpl<ProductVarian
     public Boolean saveOrUpdate(ProductVariantPropertyDTO dto) {
         ProductVariantPropertyEntity variantPropertyEntity = new ProductVariantPropertyEntity();
         BeanMapper.copy(dto, variantPropertyEntity);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (ObjectUtils.isNotEmpty(loginUser)) {
-            if (StringUtils.isBlank(dto.getId())) {
-                variantPropertyEntity.setCreateUserId(loginUser.getUid());
-                variantPropertyEntity.setCreateUserName(loginUser.getUserName());
-            } else {
-                variantPropertyEntity.setUpdateUserId(loginUser.getUid());
-                variantPropertyEntity.setUpdateUserName(loginUser.getUserName());
-            }
-        }
         return this.saveOrUpdate(variantPropertyEntity);
     }
 
@@ -71,18 +74,6 @@ public class ProductVariantPropertyServiceImpl extends ServiceImpl<ProductVarian
     @Override
     public Boolean saveOrUpdateBatch(List<ProductVariantPropertyDTO> dto) {
         List<ProductVariantPropertyEntity> variantPropertyEntityList = BeanMapper.copyList(dto, ProductVariantPropertyEntity.class);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (ObjectUtils.isNotEmpty(loginUser)) {
-            variantPropertyEntityList.forEach(req -> {
-                if (StringUtils.isBlank(req.getId())) {
-                    req.setCreateUserId(loginUser.getUid());
-                    req.setCreateUserName(loginUser.getUserName());
-                } else {
-                    req.setUpdateUserId(loginUser.getUid());
-                    req.setUpdateUserName(loginUser.getUserName());
-                }
-            });
-        }
         return this.saveOrUpdateBatch(variantPropertyEntityList);
     }
 
@@ -95,9 +86,42 @@ public class ProductVariantPropertyServiceImpl extends ServiceImpl<ProductVarian
      **/
     @Override
     public Boolean deleteVariant(String variantId) {
+        ProductVariantPropertyEntity entity = this.getById(variantId);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_95169);
+        }
+        if (entity.getOccupyStatus()) {
+            throw new ServiceException(ApiError.ERROR_95168);
+        }
         LambdaQueryWrapper<ProductVariantPropertyEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductVariantPropertyEntity::getId, variantId);
         return this.remove(queryWrapper);
+    }
+
+    /**
+     * 设置占用
+     * @Author Luo_WG
+     * @Date 2023/6/14 11:36
+     * @param propertyValueList
+     * @param propertyTypeList
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean setupOccupy(List<String> propertyValueList, List<String> propertyTypeList) {
+        if (CollectionUtils.isEmpty(propertyValueList)) {
+            return Boolean.TRUE;
+        }
+        List<ProductVariantDTO> productVariantDTOS = productVariantService.listVariantAndProperty();
+        List<ProductVariantDTO> productVariantDTOList = productVariantDTOS.stream().filter(req -> propertyTypeList.contains(req.getPropertyType())).collect(Collectors.toList());
+        List<String> propertyTypeIds = productVariantDTOList.stream().map(ProductVariantDTO::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(propertyTypeIds)) {
+            return Boolean.TRUE;
+        }
+        return lambdaUpdate()
+                .set(ProductVariantPropertyEntity::getOccupyStatus, Boolean.TRUE)
+                .in(ProductVariantPropertyEntity::getId, propertyValueList)
+                .in(ProductVariantPropertyEntity::getVariantId, propertyTypeIds)
+                .update();
     }
 }
 

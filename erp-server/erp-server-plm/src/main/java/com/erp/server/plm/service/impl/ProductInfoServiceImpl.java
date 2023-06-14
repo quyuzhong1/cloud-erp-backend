@@ -1040,14 +1040,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public String updateSpec(ProductInfoDTO dto) {
         ProductInfoEntity productInfoEntity = new ProductInfoEntity();
         BeanMapper.copy(dto, productInfoEntity);
-        LoginUser loginUser = commonService.getUserInfo();
-        if (StringUtils.isBlank(productInfoEntity.getId())) {
-            productInfoEntity.setCreateUserId(loginUser.getUid());
-            productInfoEntity.setCreateUserName(loginUser.getUserName());
-        } else {
-            productInfoEntity.setUpdateUserId(loginUser.getUid());
-            productInfoEntity.setUpdateUserName(loginUser.getUserName());
-        }
         //自动生成产品编号
         if (ObjectUtils.isEmpty(productInfoEntity.getId()) && StringUtils.isBlank(productInfoEntity.getSpuNo()) && !MathUtil.ONE.equals(dto.getIsNoSpecAdd())) {
             String spuNo = sysCodeService.getSpuNo(productInfoEntity.getCategoryId());

@@ -98,7 +98,7 @@ public class ProductSaleDTO implements Serializable {
     private BigDecimal targetSalesQty;
 
     /**
-     * 销售平台(SalesPlatformEnum枚举)
+     * 销售平台(ProductSalesPlatformEnum枚举)
      */
     @Size(max = 200,message = "销售平台最大不能超过200字符")
     private String salesPlatform;

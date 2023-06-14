@@ -932,69 +932,67 @@ ProductDetailController extends BaseController {
         productDetailService.handleChargeId();
     }
 
-/*
-    *//**
+    /**
      * 提交
      * @Author Luo_WG
      * @Date 2023/4/6 18:52
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
-     **//*
+     **/
     @PostMapping("/submit")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = Boolean.TRUE;
+        Boolean flag = productDetailService.submit(dto.getIds());
         return flag == true ? success() : failure();
     }
 
-    *//**
-     * 批量审核
+    /** 批量审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:06
      * @param baseApproveParamDTO baseApproveParamDTO
      * @return com.common.core.controller.vo.ApiResult
-     **//*
+     **/
     @PostMapping("/approve")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        Boolean flag = Boolean.TRUE;
+        Boolean flag = productDetailService.approve(baseApproveParamDTO);
         return flag == true ? success() : failure();
     }
 
-    *//**
+    /**
      * 批量反审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
-     **//*
+     **/
     @PostMapping("/disApprove")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = Boolean.TRUE;
+        Boolean flag = productDetailService.disApprove(dto.getIds());
         return flag == true ? success() : failure();
     }
 
-    *//**
+    /**
      * 取消流程
      * @Author Luo_WG
      * @Date 2023/4/13 18:58
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
-     **//*
+     **/
     @PostMapping("/cancelProcess")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = Boolean.TRUE;
+        Boolean flag = productDetailService.cancelProcess(dto.getIds());
         return flag == true ? success() : failure();
     }
 
-    *//**
+    /**
      * 批量删除
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
      * @param idsDTO idsDTO
      * @return com.common.core.controller.vo.ApiResult
-     **//*
-    @PostMapping("/delete")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        Boolean flag = Boolean.TRUE;
+     **/
+    @PostMapping("/deleteBatch")
+    public ApiResult deleteBatch(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        Boolean flag = productDetailService.deleteBatch(idsDTO.getIds());
         return flag == true ? success() : failure();
-    }*/
+    }
 }

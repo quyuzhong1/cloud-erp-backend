@@ -85,15 +85,15 @@ public class TaskRefSkuConfigServiceImpl extends ServiceImpl<TaskRefSkuConfigMap
     /**
      * 删除SKU 后需要删除SKU 关联关系
      *
-     * @param skuId
+     * @param skuIds
      * @return void
      * @author yl
      * @date 2022-11-22 9:21
      */
     @Override
-    public void removeTaskRefSku(String skuId) {
+    public void removeTaskRefSku(List<String> skuIds) {
         LambdaQueryWrapper<TaskRefSkuConfigEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TaskRefSkuConfigEntity::getSkuId, skuId);
+        queryWrapper.in(TaskRefSkuConfigEntity::getSkuId, skuIds);
         this.remove(queryWrapper);
 
     }

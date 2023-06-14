@@ -93,13 +93,13 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
      * @Description 根据skuid删除产品证书信息
      * @Author Luo_WG
      * @Date 2022/9/26 18:42
-     * @param skuId skuId
+     * @param skuIds skuIds
      * @return java.lang.Boolean
      **/
     @Override
-    public Boolean removeCertificate(String skuId) {
+    public Boolean removeCertificate(List<String> skuIds) {
         LambdaQueryWrapper<ProductCertificateEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(ProductCertificateEntity::getSkuId, skuId);
+        queryWrapper.in(ProductCertificateEntity::getSkuId, skuIds);
         Integer count = baseMapper.delete(queryWrapper);
         if (count > 0) {
             return true;

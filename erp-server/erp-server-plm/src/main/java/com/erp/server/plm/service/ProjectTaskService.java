@@ -166,6 +166,8 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      */
     List<ProjectTaskEntity> listByProductId(String productId);
 
+    List<ProjectTaskEntity> listByProductIds(List<String> productIds);
+
     /**
      * 分配给我 待审核
      * @author yl

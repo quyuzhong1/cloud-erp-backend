@@ -6,6 +6,7 @@ import com.erp.model.plm.dto.ProductVariantPropertyDTO;
 import com.erp.model.plm.entity.ProductVariantEntity;
 import com.erp.model.plm.entity.ProductVariantPropertyEntity;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -49,4 +50,14 @@ public interface ProductVariantPropertyService extends IService<ProductVariantPr
      * @return java.lang.Boolean
      **/
     Boolean deleteVariant(String id);
+
+    /**
+     * 设置占用
+     * @Author Luo_WG
+     * @Date 2023/6/14 11:36
+     * @param propertyValueList
+     * @param propertyTypeList
+     * @return java.lang.Boolean
+     **/
+    Boolean setupOccupy(List<String> propertyValueList, List<String> propertyTypeList);
 }
