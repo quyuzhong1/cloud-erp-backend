@@ -39,18 +39,18 @@ public class MabangDeliveryDownloadJob {
     public ReturnT mabangDeliveryClean(){
         Integer size = 1000;
         String jobParamStr = XxlJobHelper.getJobParam();
-        Boolean isClean = null;
-        Boolean isExists = null;
+        Integer isClean = null;
+        Integer isExists = null;
         if(StrUtil.isNotBlank(jobParamStr)){
             JSONObject jobParam = JSONUtil.parseObj(jobParamStr);
             if (ObjectUtil.isNotEmpty(jobParam.get("size"))) {
                 size = jobParam.getInt("size");
             }
             if (ObjectUtil.isNotEmpty(jobParam.get("isClean"))) {
-                isClean = jobParam.getBool("isClean");
+                isClean = jobParam.getInt("isClean");
             }
             if (ObjectUtil.isNotEmpty(jobParam.get("isExists"))) {
-                isExists = jobParam.getBool("isExists");
+                isExists = jobParam.getInt("isExists");
             }
         }
         if(ObjectUtil.isEmpty(isClean) && ObjectUtil.isEmpty(isExists)){

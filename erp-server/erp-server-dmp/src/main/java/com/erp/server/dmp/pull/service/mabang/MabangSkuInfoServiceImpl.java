@@ -1,23 +1,39 @@
 package com.erp.server.dmp.pull.service.mabang;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.NumberUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.entity.DmpSkuInfoEntity;
+import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.dmp.kingdee.KingdeeSkuEntity;
+import com.erp.model.dmp.mabang.ComboSkuInfoEntity;
+import com.erp.model.dmp.mabang.ShopEntity;
 import com.erp.model.dmp.mabang.SkuInfoEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.pull.service.dmp.DmpSkuInfoService;
+import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +42,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 马帮商品
@@ -37,9 +54,10 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
 
     @Resource
     private MongoService mongoService;
-
     @Resource
-    private DmpSkuInfoService dmpSkuInfoService;
+    private CfgSettingService cfgSettingService;
+    @Resource
+    private MQProducerService<ComboSkuInfoEntity> mqProducerService;
 
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
@@ -55,6 +73,8 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
         for (SkuInfoEntity entity : entityList) {
             OrderMongoDTO orderMongoDTO = new OrderMongoDTO(entity.getId());
             List<SkuInfoEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_MABANG_SKU, SkuInfoEntity.class);
+            entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
+            entity.setDownloadTime(LocalDateTime.now());
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
                 pushToMqList.add(entity);
@@ -72,8 +92,62 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_MABANG_SKU);
         }
-        // 不需要 推送到MQ
+        // 推送到MQ
+        if (CollectionUtil.isEmpty(pushToMqList)){
+            log.warn("马帮加工SKU订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
+            return;
+        }
+        // 构造订单结构
+        List<ComboSkuInfoEntity> entityToMqlist = pushToMqList.stream()
+                .map(this::initOrderInfoEntity)
+                .filter(ObjectUtil::isNotEmpty)
+                .collect(Collectors.toList());
 
+        // 异步推送到MQ
+        entityToMqlist.stream().peek(msg ->{
+            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_SKU_MACHINING_INFO_TAG.getName(),
+                    msg, StrUtil.format("{}_{}", msg.getComboSku(), msg.getStatus()));
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
+                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            }
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public void cleanDataSave(String tableName, int size) {
+        // 查询mongo待推送数据
+        String value = cfgSettingService.getValue(SettingEnum.CLEAN_JOB_DELAY_MINUTE);
+        Integer delayMinute = null != value ? NumberUtil.parseInt(value) : 0;
+        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsClean(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
+        List<SkuInfoEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.ORIGINAL_MABANG_SKU, SkuInfoEntity.class);
+        if (CollectionUtil.isEmpty(mongoData)) {
+            return;
+        }
+        for (SkuInfoEntity mongoDatum : mongoData) {
+            mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
+            mongoDatum.setLastPushTime(LocalDateTime.now());
+            updateAndSaveDb(mongoDatum);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void updateAndSaveDb(SkuInfoEntity mongoDatum) {
+        ComboSkuInfoEntity comboSkuInfo = initOrderInfoEntity(mongoDatum);
+        OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.getId());
+        if(null == comboSkuInfo){
+            mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
+            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);
+            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_SKU, SkuInfoEntity.class);
+            return;
+        }
+        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);
+        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_SKU, SkuInfoEntity.class);
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_SKU_MACHINING_INFO_TAG.getName(),
+                comboSkuInfo, StrUtil.format("{}_{}", comboSkuInfo.getComboSku(), comboSkuInfo.getStatus()));
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
+            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+        }
     }
 
     /**
@@ -90,47 +164,31 @@ public class MabangSkuInfoServiceImpl implements IReportSaveService<SkuInfoEntit
     /**
      * 解析订单数据
      **/
-    public void analysisOrder(SkuInfoEntity skuInfoEntity) throws Exception {
-        DmpSkuInfoEntity dmpSkuInfoEntity = new DmpSkuInfoEntity();
-        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-        dmpSkuInfoEntity.setItemCode(skuInfoEntity.getStockSku());
-        //sku编号
-        dmpSkuInfoEntity.setSkuNo(skuInfoEntity.getStockSku());
-        //中文名
-        dmpSkuInfoEntity.setNameCn(skuInfoEntity.getNameCN());
-        //英文名
-        dmpSkuInfoEntity.setNameEn(skuInfoEntity.getNameEN());
-        //统一成本价
-        dmpSkuInfoEntity.setDefaultCost(skuInfoEntity.getDefaultCost());
-        //商品状态:1.自动创建;2.待开发;3.正常;4.清仓;5.停止销售
-        dmpSkuInfoEntity.setStatus(skuInfoEntity.getStatus());
-        //商品创建时间
-        if (StringUtils.isNotBlank(skuInfoEntity.getTimeCreated())) {
-            dmpSkuInfoEntity.setSkuCreateTime(LocalDateTime.parse(skuInfoEntity.getTimeCreated(), sdf));
+    public ComboSkuInfoEntity initOrderInfoEntity(SkuInfoEntity skuInfoEntity) {
+        if(CollectionUtil.isEmpty(skuInfoEntity.getMachiningData())){
+            return null;
         }
-        //商品修改时间
-        if (StringUtils.isNotBlank(skuInfoEntity.getTimeModify())) {
-            dmpSkuInfoEntity.setSkuUpdateTime(LocalDateTime.parse(skuInfoEntity.getTimeModify(), sdf));
-        }
-        //品牌
-        dmpSkuInfoEntity.setBrandName(skuInfoEntity.getBrandName());
-        //商品目录(一级)
-        dmpSkuInfoEntity.setParentCategoryName(skuInfoEntity.getParentCategoryName());
-        //商品目录(二级)
-        dmpSkuInfoEntity.setCategoryName(skuInfoEntity.getCategoryName());
-        //售价
-        dmpSkuInfoEntity.setSalePrice(skuInfoEntity.getSalePrice());
-        //申报价格
-        dmpSkuInfoEntity.setDeclarePrice(skuInfoEntity.getDeclareValue());
-        //开发员id
-        dmpSkuInfoEntity.setDeveloperId(skuInfoEntity.getDeveloperId());
-        //开发员名称
-        dmpSkuInfoEntity.setDeveloperName(skuInfoEntity.getDeveloperName());
-        //平台标识
-        dmpSkuInfoEntity.setPlatformSign(PlatformEnum.MABANG.getDesc());
+        ComboSkuInfoEntity comboSkuInfo = new ComboSkuInfoEntity();
+        comboSkuInfo.setComboSku(skuInfoEntity.getStockSku());
+        comboSkuInfo.setName(skuInfoEntity.getNameCN());
+        comboSkuInfo.setNameEn(skuInfoEntity.getNameEN());
+        comboSkuInfo.setRelationType("machining");
+        comboSkuInfo.setPlatformSign(PlatformEnum.MABANG.getDesc());
+        comboSkuInfo.set_id(skuInfoEntity.getId());
+        comboSkuInfo.setComboProductDetail(initOrderItem(skuInfoEntity));
+        return comboSkuInfo;
+    }
 
-        dmpSkuInfoEntity.setCreateTime(LocalDateTime.now());
-
-        dmpSkuInfoService.checkOrder(dmpSkuInfoEntity);
+    /**
+     * 解析订单明细数据
+     **/
+    private List<ComboSkuInfoEntity.ComboProductDetail> initOrderItem(SkuInfoEntity skuInfoEntity){
+        return skuInfoEntity.getMachiningData().stream().map(detail -> {
+            ComboSkuInfoEntity.ComboProductDetail comboProductDetail = new ComboSkuInfoEntity.ComboProductDetail();
+            comboProductDetail.setStockSku(detail.getStockSku());
+            comboProductDetail.setNameCN(detail.getNameCN());
+            comboProductDetail.setQuantity(detail.getQuantity());
+            return comboProductDetail;
+        }).collect(Collectors.toList());
     }
 }

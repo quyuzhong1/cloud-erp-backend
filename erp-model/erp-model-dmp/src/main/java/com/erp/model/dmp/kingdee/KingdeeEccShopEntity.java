@@ -1,9 +1,12 @@
 package com.erp.model.dmp.kingdee;
 
 import cn.hutool.core.annotation.Alias;
+import com.erp.model.dmp.dto.CleanBaseDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+
+import java.time.LocalDateTime;
 
 
 /**
@@ -12,7 +15,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @Data
 @ToString
-public class KingdeeEccShopEntity {
+public class KingdeeEccShopEntity  extends CleanBaseDTO {
     @Alias("FId")
     private String id;
     @Alias("FNumber")
@@ -76,8 +79,4 @@ public class KingdeeEccShopEntity {
     private String fCreateDate;
     @Alias("FModifyDate")
     private String fModifyDate;
-    /**
-     * 清洗数据
-     */
-    private Boolean isClean;
 }

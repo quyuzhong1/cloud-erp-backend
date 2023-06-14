@@ -1,11 +1,14 @@
 package com.erp.model.dmp.dto;
 
+import cn.hutool.core.annotation.Alias;
 import cn.hutool.core.util.StrUtil;
 import com.common.core.anno.Panno;
 import com.common.core.enums.PannoEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
@@ -47,14 +50,29 @@ public class  OrderMongoDTO {
     private Integer downloadStatus;
 
     @Panno(findType = PannoEnum.EQ,field = "isClean")
-    private Boolean isClean;
+    private Integer isClean;
 
     @Panno(findType = PannoEnum.EQ,field = "cleanToDelivery")
-    private Boolean cleanToDelivery;
+    private Integer cleanToDelivery;
 
     @Panno(findType = PannoEnum.EXISTS,field = "cleanToDelivery")
-    private Boolean cleanToDeliveryExists;
+    private Integer cleanToDeliveryExists;
 
+    @Panno(findType = PannoEnum.LTE,field = "downloadTime")
+    private LocalDateTime downloadEndTime;
+    @Panno(findType = PannoEnum.EQ, field = "comboSku")
+    private String comboSku;
+
+    @Panno(findType=PannoEnum.EQ,  field = "returnOrderId")
+    private String returnOrderId;
+
+    @Panno(findType=PannoEnum.EQ,  field = "fNumber")
+    private String fNumber;
+    public static OrderMongoDTO getByFBillNo(String fBillNo) {
+        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+        orderMongoDTO.setBillNo(fBillNo);
+        return orderMongoDTO;
+    }
     public OrderMongoDTO(String platformCode, String code) {
         this.platformCode = platformCode;
         this.code = code;
@@ -92,6 +110,11 @@ public class  OrderMongoDTO {
         orderMongoDTO.setSalesRecordNumber(salesRecordNumber);
         return orderMongoDTO;
     }
+    public static OrderMongoDTO getByPlatformOrderId(String platformOrderId) {
+        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+        orderMongoDTO.setPlatformOrderId(platformOrderId);
+        return orderMongoDTO;
+    }
 
     public static OrderMongoDTO getShopByMaterialId(String fMaterialId) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
@@ -105,13 +128,16 @@ public class  OrderMongoDTO {
         return orderMongoDTO;
     }
 
-    public static OrderMongoDTO getByIsClean(Boolean isClean) {
+    public static OrderMongoDTO getByIsClean(Integer isClean, Integer diffMinute) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
         orderMongoDTO.setIsClean(isClean);
+        if(null != diffMinute && diffMinute != 0){
+            orderMongoDTO.setDownloadEndTime(LocalDateTime.now().minusMinutes(diffMinute));
+        }
         return orderMongoDTO;
     }
 
-    public static OrderMongoDTO getByCleanToDelivery(Boolean isClean, Boolean cleanToDelivery) {
+    public static OrderMongoDTO getByCleanToDelivery(Integer isClean, Integer cleanToDelivery) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
         if(null != isClean){
             orderMongoDTO.setCleanToDelivery(isClean);
@@ -119,6 +145,23 @@ public class  OrderMongoDTO {
         if (null != cleanToDelivery){
             orderMongoDTO.setCleanToDeliveryExists(cleanToDelivery);
         }
+        return orderMongoDTO;
+    }
+
+    public static OrderMongoDTO getByComboSku(String comboSku) {
+        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+        orderMongoDTO.setComboSku(comboSku);
+        return orderMongoDTO;
+    }
+
+    public static OrderMongoDTO getByReturnOrderId(String returnCode) {
+        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+        orderMongoDTO.setReturnOrderId(returnCode);
+        return orderMongoDTO;
+    }
+    public static OrderMongoDTO getByFNumber(String fNumber) {
+        OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
+        orderMongoDTO.setFNumber(fNumber);
         return orderMongoDTO;
     }
 }

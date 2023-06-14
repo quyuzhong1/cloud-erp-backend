@@ -1,14 +1,16 @@
 package com.erp.model.dmp.gyy;
 
+import com.erp.model.dmp.dto.CleanBaseDTO;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.time.LocalDateTime;
+
 @Data
 @NoArgsConstructor
-@ToString
-public class GyyShopInfoEntity {
+public class GyyShopInfoEntity extends CleanBaseDTO {
 
     /**
      * id : 311365621501
@@ -61,8 +63,18 @@ public class GyyShopInfoEntity {
      */
     @SerializedName("type_name")
     private String typeName;
-    /**
-     * 清洗数据
-     */
-    private Boolean isClean;
+
+    @Override
+    public String toString() {
+        return "GyyShopInfoEntity{" +
+                "id='" + id + '\'' +
+                ", nick='" + nick + '\'' +
+                ", code='" + code + '\'' +
+                ", name='" + name + '\'' +
+                ", createDate='" + createDate + '\'' +
+                ", modifyDate='" + modifyDate + '\'' +
+                ", note='" + note + '\'' +
+                ", typeName='" + typeName + '\'' +
+                '}';
+    }
 }

@@ -1,22 +1,34 @@
 package com.erp.server.dmp.pull.thread;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.erp.model.dmp.dto.RequestDTO;
+import com.common.business.utils.RedisUtil;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.JobTaskDTO;
+import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.erp.server.dmp.config.SaveHandler;
 import com.erp.server.dmp.pull.service.ModelService;
 import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
 import com.erp.server.dmp.pull.service.dmp.PlatformApiTaskService;
+import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -33,6 +45,10 @@ public class PullErpDateThread {
 
     @Autowired
     private RedisTemplate<String, String> template;
+    @Resource(name = "pullErpOpenApi")
+    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
+    @Resource
+    private RedisUtil redisUtil;
 
 
     @Async("pullErpOpenApi")
@@ -77,5 +93,33 @@ public class PullErpDateThread {
         }else {
             template.opsForList().leftPush(taskName, JSONObject.toJSONString(orderJobTask));
         }
+    }
+
+
+    public void executeCleanTask(String taskKey, List<String> finalTaskList) {
+        // 任务列表
+        List<String> tableListByTask = MongoTableNameContant.getTableListByTask(taskKey);
+        if(CollectionUtil.isNotEmpty(finalTaskList)){
+            tableListByTask = finalTaskList;
+        }
+        if (CollectionUtil.isEmpty(tableListByTask)) {
+            return;
+        }
+        for (String tableName : tableListByTask) {
+            try {
+                threadPoolTaskExecutor.execute(()->{
+                    // 记录执行时间
+                    // 执行完毕后，更新执行时间
+                    String key = StrUtil.format("{}:{}", "clean", taskKey);
+                    redisUtil.hset(key, tableName, LocalDateTime.now());
+                    // 清理数据
+                    SaveHandler.cleanDataSave(tableName);
+                });
+            }catch (Exception e) {
+                log.error("清理数据错误tableName={}", tableName, e);
+                XxlJobHelper.log("清理数据错误tableName={}", tableName, e);
+            }
+        }
+
     }
 }

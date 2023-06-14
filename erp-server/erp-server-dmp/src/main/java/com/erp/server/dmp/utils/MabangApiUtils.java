@@ -217,13 +217,12 @@ public class MabangApiUtils {
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         while (StrUtil.isNotBlank(pageIndex)) {
             HashMap<String, Object> params = new HashMap<>(6);
-            params.put("updateTimeStart", sdf.format(startDate));
-            params.put("updateTimeEnd", sdf.format(endDate));
+//            params.put("updateTimeStart", sdf.format(startDate));
+//            params.put("updateTimeEnd", sdf.format(endDate));
             if (StrUtil.isNotBlank(pageIndex) && !"1".equals(pageIndex)){
                 params.put("cursor", pageIndex);
             }
             params.put("maxRows", pageSize);
-//            params.put("stockSku", "JG-0085+0100+0199+0505+0559+0673+1108");
             params.put("showMachining", 1);
             params.put("showVirtualSku", 1);
             params.put("showProvider",1);
@@ -297,10 +296,39 @@ public class MabangApiUtils {
         return new ParamHeaderVO(paramStr, headerMap);
     }
 
+    public static List<ComboSkuInfoEntity> queryComboSkuList(String method, LocalDateTime startDate, LocalDateTime endDate) {
+        // 当前每页条数，默认20，最大值为100
+        Integer pageSize = 1000;
+        Integer pageIndex = 1;
+        Integer count = pageSize;
+        List<ComboSkuInfoEntity> infoArrayList = new ArrayList<>();
+        while (pageSize.equals(count)) {
+            HashMap<String, Object> params = new HashMap<>(6);
+            params.put("page", pageIndex);
+            params.put("rowsPerPage", pageSize);
+            ParamHeaderVO paramVo = getParamMap(method, pageIndex, params);
+
+            JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
+            if (!Objects.equals(responseMap.getInteger("code"), 200)) {
+                log.error("调用url={} param={}马帮SKU数据失败 responseMap={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap));
+                throw new RuntimeException(StrUtil.format("调用url={} param={}马帮SKU数据失败 responseMap={}",
+                        UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap)));
+            }
+            JSONObject jsonObject = JSONObject.parseObject(responseMap.getString("data"));
+            List<ComboSkuInfoEntity> dataList = JSONObject.parseArray(jsonObject.getString("data"), ComboSkuInfoEntity.class);
+            pageIndex ++;
+            count = dataList.size();
+            if(CollectionUtil.isNotEmpty(dataList)){
+                infoArrayList.addAll(dataList);
+            }
+        }
+        return infoArrayList;
+    }
+
     public static void main(String[] args) {
         LocalDateTime startDate = LocalDateTime.of(2021, 1, 1, 0, 0, 0);
         LocalDateTime endDate = LocalDateTime.of(2023, 6, 7, 23, 59, 59);
-        List<SkuInfoEntity> skuInfoEntities = querySkuList("stock-do-search-sku-list-new", startDate, endDate);
+        List<ComboSkuInfoEntity> skuInfoEntities = queryComboSkuList(PlatformApiEnum.STOCK_DO_SEARCH_COMBO_SKU.getTaskName(), startDate, endDate);
         System.out.println(skuInfoEntities);
     }
 
