@@ -1,16 +1,18 @@
 package com.erp.model.dmp.kingdee;
 
 import cn.hutool.core.annotation.Alias;
+import com.erp.model.dmp.dto.CleanBaseDTO;
 import com.erp.model.dmp.kingdee.item.KingdeeOrderItemEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
-public class KingdeeOrderEntity {
+public class KingdeeOrderEntity  extends CleanBaseDTO {
 
     private String _id;
     @Alias("FID")
@@ -258,10 +260,6 @@ public class KingdeeOrderEntity {
      * 商品信息
      */
     private List<KingdeeOrderItemEntity> orderItemEntityList;
-    /**
-     * 清洗数据
-     */
-    private Boolean isClean;
 
     @Override
     public String toString() {

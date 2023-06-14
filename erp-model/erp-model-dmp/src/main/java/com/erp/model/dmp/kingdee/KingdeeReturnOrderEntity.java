@@ -1,18 +1,20 @@
 package com.erp.model.dmp.kingdee;
 
 import cn.hutool.core.annotation.Alias;
+import com.erp.model.dmp.dto.CleanBaseDTO;
 import com.erp.model.dmp.kingdee.item.KingdeeReturnOrderItemEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
 @ToString
-public class KingdeeReturnOrderEntity {
+public class KingdeeReturnOrderEntity extends CleanBaseDTO {
 
     private String _id;
     @Alias("FBillTypeID")
@@ -64,10 +66,6 @@ public class KingdeeReturnOrderEntity {
     @Alias("FHeadNote")
     private String FHeadNote;
     private List<KingdeeReturnOrderItemEntity> itemEntityList;
-    /**
-     * 清洗数据
-     */
-    private Boolean isClean;
     @Override
     public String toString() {
         return "KingdeeReturnOrderEntity{" +

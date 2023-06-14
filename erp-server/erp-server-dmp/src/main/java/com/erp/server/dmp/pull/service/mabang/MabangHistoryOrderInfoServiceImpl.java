@@ -11,6 +11,7 @@ import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.mabang.OrderEntity;
@@ -64,22 +65,21 @@ public class MabangHistoryOrderInfoServiceImpl implements IReportSaveService<Ord
         for (OrderEntity entity : entityList) {
             OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByOrderIdAndSaleNum(entity.getPlatformOrderId(), entity.getSalesRecordNumber());
             List<OrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
+            entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
+            entity.setDownloadTime(LocalDateTime.now());
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
                 pushToMqList.add(entity);
                 continue;
             }
             OrderEntity mongoDatum = mongoData.get(0);
-            String id = mongoDatum.get_id();
-            mongoDatum.set_id(null);
             // 比较数据是否相同
             if (mongoDatum.toString().equals(entity.toString())) {
                 continue;
             }
             pushToMqList.add(entity);
-            entity.set_id(null);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
-            OrderMongoDTO updateDto = new OrderMongoDTO(id);
+            OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
@@ -108,5 +108,16 @@ public class MabangHistoryOrderInfoServiceImpl implements IReportSaveService<Ord
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public void cleanDataSave(String tableName, int size) {
+
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void updateAndSaveDb(OrderEntity mongoDatum) {
+
     }
 }

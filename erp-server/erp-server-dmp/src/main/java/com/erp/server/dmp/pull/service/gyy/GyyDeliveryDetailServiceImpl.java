@@ -2,6 +2,7 @@ package com.erp.server.dmp.pull.service.gyy;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -16,13 +17,16 @@ import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
+import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
 import com.erp.model.dmp.gyy.bean.DeliveryDetailsBean;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
+import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
@@ -49,12 +53,14 @@ import java.util.stream.Collectors;
 @Component
 @SaveData(method = PlatformApiEnum.GY_ERP_TRADE_DELIVERY_GET)
 public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliveryDetailEntity> {
-
     @Resource
     private MongoService mongoService;
 
     @Resource
     private MQProducerService<DmpDeliveryDetailInfoEntity> mqProducerService;
+    @Resource
+    private CfgSettingService cfgSettingService;
+
 
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
@@ -96,7 +102,6 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
      * 补充详情信息并发送到mq
      * @param gyyOrderEntity
      */
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void addOrderDetail(GyyDeliveryDetailEntity gyyOrderEntity){
         // 根据状态查询未下载数据
         // 查询订单详情
@@ -107,32 +112,46 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
             return;
         }
         deliveryEntity.setDownloadStatus(1);
+        deliveryEntity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
+        deliveryEntity.setDownloadTime(LocalDateTime.now());
+        deliveryEntity.set_id(gyyOrderEntity.get_id());
         // 修改数据
-        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(deliveryEntity), MapUtil.class);
-        OrderMongoDTO updateDto = new OrderMongoDTO(gyyOrderEntity.get_id());
-        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
+        updateAndSaveDb(deliveryEntity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void updateAndSaveDb(GyyDeliveryDetailEntity deliveryEntity) {
+
         List<DmpDeliveryDetailInfoEntity> entityToMqlist = new ArrayList<>();
-        if (CollectionUtil.isEmpty(gyyOrderEntity.getDetails()) ||  1 == gyyOrderEntity.getDetails().size()) {
-            entityToMqlist.add(initOrderInfoEntity(gyyOrderEntity));
+        if (CollectionUtil.isEmpty(deliveryEntity.getDetails()) ||  1 == deliveryEntity.getDetails().size()) {
+            entityToMqlist.add(initOrderInfoEntity(deliveryEntity));
         }else {
             // 对应多个销售订单时进行拆单操作
-            Map<String, List<DeliveryDetailsBean>> tradeCodeItemMap = gyyOrderEntity.getDetails().stream()
+            Map<String, List<DeliveryDetailsBean>> tradeCodeItemMap = deliveryEntity.getDetails().stream()
                     .collect(Collectors.groupingBy(DeliveryDetailsBean::getTradeCode));
             if (1 == tradeCodeItemMap.keySet().size()) {
-                entityToMqlist.add(initOrderInfoEntity(gyyOrderEntity));
+                entityToMqlist.add(initOrderInfoEntity(deliveryEntity));
             }else {
                 tradeCodeItemMap.keySet().forEach(tradeCode -> {
                     List<DeliveryDetailsBean> itemList = tradeCodeItemMap.get(tradeCode);
                     GyyDeliveryDetailEntity deliveryInfoEntity = new GyyDeliveryDetailEntity();
-                    BeanUtil.copyProperties(gyyOrderEntity, deliveryInfoEntity);
+                    BeanUtil.copyProperties(deliveryEntity, deliveryInfoEntity);
                     deliveryInfoEntity.setDetails(itemList);
                     entityToMqlist.add(initOrderInfoEntity(deliveryInfoEntity));
                 });
             }
         }
+
+        OrderMongoDTO updateDto = new OrderMongoDTO(deliveryEntity.get_id());
         if(CollectionUtil.isEmpty(entityToMqlist)){
+            deliveryEntity.setIsClean(CleanStatusEnum.CLEANED.getCode());
+            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(deliveryEntity), MapUtil.class);
+            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
             return;
         }
+        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(deliveryEntity), MapUtil.class);
+        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
         // 异步推送到MQ
         List<DmpDeliveryDetailInfoEntity> collect = entityToMqlist.stream().peek(msg -> {
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_DELIVERY_ORDER_TAG.getName(),
@@ -141,6 +160,24 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public void cleanDataSave(String tableName, int size) {
+        // 查询mongo待推送数据
+        String value = cfgSettingService.getValue(SettingEnum.CLEAN_JOB_DELAY_MINUTE);
+        Integer delayMinute = null != value ? NumberUtil.parseInt(value) : 0;
+        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsClean(CleanStatusEnum.UNCLEAN.getCode(),delayMinute);
+        List<GyyDeliveryDetailEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
+        if (CollectionUtil.isEmpty(mongoData)) {
+            return;
+        }
+        for (GyyDeliveryDetailEntity mongoDatum : mongoData) {
+            mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
+            mongoDatum.setLastPushTime(LocalDateTime.now());
+            updateAndSaveDb(mongoDatum);
+        }
+
     }
 
     /**

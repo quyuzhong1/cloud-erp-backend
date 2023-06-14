@@ -1,6 +1,7 @@
 package com.erp.model.dmp.gyy;
 
 
+import com.erp.model.dmp.dto.CleanBaseDTO;
 import com.erp.model.dmp.gyy.bean.DeliveryDetailsBean;
 import com.erp.model.dmp.gyy.bean.DeliveryStatusInfoBean;
 import com.google.gson.annotations.SerializedName;
@@ -10,12 +11,13 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @EqualsAndHashCode
 @NoArgsConstructor
-public class GyyDeliveryDetailEntity {
+public class GyyDeliveryDetailEntity extends CleanBaseDTO {
     /**
      * create_date : 2022-09-14 08:54:06
      * modify_date : 2022-12-08 15:29:26 -
@@ -385,10 +387,7 @@ public class GyyDeliveryDetailEntity {
      * api编码，订单来源于历史订单还是当前订单接口区分
      */
     private String apiCode;
-    /**
-     * 清洗数据
-     */
-    private Boolean isClean;
+
 
     @Override
     public String toString() {

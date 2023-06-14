@@ -2,12 +2,9 @@ package com.erp.server.dmp.pull.service.stock;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.core.lang.Console;
 import cn.hutool.core.lang.Dict;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.http.HttpUtil;
-import cn.hutool.http.webservice.SoapClient;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -18,34 +15,24 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.*;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
-import com.erp.model.dmp.entity.DmpRefundInfoEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
-import com.erp.model.dmp.gyy.GyyOrderEntity;
-import com.erp.model.dmp.gyy.GyyShopInfoEntity;
-import com.erp.model.dmp.mabang.OrderEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
-import com.erp.server.dmp.utils.GyyApiUtils;
 import com.erp.server.dmp.utils.ImlApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.aggregation.ArrayOperators;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.xml.namespace.QName;
-import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -129,6 +116,16 @@ public class ImlStockServiceImpl implements IReportSaveService {
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public void cleanDataSave(String tableName, int size) {
+
+    }
+
+    @Override
+    public void updateAndSaveDb(Object mongoDatum) {
+
     }
 
     /**
