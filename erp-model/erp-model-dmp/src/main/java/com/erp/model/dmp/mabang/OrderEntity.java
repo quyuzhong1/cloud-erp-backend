@@ -1,16 +1,18 @@
 package com.erp.model.dmp.mabang;
 
 import com.alibaba.fastjson.JSONObject;
+import com.erp.model.dmp.dto.CleanBaseDTO;
 import com.erp.model.dmp.mabang.item.OrderItemEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
-public class OrderEntity {
+public class OrderEntity extends CleanBaseDTO {
 
     private String _id;
     /**
@@ -460,13 +462,13 @@ public class OrderEntity {
      */
     private JSONObject extendAttr;
     /**
-     * 清洗数据
+     * 清洗到发货订单 0 未清洗 1 清洗中 2 清洗完成
      */
-    private Boolean isClean;
+    private Integer cleanToDelivery;
     /**
-     * 清洗到发货订单
+     * 上次推送Delivery时间
      */
-    private Boolean cleanToDelivery;
+    private LocalDateTime lastPushDeliveryTime;
 
     @Override
     public String toString() {

@@ -20,7 +20,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -41,9 +44,6 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
 
     @Resource
     private DmpShopChangeLogService dmpShopChangeLogService;
-
-    @Resource
-    private DmpSkuInfoService dmpSkuInfoService;
     @Resource
     private SysUserFeign sysUserFeign;
 

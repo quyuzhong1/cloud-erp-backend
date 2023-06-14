@@ -1,17 +1,19 @@
 package com.erp.model.dmp.mabang;
 
 import cn.hutool.json.JSONObject;
+import com.erp.model.dmp.dto.CleanBaseDTO;
 import com.erp.model.dmp.mabang.item.ReturnOrderItemEntity;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
-public class ReturnOrderEntity {
+public class ReturnOrderEntity extends CleanBaseDTO {
 
     private String _id;
     /**
@@ -150,10 +152,6 @@ public class ReturnOrderEntity {
 
     @SerializedName("item")
     private List<ReturnOrderItemEntity> item;
-    /**
-     * 清洗数据
-     */
-    private Boolean isClean;
 
     @Override
     public String toString() {

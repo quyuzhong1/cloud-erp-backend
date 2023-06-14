@@ -2,6 +2,7 @@ package com.erp.server.dmp.pull.service.kingdee;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -13,16 +14,21 @@ import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
+import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.KingdeeEccShopEntity;
 import com.erp.model.dmp.kingdee.KingdeeShopEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
@@ -43,12 +49,14 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @SaveData(method = PlatformApiEnum.ECC_SHOP)
-public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeShopEntity> {
+public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeEccShopEntity> {
     @Resource
     private MongoService mongoService;
 
     @Resource
     private MQProducerService<DmpShopInfoEntity> mqProducerService;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     public static void main(String[] args) {
         KingdeeEccShopServiceImpl shopService = new KingdeeEccShopServiceImpl();
@@ -90,20 +98,22 @@ public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeShop
         List<KingdeeEccShopEntity> pushToMqList = new ArrayList<>();
         for (KingdeeEccShopEntity entity : skuEntityList) {
             OrderMongoDTO queryMongoDTO = new OrderMongoDTO(entity.getId());
-            List<KingdeeShopEntity> mongoData = mongoService.findMongoData(queryMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_ECC_SHOP, KingdeeShopEntity.class);
+            List<KingdeeEccShopEntity> mongoData = mongoService.findMongoData(queryMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_ECC_SHOP, KingdeeEccShopEntity.class);
+            entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
+            entity.setDownloadTime(LocalDateTime.now());
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
                 pushToMqList.add(entity);
                 continue;
             }
-            KingdeeShopEntity mongoDatum = mongoData.get(0);
+            KingdeeEccShopEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
             if (mongoDatum.toString().equals(entity.toString())) {
                 continue;
             }
             pushToMqList.add(entity);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
-            mongoService.updateMongoData(queryMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_ECC_SHOP, KingdeeShopEntity.class);
+            mongoService.updateMongoData(queryMongoDTO, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_ECC_SHOP, KingdeeEccShopEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_KINGDEE_ECC_SHOP);
@@ -127,6 +137,44 @@ public class KingdeeEccShopServiceImpl implements IReportSaveService<KingdeeShop
             }
         }).collect(Collectors.toList());
 
+    }
+
+    @Override
+    public void cleanDataSave(String tableName, int size) {
+        // 查询mongo待推送数据
+        String value = cfgSettingService.getValue(SettingEnum.CLEAN_JOB_DELAY_MINUTE);
+        Integer delayMinute = null != value ? NumberUtil.parseInt(value) : 0;
+        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsClean(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
+        List<KingdeeEccShopEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.ORIGINAL_KINGDEE_ECC_SHOP, KingdeeEccShopEntity.class);
+        if (CollectionUtil.isEmpty(mongoData)) {
+            return;
+        }
+        for (KingdeeEccShopEntity mongoDatum : mongoData) {
+            mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
+            mongoDatum.setLastPushTime(LocalDateTime.now());
+            updateAndSaveDb(mongoDatum);
+        }
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void updateAndSaveDb(KingdeeEccShopEntity mongoDatum) {
+        DmpShopInfoEntity shopInfo = initOrderInfoEntity(mongoDatum);
+        OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.getId());
+        if(null == shopInfo){
+            mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
+            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);
+            mongoService.updateMongoData(updateDto, mapUtil,  MongoTableNameContant.ORIGINAL_KINGDEE_ECC_SHOP, KingdeeEccShopEntity.class);
+            return;
+        }
+        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);
+        mongoService.updateMongoData(updateDto, mapUtil,  MongoTableNameContant.ORIGINAL_KINGDEE_ECC_SHOP, KingdeeEccShopEntity.class);
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_ECC_SHOP_INFO_TAG.getName(),
+                shopInfo, StrUtil.format("{}_{}", shopInfo.getPlatformShopNo(), shopInfo.getId()));
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
+            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+        }
     }
 
     private DmpShopInfoEntity initOrderInfoEntity(KingdeeEccShopEntity shopEntity) {

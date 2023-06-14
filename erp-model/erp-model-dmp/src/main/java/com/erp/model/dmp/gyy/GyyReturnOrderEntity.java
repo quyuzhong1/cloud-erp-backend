@@ -1,5 +1,6 @@
 package com.erp.model.dmp.gyy;
 
+import com.erp.model.dmp.dto.CleanBaseDTO;
 import com.erp.model.dmp.gyy.bean.ReturnOrderDetailsBean;
 import com.erp.model.dmp.gyy.bean.ReturnOrderPayments;
 import com.google.gson.annotations.SerializedName;
@@ -7,11 +8,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
-public class GyyReturnOrderEntity {
+public class GyyReturnOrderEntity extends CleanBaseDTO {
     /**
      * code : RGO315677282722
      * reason : 7天无理由退换货
@@ -328,10 +330,6 @@ public class GyyReturnOrderEntity {
     private List<?> refundCodes;
     @SerializedName("stock_location")
     private List<?> stockLocation;
-    /**
-     * 清洗数据
-     */
-    private Boolean isClean;
     @Override
     public String toString() {
         return "GyyReturnOrderEntity{" +

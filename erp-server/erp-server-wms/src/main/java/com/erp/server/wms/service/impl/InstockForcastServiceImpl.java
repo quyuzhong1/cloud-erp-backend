@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.ApproveStatusEnum;
@@ -12,10 +13,8 @@ import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.*;
-import com.erp.model.wms.entity.InstockForcastDetailEntity;
-import com.erp.model.wms.entity.InstockForcastEntity;
-import com.erp.model.wms.entity.PoInstockDetailEntity;
-import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.InstockForcastMapper;
@@ -33,6 +32,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -69,6 +69,9 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
 
     @Autowired
     private WarehouseService warehouseService;
+
+    @Autowired
+    private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -250,37 +253,60 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
             String purchaseOrderDetailId = member.getPurchaseOrderDetailId();
             // 获取原采购订单明细的收货信息
             List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(Lists.newArrayList(purchaseOrderDetailId));
+            // 原采购订单入库明细id
+            List<String> receiveDetailIds = CollUtil.isNotEmpty(receiveDetailList) ? receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getId).collect(Collectors.toList()) : null;
             // 获取原采购订单明细的入库信息
             List<PoInstockDetailEntity> poInstockDetailList = poInstockDetailService.listDetailByPodIds(Lists.newArrayList(purchaseOrderDetailId));
+            // 获取原退货单明细的退货信息
+            List<PurchaseReturnOrderDetailEntity> returnOrderDetailList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(Lists.newArrayList(purchaseOrderDetailId));
 
             String arriveStatus = member.getArriveStatus();
             Integer changeQty = 0;
             InventoryModeEnum inventoryModeEnum;
 
-            Integer qty = MathUtil.ZERO;
+            Integer receiveQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(receiveDetailList)) {
                 // 此处收货单需过滤为审核通过的，只有审核通过的才占用库存数量
-                qty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(purchaseOrderDetailId)
+                receiveQty = receiveDetailList.stream().filter(e -> Objects.equals(e.getPurchaseOrderDetailId(),purchaseOrderDetailId)
                         && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
                         .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             }
-            Integer poQty = MathUtil.ZERO;
+            // 采购入库单（直接下推的无收货单的）入库数量
+            Integer poUnRecQty = MathUtil.ZERO;
+            // 采购入库单（收货单下推的）入库数量
+            Integer poRecQty = MathUtil.ZERO;
             if(CollectionUtils.isNotEmpty(poInstockDetailList)) {
-                // 采购入库单，只有审核通过的才占用库存数量
-                poQty = poInstockDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(purchaseOrderDetailId)
+                // 采购入库单（直接下推的无收货单的），会减少在途
+                poUnRecQty = poInstockDetailList.stream().filter(e -> Objects.equals(e.getPurchaseOrderDetailId(), purchaseOrderDetailId)
+                        // 采购入库单的来源明细id=采购订单明细id
+                        && Objects.equals(e.getSourceDetailId(), purchaseOrderDetailId)
+                        && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
+                        .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                // 采购入库单（收货单下推的）入库数量，会减少待检数量
+                poRecQty = poInstockDetailList.stream().filter(e -> Objects.equals(e.getPurchaseOrderDetailId(), purchaseOrderDetailId)
+                        // 采购入库单的来源明细id在收货单
+                        && receiveDetailIds.contains(e.getSourceDetailId())
                         && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
                         .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             }
+            Integer returnQty = MathUtil.ZERO;
+            if(CollUtil.isNotEmpty(returnOrderDetailList)) {
+                // 退货单（退货补货的才会导致在途数量变化）
+                returnQty = returnOrderDetailList.stream().filter(e -> Objects.equals(e.getPurchaseOrderDetailId(), purchaseOrderDetailId)
+                        && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode())
+                        && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
+                        .map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
 
-            // 新的采购订单数量、原在途、待检数量综合计算得出
-            // 已到货（包括结束交货），如果存在收货单存在待检的情况下，需考虑扣除待检的数量
+            // 已到货（包括结束交货）
             if(Objects.equals(ArrivalStatusEnum.ARRIVED.getCode(), arriveStatus)) {
-                // 此处需考虑待检的数量，因为数量被拆分成了在途和待检
-                changeQty = member.getQty() - qty - poQty;
+                // 新采购数量- (待检 + 退货在途)
+                changeQty = member.getQty() - ((receiveQty - poRecQty) + returnQty);
                 inventoryModeEnum = changeQty > 0 ? InventoryModeEnum.IN_STOCK : InventoryModeEnum.OUT_STOCK;
                 changeQty = Math.abs(changeQty);
             } else {
-                changeQty = member.getQty() - member.getOriginQty();
+                // 新采购订单数量 - (原采购订单数量 - 原采购订单入库数量 + 待检)
+                changeQty = member.getQty() - (member.getOriginQty() - (receiveQty + poUnRecQty) + returnQty + (receiveQty - poRecQty));
                 inventoryModeEnum = changeQty > 0 ? InventoryModeEnum.IN_STOCK : InventoryModeEnum.OUT_STOCK;
                 changeQty = Math.abs(changeQty);
             }

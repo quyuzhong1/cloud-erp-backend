@@ -239,4 +239,12 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/purchaseOrder/getPushDownBySourceIds")
     Integer getPushDownBySourceIds(List<String> soIds);
+
+    /**
+     * 根据采购订单编号获取采购订单信息
+     * @param codes
+     * @return
+     */
+    @PostMapping("feign/purchaseOrder/getPurchaseOrderByCodes")
+    List<PurchaseOrderEntity> getPurchaseOrderByCodes(@RequestBody List<String> codes);
 }

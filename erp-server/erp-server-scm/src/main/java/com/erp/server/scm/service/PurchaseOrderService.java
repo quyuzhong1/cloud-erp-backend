@@ -258,4 +258,11 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param records
      */
     void doOpHandlePurchaseOrder(List<PurchaseOrderDTO.ListDTO> records);
+
+    /**
+     * 根据采购订单编号获取采购订单信息
+     * @param codes
+     * @return
+     */
+    List<PurchaseOrderEntity> findByCodes(List<String> codes);
 }

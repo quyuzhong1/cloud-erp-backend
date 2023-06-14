@@ -332,8 +332,8 @@ public enum ApiError implements Serializable {
     ERROR_BUSINESS_NOT_EXIT(95162, "业务类型不存在，请检查"),
     ERROR_95163(95163, "BOM信息不存在"),
     ERROR_95164(95164, "不可新增相同EAN码"),
-
     ERROR_DOCS_NO(95165,"文档不存在"),
+    ERROR_95166(95166, "未找到BOM子件"),
 
 
 
@@ -454,6 +454,7 @@ public enum ApiError implements Serializable {
     ERROR_98070(98070,"未找到委外订单明细"),
     ERROR_98071(98071,"未找到委外订单明细父级SKU信息"),
     ERROR_98072(98072,"未找到委外订单明细子级SKU信息"),
+    ERROR_98073(98073,"未找到委外订单"),
 
 
 

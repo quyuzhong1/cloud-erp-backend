@@ -1,6 +1,7 @@
 package com.erp.server.dmp.pull.service.mabang;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -15,13 +16,13 @@ import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
-import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
-import com.erp.model.dmp.enums.PlatformApiEnum;
-import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.*;
 import com.erp.model.dmp.mabang.OrderEntity;
 import com.erp.model.dmp.mabang.item.OrderItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
+import com.erp.server.dmp.pull.service.SaveData;
+import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -43,6 +44,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
+@SaveData(method = PlatformApiEnum.ORDER_GET_DELIVERY_LIST)
 public class MabangDeliveryDetailServiceImpl implements IReportSaveService<OrderEntity> {
 
     @Resource
@@ -50,6 +52,8 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
 
     @Resource
     private MQProducerService<DmpDeliveryDetailInfoEntity> mqProducerService;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     /**
      * 拉取订单数据
@@ -59,57 +63,44 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void pullDataSave(RequestDTO dto) {
-        dto.setPlatformApiEnum(PlatformApiEnum.ORDER_GET_ORDER_LIST);
-        List<OrderEntity> entityList = pullDate(dto);
-        if (CollectionUtil.isEmpty(entityList)) {
-            log.info("拉取马帮发货订单列表数据为空 entityList.size = 0 ");
+
+    }
+
+    @Override
+    public void cleanDataSave(String tableName, int size) {
+        // 查询mongo待推送数据
+        String value = cfgSettingService.getValue(SettingEnum.CLEAN_JOB_DELAY_MINUTE);
+        Integer delayMinute = null != value ? NumberUtil.parseInt(value) : 0;
+        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsClean(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
+        List<OrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.ORIGINAL_MABANG_DELIVERY_DETAIL, OrderEntity.class);
+        if (CollectionUtil.isEmpty(mongoData)) {
             return;
         }
-        log.info("拉取马帮发货订单列表数据 entityList.size = {} ", entityList.size());
-        List<OrderEntity> insertList = new ArrayList<>();
-        List<OrderEntity> pushToMqList = new ArrayList<>();
-        for (OrderEntity entity : entityList) {
+        for (OrderEntity mongoDatum : mongoData) {
+            mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
+            mongoDatum.setLastPushTime(LocalDateTime.now());
+            updateAndSaveDb(mongoDatum);
+        }
+    }
 
-            OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByOrderIdAndSaleNum(entity.getPlatformOrderId(), entity.getSalesRecordNumber());
-            List<OrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_MABANG_DELIVERY_DETAIL, OrderEntity.class);
-            if(CollectionUtil.isEmpty(mongoData)){
-                insertList.add(entity);
-                pushToMqList.add(entity);
-                continue;
-            }
-            OrderEntity mongoDatum = mongoData.get(0);
-            String id = mongoDatum.get_id();
-            mongoDatum.set_id(null);
-            // 比较数据是否相同
-            if (mongoDatum.toString().equals(entity.toString())) {
-                continue;
-            }
-            pushToMqList.add(entity);
-            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
-            OrderMongoDTO updateDto = new OrderMongoDTO(id);
+    @Override
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void updateAndSaveDb(OrderEntity mongoDatum) {
+        DmpDeliveryDetailInfoEntity deliveryDetailInfo = initOrderInfoEntity(mongoDatum);
+        OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
+        if(null == deliveryDetailInfo){
+            mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
+            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_DELIVERY_DETAIL, OrderEntity.class);
-        }
-        if(CollectionUtil.isNotEmpty(insertList)){
-            mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_MABANG_DELIVERY_DETAIL);
-        }
-        if (CollectionUtil.isEmpty(pushToMqList)){
-            log.warn("马帮发货订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
             return;
         }
-        // 构造订单结构
-        List<DmpDeliveryDetailInfoEntity> entityToMqlist = pushToMqList.stream()
-                .map(MabangDeliveryDetailServiceImpl::initOrderInfoEntity)
-                .filter(ObjectUtil::isNotEmpty)
-                .collect(Collectors.toList());
-
-        // 异步推送到MQ
-        List<DmpDeliveryDetailInfoEntity> collect = entityToMqlist.stream().peek(msg -> {
-            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_DELIVERY_ORDER_TAG.getName(),
-                    msg, msg.getBillNo());
-            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-            }
-        }).collect(Collectors.toList());
+        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);
+        mongoService.updateMongoData(updateDto, mapUtil,  MongoTableNameContant.ORIGINAL_MABANG_DELIVERY_DETAIL, OrderEntity.class);
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_DELIVERY_ORDER_TAG.getName(),
+                deliveryDetailInfo, deliveryDetailInfo.getBillNo());
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
+            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+        }
     }
 
     /**
@@ -275,7 +266,8 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void addDeliveryOrder(OrderEntity entity) {
         // 更新mongo数据
-        entity.setCleanToDelivery(Boolean.TRUE);
+        entity.setCleanToDelivery(1);
+        entity.setLastPushDeliveryTime(LocalDateTime.now());
         MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
         OrderMongoDTO updateDto = new OrderMongoDTO(entity.get_id());
         mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);

@@ -106,6 +106,16 @@ public enum RocketMqTagEnum {
      */
     MABANG_SKU_INFO_TAG(20, RocketMqTagEnum.SKU_INFO,"mabang_sku_info_tag"),
 
+    /**
+     * 马帮组合sku信息tag
+     */
+    MABANG_SKU_COMBO_INFO_TAG(21, RocketMqTagEnum.SKU_INFO,"mabang_sku_combo_info_tag"),
+
+    /**
+     * 马帮加工sku信息tag
+     */
+    MABANG_SKU_MACHINING_INFO_TAG(22, RocketMqTagEnum.SKU_INFO,"mabang_sku_machining_info_tag"),
+
     //---------------------------------金蝶数据同步code从1001开始------------------------------------------------------------------------------------------
 
     /**
