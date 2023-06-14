@@ -25,4 +25,13 @@ public interface ReportFormsManageMapper extends BaseMapper<PurchaseOrderDetailE
      **/
     IPage<PurchaseBusinessGatherTableDTO.PagingViewDTO> paging(Page query, @Param("params") PurchaseBusinessGatherTableDTO.PagingParamDTO param);
 
+    /**
+     * 导出excel查询
+     * @Author Luo_WG
+     * @Date 2023/6/13 10:26
+     * @param param
+     * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO.PagingViewDTO>
+     **/
+    List<PurchaseBusinessGatherTableDTO.PagingViewDTO> exportExcel(@Param("params") PurchaseBusinessGatherTableDTO.PagingParamDTO param);
+
 }

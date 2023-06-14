@@ -8,8 +8,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
 import com.erp.model.scm.dto.SalesDemandDTO;
@@ -28,6 +30,8 @@ import org.apache.xmlbeans.impl.regex.Match;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -54,8 +58,13 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
         ids.forEach(req -> {
             podIdList.addAll(Arrays.asList(req.split(",")));
         });
-        Map<String,PurchaseBusinessGatherTableDTO.PagingViewDTO> map = new HashMap();
-
+        //查询采购签收信息
+        List<WarehouseReceiveDetailEntity> warehouseReceiveDetailEntities = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIdList);
+        //查询采购入库信息
+        List<PoInstockDetailEntity> poInstockDetailEntities = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIdList);
+        //查询退货信息
+        List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIdList);
+        Map<String, PurchaseBusinessGatherTableDTO.PagingViewDTO> map = new HashMap();
         for (PurchaseBusinessGatherTableDTO.PagingViewDTO record : records) {
             String mapKey = record.getPurchaseOrgName() + record.getSupplierName() + record.getSpuNo() + record.getSkuNo();
             if (map.get(mapKey) != null) {
@@ -63,10 +72,14 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
                 mapEntity.setOrderQty(mapEntity.getOrderQty() + 1);
                 mapEntity.setOrderAmount(mapEntity.getOrderAmount().add(record.getOrderAmount()));
                 mapEntity.setAvgPrice(mapEntity.getOrderAmount().divide(BigDecimal.valueOf(mapEntity.getOrderQty()), 4, BigDecimal.ROUND_DOWN));
-                computeNumber(mapEntity, record, podIdList);
+                computeReceive(mapEntity, record, warehouseReceiveDetailEntities);
+                computeInstock(mapEntity, record, poInstockDetailEntities);
+                computeReturn(mapEntity, record, purchaseReturnOrderDetailEntities);
             } else {
                 map.put(mapKey, record);
-                computeNumber(record, record, podIdList);
+                computeReceive(record, record, warehouseReceiveDetailEntities);
+                computeInstock(record, record, poInstockDetailEntities);
+                computeReturn(record, record, purchaseReturnOrderDetailEntities);
             }
         }
         List<PurchaseBusinessGatherTableDTO.PagingViewDTO> viewDTOList = new ArrayList<>();
@@ -77,13 +90,57 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
         return new PagingVO(pageData);
     }
 
-    private void  computeNumber(PurchaseBusinessGatherTableDTO.PagingViewDTO mapEntity, PurchaseBusinessGatherTableDTO.PagingViewDTO record, List<String> podIdList) {
+    @Override
+    public Boolean exportExcelPurchaseBusiness(PurchaseBusinessGatherTableDTO.PagingParamDTO dto, HttpServletResponse response) {
+        List<PurchaseBusinessGatherTableDTO.PagingViewDTO> viewDTOS = baseMapper.exportExcel(dto);
+        List<String> ids = viewDTOS.stream().map(PurchaseBusinessGatherTableDTO.PagingViewDTO::getId).collect(Collectors.toList());
+        List<String> podIdList = new ArrayList<>();
+        ids.forEach(req -> {
+            podIdList.addAll(Arrays.asList(req.split(",")));
+        });
         //查询采购签收信息
         List<WarehouseReceiveDetailEntity> warehouseReceiveDetailEntities = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIdList);
         //查询采购入库信息
         List<PoInstockDetailEntity> poInstockDetailEntities = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIdList);
         //查询退货信息
         List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIdList);
+        Map<String, PurchaseBusinessGatherTableDTO.PagingViewDTO> map = new HashMap();
+        for (PurchaseBusinessGatherTableDTO.PagingViewDTO record : viewDTOS) {
+            String mapKey = record.getPurchaseOrgName() + record.getSupplierName() + record.getSpuNo() + record.getSkuNo();
+            if (map.get(mapKey) != null) {
+                PurchaseBusinessGatherTableDTO.PagingViewDTO mapEntity = map.get(mapKey);
+                mapEntity.setOrderQty(mapEntity.getOrderQty() + 1);
+                mapEntity.setOrderAmount(mapEntity.getOrderAmount().add(record.getOrderAmount()));
+                mapEntity.setAvgPrice(mapEntity.getOrderAmount().divide(BigDecimal.valueOf(mapEntity.getOrderQty()), 4, BigDecimal.ROUND_DOWN));
+                computeReceive(mapEntity, record, warehouseReceiveDetailEntities);
+                computeInstock(mapEntity, record, poInstockDetailEntities);
+                computeReturn(mapEntity, record, purchaseReturnOrderDetailEntities);
+            } else {
+                map.put(mapKey, record);
+                computeReceive(record, record, warehouseReceiveDetailEntities);
+                computeInstock(record, record, poInstockDetailEntities);
+                computeReturn(record, record, purchaseReturnOrderDetailEntities);
+            }
+        }
+        List<PurchaseBusinessGatherTableDTO.PagingViewDTO> viewDTOList = new ArrayList<>();
+        for (Map.Entry<String, PurchaseBusinessGatherTableDTO.PagingViewDTO> stringPagingViewDTOEntry : map.entrySet()) {
+            viewDTOList.add(stringPagingViewDTOEntry.getValue());
+        }
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/purchaseBusinessGatherExport.xlsx";
+        String name = "采购业务汇总表";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(viewDTOList, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return Boolean.TRUE;
+    }
+
+    private void computeReceive(PurchaseBusinessGatherTableDTO.PagingViewDTO mapEntity, PurchaseBusinessGatherTableDTO.PagingViewDTO record, List<WarehouseReceiveDetailEntity> warehouseReceiveDetailEntities) {
         //签收
         List<WarehouseReceiveDetailEntity> warehouseReceiveDetailEntityList = warehouseReceiveDetailEntities.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(warehouseReceiveDetailEntityList)) {
@@ -93,6 +150,9 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
             mapEntity.setReceiveGiftQty(mapEntity.getReceiveGiftQty() + exceedQty);
             mapEntity.setReceiveAmount(mapEntity.getReceiveAmount().add(mapEntity.getTaxPrice().multiply(BigDecimal.valueOf(receiveQty))));
         }
+    }
+
+    private void computeInstock(PurchaseBusinessGatherTableDTO.PagingViewDTO mapEntity, PurchaseBusinessGatherTableDTO.PagingViewDTO record, List<PoInstockDetailEntity> poInstockDetailEntities) {
         //入库
         List<PoInstockDetailEntity> poInstockDetailEntityList = poInstockDetailEntities.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(poInstockDetailEntityList)) {
@@ -102,6 +162,8 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
             mapEntity.setStockInGiftQty(mapEntity.getStockInGiftQty() + exceedQty);
             mapEntity.setStockInAmount(mapEntity.getStockInAmount().add(mapEntity.getTaxPrice().multiply(BigDecimal.valueOf(stockInQty))));
         }
+    }
+    private void computeReturn(PurchaseBusinessGatherTableDTO.PagingViewDTO mapEntity, PurchaseBusinessGatherTableDTO.PagingViewDTO record, List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities) {
         //退货
         List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntityList = purchaseReturnOrderDetailEntities.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(purchaseReturnOrderDetailEntityList)) {

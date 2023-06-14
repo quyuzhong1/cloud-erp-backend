@@ -59,7 +59,7 @@ public class ReportFormsManageController extends BaseController {
             menuCode = "scm:ReportFormsManage:exportExcelPurchaseBusiness",
             tableAlias = "pod")
     public ApiResult exportExcelPurchaseBusiness(@RequestBody PurchaseBusinessGatherTableDTO.PagingParamDTO dto, HttpServletResponse response) {
-        Boolean flag = Boolean.TRUE;
+        Boolean flag = reportFormsManageService.exportExcelPurchaseBusiness(dto, response);
         return flag == true ? success() : failure();
     }
 }
