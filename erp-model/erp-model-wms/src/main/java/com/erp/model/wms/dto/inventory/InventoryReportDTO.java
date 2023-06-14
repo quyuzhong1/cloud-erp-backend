@@ -212,7 +212,7 @@ public class InventoryReportDTO implements Serializable {
         private String sourceCode;
 
         /**
-         * 单据类型 接口地址：/wms/inventoryReport/transport/sourceTypeTab
+         * 单据类型 接口地址：/wms/common/enumDropDown?type=InventoryTransportType
          */
         private String sourceType;
 

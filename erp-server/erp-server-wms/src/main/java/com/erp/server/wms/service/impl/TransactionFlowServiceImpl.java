@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
@@ -348,6 +349,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     public PagingVO<InventoryReportDTO.TransportPagingDTO> transportPagingList(PagingDTO<InventoryReportDTO.TransportSearchParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        // 在途库存大于0的才查询出来
         IPage<InventoryReportDTO.TransportPagingDTO> pageData = this.baseMapper.transportPagingList(query, pagingParamDTO.getParams());
         // 填充
         fillTransportPageData(pageData.getRecords());
@@ -364,6 +366,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             pagingParamDTO.setWarehouseIdList(warehouseIds);
             pagingParamDTO.setSkuIdList(skuIds);
         }
+        // 在途库存大于0的才查询出来
         List<InventoryReportDTO.TransportPagingDTO> dataList = this.baseMapper.exportTransport(pagingParamDTO);
         if (CollUtil.isEmpty(dataList)) {
             return;

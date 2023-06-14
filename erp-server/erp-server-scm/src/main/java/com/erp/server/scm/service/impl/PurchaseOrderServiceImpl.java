@@ -1530,6 +1530,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
         // 采购入库（无收货单）信息（采购入库会扣减在途库存）
         List<PoInstockDetailEntity> poInstockDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+        //退货数量
+        List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
+
         poMap.forEach((mainId, po)->{
             InstockForcastDTO.FinishDeliveryDTO inventoryDTO = new InstockForcastDTO.FinishDeliveryDTO();
             inventoryDTO.setPurchaseOrderId(mainId);
@@ -1541,21 +1544,29 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 inventoryMember.setSkuId(member.getSkuId());
                 inventoryMember.setSkuNo(member.getSkuNo());
                 inventoryMember.setPurchaseOrderDetailId(member.getId());
-                Integer qty = MathUtil.ZERO;
-                if (CollectionUtils.isNotEmpty(receiveDetailList)) {
+                Integer receiveQty = MathUtil.ZERO;
+                if (CollUtil.isNotEmpty(receiveDetailList)) {
                     // 此处收货单需过滤为审核通过的，只有审核通过的才占用库存数量
-                    qty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(member.getId())
+                    receiveQty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(member.getId())
                             && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
                             .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
                 Integer poQty = MathUtil.ZERO;
-                if(CollectionUtils.isNotEmpty(poInstockDetailList)) {
-                    // 采购入库单，只有审核通过的才占用库存数量
+                if(CollUtil.isNotEmpty(poInstockDetailList)) {
+                    // 采购入库单（无收货单），只有审核通过的才占用库存数量
                     poQty = poInstockDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(member.getId())
+                            && Objects.equals(e.getSourceDetailId(), member.getId())
                             && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
                             .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
-                Integer deliveryQty = member.getPurchaseQty() - qty - poQty;
+                Integer returnQty = MathUtil.ZERO;
+                if(CollUtil.isNotEmpty(purchaseReturnOrderDetailEntities)) {
+                    // 退货单
+                    returnQty = purchaseReturnOrderDetailEntities.stream().filter(e -> e.getPurchaseOrderDetailId().equals(member.getId())
+                            && Objects.equals(e.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()) )
+                            .map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                }
+                Integer deliveryQty = member.getPurchaseQty() + returnQty - receiveQty - poQty;
                 inventoryMember.setQty(deliveryQty);
                 inventoryMembers.add(inventoryMember);
             });
