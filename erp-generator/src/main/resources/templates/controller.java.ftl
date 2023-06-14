@@ -36,9 +36,7 @@ import java.util.List;
 </#if>
 
 /**
- * <p>
  * ${table.comment!}
- * </p>
  *
  * @author ${author}
  * @since ${date}

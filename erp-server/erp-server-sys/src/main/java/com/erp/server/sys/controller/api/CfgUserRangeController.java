@@ -14,9 +14,7 @@ import java.util.List;
 
 
 /**
- * <p>
  * 用户区间配置
- * </p>
  *
  * @author zhangchunlin
  * @since 2023-06-12
