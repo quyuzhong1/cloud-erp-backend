@@ -1496,6 +1496,29 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
     }
 
+    /**
+     * 检查任务列表 下有子任务 是否有未完成的任务
+     *
+     * @param taskIds
+     * @return void
+     * @author yl
+     * @date 2022-10-18 19:53
+     */
+    @Override
+    public void checkSonTaskFinish(List<String> taskIds,List<ProjectTaskEntity> taskList) {
+        Integer finishCode = TaskStateEnum.FINISH.getCode();
+        Integer approvalPassCode = TaskStateEnum.APPROVAL_PASS.getCode();
+        for (String taskId : taskIds) {
+            List<String> resultList = new ArrayList<>();
+            //递归获取他的子任务id
+            getChilds(taskId, taskList, resultList);
+            int count = countUndoneByTaskIds(finishCode, approvalPassCode, resultList);
+            if (count > 0) {
+                throw new ServiceException(ApiError.ERROR_95036);
+            }
+        }
+    }
+
 
     @Override
     public void checkTaskFinish(List<ProjectTaskEntity> list) {

@@ -202,4 +202,15 @@ public interface ProductPlanService extends IService<ProductPlanEntity> {
      * @return ProductPlanDevelopDTO 
      */
     ProductPlanDevelopDTO getProductPlanDevelopById(String id);
+
+    /**
+     * 批量更改项目状态
+     * @author yl
+     * @date 2023-06-14 14:03
+     * @param productIds
+     * @param finishState
+     * @param two
+     * @return void
+     */
+    void updateBatchPlanStatus(List<String> productIds, Integer finishState, Integer two);
 }

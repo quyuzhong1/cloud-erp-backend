@@ -26,4 +26,22 @@ public interface ProductConstant {
      */
     String PRODUCT_ARCHIVE = "productArchive";
 
+    /**
+     *  所有
+     */
+    String ALL = "all";
+
+    /**
+     *  完成
+     */
+    String FINISHED = "finished";
+
+    /**
+     *  完成
+     */
+    String UNFINISHED = "unfinished";
+
+
+
+
 }

@@ -1,6 +1,7 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -8,7 +9,6 @@ import lombok.EqualsAndHashCode;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * <p>
@@ -241,5 +241,12 @@ public class ProductInfoEntity extends BaseEntity implements Serializable {
      */
     @TableField(value = "product_version")
     private Integer productVersion;
+
+
+    /**
+     * 暂停前的状态
+     */
+    @TableField(value = "suspend_before_status")
+    private Integer suspendBeforeStatus;
 
 }

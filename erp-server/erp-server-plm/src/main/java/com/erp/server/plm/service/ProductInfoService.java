@@ -236,4 +236,18 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @return com.erp.model.plm.dto.ProductDTO.ProductCountDTO
      */
     ProductDTO.ProductCountDTO collectCount();
+
+    /**
+     * 获取下拉列表
+     * @return
+     */
+    List<ProductDTO.DropdownDTO> getItemDropdown();
+
+
+    /**
+     * 批量立项
+     * @param productIdList
+     * @return
+     */
+    Boolean batchEstablish(List<String> productIdList);
 }

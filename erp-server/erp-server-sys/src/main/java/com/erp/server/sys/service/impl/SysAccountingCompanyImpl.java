@@ -1,5 +1,6 @@
 package com.erp.server.sys.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -19,6 +20,7 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.server.sys.mapper.SysAccountingCompanyMapper;
 import com.erp.server.sys.service.SysAccountingCompanyService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -48,8 +50,31 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
     @Override
     public boolean saveCompany(SysAccountingCompanyDTO dto) {
         SysAccountingCompanyEntity entity = new SysAccountingCompanyEntity();
+        checkName("", dto.getCompanyName());
         BeanMapperUtils.copy(dto, entity);
         return this.save(entity);
+    }
+
+    /**
+     * 检查名称
+     *
+     * @param id
+     * @param name
+     * @return void
+     * @author yl
+     * @date 2023-06-13 17:12
+     */
+    private void checkName(String id, String name) {
+        LambdaQueryWrapper<SysAccountingCompanyEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SysAccountingCompanyEntity::getCompanyName,name);
+        if(StringUtils.isNotBlank(id)){
+            queryWrapper.ne(SysAccountingCompanyEntity::getId,id);
+        }
+        queryWrapper.last("LIMIT 1");
+        int count = this.count(queryWrapper);
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_DUPLICATION_NAME);
+        }
     }
 
     /**
@@ -67,6 +92,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_9014);
         }
+        checkName(dto.getId(), dto.getCompanyName());
         entity.setCompanyAddress(dto.getCompanyAddress());
         entity.setCompanyName(dto.getCompanyName());
         entity.setContactAddress(dto.getContactAddress());
@@ -145,7 +171,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
      */
     @Override
     public List<SysAccountingCompanyDTO.ListDTO> getList() {
-        List<SysAccountingCompanyEntity> list = this.lambdaQuery().eq(SysAccountingCompanyEntity::getDisabled,false).list();
+        List<SysAccountingCompanyEntity> list = this.lambdaQuery().eq(SysAccountingCompanyEntity::getDisabled, false).list();
         return BeanMapper.copyList(list, SysAccountingCompanyDTO.ListDTO.class);
     }
 

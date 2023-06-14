@@ -79,4 +79,44 @@ public interface ProjectInfoService extends IService<ProjectInfoEntity> {
      * @return int
      */
     int getDelayCount(List<String> productIdList);
+
+    /**
+     * 从新启动
+     * @author yl
+     * @date 2023-06-14 10:47
+     * @param productIdList
+     * @return java.lang.Boolean
+     */
+    Boolean restart(List<String> productIdList);
+
+    /**
+     * 暂停项目
+     * @author yl
+     * @date 2023-06-14 10:57
+     * @param productIdList
+     * @return java.lang.Boolean
+     */
+    Boolean suspend(List<String> productIdList);
+
+    /**
+     * 终止项目
+     * @author yl
+     * @date 2023-06-14 11:06
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean stop(List<String> ids);
+
+    /**
+     * 完成项目 ids 是项目ids
+     * @author yl
+     * @date 2023-06-14 11:58
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean finish(List<String> ids);
+
+    Boolean batchArchive(List<String> productIdList);
+
+
 }

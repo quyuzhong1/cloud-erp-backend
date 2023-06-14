@@ -615,6 +615,32 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     }
 
+    /**
+     * 获取下拉列表
+     *
+     * @return
+     */
+    @Override
+    public List<ProductDTO.DropdownDTO> getItemDropdown() {
+        List<ProductDTO.DropdownDTO> resultList = new ArrayList<>(3);
+        ProductDTO.DropdownDTO all = new ProductDTO.DropdownDTO();
+        all.setCode(ProductConstant.ALL);
+        all.setCodeName("所有");
+        resultList.add(all);
+
+        ProductDTO.DropdownDTO unfinished = new ProductDTO.DropdownDTO();
+        unfinished.setCode(ProductConstant.UNFINISHED);
+        unfinished.setCodeName("未完成项目");
+        resultList.add(unfinished);
+
+        ProductDTO.DropdownDTO finish = new ProductDTO.DropdownDTO();
+        finish.setCode(ProductConstant.FINISHED);
+        finish.setCodeName("已完成项目");
+        resultList.add(finish);
+
+        return resultList;
+    }
+
 
     /**
      * 获取统计的值
@@ -1705,6 +1731,51 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             resultList.add(addRolePeople);
         }
         return resultList;
+    }
+
+
+    /**
+     * 批量立项
+     *
+     * @param productIdList
+     * @return
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean batchEstablish(List<String> productIdList) {
+        List<ProductInfoEntity> productInfoList = this.listByIds(productIdList);
+        Integer terminateCode = ApprovalStatusEnum.TERMINATE.getCode();
+        long terminateCount = productInfoList.stream().filter(p -> terminateCode.equals(p.getApprovalStatus())).count();
+        if (terminateCount > 0) {
+            throw new ServiceException(ApiError.ERROR_95159);
+        }
+        /**
+         * 表示改成已立项 就要去检查该该产品下的 所有的立项任务
+         *  是否完成
+         */
+        List<ProjectTaskEntity> taskList = projectTaskService.getByProductIds(productIdList);
+        List<String> taskIdList = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).map(ProjectTaskEntity::getId).collect(Collectors.toList());
+        List<ProjectTaskEntity> taskFinish = taskList.stream().filter(t -> TaskConstant.APPROVAL_TASK.equals(t.getProperty())).collect(Collectors.toList());
+        projectTaskService.checkTaskFinish(taskFinish);
+        preTaskService.checkPreTaskFinish(taskIdList);
+        projectTaskService.checkSonTaskFinish(taskIdList, taskFinish);
+        Integer approvalCode = ApprovalStatusEnum.APPROVAL.getCode();
+
+        productInfoList.stream().forEach(p -> p.setApprovalStatus(approvalCode));
+        Boolean result = this.updateBatchById(productInfoList);
+        if(result){
+            //批量添加获取修改产品
+            productStatusTimeService.batchSaveOrUpdateProductStatusTime(productIdList, approvalCode);
+            //更新产品规划的产品状态
+            productPlanService.updateBatchPlanStatus(productIdList, approvalCode, MathUtil.ONE);
+        }
+
+        return result;
+
+
+
+
+
     }
 
 

@@ -12,7 +12,8 @@ public enum ProjectStateEnum {
     YES_START(1, "已启动"),
     ING(2, "进行中"),
     FINISH(3, "已完成"),
-    STOP(4, "已中止");
+    STOP(4, "已中止"),
+    SUSPEND(5, "暂停");
 
     private Integer state;
     private String name;

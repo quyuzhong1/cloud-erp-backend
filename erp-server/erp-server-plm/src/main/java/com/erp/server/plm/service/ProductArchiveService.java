@@ -32,4 +32,14 @@ public interface ProductArchiveService extends IService<ProductArchiveEntity> {
      * @return ProductArchiveEntity
      */
     ProductArchiveEntity getArchiveByProductId(String productId);
+
+    
+    /**
+     * 批量添加归档
+     * @author yl
+     * @date 2023-06-14 14:59
+     * @param productIdList
+     * @return java.lang.Boolean
+     */
+    Boolean batchAddArchive(List<String> productIdList);
 }

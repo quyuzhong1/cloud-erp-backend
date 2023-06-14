@@ -1856,7 +1856,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     List<String> configTaskIds = hasConfigList.stream().map(TaskRefSkuConfigEntity::getTaskId).collect(Collectors.toList());
 
                     //验证关联任务是否已全部完成
-                    long relatedCount = taskAllList.stream().filter(obj -> !RelatedSkuTypeEnum.NOT_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId()) ).count();
+                    long relatedCount = taskAllList.stream().filter(obj -> !RelatedSkuTypeEnum.NOT_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId())).count();
                     if (relatedCount > 0) {
                         throw new ServiceException(ApiError.ERROR_95083);
                     }
@@ -1924,7 +1924,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> chargIds = Arrays.stream(obj.getChargeId().split(",")).collect(Collectors.toList());
             Boolean flag = false;
             List<String> chargIdList = new ArrayList<>();
-            for (String chargeName: chargeNames) {
+            for (String chargeName : chargeNames) {
                 String chargId = userList.stream().filter(e -> e.getUserName().equals(chargeName)).map(FindUserDTO::getUserId).findFirst().orElse("");
                 if (!chargIds.contains(chargId)) {
                     flag = true;
@@ -1933,7 +1933,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             if (flag) {
                 if (CollectionUtils.isNotEmpty(chargIdList)) {
-                    obj.setChargeId(String.join(",",chargIdList));
+                    obj.setChargeId(String.join(",", chargIdList));
                 }
                 resultList.add(obj);
             }
@@ -1956,12 +1956,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId) {
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId) {
         return this.lambdaUpdate()
                 .eq(ProductDetailEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),ProductDetailEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),ProductDetailEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId),ProductDetailEntity::getSyncKingdeeId,syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), ProductDetailEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), ProductDetailEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), ProductDetailEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
     }
 
@@ -1985,7 +1985,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public List<SkuVO> searchSkuInfo(ProductDetailDTO.SearchDTO dto) {
-        return baseMapper.searchSku(dto.getSearchKeyword(),dto.getStatus());
+        return baseMapper.searchSku(dto.getSearchKeyword(), dto.getStatus());
     }
 
 
@@ -2605,11 +2605,30 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     /**
      * 获取所有明细信息包括删除，用来同步到DMP
+     *
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      * @Author Luo_WG
      * @Date 2023/4/19 16:12
-     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      **/
     public List<ProductDetailEntity> getProductDetailAll() {
         return baseMapper.getProductDetailAll();
+    }
+
+    /**
+     * 更改产品状态
+     *
+     * @param productIds
+     * @param code
+     * @return void
+     * @author yl
+     * @date 2023-06-14 11:12
+     */
+    @Override
+    public void updateProductStateByProductIdList(List<String> productIds, Integer productState) {
+        if (CollectionUtils.isNotEmpty(productIds)) {
+            this.lambdaUpdate().in(ProductDetailEntity::getProductId, productIds).
+                    set(ProductDetailEntity::getProductState, productState).update();
+        }
+
     }
 }

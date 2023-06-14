@@ -452,4 +452,14 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      **/
     List<ProductDetailEntity> getProductDetailAll();
+
+    /**
+     * 更改产品状态
+     * @author yl
+     * @date 2023-06-14 11:12
+     * @param productIds
+     * @param code
+     * @return void
+     */
+    void updateProductStateByProductIdList(List<String> productIds, Integer code);
 }

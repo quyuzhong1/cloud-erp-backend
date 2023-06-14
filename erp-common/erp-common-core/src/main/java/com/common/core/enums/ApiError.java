@@ -323,6 +323,10 @@ public enum ApiError implements Serializable {
     ERROR_95156(95156, "该文档已被引用状态不能关闭"),
     ERROR_95157(95157, "请选择模板"),
     ERROR_MSG_IS_NOT_NULL(95157, "消息模板不能为空"),
+    ERROR_95158(95158, "只有暂停的项目才能重新启动"),
+    ERROR_95159(95159, "已终止的项目不能进行更改"),
+
+
 
     ERROR_LARK_TOKEN_IS_NULL(95158, "飞书应用token为空"),
     ERROR_LARK_SEND_MSG_FAIL(95159, "飞书发送消息失败"),
@@ -596,6 +600,7 @@ public enum ApiError implements Serializable {
     ERROR_92044(92044,"存在已使用的的客户不能进行停用"),
     ERROR_92045(92045,"实退总数量不能大于签收单的签收数量"),
     ERROR_92046(92046,"存在被销售订单引用的地址不能删除"),
+    ERROR_92047(92047,"存在销售订单处于变更中,无法反审核"),
 
     ERROR_99999(99999, "参数错误"),
     ERROR_end(1000000, "系统错误");

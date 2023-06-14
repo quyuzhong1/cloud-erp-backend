@@ -289,6 +289,9 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         try {
             save = apiUtils.save(param);
         } catch (Exception e) {
+
+
+
             //新增失败时添加日志及定时任务
             insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(json), msg.concat("；").concat(e.getMessage()), type, ApiSendStatusEnum.FAILURE.getCode());
             return Boolean.FALSE;

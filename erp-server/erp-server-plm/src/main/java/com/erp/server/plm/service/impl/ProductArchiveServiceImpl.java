@@ -22,6 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -165,7 +167,52 @@ public class ProductArchiveServiceImpl extends ServiceImpl<ProductArchiveMapper,
     @Override
     public ProductArchiveEntity getArchiveByProductId(String productId) {
         LambdaQueryWrapper<ProductArchiveEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProductArchiveEntity::getProductId,productId);
+        queryWrapper.eq(ProductArchiveEntity::getProductId, productId);
         return this.getOne(queryWrapper);
+    }
+
+
+    /**
+     * 批量添加归档
+     *
+     * @param productIdList
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-06-14 14:59
+     */
+    @Override
+    public Boolean batchAddArchive(List<String> productIdList) {
+        LoginUser user = CommonInterceptor.threadLocal.get();
+        String operator = "";
+        if (user != null) {
+            operator = user.getUid();
+        }
+        List<ProductArchiveEntity> entityList = listByProductIdList(productIdList);
+        LocalDateTime now = LocalDateTime.now();
+        List<ProductArchiveEntity> saveOrUpdateList = new ArrayList<>(productIdList.size());
+        for (String productId : productIdList) {
+            ProductArchiveEntity entity = entityList.stream().filter(p -> p.getProductId().equals(productId)).
+                    findFirst().orElse(null);
+            if (!Objects.isNull(entity)) {
+                entity.setArchiveTime(now);
+                entity.setOperator(operator);
+                saveOrUpdateList.add(entity);
+            } else {
+                ProductArchiveEntity saveEntity = new ProductArchiveEntity();
+                saveEntity.setArchiveTime(now);
+                saveEntity.setProductId(productId);
+                saveEntity.setOperator(operator);
+                saveOrUpdateList.add(saveEntity);
+            }
+        }
+        return this.saveOrUpdateBatch(saveOrUpdateList);
+
+    }
+
+    private List<ProductArchiveEntity> listByProductIdList(List<String> productIdList) {
+        if (CollectionUtils.isEmpty(productIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(ProductArchiveEntity::getProductId, productIdList).list();
     }
 }

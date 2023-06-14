@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.PagingDTO;
@@ -40,6 +39,7 @@ import com.erp.server.plm.mapper.ProductPlanMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -141,12 +141,12 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             throw new ServiceException(ApiError.ERROR_95133);
         }
         ProductPlanDTO productPlanDTO = new ProductPlanDTO();
-        BeanMapperUtils.copy(productPlanEntity,productPlanDTO);
+        BeanMapperUtils.copy(productPlanEntity, productPlanDTO);
         resultDTO.setProductPlanDTO(productPlanDTO);
         //枚举格式化
         productPlanDTO.setProductStyleName(ProductStyleEnum.getNameByCode(productPlanEntity.getProductStyle()));
         productPlanDTO.setProductTypeName(ProductTypeEnum.getNameByCode(productPlanEntity.getProductType()));
-        productPlanDTO.setThreeGenerationPlanningName(ThreeGenerationPlanningEnum.getNameByCode( productPlanEntity.getThreeGenerationPlanning()));
+        productPlanDTO.setThreeGenerationPlanningName(ThreeGenerationPlanningEnum.getNameByCode(productPlanEntity.getThreeGenerationPlanning()));
         productPlanDTO.setPlanMarketingSeasonName(SeasonEnum.getNameByCode(productPlanEntity.getPlanMarketingSeason()));
         //调研是否延期
         if (ObjectUtils.isNotEmpty(productPlanEntity.getSurveyDate()) && ObjectUtils.isNotEmpty(productPlanEntity.getPlanSurveyDate())) {
@@ -179,7 +179,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             throw new ServiceException(ApiError.ERROR_95134);
         }
         ProductPlanPurchaseDTO productPlanPurchaseDTO = new ProductPlanPurchaseDTO();
-        BeanMapperUtils.copy(productPlanPurchaseEntity,productPlanPurchaseDTO);
+        BeanMapperUtils.copy(productPlanPurchaseEntity, productPlanPurchaseDTO);
         productPlanPurchaseDTO.setSupplierStatusName(productPlanPurchaseEntity.getSupplierStatus());
         resultDTO.setProductPlanPurchaseDTO(productPlanPurchaseDTO);
 
@@ -189,14 +189,14 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             throw new ServiceException(ApiError.ERROR_95134);
         }
         ProductPlanSaleDTO productPlanSaleDTO = new ProductPlanSaleDTO();
-        BeanMapperUtils.copy(productPlanSaleEntity,productPlanSaleDTO);
+        BeanMapperUtils.copy(productPlanSaleEntity, productPlanSaleDTO);
         resultDTO.setProductPlanSaleDTO(productPlanSaleDTO);
         productPlanSaleDTO.setSalesPlatformName(SalesPlatformEnum.getNameByName(productPlanSaleEntity.getSalesPlatform()));
 
         //查询备注信息
-       List<ProductPlanRemarkEntity> remarkList = productPlanRemarkService.listByProductPlanId(id);
+        List<ProductPlanRemarkEntity> remarkList = productPlanRemarkService.listByProductPlanId(id);
         if (CollectionUtils.isNotEmpty(remarkList)) {
-            List<ProductPlanRemarkDTO> list = BeanMapperUtils.copyList(ProductPlanRemarkDTO.class,remarkList);
+            List<ProductPlanRemarkDTO> list = BeanMapperUtils.copyList(ProductPlanRemarkDTO.class, remarkList);
             resultDTO.setRemarkList(list);
         }
 
@@ -207,7 +207,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             //最新年份的
             saleInfoList = saleInfoList.stream().filter(e -> e.getYear().equals(year)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(saleInfoList)) {
-                List<ProductPlanSaleInfoDTO> list = BeanMapperUtils.copyList(ProductPlanSaleInfoDTO.class,saleInfoList);
+                List<ProductPlanSaleInfoDTO> list = BeanMapperUtils.copyList(ProductPlanSaleInfoDTO.class, saleInfoList);
                 Integer totalQty = list.stream().map(ProductPlanSaleInfoDTO::getSalesQty).reduce(Integer::sum).get();
                 BigDecimal totalAmount = list.stream().map(ProductPlanSaleInfoDTO::getSalesAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
                 resultDTO.setTotalQty(totalQty);
@@ -251,14 +251,14 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        ProductPlanExcelListener excelListenerUtil = new ProductPlanExcelListener(this,basicDictService,basicCategoryService,productPlanSaleService,productPlanSaleInfoService,productPlanPurchaseService,productPlanRemarkService,sysUserFeign);
+        ProductPlanExcelListener excelListenerUtil = new ProductPlanExcelListener(this, basicDictService, basicCategoryService, productPlanSaleService, productPlanSaleInfoService, productPlanPurchaseService, productPlanRemarkService, sysUserFeign);
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductPlanExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
-            log.error("导入错误！",e);
+            log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
         } catch (ExcelCommonException e) {
-            log.error("导入格式错误！",e);
+            log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
         }
         List<ProductPlanExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
@@ -293,7 +293,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
                 //枚举格式化
                 obj.setProductStyleName(ProductStyleEnum.getNameByCode(obj.getProductStyleName()));
                 obj.setProductTypeName(ProductTypeEnum.getNameByCode(obj.getProductTypeName()));
-                obj.setThreeGenerationPlanningName(ThreeGenerationPlanningEnum.getNameByCode( obj.getThreeGenerationPlanningName()));
+                obj.setThreeGenerationPlanningName(ThreeGenerationPlanningEnum.getNameByCode(obj.getThreeGenerationPlanningName()));
                 obj.setSalesPlatformName(SalesPlatformEnum.getNameByName(obj.getSalesPlatformName()));
                 obj.setPlanMarketingSeasonName(SeasonEnum.getNameByCode(obj.getPlanMarketingSeasonName()));
                 //销售数据信息
@@ -304,7 +304,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
                 if (CollectionUtils.isEmpty(saleInfoList)) {
                     return;
                 }
-                for (ProductPlanSaleInfoEntity entity: saleInfoList) {
+                for (ProductPlanSaleInfoEntity entity : saleInfoList) {
                     if (MonthEnum.JANUARY.getCode().equals(entity.getMonth().toString())) {
                         obj.setJanuaryQtyStr(entity.getSalesQty().toString());
                         obj.setJanuaryAmountStr(entity.getSalesAmount().stripTrailingZeros().toPlainString());
@@ -378,7 +378,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         }
         //新增备注
         ProductPlanRemarkEntity productPlanRemarkEntity = new ProductPlanRemarkEntity();
-        BeanMapperUtils.copy(dto,productPlanRemarkEntity);
+        BeanMapperUtils.copy(dto, productPlanRemarkEntity);
         return productPlanRemarkService.save(productPlanRemarkEntity);
     }
 
@@ -418,7 +418,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         ProductInfoEntity productInfoEntity = productInfoService.getByName(dto.getName());
         if (ObjectUtils.isEmpty(productInfoEntity)) {
             ProductDTO productDTO = new ProductDTO();
-            BeanMapperUtils.copy(dto,productDTO);
+            BeanMapperUtils.copy(dto, productDTO);
             productDTO.setChargeIds(dto.getChargeIdList());
             productDTO.setId(null);
             //当需要新增产品时
@@ -435,7 +435,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             }
         }
         //存在数据则关联规划并且需要同步的数据以产品的为准
-        updateProductPlanByProduct(productPlanEntity,productInfoEntity);
+        updateProductPlanByProduct(productPlanEntity, productInfoEntity);
         return Boolean.TRUE;
     }
 
@@ -447,12 +447,12 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         //根据产品id清空之前关联的规划
         ProductPlanEntity found = this.getByProductId(entity.getId());
         if (ObjectUtils.isNotEmpty(found)) {
-                lambdaUpdate()
-                    .set(ProductPlanEntity::getProductId,"")
-                    .set(ProductPlanEntity::getProductStatus,"")
+            lambdaUpdate()
+                    .set(ProductPlanEntity::getProductId, "")
+                    .set(ProductPlanEntity::getProductStatus, "")
                     .set(ProductPlanEntity::getSurveyDate, null)
                     .set(ProductPlanEntity::getProjectApprovalDate, null)
-                    .eq(ProductPlanEntity::getId,found.getId())
+                    .eq(ProductPlanEntity::getId, found.getId())
                     .update();
         }
         //未关联时
@@ -464,11 +464,11 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             throw new ServiceException(ApiError.ERROR_95134);
         }
         //更新同步规划数据
-        updateProductPlanByProduct(productPlanEntity,entity);
+        updateProductPlanByProduct(productPlanEntity, entity);
     }
 
     @Override
-    public void updateProductPlanByProduct(ProductPlanEntity productPlanEntity,ProductInfoEntity productInfoEntity) {
+    public void updateProductPlanByProduct(ProductPlanEntity productPlanEntity, ProductInfoEntity productInfoEntity) {
         if (ObjectUtils.isEmpty(productPlanEntity)
                 || ObjectUtils.isEmpty(productInfoEntity)
                 || StringUtils.isBlank(productPlanEntity.getId())) {
@@ -487,7 +487,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         productPlanEntity.setPropertyId(productInfoEntity.getPropertyId());
         productPlanEntity.setProperty(productInfoEntity.getProperty());
         //未生成项目列表则取产品状态
-        ProductPlanStatusEnum  statusEnum = ProductPlanStatusEnum.getByName(ApprovalStatusEnum.getName(productInfoEntity.getApprovalStatus()));
+        ProductPlanStatusEnum statusEnum = ProductPlanStatusEnum.getByName(ApprovalStatusEnum.getName(productInfoEntity.getApprovalStatus()));
         if (ObjectUtils.isNotEmpty(statusEnum)) {
             productPlanEntity.setProductStatus(statusEnum.getCode());
         } else {
@@ -514,9 +514,9 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             }
         }
         //同步入库日期和上市日期
-        syncSkuDate(productInfoEntity.getId(),productPlanEntity);
+        syncSkuDate(productInfoEntity.getId(), productPlanEntity);
         //同步调研时间和立项时间
-        syncProductDate(productInfoEntity.getId(),productPlanEntity);
+        syncProductDate(productInfoEntity.getId(), productPlanEntity);
         this.updateById(productPlanEntity);
     }
 
@@ -528,15 +528,15 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             return;
         }
         //同步入库日期和上市日期
-        syncSkuDate(productId,productPlanEntity);
+        syncSkuDate(productId, productPlanEntity);
         this.updateById(productPlanEntity);
     }
 
     @Override
     public void removeProductId(String productId) {
         LambdaUpdateWrapper<ProductPlanEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.set(ProductPlanEntity::getProductId,"");
-        updateWrapper.eq(ProductPlanEntity::getProductId,productId);
+        updateWrapper.set(ProductPlanEntity::getProductId, "");
+        updateWrapper.eq(ProductPlanEntity::getProductId, productId);
         this.update(updateWrapper);
     }
 
@@ -547,35 +547,34 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         LocalDateTime startTime = LocalDateUtil.getThisMonthStart(now);
         LocalDateTime endTime = LocalDateUtil.getThisMonthEnd(now);
         //查询规划总数及本月新增
-        Integer count = this.baseMapper.listProductPlanTotalCount(dto, null,null);
-        Integer crtCount = this.baseMapper.listProductPlanTotalCount(dto,startTime,endTime);
-        setProductPlanStatisticsVO(reslutList,"规划总数",count,"本月新增",crtCount);
+        Integer count = this.baseMapper.listProductPlanTotalCount(dto, null, null);
+        Integer crtCount = this.baseMapper.listProductPlanTotalCount(dto, startTime, endTime);
+        setProductPlanStatisticsVO(reslutList, "规划总数", count, "本月新增", crtCount);
         //待开发
-        Integer notSurveyCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.ONE,null,null);
-        setProductPlanStatisticsVO(reslutList,"待开发",notSurveyCount,"",null);
+        Integer notSurveyCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.ONE, null, null);
+        setProductPlanStatisticsVO(reslutList, "待开发", notSurveyCount, "", null);
         //已立项
-        Integer approvalCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.TWO,null,null);
-        Integer thisApprovalCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.TWO,startTime,endTime);
-        setProductPlanStatisticsVO(reslutList,"已立项",approvalCount,"本月立项",thisApprovalCount);
+        Integer approvalCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.TWO, null, null);
+        Integer thisApprovalCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.TWO, startTime, endTime);
+        setProductPlanStatisticsVO(reslutList, "已立项", approvalCount, "本月立项", thisApprovalCount);
         //已进行中
-        Integer handCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.THREE,null,null);
-        Integer thisHandCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.THREE,startTime,endTime);
-        setProductPlanStatisticsVO(reslutList,"进行中",handCount,"本月进行中",thisHandCount);
+        Integer handCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.THREE, null, null);
+        Integer thisHandCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.THREE, startTime, endTime);
+        setProductPlanStatisticsVO(reslutList, "进行中", handCount, "本月进行中", thisHandCount);
         //已完成
-        Integer completeCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.FOUR,null,null);
-        Integer thisCompleteCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.FOUR,startTime,endTime);
-        setProductPlanStatisticsVO(reslutList,"已完成",completeCount,"本月已完成",thisCompleteCount);
+        Integer completeCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.FOUR, null, null);
+        Integer thisCompleteCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.FOUR, startTime, endTime);
+        setProductPlanStatisticsVO(reslutList, "已完成", completeCount, "本月已完成", thisCompleteCount);
         //立项延期
-        Integer deferCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.SIX,null,null);
-        Integer thisDeferCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.SIX,startTime,endTime);
-        setProductPlanStatisticsVO(reslutList,"立项延期",deferCount,"本月延期数",thisDeferCount);
+        Integer deferCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.SIX, null, null);
+        Integer thisDeferCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.SIX, startTime, endTime);
+        setProductPlanStatisticsVO(reslutList, "立项延期", deferCount, "本月延期数", thisDeferCount);
         //已中止
-        Integer cacelCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.FIVE,null,null);
-        Integer thisCacelCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.FIVE,startTime,endTime);
-        setProductPlanStatisticsVO(reslutList,"已中止",cacelCount,"本月已中止",thisCacelCount);
+        Integer cacelCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.FIVE, null, null);
+        Integer thisCacelCount = this.baseMapper.listProductPlanStatusCount(dto, MathUtil.FIVE, startTime, endTime);
+        setProductPlanStatisticsVO(reslutList, "已中止", cacelCount, "本月已中止", thisCacelCount);
         return reslutList;
     }
-
 
 
     @Override
@@ -595,7 +594,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (CollectionUtils.isEmpty(userDeptList)) {
             return list;
         }
-        for (ProductPlanGroupVO productPlanGroupVO: list) {
+        for (ProductPlanGroupVO productPlanGroupVO : list) {
             List<String> chargeIds = Arrays.stream(productPlanGroupVO.getChargeId().split(",")).collect(Collectors.toList());
             String deptNames = userDeptList.stream().filter(obj -> chargeIds.contains(obj.getUid()) && StringUtils.isNotBlank(obj.getDeptName())).map(SysUserDeptDTO::getDeptName).collect(Collectors.joining(","));
             productPlanGroupVO.setDeptName(deptNames);
@@ -639,17 +638,17 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         List<String> monthList = new ArrayList<>();
         List<Integer> approvalCountList = new ArrayList<>();
         List<Integer> completeCountList = new ArrayList<>();
-        for (MonthEnum monthEnum:values) {
+        for (MonthEnum monthEnum : values) {
             //立项数量
             Integer approvalCount = MathUtil.ZERO;
             //完成数量
             Integer completeCount = MathUtil.ZERO;
             monthList.add(monthEnum.getCode().concat("月份"));
-            if (CollectionUtils.isNotEmpty(approvalList)){
-                 approvalCount = approvalList.stream().filter(obj -> (Integer.valueOf(monthEnum.getCode())).equals(Integer.valueOf(obj.getMonth()))).map(ProductPlanApprovalTrendDTO::getApprovalCount).findFirst().orElse(0);
+            if (CollectionUtils.isNotEmpty(approvalList)) {
+                approvalCount = approvalList.stream().filter(obj -> (Integer.valueOf(monthEnum.getCode())).equals(Integer.valueOf(obj.getMonth()))).map(ProductPlanApprovalTrendDTO::getApprovalCount).findFirst().orElse(0);
             }
-            if (CollectionUtils.isNotEmpty(completeList)){
-                 completeCount = completeList.stream().filter(obj -> (Integer.valueOf(monthEnum.getCode())).equals(Integer.valueOf(obj.getMonth()))).map(ProductPlanApprovalTrendDTO::getCompleteCount).findFirst().orElse(0);
+            if (CollectionUtils.isNotEmpty(completeList)) {
+                completeCount = completeList.stream().filter(obj -> (Integer.valueOf(monthEnum.getCode())).equals(Integer.valueOf(obj.getMonth()))).map(ProductPlanApprovalTrendDTO::getCompleteCount).findFirst().orElse(0);
             }
             approvalCountList.add(approvalCount);
             completeCountList.add(completeCount);
@@ -684,12 +683,11 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     }
 
 
-
     @Override
     public ProductPlanEntity getByYearAndName(Integer year, String name) {
         LambdaQueryWrapper<ProductPlanEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProductPlanEntity::getYear,year);
-        queryWrapper.eq(ProductPlanEntity::getName,name);
+        queryWrapper.eq(ProductPlanEntity::getYear, year);
+        queryWrapper.eq(ProductPlanEntity::getName, name);
         return this.getOne(queryWrapper);
     }
 
@@ -705,11 +703,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             if (ApprovalStatusEnum.WAIT.getCode().equals(status)) {
                 productPlanEntity.setProductStatus(ProductPlanStatusEnum.WAIT.getCode());
             }
-            //调研中
-            if (ApprovalStatusEnum.PROBE.getCode().equals(status)) {
-                productPlanEntity.setProductStatus(ProductPlanStatusEnum.PROBE.getCode());
-                productPlanEntity.setSurveyDate(LocalDate.now());
-            }
+
             //已立项
             if (ApprovalStatusEnum.APPROVAL.getCode().equals(status)) {
                 productPlanEntity.setProductStatus(ProductPlanStatusEnum.APPROVAL.getCode());
@@ -749,26 +743,26 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (StringUtils.isNotBlank(productId)) {
             ProductPlanEntity productPlanEntity = this.getByProductId(productId);
             if (ObjectUtils.isNotEmpty(productPlanEntity)) {
-                resultList.add(new SelectShowDTO(null,productPlanEntity.getId(),productPlanEntity.getName()));
+                resultList.add(new SelectShowDTO(null, productPlanEntity.getId(), productPlanEntity.getName()));
             }
         }
         //查询所有未关联产品的规划
         List<ProductPlanEntity> list = this.listAllNotRelatedProductPlan();
         if (CollectionUtils.isEmpty(list)) {
-            return  resultList;
+            return resultList;
         }
         list.forEach(obj -> {
-            resultList.add(new SelectShowDTO(null,obj.getId(),obj.getName()));
+            resultList.add(new SelectShowDTO(null, obj.getId(), obj.getName()));
         });
         return resultList;
     }
 
     /**
+     * @param productPlanId
+     * @return Boolean
      * @description: 删除规划
      * @author Will
      * @date: 2023/2/21 18:00
-     * @param productPlanId
-     * @return Boolean
      */
     private Boolean removeByProductPlanId(String productPlanId) {
         //获取当前登录人
@@ -777,25 +771,25 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
         LambdaUpdateWrapper<ProductPlanEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.eq(ProductPlanEntity::getId,productPlanId);
+        updateWrapper.eq(ProductPlanEntity::getId, productPlanId);
         updateWrapper.set(ProductPlanEntity::getIsDeleted, Boolean.TRUE);
         return this.remove(updateWrapper);
     }
 
     /**
-     * @description:设置进度
-     * @author Will
-     * @date: 2023/2/21 19:57
      * @param productPlanEntity
      * @param progressList
      * @param typeName
+     * @description:设置进度
+     * @author Will
+     * @date: 2023/2/21 19:57
      */
-    private void setProductPlanProgress(ProductPlanEntity productPlanEntity,List<ProductPlanProgressDTO> progressList,String typeName) {
+    private void setProductPlanProgress(ProductPlanEntity productPlanEntity, List<ProductPlanProgressDTO> progressList, String typeName) {
         ProductPlanProgressDTO productPlanProgressDTO = new ProductPlanProgressDTO();
         productPlanProgressDTO.setTypeName(typeName);
         productPlanProgressDTO.setIsComplete(Boolean.FALSE);
         if (ProductPlanProcessEnum.NEW_PRODUCT_PLAN.getName().equals(typeName)) {
-            productPlanProgressDTO.setStartTime(LocalDateTimeUtil.format(productPlanEntity.getCreateTime(),DateUtil.DATE_TIME_PATTERN_NO_SEC));
+            productPlanProgressDTO.setStartTime(LocalDateTimeUtil.format(productPlanEntity.getCreateTime(), DateUtil.DATE_TIME_PATTERN_NO_SEC));
             productPlanProgressDTO.setUserName(productPlanEntity.getCreateUserName());
             productPlanProgressDTO.setIsComplete(Boolean.TRUE);
             progressList.add(productPlanProgressDTO);
@@ -848,10 +842,10 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     /**
      * 指标数量
      */
-    private void setProductPlanStatisticsVO(List<ProductPlanStatisticsVO> resultList,String describe,Integer totalCount,String thisDescribe,Integer thisMonthCount) {
+    private void setProductPlanStatisticsVO(List<ProductPlanStatisticsVO> resultList, String describe, Integer totalCount, String thisDescribe, Integer thisMonthCount) {
         ProductPlanStatisticsVO productPlanStatisticsVO = new ProductPlanStatisticsVO();
         productPlanStatisticsVO.setDescribe(describe);
-        productPlanStatisticsVO.setTotalCount(totalCount == null ? MathUtil.ZERO :totalCount);
+        productPlanStatisticsVO.setTotalCount(totalCount == null ? MathUtil.ZERO : totalCount);
         productPlanStatisticsVO.setThisDescribe(thisDescribe);
         if ("未调研".equals(describe)) {
             productPlanStatisticsVO.setThisMonthCount(null);
@@ -867,7 +861,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     @Override
     public ProductPlanEntity getByProductId(String productId) {
         LambdaQueryWrapper<ProductPlanEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProductPlanEntity::getProductId,productId);
+        queryWrapper.eq(ProductPlanEntity::getProductId, productId);
         return this.getOne(queryWrapper);
     }
 
@@ -878,7 +872,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             throw new ServiceException(ApiError.ERROR_95134);
         }
         ProductPlanDevelopDTO dto = new ProductPlanDevelopDTO();
-        BeanMapperUtils.copy(productPlanEntity,dto);
+        BeanMapperUtils.copy(productPlanEntity, dto);
         String chargeId = productPlanEntity.getChargeId();
         if (StringUtils.isNotBlank(chargeId)) {
             List<String> chargeIds = Arrays.stream(chargeId.split(",")).collect(Collectors.toList());
@@ -890,29 +884,100 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         return dto;
     }
 
+
+    /**
+     * 批量更改项目状态
+     *
+     * @param productIds
+     * @param status
+     * @param type
+     * @return void
+     * @author yl
+     * @date 2023-06-14 14:03
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateBatchPlanStatus(List<String> productIds, Integer status, Integer type) {
+
+        if (CollectionUtils.isEmpty(productIds)) {
+            return;
+        }
+        String planStatus = "";
+        LocalDate approvalDate = null;
+        //产品状态
+        if (MathUtil.ONE.equals(type)) {
+            //未开始
+            if (ApprovalStatusEnum.WAIT.getCode().equals(status)) {
+                planStatus = ProductPlanStatusEnum.WAIT.getCode();
+            }
+
+            //已立项
+            if (ApprovalStatusEnum.APPROVAL.getCode().equals(status)) {
+                planStatus = ProductPlanStatusEnum.APPROVAL.getCode();
+                approvalDate = LocalDate.now();
+            }
+            //已中止
+            if (ApprovalStatusEnum.TERMINATE.getCode().equals(status)) {
+                planStatus = ProductPlanStatusEnum.CANCEL.getCode();
+
+            }
+        }
+        //项目状态
+        if (MathUtil.TWO.equals(type)) {
+            //启动
+            if (ProjectStateEnum.YES_START.getState().equals(status)) {
+                planStatus = ProductPlanStatusEnum.YES_START.getCode();
+            }
+            //进行中
+            if (ProjectStateEnum.ING.getState().equals(status)) {
+                planStatus = ProductPlanStatusEnum.ING.getCode();
+            }
+            //完成
+            if (ProjectStateEnum.FINISH.getState().equals(status)) {
+                planStatus = ProductPlanStatusEnum.FINISH.getCode();
+            }
+            //中止
+            if (ProjectStateEnum.STOP.getState().equals(status)) {
+                planStatus = ProductPlanStatusEnum.CANCEL.getCode();
+
+            }
+        }
+        if (StringUtils.isNotBlank(planStatus)) {
+            LambdaUpdateWrapper<ProductPlanEntity> updateWrapper = new LambdaUpdateWrapper<>();
+            updateWrapper.set(ProductPlanEntity::getProductStatus, planStatus);
+            if (approvalDate != null) {
+                updateWrapper.set(ProductPlanEntity::getProjectApprovalDate, approvalDate);
+            }
+            updateWrapper.in(ProductPlanEntity::getProductId, productIds);
+            this.update(updateWrapper);
+        }
+
+
+    }
+
     /**
      * 查询所有未关联产品的规划
      */
     private List<ProductPlanEntity> listAllNotRelatedProductPlan() {
         LambdaQueryWrapper<ProductPlanEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProductPlanEntity::getProductId,"");
+        queryWrapper.eq(ProductPlanEntity::getProductId, "");
         return this.list(queryWrapper);
     }
 
     /**
+     * @param productId
+     * @param productPlanEntity
      * @description: 同步首批入库时间和上市时间
      * @author Will
      * @date: 2023/3/2 10:49
-     * @param productId
-     * @param productPlanEntity
      */
-    private void syncSkuDate (String productId,ProductPlanEntity productPlanEntity) {
+    private void syncSkuDate(String productId, ProductPlanEntity productPlanEntity) {
         //查询产品信息最后的首批入库时间
         List<ProductDetailEntity> skuList = productDetailService.getSkuListByProductId(productId);
         if (CollectionUtils.isEmpty(skuList)) {
             return;
         }
-        List<ProductDetailEntity>  firstMassProductList= skuList .stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getFirstMassProductDate())).collect(Collectors.toList());
+        List<ProductDetailEntity> firstMassProductList = skuList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getFirstMassProductDate())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(firstMassProductList)) {
             LocalDate firstMassProductDate = firstMassProductList.stream().max(Comparator.comparing(ProductDetailEntity::getFirstMassProductDate))
                     .map(ProductDetailEntity::getFirstMassProductDate).get();
@@ -926,19 +991,19 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             if (CollectionUtils.isNotEmpty(productSaleList)) {
                 LocalDate listingTime = productSaleList.stream().max(Comparator.comparing(ProductSaleEntity::getListingTime))
                         .map(ProductSaleEntity::getListingTime).get();
-                productPlanEntity.setListingDate(ObjectUtils.isEmpty(listingTime) ? null :listingTime);
+                productPlanEntity.setListingDate(ObjectUtils.isEmpty(listingTime) ? null : listingTime);
             }
         }
     }
 
     /**
+     * @param productId
+     * @param productPlanEntity
      * @description: 同步调研时间和立项时间
      * @author Will
      * @date: 2023/3/2 11:41
-     * @param productId
-     * @param productPlanEntity
      */
-    private void syncProductDate (String productId,ProductPlanEntity productPlanEntity) {
+    private void syncProductDate(String productId, ProductPlanEntity productPlanEntity) {
         List<ProductStatusTimeEntity> productStatusTimeList = productStatusTimeService.listByProductId(productId);
         if (CollectionUtils.isNotEmpty(productStatusTimeList)) {
             //同步实际调研日期

@@ -22,11 +22,8 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.model.msg.dto.WarnMsgInfoDTO;
-import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
@@ -127,8 +124,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Resource
     private DmpTaskFeign dmpTaskFeign;
 
-    @Resource
-    private MQProducerService mqProducerService;
 
     @Value("${so.contract.company}")
     private String company;
@@ -711,6 +706,19 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         //检查关联单据
         checkRefBill(ids);
+        //有销售变更的也不能反审核
+        List<SoChangeEntity> soChangeList = soChangeService.listBySoIds(ids);
+        String waitSubmit = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        String approveIng = ApproveStatusEnum.APPROVE_ING.getStatus();
+        List<String> soChangeStatusList = new ArrayList<>();
+        soChangeStatusList.add(waitSubmit);
+        soChangeStatusList.add(approveIng);
+        long soChangeCount = soChangeList.stream().filter(s -> statusList.contains(s.getApproveStatus().getStatus())).count();
+        //表示 有变更中的销售变更单
+        if (soChangeCount > 0) {
+            throw new ServiceException(ApiError.ERROR_92047);
+        }
+
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
@@ -1405,19 +1413,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 }
             }
 
-            //同步失败
-            if (syncKingdeeStatus.equals(SyncKingdeeStatusEnum.FAILED_SYNC.getCode())) {
-                WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
-                warnMsgInfo.setBizName("销售订单同步");
-                warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-                warnMsgInfo.setTitle("销售订单同步失败");
-                warnMsgInfo.setTableName("so_info");
-                warnMsgInfo.setTableId(id);
-                warnMsgInfo.setKeyInfo("");
-                warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
-                mqProducerService.sendWarnMsg(warnMsgInfo);
-            }
-
             return this.lambdaUpdate()
                     .eq(SoInfoEntity::getId, id)
                     .set(StringUtils.isNotBlank(syncKingdeeStatus), SoInfoEntity::getSyncKingdeeStatus, syncKingdeeStatus)
@@ -1426,7 +1421,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     .set(StringUtils.isNotBlank(syncOperate), SoInfoEntity::getSyncOperate, syncOperate)
                     .update();
         } catch (Exception e) {
-            log.error("同步状态出错=={}", e);
+            log.error("同步状态出错>>>>{}", e);
         }
         return Boolean.TRUE;
     }

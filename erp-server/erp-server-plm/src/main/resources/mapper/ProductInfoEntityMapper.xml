@@ -23,6 +23,8 @@
         p.property,
         p.category,
         pi.end_time,
+        pi.start_time,
+        p.create_user_name,
         p.spu_no,
         pph.name as projectPhase
         FROM product_info p
@@ -146,6 +148,8 @@
         p.property,
         p.category,
         pi.end_time,
+        pi.start_time,
+        p.create_user_name,
         p.spu_no,
         pph.name as projectPhase
         FROM product_info p
@@ -256,6 +260,8 @@
         p.property,
         p.category,
         pi.end_time,
+        pi.start_time,
+        p.create_user_name,
         p.spu_no,
         pph.name as projectPhase
         FROM product_info p

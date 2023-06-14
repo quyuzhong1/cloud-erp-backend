@@ -158,7 +158,7 @@ public class ProductDTO implements Serializable {
     public static class ProductCountDTO {
 
         /**
-         * 新项目数
+         * 总项目数
          */
         private Integer totalCount;
 
@@ -179,7 +179,7 @@ public class ProductDTO implements Serializable {
         private Integer startCount;
 
         /**
-        * 进行中的数
+         * 进行中的数
          */
         private Integer doingCount;
 
@@ -206,6 +206,26 @@ public class ProductDTO implements Serializable {
         private Integer delayCount;
 
 
+    }
+
+
+    /**
+     * 下拉
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DropdownDTO {
+
+        /**
+         * code
+         */
+        private String code;
+
+        /**
+         * 名称
+         */
+        private String codeName;
+
 
     }
 
@@ -222,10 +242,9 @@ public class ProductDTO implements Serializable {
         private Integer status;
 
         /**
-         *数量
+         * 数量
          */
         private Integer count;
-
 
 
     }

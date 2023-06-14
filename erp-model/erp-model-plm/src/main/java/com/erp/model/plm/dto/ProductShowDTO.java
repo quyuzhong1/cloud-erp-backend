@@ -73,10 +73,6 @@ public class ProductShowDTO implements Serializable {
      */
     private String projectStatusName;
 
-    /**
-     * 截止时间
-     */
-    private LocalDate endTime;
 
     /**
      * 项目负责人
@@ -145,6 +141,9 @@ public class ProductShowDTO implements Serializable {
     private Integer finishedCount;
 
 
+    private String taskCountStr;
+
+
     /**
      * 我的任务总数
      */
@@ -156,9 +155,25 @@ public class ProductShowDTO implements Serializable {
     private Integer myTaskFinishedCount;
 
     /**
+     * 我完成的任务总数 导出用到
+     */
+    private Integer myTaskCountStr;
+
+    /**
      * 计划工时
      */
     private Integer planWorkHour;
+
+    /**
+     * 计划开始时间
+     */
+    private LocalDate startTime;
+
+    /**
+     * 计划结束时间
+     */
+    private LocalDate endTime;
+
 
     /**
      * 是否收藏 产品 true  收藏 false 没有
@@ -170,10 +185,25 @@ public class ProductShowDTO implements Serializable {
      */
     private Boolean ifIteration = false;
 
+
+    /**
+     * 是否收藏 产品 true  收藏 false 没有
+     */
+    private String isAddProductName;
+
+    /**
+     * 是否迭代产品 true  是  false 不是
+     */
+    private Boolean isIterationName;
+
+
     /**
      * 创建时间
      */
     private LocalDateTime createTime;
+
+    private String createUserName;
+
 
     /**
      * 总文档数
@@ -185,6 +215,11 @@ public class ProductShowDTO implements Serializable {
      * 完成文档档数
      */
     private Integer finishDocsCount;
+
+    /**
+     * 文档数 导出用到
+     */
+    private String docsCountStr;
 
 
     /**
@@ -225,8 +260,6 @@ public class ProductShowDTO implements Serializable {
      * 产品分类名
      */
     private String category;
-
-
 
 
 }

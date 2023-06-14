@@ -14,7 +14,8 @@ public enum ApprovalStatusEnum implements EnumMessage {
     PROBE(1,"调研中"),
     ID_DESIGN_ING(2,"ID设计中"),
     APPROVAL(3,"已立项"),
-    TERMINATE(4,"已中止");
+    TERMINATE(4,"已中止"),
+    SUSPEND(5,"暂停");
 
     private Integer code;
 

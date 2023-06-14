@@ -18,9 +18,9 @@ import java.util.Map;
 public class ProjectInfoDTO  implements Serializable {
 
 
-    /**
-     * 总任务数
-     */
+        /**
+         * 总任务数
+         */
     private Integer  totalTaskCount;
 
     /**
@@ -30,45 +30,45 @@ public class ProjectInfoDTO  implements Serializable {
 
 
 
-    /**
-     * 完成任务数
-     */
+        /**
+         * 完成任务数
+         */
     private Integer finishTaskCount;
 
 
-    /**
-     * 完成率
-     */
+        /**
+         * 完成率
+         */
     private Double finishRatio;
 
 
-    /**
+        /**
      * 未完成的任务数
-     */
+         */
     private Integer unfinishedTaskCount;
 
 
 
-    /**
-     * 延期的任务数
-     */
+        /**
+         * 延期的任务数
+         */
     private Integer postponeTaskCount;
 
 
 
-    /**
+        /**
      * 延期率
-     */
+         */
     private Double postponeRatio;
 
-    /**
+        /**
      * 阶段分布
-     */
+         */
     private PhaseDistributeDTO  phaseDistribute;
 
 
-    /**
+        /**
      * 完成趋势
-     */
+         */
     private List<Map<String,Object>> finishTaskTrend;
 }

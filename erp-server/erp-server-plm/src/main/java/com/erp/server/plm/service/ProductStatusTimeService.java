@@ -30,4 +30,15 @@ public interface ProductStatusTimeService extends IService<ProductStatusTimeEnti
      * @return List<ProductStatusTimeEntity>
      */
     List<ProductStatusTimeEntity> listByProductId(String productId);
+
+    
+    /**
+     * 批量修改或者添加对应的状态及时间
+     * @author yl
+     * @date 2023-06-14 16:52
+     * @param productIdList
+     * @param approvalCode
+     * @return void
+     */
+    void batchSaveOrUpdateProductStatusTime(List<String> productIdList, Integer approvalCode);
 }
