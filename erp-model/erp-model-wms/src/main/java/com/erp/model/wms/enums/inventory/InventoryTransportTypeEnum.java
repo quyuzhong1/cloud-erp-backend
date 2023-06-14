@@ -17,8 +17,8 @@ import java.util.Optional;
 @NoArgsConstructor
 public enum InventoryTransportTypeEnum {
 
-    PURCHASE("purchase", "采购订单"),
-    TRANSFER("transfer", "调拨单"),
+    PURCHASE("purchase", "采购订单", "采购订单"),
+    TRANSFER("transfer", "调拨单", "分步式调拨单"),
 
     ;
 
@@ -33,9 +33,12 @@ public enum InventoryTransportTypeEnum {
      */
     private String name;
 
-    InventoryTransportTypeEnum(String type, String name) {
+    private String label;
+
+    InventoryTransportTypeEnum(String type, String name, String label) {
         this.code = type;
         this.name = name;
+        this.label = label;
     }
 
     public String getCode() {
@@ -46,6 +49,13 @@ public enum InventoryTransportTypeEnum {
         return name;
     }
 
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
 
     public static InventoryTransportTypeEnum of(String code) {
         return Arrays.stream(InventoryTransportTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
@@ -54,6 +64,11 @@ public enum InventoryTransportTypeEnum {
     public static String getNameByCode(String code) {
         InventoryTransportTypeEnum inventoryTransportTypeEnum = of(code);
         return Optional.ofNullable(inventoryTransportTypeEnum).map(InventoryTransportTypeEnum::getName).orElse("");
+    }
+
+    public static String getLabelByCode(String code) {
+        InventoryTransportTypeEnum inventoryTransportTypeEnum = of(code);
+        return Optional.ofNullable(inventoryTransportTypeEnum).map(InventoryTransportTypeEnum::getLabel).orElse("");
     }
 
 }
