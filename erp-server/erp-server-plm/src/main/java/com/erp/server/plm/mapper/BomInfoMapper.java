@@ -3,6 +3,7 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.plm.dto.BomSkuPageDTO;
 import com.erp.model.plm.dto.ChangeInfoDTO;
 import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
@@ -30,5 +31,9 @@ public interface BomInfoMapper  extends BaseMapper<BomInfoEntity> {
     List<ChangeInfoDTO> getBomInfo(@Param("state")Integer state, @Param("searchKeyword") String searchKeyword);
 
     List<BomPagingVO> getAllBom(@Param("params") SearchPagingDTO params,@Param("bomIdList") List<String> bomIdList,@Param("skuIdList") List<String> skuIdList,@Param("stateList")List<Integer> stateList);
+
+    IPage<BomSkuPageDTO.ListDTO> skuPaging(Page query, @Param("params") BomSkuPageDTO.PagingParamDTO params);
+
+    List<BomSkuPageDTO.ListDTO> listBomSkuByBomIds(@Param("bomIds") List<String> bomIds);
 }
 

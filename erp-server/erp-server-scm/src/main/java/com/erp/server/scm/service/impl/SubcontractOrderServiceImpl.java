@@ -29,9 +29,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.scm.dto.SubcontractOrderDTO;
-import com.erp.model.scm.dto.SubcontractOrderDetailDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -90,6 +88,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     @Autowired
     private PurchaseOrderService purchaseOrderService;
 
+    @Autowired
+    private PurchasePriceDetailService purchasePriceDetailService;
 
     @Override
     public PagingVO<SubcontractOrderDTO.ListDTO> paging(PagingDTO<SubcontractOrderDTO.PagingParamDTO> pagingParamDTO) {
@@ -163,8 +163,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     }
 
     @Override
-    public List<SubcontractOrderDTO.PurchaseOrderListDTO> listPurchaseOrderByDetailId(String detailId) {
-        List<SubcontractOrderDTO.PurchaseOrderListDTO> resultList = new ArrayList<>();
+    public List<PurchaseOrderDTO.ListDTO> listPurchaseOrderByDetailId(String detailId) {
         List<String> detailIds = new ArrayList<>();
         detailIds.add(detailId);
         List<SubcontractOrderDetailEntity> childList = subcontractOrderDetailService.listByParentId(detailId);
@@ -174,19 +173,16 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         childList.forEach(obj -> detailIds.add(obj.getId()));
         List<PurchaseOrderDTO.ListDTO> list = purchaseOrderService.listBySourceDetailIds(detailIds);
         if (CollectionUtils.isEmpty(list)) {
-            return resultList;
+            return Collections.EMPTY_LIST;
         }
         //列表数据处理
         purchaseOrderService.doOpHandlePurchaseOrder(list);
         for (PurchaseOrderDTO.ListDTO listDTO : list) {
-            SubcontractOrderDTO.PurchaseOrderListDTO purchaseOrderListDTO = new SubcontractOrderDTO.PurchaseOrderListDTO();
             if (detailId.equals(listDTO.getSourceDetailId())) {
-                purchaseOrderListDTO.setIsParent(Boolean.TRUE);
+                listDTO.setIsParent(Boolean.TRUE);
             }
-            purchaseOrderListDTO.setPurchaseOrderDTO(listDTO);
-            resultList.add(purchaseOrderListDTO);
         }
-        return resultList;
+        return list;
     }
 
     @Override
@@ -486,9 +482,39 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Override
     public List<SubcontractOrderDTO.ViewGeneratePoDTO> viewGeneratePo(List<String> ids) {
+       if (CollectionUtils.isEmpty(ids)) {
+            return Collections.EMPTY_LIST;
+       }
+        List<SubcontractOrderDTO.ViewGeneratePoDTO> list = baseMapper.viewGeneratePo(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        //产品信息
+        List<String> skuIds = list.stream().map(SubcontractOrderDTO.ViewGeneratePoDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
 
+        List<String> sourceDetailIds = list.stream().map(SubcontractOrderDTO.ViewGeneratePoDTO::getSourceDetailId).collect(Collectors.toList());
+        //下推采购订单信息
+        List<PurchaseOrderDTO.ListDTO> purchaseOrderList = purchaseOrderService.listBySourceDetailIds(sourceDetailIds);
 
-        return null;
+        for (SubcontractOrderDTO.ViewGeneratePoDTO dto : list) {
+            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(skuVO)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            dto.setProductName(skuVO.getSkuName());
+            dto.setMoq(skuVO.getMoq());
+            //待申请数量
+            Integer purchaseQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(purchaseOrderList)) {
+                 purchaseQty = purchaseOrderList.stream().map(PurchaseOrderDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            dto.setApplyQty(dto.getQty() - purchaseQty);
+        }
+        return list;
     }
 
     @Override
@@ -496,13 +522,132 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
+        List<SubcontractOrderDTO.GeneratePoDTO> addList = list.getList();
+        List<SubcontractOrderDTO.GeneratePoAddDTO> resultList = BeanMapperUtils.copyList(SubcontractOrderDTO.GeneratePoAddDTO.class, addList);
+
+        //委外订单主表信息
+        List<String> sourceIds = resultList.stream().map(SubcontractOrderDTO.GeneratePoDTO::getSourceId).collect(Collectors.toList());
+        List<SubcontractOrderEntity> mainList = this.listByIds(sourceIds);
+        if (CollectionUtils.isEmpty(mainList)) {
+            throw new ServiceException(ApiError.ERROR_98073);
+        }
+
+        //委外订单明细信息
+        List<String> sourceDetailIds = resultList.stream().map(SubcontractOrderDTO.GeneratePoDTO::getSourceDetailId).collect(Collectors.toList());
+        log.info("查询委外订单明细，detailIds = 【{}】",sourceDetailIds);
+        List<SubcontractOrderDetailEntity> detailList = subcontractOrderDetailService.listByIds(sourceDetailIds);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_98070);
+        }
+
+
+        for (SubcontractOrderDTO.GeneratePoAddDTO generatePoDTO :  resultList) {
+            //主表
+            SubcontractOrderEntity mainEntity = mainList.stream().filter(obj -> obj.getId().equals(generatePoDTO.getSourceId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(mainEntity)) {
+                throw new ServiceException(ApiError.ERROR_98073);
+            }
+            //明细
+            SubcontractOrderDetailEntity detailEntity = detailList.stream().filter(obj -> obj.getId().equals(generatePoDTO.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(detailEntity)) {
+                throw new ServiceException(ApiError.ERROR_98070);
+            }
+            //skuId
+            generatePoDTO.setSkuId(detailEntity.getSkuId());
+            //仓库
+            generatePoDTO.setDeliveryWarehouseId(detailEntity.getWarehouseId());
+            //是否是父级sku
+            generatePoDTO.setIsParent(StringUtils.isBlank(detailEntity.getParentId()) ? Boolean.TRUE :Boolean.FALSE );
+            //采购员
+            generatePoDTO.setPurchaseUserId(mainEntity.getPurchaserId());
+            //采购部门
+            generatePoDTO.setPurchaseDeptId(mainEntity.getDeptId());
+            //采购组织
+            generatePoDTO.setPurchaseOrgId(mainEntity.getPurchaseOrgId());
+            //收料组织
+            generatePoDTO.setReceiveOrgId(mainEntity.getReceiveOrgId());
+            //新品首批暂时默认
+            generatePoDTO.setIsFirstMassProduct(Boolean.FALSE);
+        }
+        //查询产品信息
+        List<String> skuIds = resultList.stream().map(obj -> obj.getSkuId()).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+
+        Map<String, List<SubcontractOrderDTO.GeneratePoAddDTO>> map = resultList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getSupplierId()).concat(obj.getDeliveryWarehouseId()).concat(obj.getIsParent().toString())));
+        for (Map.Entry<String, List<SubcontractOrderDTO.GeneratePoAddDTO>> entry : map.entrySet()) {
+            List<SubcontractOrderDTO.GeneratePoAddDTO> value = entry.getValue();
+            SubcontractOrderDTO.GeneratePoAddDTO generatePoAddDTO = value.get(0);
+            PurchaseOrderDTO.AddDTO addDTO = new PurchaseOrderDTO.AddDTO();
+            BeanMapperUtils.copy(generatePoAddDTO,addDTO);
+            //采购供应商
+            PurchaseOrderSupplierDTO.AddDTO supplierDTO = new PurchaseOrderSupplierDTO.AddDTO();
+            supplierDTO.setSupplierId(generatePoAddDTO.getSupplierId());
+            addDTO.setPurchaseOrderSupplierDTO(supplierDTO);
+            //采购明细
+            List<PurchaseOrderDetailDTO.AddDTO> poDetailList = new ArrayList<>();
+            for (SubcontractOrderDTO.GeneratePoAddDTO addDetailDTO : value) {
+                PurchaseOrderDetailDTO.AddDTO poDetailAddDTO = new PurchaseOrderDetailDTO.AddDTO();
+                //产品信息
+                SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(addDetailDTO.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(skuVO)) {
+                    throw new ServiceException(ApiError.ERROR_95084);
+                }
+                BeanMapperUtils.copy(skuVO,poDetailAddDTO);
+                poDetailAddDTO.setPurchaseQty(addDetailDTO.getQty());
+
+                //供应商报价信息
+                PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+                searchDTO.setSkuId(addDetailDTO.getSkuId());
+                searchDTO.setSupplierId(addDetailDTO.getSupplierId());
+                searchDTO.setPurchaseQty(addDetailDTO.getQty());
+                searchDTO.setSkuNo(skuVO.getSkuNo());
+                List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(searchDTO);
+                PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
+
+                poDetailAddDTO.setCurrency(viewDTO.getCurrency());
+                poDetailAddDTO.setCurrencySymbol(viewDTO.getCurrencySymbol());
+                poDetailAddDTO.setTaxPrice(viewDTO.getTaxPrice());
+                poDetailAddDTO.setDeliveryDay(viewDTO.getDeliveryDay());
+                poDetailAddDTO.setPurchaseAmount(MathUtil.multiply(poDetailAddDTO.getTaxPrice(),poDetailAddDTO.getPurchaseQty()));
+                poDetailList.add(poDetailAddDTO);
+            }
+            addDTO.setDetails(poDetailList);
+            purchaseOrderService.add(addDTO);
+        }
     }
 
     @Override
     public List<SubcontractOrderDTO.ViewAddDetailDTO> viewAddDetail(SubcontractOrderDTO.ViewAddDetailParamDTO dto) {
+        List<SubcontractOrderDTO.ViewAddDetailDTO> resultList = new ArrayList<>();
+        List<SubcontractOrderDetailEntity> detailList = subcontractOrderDetailService.listByMainIdAndSku(dto.getId(), dto.getSkuNoList());
+        List<SubcontractOrderDetailEntity> parentList = detailList.stream().filter(obj -> StringUtils.isBlank(obj.getParentId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(parentList)) {
+            throw new ServiceException(ApiError.ERROR_98071);
+        }
+        for (SubcontractOrderDetailEntity parent : parentList) {
+            SubcontractOrderDTO.ViewAddDetailDTO parentDTO = new SubcontractOrderDTO.ViewAddDetailDTO();
+            BeanMapperUtils.copy(parent,parentDTO);
+            parentDTO.setSourceDetailId(parent.getId());
 
-
-        return null;
+            //子集
+            List<SubcontractOrderDetailEntity> childList = detailList.stream().filter(obj -> StringUtils.equals(obj.getParentId(), parent.getId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(childList)) {
+                throw new ServiceException(ApiError.ERROR_98072);
+            }
+            List<SubcontractOrderDTO.ViewAddDetailDTO> childDTOList = new ArrayList<>();
+            for (SubcontractOrderDetailEntity child : childList) {
+                SubcontractOrderDTO.ViewAddDetailDTO childDTO = new SubcontractOrderDTO.ViewAddDetailDTO();
+                BeanMapperUtils.copy(child,childDTO);
+                childDTO.setSourceDetailId(child.getId());
+                childDTOList.add(childDTO);
+            }
+            parentDTO.setChildList(childDTOList);
+            resultList.add(parentDTO);
+        }
+        return resultList;
     }
 
     /**

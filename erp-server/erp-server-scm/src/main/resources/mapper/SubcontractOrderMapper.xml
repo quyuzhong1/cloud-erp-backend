@@ -252,4 +252,33 @@
         so.create_time desc
     </select>
 
+    <select id="viewGeneratePo" resultType="com.erp.model.scm.dto.SubcontractOrderDTO$ViewGeneratePoDTO">
+        select
+            so.id as sourceId,
+            so.code as sourceCode,
+            sod.id as sourceDetailId,
+            sod.sku_id as skuId,
+            sod.sku_no as skuNo,
+            sod.variant_property as variantProperty,
+            so.purchase_org_id as purchaseOrgId,
+            so.purchase_org_name as purchaseOrgName,
+            so.receive_org_id as receiveOrgId,
+            so.receive_org_name as receiveOrgName,
+            sod.warehouse_id as warehouseId,
+            sod.warehouse_name as warehouseName,
+            sod.qty
+        from subcontract_order so
+        inner join subcontract_order_detail sod on so.id = sod.main_id  and sod.is_deleted = false
+        <where>
+            so.is_deleted = false and so.invalid_status = false
+            <if test="ids != null and ids.size > 0">
+                and so.id in
+                <foreach collection="ids" item="item" separator="," close=",">
+                    ${item}
+                </foreach>
+            </if>
+        </where>
+        order by so.create_time desc, sod.id desc
+    </select>
+
 </mapper>

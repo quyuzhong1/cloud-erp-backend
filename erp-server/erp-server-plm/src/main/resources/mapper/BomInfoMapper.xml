@@ -123,4 +123,67 @@
             </if>
         ORDER BY b.create_time DESC
     </select>
+
+    <select id="skuPaging" resultType="com.erp.model.plm.dto.BomSkuPageDTO$ListDTO">
+        select
+            distinct
+            pbi.id as bomId,
+            pd.images_url as imagesUrl,
+            pd.name as skuName,
+            pd.id as skuId,
+            pd.sku_no as skuNo,
+            pi.id as productId,
+            pi.spu_no as spuNo,
+            pd.status,
+            pi.category,
+            pi.brand_name as brandName,
+            pbi.bom_version as bomVersion
+        from product_bom_info pbi
+        inner join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
+        left join product_detail pd on pbs.parent_sku_no = pd.sku_no and pd.is_deleted = false
+        left join product_info pi on pd.product_id = pi.id and pi.is_deleted = false
+        <where>
+            pbi.is_deleted = false and pbi.state = 4
+            <if test="params.skuNoList !=null and params.skuNoList.size>0">
+                and pd.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.categoryIdList !=null and params.categoryIdList.size>0">
+                and pi.category_id in
+                <foreach collection="params.categoryIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="listBomSkuByBomIds" resultType="com.erp.model.plm.dto.BomSkuPageDTO$ListDTO">
+        select
+            pbi.id as bomId,
+            pd.images_url as imagesUrl,
+            pd.name as skuName,
+            pd.id as skuId,
+            pd.sku_no as skuNo,
+            pi.id as productId,
+            pi.spu_no as spuNo,
+            pd.status,
+            pi.category,
+            pi.brand_name as brandName,
+            pbi.bom_version as bomVersion
+        from product_bom_info pbi
+        inner join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
+        left join product_detail pd on pbs.sku_no = pd.sku_no and pd.is_deleted = false
+        left join product_info pi on pd.product_id = pi.id and pi.is_deleted = false
+        <where>
+            pbi.is_deleted = false and pbi.state = 4
+            <if test="bomIds !=null and bomIds.size>0">
+                and pbi.id in
+                <foreach collection="bomIds" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
 </mapper>

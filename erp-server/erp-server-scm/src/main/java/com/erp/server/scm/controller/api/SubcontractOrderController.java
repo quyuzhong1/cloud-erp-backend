@@ -7,6 +7,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.server.scm.service.SubcontractOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,10 +66,10 @@ public class SubcontractOrderController extends BaseController {
      * @author Will
      * @date: 2023/6/9 16:16
      * @param dto
-     * @return ApiResult<PurchaseOrderListDTO>
+     * @return ApiResult<List<PurchaseOrderDTO.ListDTO>>
      */
     @PostMapping("/listPurchaseOrderByDetailId")
-    public ApiResult<List<SubcontractOrderDTO.PurchaseOrderListDTO>> listPurchaseOrderByDetailId(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<List<PurchaseOrderDTO.ListDTO>> listPurchaseOrderByDetailId(@RequestBody @Validated BaseIdDTO dto) {
         return success(subcontractOrderService.listPurchaseOrderByDetailId(dto.getId()));
     }
 

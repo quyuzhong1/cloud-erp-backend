@@ -621,11 +621,13 @@
         pi.brand_name as brandName,
         ps.sale_state as saleState,
         pd.unit_name,
-        pd.status
+        pd.status,
+        pp.moq
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
         left join product_sale ps on pd.id = ps.sku_id and ps.is_deleted = FALSE
+        LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
         WHERE pi.delete_state = 0 AND pd.is_deleted = FALSE
         <if test="skuIds != null and skuIds.size>0">
             AND pd.id IN

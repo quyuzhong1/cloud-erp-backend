@@ -73,6 +73,24 @@ public class BomInfoController extends BaseController {
 
 
     /**
+     * 分页查询显示组合SKU列表
+     *
+     * @param
+     * @return 查询结果
+     */
+    @PostMapping("/skuPaging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "plm:bom:paging",
+            tableAlias = "b"
+    )
+    public ApiResult<PagingVO<List<BomSkuPageDTO.ListDTO>>> skuPaging(@RequestBody @Validated PagingDTO<BomSkuPageDTO.PagingParamDTO> dto) {
+        PagingVO<List<BomSkuPageDTO.ListDTO>> pagingVO = bomInfoService.skuPaging(dto);
+        return success(pagingVO);
+    }
+
+
+    /**
      * 新增BOM
      *
      * @param

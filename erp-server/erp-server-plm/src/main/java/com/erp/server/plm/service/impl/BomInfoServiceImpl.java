@@ -222,6 +222,29 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 .update();
     }
 
+    @Override
+    public PagingVO<List<BomSkuPageDTO.ListDTO>> skuPaging(PagingDTO<BomSkuPageDTO.PagingParamDTO> dto) {
+        BomSkuPageDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<BomSkuPageDTO.ListDTO> pageData = baseMapper.skuPaging(query, params);
+        List<BomSkuPageDTO.ListDTO> records = pageData.getRecords();
+        if (CollectionUtils.isEmpty(records)) {
+            return new PagingVO(pageData);
+        }
+        List<String> bomIds = records.stream().map(BomSkuPageDTO.ListDTO::getBomId).collect(Collectors.toList());
+        List<BomSkuPageDTO.ListDTO> childList = baseMapper.listBomSkuByBomIds(bomIds);
+        if (CollectionUtils.isEmpty(childList)) {
+            throw new ServiceException(ApiError.ERROR_95166);
+        }
+        for (BomSkuPageDTO.ListDTO listDTO : records) {
+            List<BomSkuPageDTO.ListDTO> childDTOList = childList.stream().filter(obj -> obj.getBomId().equals(listDTO.getBomId())).collect(Collectors.toList());
+            listDTO.setChildList(childDTOList);
+        }
+
+        return new PagingVO(pageData);
+    }
+
     /**
      * 获取到skuId
      *

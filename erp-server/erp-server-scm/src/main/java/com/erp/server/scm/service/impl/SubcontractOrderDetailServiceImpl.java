@@ -115,6 +115,14 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 .list();
     }
 
+    @Override
+    public List<SubcontractOrderDetailEntity> listByMainIdAndSku(String mainId, List<String> skuNoList) {
+        return lambdaQuery()
+                .eq(SubcontractOrderDetailEntity::getMainId,mainId)
+                .in(CollectionUtils.isNotEmpty(skuNoList),SubcontractOrderDetailEntity::getSkuNo,skuNoList)
+                .list();
+    }
+
     private List<SubcontractOrderDetailEntity> listParentByMainId(String mainId) {
         return lambdaQuery()
                 .eq(SubcontractOrderDetailEntity::getMainId,mainId)
