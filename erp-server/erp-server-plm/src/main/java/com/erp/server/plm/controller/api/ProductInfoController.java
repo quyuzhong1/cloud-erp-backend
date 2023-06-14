@@ -134,7 +134,7 @@ public class ProductInfoController extends BaseController {
      * @param
      * @return
      */
-    @GetMapping("/itemDropdown ")
+    @GetMapping("/itemDropdown")
     public ApiResult<List<ProductDTO.DropdownDTO>> itemDropdown() {
         List<ProductDTO.DropdownDTO> list = productInfoService.getItemDropdown();
         return success(list);

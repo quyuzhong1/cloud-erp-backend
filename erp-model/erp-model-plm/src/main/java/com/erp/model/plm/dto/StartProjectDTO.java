@@ -1,14 +1,11 @@
 package com.erp.model.plm.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * @Classname ProjectDTO
@@ -58,6 +55,9 @@ public class StartProjectDTO implements Serializable {
      * 描述
      */
     private String describe;
+
+
+
 
 
 }

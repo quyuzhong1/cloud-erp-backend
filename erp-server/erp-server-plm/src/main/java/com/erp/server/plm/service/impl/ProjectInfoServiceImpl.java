@@ -443,7 +443,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
 
     /**
-     * 从新启动
+     * 重新启动
      * 可通过重新启动恢复立项/项目状态
      *
      * @param productIdList

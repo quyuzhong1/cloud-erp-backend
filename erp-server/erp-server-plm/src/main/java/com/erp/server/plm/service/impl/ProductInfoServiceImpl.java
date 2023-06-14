@@ -651,6 +651,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         ProductDTO.ProductCountDTO result = new ProductDTO.ProductCountDTO();
         //产品的是状态
         Integer approval = ApprovalStatusEnum.APPROVAL.getCode();
+
+        //产品的是状态
+        Integer productSuspend = ApprovalStatusEnum.SUSPEND.getCode();
         //项目状态
         Integer startStatus = ProjectStateEnum.YES_START.getState();
         //进行中
@@ -659,6 +662,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         Integer finishStatus = ProjectStateEnum.FINISH.getState();
         //终止
         Integer stopStatus = ProjectStateEnum.STOP.getState();
+
+        //终止
+        Integer projectSuspend = ProjectStateEnum.SUSPEND.getState();
         //总的数
         int totalCount = productCountList.stream().mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
         result.setTotalCount(totalCount);
@@ -683,9 +689,20 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
         result.setFinishCount(finishCount);
         //终止
-        int terminateCount = projectCountList.stream().filter(p -> stopStatus.equals(p.getStatus())).
+        int projectTerminateCount = projectCountList.stream().filter(p -> stopStatus.equals(p.getStatus())).
                 mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
-        result.setTerminateCount(terminateCount);
+        //终止
+        int productTerminateCount = productCountList.stream().filter(p -> ApprovalStatusEnum.TERMINATE.getCode().equals(p.getStatus())).
+                mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
+        result.setTerminateCount(projectTerminateCount+productTerminateCount);
+        //项目暂停数
+        int projectSuspendCount = projectCountList.stream().filter(p -> projectSuspend.equals(p.getStatus())).
+                mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
+
+        int productSuspendCount = productCountList.stream().filter(p -> productSuspend.equals(p.getStatus())).
+                mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
+        result.setSuspendCount(projectSuspendCount + productSuspendCount);
+
         //延期的数量
         int delayCount = projectInfoService.getDelayCount(new ArrayList<>());
         result.setDelayCount(delayCount);
@@ -1763,7 +1780,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
         productInfoList.stream().forEach(p -> p.setApprovalStatus(approvalCode));
         Boolean result = this.updateBatchById(productInfoList);
-        if(result){
+        if (result) {
             //批量添加获取修改产品
             productStatusTimeService.batchSaveOrUpdateProductStatusTime(productIdList, approvalCode);
             //更新产品规划的产品状态
@@ -1771,9 +1788,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         }
 
         return result;
-
-
-
 
 
     }

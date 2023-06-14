@@ -187,19 +187,7 @@ public class ProjectInfoController extends BaseController {
         return flag ? success() : failure();
     }
 
-    /**
-     * 产品开发管理-启动项目  ids为产品id集合【PLM1.3】
-     *
-     * @param
-     * @return void
-     * @author yl
-     * @date 2022-10-09 14:38
-     */
-//    @PostMapping("/batchStartProject")
-//    public ApiResult batchStartProject(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-//        boolean flag = projectInfoService.batchArchive(dto.getIds());
-//        return flag ? success() : failure();
-//    }
+
 
 }
 
