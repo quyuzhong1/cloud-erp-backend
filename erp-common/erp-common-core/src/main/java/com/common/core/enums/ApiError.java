@@ -338,6 +338,7 @@ public enum ApiError implements Serializable {
     ERROR_95168(95168,"变体值已被关联，不可删除"),
     ERROR_95169(95169,"变体类型值不存在，或已被删除"),
     ERROR_95170(95170,"变体类型不存在，或已被删除"),
+    ERROR_95171(95171,"产品单位以被关联，不可删除"),
 
 
 
