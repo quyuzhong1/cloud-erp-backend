@@ -580,8 +580,11 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         for (Map.Entry<String, List<SubcontractOrderDTO.GeneratePoAddDTO>> entry : map.entrySet()) {
             List<SubcontractOrderDTO.GeneratePoAddDTO> value = entry.getValue();
             SubcontractOrderDTO.GeneratePoAddDTO generatePoAddDTO = value.get(0);
+            //采购主表
             PurchaseOrderDTO.AddDTO addDTO = new PurchaseOrderDTO.AddDTO();
             BeanMapperUtils.copy(generatePoAddDTO,addDTO);
+            addDTO.setIsSubcontract(Boolean.TRUE);
+
             //采购供应商
             PurchaseOrderSupplierDTO.AddDTO supplierDTO = new PurchaseOrderSupplierDTO.AddDTO();
             supplierDTO.setSupplierId(generatePoAddDTO.getSupplierId());

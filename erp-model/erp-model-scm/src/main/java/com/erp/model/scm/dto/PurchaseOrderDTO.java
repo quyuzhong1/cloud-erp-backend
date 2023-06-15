@@ -317,13 +317,20 @@ public class PurchaseOrderDTO implements Serializable {
         private Boolean isFirstMassProduct;
 
         /**
+         * 是否是委外订单
+         */
+        private Boolean isSubcontract;
+
+        /**
          * 来源id
          */
         private String sourceId;
+
         /**
          * 来源类型
          */
         private String sourceType;
+
         /**
          * 来源编码
          */

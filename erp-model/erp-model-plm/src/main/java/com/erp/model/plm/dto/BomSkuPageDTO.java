@@ -91,8 +91,14 @@ public class BomSkuPageDTO {
         private String bomVersion;
 
         /**
+         * 用量
+         */
+        private Integer quantity;
+
+        /**
          * 子件信息
          */
         private List<ListDTO> childList;
     }
+
 }

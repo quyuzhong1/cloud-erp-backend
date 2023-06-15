@@ -1,8 +1,10 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -13,15 +15,13 @@ import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.SubcontractOrderDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
+import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.SubcontractOrderDetailMapper;
-import com.erp.server.scm.service.ModuleOperateLogService;
-import com.erp.server.scm.service.PurchaseApplicationDetailService;
-import com.erp.server.scm.service.PurchasePriceDetailService;
-import com.erp.server.scm.service.SubcontractOrderDetailService;
+import com.erp.server.scm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -61,6 +61,10 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
 
     @Resource
     private PurchaseApplicationDetailService purchaseApplicationDetailService;
+
+    @Resource
+    private SubcontractOrderService subcontractOrderService;
+
 
     @Override
     public void updateArrivalStatusByIds(String arrivalStatus, List<String> ids) {
@@ -114,29 +118,12 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             moduleOperateLogService.batchAddModuleOperateLog("删除了一个父级SKU【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
-        checkQty(list);
+        checkSourceDetailQty(list,mainId);
 
         //处理父子级数据
         List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId);
 
         this.saveOrUpdateBatch(resultList);
-    }
-
-    private void checkQty(List<SubcontractOrderDetailEntity> list) {
-        //由采购申请下推的数据
-        List<SubcontractOrderDetailEntity> sourceDetailList = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getSourceDetailId())).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(sourceDetailList)) {
-            return;
-        }
-        //采购申请单明细
-        List<String> sourceDetailIds = sourceDetailList.stream().map(SubcontractOrderDetailEntity::getSourceDetailId).collect(Collectors.toList());
-        List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = purchaseApplicationDetailService.listByIds(sourceDetailIds);
-
-        for (SubcontractOrderDetailEntity detailEntity : sourceDetailList) {
-            //申请数量
-            Integer applyQty = purchaseApplicationDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getApplyQty())).orElse(MathUtil.ZERO);
-            //
-        }
     }
 
     @Override
@@ -181,9 +168,68 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 
+    /**
+     * @description: 修改验证下推数量
+     * @author Will
+     * @date: 2023/6/15 10:01
+     * @param list
+     * @param mainId
+     */
+    private void checkSourceDetailQty(List<SubcontractOrderDetailEntity> list,String mainId) {
+        //由采购申请下推的数据
+        List<SubcontractOrderDetailEntity> sourceDetailList = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getSourceDetailId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(sourceDetailList)) {
+            return;
+        }
+        //主表信息
+        SubcontractOrderEntity entity = subcontractOrderService.getById(mainId);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_98073);
+        }
+
+        //采购申请单明细
+        List<String> sourceDetailIds = sourceDetailList.stream().map(SubcontractOrderDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = purchaseApplicationDetailService.listByIds(sourceDetailIds);
+
+        //已下推明细信息
+        List<SubcontractOrderDetailEntity> foundList = this.listBySourceDetailIds(sourceDetailIds);
+
+        //产品信息
+        List<String> skuIds = sourceDetailList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+
+        for (SubcontractOrderDetailEntity detailEntity : sourceDetailList) {
+            //sku编码
+            String skuNo = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
+
+            //申请数量
+            Integer applyQty = purchaseApplicationDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getApplyQty())).orElse(MathUtil.ZERO);
+            //本次更新数量
+            Integer qty = detailEntity.getQty();
+            //已下推数量（不包括本明细数量）
+            Integer pushdownQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(foundList)) {
+                pushdownQty = foundList.stream().filter(obj ->obj.getSourceDetailId().equals(detailEntity.getSourceDetailId()) && !StringUtils.equals(obj.getId(),detailEntity.getId()))
+                        .map(SubcontractOrderDetailEntity::getQty).reduce(MathUtil.ZERO,Integer::sum);
+            }
+            //下推单据数量验证
+            if (qty > applyQty - pushdownQty) {
+                throw new ServiceException(new ApiResult(ApiError.ERROR_98074.code, StrUtil.format(ApiError.ERROR_98074.msg,entity.getCode(),skuNo,applyQty - pushdownQty)));
+            }
+        }
+    }
+
 
     /**
-     * 处理明细中的数据id
+     * @description: 生成明细结果
+     * @author Will
+     * @date: 2023/6/15 10:06
+     * @param newList
+     * @param mainId
+     * @return List<SubcontractOrderDetailEntity>
      */
     private List<SubcontractOrderDetailEntity> generateResultDetail (List<SubcontractOrderDetailEntity> newList, String mainId) {
         List<SubcontractOrderDetailEntity> resultList = new ArrayList<>();

@@ -787,6 +787,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<String> listSign = new ArrayList<>();
 
         for (PurchaseOrderDTO.GenerateReceiveDTO generateReceiveDTO : list) {
+            //采购订单
+            PurchaseOrderEntity entity = purchaseOrderList.stream().filter(obj -> obj.getId().equals(generateReceiveDTO.getId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_98025);
+            }
+
             boolean contains = listSign.contains(generateReceiveDTO.getId());
             if (!contains) {
                 WarehouseReceiveDTO.AddDTO addDTO = new WarehouseReceiveDTO.AddDTO();
@@ -797,7 +803,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 addDTO.setReceiveDeptId(deptByUserId.getDepartmentId());
                 addDTO.setBillDate(generateReceiveDTO.getBillDate());
                 addDTO.setDeliveryWarehouseId(generateReceiveDTO.getDeliveryWarehouseId());
-
+                addDTO.setIsSubcontract(entity.getIsSubcontract());
                 List<WarehouseReceiveDetailDTO.AddDTO> warehouseReceiveDetailList = new ArrayList<>();
                 for (PurchaseOrderDTO.GenerateReceiveDTO receiveDTO : list) {
                     if (generateReceiveDTO.getId().equals(receiveDTO.getId())) {

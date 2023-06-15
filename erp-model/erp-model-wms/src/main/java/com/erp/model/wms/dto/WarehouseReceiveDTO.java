@@ -62,6 +62,11 @@ public class WarehouseReceiveDTO {
         private String deliveryWarehouseId;
 
         /**
+         * 是否是委外订单
+         */
+        private Boolean isSubcontract;
+
+        /**
          * 报价明细
          */
         @Valid

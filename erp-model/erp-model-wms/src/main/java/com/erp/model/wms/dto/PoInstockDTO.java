@@ -264,6 +264,11 @@ public class PoInstockDTO implements Serializable {
          * 入库部门id
          */
         private String stockInDeptId;
+
+        /**
+         * 是否是委外订单
+         */
+        private Boolean isSubcontract;
     }
 
     @Data

@@ -468,6 +468,7 @@ public enum ApiError implements Serializable {
     ERROR_98071(98071,"未找到委外订单明细父级SKU信息"),
     ERROR_98072(98072,"未找到委外订单明细子级SKU信息"),
     ERROR_98073(98073,"未找到委外订单"),
+    ERROR_98074(98074,"委外订单【{}】明细父级SKU【{}】数量不能大于{}"),
 
 
 
