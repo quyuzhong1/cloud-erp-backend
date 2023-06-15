@@ -256,6 +256,24 @@ public class SubcontractOrderController extends BaseController {
     }
 
     /**
+     * 批量作废
+     * @author Will
+     * @date: 2023-06-08
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "scm:subcontractOrder:invalid",
+            serviceClass = SubcontractOrderService.class,
+            keyIdName = "ids")
+    public ApiResult<Void> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        subcontractOrderService.invalid(dto.getIds(),dto.getRemark());
+        return success();
+    }
+
+    /**
     * 详情
     * @author will
     * @date:  2023-06-08

@@ -11,6 +11,7 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.SubcontractOrderDetailDTO;
+import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -18,6 +19,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.SubcontractOrderDetailMapper;
 import com.erp.server.scm.service.ModuleOperateLogService;
+import com.erp.server.scm.service.PurchaseApplicationDetailService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.SubcontractOrderDetailService;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +58,9 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private PurchaseApplicationDetailService purchaseApplicationDetailService;
 
     @Override
     public void updateArrivalStatusByIds(String arrivalStatus, List<String> ids) {
@@ -109,10 +114,29 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             moduleOperateLogService.batchAddModuleOperateLog("删除了一个父级SKU【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
+        checkQty(list);
+
         //处理父子级数据
         List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId);
 
         this.saveOrUpdateBatch(resultList);
+    }
+
+    private void checkQty(List<SubcontractOrderDetailEntity> list) {
+        //由采购申请下推的数据
+        List<SubcontractOrderDetailEntity> sourceDetailList = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getSourceDetailId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(sourceDetailList)) {
+            return;
+        }
+        //采购申请单明细
+        List<String> sourceDetailIds = sourceDetailList.stream().map(SubcontractOrderDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = purchaseApplicationDetailService.listByIds(sourceDetailIds);
+
+        for (SubcontractOrderDetailEntity detailEntity : sourceDetailList) {
+            //申请数量
+            Integer applyQty = purchaseApplicationDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getApplyQty())).orElse(MathUtil.ZERO);
+            //
+        }
     }
 
     @Override

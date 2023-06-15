@@ -180,4 +180,11 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @return List<ViewAddDetailDTO>
      */
     List<SubcontractOrderDTO.ViewAddDetailDTO> viewAddDetail(SubcontractOrderDTO.ViewAddDetailParamDTO dto);
-}
+    /**
+     * @description: 作废
+     * @author Will
+     * @date: 2023/6/15 9:37
+     * @param ids
+     * @param remark
+     */
+    void invalid(List<String> ids, String remark);}

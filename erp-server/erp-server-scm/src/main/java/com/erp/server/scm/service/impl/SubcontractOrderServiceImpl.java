@@ -650,6 +650,45 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         return resultList;
     }
 
+    @Override
+    public void invalid(List<String> ids, String remark) {
+        List<SubcontractOrderEntity> list = super.listByIds(ids);
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException("未找到委外订单数据");
+        }
+        //非待提交和审核不通过不能作废
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98005);
+        }
+        long invalidCount = list.stream().filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
+        if (invalidCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98012);
+        }
+        log.info("采购订单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
+        //更新订单作废状态
+        updateInvalidStatus(ids, remark);
+
+        //操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("作废了一个委外订单【%s】，作废原因：".concat(remark), ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "作废操作");
+    }
+
+    /**
+     * @param ids
+     * @param reason
+     * @description: 更新作废状态
+     * @author Will
+     */
+    private void updateInvalidStatus(List<String> ids, String reason) {
+        //更新
+        lambdaUpdate().in(SubcontractOrderEntity::getId, ids)
+                .set(SubcontractOrderEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+                .set(SubcontractOrderEntity::getInvalidTime, LocalDateTime.now())
+                .set(SubcontractOrderEntity::getInvalidRemark, reason)
+                .update();
+    }
+
     /**
     * 审核更新审核信息
     * @param ids
