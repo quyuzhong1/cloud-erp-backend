@@ -7,9 +7,11 @@ import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.server.dmp.pull.mapper.ProductDetailMapper;
 import com.erp.server.dmp.pull.service.dmp.ProductDetailService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +27,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public List<ProductDetailEntity> ListProductDetailByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return new ArrayList<>();
+        }
         return baseMapper.ListProductDetailByIds(ids);
     }
 

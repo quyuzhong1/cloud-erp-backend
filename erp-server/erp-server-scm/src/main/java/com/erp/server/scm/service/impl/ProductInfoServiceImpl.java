@@ -4,8 +4,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.scm.mapper.ProductInfoMapper;
 import com.erp.server.scm.service.ProductInfoService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,6 +23,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      **/
     @Override
     public List<ProductInfoEntity> ListProductInfoByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return new ArrayList<>();
+        }
         return baseMapper.ListProductInfoByIds(ids);
     }
 
