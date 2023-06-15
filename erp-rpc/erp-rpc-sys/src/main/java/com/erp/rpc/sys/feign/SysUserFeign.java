@@ -357,4 +357,12 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/user/listUserKingdeePostByUserIds")
     List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByUserIds(@RequestBody List<String> userIds);
+
+    /**
+     * 获取用户区间配置
+     * @param type
+     * @return
+     */
+    @GetMapping("feign/cfgUserRange/getByType")
+    List<CfgUserRangeDTO.UserRangeDataDTO> getUserRangeByType(@RequestParam(value = "type")String type);
 }

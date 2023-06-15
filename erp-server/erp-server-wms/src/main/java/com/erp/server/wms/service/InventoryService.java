@@ -6,15 +6,17 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.PickingDetailDTO;
+import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.InventorySaveDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
  * @Classname: InventoryService
- * @Description: TODO
+ * @Description: 实时库存服务接口类
  * @CreateTime: 2023-04-25  12:15
  * @Author: zhangchunlin
  */
@@ -159,8 +161,15 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     /**
      * 导出即时库存Excel
      * @param param
+     * @param response
      */
     void exportExcel(InventoryDTO.ExportSearchParamDTO param, HttpServletResponse response);
 
+    /**
+     * 库龄计算表分页列表
+     * @param pagingParamDTO
+     * @return
+     */
+    PagingVO<InventoryReportDTO.InventoryAgePagingDTO> inventoryAgePaging(PagingDTO<InventoryReportDTO.InventoryAgeSearchParamDTO> pagingParamDTO);
 
 }

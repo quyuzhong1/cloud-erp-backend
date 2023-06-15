@@ -41,4 +41,10 @@ public interface CfgUserRangeService extends SuperService<CfgUserRangeEntity> {
      */
     List<CfgUserRangeDTO.UserRangeDataDTO> detail(String type);
 
+    /**
+     * 根据区间类型获取用户区间配置（如果没有取到则取默认的）
+     * @param type
+     * @return
+     */
+    List<CfgUserRangeDTO.UserRangeDataDTO> getUserRanges(String type);
 }

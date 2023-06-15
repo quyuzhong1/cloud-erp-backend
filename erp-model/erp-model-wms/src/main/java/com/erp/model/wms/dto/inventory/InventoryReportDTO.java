@@ -326,6 +326,37 @@ public class InventoryReportDTO implements Serializable {
          */
         private List<String> orgIdList;
 
+        /**
+         * 用户区间设置
+         */
+        @JsonIgnore
+        private List<InventoryAgeRangeDTO> userRangeList;
+
+    }
+
+    /**
+     * 库龄计算区间
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InventoryAgeRangeDTO {
+
+
+        /**
+         * 开始值
+         */
+        private Integer startValue;
+
+        /**
+         * 结束值
+         */
+        private Integer endValue;
+
+        /**
+         * 标题
+         */
+        private String name;
+
     }
 
     /**

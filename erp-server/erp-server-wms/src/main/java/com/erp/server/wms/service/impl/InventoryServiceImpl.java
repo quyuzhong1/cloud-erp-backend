@@ -17,12 +17,15 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.sys.dto.CfgUserRangeDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.sys.enums.UserRangeTypeEnum;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.ExportInventoryExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.InventorySaveDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -464,6 +467,20 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         }
     }
 
+    @Override
+    public PagingVO<InventoryReportDTO.InventoryAgePagingDTO> inventoryAgePaging(PagingDTO<InventoryReportDTO.InventoryAgeSearchParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+
+        // 获取用户区间配置
+        List<CfgUserRangeDTO.UserRangeDataDTO> userRanges = sysUserFeign.getUserRangeByType(UserRangeTypeEnum.INVENTORY_AGE.getCode());
+        List<InventoryReportDTO.InventoryAgeRangeDTO> userRangeList = BeanMapperUtils.copyList(InventoryReportDTO.InventoryAgeRangeDTO.class, userRanges);
+        pagingParamDTO.getParams().setUserRangeList(userRangeList);
+
+        IPage<LinkedHashMap> pageData = this.baseMapper.inventoryAgePage(query, pagingParamDTO.getParams());
+        return new PagingVO(pageData);
+    }
+
 
     private void fillInventoryPageData(List<InventoryDTO.PagingViewDTO> list) {
         if (CollUtil.isEmpty(list)) {
@@ -472,7 +489,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         // 此处优化，取最新的产品名称和产品图片，防止数据没同步过来，销售状态和SPU则不取最新的，防止查询和显示不一样
         List<String> skuIds = list.stream().map(InventoryDTO.PagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         Map<String, WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
         Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
         list.stream().forEach(data -> {
@@ -486,11 +503,12 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             if (Objects.nonNull(sysAccountingCompanyEntity)) {
                 data.setOrgName(sysAccountingCompanyEntity.getCompanyName());
             }
-            if (skuMap.containsKey(data.getSkuId())) {
+            if (skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
+                SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
                 // 产品名称
-                data.setProductName(skuMap.getOrDefault(data.getSkuId(), new SkuVO()).getSkuName());
+                data.setProductName(skuVO.getSkuName());
                 // 产品图片
-                data.setProductImgUrl(skuMap.getOrDefault(data.getSkuId(), new SkuVO()).getSkuImagesUrl());
+                data.setProductImgUrl(skuVO.getSkuImagesUrl());
             }
             // 销售状态名称
             data.setSaleStateName(SaleStateEnum.getNameByCode(data.getSaleState()));

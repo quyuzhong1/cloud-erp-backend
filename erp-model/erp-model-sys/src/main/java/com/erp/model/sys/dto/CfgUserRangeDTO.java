@@ -34,6 +34,13 @@ public class CfgUserRangeDTO implements Serializable {
          * 结束值
          */
         private Integer endValue;
+
+        /**
+         * 标题
+         */
+        private String name;
+
+
     }
 
     @NoArgsConstructor

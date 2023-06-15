@@ -671,11 +671,11 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         // 明细信息填充
         List<String> skuIds = viewDetailList.stream().map(TransferOutDetailDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        Map<String,SkuVO> skuMap =  skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         viewDetailList.stream().forEach(member->{
             //产品名称
-            SkuVO skuVO = skuMap.get(member.getSkuId());
-            if(Objects.nonNull(skuVO)) {
+            if(skuMap.containsKey(member.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(member.getSkuId()))) {
+                SkuVO skuVO = skuMap.get(member.getSkuId()).get(0);
                 member.setProductName(skuVO.getSkuName());
                 member.setVariantProperty(skuVO.getVariantProperty());
             }

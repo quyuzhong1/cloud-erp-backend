@@ -158,7 +158,7 @@ public class InventoryController extends BaseController {
      */
     @PostMapping("/inventoryAge/paging")
     public ApiResult<PagingVO<InventoryReportDTO.InventoryAgePagingDTO>> inventoryAgePaging(@RequestBody @Validated PagingDTO<InventoryReportDTO.InventoryAgeSearchParamDTO> dto) {
-        return success(null);
+        return success(inventoryService.inventoryAgePaging(dto));
     }
 
     /**

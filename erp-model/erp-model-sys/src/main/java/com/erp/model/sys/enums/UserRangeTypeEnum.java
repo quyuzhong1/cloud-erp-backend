@@ -18,12 +18,12 @@ public enum UserRangeTypeEnum {
 
     private String code;
     private String name;
-    private String labelFormat;
+    private String label;
 
-    UserRangeTypeEnum(String code, String name, String labelFormat) {
+    UserRangeTypeEnum(String code, String name, String label) {
         this.code = code;
         this.name = name;
-        this.labelFormat = labelFormat;
+        this.label = label;
     }
 
     public String getCode() {
@@ -34,8 +34,8 @@ public enum UserRangeTypeEnum {
         return name;
     }
 
-    public String getLabelFormat() {
-        return labelFormat;
+    public String getLabel() {
+        return label;
     }
 
     /**
@@ -62,9 +62,9 @@ public enum UserRangeTypeEnum {
      * @param code
      * @return
      */
-    public static String getLabelFormatByCode(String code) {
+    public static String getLabelByCode(String code) {
         UserRangeTypeEnum userRangeTypeEnum = of(code);
-        return Optional.ofNullable(userRangeTypeEnum).map(UserRangeTypeEnum::getLabelFormat).orElse("");
+        return Optional.ofNullable(userRangeTypeEnum).map(UserRangeTypeEnum::getLabel).orElse("");
     }
 
 }

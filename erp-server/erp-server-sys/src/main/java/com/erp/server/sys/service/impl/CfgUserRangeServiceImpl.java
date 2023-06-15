@@ -9,6 +9,7 @@ import com.common.core.utils.ValidatorUtil;
 import com.erp.model.sys.dto.CfgUserRangeDTO;
 import com.erp.model.sys.entity.CfgUserRangeEntity;
 import com.erp.model.sys.enums.UserRangeTypeEnum;
+import com.erp.server.sys.config.UserRangeProperties;
 import com.erp.server.sys.mapper.CfgUserRangeMapper;
 import com.erp.server.sys.service.CfgUserRangeService;
 import com.common.business.service.SuperServiceImpl;
@@ -20,7 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.Resource;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -39,6 +42,9 @@ public class CfgUserRangeServiceImpl extends SuperServiceImpl<CfgUserRangeMapper
 
     @Autowired
     private CommonService commonService;
+
+    @Resource
+    private UserRangeProperties userRangeProperties;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -73,7 +79,7 @@ public class CfgUserRangeServiceImpl extends SuperServiceImpl<CfgUserRangeMapper
             cfgUserRangeEntity.setStartValue(range.getStartValue());
             cfgUserRangeEntity.setEndValue(range.getEndValue());
             cfgUserRangeEntity.setUserId(userId);
-            String name = StrUtil.format( userRangeTypeEnum.getLabelFormat(),range.getStartValue(), range.getEndValue());
+            String name = StrUtil.format( userRangeTypeEnum.getLabel(),range.getStartValue(), range.getEndValue());
             cfgUserRangeEntity.setName(name);
             cfgUserRangeEntityList.add(cfgUserRangeEntity);
         }
@@ -138,11 +144,31 @@ public class CfgUserRangeServiceImpl extends SuperServiceImpl<CfgUserRangeMapper
                 CfgUserRangeDTO.UserRangeDataDTO userRangeData = new CfgUserRangeDTO.UserRangeDataDTO();
                 userRangeData.setStartValue(data.getStartValue());
                 userRangeData.setEndValue(data.getEndValue());
+                userRangeData.setName(data.getName());
                 rangeList.add(userRangeData);
             });
             return rangeList;
         }
         return null;
+    }
+
+    @Override
+    public List<CfgUserRangeDTO.UserRangeDataDTO> getUserRanges(String type) {
+        UserRangeTypeEnum userRangeTypeEnum = UserRangeTypeEnum.of(type);
+        String formatName = userRangeTypeEnum.getLabel();
+        List<CfgUserRangeDTO.UserRangeDataDTO> rangeList = this.detail(type);
+        if(CollUtil.isEmpty(rangeList)) {
+            // 获取默认的区间配置
+            LinkedHashMap<String, List<CfgUserRangeDTO.UserRangeDataDTO>> rangeMap = userRangeProperties.getRangeMap();
+            rangeList = rangeMap.get(type);
+
+            if(CollUtil.isNotEmpty(rangeList)) {
+                // 需要赋值展示名称
+                rangeList.stream().forEach(data-> data.setName(StrUtil.format(formatName, data.getStartValue(), data.getEndValue())));
+            }
+            return rangeList;
+        }
+        return rangeList;
     }
 
 }

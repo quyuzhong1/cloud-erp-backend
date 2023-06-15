@@ -152,11 +152,13 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
         List<TransferOutDTO.ChooseListDTO> resultList = BeanMapperUtils.copyList(TransferOutDTO.ChooseListDTO.class, transferOutDetailList);
         List<String> skuIds = resultList.stream().map(TransferOutDTO.ChooseListDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        Map<String,SkuVO> skuMap =  skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         for (TransferOutDTO.ChooseListDTO data : resultList) {
-            SkuVO skuInfo = skuMap.getOrDefault(data.getSkuId(),new SkuVO());
-            data.setProductName(skuInfo.getSkuName()); //产品名称
-            data.setVariantProperty(skuInfo.getVariantProperty()); // 变体信息
+            if(skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
+                SkuVO skuInfo = skuMap.get(data.getSkuId()).get(0);
+                data.setProductName(skuInfo.getSkuName()); //产品名称
+                data.setVariantProperty(skuInfo.getVariantProperty()); // 变体信息
+            }
             data.setSourceType(SourceTypeEnum.TRANSFER_OUT.getCode());
             data.setSourceDetailId(data.getId());
             data.setSourceId(transferOutEntity.getId());
@@ -189,18 +191,18 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
 
         List<String> skuIds = newList.stream().map(TransferOutDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuInfos = plmTaskFeign.getSkuInfoByIds(skuIds);
-        Map<String,SkuVO> skuMap =  skuInfos.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        Map<String, List<SkuVO>> skuMap = skuInfos.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         for(int i = 0, length = newList.size();i < length;i++) {
             TransferOutDetailEntity data = newList.get(i);
-            SkuVO skuVO = skuMap.get(data.getSkuId());
-            if(Objects.isNull(skuVO)) {
+            if(!skuMap.containsKey(data.getSkuId()) || CollUtil.isEmpty(skuMap.get(data.getSkuId()))) {
                 throw new ServiceException(StrUtil.format("SKU【{}】错误", data.getSkuNo()));
             }
+            SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
             // 单位
             String unit = StrUtils.null2EmptyWithTrim(skuVO.getUnitName());
             data.setUnit(unit);
             data.setMainId(mainId);
-            data.setSkuNo(skuMap.get(data.getSkuId()).getSkuNo());// 填充sku编号
+            data.setSkuNo(skuVO.getSkuNo());// 填充sku编号
             data.setOutWarehouseLocation(StrUtils.null2EmptyWithTrim(data.getOutWarehouseLocation()));
             // 修改时添加日志
             if(StrUtils.isNotEmpty(data.getId())) {

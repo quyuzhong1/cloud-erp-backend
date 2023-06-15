@@ -409,10 +409,10 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         }
         List<String> skuIds = dataList.stream().map(InventoryDTO.TransFlowPagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         dataList.stream().forEach(data->{
-            if(skuMap.containsKey(data.getSkuId())) {
-                SkuVO skuVO = skuMap.get(data.getSkuId());
+            if(skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
+                SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
                 data.setProductName(skuVO.getSkuName());
                 data.setSpuNo(skuVO.getSpuNo());
             }
@@ -431,11 +431,11 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         }
         List<String> skuIds = dataList.stream().map(InventoryDTO.InOutStockTransFlowPagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
         dataList.stream().forEach(data->{
-            if(skuMap.containsKey(data.getSkuId())) {
-                SkuVO skuVO = skuMap.get(data.getSkuId());
+            if(skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
+                SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
                 data.setProductName(skuVO.getSkuName());
                 data.setSpuNo(skuVO.getSpuNo());
             }
@@ -458,11 +458,12 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         }
         List<String> skuIds = dataList.stream().map(InventoryDTO.InOutStockSummaryPagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        // 此处修复，返回的记录按sku id不是唯一的了
+        Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         Map<String,WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
         for(InventoryDTO.InOutStockSummaryPagingViewDTO data : dataList) {
             if(skuMap.containsKey(data.getSkuId())) {
-                SkuVO skuVO = skuMap.get(data.getSkuId());
+                SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
                 data.setProductName(skuVO.getSkuName());
                 data.setProductImgUrl(skuVO.getSkuImagesUrl());
             }
@@ -487,7 +488,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         // 此处优化，取最新的产品名称和产品图片，防止数据没同步过来，销售状态和SPU则不取最新的，防止查询和显示不一样
         List<String> skuIds = list.stream().map(InventoryReportDTO.TransportPagingDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         Map<String, WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
         Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
         list.stream().forEach(data -> {
@@ -501,11 +502,12 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             if (Objects.nonNull(sysAccountingCompanyEntity)) {
                 data.setOrgName(sysAccountingCompanyEntity.getCompanyName());
             }
-            if (skuMap.containsKey(data.getSkuId())) {
+            if (skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
+                SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
                 // 产品名称
-                data.setProductName(skuMap.getOrDefault(data.getSkuId(), new SkuVO()).getSkuName());
+                data.setProductName(skuVO.getSkuName());
                 // 产品图片
-                data.setProductImgUrl(skuMap.getOrDefault(data.getSkuId(), new SkuVO()).getSkuImagesUrl());
+                data.setProductImgUrl(skuVO.getSkuImagesUrl());
             }
             // 销售状态名称
             data.setSaleStateName(SaleStateEnum.getNameByCode(data.getSaleState()));
@@ -537,11 +539,12 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         // 此处优化，取最新的产品名称和产品图片，防止数据没同步过来，销售状态和SPU则不取最新的，防止查询和显示不一样
         List<String> skuIds = list.stream().map(InventoryReportDTO.ListTransportPagingDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         for(InventoryReportDTO.ListTransportPagingDTO data : list) {
-            if (skuMap.containsKey(data.getSkuId())) {
+            if (skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
                 // 产品名称
-                data.setProductName(skuMap.getOrDefault(data.getSkuId(), new SkuVO()).getSkuName());
+                SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
+                data.setProductName(skuVO.getSkuName());
             }
             // 单据名称
             data.setSourceTypeName(InventoryTransportTypeEnum.getLabelByCode(data.getSourceType()));
