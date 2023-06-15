@@ -38,11 +38,13 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.OsDeliveryChangeListTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -63,10 +65,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -123,6 +122,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Resource
     private WmsAttachmentService wmsAttachmentService;
+
+    @Resource
+    private InventoryService inventoryService;
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
@@ -779,6 +781,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Transactional(rollbackFor = Exception.class)
     public Boolean generateDeliverySave(List<SoInfoDTO.GenerateDeliveryView> list) {
         List<String> soIdList = list.stream().map(SoInfoDTO.GenerateDeliveryView::getSoId).distinct().collect(Collectors.toList());
+        List<String> skuIdList = list.stream().map(SoInfoDTO.GenerateDeliveryView::getSkuId).distinct().collect(Collectors.toList());
+        List<String> warehouseIdList = list.stream().map(SoInfoDTO.GenerateDeliveryView::getWarehouseId).distinct().collect(Collectors.toList());
+        InventoryQtyDTO.SkuInventoryParamDTO paramDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
+        paramDTO.setSkuIdList(skuIdList);
+        paramDTO.setWarehouseIdList(warehouseIdList);
+        paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        //从wms 获取到sku 的即时库存信息
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryService.listSkuInventory(paramDTO);
+
         for (String soId : soIdList) {
             SoDeliveryNoticeDTO.Add add = new SoDeliveryNoticeDTO.Add();
             add.setSourceId(soId);
@@ -789,6 +800,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 add.setWarehouseId(view.getWarehouseId());
                 add.setPlanDeliveryDate(view.getPlanDeliveryDate());
                 SoDeliveryNoticeDetailDTO.Add detailAdd = new SoDeliveryNoticeDetailDTO.Add();
+                //即时库存
+                Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(view.getSkuId()) && s.getWarehouseId().equals(view.getWarehouseId())).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+                if (view.getDeliveryQty() > curInventoryQty) {
+                    throw new ServiceException(ApiError.ERROR_99070);
+                }
                 detailAdd.setDeliveryQty(view.getDeliveryQty());
                 detailAdd.setRemark(view.getRemark());
                 detailAdd.setSourceDetailId(view.getDetailId());
