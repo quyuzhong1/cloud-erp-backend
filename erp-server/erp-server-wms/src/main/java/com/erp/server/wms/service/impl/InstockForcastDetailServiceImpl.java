@@ -1,9 +1,9 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDetailDTO;
@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -50,7 +49,7 @@ public class InstockForcastDetailServiceImpl extends SuperServiceImpl<InstockFor
         // 获取产品信息
         List<String> skuIdList = details.stream().map(InstockForcastDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-        Map<String,SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         // 需要保存的详情集合
         List<InstockForcastDetailEntity> listDetail = new ArrayList<>();
         for (InstockForcastDetailDTO.AddDTO addDTO : details) {
@@ -60,9 +59,10 @@ public class InstockForcastDetailServiceImpl extends SuperServiceImpl<InstockFor
             instockForcastDetailEntity.setSkuNo(addDTO.getSkuNo());
             instockForcastDetailEntity.setQty(addDTO.getQty());
             instockForcastDetailEntity.setPurchaseOrderDetailId(addDTO.getPurchaseOrderDetailId());
-            ValidatorUtil.isTrueCall(skuMap.containsKey(instockForcastDetailEntity.getSkuId()),()->{
-                instockForcastDetailEntity.setProductName(skuMap.getOrDefault(instockForcastDetailEntity.getSkuId(), new SkuVO()).getSkuName());
-            });
+            if(skuMap.containsKey(instockForcastDetailEntity.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(instockForcastDetailEntity.getSkuId()))) {
+                SkuVO skuVO = skuMap.get(instockForcastDetailEntity.getSkuId()).get(0);
+                instockForcastDetailEntity.setProductName(skuVO.getSkuName());
+            }
             listDetail.add(instockForcastDetailEntity);
         }
         this.saveBatch(listDetail);
