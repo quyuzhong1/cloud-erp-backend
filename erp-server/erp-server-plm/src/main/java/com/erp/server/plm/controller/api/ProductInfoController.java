@@ -277,7 +277,7 @@ public class ProductInfoController extends BaseController {
 
 
     /**
-     * 新概览
+     * 新概览【PLM1.3】
      *
      */
     @PostMapping("/overview")

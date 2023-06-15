@@ -76,4 +76,13 @@ public interface SysDepartmentUserService  extends IService<SysDepartmentUserEnt
      * @return java.util.List<com.common.business.dto.FindUserDTO>
      */
     List<FindUserDTO> listDeptUserByDeptId(String deptId);
+
+    /**
+     * 根据用户ids 获取部门 用户信息
+     * @author yl
+     * @date 2023-06-15 16:56
+     * @param userIdList
+     * @return java.util.List<com.erp.model.sys.dto.SysDepartmentUserNumberDTO>
+     */
+    List<SysDepartmentUserNumberDTO> listDeptUserByUserIdList(List<String> userIdList);
 }

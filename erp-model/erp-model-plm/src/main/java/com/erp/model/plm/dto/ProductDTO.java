@@ -249,5 +249,25 @@ public class ProductDTO implements Serializable {
 
     }
 
+    /**
+     * 产品统计信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CountBaseStrDTO {
+
+        /**
+         * 状态
+         */
+        private String status;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+
+
+    }
+
 
 }

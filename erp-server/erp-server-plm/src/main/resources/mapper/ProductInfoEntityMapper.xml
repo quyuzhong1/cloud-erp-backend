@@ -809,7 +809,7 @@
         GROUP BY approval_status
     </select>
 
-    <select id="listProgressStatusCount" resultType="com.erp.model.plm.dto.ProductDTO$CountBaseDTO">
+    <select id="listProgressStatusCount" resultType="com.erp.model.plm.dto.ProductDTO$CountBaseStrDTO">
         SELECT
         progress_status AS status,
         count(*)
@@ -821,7 +821,7 @@
                 #{productId}
             </foreach>
         </if>
-        GROUP BY approval_status
+        GROUP BY progress_status
     </select>
 
     <select id="listProductIdByUserId" resultType="java.lang.String">

@@ -29,4 +29,12 @@ public class SysDepartmentUserNumberDTO implements Serializable {
     private String code;
 
 
+    private String userCode;
+
+    /**
+     * 头像
+     */
+    private String userHeadIcon;
+
+
 }

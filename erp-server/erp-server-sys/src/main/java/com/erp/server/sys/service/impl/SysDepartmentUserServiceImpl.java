@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -173,7 +174,7 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
     public List<UserSuperiorDTO> listSuperiorByUserId(String userId) {
         List<UserSuperiorDTO> resultList = baseMapper.listSuperiorByUserId(userId);
         // 如果不包含自己, 则过滤掉包含自己的上级
-        if(CollectionUtils.isNotEmpty(resultList)){
+        if (CollectionUtils.isNotEmpty(resultList)) {
             resultList = resultList.stream().filter(x -> !userId.equals(x.getUserId())).collect(Collectors.toList());
         }
         return resultList;
@@ -182,14 +183,31 @@ public class SysDepartmentUserServiceImpl extends ServiceImpl<SysDepartmentUserM
 
     /**
      * 根据部门id 获取部门员工
-     * @author yl
-     * @date 2023-06-05 12:07
+     *
      * @param deptId
      * @return java.util.List<com.common.business.dto.FindUserDTO>
+     * @author yl
+     * @date 2023-06-05 12:07
      */
     @Override
     public List<FindUserDTO> listDeptUserByDeptId(String deptId) {
         return baseMapper.listDeptUserByDeptId(deptId);
+    }
+
+    /**
+     * 根据用户ids 获取部门 用户信息
+     *
+     * @param userIdList
+     * @return java.util.List<com.erp.model.sys.dto.SysDepartmentUserNumberDTO>
+     * @author yl
+     * @date 2023-06-15 16:56
+     */
+    @Override
+    public List<SysDepartmentUserNumberDTO> listDeptUserByUserIdList(List<String> userIdList) {
+        if (CollectionUtils.isEmpty(userIdList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listDeptUserByUserIdList(userIdList);
     }
 
 

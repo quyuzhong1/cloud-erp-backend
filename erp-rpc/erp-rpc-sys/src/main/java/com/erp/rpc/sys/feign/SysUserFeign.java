@@ -103,6 +103,8 @@ public interface SysUserFeign {
     @PostMapping("feign/user/getUserByUserId")
     FindUserDTO getUserByUserId(@RequestBody String userId);
 
+
+
     /**
      *  根据用户名称查询用户
      */
@@ -249,6 +251,9 @@ public interface SysUserFeign {
      **/
     @PostMapping("feign/dept/getDeptByUserId")
     SysDepartmentUserNumberDTO getDeptByUserId(@RequestBody String userId);
+
+    @PostMapping("feign/dept/listDeptUserByUserIdList")
+    List<SysDepartmentUserNumberDTO> listDeptUserByUserIdList(@RequestBody List<String> userIdList);
 
     /**
      * 更新业务单据状态
