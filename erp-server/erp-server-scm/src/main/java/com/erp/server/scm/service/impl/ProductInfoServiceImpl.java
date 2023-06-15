@@ -43,8 +43,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<String> notExistIdList = ids.stream().filter(s -> !dbIds.contains(s)).collect(Collectors.toList());
         List<ProductInfoEntity> existDetailEntityList = ListProductInfoByIds(existIdList);
         List<ProductInfoEntity> notExistDetailEntityList = ListProductInfoByIds(notExistIdList);
-        baseMapper.updateBatchSelective(existDetailEntityList);
-        this.saveBatch(notExistDetailEntityList);
+        if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
+            baseMapper.updateBatchSelective(existDetailEntityList);
+        }
+        if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
+            this.saveBatch(notExistDetailEntityList);
+        }
         return Boolean.TRUE;
     }
 }
