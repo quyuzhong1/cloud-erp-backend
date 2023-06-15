@@ -310,20 +310,6 @@ public class PurchaseOrderController extends BaseController {
         return success(list);
     }
 
-
-    /**
-     * 下推收货单保存
-     * @author Will
-     * @date: 2023/3/15 18:26
-     * @param dto
-     * @return ApiResult
-     */
-    @PostMapping("/generateReceive")
-    public ApiResult generateReceive(@RequestBody @Validated PurchaseOrderDTO.ListGenerateReceiveDTO dto) {
-        Boolean flag = purchaseOrderService.generateReceive(dto);
-        return flag == true ? success() : failure();
-    }
-
     /**
      * 下推采购入库单弹窗显示
      * @author Will

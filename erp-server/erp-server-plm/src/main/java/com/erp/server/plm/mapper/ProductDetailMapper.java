@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.core.utils.ObjectUtils;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -119,7 +120,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @param values
      * @return java.lang.Boolean
      **/
-    Boolean updateFiledBatch(@Param("ids") List<String> ids, @Param("tableName") String tableName, @Param("filedName") String filedName, @Param("values") String values, @Param("keyName") String keyName);
+    Boolean updateFiledBatch(@Param("ids") List<String> ids, @Param("tableName") String tableName, @Param("filedName") String filedName, @Param("values") Object values, @Param("keyName") String keyName);
 }
 
 

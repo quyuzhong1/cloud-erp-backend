@@ -26,5 +26,5 @@ public class ProductDetailBatchUpdateDTO implements Serializable {
     /**
      * 字段内容
      */
-    private String values;
+    private Object values;
 }

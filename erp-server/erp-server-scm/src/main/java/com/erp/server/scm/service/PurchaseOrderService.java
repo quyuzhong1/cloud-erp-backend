@@ -171,14 +171,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return List<ViewGenerateReceiveDTO>
      */
     List<PurchaseOrderDTO.ViewGenerateReceiveDTO> viewGenerateReceive(List<String> ids);
-    /**
-     * @description: 下推签收单保存
-     * @author Will
-     * @date: 2023/3/29 16:46
-     * @param dto
-     * @return Boolean
-     */
-    Boolean generateReceive(PurchaseOrderDTO.ListGenerateReceiveDTO dto);
+
     /**
      * @description: 采购变更数据显示
      * @author Will
