@@ -915,7 +915,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             addDTO.setDeliveryWarehouseId(warehouseReceiveEntity.getDeliveryWarehouseId());
             addDTO.setStockInUserId(warehouseReceiveEntity.getReceiveUserId());
             addDTO.setStockInDeptId(deptByUserId.getDepartmentId());
-            addDTO.setIsSubcontract(entity.getIsSubcontract());
+            addDTO.setSubcontractType(entity.getSubcontractType());
             List<String> detailList = dtos.stream().filter(req -> req.getMainId().equals(id)).map(WarehouseReceiveDTO.GenerateStockInDTO::getId).collect(Collectors.toList());
             List<PoInstockDetailEntity> stockInDetailEntityList = poInstockDetailService.listDetailBySourceDetailIds(detailList);
             //设置明细
@@ -1045,7 +1045,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 addDTO.setReceiveDeptId(deptByUserId.getDepartmentId());
                 addDTO.setBillDate(generateReceiveDTO.getBillDate());
                 addDTO.setDeliveryWarehouseId(generateReceiveDTO.getDeliveryWarehouseId());
-                addDTO.setIsSubcontract(entity.getIsSubcontract());
+                addDTO.setSubcontractType(entity.getSubcontractType());
                 List<WarehouseReceiveDetailDTO.AddDTO> warehouseReceiveDetailList = new ArrayList<>();
                 for (PurchaseOrderDTO.GenerateReceiveDTO receiveDTO : list) {
                     if (generateReceiveDTO.getId().equals(receiveDTO.getId())) {

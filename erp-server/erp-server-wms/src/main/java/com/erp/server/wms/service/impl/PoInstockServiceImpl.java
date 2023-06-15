@@ -921,7 +921,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             addDTO.setDeliveryWarehouseId(entity.getDeliveryWarehouseId());
             addDTO.setStockInDeptId(entity.getPurchaseDeptId());
             addDTO.setStockInUserId(entity.getPurchaseUserId());
-            addDTO.setIsSubcontract(entity.getIsSubcontract());
+            addDTO.setSubcontractType(entity.getSubcontractType());
             List<PoInstockDetailDTO.AddDTO> details = new ArrayList<>();
             for (PurchaseOrderDTO.GenerateStockInDTO generateStockInDTO : value) {
                 PoInstockDetailDTO.AddDTO addDetailDTO = new PoInstockDetailDTO.AddDTO();

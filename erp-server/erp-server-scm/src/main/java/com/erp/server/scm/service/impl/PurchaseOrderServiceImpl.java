@@ -1119,7 +1119,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
             throw new ServiceException(ApiError.ERROR_98025);
         }
-        if (!purchaseOrderEntity.getIsSubcontract()) {
+        if (StringUtils.isBlank(purchaseOrderEntity.getSubcontractType())) {
             return Collections.EMPTY_LIST;
         }
         List<PurchaseOrderDTO.ViewSubcontractPoDTO> list =  baseMapper.viewSubcontractPo(purchaseOrderEntity.getSourceId());

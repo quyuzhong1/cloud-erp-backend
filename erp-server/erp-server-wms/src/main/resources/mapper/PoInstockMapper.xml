@@ -25,7 +25,7 @@
             psid.exceed_qty,
             psi.delivery_warehouse_name,
             psid.remark,
-            psi.is_subcontract as isSubcontract,
+            psi.subcontract_type as subcontractType,
             psid.warehouse_location
         from po_instock psi
         inner join po_instock_detail psid on psi.id = psid.main_id and psid.is_deleted = false

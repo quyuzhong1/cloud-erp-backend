@@ -17,6 +17,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SubcontractTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
@@ -39,8 +40,11 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.server.scm.mapper.SubcontractOrderMapper;
 import com.erp.server.scm.service.*;
 import com.google.common.collect.Sets;
@@ -90,6 +94,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Autowired
     private PurchasePriceDetailService purchasePriceDetailService;
+
+    @Autowired
+    private InventoryFeign inventoryFeign;
+
 
     @Override
     public PagingVO<SubcontractOrderDTO.ListDTO> paging(PagingDTO<SubcontractOrderDTO.PagingParamDTO> pagingParamDTO) {
@@ -322,6 +330,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+        //校验申请单下推数量
+
+
         // 新审核状态
         ApproveStatusEnum approveStatus = Objects.equals(ApproveTypeEnum.PASS, approveType) ? ApproveStatusEnum.APPROVE : ApproveStatusEnum.REJECT;
         if(Objects.equals(ApproveTypeEnum.PASS, approveType)) {
@@ -453,6 +464,12 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(viewDTO.getSupplierId())).findFirst().flatMap(e -> Optional.ofNullable(e.getName())).orElse("");
             viewDTO.setSupplierName(supplierName);
 
+            //根据组织、仓库、sku查询可用库存
+            List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSkuInventoryTotalList(Arrays.asList(viewDTO.getSkuId()),viewDTO.getWarehouseId());
+            //即时库存
+            Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(viewDTO.getSkuId())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+            viewDTO.setCurInventoryQty(curInventoryQty);
 
             //子集SKU
             List<SubcontractOrderDetailEntity> childList = detailList.stream().filter(obj -> obj.getParentId().equals(viewDTO.getId())).collect(Collectors.toList());
@@ -467,6 +484,13 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 //供应商名称
                 String childSupplierName = supplierList.stream().filter(obj -> obj.getId().equals(viewDTO.getSupplierId())).findFirst().flatMap(e -> Optional.ofNullable(e.getName())).orElse("");
                 childViewDTO.setSupplierName(childSupplierName);
+
+                //根据组织、仓库、sku查询可用库存
+                List<InventoryQtyDTO.SkuInventoryTotalDTO> childSkuInventoryTotalList = listSkuInventoryTotalList(Arrays.asList(viewDTO.getSkuId()),viewDTO.getWarehouseId());
+                //即时库存
+                Integer childCurInventoryQty = childSkuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(childViewDTO.getSkuId())).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
+                childViewDTO.setCurInventoryQty(childCurInventoryQty);
             }
 
             viewDTO.setChildList(childDTOList);
@@ -578,8 +602,14 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //采购主表
             PurchaseOrderDTO.AddDTO addDTO = new PurchaseOrderDTO.AddDTO();
             BeanMapperUtils.copy(generatePoAddDTO,addDTO);
-            addDTO.setIsSubcontract(Boolean.TRUE);
 
+            //委外类型
+            if (generatePoAddDTO.getIsParent()) {
+                addDTO.setSubcontractType(SubcontractTypeEnum.ENUM_PARENT.getCode());
+            } else {
+                addDTO.setSubcontractType(SubcontractTypeEnum.ENUM_CHILD.getCode());
+
+            }
             //采购供应商
             PurchaseOrderSupplierDTO.AddDTO supplierDTO = new PurchaseOrderSupplierDTO.AddDTO();
             supplierDTO.setSupplierId(generatePoAddDTO.getSupplierId());
@@ -775,6 +805,16 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             }
             mainIds.add(data.getId());
         }
+    }
+
+    private List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventoryTotalList(List<String> skuIdList, String warehouseId) {
+        InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
+        paramDTO.setSkuIds(skuIdList);
+        paramDTO.setWarehouseId(warehouseId);
+        paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        //从wms 获取到sku 的即时库存信息
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
+        return skuInventoryTotalList;
     }
 
     /**

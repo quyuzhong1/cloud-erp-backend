@@ -166,8 +166,8 @@ public class WarehouseReceiveEntity extends BaseEntity<WarehouseReceiveEntity> {
     /**
      * 是否是委外
      */
-    @TableField("is_subcontract")
-    private Boolean isSubcontract;
+    @TableField("subcontract_type")
+    private String subcontractType;
 
     @Override
     public Serializable pkVal() {

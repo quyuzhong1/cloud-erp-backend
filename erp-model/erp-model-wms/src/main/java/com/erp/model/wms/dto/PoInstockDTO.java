@@ -149,7 +149,7 @@ public class PoInstockDTO implements Serializable {
         /**
          * 是否是委外订单
          */
-        private Boolean isSubcontract;
+        private String subcontractType;
 
         /**
          * 仓位
@@ -273,7 +273,7 @@ public class PoInstockDTO implements Serializable {
         /**
          * 是否是委外订单
          */
-        private Boolean isSubcontract;
+        private String subcontractType;
     }
 
     @Data
