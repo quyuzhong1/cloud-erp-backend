@@ -122,6 +122,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
             if (mongoDatum.toString().equals(entity.toString())) {
                 continue;
             }
+            entity.set_id(null);
             pushToMqList.add(entity);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
             OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
