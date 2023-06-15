@@ -35,9 +35,10 @@ public interface BasicCategoryService extends IService<BasicCategoryEntity> {
      * @Author Luo_WG
      * @Date 2022/9/28 18:51
      * @param categoryName：类别名称
+     * @param isMainCategory：是否是一级主类别
      * @return BasicCategoryEntity
      **/
-    BasicCategoryEntity getCategoryByName(String categoryName);
+    BasicCategoryEntity getCategoryByName(String categoryName, Boolean isMainCategory);
     /**
      * @description: 查询最高级
      * @author Will

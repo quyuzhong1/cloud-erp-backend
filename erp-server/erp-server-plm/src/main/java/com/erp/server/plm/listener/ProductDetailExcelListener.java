@@ -209,15 +209,15 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         }
 
         //产品分类
-        String category = dto.getCategory();
-        BasicCategoryEntity basicCategoryEntity = basicCategoryService.getCategoryByName(category);
+        String category = dto.getMainCategory();
+        BasicCategoryEntity basicCategoryEntity = basicCategoryService.getCategoryByName(category, Boolean.TRUE);
         if (ObjectUtils.isEmpty(basicCategoryEntity)) {
-            errorMsgList.add("产品分类不存在");
+            errorMsgList.add("产品分类一级类目不存在");
         } else {
             //父级品类
             List<BasicCategoryEntity> categoryList = basicCategoryService.listParentEntity(basicCategoryEntity.getId());
             if (CollectionUtils.isEmpty(categoryList)) {
-                errorMsgList.add("产品分类不存在");
+                errorMsgList.add(ApiError.ERROR_95091.msg);
             }
             //一级品类
             BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
@@ -225,9 +225,18 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                 errorMsgList.add(ApiError.ERROR_95091.msg);
             }
             //二级品类
-            BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> bestEntity.getId().equals(obj.getPid())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondEntity.getCode())) {
-                errorMsgList.add(ApiError.ERROR_95092.msg);
+            String secondaryCategory = dto.getSecondaryCategory();
+            BasicCategoryEntity secondaryCategoryEntity = basicCategoryService.getCategoryByName(secondaryCategory, Boolean.FALSE);
+            if (ObjectUtils.isEmpty(secondaryCategoryEntity) ) {
+                errorMsgList.add("二级类目不存在");
+            } else {
+                BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> secondaryCategoryEntity.getPid().equals(obj.getId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondaryCategoryEntity.getCode())) {
+                    errorMsgList.add(ApiError.ERROR_95092.msg);
+                }
+                if (!bestEntity.getId().equals(secondaryCategoryEntity.getPid())) {
+                    errorMsgList.add("产品分类一级类目和二级类目的关系不匹配");
+                }
             }
             productInfoDTO.setCategory(category);
             productInfoDTO.setCategoryId(basicCategoryEntity.getId());

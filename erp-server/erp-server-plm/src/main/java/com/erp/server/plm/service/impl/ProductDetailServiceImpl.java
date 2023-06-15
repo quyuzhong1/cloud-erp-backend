@@ -1469,6 +1469,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<ProductDetailExcelDTO> list = productDetailMapper.getExportSkuExcel(productSkuExcelDTO);
         list.forEach(req -> {
+            List<BasicCategoryEntity> categoryList = basicCategoryService.listParentEntity(req.getCategoryId());
+            //一级品类
+            BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(bestEntity)) {
+                req.setMainCategory(bestEntity.getName());
+                //二级品类
+                BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> bestEntity.getId().equals(obj.getPid())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(secondEntity)) {
+                    req.setSecondaryCategory(secondEntity.getName());
+                }
+            }
+
             //销售状态编码转换成中文
             req.setProductStateName(ProductDetailStateEnum.getNameByCode(Integer.valueOf(req.getProductStateName())));
             if (StringUtils.isNotBlank(req.getSaleState())) {

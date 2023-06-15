@@ -548,15 +548,21 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
 
     /**
      * @param categoryName：类别名称
+     * @param isMainCategory：是否是一级主类别
      * @return BasicCategoryEntity
      * @Description 根据类别名称查询类别信息
      * @Author Luo_WG
      * @Date 2022/9/28 18:51
      **/
     @Override
-    public BasicCategoryEntity getCategoryByName(String categoryName) {
+    public BasicCategoryEntity getCategoryByName(String categoryName, Boolean isMainCategory) {
         LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(BasicCategoryEntity::getName, categoryName);
+        if (isMainCategory) {
+            queryWrapper.eq(BasicCategoryEntity::getPid, "0");
+        } else {
+            queryWrapper.ne(BasicCategoryEntity::getPid, "0");
+        }
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
     }

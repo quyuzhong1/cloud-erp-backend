@@ -375,7 +375,9 @@
         SELECT
         pi.spu_no as spuNo,
         pd.sku_no as skuNo,
-        pi.category,
+        pi.category_id AS categoryId,
+        pi.category AS mainCategory,
+        pi.category AS secondaryCategory,
         pi.sale_method as saleMethod,
         pi.sell_spot as sellSpot,
         pi.function_desc as functionDesc,

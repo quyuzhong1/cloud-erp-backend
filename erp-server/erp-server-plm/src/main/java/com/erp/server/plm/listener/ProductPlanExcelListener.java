@@ -125,7 +125,7 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
         //产品分类
         String category = productPlanExcelDTO.getCategory();
         if (StringUtils.isNotBlank(category)) {
-            BasicCategoryEntity basicCategoryEntity = basicCategoryService.getCategoryByName(category);
+            BasicCategoryEntity basicCategoryEntity = basicCategoryService.getCategoryByName(category, Boolean.FALSE);
             if (ObjectUtils.isEmpty(basicCategoryEntity)) {
                 errorMsgList.add("产品分类不存在");
             } else {
