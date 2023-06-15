@@ -42,4 +42,15 @@ public enum ProjectStateEnum {
         }
         return "";
     }
+
+    public static ProjectStateEnum getEnum(Integer code) {
+        if (code != null) {
+            for (ProjectStateEnum state : ProjectStateEnum.values()) {
+                if (code.equals(state.getState())) {
+                    return state;
+                }
+            }
+        }
+        return null;
+    }
 }

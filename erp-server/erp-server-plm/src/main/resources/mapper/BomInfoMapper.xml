@@ -137,7 +137,8 @@
             pd.status,
             pi.category,
             pi.brand_name as brandName,
-            pbi.bom_version as bomVersion
+            pbi.bom_version as bomVersion,
+            pd.variant_property
         from product_bom_info pbi
         inner join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
         left join product_detail pd on pbs.parent_sku_no = pd.sku_no and pd.is_deleted = false
@@ -159,7 +160,7 @@
         </where>
     </select>
 
-    <select id="listBomSkuByBomIds" resultType="com.erp.model.plm.dto.BomSkuPageDTO$ListDTO">
+    <select id="listBomSkuByBomIds" resultType="com.erp.model.plm.dto.BomSkuPageDTO$ChildDTO">
         select
             pbi.id as bomId,
             pd.images_url as imagesUrl,
@@ -172,7 +173,8 @@
             pi.category,
             pi.brand_name as brandName,
             pbi.bom_version as bomVersion,
-            pbs.quantity
+            pbs.quantity,
+            pd.variant_property
         from product_bom_info pbi
         inner join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
         left join product_detail pd on pbs.sku_no = pd.sku_no and pd.is_deleted = false

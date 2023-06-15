@@ -191,6 +191,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private CfgProductOwnerRuleService cfgProductOwnerRuleService;
 
+    @Autowired
+    private ProductSaleService productSaleService;
+
 
     private static final String CLASSPATH = String.valueOf(ProductInfoEntity.class);
 
@@ -1156,10 +1159,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 noticeMessageService.projectApprovalNotice(loginUser.getUserName(), dto.getProductId());
                 projectInfoService.addProject(dto.getProductId(), newProduct.getName(), product.getProjectChargeId());
             }
-            //如果状态为已中止则更新产品开发列表开发状态为中止开发
-            if (ApprovalStatusEnum.TERMINATE.getCode().equals(approvalStatus)) {
-                productDetailService.updateProductStateByProductId(newProduct.getId(), ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode());
-            }
+
+            //修改产品开发状态
+            updateProductStateByApprovalStatus(Arrays.asList(newProduct.getId()), approvalStatus);
 
             UpdateProductDTO updateDto = new UpdateProductDTO();
             BeanMapperUtils.copy(newProduct, updateDto);
@@ -1217,10 +1219,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                         if (ProjectStateEnum.ING.getState().equals(projectStatus)) {
                             noticeMessageService.beginProjectNotice(loginUser.getUserName(), productId);
                         }
-                        //如果状态为已终止则更新产品开发列表开发状态为中止开发
-                        if (ProjectStateEnum.STOP.getState().equals(projectStatus)) {
-                            productDetailService.updateProductStateByProductId(productId, ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode());
-                        }
+                        //修改产品开发状态
+                        updateProductStateByProjectState(Arrays.asList(productId), projectStatus);
                     }
                     project.setProjectStatus(projectStatus);
 
@@ -1236,6 +1236,75 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     }
 
+    /**
+     * 同步修改产品开发状态
+     * @Author Luo_WG
+     * @Date 2023/6/15 15:32
+     * @param productInfoIds
+     * @param approvalStatus
+     * @return void
+     **/
+    private void updateProductStateByApprovalStatus(List<String> productInfoIds, Integer approvalStatus) {
+        switch (ApprovalStatusEnum.getEnum(approvalStatus)) {
+            case WAIT :
+                //如果状态为未开始时，更新产品信息{产品开发状态}：未开发
+                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.NO_DEVELOP.getCode());
+                break;
+            case APPROVAL :
+                //如果状态为已立项时，更新产品信息{产品开发状态}：开发中
+                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DEVELOP_AFOOT.getCode());
+                break;
+            case TERMINATE :
+                //如果状态改为中止，更新产品信息{产品开发状态}：中止开发；
+                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode());
+                break;
+            case SUSPEND :
+                //如果状态改为暂停时，更新产品信息{产品开发状态}：暂停；
+                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.SUSPEND_DEVELOP.getCode());
+                break;
+            default:
+                break;
+        }
+    }
+
+    /**
+     * 同步修改产品开发状态
+     * @Author Luo_WG
+     * @Date 2023/6/15 15:32
+     * @param productInfoIds
+     * @param projectState
+     * @return void
+     **/
+    private void updateProductStateByProjectState(List<String> productInfoIds, Integer projectState) {
+        switch (ProjectStateEnum.getEnum(projectState)) {
+            case YES_START :
+                //如果状态为已启动，更新产品信息{产品开发状态}：开发中
+                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DEVELOP_AFOOT.getCode());
+                break;
+            case ING :
+                //如果状态为进行中，更新产品信息{产品开发状态}：开发中
+                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DEVELOP_AFOOT.getCode());
+                break;
+            case FINISH :
+                //如果状态改为已完成，更新产品信息{产品开发状态}：开发完成；
+                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DEVELOP_FINISH.getCode());
+                List<ProductDetailEntity> detailEntityList = productDetailService.listSkuByProductIds(productInfoIds);
+                //{销售状态}更新为是
+                List<String> detailIds = detailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+                productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, Boolean.TRUE).in(ProductSaleEntity::getSkuId,detailIds).update();
+                break;
+            case STOP :
+                //如果状态改为已中止，更新产品信息{产品开发状态}：中止开发；
+                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode());
+                break;
+            case SUSPEND :
+                //如果状态改为暂停，更新产品信息{产品开发状态}：暂停；
+                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.SUSPEND_DEVELOP.getCode());
+                break;
+            default:
+                break;
+        }
+    }
 
     /**
      * 导出数据
@@ -1798,6 +1867,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             productStatusTimeService.batchSaveOrUpdateProductStatusTime(productIdList, approvalCode);
             //更新产品规划的产品状态
             productPlanService.updateBatchPlanStatus(productIdList, approvalCode, MathUtil.ONE);
+            //已立项时，更新产品信息{产品开发状态}：开发中
+            productDetailService.updateProductStateByProductIdList(productIdList, ProductDetailStateEnum.DEVELOP_AFOOT.getCode());
         }
 
         return result;

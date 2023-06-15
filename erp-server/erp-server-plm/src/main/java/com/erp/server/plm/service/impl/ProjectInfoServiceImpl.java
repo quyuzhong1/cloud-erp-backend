@@ -568,6 +568,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                     for (ProductInfoEntity item : productInfoList) {
                         productPlanService.updateProductPlanStatus(item.getId(), item.getApprovalStatus(), MathUtil.ONE);
                     }
+                    //修改产品开发状态
+                    List<String> productIds = projectInfoList.stream().map(ProjectInfoEntity::getProductId).collect(Collectors.toList());
+                    productDetailService.updateProductStateByProductIdList(productIds, ProductDetailStateEnum.DEVELOP_AFOOT.getCode());
                 }
             }
 
@@ -624,6 +627,10 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 item.setApprovalStatus(productSuspend);
             }
             result = productInfoService.updateBatchById(productInfoList);
+
+            //修改产品开发状态
+            List<String> productIds = projectInfoList.stream().map(ProjectInfoEntity::getProductId).collect(Collectors.toList());
+            productDetailService.updateProductStateByProductIdList(productIds, ProductDetailStateEnum.SUSPEND_DEVELOP.getCode());
         }
 
         return result;

@@ -43,4 +43,13 @@ public enum ApprovalStatusEnum implements EnumMessage {
         }
         return "";
     }
+
+    public static ApprovalStatusEnum getEnum(Integer code) {
+        for (ApprovalStatusEnum state : ApprovalStatusEnum.values()) {
+            if (code.equals(state.getCode())) {
+                return state;
+            }
+        }
+        return null;
+    }
 }

@@ -258,4 +258,12 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return
      */
     List<PurchaseOrderEntity> findByCodes(List<String> codes);
+    /**
+     * @description: 根据采购订单id查询委外订单下所有的采购订单id
+     * @author Will
+     * @date: 2023/6/15 15:10
+     * @param poId
+     * @return List<ViewSubcontractPoDTO>
+     */
+    List<PurchaseOrderDTO.ViewSubcontractPoDTO> viewSubcontractPo(String poId);
 }

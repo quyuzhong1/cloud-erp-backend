@@ -34,6 +34,6 @@ public interface BomInfoMapper  extends BaseMapper<BomInfoEntity> {
 
     IPage<BomSkuPageDTO.ListDTO> skuPaging(Page query, @Param("params") BomSkuPageDTO.PagingParamDTO params);
 
-    List<BomSkuPageDTO.ListDTO> listBomSkuByBomIds(@Param("bomIds") List<String> bomIds);
+    List<BomSkuPageDTO.ChildDTO> listBomSkuByBomIds(@Param("bomIds") List<String> bomIds);
 }
 

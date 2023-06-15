@@ -22,6 +22,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -32,8 +33,10 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.PoInstockDTO;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryFinishDeliveryDetailDTO;
@@ -1056,8 +1059,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //退货数量
         List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
 
+        //根据SKU查询BOM判断是否是组合SKU
+        List<String> skuIds = records.stream().map(PurchaseOrderDTO.ListDTO::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+
         records.forEach(obj -> {
-            obj.setArrivalStatusName(ArrivalStatusEnum.getNameByCode(obj.getArrivalStatus()));
+
             Integer receiveQty = MathUtil.ZERO;
             Integer deliveryQty = MathUtil.ZERO;
             Integer returnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -1085,14 +1092,51 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
             obj.setReturnQty(returnQtyt);
             obj.setStockInQty(stockInQty);
+
+
+            //是否是组合SKU
+            if (CollectionUtils.isNotEmpty(bomChildrenList)) {
+                long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(obj.getSkuId())).count();
+                if (count > 0) {
+                    obj.setIsConstitute(Boolean.TRUE);
+                }
+            }
+
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
+            obj.setArrivalStatusName(ArrivalStatusEnum.getNameByCode(obj.getArrivalStatus()));
         });
     }
 
     @Override
     public List<PurchaseOrderEntity> findByCodes(List<String> codes) {
         return lambdaQuery().in(PurchaseOrderEntity::getCode, codes).list();
+    }
+
+    @Override
+    public List<PurchaseOrderDTO.ViewSubcontractPoDTO> viewSubcontractPo(String poId) {
+        PurchaseOrderEntity purchaseOrderEntity = this.getById(poId);
+        if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        if (!purchaseOrderEntity.getIsSubcontract()) {
+            return Collections.EMPTY_LIST;
+        }
+        List<PurchaseOrderDTO.ViewSubcontractPoDTO> list =  baseMapper.viewSubcontractPo(purchaseOrderEntity.getSourceId());
+        if (CollectionUtils.isEmpty(list)) {
+            return list;
+        }
+        List<String> skuIds = list.stream().map(PurchaseOrderDTO.ViewSubcontractPoDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
+        for (PurchaseOrderDTO.ViewSubcontractPoDTO viewSubcontractPoDTO : list) {
+            //产品名称
+            String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(viewSubcontractPoDTO.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
+            viewSubcontractPoDTO.setProductName(productName);
+            //单据状态名称
+            viewSubcontractPoDTO.setApproveStatusName(ApproveStatusEnum.getName(viewSubcontractPoDTO.getApproveStatus()));
+        }
+        return list;
     }
 
 

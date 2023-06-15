@@ -177,11 +177,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         }
         //列表数据处理
         purchaseOrderService.doOpHandlePurchaseOrder(list);
-        for (PurchaseOrderDTO.ListDTO listDTO : list) {
-            if (detailId.equals(listDTO.getSourceDetailId())) {
-                listDTO.setIsParent(Boolean.TRUE);
-            }
-        }
         return list;
     }
 

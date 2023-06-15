@@ -73,7 +73,87 @@ public class BomSkuPageDTO {
         /**
          * SKU状态
          */
-        private String status;
+        private Integer status;
+
+        /**
+         * SKU状态名称
+         */
+        private String statusName;
+
+        /**
+         * 二级分类
+         */
+        private String category;
+
+        /**
+         * 产品品类
+         */
+        private String brandName;
+
+        /**
+         * bom版本
+         */
+        private String bomVersion;
+
+        /**
+         * 变体属性
+         */
+        private String variantProperty;
+
+        /**
+         * 子件信息
+         */
+        private List<ChildDTO> childList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ChildDTO {
+
+        /**
+         * bomId
+         */
+        private String bomId;
+
+        /**
+         * 图片
+         */
+        private String imagesUrl;
+
+        /**
+         * SKU名称
+         */
+        private String skuName;
+
+        /**
+         * SKUID
+         */
+        private String skuId;
+
+        /**
+         * SKU编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品id
+         */
+        private String productId;
+
+        /**
+         * spu编号
+         */
+        private String spuNo;
+
+        /**
+         * SKU状态
+         */
+        private Integer status;
+
+        /**
+         * SKU状态名称
+         */
+        private String statusName;
 
         /**
          * 二级分类
@@ -96,9 +176,8 @@ public class BomSkuPageDTO {
         private Integer quantity;
 
         /**
-         * 子件信息
+         * 变体属性
          */
-        private List<ListDTO> childList;
+        private String variantProperty;
     }
-
 }
