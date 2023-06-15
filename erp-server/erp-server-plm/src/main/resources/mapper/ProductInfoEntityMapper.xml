@@ -795,8 +795,8 @@
         SELECT
         approval_status AS status,
         count(*)
-        FROM product_infois
-        WHERE is_deleted=FALSE  AND is_finished_product_dev = 1 AND is_deleted=FALSE
+        FROM product_info
+        WHERE is_deleted=FALSE  AND is_finished_product_dev = 1
         AND  id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
         <if test="productIdList!=null and productIdList.size>0">
             AND id IN
@@ -813,6 +813,8 @@
         count(*)
         FROM product_info
         WHERE is_deleted=FALSE  AND is_finished_product_dev = 1
+         AND id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+
         <if test="productIdList!=null and productIdList.size>0">
             AND id IN
             <foreach collection="productIdList" item="productId" open="(" separator="," close=")">
