@@ -84,11 +84,16 @@ public class ProductOverviewDTO implements Serializable {
          */
         private Integer productStatus;
 
+        /**
+         * 项目状态
+         */
+        private Integer projectStatus;
+
 
         /**
-         * 产品状态名
+         * 状态名
          */
-        private String productStatusName;
+        private String statusName;
 
         /**
          * 预计开始时间

@@ -188,6 +188,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     private TaskChargeDistributionService taskChargeDistributionService;
 
 
+    @Autowired
+    private CfgProductOwnerRuleService cfgProductOwnerRuleService;
+
+
     private static final String CLASSPATH = String.valueOf(ProductInfoEntity.class);
 
     /**
@@ -408,9 +412,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             if (!entity.getName().equals(dto.getProductName())) {
                 throw new ServiceException(ApiError.ERROR_95009);
             }
-            entity.setDeleteState(IsConstant.YES);
-            entity.setIsDeleted(Boolean.TRUE);
-            flag = this.updateById(entity);
+            flag = this.removeById(productId);
             //当保存成功 就要去删除对应的任务了
             if (flag) {
                 //删除任务
@@ -567,9 +569,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public ProductDTO.ProductCountDTO allCount() {
         //产品的统计
         List<ProductDTO.CountBaseDTO> productCountList = baseMapper.listStatusCount(new ArrayList<>());
+
+        //产品延期的统计
+        List<ProductDTO.CountBaseDTO> progressCountList = baseMapper.listProgressStatusCount(new ArrayList<>());
         //项目的统计
         List<ProductDTO.CountBaseDTO> projectCountList = projectInfoService.listStatusCount(new ArrayList<>());
-        return getProductCount(productCountList, projectCountList);
+        return getProductCount(productCountList, projectCountList, progressCountList);
     }
 
 
@@ -591,9 +596,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<String> findProductIdList = taskProductIdList.stream().distinct().collect(Collectors.toList());
         //产品的统计
         List<ProductDTO.CountBaseDTO> productCountList = baseMapper.listStatusCount(findProductIdList);
+        //产品延期的统计
+        List<ProductDTO.CountBaseDTO> progressCountList = baseMapper.listProgressStatusCount(findProductIdList);
         //项目的统计
         List<ProductDTO.CountBaseDTO> projectCountList = projectInfoService.listStatusCount(findProductIdList);
-        return getProductCount(productCountList, projectCountList);
+        return getProductCount(productCountList, projectCountList, progressCountList);
     }
 
 
@@ -611,9 +618,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<String> productIdList = userAddProductList.stream().map(UserAddProductEntity::getProductId).collect(Collectors.toList());
         //产品的统计
         List<ProductDTO.CountBaseDTO> productCountList = baseMapper.listStatusCount(productIdList);
+        //产品延期的统计
+        List<ProductDTO.CountBaseDTO> progressCountList = baseMapper.listProgressStatusCount(productIdList);
         //项目的统计
         List<ProductDTO.CountBaseDTO> projectCountList = projectInfoService.listStatusCount(productIdList);
-        return getProductCount(productCountList, projectCountList);
+        return getProductCount(productCountList, projectCountList, progressCountList);
 
     }
 
@@ -649,7 +658,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      *
      * @return
      */
-    private ProductDTO.ProductCountDTO getProductCount(List<ProductDTO.CountBaseDTO> productCountList, List<ProductDTO.CountBaseDTO> projectCountList) {
+    private ProductDTO.ProductCountDTO getProductCount(List<ProductDTO.CountBaseDTO> productCountList, List<ProductDTO.CountBaseDTO> projectCountList, List<ProductDTO.CountBaseDTO> progressCountList) {
         ProductDTO.ProductCountDTO result = new ProductDTO.ProductCountDTO();
         //产品的是状态
         Integer approval = ApprovalStatusEnum.APPROVAL.getCode();
@@ -705,8 +714,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
         result.setSuspendCount(projectSuspendCount + productSuspendCount);
 
+        //延期
+        String postponeStatus = ProductProgressStatusEnum.POSTPONE.getStatus();
+
         //延期的数量
-        int delayCount = projectInfoService.getDelayCount(new ArrayList<>());
+        int delayCount = progressCountList.stream().filter(p -> postponeStatus.equals(p.getStatus())).
+                mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
         result.setDelayCount(delayCount);
         return result;
     }
@@ -743,14 +756,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 if (CollectionUtils.isNotEmpty(myCollectProductIds) && myCollectProductIds.contains(item.getProductId())) {
                     item.setIfAddProduct(true);
                     item.setIsAddProductName("是");
-                }else{
+                } else {
                     item.setIsAddProductName("否");
                     item.setIfAddProduct(false);
                 }
                 if (ProductConstant.ITERATION_PRODUCT.equals(item.getType())) {
                     item.setIfIteration(true);
                     item.setIsIterationName("是");
-                }else{
+                } else {
                     item.setIfIteration(false);
                     item.setIsIterationName("否");
                 }
@@ -767,7 +780,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                         map(CountDTO::getCount).orElse(0);
                 item.setFinishDocsCount(finishDocsCount);
 
-                item.setDocsCountStr(finishDocsCount+"/"+totalDocsCount);
+                item.setDocsCountStr(finishDocsCount + "/" + totalDocsCount);
                 //迭代数
                 Integer iterateCount = productRelevance.stream().filter(p -> productId.equals(p.getFlagId())).findFirst().
                         map(CountDTO::getCount).orElse(0);
@@ -813,7 +826,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 Long finishedCount = productTaskList.stream().filter(f -> finishedList.contains(f.getStatus())).count();
                 item.setFinishedCount(Math.toIntExact(finishedCount));
 
-                item.setTaskCountStr(finishedCount+"/"+taskCount);
+                item.setTaskCountStr(finishedCount + "/" + taskCount);
                 //我的总任务数
                 List<ProjectTaskEntity> myTaskList = productTaskList.stream().filter(m -> ArrayUtils.contains(m.getChargeId().split(","), userId)).collect(Collectors.toList());
                 int myTaskTotalCount = myTaskList.size();
@@ -821,7 +834,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 //我完成的
                 long myTaskFinishedCount = myTaskList.stream().filter(f -> finishedList.contains(f.getStatus())).count();
                 item.setMyTaskFinishedCount((int) myTaskFinishedCount);
-                item.setMyTaskCountStr(myTaskFinishedCount+"/"+myTaskTotalCount);
+                item.setMyTaskCountStr(myTaskFinishedCount + "/" + myTaskTotalCount);
                 Integer planWorkHour = taskTimeList.stream().filter(t -> t.getProductId().equals(productId)).
                         mapToInt(ProjectTaskTimeRecordDTO.TaskWorkTimeDTO::getTaskTime).sum();
                 item.setPlanWorkHour(planWorkHour);
@@ -870,7 +883,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     private void checkName(String name, String id) {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductInfoEntity::getName, name);
-        queryWrapper.eq(ProductInfoEntity::getDeleteState, IsConstant.NO);
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(ProductInfoEntity::getId, id);
         }
@@ -986,7 +998,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public List<Map<String, Object>> getListObjs() {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(ProductInfoEntity::getId, ProductInfoEntity::getName);
-        queryWrapper.eq(ProductInfoEntity::getDeleteState, IsConstant.NO);
         queryWrapper.eq(ProductInfoEntity::getIsFinishedProductDev, IsConstant.YES);
         return this.listMaps(queryWrapper);
     }
@@ -1462,7 +1473,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         }
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ProductInfoEntity::getCategoryId, categoryIds);
-        queryWrapper.eq(ProductInfoEntity::getDeleteState, 0);
         queryWrapper.eq(ProductInfoEntity::getIsFinishedProductDev, isFinishedProductDev);
         return this.list(queryWrapper);
     }
@@ -1487,7 +1497,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ProductInfoEntity::getCategoryId, categoryIds);
-        queryWrapper.eq(ProductInfoEntity::getDeleteState, 0);
         if (isFinishedProductDev) {
             queryWrapper.eq(ProductInfoEntity::getIsFinishedProductDev, IsConstant.YES);
         } else {
@@ -1523,7 +1532,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //获取到归档的产品id
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(ProductInfoEntity::getDeleteState, 0);
         //如果是产品开发管理
         if (isFinishedProductDev) {
             queryWrapper.eq(ProductInfoEntity::getIsFinishedProductDev, IsConstant.YES);
@@ -1807,7 +1815,22 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Override
     public ProductOverviewDTO.InfoDTO overview(String productId) {
         ProductOverviewDTO.InfoDTO info = baseMapper.overviewBase(productId);
-        return null;
+        Integer projectStatus = info.getProjectStatus();
+        Integer productStatus = info.getProductStatus();
+        String statusName = ApprovalStatusEnum.getName(productStatus);
+        if (projectStatus != null) {
+            statusName = ProjectStateEnum.getName(projectStatus);
+        }
+        info.setStatusName(statusName);
+        //分类id
+        String categoryId = info.getCategoryId();
+        List<BasicCategoryEntity> categoryList = basicCategoryService.listParentEntity(categoryId);
+        List<String> allCategoryIdList = categoryList.stream().map(BasicCategoryEntity::getId).collect(Collectors.toList());
+        CfgProductOwnerRuleEntity productOwner = cfgProductOwnerRuleService.getByCategoryIdList(allCategoryIdList);
+        info.setProductOwnerOrgId(productOwner.getOrgId());
+        info.setProductOwnerOrgName(productOwner.getOrgName());
+
+        return info;
     }
 
 
@@ -1832,7 +1855,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
-        List<ProductShowDTO> list=baseMapper.listAllExport(params,categoryIdList);
+        List<ProductShowDTO> list = baseMapper.listAllExport(params, categoryIdList);
         fillPagingDb(list);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/product.xlsx";
@@ -1851,14 +1874,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     }
 
 
-
     /**
      * 我的项目导出
-     * @author yl
-     * @date 2023-06-15 10:02
+     *
      * @param params
      * @param response
      * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-06-15 10:02
      */
     @Override
     public Boolean myProjectExport(ProductSearchDTO.ExportDTO params, HttpServletResponse response) {
@@ -1880,7 +1903,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             params.setProductIds(productIdList);
         }
         //我的项目
-        List<ProductShowDTO> list=baseMapper.listMyProjectExport(params,categoryIdList,userId);
+        List<ProductShowDTO> list = baseMapper.listMyProjectExport(params, categoryIdList, userId);
         //填充分页数据
         fillPagingDb(list);
         StringBuffer sb = new StringBuffer();
@@ -1901,11 +1924,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     /**
      * 收藏项目导出
-     * @author yl
-     * @date 2023-06-15 10:10
+     *
      * @param params
      * @param response
      * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-06-15 10:10
      */
     @Override
     public Boolean collectExport(ProductSearchDTO.ExportDTO params, HttpServletResponse response) {
@@ -1919,7 +1943,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
         //收藏的项目
-        List<ProductShowDTO> list = baseMapper.collectExport( params, categoryIdList);
+        List<ProductShowDTO> list = baseMapper.collectExport(params, categoryIdList);
         //填充分页数据
         fillPagingDb(list);
         StringBuffer sb = new StringBuffer();

@@ -91,6 +91,8 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
 
     List<ProductDTO.CountBaseDTO> listStatusCount(@Param("productIdList") List<String> productIdList);
 
+    List<ProductDTO.CountBaseDTO> listProgressStatusCount(@Param("productIdList") List<String> productIdList);
+
     List<String> listProductIdByUserId(@Param("userId")String userId);
 
     /**
