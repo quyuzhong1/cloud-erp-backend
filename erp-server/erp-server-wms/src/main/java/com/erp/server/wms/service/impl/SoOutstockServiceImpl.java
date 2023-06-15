@@ -35,6 +35,7 @@ import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
+import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -375,7 +376,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //销售订单的id
         List<String> soIds = list.stream().map(SoOutstockEntity::getSoId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(soIds);
-        List<String> soDetailIdList = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
+        List<String> detailIdList = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
         List<String> allList = list.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
         //发货通知单
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
@@ -386,6 +387,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> noticeIdList = noticeSoOutstockList.stream().map(SoOutstockEntity::getSourceId).collect(Collectors.toList());
         //发货通知集合
         List<SoDeliveryNoticeEntity> noticeList = CollectionUtils.isNotEmpty(noticeIdList) ? soDeliveryNoticeService.listByIds(noticeIdList) : Collections.emptyList();
+        //发货通知单详情
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailByMainIds(noticeIdList);
+        detailIdList.addAll(soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList()));
         for (SoDeliveryNoticeEntity item : noticeList) {
             String deliveryNoticeId = item.getId();
             SoOutstockEntity noticeSoOutstock = noticeSoOutstockList.stream().filter(o -> o.getSourceId().equals(deliveryNoticeId)).findFirst().orElse(null);
@@ -400,7 +404,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soDeliveryNoticeService.updateBatchById(noticeList);
 
         //这个是销售订单的 这个要统计 存在多个
-        List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockDetailService.listDetailBySoDetailIds(soDetailIdList);
+        List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockDetailService.listDetailBySoDetailIds(detailIdList);
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         soOutstockDetailList = soOutstockDetailList.stream().filter(s -> s.getApproveStatus().equals(approveStatus)).collect(Collectors.toList());
         //分组
