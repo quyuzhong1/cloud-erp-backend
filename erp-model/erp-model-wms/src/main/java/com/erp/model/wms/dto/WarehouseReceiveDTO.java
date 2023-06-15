@@ -64,7 +64,7 @@ public class WarehouseReceiveDTO {
         /**
          * 是否是委外订单
          */
-        private Boolean isSubcontract;
+        private String subcontractType;
 
         /**
          * 报价明细
@@ -421,7 +421,7 @@ public class WarehouseReceiveDTO {
         /**
          * 是否是委外订单
          */
-        private Boolean isSubcontract;
+        private String subcontractType;
 
         /**
          * 创建时间

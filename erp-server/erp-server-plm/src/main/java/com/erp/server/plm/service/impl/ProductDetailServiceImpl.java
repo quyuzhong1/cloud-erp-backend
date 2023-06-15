@@ -54,6 +54,7 @@ import org.thymeleaf.util.ListUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -173,6 +174,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Autowired
     private ProductVariantPropertyService productVariantPropertyService;
+
+    @Autowired
+    private ProductCustomsService productCustomsService;
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -341,6 +345,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             attestation.setSkuImagesUrl(skuImagesUrl);
         }
         productNoSpecDetailAllDTO.setProductAttestationList(productAttestationList);
+
+        //查询目的国海关编码
+        List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(productId);
+        productNoSpecDetailAllDTO.setProductCustomsList(productCustomsEntityList);
         return productNoSpecDetailAllDTO;
     }
 
@@ -496,6 +504,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             attestation.setSkuImagesUrl(skuImagesUrl);
         }
         productManyDetail.setProductAttestationList(productAttestationList);
+
+        //查询目的国海关编码
+        List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(productId);
+        productManyDetail.setProductCustomsList(productCustomsEntityList);
         return productManyDetail;
     }
 
@@ -725,15 +737,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //9.修改/新增  包装辅料信息
         List<ProductAccessoriesDTO> productAccessoriesList = productNoSpecDTO.getProductAccessoriesList();
         if (CollectionUtils.isNotEmpty(productAccessoriesList)) {
-
             for (ProductAccessoriesDTO accessories : productAccessoriesList) {
                 accessories.setParentSkuId(skuId);
                 accessories.setProductId(id);
             }
-
             //添加包装辅料的日志
             addProductAccessoriesLog(productAccessoriesList, id);
-
             productAccessoriesService.saveOrUpdateBatchAccessories(productAccessoriesList);
         }
 
@@ -743,11 +752,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             for (ProductAttestationDTO attestation : productAttestationList) {
                 attestation.setSkuId(skuId);
             }
-
             addProductAttestationLog(productAttestationList, id);
             productAttestationService.saveOrUpdateBatchAttestation(productAttestationList);
         }
 
+        //11.修改/新增  目的国海关编码信息
+        ProductCustomsDTO productCustomsDTO = productNoSpecDTO.getProductCustomsDTO();
+        if (ObjectUtils.isEmpty(productCustomsDTO)) {
+            ProductCustomsEntity customsEntity = new ProductCustomsEntity();
+            BeanMapper.copy(productCustomsDTO, customsEntity);
+            productCustomsService.saveOrUpdate(customsEntity);
+        }
         return true;
     }
 
@@ -886,7 +901,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productAttestationService.saveOrUpdateBatchAttestation(productAttestationList);
         }
 
-
+        //11.修改/新增  目的国海关编码信息
+        List<ProductCustomsDTO> productCustomsDTOList = productManySpecDTO.getProductCustomsDTOList();
+        if (CollectionUtils.isNotEmpty(productCustomsDTOList)) {
+            List<ProductCustomsEntity> list = BeanMapper.copyList(productCustomsDTOList, ProductCustomsEntity.class);
+            productCustomsService.saveOrUpdateBatch(list);
+        }
         return true;
     }
 

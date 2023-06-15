@@ -700,6 +700,9 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             log.error("单据【{}】未审核完成，不支持下推",codes);
             throw new ServiceException(new ApiResult(ApiError.ERROR_1039.code, StrUtil.format(ApiError.ERROR_1039.msg,codes)));
         }
+        List<String> sourceDetailIds = list.stream().map(PurchaseApplicationDTO.GenerateSubcontractOrderDTO::getSourceDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDTO.ListDTO> purchaseOrderList = purchaseOrderService.listBySourceDetailIds(sourceDetailIds);
+
 
         Map<String, List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO>> map = list.stream().collect(Collectors.groupingBy(PurchaseApplicationDTO.GenerateSubcontractOrderDTO::getSourceId));
         for (Map.Entry<String, List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO>> entry :  map.entrySet()) {
@@ -719,6 +722,14 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             //委外订单明细数据
             List<SubcontractOrderDetailDTO.AddDTO> detailList = new ArrayList<>();
             for (PurchaseApplicationDTO.GenerateSubcontractOrderDTO generateDetailDTO :  value) {
+                if (CollectionUtils.isNotEmpty(purchaseOrderList)) {
+                    long count = purchaseOrderList.stream().filter(obj -> obj.getSourceDetailId().equals(generateDetailDTO.getSourceDetailId())).count();
+                    if (count > 0) {
+                        log.error("采购申请单【{}】明细SKU【{}】已下推采购订单",generateDetailDTO.getSourceCode(),generateDetailDTO.getSkuId());
+                        throw new ServiceException(new ApiResult(ApiError.ERROR_98075.code,StrUtil.format(ApiError.ERROR_98075.msg,generateDetailDTO.getSourceCode(),generateDetailDTO.getSkuId())));
+                    }
+                }
+
                 //委外订单父级SKU
                 SubcontractOrderDetailDTO.AddDTO detail = BeanMapperUtils.map(SubcontractOrderDetailDTO.AddDTO.class, generateDetailDTO);
 

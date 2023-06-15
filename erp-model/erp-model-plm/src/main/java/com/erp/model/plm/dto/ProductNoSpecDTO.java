@@ -79,4 +79,10 @@ public class ProductNoSpecDTO {
      */
     @Valid
     private List<ProductAttestationDTO> productAttestationList;
+
+    /**
+     * 目的国海关编码信息
+     */
+    @Valid
+    private ProductCustomsDTO productCustomsDTO;
 }

@@ -185,7 +185,7 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 是否是委外订单
          */
-        private Boolean isSubcontract;
+        private String subcontractType;
 
         /**
          * 是否是组合SKU
@@ -324,7 +324,7 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 是否是委外订单
          */
-        private Boolean isSubcontract;
+        private String subcontractType;
 
         /**
          * 来源id

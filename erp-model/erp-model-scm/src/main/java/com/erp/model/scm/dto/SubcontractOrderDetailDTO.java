@@ -65,14 +65,14 @@ public class SubcontractOrderDetailDTO implements Serializable {
         private String warehouseName;
 
         /**
-        * 是否是赠品（false否，true是）
-        */
-        private Boolean isGift;
-
-        /**
         * bom版本
         */
         private Integer bomVersion;
+
+        /**
+         * 即时库存数量
+         */
+        private Integer curInventoryQty;
 
         /**
          * 子件集合

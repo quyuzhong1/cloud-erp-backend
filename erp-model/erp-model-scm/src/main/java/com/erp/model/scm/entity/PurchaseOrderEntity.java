@@ -161,8 +161,8 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
     /**
      * 是否是委外
      */
-    @TableField("is_subcontract")
-    private Boolean isSubcontract;
+    @TableField("subcontract_type")
+    private String subcontractType;
 
     /**
      * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
