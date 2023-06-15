@@ -143,7 +143,7 @@ public class PurchaseBusinessGatherTableDTO extends PermissionsDTO implements Se
         /**
          * spu集合
          */
-        private List<String> spuIdList;
+        private List<String> spuList;
         /**
          * 仓库id
          */

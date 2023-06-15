@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.time.LocalDate;
+
 /**
  * <p>
  * 采购入库明细表
@@ -95,6 +97,9 @@ public class PoInstockDetailEntity extends BaseEntity<PoInstockDetailEntity> {
 
     @TableField(exist = false)
     private String approveStatus;
+
+    @TableField(exist = false)
+    private LocalDate billDate;
 
     public PoInstockDetailEntity() {
         this.stockInQty = 0;

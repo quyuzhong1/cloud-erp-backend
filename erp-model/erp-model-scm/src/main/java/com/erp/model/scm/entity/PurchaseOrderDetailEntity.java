@@ -214,6 +214,7 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
 
     public PurchaseOrderDetailEntity() {
         this.taxRate = BigDecimal.ZERO;
+        this.taxPrice = BigDecimal.ZERO;
         this.purchaseAmount = BigDecimal.ZERO;
     }
 
