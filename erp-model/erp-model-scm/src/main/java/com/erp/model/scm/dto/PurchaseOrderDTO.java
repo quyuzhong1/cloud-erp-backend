@@ -183,9 +183,14 @@ public class PurchaseOrderDTO implements Serializable {
         private LocalDateTime createTime;
 
         /**
-         * 是否是父级SKU
+         * 是否是委外订单
          */
-        private Boolean isParent;
+        private Boolean isSubcontract;
+
+        /**
+         * 是否是组合SKU
+         */
+        private Boolean isConstitute;
 
         /**
          * 来源明细id
@@ -927,5 +932,57 @@ public class PurchaseOrderDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ViewSubcontractPoDTO {
 
+        /**
+         * 采购单号
+         */
+        private String code;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 单据状态
+         */
+        private String approveStatus;
+        /**
+         * 单据状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * SKUId
+         */
+        private String skuId;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 预计交货日期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 交货仓库
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 采购员
+         */
+        private String  purchaseUserName;
+    }
 }

@@ -30,6 +30,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomOperationTypeEnum;
 import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
@@ -233,12 +234,22 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             return new PagingVO(pageData);
         }
         List<String> bomIds = records.stream().map(BomSkuPageDTO.ListDTO::getBomId).collect(Collectors.toList());
-        List<BomSkuPageDTO.ListDTO> childList = baseMapper.listBomSkuByBomIds(bomIds);
+        List<BomSkuPageDTO.ChildDTO> childList = baseMapper.listBomSkuByBomIds(bomIds);
         if (CollectionUtils.isEmpty(childList)) {
             throw new ServiceException(ApiError.ERROR_95166);
         }
         for (BomSkuPageDTO.ListDTO listDTO : records) {
-            List<BomSkuPageDTO.ListDTO> childDTOList = childList.stream().filter(obj -> obj.getBomId().equals(listDTO.getBomId())).collect(Collectors.toList());
+            //状态名称
+            listDTO.setStatusName(ProductDetailStatusEnum.getName(listDTO.getStatus()));
+
+            //子件
+            List<BomSkuPageDTO.ChildDTO> childDTOList = childList.stream().filter(obj -> obj.getBomId().equals(listDTO.getBomId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(childDTOList)) {
+                for (BomSkuPageDTO.ChildDTO childDTO: childDTOList) {
+                    //状态名称
+                    childDTO.setStatusName(ProductDetailStatusEnum.getName(childDTO.getStatus()));
+                }
+            }
             listDTO.setChildList(childDTOList);
         }
 

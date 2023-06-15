@@ -24,6 +24,7 @@
             wr.create_user_name,
             wrd.purchase_order_detail_id,
             wrd.remark,
+            wr.is_subcontract as isSubcontract,
             wr.create_time
         FROM po_receive_detail wrd
         INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE

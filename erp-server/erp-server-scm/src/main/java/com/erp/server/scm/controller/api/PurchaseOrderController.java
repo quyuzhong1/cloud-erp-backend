@@ -2,10 +2,7 @@ package com.erp.server.scm.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -487,7 +484,18 @@ public class PurchaseOrderController extends BaseController {
     }
 
 
-
+    /**
+     * 查询委外采购订单
+     * @author Will
+     * @date: 2023/6/15 15:09
+     * @param dto
+     * @return ApiResult<List<ViewSubcontractPoDTO>>
+     */
+    @PostMapping("/viewSubcontractPo")
+    public ApiResult<List<PurchaseOrderDTO.ViewSubcontractPoDTO>> viewSubcontractPo(@RequestBody @Validated BaseIdDTO dto) {
+        List<PurchaseOrderDTO.ViewSubcontractPoDTO> list = purchaseOrderService.viewSubcontractPo(dto.getId());
+        return success(list);
+    }
 
 
 

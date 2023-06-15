@@ -81,4 +81,12 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return List<ListDTO>
      */
     List<PurchaseOrderDTO.ListDTO> listBySourceDetailIds(@Param("sourceDetailIds") List<String> sourceDetailIds);
+    /**
+     * @description: 查询委外采购订单
+     * @author Will
+     * @date: 2023/6/15 15:16
+     * @param sourceId
+     * @return List<ViewSubcontractPoDTO>
+     */
+    List<PurchaseOrderDTO.ViewSubcontractPoDTO> viewSubcontractPo(@Param("sourceId") String sourceId);
 }

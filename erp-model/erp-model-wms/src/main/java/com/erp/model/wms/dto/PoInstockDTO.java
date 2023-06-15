@@ -147,6 +147,11 @@ public class PoInstockDTO implements Serializable {
         private LocalDateTime createTime;
 
         /**
+         * 是否是委外订单
+         */
+        private Boolean isSubcontract;
+
+        /**
          * 仓位
          */
         private String warehouseLocation;

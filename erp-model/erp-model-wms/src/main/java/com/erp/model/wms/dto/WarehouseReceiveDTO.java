@@ -419,6 +419,11 @@ public class WarehouseReceiveDTO {
         private String remark;
 
         /**
+         * 是否是委外订单
+         */
+        private Boolean isSubcontract;
+
+        /**
          * 创建时间
          */
         private LocalDateTime createTime;
