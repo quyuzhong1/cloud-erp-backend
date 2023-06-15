@@ -9,7 +9,6 @@ import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
@@ -356,25 +355,6 @@ public class InventoryReportDTO implements Serializable {
          * 标题
          */
         private String name;
-
-    }
-
-    /**
-     * 库龄计算表分页列表结果
-     */
-    @Data
-    @NoArgsConstructor
-    public static class InventoryAgePagingDTO {
-
-        /**
-         * 标题
-         */
-        LinkedHashMap<String, String> head;
-
-        /**
-         * 结果集
-         */
-        List<LinkedHashMap<String, Object>> data;
 
     }
 

@@ -170,6 +170,6 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * @param pagingParamDTO
      * @return
      */
-    PagingVO<InventoryReportDTO.InventoryAgePagingDTO> inventoryAgePaging(PagingDTO<InventoryReportDTO.InventoryAgeSearchParamDTO> pagingParamDTO);
+    PagingVO<LinkedHashMap> inventoryAgePaging(PagingDTO<InventoryReportDTO.InventoryAgeSearchParamDTO> pagingParamDTO);
 
 }

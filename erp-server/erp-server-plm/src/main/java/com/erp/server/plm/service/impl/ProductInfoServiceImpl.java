@@ -27,9 +27,11 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
+import com.erp.server.plm.constant.ProjectPlanConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.service.*;
@@ -51,8 +53,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.net.URLEncoder;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.WeekFields;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -574,7 +579,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<ProductDTO.CountBaseDTO> productCountList = baseMapper.listStatusCount(new ArrayList<>());
 
         //产品延期的统计
-        List<ProductDTO.CountBaseDTO> progressCountList = baseMapper.listProgressStatusCount(new ArrayList<>());
+        List<ProductDTO.CountBaseStrDTO> progressCountList = baseMapper.listProgressStatusCount(new ArrayList<>());
         //项目的统计
         List<ProductDTO.CountBaseDTO> projectCountList = projectInfoService.listStatusCount(new ArrayList<>());
         return getProductCount(productCountList, projectCountList, progressCountList);
@@ -600,7 +605,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //产品的统计
         List<ProductDTO.CountBaseDTO> productCountList = baseMapper.listStatusCount(findProductIdList);
         //产品延期的统计
-        List<ProductDTO.CountBaseDTO> progressCountList = baseMapper.listProgressStatusCount(findProductIdList);
+        List<ProductDTO.CountBaseStrDTO> progressCountList = baseMapper.listProgressStatusCount(findProductIdList);
         //项目的统计
         List<ProductDTO.CountBaseDTO> projectCountList = projectInfoService.listStatusCount(findProductIdList);
         return getProductCount(productCountList, projectCountList, progressCountList);
@@ -622,7 +627,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //产品的统计
         List<ProductDTO.CountBaseDTO> productCountList = baseMapper.listStatusCount(productIdList);
         //产品延期的统计
-        List<ProductDTO.CountBaseDTO> progressCountList = baseMapper.listProgressStatusCount(productIdList);
+        List<ProductDTO.CountBaseStrDTO> progressCountList = baseMapper.listProgressStatusCount(productIdList);
         //项目的统计
         List<ProductDTO.CountBaseDTO> projectCountList = projectInfoService.listStatusCount(productIdList);
         return getProductCount(productCountList, projectCountList, progressCountList);
@@ -661,7 +666,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      *
      * @return
      */
-    private ProductDTO.ProductCountDTO getProductCount(List<ProductDTO.CountBaseDTO> productCountList, List<ProductDTO.CountBaseDTO> projectCountList, List<ProductDTO.CountBaseDTO> progressCountList) {
+    private ProductDTO.ProductCountDTO getProductCount(List<ProductDTO.CountBaseDTO> productCountList, List<ProductDTO.CountBaseDTO> projectCountList, List<ProductDTO.CountBaseStrDTO> progressCountList) {
         ProductDTO.ProductCountDTO result = new ProductDTO.ProductCountDTO();
         //产品的是状态
         Integer approval = ApprovalStatusEnum.APPROVAL.getCode();
@@ -722,7 +727,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
         //延期的数量
         int delayCount = progressCountList.stream().filter(p -> postponeStatus.equals(p.getStatus())).
-                mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
+                mapToInt(ProductDTO.CountBaseStrDTO::getCount).sum();
         result.setDelayCount(delayCount);
         return result;
     }
@@ -1889,7 +1894,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         Integer projectStatus = info.getProjectStatus();
         Integer productStatus = info.getProductStatus();
         String statusName = ApprovalStatusEnum.getName(productStatus);
-        if (projectStatus != null){
+        if (projectStatus != null) {
             statusName = ProjectStateEnum.getName(projectStatus);
         }
         info.setStatusName(statusName);
@@ -1900,10 +1905,176 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         CfgProductOwnerRuleEntity productOwner = cfgProductOwnerRuleService.getByCategoryIdList(allCategoryIdList);
         info.setProductOwnerOrgId(productOwner.getOrgId());
         info.setProductOwnerOrgName(productOwner.getOrgName());
+        //结束时间
+        LocalDate endTime = info.getPlanEndTime();
 
+        LocalDate now = LocalDate.now();
+        //是否延期
+        Boolean isDelay = Boolean.FALSE;
+        if (endTime != null) {
+            Integer finishState = ProjectStateEnum.FINISH.getState();
+            //表示未完成
+            if (!finishState.equals(projectStatus)) {
+                if (now.compareTo(endTime) > 0) {
+                    isDelay = true;
+                }
+            }
+        }
+        info.setIsDelay(isDelay);
+        //产品任务
+        List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
+        //任务完成
+        Integer taskFinish = TaskStateEnum.FINISH.getCode();
+        //进行中
+        Integer taskIng = TaskStateEnum.ING.getCode();
+        //未开始
+        Integer taskNotStart = TaskStateEnum.NOT_START.getCode();
+        //取消
+        Integer taskClose = TaskStateEnum.CLOSE.getCode();
+        //排期变更的
+        String change = ProjectPlanConstant.PROJECT_PLAN_CHANGE;
 
+        //总任务
+        ProductOverviewDTO.TotalTaskDTO totalTask = new ProductOverviewDTO.TotalTaskDTO();
+        Integer totalCount = taskList.size();
+        totalTask.setTotalCount(totalCount);
+        //完成
+        long totalFinishCount = taskList.stream().filter(t -> taskFinish.equals(t.getStatus())).count();
+        //进行中
+        long totalDoingCount = taskList.stream().filter(t -> taskIng.equals(t.getStatus())).count();
+        //未开始
+        long totalNotStartCount = taskList.stream().filter(t -> taskNotStart.equals(t.getStatus())).count();
+        //取消
+        long totalCancelCount = taskList.stream().filter(t -> taskClose.equals(t.getStatus())).count();
+        //变更
+        long totalChangeCount = taskList.stream().filter(t -> change.equals(t.getScheduleType())).count();
+        totalTask.setFinishCount((int) totalFinishCount);
+        totalTask.setDoingCount((int) totalDoingCount);
+        totalTask.setNotStartCount((int) totalNotStartCount);
+        totalTask.setCancelCount((int) totalCancelCount);
+        totalTask.setChangeCount((int) totalChangeCount);
+        totalTask.setFinishRate(getFinishRate(totalFinishCount, totalCount));
+        info.setTotalTask(totalTask);
 
+        //周任务
+        ProductOverviewDTO.WeekTaskDTO weekTask = new ProductOverviewDTO.WeekTaskDTO();
+        //周开始
+        WeekFields weekFields = WeekFields.ISO;
+        LocalDate weekStart = now.with(weekFields.dayOfWeek(), 1L);
+        //周结束
+        LocalDate weekEnd = now.with(weekFields.dayOfWeek(), 7L);
+        List<ProjectTaskEntity> weekTaskList = taskList.stream().filter(t -> weekStart.compareTo(t.getPlanEndTime()) <= 0 && weekEnd.compareTo(t.getPlanEndTime()) >= 0).
+                collect(Collectors.toList());
+        Integer weekTotal = weekTaskList.size();
+        weekTask.setWeekCount(weekTotal);
+        //完成
+        long weekFinishCount = weekTaskList.stream().filter(t -> taskFinish.equals(t.getStatus())).count();
+        weekTask.setFinishCount((int) weekFinishCount);
+        //进行中
+        long weekDoingCount = weekTaskList.stream().filter(t -> taskIng.equals(t.getStatus())).count();
+        weekTask.setDoingCount((int) weekDoingCount);
+        //未开始
+        long weekNotStartCount = weekTaskList.stream().filter(t -> taskNotStart.equals(t.getStatus())).count();
+        weekTask.setNotStartCount((int) weekNotStartCount);
+        weekTask.setFinishRate(getFinishRate(weekFinishCount, weekTotal));
+        List<Integer> statusList = Arrays.asList(taskNotStart, taskIng);
+        long weekDelayCount = weekTaskList.stream().filter(w -> statusList.contains(w.getStatus()) && now.compareTo(w.getPlanEndTime()) < 0).count();
+        weekTask.setDelayCount((int) weekDelayCount);
+        info.setWeekTask(weekTask);
+
+        //到期任务信息
+        ProductOverviewDTO.ExpireTaskDTO expireTask = new ProductOverviewDTO.ExpireTaskDTO();
+        List<ProjectTaskEntity> expireTaskList = taskList.stream().filter(t -> now.compareTo(t.getPlanEndTime()) == 0).collect(Collectors.toList());
+        Integer expireCount = expireTaskList.size();
+        expireTask.setExpireCount(expireCount);
+        //完成
+        long expireFinishCount = expireTaskList.stream().filter(t -> taskFinish.equals(t.getStatus())).count();
+        expireTask.setFinishCount((int) expireFinishCount);
+        //进行中
+        long expireDoingCount = expireTaskList.stream().filter(t -> taskIng.equals(t.getStatus())).count();
+        expireTask.setDoingCount((int) expireDoingCount);
+        //未开始
+        long expireNotStartCount = expireTaskList.stream().filter(t -> taskNotStart.equals(t.getStatus())).count();
+        expireTask.setNotStartCount((int) expireNotStartCount);
+        expireTask.setFinishRate(getFinishRate(expireFinishCount, expireCount));
+        info.setExpireTask(expireTask);
+
+        //延期的任务
+        ProductOverviewDTO.DelayTaskDTO delayTask = new ProductOverviewDTO.DelayTaskDTO();
+        List<ProjectTaskEntity> delayTaskList = taskList.stream().filter(t -> now.compareTo(t.getPlanEndTime()) > 0).collect(Collectors.toList());
+        Integer delayCount = delayTaskList.size();
+        delayTask.setDelayCount(delayCount);
+        //完成
+        long delayFinishCount = delayTaskList.stream().filter(t -> taskFinish.equals(t.getStatus())).count();
+        delayTask.setFinishCount((int) delayFinishCount);
+        //未完成的任务id
+        List<String> unfinishedTaskIdList = delayTaskList.stream().filter(d -> !taskFinish.equals(d.getStatus())).
+                map(ProjectTaskEntity::getId).collect(Collectors.toList());
+        delayTask.setUnfinishedCount(unfinishedTaskIdList.size());
+        //获取到前置任务
+        List<PreTaskEntity> preTaskList = preTaskService.getPreTaskListBytaskIds(unfinishedTaskIdList);
+        //前置任务ids
+        List<String> preTaskIdList = preTaskList.stream().map(PreTaskEntity::getPreTaskId).collect(Collectors.toList());
+        //前置任务完成
+        List<ProjectTaskEntity> preTaskInfoList = taskList.stream().filter(p -> preTaskIdList.contains(p.getId()) &&
+                taskFinish.equals(p.getStatus())).collect(Collectors.toList());
+        delayTask.setPreTaskFinishCount(preTaskInfoList.size());
+        delayTask.setPreTaskIdList(preTaskInfoList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList()));
+        delayTask.setFinishRate(getFinishRate(delayFinishCount, delayCount));
+        info.setDelayTask(delayTask);
+        //这个是项目成员
+        List<MemberPagingShowDTO> projectMembersList = projectMembersService.listByMembers(productId);
+        ProductOverviewDTO.TeamMemberDTO teamMember = new ProductOverviewDTO.TeamMemberDTO();
+        List<String> userIdList = projectMembersList.stream().map(MemberPagingShowDTO::getMemberId).collect(Collectors.toList());
+        List<SysDepartmentUserNumberDTO> userDeptList = sysUserFeign.listDeptUserByUserIdList(userIdList);
+        List<String> imgUrlList = userDeptList.stream().map(SysDepartmentUserNumberDTO::getUserHeadIcon).collect(Collectors.toList());
+        teamMember.setMemberCount(projectMembersList.size());
+        teamMember.setImgUrlList(imgUrlList);
+        info.setTeamMember(teamMember);
+        List<String> chargeStatus = Arrays.asList(ProductConstant.PRODUCT_CHARGE, ProductConstant.PROJECT_CHARGE);
+        List<MemberPagingShowDTO> chargeList = projectMembersList.stream().filter(p -> chargeStatus.contains(p.getRoleName())).collect(Collectors.toList());
+        List<ProductOverviewDTO.ProductMemberDTO> chargeMemberList = getProductMember(chargeList, userDeptList, taskList);
+
+        List<MemberPagingShowDTO> otherList = projectMembersList.stream().filter(p -> !chargeStatus.contains(p.getRoleName())).collect(Collectors.toList());
+        List<ProductOverviewDTO.ProductMemberDTO> productMemberList = getProductMember(otherList, userDeptList, taskList);
+        info.setChargeMemberList(chargeMemberList);
+        info.setProductMemberList(productMemberList);
         return info;
+    }
+
+    public List<ProductOverviewDTO.ProductMemberDTO> getProductMember(List<MemberPagingShowDTO> chargeList, List<SysDepartmentUserNumberDTO> userDeptList, List<ProjectTaskEntity> taskList) {
+        List<ProductOverviewDTO.ProductMemberDTO> memberList = new ArrayList<>(chargeList.size());
+        Integer finishStatus = TaskStateEnum.FINISH.getCode();
+        for (MemberPagingShowDTO item : chargeList) {
+            String userId = item.getMemberId();
+            SysDepartmentUserNumberDTO deptUser = userDeptList.stream().filter(u -> u.getUserId().equals(userId)).findFirst().orElse(null);
+            if (deptUser != null) {
+                ProductOverviewDTO.ProductMemberDTO member = new ProductOverviewDTO.ProductMemberDTO();
+                member.setDeptId(deptUser.getDepartmentId());
+                member.setDeptName(deptUser.getDepartmentName());
+                member.setImgUrl(deptUser.getUserHeadIcon());
+                List<ProjectTaskEntity> myTaskList = taskList.stream().filter(t -> Arrays.asList(t.getChargeId().split(",")).
+                        contains(userId)).collect(Collectors.toList());
+                member.setTotalTaskCount(myTaskList.size());
+                long finishTaskCount = myTaskList.stream().filter(m -> finishStatus.equals(m.getStatus())).count();
+                member.setFinishTaskCount((int) finishTaskCount);
+                memberList.add(member);
+            }
+        }
+        return memberList;
+    }
+
+
+    /**
+     * 获取完成率
+     *
+     * @param finishCount
+     * @param totalCount
+     * @return
+     */
+    private BigDecimal getFinishRate(long finishCount, Integer totalCount) {
+        BigDecimal rete = MathUtil.divide(new BigDecimal(String.valueOf(finishCount)), new BigDecimal(String.valueOf(totalCount)));
+        return rete.multiply(MathUtil.BigDecimal_100);
     }
 
 

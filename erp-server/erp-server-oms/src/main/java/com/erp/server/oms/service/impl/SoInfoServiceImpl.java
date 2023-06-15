@@ -708,20 +708,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         checkRefBill(ids);
         //有销售变更的也不能反审核
         List<SoChangeEntity> soChangeList = soChangeService.listBySoIds(ids);
-        String waitSubmit = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        String approveIng = ApproveStatusEnum.APPROVE_ING.getStatus();
-        List<String> soChangeStatusList = new ArrayList<>();
-        soChangeStatusList.add(waitSubmit);
-        soChangeStatusList.add(approveIng);
-        long soChangeCount = soChangeList.stream().filter(s -> statusList.contains(s.getApproveStatus().getStatus())).count();
+
+        long soChangeCount = soChangeList.stream().filter(s -> !s.getInvalidStatus()).count();
         //表示 有变更中的销售变更单
         if (soChangeCount > 0) {
             throw new ServiceException(ApiError.ERROR_92047);
         }
-
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-
         Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(waitSubmitStatus), "");
         //反审核
         if (result) {

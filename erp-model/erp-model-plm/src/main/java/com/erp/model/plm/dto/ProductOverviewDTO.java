@@ -170,12 +170,12 @@ public class ProductOverviewDTO implements Serializable {
         /**
          * 产品经理，项目经理信息
          */
-        private ProductMemberDTO chargeMember;
+        private List<ProductMemberDTO> chargeMemberList;
 
         /**
          * 其它成员信息
          */
-        private ProductMemberDTO productMember;
+        private List<ProductMemberDTO> productMemberList;
     }
 
     /**
@@ -183,7 +183,7 @@ public class ProductOverviewDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public class TotalTaskDTO {
+    public static class TotalTaskDTO {
 
         /**
          * 总任务数
@@ -234,7 +234,7 @@ public class ProductOverviewDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public class WeekTaskDTO{
+    public static class WeekTaskDTO{
 
         /**
          * 总任务数
@@ -281,7 +281,7 @@ public class ProductOverviewDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public class ExpireTaskDTO  {
+    public static class ExpireTaskDTO  {
 
         /**
          * 到期的任务总数
@@ -320,7 +320,7 @@ public class ProductOverviewDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public class DelayTaskDTO  {
+    public static class DelayTaskDTO  {
 
         /**
          * 到期的任务总数
@@ -350,7 +350,6 @@ public class ProductOverviewDTO implements Serializable {
         private List<String> preTaskIdList;
 
 
-
         /**
          * 完成率
          */
@@ -365,7 +364,7 @@ public class ProductOverviewDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public class TeamMemberDTO  {
+    public static class TeamMemberDTO  {
 
         /**
          * 成员总数
@@ -388,7 +387,7 @@ public class ProductOverviewDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public class ProductMemberDTO  {
+    public static class ProductMemberDTO  {
 
 
 

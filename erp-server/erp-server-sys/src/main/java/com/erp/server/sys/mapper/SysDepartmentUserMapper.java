@@ -47,4 +47,6 @@ public interface SysDepartmentUserMapper  extends BaseMapper<SysDepartmentUserEn
      * @return java.util.List<com.common.business.dto.FindUserDTO>
      */
     List<FindUserDTO> listDeptUserByDeptId(@Param("deptId") String deptId);
+
+    List<SysDepartmentUserNumberDTO> listDeptUserByUserIdList(@Param("userIdList")List<String> userIdList);
 }
