@@ -154,7 +154,8 @@
     </select>
     <select id="inventoryAgePage" resultType="java.util.LinkedHashMap">
         select
-        warehouse_id,org_id,sku_id,max(sku_no) as sku_no,warehouse_location,max(spu_no) as spu_no,sum(qty) as usable_inventory
+        warehouse_id,org_id,sku_id,max(sku_no) as sku_no,warehouse_location,max(spu_no) as spu_no,max(sale_state) as sale_state,
+        sum(qty) as usable_inventory
         <if test="params.userRangeList != null and params.userRangeList.size  > 0">
             <foreach collection="params.userRangeList" item="item" open="," separator=",">
                 sum(case when age >=  #{item.startValue} and age <![CDATA[<]]> #{item.endValue} then qty else 0 end) as "${item.name}"

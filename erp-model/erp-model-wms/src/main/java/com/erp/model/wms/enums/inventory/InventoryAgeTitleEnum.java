@@ -13,7 +13,7 @@ public enum  InventoryAgeTitleEnum {
 
     SKU_INFO("skuInfo", "产品信息"),
     SPU_NO("spuNo", "SPU型号"),
-    SALE_STATUS_NAME("saleStatusName", "销售状态"),
+    SALE_STATE_NAME("saleStateName", "销售状态"),
     ORG_NAME("orgName", "库存组织"),
     WAREHOUSE_LOCATION("warehouseLocation", "仓位"),
     USABLE_INVENTORY("usableInventory", "可用库存"),

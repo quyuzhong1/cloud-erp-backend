@@ -12,6 +12,7 @@ import com.common.business.enums.DistributedLockEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.FieldConstant;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -536,15 +537,53 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             headMap.put(inventoryAgeTitleEnum.getCode(), inventoryAgeTitleEnum.getName());
         });
 
-        // 结果集字段转驼峰
+        List<String> skuIds = Lists.newArrayList();
         dataList.stream().forEach(data->{
+            skuIds.add(StrUtils.null2EmptyWithTrim(data.get("sku_id")));
+        });
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
+        Map<String,WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
+        Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
+
+        // 结果集字段转驼峰
+        dataList.stream().forEach(record->{
             LinkedHashMap convertMap = new LinkedHashMap();
-            data.forEach((k,v)->{
-                String camelKey = StrUtil.toCamelCase(StrUtils.null2EmptyWithTrim(k));
+            convertMap.put("productName", null);
+            convertMap.put("productImgUrl", null);
+            convertMap.put("saleStateName", null);
+            convertMap.put("warehouseName", null);
+            convertMap.put("orgName", null);
+            record.forEach((fieldKey,fieldVal)->{
+                String camelKey = StrUtil.toCamelCase(StrUtils.null2EmptyWithTrim(fieldKey));
+                // 动态字段标题
                 if(!headMap.containsKey(camelKey)) {
                     headMap.put(camelKey, camelKey);
                 }
-                convertMap.put(camelKey, v);
+                if(Objects.equals(fieldKey, FieldConstant.SKU_ID) && skuMap.containsKey(fieldVal)) {
+                    SkuVO skuVO = skuMap.get(fieldVal).get(0);
+                    convertMap.put("productName", skuVO.getSkuName());
+                    convertMap.put("productImgUrl", skuVO.getSkuImagesUrl());
+                }
+                // 销售状态
+                if(Objects.equals(fieldKey,FieldConstant.SALE_STATE) && Objects.nonNull(fieldVal) && StrUtils.isInteger(fieldVal) ) {
+                    convertMap.put("saleStateName", SaleStateEnum.getNameByCode(Integer.parseInt(StrUtils.null2EmptyWithTrim(fieldVal))));
+                }
+                // 仓库名称
+                if(Objects.equals(fieldKey,FieldConstant.WAREHOUSE_ID) && Objects.nonNull(fieldVal)) {
+                    WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(StrUtils.null2EmptyWithTrim(fieldVal), (warehouseId) -> warehouseService.detailWithCache(warehouseId));
+                    if (Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+                        convertMap.put("warehouseName", warehouseDetail.getName());
+                    }
+                }
+                // 组织名称
+                if(Objects.equals(fieldKey,FieldConstant.ORG_ID) && Objects.nonNull(fieldVal)) {
+                    SysAccountingCompanyEntity sysAccountingCompanyEntity = accountingCompanyMap.computeIfAbsent(StrUtils.null2EmptyWithTrim(fieldVal), (orgId) -> sysUserFeign.getCompanyById(orgId));
+                    if (Objects.nonNull(sysAccountingCompanyEntity)) {
+                        convertMap.put("orgName", sysAccountingCompanyEntity.getCompanyName());
+                    }
+                }
+                convertMap.put(camelKey, fieldVal);
             });
             convertDataList.add(convertMap);
         });
