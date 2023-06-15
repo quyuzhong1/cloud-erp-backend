@@ -263,7 +263,7 @@
         INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
         LEFT JOIN product_cost pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
-        WHERE pi.delete_state = 0 AND pi.is_deleted = FALSE
+        WHERE  pi.is_deleted = FALSE
         <if test="name != '' and name != null">
             AND pi."name" = #{name}
         </if>
@@ -334,7 +334,7 @@
         FROM product_info pi
         LEFT JOIN product_detail pd on pi.id = pd.product_id AND pd.is_deleted = FALSE
         LEFT JOIN product_unit unit ON pd.unit_id = unit.id AND unit.is_deleted = FALSE
-        WHERE pi.delete_state = 0 AND pi.is_deleted = FALSE
+        WHERE  pi.is_deleted = FALSE
         AND pi.id = #{productId}
         LIMIT 1
     </select>
@@ -450,7 +450,7 @@
         LEFT JOIN product_logistics pl ON pl.sku_id = pd."id" AND pl.is_deleted = FALSE
         LEFT JOIN product_unit unit ON pd.unit_id = unit.id AND unit.is_deleted = FALSE
         LEFT JOIN basic_dict dp ON pl.product_property_id = dp.id AND dp.is_deleted = FALSE
-        WHERE pi.delete_state = 0 AND pi.is_deleted = FALSE
+        WHERE  pi.is_deleted = FALSE
         <if test="params.no != '' and params.no != null">
             AND (pi.spu_no LIKE concat('%',#{params.no},'%') OR pd.sku_no LIKE concat('%',#{params.no},'%'))
         </if>
@@ -565,7 +565,7 @@
         pd.name AS skuName
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
-        WHERE pi.delete_state = 0 AND pd.is_deleted = FALSE
+        WHERE  pd.is_deleted = FALSE
         <if test="skuIdList != null and skuIdList.size>0">
             AND pd.id IN
             <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
@@ -634,13 +634,13 @@
         left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
         left join product_sale ps on pd.id = ps.sku_id and ps.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
-        WHERE pi.delete_state = 0 AND pd.is_deleted = FALSE
+        WHERE pi.is_deleted = FALSE AND pd.is_deleted = FALSE
         <if test="skuIds != null and skuIds.size>0">
             AND pd.id IN
             <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
                 #{skuId}
             </foreach>
-        </if>
+        </if>``
 
 
 

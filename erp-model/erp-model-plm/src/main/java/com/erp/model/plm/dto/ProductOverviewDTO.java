@@ -25,7 +25,7 @@ public class ProductOverviewDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public class BaseInfoDTO {
+    public static class BaseInfoDTO {
 
         /**
          * 产品id
@@ -138,7 +138,7 @@ public class ProductOverviewDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public class InfoDTO extends BaseInfoDTO {
+    public static class InfoDTO extends BaseInfoDTO {
 
         /**
          * 总任务信息

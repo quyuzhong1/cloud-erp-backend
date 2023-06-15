@@ -115,8 +115,7 @@ public class ProductInfoEntity extends BaseEntity implements Serializable {
     @TableField("category_id")
     private String categoryId;
 
-    @TableField("delete_state")
-    private Integer deleteState;
+
 
     @TableField("type")
     private Integer type;

@@ -1818,7 +1818,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         Integer projectStatus = info.getProjectStatus();
         Integer productStatus = info.getProductStatus();
         String statusName = ApprovalStatusEnum.getName(productStatus);
-        if (projectStatus != null) {
+        if (projectStatus != null){
             statusName = ProjectStateEnum.getName(projectStatus);
         }
         info.setStatusName(statusName);
@@ -1829,6 +1829,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         CfgProductOwnerRuleEntity productOwner = cfgProductOwnerRuleService.getByCategoryIdList(allCategoryIdList);
         info.setProductOwnerOrgId(productOwner.getOrgId());
         info.setProductOwnerOrgName(productOwner.getOrgName());
+
+
 
         return info;
     }
