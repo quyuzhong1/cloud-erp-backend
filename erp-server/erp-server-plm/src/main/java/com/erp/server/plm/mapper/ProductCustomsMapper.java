@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -17,4 +19,12 @@ import org.apache.ibatis.annotations.Mapper;
 public interface ProductCustomsMapper extends BaseMapper<ProductCustomsEntity> {
 
 
+    /**
+     * 根据产品id查询目的国海关编码
+     * @Author Luo_WG
+     * @Date 2023/6/15 16:52
+     * @param productId productId
+     * @return java.util.List<com.erp.model.plm.entity.ProductCustomsEntity>
+     **/
+    List<ProductCustomsEntity> listByProductId(String productId);
 }

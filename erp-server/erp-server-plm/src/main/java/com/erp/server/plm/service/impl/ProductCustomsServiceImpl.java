@@ -9,6 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;
+
+import javax.annotation.Resource;
+import java.util.List;
+
 /**
  * <p>
  *  服务实现类
@@ -21,6 +25,11 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMapper, ProductCustomsEntity> implements ProductCustomsService {
 
+    @Resource
+    private ProductCustomsMapper productCustomsMapper;
 
-
+    @Override
+    public List<ProductCustomsEntity> listByProductId(String productId) {
+        return productCustomsMapper.listByProductId(productId);
+    }
 }
