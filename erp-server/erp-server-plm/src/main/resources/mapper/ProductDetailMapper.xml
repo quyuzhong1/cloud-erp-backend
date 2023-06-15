@@ -640,10 +640,7 @@
             <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
                 #{skuId}
             </foreach>
-        </if>``
-
-
-
+        </if>
     </select>
 
     <select id="getProductDetailAll" resultType="com.erp.model.plm.entity.ProductDetailEntity">
