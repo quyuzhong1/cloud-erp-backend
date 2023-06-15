@@ -332,10 +332,10 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      */
 
     @Override
-    public PagingVO<List<ProductShowDTO>> paging(PagingDTO<ProductSearchDTO> dto) {
+    public PagingVO<List<ProductShowDTO>> paging(PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        ProductSearchDTO params = dto.getParams();
+        ProductSearchDTO.PagingParamDTO params = dto.getParams();
         IPage pageData = new Page();
         //获取@RequestPermissions的产品id
         List<String> archiveProductIds = archiveService.getArchiveProductIds();

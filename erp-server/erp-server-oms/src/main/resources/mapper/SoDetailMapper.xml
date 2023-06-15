@@ -41,8 +41,8 @@
 	      round( SUM (sd.price*qty ) / sum(sd.qty), 2 ) avgPrice
         FROM so_detail sd
         INNER JOIN so_info si ON sd.main_id = si.id
-        AND sd.is_deleted = FALSE
-        WHERE is_deleted=FALSE AND si.approve_status=#{approveStatus}
+        AND si.is_deleted = FALSE
+        WHERE sd.is_deleted=FALSE AND si.approve_status=#{approveStatus}
         AND sku_id!='' and qty!=0
         GROUP BY sku_id
     </select>

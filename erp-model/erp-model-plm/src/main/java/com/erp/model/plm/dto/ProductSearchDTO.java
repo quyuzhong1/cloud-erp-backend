@@ -1,6 +1,7 @@
 package com.erp.model.plm.dto;
 
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -19,82 +20,97 @@ import java.util.List;
 public class ProductSearchDTO extends PermissionsDTO {
 
 
-    /**
-     * 我的任务类型
-     * all 全部  finished 完成的  unfinished 未完成的
-     *
-     */
-    private String myTaskType;
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO  extends SortDTO {
+        /**
+         * 我的任务类型
+         * all 全部  finished 完成的  unfinished 未完成的
+         *
+         */
+        private String myTaskType;
 
 
-    /**
-     * 搜索关键字
-     */
-    private String searchKeyword;
+        /**
+         * 搜索关键字
+         */
+        private String searchKeyword;
 
-    /**
-     * 分类id
-     */
-    private String categoryId;
+        /**
+         * 分类id
+         */
+        private String categoryId;
 
-    /**
-     * 在点击分类可以获取到产品id
-     */
-    private List<String> productIds;
-
-
-
-
-    /**
-     * 阶段集合
-     */
-    private List<String> phaseNameList;
-
-    /**
-     * 状态列表
-     *  立项状态 0 待规划 1 调研中  2：ID设计中  3::已立项  4：已终止
-     */
-    private List<Integer> stateList;
+        /**
+         * 在点击分类可以获取到产品id
+         */
+        private List<String> productIds;
 
 
 
-    /**
-     * 产品等级
-     */
-    private List<String> gradeIdList;
 
-    /**
-     * 产品 品牌id 集合
-     */
-    private List<String> brandIdList;
+        /**
+         * 阶段集合
+         */
+        private List<String> phaseNameList;
 
-    /**
-     * 产品 属性
-     */
-    private List<String> propertyIdList;
+        /**
+         * 状态列表
+         *  立项状态 0 待规划 1 调研中  2：ID设计中  3::已立项  4：已终止
+         */
+        private List<Integer> stateList;
 
 
-    /**
-     * 产品 经理
-     */
-    private List<String> productChargeIdList;
 
-    /**
-     * 项目 经理
-     */
-    private List<String> projectChargeIdList;
+        /**
+         * 产品等级
+         */
+        private List<String> gradeIdList;
+
+        /**
+         * 产品 品牌id 集合
+         */
+        private List<String> brandIdList;
+
+        /**
+         * 产品 属性
+         */
+        private List<String> propertyIdList;
 
 
-    /**
-     * 项目进展
-     * 列表
-     */
-    private List<String> progressStatusList;
+        /**
+         * 产品 经理
+         */
+        private List<String> productChargeIdList;
+
+        /**
+         * 项目 经理
+         */
+        private List<String> projectChargeIdList;
 
 
-    /**
-     * 创建时间
-     */
-    private List<LocalDate> createTimeList;
+        /**
+         * 项目进展
+         * 列表
+         */
+        private List<String> progressStatusList;
+
+
+        /**
+         * 创建时间
+         */
+        private List<LocalDate> createTimeList;
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO{
+        /**
+         * 产品ids
+         */
+        private List<String> ids;
+    }
 
 }

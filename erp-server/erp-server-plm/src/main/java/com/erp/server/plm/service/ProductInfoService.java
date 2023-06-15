@@ -36,7 +36,7 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
 
     void exportTemplate(HttpServletRequest request, HttpServletResponse response);
 
-    PagingVO<ProductShowDTO> paging(PagingDTO<ProductSearchDTO> dto);
+    PagingVO<ProductShowDTO> paging(PagingDTO<ProductSearchDTO.PagingParamDTO> dto);
 
     /**
      * @description: 查询产品列表数据（无分页）
@@ -45,7 +45,7 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @param dto
      * @return List<ProductShowDTO>
      */
-    List<BasicDTO> listProductInfo(ProductSearchDTO dto);
+    List<BasicDTO> listProductInfo(ProductSearchDTO.PagingParamDTO dto);
 
     /**
      * 保存模板
@@ -199,7 +199,7 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @param dto
      * @return com.common.business.vo.PagingVO<com.erp.model.plm.dto.ProductShowDTO>
      */
-    PagingVO<ProductShowDTO> myProject(PagingDTO<ProductSearchDTO> dto);
+    PagingVO<ProductShowDTO> myProject(PagingDTO<ProductSearchDTO.PagingParamDTO> dto);
 
     /**
      * 收藏的项目
@@ -208,7 +208,7 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @param dto
      * @return com.common.business.vo.PagingVO<com.erp.model.plm.dto.ProductShowDTO>
      */
-    PagingVO<ProductShowDTO> collect(PagingDTO<ProductSearchDTO> dto);
+    PagingVO<ProductShowDTO> collect(PagingDTO<ProductSearchDTO.PagingParamDTO> dto);
 
     /**
      * 获取所有项目的统计
@@ -259,4 +259,34 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @return com.erp.model.plm.dto.ProductOverviewDTO.InfoDTO
      */
     ProductOverviewDTO.InfoDTO overview(String id);
+
+    /**
+     * 导出数据
+     * @author yl
+     * @date 2023-06-15 9:19
+     * @param dto
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean allExport(ProductSearchDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 我的项目导出
+     * @author yl
+     * @date 2023-06-15 10:02
+     * @param dto
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean myProjectExport(ProductSearchDTO.ExportDTO dto, HttpServletResponse response);
+
+    /**
+     * 收藏项目导出
+     * @author yl
+     * @date 2023-06-15 10:10
+     * @param dto
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean collectExport(ProductSearchDTO.ExportDTO dto, HttpServletResponse response);
 }

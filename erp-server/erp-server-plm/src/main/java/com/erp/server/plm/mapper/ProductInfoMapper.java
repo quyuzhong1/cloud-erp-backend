@@ -21,7 +21,9 @@ import java.util.List;
 @Mapper
 public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
 
-    IPage<ProductShowDTO> paging(Page query, @Param("params") ProductSearchDTO params,@Param("categoryIdList") List<String> categoryIdList);
+    IPage<ProductShowDTO> paging(Page query, @Param("params") ProductSearchDTO.PagingParamDTO params,@Param("categoryIdList") List<String> categoryIdList);
+
+    List<ProductShowDTO> listAllExport(@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList);
 
     /**
      * 我的项目
@@ -30,8 +32,16 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
      * @param categoryIdList
      * @return
      */
-    IPage<ProductShowDTO> myProjectPaging(Page query, @Param("params")ProductSearchDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId") String userId);
+    IPage<ProductShowDTO> myProjectPaging(Page query, @Param("params")ProductSearchDTO.PagingParamDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId") String userId);
 
+    /**
+     * 我的项目导出
+     * @param params
+     * @param categoryIdList
+     * @param userId
+     * @return
+     */
+    List<ProductShowDTO> listMyProjectExport(@Param("params") ProductSearchDTO.ExportDTO params, @Param("categoryIdList")List<String> categoryIdList, @Param("userId")String userId);
     /**
      * 收藏的项目
      * @param query
@@ -39,9 +49,11 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
      * @param categoryIdList
      * @return
      */
-    IPage<ProductShowDTO> collect(Page query, @Param("params") ProductSearchDTO params, @Param("categoryIdList")List<String> categoryIdList);
+    IPage<ProductShowDTO> collect(Page query, @Param("params") ProductSearchDTO.PagingParamDTO params, @Param("categoryIdList")List<String> categoryIdList);
 
-    List<BasicDTO> listNotPaging(@Param("params") ProductSearchDTO params,@Param("archiveProductIds") List<String> archiveProductIds,@Param("categoryIdList") List<String> categoryIdList);
+    List<ProductShowDTO> collectExport(@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList);
+
+    List<BasicDTO> listNotPaging(@Param("params") ProductSearchDTO.PagingParamDTO params,@Param("archiveProductIds") List<String> archiveProductIds,@Param("categoryIdList") List<String> categoryIdList);
 
     List<ProductExcelDTO> getExportProduct(@Param("productIds") List<String> productIds);
 
@@ -87,4 +99,7 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
      * @return
      */
     ProductOverviewDTO.InfoDTO overviewBase(@Param("productId")String productId);
+
+
+
 }

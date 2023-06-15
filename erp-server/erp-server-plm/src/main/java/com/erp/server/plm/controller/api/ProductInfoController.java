@@ -58,7 +58,7 @@ public class ProductInfoController extends BaseController {
             menuCode = "plm:product:paging",
             tableAlias = "pt"
     )
-    public ApiResult<PagingVO<ProductShowDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
+    public ApiResult<PagingVO<ProductShowDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.paging(dto);
         return success(pagingVO);
     }
@@ -72,7 +72,7 @@ public class ProductInfoController extends BaseController {
      * @date 2023-06-12 14:54
      */
     @PostMapping("/myProject")
-    public ApiResult<PagingVO<ProductShowDTO>> myProject(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
+    public ApiResult<PagingVO<ProductShowDTO>> myProject(@RequestBody @Validated PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.myProject(dto);
         return success(pagingVO);
     }
@@ -86,7 +86,7 @@ public class ProductInfoController extends BaseController {
      * @date 2023-06-12 14:54
      */
     @PostMapping("/collect")
-    public ApiResult<PagingVO<ProductShowDTO>> collect(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
+    public ApiResult<PagingVO<ProductShowDTO>> collect(@RequestBody @Validated PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.collect(dto);
         return success(pagingVO);
     }
@@ -129,6 +129,52 @@ public class ProductInfoController extends BaseController {
 
 
     /**
+     * 产品开发管理所有导出【PLM1.3】
+     * @param dto
+     * @param response
+     * @return
+     */
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "plm:product:paging",
+            tableAlias = "pt"
+    )
+    @PostMapping("/allExport")
+    public ApiResult allExport(@RequestBody @Validated ProductSearchDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result= productInfoService.allExport(dto,response);
+        return result ? success() : failure();
+    }
+
+
+    /**
+     * 产品开发管理我的项目导出【PLM1.3】
+     * @param dto
+     * @param response
+     * @return
+     */
+    @PostMapping("/myProjectExport")
+    public ApiResult myProjectExport(@RequestBody @Validated ProductSearchDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result= productInfoService.myProjectExport(dto,response);
+        return result ? success() : failure();
+    }
+
+
+    /**
+     * 产品开发管理 收藏项目导出【PLM1.3】
+     * @param dto
+     * @param response
+     * @return
+     */
+    @PostMapping("/collectExport")
+    public ApiResult collectExport(@RequestBody @Validated ProductSearchDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result= productInfoService.collectExport(dto,response);
+        return result ? success() : failure();
+    }
+
+
+
+
+    /**
      * 项目下拉【PLM1.3】
      *
      * @param
@@ -151,7 +197,7 @@ public class ProductInfoController extends BaseController {
      */
     @PostMapping("/list")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:paging", tableAlias = "pt")
-    public ApiResult<List<BasicDTO>> listProductInfo(@RequestBody @Validated ProductSearchDTO dto) {
+    public ApiResult<List<BasicDTO>> listProductInfo(@RequestBody @Validated ProductSearchDTO.PagingParamDTO dto) {
         List<BasicDTO> list = productInfoService.listProductInfo(dto);
         return success(list);
     }

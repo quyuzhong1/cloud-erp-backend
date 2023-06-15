@@ -17,6 +17,7 @@ import com.common.business.service.RedisService;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
@@ -467,10 +468,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @date 2022-10-09
      */
     @Override
-    public PagingVO paging(PagingDTO<ProductSearchDTO> dto) {
+    public PagingVO paging(PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        ProductSearchDTO params = dto.getParams();
+        ProductSearchDTO.PagingParamDTO params = dto.getParams();
         //这个是点击左侧分类获取到的产品id
         List<String> productIdList = params.getProductIds();
         //如果productIds 不等于null 就是正常的搜索 ;
@@ -496,9 +497,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @date 2023-06-12 16:56
      */
     @Override
-    public PagingVO<ProductShowDTO> myProject(PagingDTO<ProductSearchDTO> dto) {
+    public PagingVO<ProductShowDTO> myProject(PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        ProductSearchDTO params = dto.getParams();
+        ProductSearchDTO.PagingParamDTO params = dto.getParams();
         //这个是点击左侧分类获取到的产品id
         List<String> productIdList = params.getProductIds();
         //如果productIds 不等于null 就是正常的搜索 ;
@@ -534,9 +535,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @date 2023-06-12 16:58
      */
     @Override
-    public PagingVO<ProductShowDTO> collect(PagingDTO<ProductSearchDTO> dto) {
+    public PagingVO<ProductShowDTO> collect(PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        ProductSearchDTO params = dto.getParams();
+        ProductSearchDTO.PagingParamDTO params = dto.getParams();
         //这个是点击左侧分类获取到的产品id
         List<String> productIdList = params.getProductIds();
         //如果productIds 不等于null 就是正常的搜索 ;
@@ -741,9 +742,17 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             for (ProductShowDTO item : list) {
                 if (CollectionUtils.isNotEmpty(myCollectProductIds) && myCollectProductIds.contains(item.getProductId())) {
                     item.setIfAddProduct(true);
+                    item.setIsAddProductName("是");
+                }else{
+                    item.setIsAddProductName("否");
+                    item.setIfAddProduct(false);
                 }
                 if (ProductConstant.ITERATION_PRODUCT.equals(item.getType())) {
                     item.setIfIteration(true);
+                    item.setIsIterationName("是");
+                }else{
+                    item.setIfIteration(false);
+                    item.setIsIterationName("否");
                 }
                 //产品id
                 String productId = item.getProductId();
@@ -757,6 +766,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 Integer finishDocsCount = productFinishDocs.stream().filter(p -> productId.equals(p.getFlagId())).findFirst().
                         map(CountDTO::getCount).orElse(0);
                 item.setFinishDocsCount(finishDocsCount);
+
+                item.setDocsCountStr(finishDocsCount+"/"+totalDocsCount);
                 //迭代数
                 Integer iterateCount = productRelevance.stream().filter(p -> productId.equals(p.getFlagId())).findFirst().
                         map(CountDTO::getCount).orElse(0);
@@ -775,8 +786,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 if (StringUtils.isNotBlank(productChargeId)) {
                     List<String> productChargeIdList = Arrays.asList(productChargeId.split(","));
                     item.setProductChargeIdList(productChargeIdList);
-                    String productChargeName = commonService.getNameByIds(productChargeIdList);
-                    item.setProductChargeName(productChargeName);
                 }
                 Integer approvalStatus = item.getApprovalStatus();
                 item.setApprovalStatusName(ApprovalStatusEnum.getName(approvalStatus));
@@ -803,6 +812,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 //总任务完成数
                 Long finishedCount = productTaskList.stream().filter(f -> finishedList.contains(f.getStatus())).count();
                 item.setFinishedCount(Math.toIntExact(finishedCount));
+
+                item.setTaskCountStr(finishedCount+"/"+taskCount);
                 //我的总任务数
                 List<ProjectTaskEntity> myTaskList = productTaskList.stream().filter(m -> ArrayUtils.contains(m.getChargeId().split(","), userId)).collect(Collectors.toList());
                 int myTaskTotalCount = myTaskList.size();
@@ -810,6 +821,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 //我完成的
                 long myTaskFinishedCount = myTaskList.stream().filter(f -> finishedList.contains(f.getStatus())).count();
                 item.setMyTaskFinishedCount((int) myTaskFinishedCount);
+                item.setMyTaskCountStr(myTaskFinishedCount+"/"+myTaskTotalCount);
                 Integer planWorkHour = taskTimeList.stream().filter(t -> t.getProductId().equals(productId)).
                         mapToInt(ProjectTaskTimeRecordDTO.TaskWorkTimeDTO::getTaskTime).sum();
                 item.setPlanWorkHour(planWorkHour);
@@ -833,7 +845,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     }
 
     @Override
-    public List<BasicDTO> listProductInfo(ProductSearchDTO params) {
+    public List<BasicDTO> listProductInfo(ProductSearchDTO.PagingParamDTO params) {
         List<BasicDTO> dataList = new ArrayList<>();
         LoginUser loginUser = commonService.getUserInfo();
         String userId = loginUser.getUid();
@@ -1796,6 +1808,134 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public ProductOverviewDTO.InfoDTO overview(String productId) {
         ProductOverviewDTO.InfoDTO info = baseMapper.overviewBase(productId);
         return null;
+    }
+
+
+    /**
+     * 导出数据
+     *
+     * @param
+     * @param response
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-06-15 9:19
+     */
+    @Override
+    public Boolean allExport(ProductSearchDTO.ExportDTO params, HttpServletResponse response) {
+        params.setPermissionSql(params.getPermissionSql());
+        //这个是点击左侧分类获取到的产品id
+        List<String> productIdList = params.getProductIds();
+        //如果productIds 不等于null 就是正常的搜索 ;
+        if (productIdList != null && productIdList.size() == 0) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        //分类id
+        String categoryId = params.getCategoryId();
+        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+        List<ProductShowDTO> list=baseMapper.listAllExport(params,categoryIdList);
+        fillPagingDb(list);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/product.xlsx";
+        String name = "产品列表";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("产品列表列表导出出错 >>>>>{}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+
+    }
+
+
+
+    /**
+     * 我的项目导出
+     * @author yl
+     * @date 2023-06-15 10:02
+     * @param params
+     * @param response
+     * @return java.lang.Boolean
+     */
+    @Override
+    public Boolean myProjectExport(ProductSearchDTO.ExportDTO params, HttpServletResponse response) {
+        //这个是点击左侧分类获取到的产品id
+        List<String> productIdList = params.getProductIds();
+        //如果productIds 不等于null 就是正常的搜索 ;
+        if (productIdList != null && productIdList.size() == 0) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        //分类id
+        String categoryId = params.getCategoryId();
+        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+        String userId = commonService.getUserInfo().getUid();
+        //这个是获取到任务负责人是自己的产品id
+        List<String> taskProductIdList = projectTaskService.listProductIdByTaskChargeId(userId);
+        if (productIdList == null) {
+            productIdList = new ArrayList<>();
+            productIdList.addAll(taskProductIdList);
+            params.setProductIds(productIdList);
+        }
+        //我的项目
+        List<ProductShowDTO> list=baseMapper.listMyProjectExport(params,categoryIdList,userId);
+        //填充分页数据
+        fillPagingDb(list);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/product.xlsx";
+        String name = "产品列表";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("产品列表列表导出出错 >>>>>{}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+
+    }
+
+    /**
+     * 收藏项目导出
+     * @author yl
+     * @date 2023-06-15 10:10
+     * @param params
+     * @param response
+     * @return java.lang.Boolean
+     */
+    @Override
+    public Boolean collectExport(ProductSearchDTO.ExportDTO params, HttpServletResponse response) {
+        //这个是点击左侧分类获取到的产品id
+        List<String> productIdList = params.getProductIds();
+        //如果productIds 不等于null 就是正常的搜索 ;
+        if (productIdList != null && productIdList.size() == 0) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        //分类id
+        String categoryId = params.getCategoryId();
+        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+        //收藏的项目
+        List<ProductShowDTO> list = baseMapper.collectExport( params, categoryIdList);
+        //填充分页数据
+        fillPagingDb(list);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/product.xlsx";
+        String name = "产品列表";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("产品列表列表导出出错 >>>>>{}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+
     }
 
 

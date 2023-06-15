@@ -157,7 +157,7 @@ public class ProductShowDTO implements Serializable {
     /**
      * 我完成的任务总数 导出用到
      */
-    private Integer myTaskCountStr;
+    private String myTaskCountStr;
 
     /**
      * 计划工时
@@ -178,12 +178,12 @@ public class ProductShowDTO implements Serializable {
     /**
      * 是否收藏 产品 true  收藏 false 没有
      */
-    private Boolean ifAddProduct = false;
+    private Boolean ifAddProduct;
 
     /**
      * 是否迭代产品 true  是  false 不是
      */
-    private Boolean ifIteration = false;
+    private Boolean ifIteration;
 
 
     /**
@@ -194,7 +194,7 @@ public class ProductShowDTO implements Serializable {
     /**
      * 是否迭代产品 true  是  false 不是
      */
-    private Boolean isIterationName;
+    private String isIterationName;
 
 
     /**
