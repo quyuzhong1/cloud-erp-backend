@@ -347,6 +347,7 @@ public enum ApiError implements Serializable {
 
     ERROR_95174(95174, "只有暂停的项目才能重新启动"),
     ERROR_95175(95175, "已终止的项目不能进行更改"),
+    ERROR_95176(95176, "审核通过后只支持批量更新【销售状态】【是否可销售】【产品开发状态】"),
 
 
 

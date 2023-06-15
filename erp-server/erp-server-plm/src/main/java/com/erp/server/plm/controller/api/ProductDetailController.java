@@ -995,4 +995,17 @@ ProductDetailController extends BaseController {
         Boolean flag = productDetailService.deleteBatch(idsDTO.getIds());
         return flag == true ? success() : failure();
     }
+
+    /**
+     * 批量更新字段
+     * @Author Luo_WG
+     * @Date 2023/6/15 11:32
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/updateBatchFiled")
+    public ApiResult updateBatchFiled(@RequestBody @Validated ProductDetailBatchUpdateDTO dto) {
+        Boolean flag = productDetailService.updateBatchFiled(dto);
+        return flag == true ? success() : failure();
+    }
 }

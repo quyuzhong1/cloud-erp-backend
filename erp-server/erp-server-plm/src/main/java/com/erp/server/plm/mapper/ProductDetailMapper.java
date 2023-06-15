@@ -108,6 +108,18 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      **/
     List<ProductDetailEntity> getProductDetailAll();
+
+    /**
+     * 批量更新字段
+     * @Author Luo_WG
+     * @Date 2023/6/15 12:17
+     * @param ids
+     * @param tableName
+     * @param filedName
+     * @param values
+     * @return java.lang.Boolean
+     **/
+    Boolean updateFiledBatch(@Param("ids") List<String> ids, @Param("tableName") String tableName, @Param("filedName") String filedName, @Param("values") String values, @Param("keyName") String keyName);
 }
 
 

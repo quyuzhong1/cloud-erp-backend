@@ -509,4 +509,13 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      */
     List<ProductDetailEntity> listSkuByProductIds(List<String> productIdList);
+
+    /**
+     * 批量更新字段
+     * @Author Luo_WG
+     * @Date 2023/6/15 11:32
+     * @param dto dto
+     * @return java.lang.Boolean
+     **/
+    Boolean updateBatchFiled(ProductDetailBatchUpdateDTO dto);
 }

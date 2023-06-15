@@ -678,4 +678,13 @@
             sync_kingdee_id
         FROM product_detail
     </select>
+
+    <update id="updateFiledBatch" >
+        UPDATE ${tableName} SET
+            ${filedName} = #{values}
+        WHERE ${keyName} in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
 </mapper>

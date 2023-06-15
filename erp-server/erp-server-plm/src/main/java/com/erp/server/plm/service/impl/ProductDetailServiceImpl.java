@@ -2849,4 +2849,41 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         return this.remove(queryWrapper);
     }
+
+    @Override
+    public Boolean updateBatchFiled(ProductDetailBatchUpdateDTO dto) {
+        List<ProductDetailEntity> entityList = this.listByIds(dto.getIds());
+        if (CollectionUtils.isEmpty(entityList)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //审核通过后支持批量更新【销售状态】【是否可销售】【产品开发状态】
+        long count = entityList.stream().filter(entity ->
+                entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())
+                && !ProductBatchFieldEnum.SALE_STATE.getCode().equals(dto.getUpdateFiledCode())
+                && !ProductBatchFieldEnum.IS_MARKETABLE.getCode().equals(dto.getUpdateFiledCode())
+                && !ProductBatchFieldEnum.SALE_STATE.getCode().equals(dto.getUpdateFiledCode())
+        ).count();
+
+        if (count != entityList.size()) {
+            throw new ServiceException(ApiError.ERROR_95176);
+        }
+        Boolean flag = Boolean.FALSE;
+        //如果是产品经理需要查询name
+        if (ProductBatchFieldEnum.CHARGE_ID.getCode().equals(dto.getUpdateFiledCode())) {
+            if (StringUtils.isBlank(dto.getValues())) {
+                throw new ServiceException(ApiError.ERROR_9030);
+            }
+            List<ProductDetailEntity> detailEntityList = this.listByIds(dto.getIds());
+            List<String> productIds = detailEntityList.stream().map(ProductDetailEntity::getProductId).distinct().collect(Collectors.toList());
+            String chargeName = commonService.getNameByIds(Arrays.asList(dto.getValues().split(",")));
+            flag = productInfoService.lambdaUpdate()
+                    .set(ProductInfoEntity::getCategoryId, dto.getValues())
+                    .set(ProductInfoEntity::getCategory, chargeName).in(ProductInfoEntity::getId, productIds)
+                    .update();
+        } else {
+            ProductBatchFieldEnum enumByCode = ProductBatchFieldEnum.getEnumByCode(dto.getUpdateFiledCode());
+            flag = baseMapper.updateFiledBatch(dto.getIds(), enumByCode.getTableName(), dto.getUpdateFiledCode(), dto.getValues(), enumByCode.getKeyName());
+        }
+        return flag;
+    }
 }
