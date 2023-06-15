@@ -13,6 +13,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.LinkedHashMap;
 
 /**
  * 库存报表管理
@@ -157,7 +158,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/inventoryAge/paging")
-    public ApiResult<PagingVO<InventoryReportDTO.InventoryAgePagingDTO>> inventoryAgePaging(@RequestBody @Validated PagingDTO<InventoryReportDTO.InventoryAgeSearchParamDTO> dto) {
+    public ApiResult<PagingVO<LinkedHashMap>> inventoryAgePaging(@RequestBody @Validated PagingDTO<InventoryReportDTO.InventoryAgeSearchParamDTO> dto) {
         return success(inventoryService.inventoryAgePaging(dto));
     }
 

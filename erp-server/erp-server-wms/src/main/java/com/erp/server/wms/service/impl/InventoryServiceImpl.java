@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -29,6 +30,7 @@ import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.InventorySaveDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.inventory.InventoryAgeTitleEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -468,7 +470,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
     @Override
-    public PagingVO<InventoryReportDTO.InventoryAgePagingDTO> inventoryAgePaging(PagingDTO<InventoryReportDTO.InventoryAgeSearchParamDTO> pagingParamDTO) {
+    public PagingVO<LinkedHashMap> inventoryAgePaging(PagingDTO<InventoryReportDTO.InventoryAgeSearchParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
 
@@ -478,6 +480,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         pagingParamDTO.getParams().setUserRangeList(userRangeList);
 
         IPage<LinkedHashMap> pageData = this.baseMapper.inventoryAgePage(query, pagingParamDTO.getParams());
+        // 标题及值赋值
+        List<LinkedHashMap> dataList = fillInventoryAgePageData(pageData.getRecords());
+        pageData.setRecords(dataList);
         return new PagingVO(pageData);
     }
 
@@ -513,6 +518,40 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             // 销售状态名称
             data.setSaleStateName(SaleStateEnum.getNameByCode(data.getSaleState()));
         });
+    }
+
+    private List<LinkedHashMap> fillInventoryAgePageData(List<LinkedHashMap> dataList) {
+        if(CollUtil.isEmpty(dataList)) {
+            return null;
+        }
+        List<LinkedHashMap> resultList = Lists.newArrayList();
+        LinkedHashMap resultMap = Maps.newLinkedHashMap();
+        // 标题
+        LinkedHashMap headMap = Maps.newLinkedHashMap();
+        // 结果集
+        List<LinkedHashMap> convertDataList = Lists.newArrayListWithExpectedSize(dataList.size());
+
+        // 公共标题字段
+        Arrays.asList(InventoryAgeTitleEnum.values()).stream().forEach(inventoryAgeTitleEnum -> {
+            headMap.put(inventoryAgeTitleEnum.getCode(), inventoryAgeTitleEnum.getName());
+        });
+
+        // 结果集字段转驼峰
+        dataList.stream().forEach(data->{
+            LinkedHashMap convertMap = new LinkedHashMap();
+            data.forEach((k,v)->{
+                String camelKey = StrUtil.toCamelCase(StrUtils.null2EmptyWithTrim(k));
+                if(!headMap.containsKey(camelKey)) {
+                    headMap.put(camelKey, camelKey);
+                }
+                convertMap.put(camelKey, v);
+            });
+            convertDataList.add(convertMap);
+        });
+        resultMap.put("head", headMap);
+        resultMap.put("data", convertDataList);
+        resultList.add(resultMap);
+        return resultList;
     }
 
 }
