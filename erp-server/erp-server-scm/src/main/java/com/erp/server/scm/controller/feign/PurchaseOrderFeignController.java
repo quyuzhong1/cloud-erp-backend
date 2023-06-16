@@ -237,7 +237,7 @@ public class PurchaseOrderFeignController {
      * @param subParentDetailIds
      * @return
      */
-    @PostMapping("/getPurchaseOrderByCodes")
+    @PostMapping("/listPoRefSubChildBySubParentDetailIds")
     public List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildBySubParentDetailIds(@RequestBody List<String> subParentDetailIds) {
         return purchaseOrderService.listPoRefSubChildBySubParentDetailIds(subParentDetailIds);
     }
