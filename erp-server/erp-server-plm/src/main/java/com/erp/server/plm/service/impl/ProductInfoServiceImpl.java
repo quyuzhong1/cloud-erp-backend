@@ -667,11 +667,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         Integer ingStatus = ProjectStateEnum.ING.getState();
         //完成
         Integer finishStatus = ProjectStateEnum.FINISH.getState();
-        //终止
-        Integer stopStatus = ProjectStateEnum.STOP.getState();
+        //已暂停
+        Integer projectSuspendState = ProjectStateEnum.SUSPEND.getState();
 
         //终止
-        Integer projectSuspend = ProjectStateEnum.SUSPEND.getState();
+        Integer terminationState = ProjectStateEnum.TERMINATE.getState();
         //总的数
         int totalCount = productCountList.stream().mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
         result.setTotalCount(totalCount);
@@ -696,14 +696,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
         result.setFinishCount(finishCount);
         //终止
-        int projectTerminateCount = projectCountList.stream().filter(p -> stopStatus.equals(p.getStatus())).
+        int projectTerminateCount = projectCountList.stream().filter(p -> terminationState.equals(p.getStatus())).
                 mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
         //终止
         int productTerminateCount = productCountList.stream().filter(p -> ApprovalStatusEnum.TERMINATE.getCode().equals(p.getStatus())).
                 mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
         result.setTerminateCount(projectTerminateCount + productTerminateCount);
         //项目暂停数
-        int projectSuspendCount = projectCountList.stream().filter(p -> projectSuspend.equals(p.getStatus())).
+        int projectSuspendCount = projectCountList.stream().filter(p -> projectSuspendState.equals(p.getStatus())).
                 mapToInt(ProductDTO.CountBaseDTO::getCount).sum();
 
         int productSuspendCount = productCountList.stream().filter(p -> productSuspend.equals(p.getStatus())).
@@ -1294,7 +1294,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 List<String> detailIds = detailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
                 productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, Boolean.TRUE).in(ProductSaleEntity::getSkuId, detailIds).update();
                 break;
-            case STOP:
+            case TERMINATE:
                 //如果状态改为已中止，更新产品信息{产品开发状态}：中止开发；
                 productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode());
                 break;
@@ -1772,6 +1772,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @Author Luo_WG
      * @Date 2023/3/29 14:26
      **/
+    @Override
     public ProductInfoEntity getProductByName(String name) {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductInfoEntity::getName, name);
@@ -1845,10 +1846,16 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public Boolean batchEstablish(List<String> productIdList) {
         List<ProductInfoEntity> productInfoList = this.listByIds(productIdList);
         Integer terminateCode = ApprovalStatusEnum.TERMINATE.getCode();
+        Integer approvalCode = ApprovalStatusEnum.APPROVAL.getCode();
         long terminateCount = productInfoList.stream().filter(p -> terminateCode.equals(p.getApprovalStatus())).count();
         if (terminateCount > 0) {
             throw new ServiceException(ApiError.ERROR_95175);
         }
+        long approvalCount = productInfoList.stream().filter(p -> approvalCode.equals(p.getApprovalStatus())).count();
+        if (approvalCount > 0) {
+            throw new ServiceException(ApiError.ERROR_95177);
+        }
+
         /**
          * 表示改成已立项 就要去检查该该产品下的 所有的立项任务
          *  是否完成
@@ -1859,9 +1866,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         projectTaskService.checkTaskFinish(taskFinish);
         preTaskService.checkPreTaskFinish(taskIdList);
         projectTaskService.checkSonTaskFinish(taskIdList, taskFinish);
-        Integer approvalCode = ApprovalStatusEnum.APPROVAL.getCode();
-
-        productInfoList.stream().forEach(p -> p.setApprovalStatus(approvalCode));
+        LocalDateTime now = LocalDateTime.now();
+        for (ProductInfoEntity product : productInfoList) {
+            product.setApprovalTime(now);
+            product.setApprovalStatus(approvalCode);
+        }
         Boolean result = this.updateBatchById(productInfoList);
         if (result) {
             //批量添加获取修改产品
@@ -1870,8 +1879,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             productPlanService.updateBatchPlanStatus(productIdList, approvalCode, MathUtil.ONE);
             //已立项时，更新产品信息{产品开发状态}：开发中
             productDetailService.updateProductStateByProductIdList(productIdList, ProductDetailStateEnum.DEVELOP_AFOOT.getCode());
+            for (ProductInfoEntity product : productInfoList) {
+                projectInfoService.addProject(product.getId(), product.getName(), product.getProjectChargeId());
+            }
         }
-
         return result;
 
     }

@@ -620,9 +620,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         List<ProjectInfoEntity> projectInfoList = this.getByProductIdList(productIdList);
         //启动的产品ids
         List<String> startProductIdList = projectInfoList.stream().map(ProjectInfoEntity::getProductId).collect(Collectors.toList());
-        Integer stopState = ProjectStateEnum.STOP.getState();
-        long stopStateCount = projectInfoList.stream().filter(p -> stopState.equals(p.getProjectStatus())).count();
-        if (stopStateCount > 0) {
+        Integer terminateState = ProjectStateEnum.TERMINATE.getState();
+        long terminateStateCount = projectInfoList.stream().filter(p -> terminateState.equals(p.getProjectStatus())).count();
+        if (terminateStateCount > 0) {
             throw new ServiceException(ApiError.ERROR_95175);
         }
         Integer suspend = ProjectStateEnum.SUSPEND.getState();
@@ -706,9 +706,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         if (CollectionUtils.isEmpty(ids)) {
             return Boolean.FALSE;
         }
-        Integer stopState = ProjectStateEnum.STOP.getState();
-        long stopStateCount = projectInfoList.stream().filter(p -> stopState.equals(p.getProjectStatus())).count();
-        if (stopStateCount > 0) {
+        Integer terminateState = ProjectStateEnum.TERMINATE.getState();
+        long terminateStateCount = projectInfoList.stream().filter(p -> terminateState.equals(p.getProjectStatus())).count();
+        if (terminateStateCount > 0) {
             throw new ServiceException(ApiError.ERROR_95175);
         }
 
@@ -827,6 +827,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      * @date 2022-10-12 10:49
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void addProject(String productId, String productName, String projectChargeId) {
         int getIfExist = getIfExist(productId);
         if (getIfExist == 0) {

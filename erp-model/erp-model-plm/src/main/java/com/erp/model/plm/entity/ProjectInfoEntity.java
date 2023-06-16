@@ -56,13 +56,13 @@ public class ProjectInfoEntity extends BaseEntity implements Serializable {
     private LocalDate endTime;
 
     /**
-      *项目状态 0 未启动 1 ;已启动 2 进行中 3 已完成  4 已终止
+      *项目状态 0 未启动 1 ;已启动 2 进行中 3 已完成  4 已中止(表式 已暂停) 5 终止
      */
     @TableField("project_status")
     private Integer projectStatus;
 
     /**
-     *项目状态 0 未启动 1 ;已启动 2 进行中 3 已完成  4 已终止
+     *项目状态  0 未启动 1 ;已启动 2 进行中 3 已完成  4 已中止(表式 已暂停) 5 终止
      * 暂停前的状态
      */
     @TableField("suspend_before_status")

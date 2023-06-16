@@ -509,7 +509,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
                 productPlanEntity.setProductStatus(ProductPlanStatusEnum.FINISH.getCode());
             }
             //中止
-            if (ProjectStateEnum.STOP.getState().equals(projectInfoEntity.getProjectStatus())) {
+            if (ProjectStateEnum.TERMINATE.getState().equals(projectInfoEntity.getProjectStatus())) {
                 productPlanEntity.setProductStatus(ProductPlanStatusEnum.CANCEL.getCode());
             }
         }
@@ -709,7 +709,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
                 productPlanEntity.setProductStatus(ProductPlanStatusEnum.APPROVAL.getCode());
                 productPlanEntity.setProjectApprovalDate(LocalDate.now());
             }
-            //已中止
+            //已终止
             if (ApprovalStatusEnum.TERMINATE.getCode().equals(status)) {
                 productPlanEntity.setProductStatus(ProductPlanStatusEnum.CANCEL.getCode());
             }
@@ -729,7 +729,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
                 productPlanEntity.setProductStatus(ProductPlanStatusEnum.FINISH.getCode());
             }
             //中止
-            if (ProjectStateEnum.STOP.getState().equals(status)) {
+            if (ProjectStateEnum.TERMINATE.getState().equals(status)) {
                 productPlanEntity.setProductStatus(ProductPlanStatusEnum.CANCEL.getCode());
             }
         }
@@ -936,8 +936,8 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             if (ProjectStateEnum.FINISH.getState().equals(status)) {
                 planStatus = ProductPlanStatusEnum.FINISH.getCode();
             }
-            //中止
-            if (ProjectStateEnum.STOP.getState().equals(status)) {
+            //暂停
+            if (ProjectStateEnum.SUSPEND.getState().equals(status)) {
                 planStatus = ProductPlanStatusEnum.CANCEL.getCode();
 
             }

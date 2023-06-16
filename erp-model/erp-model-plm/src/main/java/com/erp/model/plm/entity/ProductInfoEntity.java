@@ -80,7 +80,7 @@ public class ProductInfoEntity extends BaseEntity implements Serializable {
     private String brandName;
 
     /**
-     * 立项状态 0 待规划 1 调研中  3：ID设计中  4::已立项  5：已终止
+     * 立项状态0 待规划 1 调研中  2：ID设计中  3::已立项  4：已中止(已暂停) 5已终止
      */
     @TableField("approval_status")
     private Integer approvalStatus;
