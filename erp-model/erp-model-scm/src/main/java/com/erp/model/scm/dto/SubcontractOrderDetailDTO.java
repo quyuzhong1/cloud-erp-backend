@@ -88,7 +88,67 @@ public class SubcontractOrderDetailDTO implements Serializable {
         /**
          * 子件集合
          */
-        private List<ViewDTO> childList;
+        private List<ChildDTO> childList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ChildDTO extends CommonDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * SKU编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 采购金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * bom版本
+         */
+        private Integer bomVersion;
+
+        /**
+         * 即时库存数量
+         */
+        private Integer curInventoryQty;
     }
 
     /**

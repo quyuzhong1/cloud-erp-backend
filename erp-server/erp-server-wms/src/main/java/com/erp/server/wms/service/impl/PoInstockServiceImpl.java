@@ -1034,6 +1034,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
         List<String> addPoInstockIds = new ArrayList<>();
 
+        //库存更新参数
+        List<InOutStockDTO>  inOutStockList = new ArrayList<>();
         for (PurchaseOrderEntity purchaseOrderEntity : purchaseOrderList) {
             //只有已审核通过的订单可以下推入库单
             if (!ApproveStatusEnum.APPROVE.getStatus().equals(purchaseOrderEntity.getApproveStatus())) {
@@ -1063,6 +1065,21 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 addDetailDTO.setPurchaseOrderDetailId(detailEntity.getId());
                 addDetailDTO.setStockInQty(detailEntity.getPurchaseQty());
                 detailList.add(addDetailDTO);
+
+
+                //操作请求实体
+                InOutStockDTO inOutStockDTO = new InOutStockDTO();
+                inOutStockDTO.setSourceType(InventorySourceTypeEnum.MACHINE_INFO);
+                inOutStockDTO.setSourceId(purchaseOrderEntity.getId());
+                inOutStockDTO.setSourceCode(purchaseOrderEntity.getCode());
+                inOutStockDTO.setSourceDetailId(detailEntity.getId());
+                inOutStockDTO.setBillDate(purchaseOrderEntity.getPurchaseDate());
+                inOutStockDTO.setSkuId(detailEntity.getSkuId());
+                inOutStockDTO.setSkuNo(detailEntity.getSkuNo());
+                inOutStockDTO.setQty(detailEntity.getPurchaseQty());
+                inOutStockDTO.setWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
+                inOutStockDTO.setWarehouseLocation("");
+                inOutStockList.add(inOutStockDTO);
             }
             addDTO.setDetails(detailList);
             String id = this.add(addDTO);
@@ -1079,6 +1096,13 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             baseApproveParamDTO.setIds(addPoInstockIds);
             baseApproveParamDTO.setType(ApproveType.PASS);
             this.approve(baseApproveParamDTO);
+
+            //生成领料出库单（现没有领料出库单据，则直接调用领料库存变化逻辑）
+            InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+            inventoryInOutStockDTO.setMembers(inOutStockList);
+            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_PICK.getCode());
+            inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+
         }
     }
 

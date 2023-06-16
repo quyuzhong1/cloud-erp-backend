@@ -476,8 +476,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             if (CollectionUtils.isEmpty(childList)) {
                 throw new ServiceException(ApiError.ERROR_98072);
             }
-            List<SubcontractOrderDetailDTO.ViewDTO> childDTOList = BeanMapperUtils.copyList(SubcontractOrderDetailDTO.ViewDTO.class, childList);
-            for (SubcontractOrderDetailDTO.ViewDTO childViewDTO : childDTOList) {
+            List<SubcontractOrderDetailDTO.ChildDTO> childDTOList = BeanMapperUtils.copyList(SubcontractOrderDetailDTO.ChildDTO.class, childList);
+            for (SubcontractOrderDetailDTO.ChildDTO childViewDTO : childDTOList) {
                 //产品名称
                 String childProductName = skuList.stream().filter(obj -> obj.getSkuId().equals(childViewDTO.getSkuId())).findFirst().flatMap(e -> Optional.ofNullable(e.getSkuName())).orElse("");
                 childViewDTO.setProductName(childProductName);
