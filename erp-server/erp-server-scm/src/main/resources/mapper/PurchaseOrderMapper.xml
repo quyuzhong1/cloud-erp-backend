@@ -433,6 +433,7 @@
 
         select
             ppod.id as parentPodId,
+            ppod.qty as parentQty,
             po.id as childPoId,
             pod.id as childPodId,
             psod.id as subParentDetailId,

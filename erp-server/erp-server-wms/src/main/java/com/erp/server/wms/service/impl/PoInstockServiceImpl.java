@@ -1007,11 +1007,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             return;
         }
         //自动审核采购订单
-        List<String> poIds = childList.stream().map(PurchaseOrderDTO.SubcontractOrderChildDTO::getPoId).collect(Collectors.toList());
+        List<String> poIds = childList.stream().map(PurchaseOrderDTO.SubcontractOrderChildDTO::getChildPoId).distinct().collect(Collectors.toList());
         scmTaskFeign.autoApprovePurchaseOrder(poIds);
 
         //生成入库单
-        autoGeneratePoInstock(poIds,poInstockDetailList);
+        autoGeneratePoInstock(poIds,poInstockDetailList,childList);
 
     }
 
@@ -1021,7 +1021,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
      * @date: 2023/6/16 9:43
      * @param poIds
      */
-    private void autoGeneratePoInstock(List<String> poIds,List<PoInstockDetailEntity> poInstockDetailList) {
+    private void autoGeneratePoInstock(List<String> poIds,List<PoInstockDetailEntity> poInstockDetailList,List<PurchaseOrderDTO.SubcontractOrderChildDTO> childList) {
         //采购订单
         List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(poIds);
 
@@ -1066,6 +1066,12 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 addDetailDTO.setStockInQty(detailEntity.getPurchaseQty());
                 addDetailDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
                 detailList.add(addDetailDTO);
+                
+                //父级SKU
+                PurchaseOrderDTO.SubcontractOrderChildDTO parentDTO = childList.stream().filter(obj -> obj.getChildPodId().equals(detailEntity.getId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(parentDTO)) {
+                    throw new ServiceException(ApiError.ERROR_98071);
+                }
 
 
                 //操作请求实体
