@@ -44,6 +44,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -58,6 +59,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -508,8 +510,10 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             List<InventoryReportDTO.ExportInventoryAgeItem> checkData = paramDTO.getItems();
             List<String> warehouseIds = checkData.stream().map(InventoryReportDTO.ExportInventoryAgeItem::getWarehouseId).distinct().collect(Collectors.toList());
             List<String> skuIds = checkData.stream().map(InventoryReportDTO.ExportInventoryAgeItem::getSkuId).distinct().collect(Collectors.toList());
+            List<String> warehouseLocation = checkData.stream().map(InventoryReportDTO.ExportInventoryAgeItem::getWarehouseLocation).distinct().collect(Collectors.toList());
             paramDTO.setWarehouseIdList(warehouseIds);
             paramDTO.setSkuIdList(skuIds);
+            paramDTO.setWarehouseLocationList(warehouseLocation);
         }
 
         // 获取用户区间配置
@@ -523,6 +527,9 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         }
         // 标题及值赋值
         List<LinkedHashMap> resultList = fillInventoryAgePageData(dataList, userRangeList);
+
+        // 导出Excel
+        exportInventoryAgeExcel(resultList, response);
 
     }
 
@@ -571,6 +578,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         // 创建sheet页
         XSSFSheet sheet = wb.createSheet("库龄计算表");
         sheet.setDefaultColumnWidth(1 * 256);
+        sheet.setColumnWidth(0, 25 * 256);
+        sheet.setColumnWidth(3, 30 * 256);
 
         int rowNo = 0;
         // 第一行标题
@@ -578,8 +587,6 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
         // 标题
         int columnIndex = 0;
-        // 总列数
-        int totalColumn = headMap.keySet().size();
         for(Object key : headMap.keySet()) {
             Cell cell = rowTitle0.createCell(columnIndex);
             cell.setCellStyle(titleStyle);
@@ -593,7 +600,33 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             ++rowNo;
 
             XSSFRow rowContent = sheet.createRow(rowNo);
+            columnIndex = 0;
+            for(Object key : headMap.keySet()) {
+                Cell cell = rowContent.createCell(columnIndex);
+                cell.setCellStyle(contentCellStyle);
+                // 产品信息处理
+                if(Objects.equals(key, InventoryAgeTitleEnum.SKU_INFO.getCode())) {
+                    cell.setCellValue(StrUtil.format("{}\n{}", StrUtils.null2EmptyWithTrim(dataMap.get("skuNo")),
+                            StrUtils.null2EmptyWithTrim(dataMap.get("productName"))));
+                } else {
+                    cell.setCellValue(StrUtils.null2EmptyWithTrim(dataMap.get(key)));
+                }
+                ++columnIndex;
+            }
+        }
 
+        String fileName = StrUtil.format("库龄计算表数据{}.xlsx", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+        try {
+            response.setCharacterEncoding("utf-8");
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+            outputStream = response.getOutputStream();
+            wb.write(outputStream);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        } finally {
+            IOUtils.closeQuietly(outputStream);
         }
 
     }

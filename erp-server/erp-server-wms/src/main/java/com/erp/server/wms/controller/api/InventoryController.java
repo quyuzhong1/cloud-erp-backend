@@ -170,7 +170,7 @@ public class InventoryController extends BaseController {
      */
     @PostMapping(value = "/exportInventoryAge")
     public void exportInventoryAge(@RequestBody InventoryReportDTO.ExportInventoryAgeSearchParamDTO dto, HttpServletResponse response) {
-
+        inventoryService.exportInventoryAge(dto, response);
     }
 
 }

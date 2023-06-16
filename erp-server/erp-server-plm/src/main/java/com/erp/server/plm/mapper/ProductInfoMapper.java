@@ -103,5 +103,18 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
     ProductOverviewDTO.InfoDTO overviewBase(@Param("productId")String productId);
 
 
+    List<ProductDTO.CountBaseDTO> listMyProjectStatusCount(@Param("userId") String userId);
 
+    List<ProductDTO.CountBaseStrDTO> listMyProjectProgressStatusCount(@Param("userId") String userId);
+
+    /**
+     * 收藏的统计
+     * @author yl
+     * @date 2023-06-16 15:12
+     * @param
+     * @return java.util.List<com.erp.model.plm.dto.ProductDTO.CountBaseDTO>
+     */
+    List<ProductDTO.CountBaseDTO> listCollectStatusCount();
+
+    List<ProductDTO.CountBaseStrDTO> listCollectProgressStatusCount();
 }

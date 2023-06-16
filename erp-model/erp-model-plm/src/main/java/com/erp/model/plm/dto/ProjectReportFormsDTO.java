@@ -70,6 +70,10 @@ public class ProjectReportFormsDTO implements Serializable {
          */
         private String id;
         /**
+         * 产品图片
+         */
+        private String imageUrl;
+        /**
          * SKU编号
          */
         private String skuNo;
@@ -102,6 +106,10 @@ public class ProjectReportFormsDTO implements Serializable {
          */
         private String chargeName;
         /**
+         * 项目经理id
+         */
+        private String projectChargeId;
+        /**
          * 项目经理
          */
         private String projectChargeName;
@@ -110,9 +118,17 @@ public class ProjectReportFormsDTO implements Serializable {
          */
         private String approvalStatus;
         /**
+         * 立项状态名称
+         */
+        private String approvalStatusName;
+        /**
          * 项目状态
          */
         private String projectStatus;
+        /**
+         * 项目状态名称
+         */
+        private String projectStatusName;
         /**
          * 项目阶段
          */
@@ -126,7 +142,11 @@ public class ProjectReportFormsDTO implements Serializable {
          */
         private String projectProgress;
         /**
-         * 项目进展状态名
+         * 项目进展状态
+         */
+        private String progressStatus;
+        /**
+         * 项目进展状态名称
          */
         private String progressStatusName;
         /**

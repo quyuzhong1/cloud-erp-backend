@@ -35,4 +35,8 @@ public interface ProjectInfoMapper extends BaseMapper<ProjectInfoEntity> {
     List<ProductDTO.CountBaseDTO> listStatusCount(@Param("productIdList") List<String> productIdList);
 
     int getDelayCount(@Param("productIdList") List<String> productIdList,@Param("nowDate") LocalDateTime nowDate);
+
+    List<ProductDTO.CountBaseDTO> listMyProjectStatusCount(@Param("userId") String userId);
+
+    List<ProductDTO.CountBaseDTO> listCollectStatusCount();
 }

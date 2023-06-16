@@ -4,6 +4,7 @@ import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.BaseStatusEnum;
@@ -12,12 +13,12 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.ProjectPlanConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.listener.ChangeScheduleExcelListener;
@@ -28,6 +29,7 @@ import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -85,6 +87,15 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     private ProductDetailService productDetailService;
 
 
+    @Resource
+    private  CommonService commonService;
+
+    @Autowired
+    private SysLogService sysLogService;
+
+    private static final String CLASSPATH = String.valueOf(ProjectPlanEntity.class);
+
+
     /**
      * 根据条件获取到项目计划任务
      *
@@ -114,6 +125,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             List<String> scheduleStatusList = new ArrayList<>();
             scheduleStatusList.add(BaseStatusEnum.WAIT_AUDIT.getStatus());
             scheduleStatusList.add(BaseStatusEnum.AUDIT_ING.getStatus());
+            scheduleStatusList.add(BaseStatusEnum.WAIT_AUDIT.getStatus());
 
             //根据阶段分组
             TreeMap<Integer, List<ProductTaskVO>> map = taskList.stream().
@@ -128,6 +140,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 parentVO.setId(parentId);
                 parentVO.setParentId(IsConstant.NO);
                 List<ProductTaskVO> phaseTaskList = item.getValue();
+                phaseTaskList = phaseTaskList.stream().sorted(Comparator.comparing(ProductTaskVO::getCreateTime)).collect(Collectors.toList());
                 //最小计划开始时间
                 String minStartTime = phaseTaskList.stream().filter(obj -> ObjectUtils.isNotNull(obj.getPlanStartTime())).sorted(Comparator.comparing(ProductTaskVO::getPlanStartTime)).map(ProductTaskVO::getPlanStartTime).findFirst().orElse(null);
                 //最大计划结束时间
@@ -578,6 +591,13 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     @Override
     public void saveChangePlanTask(String projectPlanId, String productId, List<ProjectTaskEntity> taskList, List<ChangeTaskScheduleDTO> list) {
         List<ProjectPlanTaskEntity> addList = new ArrayList<>(list.size());
+        String nowTime = DateUtil.conversionDate(new Date(), DateUtil.fmt);
+        String userName = commonService.getUserInfo().getUserName();
+
+        StringBuffer sb = new StringBuffer();
+        sb.append(userName).append(" ").append(nowTime).append(" ").append("变更");
+
+
         for (ProjectTaskEntity item : taskList) {
             String taskId = item.getId();
             ProjectPlanTaskEntity entity = new ProjectPlanTaskEntity();
@@ -587,6 +607,9 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             entity.setOriginEndTime(item.getPlanEndTime());
             entity.setTaskId(taskId);
             entity.setProductId(productId);
+            sb.append(item.getName()).append(" ");
+            sb.append("原始计划开始时间 ").append(item.getPlanStartTime()).append("变更为 ");
+
 
             ChangeTaskScheduleDTO changeTask = list.stream().filter(t -> t.getTaskId().equals(taskId)).findFirst().orElse(null);
             //从参数里面取
@@ -607,10 +630,17 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 entity.setChangeEndTime(item.getPlanEndTime());
                 entity.setChangeChargeId(item.getChargeId());
             }
-
+            sb.append(entity.getChangeStartTime()).append(" ");
+            sb.append("原始计划结束时间 ").append(item.getPlanStartTime()).append("变更为 ");
+            sb.append(entity.getChangeEndTime()).append(" ");
             addList.add(entity);
         }
-        this.saveBatch(addList);
+        Boolean saveResult = this.saveBatch(addList);
+        if(saveResult){
+            sysLogService.addSysLogBySave(sb.toString(), CLASSPATH, projectPlanId, projectPlanId);
+        }
+
+
     }
 
 
