@@ -998,10 +998,10 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
          */
         List<String> poInIds = resultList.stream().map(PoInstockEntity::getId).collect(Collectors.toList());
         //委外订单明细父级SKU信息ids
-        List<String> sourceDetailIds = poInstockDetailList.stream().filter(obj -> poInIds.contains(obj.getMainId())).map(PoInstockDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<String> parentPodIds = poInstockDetailList.stream().filter(obj -> poInIds.contains(obj.getMainId())).map(PoInstockDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
 
         //查询委外订单所有子级SKU生成的采购订单信息
-        List<PurchaseOrderDTO.SubcontractOrderChildDTO> childList = scmTaskFeign.listPoRefSubChildBySubParentDetailIds(sourceDetailIds);
+        List<PurchaseOrderDTO.SubcontractOrderChildDTO> childList = scmTaskFeign.listPoRefSubChildByParentPodIds(parentPodIds);
         if (CollectionUtils.isEmpty(childList)) {
             //无子级采购订单无需自动入库
             return;
@@ -1011,7 +1011,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         scmTaskFeign.autoApprovePurchaseOrder(poIds);
 
         //生成入库单
-        autoGeneratePoInstock(poIds);
+        autoGeneratePoInstock(poIds,poInstockDetailList);
 
     }
 
@@ -1021,7 +1021,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
      * @date: 2023/6/16 9:43
      * @param poIds
      */
-    private void autoGeneratePoInstock(List<String> poIds) {
+    private void autoGeneratePoInstock(List<String> poIds,List<PoInstockDetailEntity> poInstockDetailList) {
         //采购订单
         List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(poIds);
 
@@ -1098,7 +1098,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             baseApproveParamDTO.setType(ApproveType.PASS);
             this.approve(baseApproveParamDTO);
 
-            //生成领料出库单（现没有领料出库单据，则直接调用领料库存变化逻辑）
+            //生成领料出库单，需要按比例出库（父级SKU入库数量/父级SKU采购数量）（现没有领料出库单据，则直接调用领料库存变化逻辑）
             InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
             inventoryInOutStockDTO.setMembers(inOutStockList);
             inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_PICK.getCode());

@@ -428,10 +428,11 @@
             </where>
     </select>
 
-    <select id="listPoRefSubChildBySubParentDetailIds"
+    <select id="listPoRefSubChildByParentPodIds"
             resultType="com.erp.model.scm.dto.PurchaseOrderDTO$SubcontractOrderChildDTO">
 
         select
+            ppod.id as parent
             po.id as poId,
             pod.id as podId,
             psod.id as subParentDetailId,
@@ -439,15 +440,16 @@
             pod.sku_id as skuId,
             pod.sku_no as skuNo,
             po.approve_status as approveStatus
-        from subcontract_order_detail psod
+        from purchase_order_detail ppod
+        inner join subcontract_order_detail psod on psod.id = ppod.source_detail_id and ppod.is_deleted = false
         inner join subcontract_order_detail sod on sod.parent_id = psod.id and sod.is_deleted = false
         inner join purchase_order_detail pod on pod.source_detail_id = sod.id and pod.is_deleted = false
         inner join purchase_order po on po.id = pod.purchase_order_id and po.is_deleted = false
         <where>
             psod.is_deleted = false and po.invoid_status = false
-            <if test="subParentDetailIds != null and subParentDetailIds.size > 0">
-                AND psod.id IN
-                <foreach collection="subParentDetailIds" item="item" open="(" close=")" separator=",">
+            <if test="parentPodIds != null and parentPodIds.size > 0">
+                AND ppod.id IN
+                <foreach collection="parentPodIds" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>

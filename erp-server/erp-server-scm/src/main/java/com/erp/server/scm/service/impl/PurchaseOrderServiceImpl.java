@@ -1141,8 +1141,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildBySubParentDetailIds(List<String> subParentDetailIds) {
-        return baseMapper.listPoRefSubChildBySubParentDetailIds(subParentDetailIds);
+    public List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildByParentPodIds(List<String> parentPodIds) {
+        return baseMapper.listPoRefSubChildByParentPodIds(parentPodIds);
     }
 
     @Override

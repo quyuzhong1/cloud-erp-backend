@@ -270,10 +270,10 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @description: 查询委外订单所有子级SKU生成的采购订单信息
      * @author Will
      * @date: 2023/6/15 17:49
-     * @param subParentDetailIds
+     * @param parentPodIds
      * @return List<SubcontractOrderChildDTO>
      */
-    List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildBySubParentDetailIds(List<String> subParentDetailIds);
+    List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildByParentPodIds(List<String> parentPodIds);
     /**
      * @description: 自动审核采购订单
      * @author Will

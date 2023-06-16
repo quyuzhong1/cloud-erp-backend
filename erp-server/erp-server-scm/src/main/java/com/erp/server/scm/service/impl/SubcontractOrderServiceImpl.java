@@ -465,7 +465,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             viewDTO.setSupplierName(supplierName);
 
             //根据组织、仓库、sku查询可用库存
-            List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSkuInventoryTotalList(Arrays.asList(viewDTO.getSkuId()),viewDTO.getWarehouseId());
+            List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSkuInventoryTotalList(Arrays.asList(viewDTO.getSkuId()),viewDTO.getWarehouseId(),"");
             //即时库存
             Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(viewDTO.getSkuId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
@@ -486,7 +486,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 childViewDTO.setSupplierName(childSupplierName);
 
                 //根据组织、仓库、sku查询可用库存
-                List<InventoryQtyDTO.SkuInventoryTotalDTO> childSkuInventoryTotalList = listSkuInventoryTotalList(Arrays.asList(viewDTO.getSkuId()),viewDTO.getWarehouseId());
+                List<InventoryQtyDTO.SkuInventoryTotalDTO> childSkuInventoryTotalList = listSkuInventoryTotalList(Arrays.asList(childViewDTO.getSkuId()),childViewDTO.getWarehouseId(),childViewDTO.getWarehouseLocation());
                 //即时库存
                 Integer childCurInventoryQty = childSkuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(childViewDTO.getSkuId())).findFirst().
                         flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
@@ -809,11 +809,12 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         }
     }
 
-    private List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventoryTotalList(List<String> skuIdList, String warehouseId) {
+    private List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventoryTotalList(List<String> skuIdList, String warehouseId,String warehouseLocation) {
         InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
         paramDTO.setSkuIds(skuIdList);
         paramDTO.setWarehouseId(warehouseId);
         paramDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        paramDTO.setWarehouseLocationId(warehouseLocation);
         //从wms 获取到sku 的即时库存信息
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventory(paramDTO);
         return skuInventoryTotalList;

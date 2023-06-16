@@ -234,12 +234,12 @@ public class PurchaseOrderFeignController {
 
     /**
      * 查询委外订单所有子级SKU生成的采购订单信息
-     * @param subParentDetailIds
+     * @param parentPodIds
      * @return
      */
-    @PostMapping("/listPoRefSubChildBySubParentDetailIds")
-    public List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildBySubParentDetailIds(@RequestBody List<String> subParentDetailIds) {
-        return purchaseOrderService.listPoRefSubChildBySubParentDetailIds(subParentDetailIds);
+    @PostMapping("/listPoRefSubChildByParentPodIds")
+    public List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildByParentPodIds(@RequestBody List<String> parentPodIds) {
+        return purchaseOrderService.listPoRefSubChildByParentPodIds(parentPodIds);
     }
 
     /**

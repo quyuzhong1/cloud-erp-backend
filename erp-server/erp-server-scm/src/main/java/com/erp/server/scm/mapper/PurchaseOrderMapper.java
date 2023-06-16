@@ -93,8 +93,8 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @description: 查询委外订单所有子级SKU生成的采购订单信息
      * @author Will
      * @date: 2023/6/15 17:49
-     * @param subParentDetailIds
+     * @param parentPodIds
      * @return List<SubcontractOrderChildDTO>
      */
-    List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildBySubParentDetailIds(@Param("subParentDetailIds") List<String> subParentDetailIds);
+    List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildByParentPodIds(@Param("parentPodIds") List<String> parentPodIds);
 }
