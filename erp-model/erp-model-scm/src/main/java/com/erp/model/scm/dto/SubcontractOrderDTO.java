@@ -421,6 +421,16 @@ public class SubcontractOrderDTO implements Serializable {
         private String variantProperty;
 
         /**
+         * 父级ID
+         */
+        private String parentId;
+
+        /**
+         * 是否是组合SKU
+         */
+        private Boolean isConstitute;
+
+        /**
          * 采购组织id
          */
         private String purchaseOrgId;
@@ -469,6 +479,7 @@ public class SubcontractOrderDTO implements Serializable {
          * 待申请数量
          */
         private Integer applyQty;
+
     }
 
     @Data

@@ -41,7 +41,7 @@ public class ReportFormsManageController extends BaseController {
             menuCode = "scm:ReportFormsManage:purchaseBusinessGatherTablePaging",
             tableAlias = "pod")
     public ApiResult<PagingVO<List<PurchaseBusinessGatherTableDTO.PagingViewDTO>>> purchaseBusinessGatherTablePaging(@RequestBody PagingDTO<PurchaseBusinessGatherTableDTO.PagingParamDTO> dto) {
-        PagingVO<List<PurchaseBusinessGatherTableDTO.PagingViewDTO>> listPagingVO = reportFormsManageService.purchaseBusinessGatherTablPaginge(dto);
+        PagingVO<List<PurchaseBusinessGatherTableDTO.PagingViewDTO>> listPagingVO = reportFormsManageService.purchaseBusinessGatherTablePaging(dto);
         return success(listPagingVO);
     }
 

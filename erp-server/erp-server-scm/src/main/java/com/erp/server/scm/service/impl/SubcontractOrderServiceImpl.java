@@ -525,6 +525,11 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             if (ObjectUtils.isEmpty(skuVO)) {
                 throw new ServiceException(ApiError.ERROR_95084);
             }
+            dto.setIsConstitute(Boolean.FALSE);
+            if (ObjectUtils.isEmpty(dto.getParentId())) {
+                dto.setIsConstitute(Boolean.TRUE);
+            }
+
             dto.setProductName(skuVO.getSkuName());
             dto.setMoq(skuVO.getMoq());
             //待申请数量

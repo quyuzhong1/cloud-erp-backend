@@ -33,6 +33,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -52,7 +53,7 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
     private PurchaseOrderDetailService purchaseOrderDetailService;
 
     @Override
-    public PagingVO<List<PurchaseBusinessGatherTableDTO.PagingViewDTO>> purchaseBusinessGatherTablPaginge(PagingDTO<PurchaseBusinessGatherTableDTO.PagingParamDTO> pagingDTO) {
+    public PagingVO<List<PurchaseBusinessGatherTableDTO.PagingViewDTO>> purchaseBusinessGatherTablePaging(PagingDTO<PurchaseBusinessGatherTableDTO.PagingParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<PurchaseBusinessGatherTableDTO.PagingViewDTO> pageData = baseMapper.paging(query, pagingDTO.getParams());
@@ -62,6 +63,9 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
         ids.forEach(req -> {
             podIdList.addAll(Arrays.asList(req.split(",")));
         });
+        if (CollectionUtils.isEmpty(podIdList)) {
+            return new PagingVO(pageData);
+        }
         //查询采购签收信息
         List<WarehouseReceiveDetailEntity> warehouseReceiveDetailEntities = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIdList);
         //查询采购入库信息

@@ -989,15 +989,18 @@ public class PurchaseOrderDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SubcontractOrderChildDTO {
-        private String poId;
 
-        private String podId;
+        private String parentPodId;
+
+        private Integer parentQty;
+
+        private String childPoId;
+
+        private String childPodId;
 
         private String subParentDetailId;
 
         private String subChildDetailId;
-
-        private String skuId;
 
         private String skuNo;
 

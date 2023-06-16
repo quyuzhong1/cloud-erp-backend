@@ -266,7 +266,8 @@
             so.receive_org_name as receiveOrgName,
             sod.warehouse_id as warehouseId,
             sod.warehouse_name as warehouseName,
-            sod.qty
+            sod.qty,
+            sod.parent_id as parentId
         from subcontract_order so
         inner join subcontract_order_detail sod on so.id = sod.main_id  and sod.is_deleted = false
         <where>
