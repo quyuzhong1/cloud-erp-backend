@@ -66,7 +66,12 @@ public class SupplierReportDTO implements Serializable {
         /**
          * 供应商禁用状态
          */
-        private String supplierDisabled;
+        private Boolean supplierDisabled;
+
+        /**
+         * 供应商禁用状态描述
+         */
+        private String supplierDisabledName;
 
         /**
          * 采购订单量
