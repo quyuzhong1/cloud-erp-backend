@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
@@ -1012,9 +1013,14 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //生成入库单
         autoGeneratePoInstock(poIds);
 
-
     }
 
+    /**
+     * @description: 自动入库
+     * @author Will
+     * @date: 2023/6/16 9:43
+     * @param poIds
+     */
     private void autoGeneratePoInstock(List<String> poIds) {
         //采购订单
         List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(poIds);
@@ -1025,6 +1031,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<PoInstockEntity> poInstockList = this.listByPoIds(poIds);
 
         LoginUser userInfo = commonService.getUserInfo();
+
+        List<String> addPoInstockIds = new ArrayList<>();
 
         for (PurchaseOrderEntity purchaseOrderEntity : purchaseOrderList) {
             //只有已审核通过的订单可以下推入库单
@@ -1048,12 +1056,29 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             addDTO.setSubcontractType(purchaseOrderEntity.getSubcontractType());
             addDTO.setDeliveryWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
             addDTO.setStockInUserId(userInfo.getUid());
-            List<PoInstockDetailDTO> detailList = new ArrayList<>();
+            List<PoInstockDetailDTO.AddDTO> detailList = new ArrayList<>();
             for (PurchaseOrderDetailEntity detailEntity : detailEntityList) {
+                PoInstockDetailDTO.AddDTO addDetailDTO = new PoInstockDetailDTO.AddDTO();
+                addDetailDTO.setSourceDetailId(detailEntity.getId());
+                addDetailDTO.setPurchaseOrderDetailId(detailEntity.getId());
+                addDetailDTO.setStockInQty(detailEntity.getPurchaseQty());
+                detailList.add(addDetailDTO);
             }
-
-
-            this.add(addDTO);
+            addDTO.setDetails(detailList);
+            String id = this.add(addDTO);
+            addPoInstockIds.add(id);
+        }
+        if (CollectionUtils.isNotEmpty(addPoInstockIds)) {
+            //提交
+            Boolean submit = this.submit(addPoInstockIds);
+            if (!submit) {
+                throw new ServiceException(ApiError.ERROR_99071);
+            }
+            //审核
+            BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+            baseApproveParamDTO.setIds(addPoInstockIds);
+            baseApproveParamDTO.setType(ApproveType.PASS);
+            this.approve(baseApproveParamDTO);
         }
     }
 

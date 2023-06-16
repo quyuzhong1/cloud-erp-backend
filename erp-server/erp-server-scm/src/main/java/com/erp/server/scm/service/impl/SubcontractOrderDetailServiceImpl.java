@@ -278,6 +278,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             if (ObjectUtils.isEmpty(skuVO)) {
                 throw new ServiceException(ApiError.ERROR_95084);
             }
+            detailEntity.setIsAdd(Boolean.FALSE);
             //新增数据手动添加ID
             if (StringUtils.isBlank(detailEntity.getId())) {
                 detailEntity.setId(IdWorker.getIdStr());
