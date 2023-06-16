@@ -472,6 +472,9 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             //更新单据(后面有流程了调用监听可删)
             updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
 
+            //委外订单入库子级SKU处理
+            handleSubContractChild(list,poInstockDetailList);
+
             // 更新库存（需区分有无收货单）
             updateInventoryTransCore(list);
 
@@ -973,6 +976,99 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
         }
+    }
+
+    /**
+     * @description: 委外订单入库子级SKU处理
+     * @author Will
+     * @date: 2023/6/15 17:02
+     * @param list
+     */
+    private void handleSubContractChild (List<PoInstockEntity> list,List<PoInstockDetailEntity> poInstockDetailList) {
+        List<PoInstockEntity> resultList = list.stream().filter(obj -> SubcontractTypeEnum.ENUM_PARENT.getCode().equals(obj.getSubcontractType())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(resultList)) {
+            return;
+        }
+        /**
+         * 委外关联子SKU订单逻辑
+         * 1.委外订单有下推【父+子】采购订单，且子采购订单未入库：则自动生成【子SKU】入库单，且生成【子SKU委外领料单】----父SKU入库成功
+         * 2.委外订单有未下推【子】采购订单，且子SKU有库存，则自动生成【子SKU委外领料单】----父SKU入库成功
+         * 3.委外订单有下推【父+子】采购订单，且子采购订单已入库【无论是否入库完成】，仅自动生成【子SKU委外领料单】---若库存充足则父SKU入库成功；子SKU库存不充足否则提示【子SKU领料失败，入库单未入库】，父SKU入库失败
+         */
+        List<String> poInIds = resultList.stream().map(PoInstockEntity::getId).collect(Collectors.toList());
+        //委外订单明细父级SKU信息ids
+        List<String> sourceDetailIds = poInstockDetailList.stream().filter(obj -> poInIds.contains(obj.getMainId())).map(PoInstockDetailEntity::getSourceDetailId).collect(Collectors.toList());
+
+        //查询委外订单所有子级SKU生成的采购订单信息
+        List<PurchaseOrderDTO.SubcontractOrderChildDTO> childList = scmTaskFeign.listPoRefSubChildBySubParentDetailIds(sourceDetailIds);
+        if (CollectionUtils.isEmpty(childList)) {
+            //无子级采购订单无需自动入库
+            return;
+        }
+        //自动审核采购订单
+        List<String> poIds = childList.stream().map(PurchaseOrderDTO.SubcontractOrderChildDTO::getPoId).collect(Collectors.toList());
+        scmTaskFeign.autoApprovePurchaseOrder(poIds);
+
+        //生成入库单
+        autoGeneratePoInstock(poIds);
+
+
+    }
+
+    private void autoGeneratePoInstock(List<String> poIds) {
+        //采购订单
+        List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(poIds);
+
+        //采购订单明细
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listByPurchaseOrderIds(poIds);
+
+        List<PoInstockEntity> poInstockList = this.listByPoIds(poIds);
+
+        LoginUser userInfo = commonService.getUserInfo();
+
+        for (PurchaseOrderEntity purchaseOrderEntity : purchaseOrderList) {
+            //只有已审核通过的订单可以下推入库单
+            if (!ApproveStatusEnum.APPROVE.getStatus().equals(purchaseOrderEntity.getApproveStatus())) {
+                return;
+            }
+            //已下推过入库单的采购订单无需自动下推
+            long count = poInstockList.stream().filter(obj -> obj.getPurchaseOrderId().equals(purchaseOrderEntity.getId())).count();
+            if (count > 0) {
+                return;
+            }
+            List<PurchaseOrderDetailEntity> detailEntityList = purchaseOrderDetailList.stream().filter(obj -> obj.getPurchaseOrderId().equals(purchaseOrderEntity.getId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(detailEntityList)) {
+                throw new ServiceException(ApiError.ERROR_98026);
+            }
+
+            PoInstockDTO.AddDTO addDTO = new PoInstockDTO.AddDTO();
+            addDTO.setSourceId(purchaseOrderEntity.getId());
+            addDTO.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
+            addDTO.setPurchaseOrderId(purchaseOrderEntity.getId());
+            addDTO.setSubcontractType(purchaseOrderEntity.getSubcontractType());
+            addDTO.setDeliveryWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
+            addDTO.setStockInUserId(userInfo.getUid());
+            List<PoInstockDetailDTO> detailList = new ArrayList<>();
+            for (PurchaseOrderDetailEntity detailEntity : detailEntityList) {
+            }
+
+
+            this.add(addDTO);
+        }
+    }
+
+    /**
+     * @description: 根据采购订单Ids查询已审核订单
+     * @author Will
+     * @date: 2023/6/15 19:19
+     * @param poIds
+     * @return List<PoInstockEntity>
+     */
+    private List<PoInstockEntity> listByPoIds(List<String> poIds) {
+      return lambdaQuery().in(PoInstockEntity::getPurchaseOrderId,poIds)
+              .eq(PoInstockEntity::getInvalidStatus,Boolean.FALSE)
+              .eq(PoInstockEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getStatus())
+              .list();
     }
 
     /**

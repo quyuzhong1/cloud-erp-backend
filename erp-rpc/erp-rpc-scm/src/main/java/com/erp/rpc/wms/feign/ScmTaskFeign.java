@@ -247,4 +247,21 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/purchaseOrder/getPurchaseOrderByCodes")
     List<PurchaseOrderEntity> getPurchaseOrderByCodes(@RequestBody List<String> codes);
+    /**
+     * @description: 查询委外订单所有子级SKU生成的采购订单信息
+     * @author Will
+     * @date: 2023/6/15 17:46
+     * @param subParentDetailIds
+     * @return List<SubcontractOrderChildDTO>
+     */
+    @PostMapping("feign/purchaseOrder/listPoRefSubChildBySubParentDetailIds")
+    List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildBySubParentDetailIds(@RequestBody List<String> subParentDetailIds);
+    /**
+     * @description: 审核采购订单
+     * @author Will
+     * @date: 2023/6/15 18:49
+     * @param poIds
+     */
+    @PostMapping("feign/purchaseOrder/autoApprovePurchaseOrder")
+    void autoApprovePurchaseOrder(@RequestBody List<String> poIds);
 }

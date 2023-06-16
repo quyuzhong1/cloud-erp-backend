@@ -495,6 +495,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
             viewDTO.setChildList(childDTOList);
         }
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
         data.setDetailList(parentDTOList);
         return data;
     }

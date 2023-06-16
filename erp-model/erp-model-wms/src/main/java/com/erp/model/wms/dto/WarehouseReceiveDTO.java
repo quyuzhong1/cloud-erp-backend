@@ -62,7 +62,7 @@ public class WarehouseReceiveDTO {
         private String deliveryWarehouseId;
 
         /**
-         * 是否是委外订单
+         * 委外订单类型(child子级，parent父级)
          */
         private String subcontractType;
 
@@ -419,7 +419,7 @@ public class WarehouseReceiveDTO {
         private String remark;
 
         /**
-         * 是否是委外订单
+         * 委外订单类型(child子级，parent父级)
          */
         private String subcontractType;
 

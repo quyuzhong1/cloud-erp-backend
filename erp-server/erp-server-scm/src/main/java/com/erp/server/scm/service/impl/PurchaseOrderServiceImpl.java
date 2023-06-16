@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
@@ -1137,6 +1138,36 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             viewSubcontractPoDTO.setApproveStatusName(ApproveStatusEnum.getName(viewSubcontractPoDTO.getApproveStatus()));
         }
         return list;
+    }
+
+    @Override
+    public List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildBySubParentDetailIds(List<String> subParentDetailIds) {
+        return baseMapper.listPoRefSubChildBySubParentDetailIds(subParentDetailIds);
+    }
+
+    @Override
+    public void autoApprovePurchaseOrder(List<String> poIds) {
+        if (CollectionUtils.isEmpty(poIds)) {
+            return;
+        }
+        List<PurchaseOrderEntity> oldList = this.listByIds(poIds);
+        //提交
+        List<String> submitIds = oldList.stream().filter(obj -> ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).map(PurchaseOrderEntity::getId).collect(Collectors.toList());
+        Boolean submit = this.submit(submitIds);
+        if (!submit) {
+            throw new ServiceException(ApiError.ERROR_98076);
+        }
+        List<PurchaseOrderEntity> newList = this.listByIds(poIds);
+        //审核
+        List<String> approveIds = newList.stream().filter(obj -> ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).map(PurchaseOrderEntity::getId).collect(Collectors.toList());
+
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setIds(approveIds);
+        baseApproveParamDTO.setType(ApproveType.PASS);
+        Boolean approve = this.approve(baseApproveParamDTO);
+        if (!approve) {
+            throw new ServiceException(ApiError.ERROR_98077);
+        }
     }
 
 
