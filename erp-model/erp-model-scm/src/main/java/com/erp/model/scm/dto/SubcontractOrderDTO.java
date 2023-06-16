@@ -567,6 +567,11 @@ public class SubcontractOrderDTO implements Serializable {
         private String deliveryWarehouseId;
 
         /**
+         * 库位id
+         */
+        private String warehouseLocation;
+
+        /**
          * 是否是父级SKU
          */
         private Boolean isParent;

@@ -151,6 +151,12 @@ public class SubcontractOrderDetailEntity extends BaseEntity<SubcontractOrderDet
     private Boolean isGeneratePo;
 
     /**
+     * 仓位
+     */
+    @TableField("warehouse_location")
+    private String warehouseLocation;
+
+    /**
     * 父级SKUid
     */
     @TableField("parent_id")

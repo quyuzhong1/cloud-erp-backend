@@ -1064,6 +1064,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 addDetailDTO.setSourceDetailId(detailEntity.getId());
                 addDetailDTO.setPurchaseOrderDetailId(detailEntity.getId());
                 addDetailDTO.setStockInQty(detailEntity.getPurchaseQty());
+                addDetailDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
                 detailList.add(addDetailDTO);
 
 
@@ -1078,7 +1079,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 inOutStockDTO.setSkuNo(detailEntity.getSkuNo());
                 inOutStockDTO.setQty(detailEntity.getPurchaseQty());
                 inOutStockDTO.setWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
-                inOutStockDTO.setWarehouseLocation("");
+                inOutStockDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
                 inOutStockList.add(inOutStockDTO);
             }
             addDTO.setDetails(detailList);

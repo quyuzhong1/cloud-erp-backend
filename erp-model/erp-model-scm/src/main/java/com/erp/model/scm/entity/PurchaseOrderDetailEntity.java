@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -143,7 +142,14 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     /**
      * 是否结束交货
      */
+    @TableField("is_end_receive")
     private Boolean isEndReceive;
+
+    /**
+     * 仓位
+     */
+    @TableField("warehouse_location")
+    private String warehouseLocation;
 
     /**
      * 来源明细id

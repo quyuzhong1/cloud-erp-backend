@@ -224,6 +224,12 @@ public class SubcontractOrderDetailDTO implements Serializable {
         @NotBlank(message = "仓库id不能为空")
         @Size(max = 19,message = "仓库id最大长度不能超过19位")
         private String warehouseId;
+
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+
         /**
         * 预计交货日期
         */

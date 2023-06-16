@@ -576,6 +576,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             generatePoDTO.setSkuId(detailEntity.getSkuId());
             //仓库
             generatePoDTO.setDeliveryWarehouseId(detailEntity.getWarehouseId());
+            //库位
+            generatePoDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
             //是否是父级sku
             generatePoDTO.setIsParent(StringUtils.isBlank(detailEntity.getParentId()) ? Boolean.TRUE :Boolean.FALSE );
             //采购员
@@ -626,7 +628,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 }
                 BeanMapperUtils.copy(skuVO,poDetailAddDTO);
                 poDetailAddDTO.setPurchaseQty(addDetailDTO.getQty());
-
+                poDetailAddDTO.setWarehouseLocation(addDetailDTO.getWarehouseLocation());
                 //供应商报价信息
                 PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
                 searchDTO.setSkuId(addDetailDTO.getSkuId());
@@ -635,7 +637,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 searchDTO.setSkuNo(skuVO.getSkuNo());
                 List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(searchDTO);
                 PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
-
                 poDetailAddDTO.setCurrency(viewDTO.getCurrency());
                 poDetailAddDTO.setCurrencySymbol(viewDTO.getCurrencySymbol());
                 poDetailAddDTO.setTaxPrice(viewDTO.getTaxPrice());
