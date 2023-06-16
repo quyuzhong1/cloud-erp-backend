@@ -17,6 +17,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CfgUserRangeDTO;
@@ -43,6 +44,11 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.redisson.api.RLock;
 import org.redisson.api.RReadWriteLock;
 import org.redisson.api.RedissonClient;
@@ -51,6 +57,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.OutputStream;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -480,11 +488,114 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         List<InventoryReportDTO.InventoryAgeRangeDTO> userRangeList = BeanMapperUtils.copyList(InventoryReportDTO.InventoryAgeRangeDTO.class, userRanges);
         pagingParamDTO.getParams().setUserRangeList(userRangeList);
 
+        // 此处注意，分页列表展示的是实时的实际库存，不是按区间设置的
+        /**
+        Integer startValue = userRangeList.get(0).getStartValue();
+        LocalDate endDate = LocalDate.now().plusDays(startValue * -1);
+        pagingParamDTO.getParams().setEndDate(endDate);
+         */
         IPage<LinkedHashMap> pageData = this.baseMapper.inventoryAgePage(query, pagingParamDTO.getParams());
         // 标题及值赋值
-        List<LinkedHashMap> dataList = fillInventoryAgePageData(pageData.getRecords());
+        List<LinkedHashMap> dataList = fillInventoryAgePageData(pageData.getRecords(), userRangeList);
         pageData.setRecords(dataList);
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public void exportInventoryAge(InventoryReportDTO.ExportInventoryAgeSearchParamDTO paramDTO, HttpServletResponse response) {
+        // 勾选导出处理
+        if (CollUtil.isNotEmpty(paramDTO.getItems())) {
+            List<InventoryReportDTO.ExportInventoryAgeItem> checkData = paramDTO.getItems();
+            List<String> warehouseIds = checkData.stream().map(InventoryReportDTO.ExportInventoryAgeItem::getWarehouseId).distinct().collect(Collectors.toList());
+            List<String> skuIds = checkData.stream().map(InventoryReportDTO.ExportInventoryAgeItem::getSkuId).distinct().collect(Collectors.toList());
+            paramDTO.setWarehouseIdList(warehouseIds);
+            paramDTO.setSkuIdList(skuIds);
+        }
+
+        // 获取用户区间配置
+        List<CfgUserRangeDTO.UserRangeDataDTO> userRanges = sysUserFeign.getUserRangeByType(UserRangeTypeEnum.INVENTORY_AGE.getCode(), Boolean.TRUE);
+        List<InventoryReportDTO.InventoryAgeRangeDTO> userRangeList = BeanMapperUtils.copyList(InventoryReportDTO.InventoryAgeRangeDTO.class, userRanges);
+        paramDTO.setUserRangeList(userRangeList);
+
+        List<LinkedHashMap> dataList = inventoryMapper.exportInventoryPage(paramDTO);
+        if (CollUtil.isEmpty(dataList)) {
+            return;
+        }
+        // 标题及值赋值
+        List<LinkedHashMap> resultList = fillInventoryAgePageData(dataList, userRangeList);
+
+    }
+
+    private void exportInventoryAgeExcel(List<LinkedHashMap> resultList, HttpServletResponse response) {
+        LinkedHashMap headMap = (LinkedHashMap) resultList.get(0).get("head");
+        List<LinkedHashMap> convertDataList = (List<LinkedHashMap>) resultList.get(0).get("data");
+
+        OutputStream outputStream = null;
+        // 声明一个工作簿
+        XSSFWorkbook wb = new XSSFWorkbook();
+        XSSFCellStyle contentCellStyle = wb.createCellStyle();
+        // 水平居左
+        contentCellStyle.setAlignment(HorizontalAlignment.LEFT);
+        contentCellStyle.setVerticalAlignment(VerticalAlignment.CENTER); //垂直居中
+        contentCellStyle.setWrapText(true);//自动换行
+        contentCellStyle.setBorderBottom(BorderStyle.THIN); //下边框
+        contentCellStyle.setBorderLeft(BorderStyle.THIN);//左边框
+        contentCellStyle.setBorderTop(BorderStyle.THIN);//上边框
+        contentCellStyle.setBorderRight(BorderStyle.THIN);//右边框
+
+        Font titleFont = wb.createFont();
+        titleFont.setBold(true);
+        titleFont.setFontHeightInPoints((short) 13);
+        CellStyle titleStyle = wb.createCellStyle();
+        // 设置水平居中
+        titleStyle.setAlignment(HorizontalAlignment.LEFT);
+        // 设置垂直对齐的样式为居中对齐;
+        titleStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        titleStyle.setFont(titleFont);
+        // 下边框
+        titleStyle.setBorderBottom(BorderStyle.THIN);
+        // 左边框
+        titleStyle.setBorderLeft(BorderStyle.THIN);
+        //上边框
+        titleStyle.setBorderTop(BorderStyle.THIN);
+        // 右边框
+        titleStyle.setBorderRight(BorderStyle.THIN);
+
+        CellStyle titleNoBorderStyle = wb.createCellStyle();
+        //设置水平居中
+        titleNoBorderStyle.setAlignment(HorizontalAlignment.LEFT);
+        //设置垂直对齐的样式为居中对齐;
+        titleNoBorderStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        titleNoBorderStyle.setFont(titleFont);
+
+        // 创建sheet页
+        XSSFSheet sheet = wb.createSheet("库龄计算表");
+        sheet.setDefaultColumnWidth(1 * 256);
+
+        int rowNo = 0;
+        // 第一行标题
+        XSSFRow rowTitle0 = sheet.createRow(rowNo);
+
+        // 标题
+        int columnIndex = 0;
+        // 总列数
+        int totalColumn = headMap.keySet().size();
+        for(Object key : headMap.keySet()) {
+            Cell cell = rowTitle0.createCell(columnIndex);
+            cell.setCellStyle(titleStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(headMap.get(key)));
+            ++columnIndex;
+        }
+
+        // 内容
+        for(int i = 0,size = convertDataList.size();i < size;i++) {
+            LinkedHashMap dataMap = convertDataList.get(i);
+            ++rowNo;
+
+            XSSFRow rowContent = sheet.createRow(rowNo);
+
+        }
+
     }
 
 
@@ -521,10 +632,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         });
     }
 
-    private List<LinkedHashMap> fillInventoryAgePageData(List<LinkedHashMap> dataList) {
-        if(CollUtil.isEmpty(dataList)) {
-            return null;
-        }
+    private List<LinkedHashMap> fillInventoryAgePageData(List<LinkedHashMap> dataList, List<InventoryReportDTO.InventoryAgeRangeDTO> userRangeList) {
         List<LinkedHashMap> resultList = Lists.newArrayList();
         LinkedHashMap resultMap = Maps.newLinkedHashMap();
         // 标题
@@ -537,6 +645,11 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             headMap.put(inventoryAgeTitleEnum.getCode(), inventoryAgeTitleEnum.getName());
         });
 
+        // 动态字段标题
+        if(CollUtil.isNotEmpty(userRangeList)) {
+            userRangeList.stream().forEach(userRange-> headMap.put(userRange.getName(), userRange.getName()));
+        }
+
         List<String> skuIds = Lists.newArrayList();
         dataList.stream().forEach(data->{
             skuIds.add(StrUtils.null2EmptyWithTrim(data.get("sku_id")));
@@ -547,19 +660,16 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
 
         // 结果集字段转驼峰
-        dataList.stream().forEach(record->{
-            LinkedHashMap convertMap = new LinkedHashMap();
-            convertMap.put("productName", null);
-            convertMap.put("productImgUrl", null);
-            convertMap.put("saleStateName", null);
-            convertMap.put("warehouseName", null);
-            convertMap.put("orgName", null);
-            record.forEach((fieldKey,fieldVal)->{
+        if(CollUtil.isNotEmpty(dataList)) {
+            dataList.stream().forEach(record->{
+                LinkedHashMap convertMap = new LinkedHashMap();
+                convertMap.put("productName", null);
+                convertMap.put("productImgUrl", null);
+                convertMap.put("saleStateName", null);
+                convertMap.put("warehouseName", null);
+                convertMap.put("orgName", null);
+                record.forEach((fieldKey,fieldVal)->{
                 String camelKey = StrUtil.toCamelCase(StrUtils.null2EmptyWithTrim(fieldKey));
-                // 动态字段标题
-                if(!headMap.containsKey(camelKey)) {
-                    headMap.put(camelKey, camelKey);
-                }
                 if(Objects.equals(fieldKey, FieldConstant.SKU_ID) && skuMap.containsKey(fieldVal)) {
                     SkuVO skuVO = skuMap.get(fieldVal).get(0);
                     convertMap.put("productName", skuVO.getSkuName());
@@ -586,7 +696,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
                 convertMap.put(camelKey, fieldVal);
             });
             convertDataList.add(convertMap);
-        });
+         });
+        }
         resultMap.put("head", headMap);
         resultMap.put("data", convertDataList);
         resultList.add(resultMap);

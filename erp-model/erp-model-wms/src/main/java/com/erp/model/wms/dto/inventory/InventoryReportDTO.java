@@ -331,6 +331,14 @@ public class InventoryReportDTO implements Serializable {
         @JsonIgnore
         private List<InventoryAgeRangeDTO> userRangeList;
 
+        /**
+         * 结束入库日期
+         */
+        /**
+        @JsonIgnore
+        private LocalDate endDate;
+        */
+
     }
 
     /**
@@ -394,6 +402,18 @@ public class InventoryReportDTO implements Serializable {
          * 勾选的数据行
          */
         private List<ExportInventoryAgeItem> items;
+
+        /**
+         * 用户区间设置
+         */
+        @JsonIgnore
+        private List<InventoryAgeRangeDTO> userRangeList;
+
+        /**
+         * sku编码
+         */
+        @JsonIgnore
+        private List<String> skuIdList;
 
     }
 
