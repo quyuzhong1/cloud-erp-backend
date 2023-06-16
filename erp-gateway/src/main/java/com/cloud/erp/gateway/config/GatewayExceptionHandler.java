@@ -41,7 +41,7 @@ public class GatewayExceptionHandler extends DefaultErrorWebExceptionHandler {
 		ApiError defaultError = ApiError.Default;
 		String code = StrUtils.null2EmptyWithTrim(defaultError.code);
 		String errorMessage = defaultError.msg;
-		Map<String, Object> map = new HashMap<>(2);
+		Map<String, Object> map = new HashMap<>(4);
 		Throwable error = super.getError(request);
 		log.error(StrUtil.format("网关异常，请求地址：{}",request.exchange().getRequest().getURI()),error);
 		if (error instanceof org.springframework.cloud.gateway.support.NotFoundException) {
