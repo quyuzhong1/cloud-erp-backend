@@ -57,4 +57,11 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      */
     IPage<LinkedHashMap> inventoryAgePage(Page query, @Param("params") InventoryReportDTO.InventoryAgeSearchParamDTO params);
 
+    /**
+     * 库龄计算表导出
+     * @param params
+     * @return
+     */
+    List<LinkedHashMap> exportInventoryPage(@Param("params") InventoryReportDTO.ExportInventoryAgeSearchParamDTO params);
+
 }

@@ -172,4 +172,11 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      */
     PagingVO<LinkedHashMap> inventoryAgePaging(PagingDTO<InventoryReportDTO.InventoryAgeSearchParamDTO> pagingParamDTO);
 
+    /**
+     * 库龄计算表导出
+     * @param paramDTO
+     * @return
+     */
+    void exportInventoryAge(InventoryReportDTO.ExportInventoryAgeSearchParamDTO paramDTO, HttpServletResponse response);
+
 }

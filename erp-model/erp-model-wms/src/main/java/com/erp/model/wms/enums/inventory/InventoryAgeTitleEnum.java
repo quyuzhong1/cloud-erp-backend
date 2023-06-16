@@ -16,6 +16,7 @@ public enum  InventoryAgeTitleEnum {
     SALE_STATE_NAME("saleStateName", "销售状态"),
     ORG_NAME("orgName", "库存组织"),
     WAREHOUSE_LOCATION("warehouseLocation", "仓位"),
+    REAL_INVENTORY("realInventory", "实际库存"),
     USABLE_INVENTORY("usableInventory", "可用库存"),
     ;
     private String code;
