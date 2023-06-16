@@ -122,4 +122,24 @@ public class WarehouseLocationDTO implements Serializable {
     }
 
 
+    /**
+     * 所有仓位下拉（不是仓库维度）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class LocationAllDTO {
+
+        /**
+         * 编码
+         */
+        private String code;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+    }
+
+
 }

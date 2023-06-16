@@ -44,4 +44,10 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      */
     WarehouseLocationEntity findByWarehouseIdAndCode(String warehouseId, String code);
 
+    /**
+     * 所有仓位下拉（不是仓库维度）
+     * @return
+     */
+    List<WarehouseLocationDTO.LocationAllDTO> all( );
+
 }

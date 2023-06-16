@@ -42,6 +42,15 @@ public class WarehouseLocationController extends BaseController {
     }
 
     /**
+     * 获取所有仓位
+     * @return
+     */
+    @PostMapping(value = "/all")
+    public ApiResult<List<WarehouseLocationDTO.LocationAllDTO>> all( ) {
+        return success(warehouseLocationService.all( ));
+    }
+
+    /**
      * 初始化部分仓位数据
      * @return
      */

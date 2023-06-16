@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.StrUtils;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
@@ -15,10 +16,7 @@ import com.google.common.collect.Lists;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -105,6 +103,30 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         LambdaQueryWrapper<WarehouseLocationEntity> lambdaQuery = new LambdaQueryWrapper<WarehouseLocationEntity>().eq(WarehouseLocationEntity::getWarehouseId, warehouseId).eq(WarehouseLocationEntity::getCode, code)
                 .eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.LOCATION.getCode()).last("limit 1");
         return baseMapper.selectOne(lambdaQuery);
+    }
+
+    @Override
+    public List<WarehouseLocationDTO.LocationAllDTO> all() {
+        List<WarehouseLocationEntity> warehouseLocationList =  lambdaQuery()
+                .eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.LOCATION.getCode()).list();
+        if(CollUtil.isEmpty(warehouseLocationList)) {
+            return Lists.newArrayList();
+        }
+        List<WarehouseLocationDTO.LocationAllDTO> dataList = Lists.newArrayListWithExpectedSize(warehouseLocationList.size());
+        // 让空仓位排前面
+        warehouseLocationList = warehouseLocationList.stream().sorted(Comparator.comparing(WarehouseLocationEntity::getCode)).collect(Collectors.toList());
+        // 根据编码+名称去重
+        warehouseLocationList = warehouseLocationList.stream().collect(
+                Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(
+                        o -> StrUtils.null2EmptyWithTrim(o.getCode()) + "-" + StrUtils.null2EmptyWithTrim(o.getName())))), ArrayList::new));
+
+        warehouseLocationList.stream().forEach(warehouseLocation->{
+            WarehouseLocationDTO.LocationAllDTO data = new WarehouseLocationDTO.LocationAllDTO();
+            data.setCode(warehouseLocation.getCode());
+            data.setName(warehouseLocation.getName());
+            dataList.add(data);
+        });
+        return dataList;
     }
 
 
