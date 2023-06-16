@@ -123,6 +123,11 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private String remark;
 
         /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
          * 委外子SKU下推可用
          */
         private String warehouseLocation;

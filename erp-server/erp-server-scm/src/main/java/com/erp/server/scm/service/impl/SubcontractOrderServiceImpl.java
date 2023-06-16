@@ -629,6 +629,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                     throw new ServiceException(ApiError.ERROR_95084);
                 }
                 BeanMapperUtils.copy(skuVO,poDetailAddDTO);
+                poDetailAddDTO.setSourceDetailId(addDetailDTO.getSourceDetailId());
                 poDetailAddDTO.setProductName(skuVO.getSkuName());
                 poDetailAddDTO.setPurchaseQty(addDetailDTO.getQty());
                 poDetailAddDTO.setWarehouseLocation(addDetailDTO.getWarehouseLocation());
