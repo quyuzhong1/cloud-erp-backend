@@ -432,9 +432,9 @@
             resultType="com.erp.model.scm.dto.PurchaseOrderDTO$SubcontractOrderChildDTO">
 
         select
-            ppod.id as parent
-            po.id as poId,
-            pod.id as podId,
+            ppod.id as parentPodId,
+            po.id as childPoId,
+            pod.id as childPodId,
             psod.id as subParentDetailId,
             sod.id as subChildDetailId,
             pod.sku_id as skuId,
