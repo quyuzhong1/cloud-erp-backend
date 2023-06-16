@@ -159,7 +159,7 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
     private String sourceType;
 
     /**
-     * 是否是委外
+     * 委外订单类型(child子级，parent父级)
      */
     @TableField("subcontract_type")
     private String subcontractType;

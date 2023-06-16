@@ -183,7 +183,7 @@ public class PurchaseOrderDTO implements Serializable {
         private LocalDateTime createTime;
 
         /**
-         * 是否是委外订单
+         * 委外订单类型(child子级，parent父级)
          */
         private String subcontractType;
 
@@ -322,7 +322,7 @@ public class PurchaseOrderDTO implements Serializable {
         private Boolean isFirstMassProduct;
 
         /**
-         * 是否是委外订单
+         * 委外订单类型(child子级，parent父级)
          */
         private String subcontractType;
 
@@ -984,5 +984,23 @@ public class PurchaseOrderDTO implements Serializable {
          * 采购员
          */
         private String  purchaseUserName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SubcontractOrderChildDTO {
+        private String poId;
+
+        private String podId;
+
+        private String subParentDetailId;
+
+        private String subChildDetailId;
+
+        private String skuId;
+
+        private String skuNo;
+
+        private String approveStatus;
     }
 }

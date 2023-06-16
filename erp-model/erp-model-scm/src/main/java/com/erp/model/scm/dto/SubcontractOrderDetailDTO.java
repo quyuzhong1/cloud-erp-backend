@@ -36,6 +36,11 @@ public class SubcontractOrderDetailDTO implements Serializable {
         private String id;
 
         /**
+         * SKU编码
+         */
+        private String skuNo;
+
+        /**
          * 产品名称
          */
         private String productName;
@@ -48,6 +53,12 @@ public class SubcontractOrderDetailDTO implements Serializable {
         * 供应商名称
         */
         private String supplierName;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
 
         /**
         * 币种符号

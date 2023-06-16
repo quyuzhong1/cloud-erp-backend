@@ -231,4 +231,25 @@ public class PurchaseOrderFeignController {
     List<PurchaseOrderEntity> getPurchaseOrderByCodes(@RequestBody List<String> codes) {
         return purchaseOrderService.findByCodes(codes);
     }
+
+    /**
+     * 查询委外订单所有子级SKU生成的采购订单信息
+     * @param subParentDetailIds
+     * @return
+     */
+    @PostMapping("/getPurchaseOrderByCodes")
+    public List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildBySubParentDetailIds(@RequestBody List<String> subParentDetailIds) {
+        return purchaseOrderService.listPoRefSubChildBySubParentDetailIds(subParentDetailIds);
+    }
+
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/6/15 18:50
+     * @param poIds
+     */
+    @PostMapping("/autoApprovePurchaseOrder")
+    public void autoApprovePurchaseOrder(@RequestBody List<String> poIds) {
+         purchaseOrderService.autoApprovePurchaseOrder(poIds);
+    }
 }
