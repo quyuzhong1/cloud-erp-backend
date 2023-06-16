@@ -273,8 +273,8 @@
             so.is_deleted = false and so.invalid_status = false
             <if test="ids != null and ids.size > 0">
                 and so.id in
-                <foreach collection="ids" item="item" separator="," close=",">
-                    ${item}
+                <foreach collection="ids" item="item" separator="," open="(" close=")">
+                    #{item}
                 </foreach>
             </if>
         </where>
