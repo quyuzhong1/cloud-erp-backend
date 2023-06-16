@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -435,6 +436,12 @@ public class InventoryReportDTO implements Serializable {
          */
         @NotEmpty(message = "sku不能为空")
         private String skuId;
+
+        /**
+         * 仓位
+         */
+        @NotNull(message = "仓位不能为null")
+        private String warehouseLocation;
 
     }
 

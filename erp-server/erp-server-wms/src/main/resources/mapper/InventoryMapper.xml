@@ -217,6 +217,12 @@
                     #{item}
                 </foreach>
             </if>
+            <if test="params.warehouseLocationList != null and params.warehouseLocationList.size  > 0">
+                and inv.warehouse_location in
+                <foreach collection="params.warehouseLocationList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
@@ -291,6 +297,12 @@
         <if test="params.orgIdList != null and params.orgIdList.size  > 0">
             and inv.org_id in
             <foreach collection="params.orgIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.warehouseLocationList != null and params.warehouseLocationList.size  > 0">
+            and inv.warehouse_location in
+            <foreach collection="params.warehouseLocationList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>
