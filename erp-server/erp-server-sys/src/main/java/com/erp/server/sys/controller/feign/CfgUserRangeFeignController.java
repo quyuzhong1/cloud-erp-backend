@@ -29,8 +29,9 @@ public class CfgUserRangeFeignController extends BaseController {
      * @return
      */
     @GetMapping("/getByType")
-    public List<CfgUserRangeDTO.UserRangeDataDTO> getUserRangeByType(@RequestParam(value = "type")String type) {
-        return cfgUserRangeService.getUserRanges(type);
+    public List<CfgUserRangeDTO.UserRangeDataDTO> getUserRangeByType(@RequestParam(value = "type")String type,
+                                                                     @RequestParam(value = "addLast", required = false, defaultValue = "true") Boolean addLast) {
+        return cfgUserRangeService.getUserRanges(type, addLast);
     }
 
 }

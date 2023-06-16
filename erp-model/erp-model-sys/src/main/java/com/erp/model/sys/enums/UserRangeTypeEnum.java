@@ -13,17 +13,20 @@ import java.util.Optional;
 
 public enum UserRangeTypeEnum {
 
-    INVENTORY_AGE("inventoryAge", "库龄天数", "{}-{}天"),;
+    INVENTORY_AGE("inventoryAge", "库龄天数", "{}-{}","天"),;
 
 
     private String code;
     private String name;
+    private String unitName;
     private String label;
+    public static final String LAST_STR = "以上";
 
-    UserRangeTypeEnum(String code, String name, String label) {
+    UserRangeTypeEnum(String code, String name, String label, String unitName) {
         this.code = code;
         this.name = name;
         this.label = label;
+        this.unitName = unitName;
     }
 
     public String getCode() {
@@ -36,6 +39,10 @@ public enum UserRangeTypeEnum {
 
     public String getLabel() {
         return label;
+    }
+
+    public String getUnitName() {
+        return unitName;
     }
 
     /**
@@ -55,16 +62,6 @@ public enum UserRangeTypeEnum {
     public static String getNameByCode(String code) {
         UserRangeTypeEnum userRangeTypeEnum = of(code);
         return Optional.ofNullable(userRangeTypeEnum).map(UserRangeTypeEnum::getName).orElse("");
-    }
-
-    /**
-     * 根据代码获取标题
-     * @param code
-     * @return
-     */
-    public static String getLabelByCode(String code) {
-        UserRangeTypeEnum userRangeTypeEnum = of(code);
-        return Optional.ofNullable(userRangeTypeEnum).map(UserRangeTypeEnum::getLabel).orElse("");
     }
 
 }

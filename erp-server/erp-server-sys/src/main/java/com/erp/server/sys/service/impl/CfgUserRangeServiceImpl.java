@@ -22,10 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -79,7 +76,7 @@ public class CfgUserRangeServiceImpl extends SuperServiceImpl<CfgUserRangeMapper
             cfgUserRangeEntity.setStartValue(range.getStartValue());
             cfgUserRangeEntity.setEndValue(range.getEndValue());
             cfgUserRangeEntity.setUserId(userId);
-            String name = StrUtil.format( userRangeTypeEnum.getLabel(),range.getStartValue(), range.getEndValue());
+            String name = StrUtil.format(userRangeTypeEnum.getLabel(),range.getStartValue(), range.getEndValue()) + userRangeTypeEnum.getUnitName();
             cfgUserRangeEntity.setName(name);
             cfgUserRangeEntityList.add(cfgUserRangeEntity);
         }
@@ -153,7 +150,7 @@ public class CfgUserRangeServiceImpl extends SuperServiceImpl<CfgUserRangeMapper
     }
 
     @Override
-    public List<CfgUserRangeDTO.UserRangeDataDTO> getUserRanges(String type) {
+    public List<CfgUserRangeDTO.UserRangeDataDTO> getUserRanges(String type, Boolean addLast) {
         UserRangeTypeEnum userRangeTypeEnum = UserRangeTypeEnum.of(type);
         String formatName = userRangeTypeEnum.getLabel();
         List<CfgUserRangeDTO.UserRangeDataDTO> rangeList = this.detail(type);
@@ -166,7 +163,16 @@ public class CfgUserRangeServiceImpl extends SuperServiceImpl<CfgUserRangeMapper
                 // 需要赋值展示名称
                 rangeList.stream().forEach(data-> data.setName(StrUtil.format(formatName, data.getStartValue(), data.getEndValue())));
             }
-            return rangeList;
+        }
+        // 追加最后一个到无穷大的区间
+        if(Objects.equals(addLast, Boolean.TRUE) && CollUtil.isNotEmpty(rangeList)) {
+            CfgUserRangeDTO.UserRangeDataDTO userRangeDataDTO = rangeList.get(rangeList.size() -1);
+
+            CfgUserRangeDTO.UserRangeDataDTO lastRange = new CfgUserRangeDTO.UserRangeDataDTO();
+            lastRange.setStartValue(userRangeDataDTO.getEndValue());
+            lastRange.setEndValue(null);
+            lastRange.setName(lastRange.getStartValue() + userRangeTypeEnum.getUnitName() + UserRangeTypeEnum.LAST_STR);
+            rangeList.add(lastRange);
         }
         return rangeList;
     }

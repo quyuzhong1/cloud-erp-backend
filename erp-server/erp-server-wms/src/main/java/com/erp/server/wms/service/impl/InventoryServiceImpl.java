@@ -476,7 +476,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
 
         // 获取用户区间配置
-        List<CfgUserRangeDTO.UserRangeDataDTO> userRanges = sysUserFeign.getUserRangeByType(UserRangeTypeEnum.INVENTORY_AGE.getCode());
+        List<CfgUserRangeDTO.UserRangeDataDTO> userRanges = sysUserFeign.getUserRangeByType(UserRangeTypeEnum.INVENTORY_AGE.getCode(), Boolean.TRUE);
         List<InventoryReportDTO.InventoryAgeRangeDTO> userRangeList = BeanMapperUtils.copyList(InventoryReportDTO.InventoryAgeRangeDTO.class, userRanges);
         pagingParamDTO.getParams().setUserRangeList(userRangeList);
 

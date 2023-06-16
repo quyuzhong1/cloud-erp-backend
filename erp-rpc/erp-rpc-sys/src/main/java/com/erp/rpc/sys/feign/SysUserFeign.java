@@ -369,5 +369,6 @@ public interface SysUserFeign {
      * @return
      */
     @GetMapping("feign/cfgUserRange/getByType")
-    List<CfgUserRangeDTO.UserRangeDataDTO> getUserRangeByType(@RequestParam(value = "type")String type);
+    List<CfgUserRangeDTO.UserRangeDataDTO> getUserRangeByType(@RequestParam(value = "type")String type,
+                                                              @RequestParam(value = "addLast", required = false, defaultValue = "true") Boolean addLast);
 }
