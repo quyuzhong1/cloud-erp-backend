@@ -5,7 +5,6 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -166,6 +165,8 @@ public class ProductTaskVO implements Serializable {
      * 排期类型
      */
     private String scheduleType;
+
+
 
 
     /**

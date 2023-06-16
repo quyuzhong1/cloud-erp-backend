@@ -37,7 +37,7 @@
         WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE  p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
@@ -162,9 +162,10 @@
         WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE  p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         AND (string_to_array( p.charge_id,',') &amp;&amp; string_to_array(#{userId}, ',') or
-        p.project_charge_id=#{userId})
+        p.project_charge_id=#{userId} or p.id in (select product_id from project_task where is_deleted=false and
+        string_to_array( charge_id,',') &amp;&amp; string_to_array(#{userId}, ',')))
         AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
@@ -366,7 +367,7 @@
         WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE  p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
             <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
@@ -499,7 +500,7 @@
         WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE   p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
             <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
@@ -598,7 +599,7 @@
         WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE   p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
             <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
@@ -689,7 +690,7 @@
         SELECT pi.id AS productId,pi.name AS productName,pj.id AS projectId
         FROM product_info pi Left JOIN project_info pj
         ON pi.id=pj.product_id AND pj.is_deleted = FALSE
-        WHERE  pi.is_finished_product_dev = 1 AND pi.is_deleted = FALSE
+        WHERE pi.is_finished_product_dev = 1 AND pi.is_deleted = FALSE
         AND (pj.project_status IS NULL OR pj.project_status!=#{projectStatus})
         <if test="archiveProductIdList!=null and  archiveProductIdList.size>0">
             AND pi.id NOT IN
@@ -719,7 +720,7 @@
         p.create_time,
         pi.end_time FROM product_info p LEFT JOIN project_info pi
         ON p.id=pi.product_id AND pi.is_deleted = FALSE
-        WHERE  p.is_deleted = FALSE and P.id IN
+        WHERE p.is_deleted = FALSE and P.id IN
         <foreach collection="productIds" item="productId" open="(" separator="," close=")">
             #{productId}
 
@@ -796,8 +797,8 @@
         approval_status AS status,
         count(*)
         FROM product_info
-        WHERE is_deleted=FALSE  AND is_finished_product_dev = 1
-        AND  id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        WHERE is_deleted=FALSE AND is_finished_product_dev = 1
+        AND id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
         <if test="productIdList!=null and productIdList.size>0">
             AND id IN
             <foreach collection="productIdList" item="productId" open="(" separator="," close=")">
@@ -812,8 +813,8 @@
         progress_status AS status,
         count(*)
         FROM product_info
-        WHERE is_deleted=FALSE  AND is_finished_product_dev = 1
-         AND id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        WHERE is_deleted=FALSE AND is_finished_product_dev = 1
+        AND id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
 
         <if test="productIdList!=null and productIdList.size>0">
             AND id IN
@@ -889,7 +890,7 @@
         WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE   p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
         <choose>
             <when test="params.ids!=null and params.ids.size>0">
@@ -940,7 +941,8 @@
 
                 <if test="params.progressStatusList !=null and params.progressStatusList.size>0">
                     AND p.progress_status IN
-                    <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator="," close=")">
+                    <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator=","
+                             close=")">
                         #{progressStatus}
                     </foreach>
                 </if>
@@ -975,7 +977,8 @@
                 </if>
 
                 <if test="params.createTimeList !=null and params.createTimeList.size>0">
-                    AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+                    AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
+                    INTERVAL '1
                     DAY' ) > p.create_time
                 </if>
 
@@ -1023,9 +1026,10 @@
         WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE  p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         AND (string_to_array( p.charge_id,',') &amp;&amp; string_to_array(#{userId}, ',') or
-        p.project_charge_id=#{userId})
+        p.project_charge_id=#{userId} or p.id in (select product_id from project_task where is_deleted=false and
+        string_to_array( charge_id,',') &amp;&amp; string_to_array(#{userId}, ',')))
         AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
         <choose>
             <when test="params.ids!=null and params.ids.size>0">
@@ -1073,7 +1077,8 @@
                 </if>
                 <if test="params.progressStatusList !=null and params.progressStatusList.size>0">
                     AND p.progress_status IN
-                    <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator="," close=")">
+                    <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator=","
+                             close=")">
                         #{progressStatus}
                     </foreach>
                 </if>
@@ -1103,7 +1108,8 @@
                     </foreach>
                 </if>
                 <if test="params.createTimeList !=null and params.createTimeList.size>0">
-                    AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+                    AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
+                    INTERVAL '1
                     DAY' ) > p.create_time
                 </if>
             </otherwise>
@@ -1147,7 +1153,7 @@
         WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE  p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
         AND p.id IN (SELECT product_id FROM user_add_product WHERE is_deleted=FALSE)
         <choose>
@@ -1196,7 +1202,8 @@
                 </if>
                 <if test="params.progressStatusList !=null and params.progressStatusList.size>0">
                     AND p.progress_status IN
-                    <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator="," close=")">
+                    <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator=","
+                             close=")">
                         #{progressStatus}
                     </foreach>
                 </if>
@@ -1226,7 +1233,8 @@
                     </foreach>
                 </if>
                 <if test="params.createTimeList !=null and params.createTimeList.size>0">
-                    AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+                    AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
+                    INTERVAL '1
                     DAY' ) > p.create_time
                 </if>
                 <if test="params.permissionSql!=null  and params.permissionSql!=''">
@@ -1236,6 +1244,56 @@
             </otherwise>
         </choose>
         ORDER BY p.create_time DESC
+    </select>
+
+
+    <select id="listMyProjectStatusCount" resultType="com.erp.model.plm.dto.ProductDTO$CountBaseDTO">
+        SELECT
+        approval_status AS status,
+        count(*)
+        FROM product_info P
+        WHERE is_deleted=FALSE  AND is_finished_product_dev = 1
+         AND (string_to_array( p.charge_id,',') &amp;&amp; string_to_array(#{userId}, ',') or
+        p.project_charge_id=#{userId} or   p.id in (select product_id from  project_task where is_deleted=false and
+        string_to_array( charge_id,',') &amp;&amp; string_to_array(#{userId}, ',')))
+        AND  id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        GROUP BY approval_status
+    </select>
+
+    <select id="listMyProjectProgressStatusCount"
+            resultType="com.erp.model.plm.dto.ProductDTO$CountBaseStrDTO">
+        SELECT
+        progress_status AS status,
+        count(*)
+        FROM product_info p
+        WHERE is_deleted=FALSE AND is_finished_product_dev = 1
+         AND (string_to_array( p.charge_id,',') &amp;&amp; string_to_array(#{userId}, ',') or
+        p.project_charge_id=#{userId} or   p.id in (select product_id from  project_task where is_deleted=false and
+        string_to_array( charge_id,',') &amp;&amp; string_to_array(#{userId}, ',')))
+        AND id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        GROUP BY progress_status
+    </select>
+
+    <select id="listCollectStatusCount" resultType="com.erp.model.plm.dto.ProductDTO$CountBaseDTO">
+        SELECT
+        approval_status AS status,
+        count(*)
+        FROM product_info P
+        WHERE is_deleted=FALSE  AND is_finished_product_dev = 1
+        AND p.id IN (SELECT product_id FROM user_add_product WHERE is_deleted=FALSE)
+        AND p.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        GROUP BY approval_status
+    </select>
+
+    <select id="listCollectProgressStatusCount" resultType="com.erp.model.plm.dto.ProductDTO$CountBaseStrDTO">
+        SELECT
+        progress_status AS status,
+        count(*)
+        FROM product_info p
+        WHERE is_deleted=FALSE AND is_finished_product_dev = 1
+        AND p.id IN (SELECT product_id FROM user_add_product WHERE is_deleted=FALSE)
+        AND p.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        GROUP BY progress_status
     </select>
 
 

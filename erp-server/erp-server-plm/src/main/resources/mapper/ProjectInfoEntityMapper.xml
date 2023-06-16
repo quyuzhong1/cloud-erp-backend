@@ -19,12 +19,14 @@
         FROM product_info p INNER JOIN project_info pi
         ON p.id=pi.product_id AND pi.is_deleted = FALSE
         LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
-        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
-        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND ppe.is_deleted = FALSE
+        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in
+        (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND
+        ppe.is_deleted = FALSE
         WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE    p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
             <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
@@ -34,7 +36,8 @@
 
         <if test="params.searchKeyword!=null  and params.searchKeyword!=''  ">
             AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
-            OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE concat('%',#{params.searchKeyword},'%'))
+            OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE
+            concat('%',#{params.searchKeyword},'%'))
             OR p.spu_no LIKE concat('%',#{params.searchKeyword},'%'))
         </if>
         <if test="params.stateList !=null and params.stateList.size()>0">
@@ -93,17 +96,17 @@
             </foreach>
         </if>
 
-        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0" >
+        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
             AND pi.charge_id IN
-            <foreach collection="params.projectChargeIdList" item="chargeId" open="("  close=")"  separator="AND">
+            <foreach collection="params.projectChargeIdList" item="chargeId" open="(" close=")" separator="AND">
                 #{chargeId}
             </foreach>
         </if>
 
         <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
             AND
-            <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")"  separator="AND">
-                string_to_array(#{chargeId},',')  &amp;&amp; string_to_array(p.charge_id,',')
+            <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")" separator="AND">
+                string_to_array(#{chargeId},',') &amp;&amp; string_to_array(p.charge_id,',')
             </foreach>
         </if>
 
@@ -118,7 +121,7 @@
             AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
             )
         </if>
-        ORDER BY  pi.create_time DESC
+        ORDER BY pi.create_time DESC
     </select>
 
 
@@ -135,12 +138,14 @@
         FROM product_info p
         INNER JOIN project_info pi ON p.id=pi.product_id AND pi.is_deleted = FALSE
         LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
-        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
-        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND ppe.is_deleted = FALSE
+        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in
+        (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND
+        ppe.is_deleted = FALSE
         WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE   p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
             <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
@@ -149,7 +154,8 @@
         </if>
         <if test="params.searchKeyword!=null and params.searchKeyword!=''  ">
             AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
-            OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE concat('%',#{params.searchKeyword},'%'))
+            OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE
+            concat('%',#{params.searchKeyword},'%'))
             OR p.spu_no LIKE concat('%',#{params.searchKeyword},'%'))
         </if>
         <if test="params.stateList !=null and params.stateList.size()>0">
@@ -205,17 +211,17 @@
             </foreach>
         </if>
 
-        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0" >
+        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
             AND pi.charge_id IN
-            <foreach collection="params.projectChargeIdList" item="chargeId" open="("  close=")"  separator="AND">
+            <foreach collection="params.projectChargeIdList" item="chargeId" open="(" close=")" separator="AND">
                 #{chargeId}
             </foreach>
         </if>
 
         <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
             AND
-            <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")"  separator="AND">
-                string_to_array(#{chargeId},',')  &amp;&amp; string_to_array(p.charge_id,',')
+            <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")" separator="AND">
+                string_to_array(#{chargeId},',') &amp;&amp; string_to_array(p.charge_id,',')
             </foreach>
         </if>
 
@@ -228,21 +234,23 @@
         <if test="params.permissionSql!=null  and  params.permissionSql!=''  ">
             AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
         </if>
-        ORDER BY  pi.create_time DESC
+        ORDER BY pi.create_time DESC
     </select>
 
     <select id="listMyCollectNotPaging" resultType="com.erp.model.plm.dto.BasicDTO">
         SELECT
-               p.id, p.name
+        p.id, p.name
         FROM product_info p
         INNER JOIN project_info pi ON p.id=pi.product_id AND pi.is_deleted = FALSE
         left JOin (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
-        left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
-        left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND ppe.is_deleted = FALSE
+        left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in
+        (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND
+        ppe.is_deleted = FALSE
         WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE   p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test="params.categoryId!=null and params.categoryId!=''  ">
             AND P.category_id=#{params.categoryId}
         </if>
@@ -251,7 +259,8 @@
         </if>
         <if test="params.searchKeyword!=null  and  params.searchKeyword!='' ">
             AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
-            OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE concat('%',#{params.searchKeyword},'%'))
+            OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE
+            concat('%',#{params.searchKeyword},'%'))
             OR p.spu_no LIKE concat('%',#{params.searchKeyword},'%'))
         </if>
         <if test="params.stateList !=null and params.stateList.size()>0">
@@ -279,21 +288,23 @@
             AND p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
         </if>
 
-        ORDER BY  pi.create_time DESC
+        ORDER BY pi.create_time DESC
     </select>
 
     <select id="listNotPaging" resultType="com.erp.model.plm.dto.BasicDTO">
         SELECT
-            p.id, p.name
+        p.id, p.name
         FROM product_info p INNER JOIN project_info pi
         ON p.id=pi.product_id
         left JOin (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
-        left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
-        left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND ppe.is_deleted = FALSE
+        left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in
+        (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND
+        ppe.is_deleted = FALSE
         WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE   p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test=" params.categoryId!=null  and params.categoryId!='' ">
             AND P.category_id = #{params.categoryId}
         </if>
@@ -302,7 +313,8 @@
         </if>
         <if test="params.searchKeyword!=null and  params.searchKeyword!=''  ">
             AND (P.name LIKE concat('%',#{params.searchKeyword},'%')
-            OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE concat('%',#{params.searchKeyword},'%'))
+            OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no LIKE
+            concat('%',#{params.searchKeyword},'%'))
             OR p.spu_no LIKE concat('%',#{params.searchKeyword},'%'))
         </if>
         <if test="params.stateList !=null and params.stateList.size()>0">
@@ -333,14 +345,14 @@
             )
         </if>
 
-        ORDER BY  pi.create_time DESC
+        ORDER BY pi.create_time DESC
     </select>
 
     <select id="listStatusCount" resultType="com.erp.model.plm.dto.ProductDTO$CountBaseDTO">
         SELECT
         project_status AS status ,
         count(*)
-        FROM  project_info
+        FROM project_info
         WHERE is_deleted=FALSE
         <if test="productIdList!=null and productIdList.size>0">
             AND product_id IN
@@ -353,10 +365,10 @@
 
     <select id="getDelayCount" resultType="java.lang.Integer">
         SELECT
-            count(*)
-        FROM  project_info
+        count(*)
+        FROM project_info
         WHERE is_deleted=FALSE
-         AND end_time &lt; #{nowDate}
+        AND end_time &lt; #{nowDate}
         <if test="productIdList!=null and productIdList.size>0">
             AND product_id IN
             <foreach collection="productIdList" item="productId" open="(" separator="," close=")">
@@ -364,6 +376,43 @@
             </foreach>
         </if>
 
+    </select>
+    <select id="listMyProjectStatusCount" resultType="com.erp.model.plm.dto.ProductDTO$CountBaseDTO">
+        SELECT
+        project_status AS status ,
+        count(*)
+        FROM  project_info
+        WHERE is_deleted=FALSE
+        AND product_id IN
+        (
+          SELECT  id FROM  product_info p
+          WHERE
+            is_deleted=FALSE AND is_finished_product_dev = 1
+            AND (string_to_array( p.charge_id,',') &amp;&amp; string_to_array(#{userId}, ',') or
+            p.project_charge_id=#{userId} or p.id in (select product_id from  project_task where is_deleted=false and
+            string_to_array( charge_id,',') &amp;&amp; string_to_array(#{userId}, ',')))
+            AND id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        )
+
+        GROUP BY project_status
+
+    </select>
+
+    <select id="listCollectStatusCount" resultType="com.erp.model.plm.dto.ProductDTO$CountBaseDTO">
+        SELECT
+        project_status AS status ,
+        count(*)
+        FROM  project_info
+        WHERE is_deleted=FALSE
+        AND product_id IN
+        (
+          SELECT  id FROM  product_info p
+          WHERE
+            is_deleted=FALSE AND is_finished_product_dev = 1
+            AND p.id IN (SELECT product_id FROM user_add_product WHERE is_deleted=FALSE)
+            AND p.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        )
+        GROUP BY project_status
     </select>
 
 </mapper>

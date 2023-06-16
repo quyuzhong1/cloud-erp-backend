@@ -199,6 +199,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private ProductSaleService productSaleService;
 
+    @Autowired
+    private ProjectTaskProgressService projectTaskProgressService;
 
     private static final String CLASSPATH = String.valueOf(ProductInfoEntity.class);
 
@@ -520,14 +522,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
         String userId = commonService.getUserInfo().getUid();
-
-        //这个是获取到任务负责人是自己的产品id
-        List<String> taskProductIdList = projectTaskService.listProductIdByTaskChargeId(userId);
-        if (productIdList == null) {
-            productIdList = new ArrayList<>();
-            productIdList.addAll(taskProductIdList);
-            params.setProductIds(productIdList);
-        }
         //我的项目
         IPage pageData = baseMapper.myProjectPaging(query, params, categoryIdList, userId);
         //填充分页数据
@@ -557,7 +551,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
-        //我的项目
+        //收藏的项目
         IPage pageData = baseMapper.collect(query, params, categoryIdList);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
@@ -598,16 +592,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public ProductDTO.ProductCountDTO myProjectCount() {
         String userId = commonService.getUserInfo().getUid();
         //这个是获取到任务负责人是自己的产品id
-        List<String> taskProductIdList = projectTaskService.listProductIdByTaskChargeId(userId);
-        List<String> productIdList = baseMapper.listProductIdByUserId(userId);
-        taskProductIdList.addAll(productIdList);
-        List<String> findProductIdList = taskProductIdList.stream().distinct().collect(Collectors.toList());
         //产品的统计
-        List<ProductDTO.CountBaseDTO> productCountList = baseMapper.listStatusCount(findProductIdList);
+        List<ProductDTO.CountBaseDTO> productCountList = baseMapper.listMyProjectStatusCount(userId);
         //产品延期的统计
-        List<ProductDTO.CountBaseStrDTO> progressCountList = baseMapper.listProgressStatusCount(findProductIdList);
+        List<ProductDTO.CountBaseStrDTO> progressCountList = baseMapper.listMyProjectProgressStatusCount(userId);
         //项目的统计
-        List<ProductDTO.CountBaseDTO> projectCountList = projectInfoService.listStatusCount(findProductIdList);
+        List<ProductDTO.CountBaseDTO> projectCountList = projectInfoService.listMyProjectStatusCount(userId);
         return getProductCount(productCountList, projectCountList, progressCountList);
     }
 
@@ -622,14 +612,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public ProductDTO.ProductCountDTO collectCount() {
-        List<UserAddProductEntity> userAddProductList = userAddProductService.list();
-        List<String> productIdList = userAddProductList.stream().map(UserAddProductEntity::getProductId).collect(Collectors.toList());
         //产品的统计
-        List<ProductDTO.CountBaseDTO> productCountList = baseMapper.listStatusCount(productIdList);
+        List<ProductDTO.CountBaseDTO> productCountList = baseMapper.listCollectStatusCount();
         //产品延期的统计
-        List<ProductDTO.CountBaseStrDTO> progressCountList = baseMapper.listProgressStatusCount(productIdList);
+        List<ProductDTO.CountBaseStrDTO> progressCountList = baseMapper.listCollectProgressStatusCount();
         //项目的统计
-        List<ProductDTO.CountBaseDTO> projectCountList = projectInfoService.listStatusCount(productIdList);
+        List<ProductDTO.CountBaseDTO> projectCountList = projectInfoService.listCollectStatusCount();
         return getProductCount(productCountList, projectCountList, progressCountList);
 
     }
@@ -1243,27 +1231,31 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     /**
      * 同步修改产品开发状态
-     * @Author Luo_WG
-     * @Date 2023/6/15 15:32
+     *
      * @param productInfoIds
      * @param approvalStatus
      * @return void
+     * @Author Luo_WG
+     * @Date 2023/6/15 15:32
      **/
     private void updateProductStateByApprovalStatus(List<String> productInfoIds, Integer approvalStatus) {
+        if (Objects.isNull(approvalStatus)) {
+            return;
+        }
         switch (ApprovalStatusEnum.getEnum(approvalStatus)) {
-            case WAIT :
+            case WAIT:
                 //如果状态为未开始时，更新产品信息{产品开发状态}：未开发
                 productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.NO_DEVELOP.getCode());
                 break;
-            case APPROVAL :
+            case APPROVAL:
                 //如果状态为已立项时，更新产品信息{产品开发状态}：开发中
                 productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DEVELOP_AFOOT.getCode());
                 break;
-            case TERMINATE :
+            case TERMINATE:
                 //如果状态改为中止，更新产品信息{产品开发状态}：中止开发；
                 productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode());
                 break;
-            case SUSPEND :
+            case SUSPEND:
                 //如果状态改为暂停时，更新产品信息{产品开发状态}：暂停；
                 productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.SUSPEND_DEVELOP.getCode());
                 break;
@@ -1274,35 +1266,39 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     /**
      * 同步修改产品开发状态
-     * @Author Luo_WG
-     * @Date 2023/6/15 15:32
+     *
      * @param productInfoIds
      * @param projectState
      * @return void
+     * @Author Luo_WG
+     * @Date 2023/6/15 15:32
      **/
     private void updateProductStateByProjectState(List<String> productInfoIds, Integer projectState) {
+        if (Objects.isNull(projectState)) {
+            return;
+        }
         switch (ProjectStateEnum.getEnum(projectState)) {
-            case YES_START :
+            case YES_START:
                 //如果状态为已启动，更新产品信息{产品开发状态}：开发中
                 productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DEVELOP_AFOOT.getCode());
                 break;
-            case ING :
+            case ING:
                 //如果状态为进行中，更新产品信息{产品开发状态}：开发中
                 productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DEVELOP_AFOOT.getCode());
                 break;
-            case FINISH :
+            case FINISH:
                 //如果状态改为已完成，更新产品信息{产品开发状态}：开发完成；
                 productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DEVELOP_FINISH.getCode());
                 List<ProductDetailEntity> detailEntityList = productDetailService.listSkuByProductIds(productInfoIds);
                 //{销售状态}更新为是
                 List<String> detailIds = detailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
-                productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, Boolean.TRUE).in(ProductSaleEntity::getSkuId,detailIds).update();
+                productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, Boolean.TRUE).in(ProductSaleEntity::getSkuId, detailIds).update();
                 break;
-            case STOP :
+            case STOP:
                 //如果状态改为已中止，更新产品信息{产品开发状态}：中止开发；
                 productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode());
                 break;
-            case SUSPEND :
+            case SUSPEND:
                 //如果状态改为暂停，更新产品信息{产品开发状态}：暂停；
                 productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.SUSPEND_DEVELOP.getCode());
                 break;
@@ -2039,6 +2035,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<ProductOverviewDTO.ProductMemberDTO> productMemberList = getProductMember(otherList, userDeptList, taskList);
         info.setChargeMemberList(chargeMemberList);
         info.setProductMemberList(productMemberList);
+        //里程碑
+        ProductMilepostShowDTO milepostShow = projectTaskProgressService.getMilepostTaskListByProductId(productId);
+        info.setProductMilepostShow(milepostShow);
+        //任务进度
+        productProgressShowDTO progress = projectTaskProgressService.getFinishProgressList(productId);
+        info.setProductProgressShow(progress);
+
         return info;
     }
 
@@ -2139,13 +2142,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
         String userId = commonService.getUserInfo().getUid();
-        //这个是获取到任务负责人是自己的产品id
-        List<String> taskProductIdList = projectTaskService.listProductIdByTaskChargeId(userId);
-        if (productIdList == null) {
-            productIdList = new ArrayList<>();
-            productIdList.addAll(taskProductIdList);
-            params.setProductIds(productIdList);
-        }
         //我的项目
         List<ProductShowDTO> list = baseMapper.listMyProjectExport(params, categoryIdList, userId);
         //填充分页数据

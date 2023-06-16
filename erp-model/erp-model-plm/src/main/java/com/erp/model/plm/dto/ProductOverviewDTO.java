@@ -176,6 +176,17 @@ public class ProductOverviewDTO implements Serializable {
          * 其它成员信息
          */
         private List<ProductMemberDTO> productMemberList;
+
+
+        /**
+         *里程碑
+         */
+        private  ProductMilepostShowDTO  productMilepostShow;
+
+        /**
+         *任务进度
+         */
+        private  productProgressShowDTO  productProgressShow;
     }
 
     /**

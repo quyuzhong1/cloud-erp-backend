@@ -127,4 +127,22 @@ public interface ProjectInfoService extends IService<ProjectInfoEntity> {
      * @return java.lang.Boolean
      */
     Boolean batchStartProject(StartProjectDTO.BatchStartProjectDTO dto);
+
+    /**
+     * 根据用户id 统计 我的项目状态
+     * @author yl
+     * @date 2023-06-16 14:49
+     * @param userId
+     * @return java.util.List<com.erp.model.plm.dto.ProductDTO.CountBaseDTO>
+     */
+    List<ProductDTO.CountBaseDTO> listMyProjectStatusCount(String userId);
+
+    /**
+     * 收藏的项目统计
+     * @author yl
+     * @date 2023-06-16 15:16
+     * @param
+     * @return java.util.List<com.erp.model.plm.dto.ProductDTO.CountBaseDTO>
+     */
+    List<ProductDTO.CountBaseDTO> listCollectStatusCount();
 }
