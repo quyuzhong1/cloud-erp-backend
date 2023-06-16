@@ -73,6 +73,11 @@ public class ProductLogisticsShowDTO implements Serializable {
     private String customsCode;
 
     /**
+     * 申报单位
+     */
+    private String declareUnit;
+
+    /**
      * 申报要素
      */
     private String declareElement;

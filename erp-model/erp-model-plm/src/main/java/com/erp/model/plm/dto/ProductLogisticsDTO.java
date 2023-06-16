@@ -68,6 +68,12 @@ public class ProductLogisticsDTO implements Serializable {
     private String customsCode;
 
     /**
+     * 报关单位
+     */
+    @Size(max = 200,message = "报关单位最大200字符")
+    private String declareUnit;
+
+    /**
      * 申报要素
      */
     @Size(max = 200,message = "申报要素最大200字符")
