@@ -14,10 +14,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SubcontractTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
@@ -529,7 +526,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             if (ObjectUtils.isEmpty(dto.getParentId())) {
                 dto.setIsConstitute(Boolean.TRUE);
             }
-
+            dto.setSourceType(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
             dto.setProductName(skuVO.getSkuName());
             dto.setMoq(skuVO.getMoq());
             //待申请数量

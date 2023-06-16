@@ -14,6 +14,7 @@ public enum SourceTypeEnum {
     //SCM
     PURCHASE_ORDER("purchaseOrder", "采购订单"),
     PURCHASE_APPLICATION("purchaseApplication", "采购申请单"),
+    SUBCONTRACT_ORDER("subcontractOrder", "委外订单"),
 
 
     //WMS
