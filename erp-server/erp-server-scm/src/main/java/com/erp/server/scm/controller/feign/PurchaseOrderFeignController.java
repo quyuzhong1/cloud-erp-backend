@@ -1,6 +1,7 @@
 package com.erp.server.scm.controller.feign;
 
 
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.server.scm.service.*;
@@ -201,6 +202,14 @@ public class PurchaseOrderFeignController {
      **/
     @PostMapping("/updatePurchaseOrderDetailById")
     public Boolean updatePurchaseOrderDetailById(@RequestBody PurchaseOrderDetailEntity entity) {
+        LambdaUpdateWrapper<PurchaseOrderDetailEntity> updateWrapper = new LambdaUpdateWrapper();
+        if (entity.getPurchaseAmount() != null) {
+            updateWrapper.set(PurchaseOrderDetailEntity::getPurchaseAmount, entity.getPurchaseAmount());
+        }
+        updateWrapper.set(PurchaseOrderDetailEntity::getArrivalStatus, entity.getArrivalStatus());
+        updateWrapper.set(PurchaseOrderDetailEntity::getArrivalStatus, entity.getArrivalStatus());
+        updateWrapper.set(PurchaseOrderDetailEntity::getArrivalTime, entity.getArrivalTime());
+        updateWrapper.eq(PurchaseOrderDetailEntity::getId, entity.getId());
         return purchaseOrderDetailService.updateById(entity);
     }
 

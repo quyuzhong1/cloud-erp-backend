@@ -84,9 +84,4 @@ public class WarehouseReceiveDetailEntity extends BaseEntity<WarehouseReceiveDet
 
     @TableField(exist = false)
     private LocalDate billDate;
-
-    public WarehouseReceiveDetailEntity() {
-        this.receiveQty = 0;
-        this.exceedQty = 0;
-    }
 }

@@ -112,13 +112,6 @@ public class PurchaseReturnOrderDetailEntity extends BaseEntity<PurchaseReturnOr
     @TableField(exist = false)
     private LocalDate billDate;
 
-    public PurchaseReturnOrderDetailEntity() {
-        this.returnPrice = BigDecimal.ZERO;
-        this.returnQty = 0;
-        this.deductAmountQty = 0;
-        this.replenishQty = 0;
-    }
-
     @Override
     public Serializable pkVal() {
         return null;

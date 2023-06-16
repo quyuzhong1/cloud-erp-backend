@@ -100,11 +100,4 @@ public class PoInstockDetailEntity extends BaseEntity<PoInstockDetailEntity> {
 
     @TableField(exist = false)
     private LocalDate billDate;
-
-    public PoInstockDetailEntity() {
-        this.stockInQty = 0;
-        this.purchaseQty = 0;
-        this.exceedQty = 0;
-        this.receiveQty = 0;
-    }
 }

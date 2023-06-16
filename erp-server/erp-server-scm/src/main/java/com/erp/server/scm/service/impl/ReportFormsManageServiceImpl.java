@@ -178,6 +178,9 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
         ).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(warehouseReceiveDetailEntityList)) {
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntityList.stream().filter(req -> record.getId().contains(req.getId())).findFirst().orElse(new PurchaseOrderDetailEntity());
+            if (ObjectUtils.isEmpty(purchaseOrderDetailEntity)) {
+                purchaseOrderDetailEntity.setTaxPrice(BigDecimal.ZERO);
+            }
             Integer receiveQty = warehouseReceiveDetailEntityList.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             mapEntity.setReceiveQty(mapEntity.getReceiveQty() + receiveQty);
             Integer exceedQty = warehouseReceiveDetailEntityList.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getExceedQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -212,6 +215,9 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
         ).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(poInstockDetailEntityList)) {
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntityList.stream().filter(req -> record.getId().contains(req.getId())).findFirst().orElse(new PurchaseOrderDetailEntity());
+            if (ObjectUtils.isEmpty(purchaseOrderDetailEntity)) {
+                purchaseOrderDetailEntity.setTaxPrice(BigDecimal.ZERO);
+            }
             Integer stockInQty = poInstockDetailEntityList.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             mapEntity.setStockInQty(mapEntity.getStockInQty() + stockInQty);
             Integer exceedQty = poInstockDetailEntityList.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).map(PoInstockDetailEntity::getExceedQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -246,6 +252,9 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
         ).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(purchaseReturnOrderDetailEntityList)) {
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntityList.stream().filter(req -> record.getId().contains(req.getId())).findFirst().orElse(new PurchaseOrderDetailEntity());
+            if (ObjectUtils.isEmpty(purchaseOrderDetailEntity)) {
+                purchaseOrderDetailEntity.setTaxPrice(BigDecimal.ZERO);
+            }
             Integer deductAmountQty = purchaseReturnOrderDetailEntityList.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).map(PurchaseReturnOrderDetailEntity::getDeductAmountQty).reduce(MathUtil.ZERO, Integer::sum);
             mapEntity.setRefundQty(mapEntity.getRefundQty() + deductAmountQty);
             Integer replenishQty = purchaseReturnOrderDetailEntityList.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).map(PurchaseReturnOrderDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);

@@ -218,10 +218,4 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     public static final String VARIANT_PROPERTY = "variant_property";
 
 
-    public PurchaseOrderDetailEntity() {
-        this.taxRate = BigDecimal.ZERO;
-        this.taxPrice = BigDecimal.ZERO;
-        this.purchaseAmount = BigDecimal.ZERO;
-    }
-
 }

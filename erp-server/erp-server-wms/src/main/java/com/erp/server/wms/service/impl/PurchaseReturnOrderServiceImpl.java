@@ -15,6 +15,7 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
@@ -897,7 +898,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             purchaseOrderDetailEntity.setArrivalTime(LocalDateTime.now());
             if (CollectionUtils.isNotEmpty(detailEntityList)) {
                 PurchaseOrderDetailEntity entity = detailEntityList.stream().filter(req -> req.getId().equals(orderDetailEntity.getId())).findFirst().orElse(null);
-                purchaseOrderDetailEntity.setPurchaseAmount(entity.getPurchaseAmount());
+                if (ObjectUtils.isNotEmpty(entity)) {
+                    purchaseOrderDetailEntity.setPurchaseAmount(entity.getPurchaseAmount());
+                }
             }
             scmTaskFeign.updatePurchaseOrderDetailById(purchaseOrderDetailEntity);
         }
