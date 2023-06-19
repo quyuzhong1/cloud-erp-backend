@@ -42,14 +42,14 @@ public interface ProductConstant {
     String UNFINISHED = "unfinished";
 
     /**
-     * 产品经理
+     * 产品导出
      */
-    String PRODUCT_CHARGE = "产品经理";
+    Integer PRODUCT_EXPORT = 0;
 
     /**
-     * 项目经理
+     * 产品任务导出
      */
-    String PROJECT_CHARGE = "项目经理";
+    Integer PRODUCT_TASK_EXPORT = 1;
 
 
 }

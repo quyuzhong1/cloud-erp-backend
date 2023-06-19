@@ -24,6 +24,13 @@ public class ProductTask  implements Serializable {
     public static class  TaskInfoDTO{
 
 
+
+        /**
+         * 任务id
+         */
+        private String taskId;
+
+
         /**
          * 任务名
          */

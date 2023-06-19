@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.dto.excel.TaskExportDTO;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -25,6 +26,7 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
 
     List<ProductShowDTO> listAllExport(@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList);
 
+    List<TaskExportDTO.ProductTaskExcelDTO> listAllTaskExport(@Param("params") ProductSearchDTO.ExportDTO params, @Param("categoryIdList")List<String> categoryIdList);
     /**
      * 我的项目
      * @param query
@@ -42,6 +44,10 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
      * @return
      */
     List<ProductShowDTO> listMyProjectExport(@Param("params") ProductSearchDTO.ExportDTO params, @Param("categoryIdList")List<String> categoryIdList, @Param("userId")String userId);
+
+    List<TaskExportDTO.ProductTaskExcelDTO> listMyProjectTaskExport(@Param("params")ProductSearchDTO.ExportDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId")String userId);
+
+
     /**
      * 收藏的项目
      * @param query
@@ -52,6 +58,9 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
     IPage<ProductShowDTO> collect(Page query, @Param("params") ProductSearchDTO.PagingParamDTO params, @Param("categoryIdList")List<String> categoryIdList);
 
     List<ProductShowDTO> collectExport(@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList);
+
+
+    List<TaskExportDTO.ProductTaskExcelDTO> collectTaskExport(@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList);
 
     List<BasicDTO> listNotPaging(@Param("params") ProductSearchDTO.PagingParamDTO params,@Param("archiveProductIds") List<String> archiveProductIds,@Param("categoryIdList") List<String> categoryIdList);
 
@@ -117,4 +126,6 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
     List<ProductDTO.CountBaseDTO> listCollectStatusCount();
 
     List<ProductDTO.CountBaseStrDTO> listCollectProgressStatusCount();
+
+
 }

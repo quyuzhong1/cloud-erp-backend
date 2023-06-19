@@ -632,6 +632,48 @@ public class ExcelPrintUtils {
 		}
 	}
 
+	public void patchSheetExport(List<?> list1, List<?> list2, HttpServletResponse response, String fileName, String excelPath) throws IOException{
+		OutputStream out = null;
+		BufferedOutputStream bos = null;
+		try {
+			//模板的路径
+			ClassPathResource classPathResource = new ClassPathResource(excelPath);
+			InputStream inputStream = classPathResource.getInputStream();
+			getOutputStream(fileName, response);
+			out = response.getOutputStream();
+			bos = new BufferedOutputStream(out);
+			ExcelWriter excelWriter = EasyExcel.write(bos).withTemplate(inputStream).build();
+			// LocalDate转化器，导入导出都可以使用
+			LocalDateTimeConverter converter = new LocalDateTimeConverter();
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey()), converter);
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(converter.supportJavaTypeKey(), converter.supportExcelTypeKey()), converter);
+
+			// LocalDateTime转化器，导入导出都可以使用
+			EasyExcelLocalTimeConverter localDateTimeDateConverter = new EasyExcelLocalTimeConverter();
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey()), localDateTimeDateConverter);
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateTimeDateConverter.supportJavaTypeKey(), localDateTimeDateConverter.supportExcelTypeKey()), localDateTimeDateConverter);
+			// LocalDate转化器，导入导出都可以使用
+			EasyExcelLocalDateConverter localDateConverter = new EasyExcelLocalDateConverter();
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey()), localDateConverter);
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(localDateConverter.supportJavaTypeKey(), localDateConverter.supportExcelTypeKey()), localDateConverter);
+			WriteSheet writeSheet1 = EasyExcel.writerSheet(0).build();
+			//列表数据
+			excelWriter.fill(list1, writeSheet1);
+			WriteSheet writeSheet2 = EasyExcel.writerSheet(1).build();
+			//列表数据
+			excelWriter.fill(list2, writeSheet2);
+			excelWriter.finish();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.info("导出模板数据异常！");
+		} finally {
+			out.flush();
+			out.close();
+			bos.flush();
+		}
+	}
+
 	/**
 	 * 导出模板
 	 * @Author Luo_WG
@@ -740,4 +782,6 @@ public class ExcelPrintUtils {
 		}
 		return dataList;
 	}
+
+
 }

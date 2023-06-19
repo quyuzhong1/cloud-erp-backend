@@ -5,6 +5,7 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -111,6 +112,18 @@ public class ProductSearchDTO extends PermissionsDTO {
          * 产品ids
          */
         private List<String> ids;
+
+        /**
+         * 导出数据 类型
+         * 0，产品列表
+         * 1. 任务列表
+         */
+        @NotNull(message = "导出类型不能为空")
+        private List<Integer> exportDataList;
     }
+
+
+
+
 
 }

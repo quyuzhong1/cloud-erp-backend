@@ -4794,20 +4794,24 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             return Collections.emptyList();
         }
         List<ProjectTaskEntity> taskList = this.listByIds(taskIdList);
-        List<ProductTask.TaskInfoDTO> resultList = BeanMapper.copyList(taskList, ProductTask.TaskInfoDTO.class);
+        List<ProductTask.TaskInfoDTO> resultList = new ArrayList<>(taskList.size());
         LocalDate now = LocalDate.now();
-        for (ProductTask.TaskInfoDTO item : resultList) {
+        for (ProjectTaskEntity item : taskList) {
+            ProductTask.TaskInfoDTO task = new ProductTask.TaskInfoDTO();
+            BeanMapper.copy(item,task);
+            task.setTaskId(item.getId());
             String chargeId = item.getChargeId();
-            item.setChargeIdList(Arrays.asList(chargeId.split(",")));
+            task.setChargeIdList(Arrays.asList(chargeId.split(",")));
             Integer status = item.getStatus();
             String statusName = TaskStateEnum.getName(status);
-            item.setStatusName(statusName);
-            LocalDate planEndTime = item.getPlanEndTime();
+            task.setStatusName(statusName);
+            LocalDate planEndTime = task.getPlanEndTime();
             Integer delayDays = 0;
             if (planEndTime != null) {
                 delayDays = Math.toIntExact(now.toEpochDay() - planEndTime.toEpochDay());
             }
-            item.setDelayDays(delayDays);
+            task.setDelayDays(delayDays);
+            resultList.add(task);
         }
         return resultList;
     }
