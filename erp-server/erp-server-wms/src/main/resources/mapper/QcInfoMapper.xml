@@ -441,4 +441,27 @@
             </foreach>
         </if>
     </select>
+    <select id="getQcInfoByPurchaseOrder" resultType="com.erp.model.wms.dto.QcInfoDTO$PurchaseQcInfoDTO">
+        select sum(qr.qc_bad_qty) as qc_bad_qty
+        from qc_info qi
+        inner join qc_result qr on qr.main_id = qi.id
+        where qi.qc_status = 'finishQc' and qi.is_deleted = false
+        <if test="params.qcType != null and params.qcType != '' ">
+            <choose>
+                <when test="params.qcType == 'inside_qc' ">
+                    and qr.is_inside = true
+                </when>
+                <otherwise>
+                    and qr.is_inside = false
+                </otherwise>
+            </choose>
+        </if>
+        and (qi.purchase_order_id is not null and qi.purchase_order_id != '')
+        <if test="params.purchaseOrderIds != null and params.purchaseOrderIds.size > 0">
+            and qi.purchase_order_id in
+            <foreach collection="params.purchaseOrderIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 </mapper>

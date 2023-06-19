@@ -1573,6 +1573,12 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     public List<QcInfoEntity> listQCBySourceIds(List<String> sourceIds) {
         return lambdaQuery().in(QcInfoEntity::getSourceId, sourceIds).list();
     }
+
+    @Override
+    public QcInfoDTO.PurchaseQcInfoDTO getQcInfoByPurchaseOrder(QcInfoDTO.PurchaseQcParamDTO dto) {
+        return this.baseMapper.getQcInfoByPurchaseOrder(dto);
+    }
+
     /**
      * 批量完成
      * 质检数量

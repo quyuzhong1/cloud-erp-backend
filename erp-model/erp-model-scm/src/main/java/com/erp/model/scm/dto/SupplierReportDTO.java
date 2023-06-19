@@ -1,6 +1,7 @@
 package com.erp.model.scm.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -74,6 +75,12 @@ public class SupplierReportDTO implements Serializable {
          * 供应商禁用状态描述
          */
         private String supplierDisabledName;
+
+        /**
+         * 采购订单id集合，用逗号隔开
+         */
+        @JsonIgnore
+        private String purchaseOrderIds;
 
         /**
          * 采购订单量

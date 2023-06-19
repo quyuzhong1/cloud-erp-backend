@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.QcInfoEntity;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
@@ -227,4 +228,12 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @return java.lang.Boolean
      **/
     List<QcInfoEntity> listQCBySourceIds(List<String> sourceIds);
+
+
+    /**
+     * 根据采购订单获取质检信息
+     * @param dto
+     * @return
+     */
+    QcInfoDTO.PurchaseQcInfoDTO getQcInfoByPurchaseOrder(QcInfoDTO.PurchaseQcParamDTO dto);
 }

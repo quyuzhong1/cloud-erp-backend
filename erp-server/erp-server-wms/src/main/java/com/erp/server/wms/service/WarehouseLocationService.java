@@ -47,10 +47,9 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
     WarehouseLocationEntity findByWarehouseIdAndCode(String warehouseId, String code);
 
     /**
-     * 仓位分页
-     * @param dto
+     * 所有仓位
      * @return
      */
-    PagingVO<WarehouseLocationDTO.LocationSelectDTO> paging(PagingDTO<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> dto);
+    List<WarehouseLocationDTO.LocationSelectDTO> all();
 
 }
