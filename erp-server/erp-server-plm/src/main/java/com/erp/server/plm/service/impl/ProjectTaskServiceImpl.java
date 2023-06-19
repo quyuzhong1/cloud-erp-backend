@@ -191,6 +191,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      */
     @Override
     public List<ProjectTaskEntity> getByProductIds(List<String> productIds) {
+        if (CollectionUtils.isEmpty(productIds)) {
+            return Collections.emptyList();
+        }
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(ProjectTaskEntity::getProductId, productIds);
         return list(queryWrapper);
@@ -1457,16 +1460,15 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     /**
      * 统计未完成的任务数
      *
-     * @param finishState
-     * @param taskIds
+     * @param excludeStatusList 排除的状态集合
      * @return int
      * @author yl
      * @date 2022-10-18 19:47
      */
     @Override
-    public int countUndoneByTaskIds(Integer finishState, Integer approvalPassState, List<String> taskIds) {
+    public int countUndoneByTaskIds(List<Integer> excludeStatusList, List<String> taskIds) {
         if (CollectionUtils.isNotEmpty(taskIds)) {
-            return this.baseMapper.findUndone(finishState, approvalPassState, taskIds);
+            return this.baseMapper.findUndone(excludeStatusList, taskIds);
         }
         return 0;
     }
@@ -1485,11 +1487,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<ProjectTaskEntity> list = this.getByProductId(productId);
         Integer finishCode = TaskStateEnum.FINISH.getCode();
         Integer approvalPassCode = TaskStateEnum.APPROVAL_PASS.getCode();
+        Integer closeCode = TaskStateEnum.CLOSE.getCode();
+        List<Integer> excludeStatusList = Arrays.asList(finishCode, approvalPassCode, closeCode);
         for (String taskId : taskIds) {
             List<String> resultList = new ArrayList<>();
             //递归获取他的子任务id
             getChilds(taskId, list, resultList);
-            int count = countUndoneByTaskIds(finishCode, approvalPassCode, resultList);
+            int count = countUndoneByTaskIds(excludeStatusList, resultList);
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_95036);
             }
@@ -1505,14 +1509,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2022-10-18 19:53
      */
     @Override
-    public void checkSonTaskFinish(List<String> taskIds,List<ProjectTaskEntity> taskList) {
+    public void checkSonTaskFinish(List<String> taskIds, List<ProjectTaskEntity> taskList) {
+
         Integer finishCode = TaskStateEnum.FINISH.getCode();
         Integer approvalPassCode = TaskStateEnum.APPROVAL_PASS.getCode();
+        Integer closeCode = TaskStateEnum.CLOSE.getCode();
+        List<Integer> excludeStatusList = Arrays.asList(finishCode, approvalPassCode, closeCode);
         for (String taskId : taskIds) {
             List<String> resultList = new ArrayList<>();
             //递归获取他的子任务id
             getChilds(taskId, taskList, resultList);
-            int count = countUndoneByTaskIds(finishCode, approvalPassCode, resultList);
+            int count = countUndoneByTaskIds(excludeStatusList, resultList);
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_95036);
             }
@@ -1524,8 +1531,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     public void checkTaskFinish(List<ProjectTaskEntity> list) {
         Integer finishCode = TaskStateEnum.FINISH.getCode();
         Integer approvalPassCode = TaskStateEnum.APPROVAL_PASS.getCode();
+        Integer closeCode = TaskStateEnum.CLOSE.getCode();
+        List<Integer> excludeStatusList = Arrays.asList(finishCode, approvalPassCode, closeCode);
         List<String> parentTaskIds = list.stream().filter(t -> t.getPid().equals("0")).map(ProjectTaskEntity::getId).collect(Collectors.toList());
-        int parentCount = countUndoneByTaskIds(finishCode, approvalPassCode, parentTaskIds);
+        int parentCount = countUndoneByTaskIds(excludeStatusList, parentTaskIds);
         if (parentCount > 0) {
             throw new ServiceException(ApiError.ERROR_95050);
         }
@@ -2476,10 +2485,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Transactional(rollbackFor = Exception.class)
     public void initialScheduleTaskPass(LoginUser loginUser, String productId, List<String> taskIdList, String scheduleStatus) {
         List<ProjectTaskEntity> taskList = this.getByTaskIds(taskIdList);
-        taskList.stream().forEach(t->t.setScheduleStatus(scheduleStatus));
+        taskList.stream().forEach(t -> t.setScheduleStatus(scheduleStatus));
         //待发布
         Integer releasedCode = TaskStateEnum.TO_BE_RELEASED.getCode();
-        List<ProjectTaskEntity> releasedTaskList =taskList.stream().filter(f -> f.getStatus().equals(releasedCode)).collect(Collectors.toList());
+        List<ProjectTaskEntity> releasedTaskList = taskList.stream().filter(f -> f.getStatus().equals(releasedCode)).collect(Collectors.toList());
         String userId = commonService.getUserInfo().getUid();
         for (ProjectTaskEntity task : releasedTaskList) {
             Integer taskType = task.getType();
@@ -4772,15 +4781,36 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         return list;
     }
 
+
     /**
-     * 根据用户id获取到任务负责人是自己的 产品id
-     * @author yl
-     * @date 2023-06-13 11:19
-     * @param userId
-     * @return java.util.List<java.lang.String>
+     * 根据任务ids 获取到任务信息
+     *
+     * @param taskIdList
+     * @return
      */
     @Override
-    public List<String> listProductIdByTaskChargeId(String userId) {
-        return baseMapper.listProductIdByTaskChargeId(userId);
+    public List<ProductTask.TaskInfoDTO> listTaskInfo(List<String> taskIdList) {
+        if (CollectionUtils.isEmpty(taskIdList)) {
+            return Collections.emptyList();
+        }
+        List<ProjectTaskEntity> taskList = this.listByIds(taskIdList);
+        List<ProductTask.TaskInfoDTO> resultList = BeanMapper.copyList(taskList, ProductTask.TaskInfoDTO.class);
+        LocalDate now = LocalDate.now();
+        for (ProductTask.TaskInfoDTO item : resultList) {
+            String chargeId = item.getChargeId();
+            item.setChargeIdList(Arrays.asList(chargeId.split(",")));
+            Integer status = item.getStatus();
+            String statusName = TaskStateEnum.getName(status);
+            item.setStatusName(statusName);
+            LocalDate planEndTime = item.getPlanEndTime();
+            Integer delayDays = 0;
+            if (planEndTime != null) {
+                delayDays = Math.toIntExact(now.toEpochDay() - planEndTime.toEpochDay());
+            }
+            item.setDelayDays(delayDays);
+        }
+        return resultList;
     }
+
+
 }

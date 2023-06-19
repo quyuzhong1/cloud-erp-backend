@@ -57,7 +57,7 @@ public interface ProjectInfoService extends IService<ProjectInfoEntity> {
 
     ProjectInfoEntity getByProductId(String productId);
 
-    List<BasicDTO> listProjectInfo(ProductSearchDTO dto);
+    List<BasicDTO> listProjectInfo(ProductSearchDTO.PagingParamDTO dto);
 
     List<ProjectInfoEntity> getByProductIdList(List<String> productIdList);
 
@@ -108,7 +108,7 @@ public interface ProjectInfoService extends IService<ProjectInfoEntity> {
     Boolean stop(List<String> ids);
 
     /**
-     * 完成项目 ids 是项目ids
+     * 完成项目 ids 是产品ids
      * @author yl
      * @date 2023-06-14 11:58
      * @param ids

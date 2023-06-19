@@ -16,5 +16,5 @@ import org.apache.ibatis.annotations.Param;
  */
 @Mapper
 public interface ProductArchiveMapper extends BaseMapper<ProductArchiveEntity> {
-    IPage paging(Page query, @Param("params") ProductSearchDTO params);
+    IPage paging(Page query, @Param("params") ProductSearchDTO.PagingParamDTO params);
 }

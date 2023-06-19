@@ -333,4 +333,38 @@
         </if>
         ORDER BY pi.create_time DESC
     </select>
+
+    <select id="taskDetailView" resultType="com.erp.model.plm.dto.ProjectReportFormsDTO$TaskDetail">
+        SELECT
+            pph.name as projectPhase,
+            pot.name,
+			pot.charge_name,
+			pot.plan_start_time,
+			pot.plan_end_time,
+			pot.reality_start_time,
+			pot.reality_end_time,
+			pot.status
+        FROM project_info poi
+        LEFT JOIN (
+            SELECT
+                pt.product_id,
+                COALESCE(MIN(pp.seq),
+                MAX(ppe.seq)) AS seq
+            FROM project_task pt
+            LEFT JOIN project_phase pp ON pt.phase_id = pp.id
+                AND pt.product_id = pp.product_id
+                AND pt.status IN (0,1,2,3,7,9,10)
+                AND pp.is_deleted = FALSE
+            LEFT JOIN project_phase ppe ON pt.phase_id = ppe.id
+                AND pt.product_id = ppe.product_id
+                AND pt.status = 4
+                AND ppe.is_deleted = FALSE
+            WHERE pt.is_deleted = FALSE
+            GROUP BY pt.product_id
+        ) tpp ON poi.product_id = tpp.product_id
+        LEFT JOIN project_phase pph ON tpp.product_id = pph.product_id AND pph.seq = tpp.seq AND pph.is_deleted = FALSE
+        LEFT JOIN project_task pot ON pot.product_id = poi.product_id AND pot.is_deleted = FALSE
+        LEFT JOIN product_plan pp ON pp.product_id = poi.product_id AND pp.is_deleted = FALSE
+		WHERE poi.is_deleted = FALSE AND poi.product_id = #{id}
+    </select>
 </mapper>

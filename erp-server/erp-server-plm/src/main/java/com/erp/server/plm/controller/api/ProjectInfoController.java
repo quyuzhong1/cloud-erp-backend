@@ -84,7 +84,7 @@ public class ProjectInfoController extends BaseController {
      */
     @PostMapping("/list")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:project:paging", tableAlias = "pt")
-    public ApiResult<List<BasicDTO>> listProjectInfo(@RequestBody @Validated ProductSearchDTO dto) {
+    public ApiResult<List<BasicDTO>> listProjectInfo(@RequestBody @Validated ProductSearchDTO.PagingParamDTO dto) {
         List<BasicDTO> list = projectInfoService.listProjectInfo(dto);
         return success(list);
     }
@@ -176,7 +176,7 @@ public class ProjectInfoController extends BaseController {
     }
 
     /**
-     * 产品开发管理-项目结项  ids为项目id集合【PLM1.3】
+     * 产品开发管理-项目结项  ids为产品id集合【PLM1.3】
      *
      * @return
      */

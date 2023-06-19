@@ -1,6 +1,8 @@
 package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BaseDicDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -10,10 +12,7 @@ import com.erp.model.plm.dto.ProjectReportFormsDTO;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProjectReportFormsService;
 import com.erp.server.plm.service.ProjectTaskService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -51,18 +50,18 @@ public class ProjectReportFormsController extends BaseController {
      * 任务详情
      * @Author Luo_WG
      * @Date 2023/6/12 18:24
-     * @param dto dto
+     * @param id id
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO.PagingViewDTO>>
      **/
-    @PostMapping(value = "/taskDetailView")
+    @GetMapping(value = "/taskDetailView")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
             menuCode = "scm:ProjectReportForms:taskDetailView",
             serviceClass = ProductInfoService.class,
             keyIdName = "id")
-    public ApiResult<List<ProjectReportFormsDTO.TaskDetailParam>> taskDetailView(@RequestBody ProjectReportFormsDTO.TaskDetailParam dto) {
-        
-        return null;
+    public ApiResult<List<ProjectReportFormsDTO.TaskDetail>> taskDetailView(@RequestParam("id") String id) {
+        List<ProjectReportFormsDTO.TaskDetail> list = projectReportFormsService.taskDetailView(id);
+        return success(list);
     }
 
     /**

@@ -10,6 +10,7 @@ import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.model.plm.enums.ProjectReportStatusEnum;
 import com.erp.model.plm.enums.ProjectStateEnum;
+import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.server.plm.mapper.ProjectReportFormsMapper;
 import com.erp.server.plm.service.ProjectReportFormsService;
 import org.springframework.stereotype.Service;
@@ -63,5 +64,12 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
             pagingView.setProjectProgress(BigDecimal.valueOf(projectProgress));
         }
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public List<ProjectReportFormsDTO.TaskDetail> taskDetailView(String id) {
+        List<ProjectReportFormsDTO.TaskDetail> list = baseMapper.taskDetailView(id);
+        list.forEach(req -> req.setTaskStateName(TaskStateEnum.getName(req.getTaskState())));
+        return list;
     }
 }

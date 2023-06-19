@@ -30,7 +30,7 @@ public interface ProjectInfoMapper extends BaseMapper<ProjectInfoEntity> {
 
     List<BasicDTO> listMyCollectNotPaging(@Param("params") ProductSearchDTO params, @Param("productIds") List<String> productIds,@Param("archiveProductIds") List<String> archiveProductIds);
 
-    List<BasicDTO> listNotPaging(@Param("params") ProductSearchDTO params,@Param("archiveProductIds") List<String> archiveProductIds);
+    List<BasicDTO> listNotPaging(@Param("params") ProductSearchDTO.PagingParamDTO params,@Param("archiveProductIds") List<String> archiveProductIds);
 
     List<ProductDTO.CountBaseDTO> listStatusCount(@Param("productIdList") List<String> productIdList);
 

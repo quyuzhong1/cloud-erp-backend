@@ -288,10 +288,11 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
     /**
      * 根据用户id 统计 我的项目状态
-     * @author yl
-     * @date 2023-06-16 14:49
+     *
      * @param userId
      * @return java.util.List<com.erp.model.plm.dto.ProductDTO.CountBaseDTO>
+     * @author yl
+     * @date 2023-06-16 14:49
      */
     @Override
     public List<ProductDTO.CountBaseDTO> listMyProjectStatusCount(String userId) {
@@ -300,10 +301,11 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
     /**
      * 收藏的项目统计
-     * @author yl
-     * @date 2023-06-16 15:16
+     *
      * @param
      * @return java.util.List<com.erp.model.plm.dto.ProductDTO.CountBaseDTO>
+     * @author yl
+     * @date 2023-06-16 15:16
      */
     @Override
     public List<ProductDTO.CountBaseDTO> listCollectStatusCount() {
@@ -473,7 +475,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     }
 
     @Override
-    public List<BasicDTO> listProjectInfo(ProductSearchDTO params) {
+    public List<BasicDTO> listProjectInfo(ProductSearchDTO.PagingParamDTO params) {
         //获取@RequestPermissions的产品id
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
         LoginUser loginUser = commonService.getUserInfo();
@@ -674,17 +676,17 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Transactional(rollbackFor = Exception.class)
     public Boolean stop(List<String> ids) {
         List<ProjectInfoEntity> projectInfoList = this.listByIds(ids);
-        Integer suspend = ProjectStateEnum.SUSPEND.getState();
-        projectInfoList.stream().forEach(p -> p.setProjectStatus(suspend));
+        Integer terminate = ProjectStateEnum.TERMINATE.getState();
+        projectInfoList.stream().forEach(p -> p.setProjectStatus(terminate));
         Boolean result = this.updateBatchById(projectInfoList);
         if (result) {
             List<String> productIds = projectInfoList.stream().map(ProjectInfoEntity::getProductId).collect(Collectors.toList());
             productDetailService.updateProductStateByProductIdList(productIds, ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode());
             //批量更改产品规划的产品状态
-            productPlanService.updateBatchPlanStatus(productIds, suspend, MathUtil.TWO);
+            productPlanService.updateBatchPlanStatus(productIds, terminate, MathUtil.TWO);
             //记录项目状态更新时间
             for (ProjectInfoEntity item : projectInfoList) {
-                projectStatusTimeService.saveOrUpdateProjectStatusTime(item.getId(), item.getProductId(), suspend);
+                projectStatusTimeService.saveOrUpdateProjectStatusTime(item.getId(), item.getProductId(), terminate);
             }
         }
         return result;
@@ -692,7 +694,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
 
     /**
-     * 完成项目 ids 是项目ids
+     * 完成项目 ids 是产品ids
      *
      * @param ids
      * @return java.lang.Boolean
@@ -702,9 +704,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean finish(List<String> ids) {
-        List<ProjectInfoEntity> projectInfoList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(ids)) {
-            return Boolean.FALSE;
+        List<ProjectInfoEntity> projectInfoList = this.listByProductIds(ids);
+        if (CollectionUtils.isEmpty(projectInfoList)) {
+            throw new ServiceException(ApiError.ERROR_95026);
         }
         Integer terminateState = ProjectStateEnum.TERMINATE.getState();
         long terminateStateCount = projectInfoList.stream().filter(p -> terminateState.equals(p.getProjectStatus())).count();
@@ -715,7 +717,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         List<String> productIds = projectInfoList.stream().map(ProjectInfoEntity::getProductId).collect(Collectors.toList());
         List<ProjectTaskEntity> taskList = projectTaskService.getByProductIds(productIds);
         List<String> taskIdList = taskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
-
         //检查任务完成情况
         projectTaskService.checkTaskFinish(taskList);
         //检查任务前置任务完成情况
@@ -740,6 +741,22 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         }
 
         return finishResult;
+    }
+
+
+    /**
+     * 根据产品id 集合获取项目信息
+     *
+     * @param productIds
+     * @return java.util.List<com.erp.model.plm.entity.ProjectInfoEntity>
+     * @author yl
+     * @date 2023-06-19 9:37
+     */
+    private List<ProjectInfoEntity> listByProductIds(List<String> productIds) {
+        if (CollectionUtils.isEmpty(productIds)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(ProjectInfoEntity::getProductId, productIds).list();
     }
 
 

@@ -83,7 +83,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     boolean updateTaskState(List<String> taskIds, Integer state, LocalDateTime realityStart, LocalDateTime realityEnd);
 
 
-    int countUndoneByTaskIds(Integer code, Integer approvalPass, List<String> preTaskIds);
+    int countUndoneByTaskIds(List<Integer> excludeStatusList , List<String> preTaskIds);
 
     void checkSonTaskFinish(List<String> noProcessTaskIds,String productId);
     void checkSonTaskFinish(List<String> noProcessTaskIds,List<ProjectTaskEntity> taskList);
@@ -303,12 +303,12 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
     List<ProjectTaskEntity> listByTaskNames(String productId, List<String> taskNameList);
 
+
+
     /**
-     * 根据用户id获取到任务负责人是自己的 产品id
-     * @author yl
-     * @date 2023-06-13 11:19
-     * @param userId
-     * @return java.util.List<java.lang.String>
+     * 根据任务ids 获取到任务信息
+     * @param taskIdList
+     * @return
      */
-    List<String> listProductIdByTaskChargeId(String userId);
+    List<ProductTask.TaskInfoDTO> listTaskInfo(List<String> taskIdList);
 }

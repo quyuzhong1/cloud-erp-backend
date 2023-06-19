@@ -476,6 +476,11 @@ public class PurchaseApplicationDTO implements Serializable {
     public static class ViewGenerateSubcontractOrderDTO {
 
         /**
+         * 序号
+         */
+        private Integer index;
+
+        /**
          * 来源id
          */
         private String sourceId;
@@ -566,8 +571,107 @@ public class PurchaseApplicationDTO implements Serializable {
         /**
          * 子集
          */
-        private List<ViewGenerateSubcontractOrderDTO> childList;
+        private List<ViewChildGenerateSubcontractOrderDTO> childList;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewChildGenerateSubcontractOrderDTO {
+
+        /**
+         * 序号
+         */
+        private Integer index;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 来源编码
+         */
+        private String sourceCode;
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织名称
+         */
+        private String purchaseOrgName;
+
+        /**
+         * 收料组织id
+         */
+        private String receiveOrgId;
+
+        /**
+         * 收料组织名称
+         */
+        private String receiveOrgName;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 可下推数量
+         */
+        private Integer toPushdownQty;
+
+        /**
+         * 采购数量
+         */
+        private Integer qty;
+
+        /**
+         * 领料数量
+         */
+        private Integer deliveryQty;
+    }
+
 
     @Data
     @NoArgsConstructor

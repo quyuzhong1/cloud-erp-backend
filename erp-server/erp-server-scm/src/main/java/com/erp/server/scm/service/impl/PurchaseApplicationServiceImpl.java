@@ -658,6 +658,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (CollectionUtils.isEmpty(bomChildList)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }
+        Integer index = MathUtil.ONE;
         for (PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO viewDTO : list) {
             //已下推数量
             Integer pushdownQty = MathUtil.ZERO;
@@ -667,19 +668,22 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             //可下推数量
             viewDTO.setToPushdownQty(viewDTO.getQty() - pushdownQty);
             viewDTO.setSourceType(SourceTypeEnum.PURCHASE_APPLICATION.getCode());
-
+            viewDTO.setIndex(index);
+            index++;
             //填充BOM子件信息
             List<BomChildrenSkuDTO> childList = bomChildList.stream().filter(obj -> obj.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(childList)) {
                 throw new ServiceException(new ApiResult(ApiError.ERROR_95173.code,StrUtil.format(ApiError.ERROR_95173.msg,viewDTO.getSkuNo())));
             }
-            List<PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO> generateChildList = new ArrayList<>();
+            List<PurchaseApplicationDTO.ViewChildGenerateSubcontractOrderDTO> generateChildList = new ArrayList<>();
             for (BomChildrenSkuDTO childrenSkuDTO : childList) {
-                PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO viewGenerateDTO = new PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO();
+                PurchaseApplicationDTO.ViewChildGenerateSubcontractOrderDTO viewGenerateDTO = new PurchaseApplicationDTO.ViewChildGenerateSubcontractOrderDTO();
                 BeanMapperUtils.copy(viewDTO,viewGenerateDTO);
                 viewGenerateDTO.setSkuId(childrenSkuDTO.getSkuId());
                 viewGenerateDTO.setSkuNo(childrenSkuDTO.getSkuNo());
                 viewGenerateDTO.setProductName(childrenSkuDTO.getSkuName());
+                viewGenerateDTO.setIndex(index);
+                index++;
                 generateChildList.add(viewGenerateDTO);
             }
             viewDTO.setChildList(generateChildList);

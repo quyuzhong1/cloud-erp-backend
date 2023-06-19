@@ -180,6 +180,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(PurchaseOrderDTO.UpdateDTO dto) {
+        PurchaseOrderEntity old = this.getById(dto.getId());
+        if (ObjectUtils.isEmpty(old)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        if (StringUtils.isNotBlank(old.getSubcontractType())) {
+            throw new ServiceException(ApiError.ERROR_98079);
+        }
+
         PurchaseOrderEntity entity = new PurchaseOrderEntity();
         BeanMapperUtils.copy(dto, entity);
         //校验明细是否有重复sku
@@ -190,7 +198,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         log.info("采购订单修改，id=【{}】", dto.getId());
 
         //操作日志
-        PurchaseOrderEntity old = this.getById(dto.getId());
         moduleOperateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.PURCHASE_ORDER.getCode(), entity.getId(), "", "");
         //更新主表数据
         this.updateById(entity);

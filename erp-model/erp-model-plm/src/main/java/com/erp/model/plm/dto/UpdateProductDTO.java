@@ -66,14 +66,14 @@ public class UpdateProductDTO  implements Serializable {
 
     /**
      * 项目状态
-     * 项目状态 0 未启动 1 ;已启动 2 进行中 3 已完成  4 已终止
+     * 项目状态 0 未启动 1 ;已启动 2 进行中 3 已完成  4 已暂停  5 已终止
      */
     private Integer projectStatus;
 
 
     /**
      * 立项状态
-     * 0 待规划 1 调研中  2：ID设计中  3::已立项  4：已终止
+     * 0 待规划 1 调研中  2：ID设计中  3::已立项  4：已暂停 5 已终止
      */
     private Integer approvalStatus;
 
