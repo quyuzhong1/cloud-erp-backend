@@ -1,6 +1,7 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -126,15 +127,22 @@ public class SupplierReportServiceImpl implements SupplierReportService {
         }
 
         // 次品量
+        Integer orderPartitionSize = 1000;
         records.stream().forEach(record->{
             if(StrUtil.isNotEmpty(record.getPurchaseOrderIds())) {
                 List<String> purchaseOrderIds = Arrays.asList(record.getPurchaseOrderIds().split(","));
-                QcInfoDTO.PurchaseQcParamDTO qcParamDTO = new QcInfoDTO.PurchaseQcParamDTO(paramDTO.getQcType(), purchaseOrderIds);
-                QcInfoDTO.PurchaseQcInfoDTO purchaseQcInfoDTO = wmsTaskFeign.getQcInfoByPurchaseOrder(qcParamDTO);
-                record.setDefectiveQty(0);
-                if(Objects.nonNull(purchaseQcInfoDTO)) {
-                  record.setDefectiveQty(Optional.ofNullable(purchaseQcInfoDTO.getDefectiveQty()).orElse(0));
+                // 此处优化，防止数据量过大，拆分成多次查询（1000个一组），如果还是很慢，则优化成前端异步加载
+                List<List<String>> partitionList = ListUtil.partition(purchaseOrderIds, orderPartitionSize);
+                Integer sumDefectiveQty = 0;
+                for(List<String> purchaseOrderIdList : partitionList) {
+                    QcInfoDTO.PurchaseQcParamDTO qcParamDTO = new QcInfoDTO.PurchaseQcParamDTO(paramDTO.getQcType(), purchaseOrderIdList);
+                    QcInfoDTO.PurchaseQcInfoDTO purchaseQcInfoDTO = wmsTaskFeign.getQcInfoByPurchaseOrder(qcParamDTO);
+
+                    if(Objects.nonNull(purchaseQcInfoDTO)) {
+                        sumDefectiveQty = sumDefectiveQty + Optional.ofNullable(purchaseQcInfoDTO.getDefectiveQty()).orElse(0);
+                    }
                 }
+                record.setDefectiveQty(sumDefectiveQty);
             }
         });
 
