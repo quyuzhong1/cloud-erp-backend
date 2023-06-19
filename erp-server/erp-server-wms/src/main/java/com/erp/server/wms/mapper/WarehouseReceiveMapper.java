@@ -10,6 +10,7 @@ import com.erp.model.wms.entity.WarehouseReceiveEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -36,4 +37,9 @@ public interface WarehouseReceiveMapper extends BaseMapper<WarehouseReceiveEntit
     List<WarehouseReceiveExcelDTO> warehouseReceiveExportExcel(@Param("params") WarehouseReceiveDTO.PagingParamDTO params);
 
     List<QcInfoDTO.ReceiveToQcDTO> getQcList(@Param("mainIds") List<String> mainIds);
+
+    /**
+     * 根据供应商id集合查询收货批次和收货数量
+     */
+    List<WarehouseReceiveDTO.SupplierReceiveInfoDTO> getReceiveInfoBySupplierIds(@Param("supplierIds") List<String> supplierIds, @Param("dateList") List<LocalDate> dateList);
 }

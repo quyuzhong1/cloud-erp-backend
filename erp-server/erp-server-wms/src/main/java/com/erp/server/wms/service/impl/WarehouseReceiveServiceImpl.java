@@ -1069,6 +1069,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<WarehouseReceiveDTO.SupplierReceiveInfoDTO> getReceiveInfoBySupplierIds(WarehouseReceiveDTO.SupplierReceiveParamDTO dto) {
+        return this.baseMapper.getReceiveInfoBySupplierIds(dto.getSupplierIds(), dto.getDateList());
+    }
+
     /**
      * 更新库存数据
      * @param list

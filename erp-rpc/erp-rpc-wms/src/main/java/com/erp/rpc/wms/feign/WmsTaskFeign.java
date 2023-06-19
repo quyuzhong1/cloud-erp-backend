@@ -168,4 +168,20 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/soDeliveryNotice/closeBySoDetailIds")
     void closeBySoDetailIds(@RequestBody List<String> terminateSoDetailIds);
+
+    /**
+     * 根据供应商id集合获取收货单量和收货数量
+     * @param dto
+     * @return List<WarehouseReceiveDTO.SupplierReceiveInfoDTO>
+     */
+    @PostMapping("feign/warehouseReceive/getReceiveInfoBySupplierIds")
+    List<WarehouseReceiveDTO.SupplierReceiveInfoDTO> getReceiveInfoBySupplierIds(@RequestBody WarehouseReceiveDTO.SupplierReceiveParamDTO dto);
+
+    /**
+     * 根据供应商id集合获取入库单量和入库数量
+     * @param dto
+     * @return List<PoInstockDTO.SupplierInstockInfoDTO>
+     */
+    @PostMapping("feign/purchaseStockIn/getInstockInfoBySupplierIds")
+    List<PoInstockDTO.SupplierInstockInfoDTO> getInstockInfoBySupplierIds(@RequestBody PoInstockDTO.SupplierInstockParamDTO dto);
 }

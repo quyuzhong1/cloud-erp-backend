@@ -195,4 +195,9 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @return java.lang.Boolean
      **/
     Boolean generateReceive(PurchaseOrderDTO.ListGenerateReceiveDTO dto);
+
+    /**
+     * 根据供应商id集合查询收货批次和收货数量
+     */
+    List<WarehouseReceiveDTO.SupplierReceiveInfoDTO> getReceiveInfoBySupplierIds(WarehouseReceiveDTO.SupplierReceiveParamDTO dto);
 }

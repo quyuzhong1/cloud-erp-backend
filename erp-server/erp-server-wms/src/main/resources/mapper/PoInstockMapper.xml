@@ -296,5 +296,22 @@
             </if>
         </where>
     </select>
+    <select id="getInstockInfoBySupplierIds"
+            resultType="com.erp.model.wms.dto.PoInstockDTO$SupplierInstockInfoDTO">
+    select  pi.supplier_id,count(distinct pi.id) as instock_count, sum(pid.stock_in_qty) as instock_qty
+    from po_instock pi
+    inner join po_instock_detail pid on pid.main_id = pi.id and pid.is_deleted = false
+    where pi.approve_status = 'approve' and pi.is_deleted = false
+    <if test="supplierIds != null and supplierIds.size > 0">
+        and pi.supplier_id in
+        <foreach collection="supplierIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </if>
+    <if test="dateList != null and dateList.size > 0">AND
+        pi.stock_in_date >= #{dateList[0]} AND (#{dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pi.stock_in_date
+    </if>
+    group by pi.supplier_id
+    </select>
 
 </mapper>

@@ -1,6 +1,5 @@
 package com.erp.server.wms.service;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -249,4 +248,11 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
      * @Date 2023/4/24 15:29
      **/
     Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate);
+
+    /**
+     * 根据供应商id集合获取入库单量和入库数量
+     * @param dto
+     * @return
+     */
+    List<PoInstockDTO.SupplierInstockInfoDTO> getInstockInfoBySupplierIds(PoInstockDTO.SupplierInstockParamDTO dto);
 }

@@ -739,6 +739,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 .update();
     }
 
+    @Override
+    public List<PoInstockDTO.SupplierInstockInfoDTO> getInstockInfoBySupplierIds(PoInstockDTO.SupplierInstockParamDTO dto) {
+        return this.baseMapper.getInstockInfoBySupplierIds(dto.getSupplierIds(), dto.getDateList());
+    }
+
     /**
      * 审核后更新审核状态、审核人、审核时间
      */

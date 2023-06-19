@@ -6,7 +6,9 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 供应商报表请求响应实体
@@ -27,7 +29,7 @@ public class SupplierReportDTO implements Serializable {
         /**
          * 日期范围
          */
-        private List<String> dateList;
+        private List<LocalDate> dateList;
 
         /**
          * 供应商名称
@@ -133,6 +135,9 @@ public class SupplierReportDTO implements Serializable {
          */
         private BigDecimal passRateQty;
 
+        public String getSupplierDisabledName() {
+            return Objects.equals(supplierDisabled, Boolean.TRUE) ? "停用" : "启用";
+        }
     }
 
     /**
