@@ -50,17 +50,17 @@ public class ProjectReportFormsController extends BaseController {
      * 任务详情
      * @Author Luo_WG
      * @Date 2023/6/12 18:24
-     * @param id id
+     * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO.PagingViewDTO>>
      **/
-    @GetMapping(value = "/taskDetailView")
+    @PostMapping(value = "/taskDetailView")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
             menuCode = "scm:ProjectReportForms:taskDetailView",
             serviceClass = ProductInfoService.class,
             keyIdName = "id")
-    public ApiResult<List<ProjectReportFormsDTO.TaskDetail>> taskDetailView(@RequestParam("id") String id) {
-        List<ProjectReportFormsDTO.TaskDetail> list = projectReportFormsService.taskDetailView(id);
+    public ApiResult<List<ProjectReportFormsDTO.TaskDetail>> taskDetailView(@RequestBody ProjectReportFormsDTO.TaskDetailParam dto) {
+        List<ProjectReportFormsDTO.TaskDetail> list = projectReportFormsService.taskDetailView(dto);
         return success(list);
     }
 
@@ -78,7 +78,7 @@ public class ProjectReportFormsController extends BaseController {
             menuCode = "scm:ProjectReportForms:exportExcelProjectReportForms",
             tableAlias = "pod")
     public ApiResult exportExcelProjectReportForms(@RequestBody ProjectReportFormsDTO.PagingParam dto, HttpServletResponse response) {
-        Boolean flag = Boolean.TRUE;
+        Boolean flag = projectReportFormsService.exportExcelProjectReportForms(dto, response);
         return flag == true ? success() : failure();
     }
 
@@ -95,8 +95,8 @@ public class ProjectReportFormsController extends BaseController {
             tableField = "create_user_id",
             menuCode = "scm:ProjectReportForms:exportExcelProjectReportForms",
             tableAlias = "pod")
-    public ApiResult exportExcelTaskDetail(@RequestBody ProjectReportFormsDTO.PagingParam dto, HttpServletResponse response) {
-        Boolean flag = Boolean.TRUE;
+    public ApiResult exportExcelTaskDetail(@RequestBody ProjectReportFormsDTO.TaskDetailParam dto, HttpServletResponse response) {
+        Boolean flag = projectReportFormsService.exportExcelTaskDetail(dto, response);
         return flag == true ? success() : failure();
     }
 }

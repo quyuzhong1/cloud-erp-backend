@@ -32,13 +32,12 @@ public interface ProjectReportFormsMapper extends BaseMapper<ProductInfoEntity> 
      **/
     List<ProjectReportFormsDTO.PagingView> projectReportFormsExportExcel(@Param("params") ProjectReportFormsDTO.PagingParam param);
 
-
     /**
      * 任务详情
      * @Author Luo_WG
      * @Date 2023/6/19 10:29
-     * @param id
+     * @param dto
      * @return java.util.List<com.erp.model.plm.dto.ProjectReportFormsDTO.TaskDetailParam>
      **/
-    List<ProjectReportFormsDTO.TaskDetail> taskDetailView(String id);
+    List<ProjectReportFormsDTO.TaskDetail> taskDetailView(@Param("params") ProjectReportFormsDTO.TaskDetailParam dto);
 }
