@@ -433,14 +433,17 @@
 
         select
             ppod.id as parentPodId,
-            ppod.qty as parentQty,
+            ppod.sku_id as parentSkuId,
             po.id as childPoId,
             pod.id as childPodId,
             psod.id as subParentDetailId,
             sod.id as subChildDetailId,
-            pod.sku_id as skuId,
-            pod.sku_no as skuNo,
-            po.approve_status as approveStatus
+            pod.sku_id as childSkuId,
+            pod.sku_no as childSkuNo,
+            po.delivery_warehouse_id as childWarehouseId,
+            pod.warehouse_location as childWarehouseLocation,
+            po.code as childCode;
+            po.approve_status as childApproveStatus
         from purchase_order_detail ppod
         inner join subcontract_order_detail psod on psod.id = ppod.source_detail_id and ppod.is_deleted = false
         inner join subcontract_order_detail sod on sod.parent_id = psod.id and sod.is_deleted = false

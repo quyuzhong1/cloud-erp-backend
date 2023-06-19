@@ -992,7 +992,7 @@ public class PurchaseOrderDTO implements Serializable {
 
         private String parentPodId;
 
-        private Integer parentQty;
+        private String parentSkuId;
 
         private String childPoId;
 
@@ -1002,8 +1002,16 @@ public class PurchaseOrderDTO implements Serializable {
 
         private String subChildDetailId;
 
-        private String skuNo;
+        private String childSkuId;
 
-        private String approveStatus;
+        private String childSkuNo;
+
+        private String childWarehouseId;
+
+        private String childWarehouseLocation;
+
+        private String childApproveStatus;
+
+        private String childCode;
     }
 }

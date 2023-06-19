@@ -22,6 +22,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
@@ -62,6 +63,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -1007,50 +1009,55 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             return;
         }
         //自动审核采购订单
-        List<String> poIds = childList.stream().map(PurchaseOrderDTO.SubcontractOrderChildDTO::getChildPoId).distinct().collect(Collectors.toList());
-        scmTaskFeign.autoApprovePurchaseOrder(poIds);
+        List<String> childPoIds = childList.stream().map(PurchaseOrderDTO.SubcontractOrderChildDTO::getChildPoId).distinct().collect(Collectors.toList());
+        scmTaskFeign.autoApprovePurchaseOrder(childPoIds);
 
         //生成入库单
-        autoGeneratePoInstock(poIds,poInstockDetailList,childList);
+        autoGeneratePoInstock(childPoIds,childList);
 
+        //生成领料出库单，需要按比例出库（父级SKU入库数量/父级SKU采购数量）（现没有领料出库单据，则直接调用领料库存变化逻辑）
+        autoOutStockInventory(childList,poInstockDetailList);
     }
 
     /**
      * @description: 自动入库
      * @author Will
      * @date: 2023/6/16 9:43
-     * @param poIds
+     * @param childPoIds
      */
-    private void autoGeneratePoInstock(List<String> poIds,List<PoInstockDetailEntity> poInstockDetailList,List<PurchaseOrderDTO.SubcontractOrderChildDTO> childList) {
+    private void autoGeneratePoInstock(List<String> childPoIds,List<PurchaseOrderDTO.SubcontractOrderChildDTO> childList) {
         //采购订单
-        List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(poIds);
+        List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(childPoIds);
 
         //采购订单明细
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listByPurchaseOrderIds(poIds);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listByPurchaseOrderIds(childPoIds);
 
-        List<PoInstockEntity> poInstockList = this.listByPoIds(poIds);
+        //子级入库单明细
+        List<String> childPodIds = childList.stream().map(PurchaseOrderDTO.SubcontractOrderChildDTO::getChildPodId).collect(Collectors.toList());
+        List<PoInstockDetailEntity> childPoInstockList = poInstockDetailService.listDetailByPodIds(childPodIds);
 
         LoginUser userInfo = commonService.getUserInfo();
 
         List<String> addPoInstockIds = new ArrayList<>();
 
-        //库存更新参数
-        List<InOutStockDTO>  inOutStockList = new ArrayList<>();
         for (PurchaseOrderEntity purchaseOrderEntity : purchaseOrderList) {
-            //只有已审核通过的订单可以下推入库单
+            //只有已审核通过的订单可以下推入库单（可能存在审核不通过的数据）
             if (!ApproveStatusEnum.APPROVE.getStatus().equals(purchaseOrderEntity.getApproveStatus())) {
                 return;
             }
-            //已下推过入库单的采购订单无需自动下推
-            long count = poInstockList.stream().filter(obj -> obj.getPurchaseOrderId().equals(purchaseOrderEntity.getId())).count();
-            if (count > 0) {
-                return;
-            }
+
             List<PurchaseOrderDetailEntity> detailEntityList = purchaseOrderDetailList.stream().filter(obj -> obj.getPurchaseOrderId().equals(purchaseOrderEntity.getId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(detailEntityList)) {
                 throw new ServiceException(ApiError.ERROR_98026);
             }
+            List<String> thisChildPodIds = detailEntityList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
 
+
+            //已下推过入库单的采购订单无需自动下推
+            long count = childPoInstockList.stream().filter(obj -> thisChildPodIds.contains(obj.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).count();
+            if (count > 0) {
+                return;
+            }
             PoInstockDTO.AddDTO addDTO = new PoInstockDTO.AddDTO();
             addDTO.setSourceId(purchaseOrderEntity.getId());
             addDTO.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
@@ -1066,27 +1073,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 addDetailDTO.setStockInQty(detailEntity.getPurchaseQty());
                 addDetailDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
                 detailList.add(addDetailDTO);
-                
-                //父级SKU
-                PurchaseOrderDTO.SubcontractOrderChildDTO parentDTO = childList.stream().filter(obj -> obj.getChildPodId().equals(detailEntity.getId())).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(parentDTO)) {
-                    throw new ServiceException(ApiError.ERROR_98071);
-                }
-
-
-                //操作请求实体
-                InOutStockDTO inOutStockDTO = new InOutStockDTO();
-                inOutStockDTO.setSourceType(InventorySourceTypeEnum.MACHINE_INFO);
-                inOutStockDTO.setSourceId(purchaseOrderEntity.getId());
-                inOutStockDTO.setSourceCode(purchaseOrderEntity.getCode());
-                inOutStockDTO.setSourceDetailId(detailEntity.getId());
-                inOutStockDTO.setBillDate(purchaseOrderEntity.getPurchaseDate());
-                inOutStockDTO.setSkuId(detailEntity.getSkuId());
-                inOutStockDTO.setSkuNo(detailEntity.getSkuNo());
-                inOutStockDTO.setQty(detailEntity.getPurchaseQty());
-                inOutStockDTO.setWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
-                inOutStockDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
-                inOutStockList.add(inOutStockDTO);
             }
             addDTO.setDetails(detailList);
             String id = this.add(addDTO);
@@ -1103,14 +1089,58 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             baseApproveParamDTO.setIds(addPoInstockIds);
             baseApproveParamDTO.setType(ApproveType.PASS);
             this.approve(baseApproveParamDTO);
-
-            //生成领料出库单，需要按比例出库（父级SKU入库数量/父级SKU采购数量）（现没有领料出库单据，则直接调用领料库存变化逻辑）
-            InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-            inventoryInOutStockDTO.setMembers(inOutStockList);
-            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_PICK.getCode());
-            inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
-
         }
+    }
+
+    /**
+     * @description: 更新出库库存
+     * @author Will
+     * @date: 2023/6/19 9:47
+     * @param childList
+     * @param poInstockDetailList
+     */
+    private void autoOutStockInventory (List<PurchaseOrderDTO.SubcontractOrderChildDTO> childList,List<PoInstockDetailEntity> poInstockDetailList) {
+        if (CollectionUtils.isEmpty(childList)) {
+            return;
+        }
+        //子级入库单明细
+        List<String> childPodIds = childList.stream().map(PurchaseOrderDTO.SubcontractOrderChildDTO::getChildPodId).collect(Collectors.toList());
+        List<PoInstockDetailEntity> childPoInstockList = poInstockDetailService.listDetailByPodIds(childPodIds);
+        if (CollectionUtils.isEmpty(childPoInstockList)) {
+            return;
+        }
+        //查询bom信息
+        List<String> skuIds = poInstockDetailList.stream().map(PoInstockDetailEntity::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+
+        List<InOutStockDTO>  inOutStockList = new ArrayList<>();
+        for (PurchaseOrderDTO.SubcontractOrderChildDTO childDTO : childList) {
+            //父子级SKU子件比例
+            Integer quantity = bomList.stream().filter(obj -> obj.getParentSkuId().equals(childDTO.getParentSkuId()) && obj.getSkuId().equals(childDTO.getChildSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getQuantity())).orElse(MathUtil.ZERO);
+
+            //采购订单明细本次入库数量
+            Integer instockQty = poInstockDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(childDTO.getParentPodId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            //操作请求实体
+            InOutStockDTO inOutStockDTO = new InOutStockDTO();
+            inOutStockDTO.setSourceType(InventorySourceTypeEnum.MACHINE_INFO);
+            inOutStockDTO.setSourceId(childDTO.getChildPoId());
+            inOutStockDTO.setSourceCode(childDTO.getChildCode());
+            inOutStockDTO.setSourceDetailId(childDTO.getChildPodId());
+            inOutStockDTO.setBillDate(LocalDate.now());
+            inOutStockDTO.setSkuId(childDTO.getChildSkuId());
+            inOutStockDTO.setSkuNo(childDTO.getChildSkuNo());
+            inOutStockDTO.setQty(quantity * instockQty);
+            inOutStockDTO.setWarehouseId(childDTO.getChildWarehouseId());
+            inOutStockDTO.setWarehouseLocation(childDTO.getChildWarehouseLocation());
+            inOutStockList.add(inOutStockDTO);
+        }
+
+        //生成领料出库单，需要按比例出库（父级SKU入库数量/父级SKU采购数量）（现没有领料出库单据，则直接调用领料库存变化逻辑）
+        InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+        inventoryInOutStockDTO.setMembers(inOutStockList);
+        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_PICK.getCode());
+        inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
     }
 
     /**
@@ -1123,7 +1153,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     private List<PoInstockEntity> listByPoIds(List<String> poIds) {
       return lambdaQuery().in(PoInstockEntity::getPurchaseOrderId,poIds)
               .eq(PoInstockEntity::getInvalidStatus,Boolean.FALSE)
-              .eq(PoInstockEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getStatus())
               .list();
     }
 
