@@ -154,6 +154,9 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         return  baseMapper.listBySourceDetailIds(sourceDetailIds);
     }
 
+    /**
+     * 根据主表id查询父级SKU数据
+     */
     private List<SubcontractOrderDetailEntity> listParentByMainId(String mainId) {
         return lambdaQuery()
                 .eq(SubcontractOrderDetailEntity::getMainId,mainId)

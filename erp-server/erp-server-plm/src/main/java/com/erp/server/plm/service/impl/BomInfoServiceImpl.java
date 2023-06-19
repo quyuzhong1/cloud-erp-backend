@@ -21,6 +21,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
@@ -238,16 +239,20 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (CollectionUtils.isEmpty(childList)) {
             throw new ServiceException(ApiError.ERROR_95166);
         }
+        Integer index = MathUtil.ONE;
         for (BomSkuPageDTO.ListDTO listDTO : records) {
             //状态名称
             listDTO.setStatusName(ProductDetailStatusEnum.getName(listDTO.getStatus()));
-
+            listDTO.setIndex(index);
+            index++;
             //子件
             List<BomSkuPageDTO.ChildDTO> childDTOList = childList.stream().filter(obj -> obj.getBomId().equals(listDTO.getBomId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(childDTOList)) {
                 for (BomSkuPageDTO.ChildDTO childDTO: childDTOList) {
                     //状态名称
                     childDTO.setStatusName(ProductDetailStatusEnum.getName(childDTO.getStatus()));
+                    childDTO.setIndex(index);
+                    index++;
                 }
             }
             listDTO.setChildList(childDTOList);

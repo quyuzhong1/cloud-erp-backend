@@ -36,6 +36,11 @@ public class BomSkuPageDTO {
     public static class ListDTO {
 
         /**
+         * 序号
+         */
+        private Integer index;
+
+        /**
          * bomId
          */
         private String bomId;
@@ -109,6 +114,11 @@ public class BomSkuPageDTO {
     @Data
     @NoArgsConstructor
     public static class ChildDTO {
+
+        /**
+         * 序号
+         */
+        private Integer index;
 
         /**
          * bomId

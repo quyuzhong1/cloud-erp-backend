@@ -32,7 +32,6 @@ import com.erp.server.scm.service.CommonService;
 import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.SubcontractChangeDetailService;
 import com.erp.server.scm.service.SubcontractChangeService;
-import com.google.common.collect.Sets;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.math3.util.Pair;
@@ -76,8 +75,6 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         }
         // 数据处理
         fillList(pageData.getRecords());
-        // 同一主单多行明细只有第一行显示主单字段，其他行赋空
-        hideData(pageData.getRecords());
         return new PagingVO(pageData);
     }
 
@@ -387,29 +384,6 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             // TODO 其他如需要显示名称的字段赋值
-        }
-    }
-
-    /**
-    * 分页查询同一主单多行明细只有第一行显示主单字段，其他行赋空
-    */
-    private void hideData(List<SubcontractChangeDTO.ListDTO> list) {
-        Set<String> mainIds = Sets.newHashSet();
-        // 同一个主单的其他行明细，只显示第一行的主单字段
-        for(SubcontractChangeDTO.ListDTO data : list) {
-            if (mainIds.contains(data.getId())) {
-                data.setCode(null);
-                data.setApproveStatus(null);
-                data.setApproveStatusName(null);
-                data.setInvalidStatus(null);
-                data.setInvalidStatusName(null);
-                data.setApproveUserName(null);
-                data.setCreateUserName(null);
-                data.setCreateTime(null);
-                // TODO 其他需要赋空值字段
-                continue;
-            }
-            mainIds.add(data.getId());
         }
     }
 
