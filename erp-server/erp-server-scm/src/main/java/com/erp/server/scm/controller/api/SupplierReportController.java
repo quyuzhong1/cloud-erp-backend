@@ -45,7 +45,7 @@ public class SupplierReportController extends BaseController {
      */
     @PostMapping(value = "/exportExcel")
     public void exportExcel(@RequestBody SupplierReportDTO.ExportSearchParamDTO dto, HttpServletResponse response) {
-
+        supplierReportService.exportList(dto, response);
     }
 
 }

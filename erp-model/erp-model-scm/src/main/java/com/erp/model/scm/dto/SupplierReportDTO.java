@@ -159,6 +159,7 @@ public class SupplierReportDTO implements Serializable {
          */
         private List<String> ids;
 
+
     }
 
 }
