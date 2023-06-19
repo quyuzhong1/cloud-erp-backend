@@ -108,6 +108,11 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
         lambdaUpdate().in(SubcontractChangeDetailEntity::getMainId,mainIds).remove();
     }
 
+    @Override
+    public List<SubcontractChangeDetailEntity> listByMainIds(List<String> mainIds) {
+        return lambdaQuery().in(SubcontractChangeDetailEntity::getMainId,mainIds).list();
+    }
+
     /**
      * 根据主表id查询父级SKU数据
      */
