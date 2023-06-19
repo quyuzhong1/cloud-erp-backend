@@ -180,8 +180,13 @@ public class SubcontractOrderDetailEntity extends BaseEntity<SubcontractOrderDet
     @TableField("remark")
     private String remark;
 
+
+
     @TableField(exist = false)
     private Boolean isAdd;
+
+    @TableField(exist = false)
+    private String supplierName;
 
     @TableField(exist = false)
     private List<SubcontractOrderDetailDTO.UpdateDTO> childList;

@@ -16,6 +16,7 @@ import com.erp.model.scm.dto.SubcontractOrderDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -65,6 +66,8 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
     @Resource
     private SubcontractOrderService subcontractOrderService;
 
+    @Resource
+    private SupplierService supplierService;
 
     @Override
     public void updateArrivalStatusByIds(String arrivalStatus, List<String> ids) {
@@ -239,6 +242,8 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         List<String> allSkuIds = new ArrayList<>();
         //仓库Ids
         List<String> warehouseIds = new ArrayList<>();
+        //供应商Ids
+        List<String> supplierIds = new ArrayList<>();
         newList.forEach(obj -> {
 
             parentSkuIds.add(obj.getSkuId());
@@ -250,6 +255,10 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             warehouseIds.add(obj.getWarehouseId());
             List<String> warehouseIdList = obj.getChildList().stream().map(SubcontractOrderDetailDTO.UpdateDTO::getWarehouseId).collect(Collectors.toList());
             warehouseIds.addAll(warehouseIdList);
+
+            supplierIds.add(obj.getSupplierId());
+            List<String> supplierIdList = obj.getChildList().stream().map(SubcontractOrderDetailDTO.UpdateDTO::getSupplierId).collect(Collectors.toList());
+            supplierIds.addAll(supplierIdList);
 
         });
 
@@ -263,7 +272,11 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
-
+        //供应商信息
+        List<SupplierEntity> supplierList = supplierService.listByIds(supplierIds);
+        if (CollectionUtils.isEmpty(supplierList)) {
+            throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
+        }
         //仓库信息
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIds);
 
@@ -293,6 +306,11 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 detailEntity.setWarehouseName(warehouseName);
             }
+            //供应商名称
+            if (CollectionUtils.isNotEmpty(supplierList)) {
+                String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(detailEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                detailEntity.setSupplierName(supplierName);
+            }
             handleSupplierTaxPrice(detailEntity,Boolean.FALSE);
             //子集SKU信息
             List<SubcontractOrderDetailEntity>   childList = BeanMapperUtils.copyList(SubcontractOrderDetailEntity.class, detailEntity.getChildList());
@@ -311,6 +329,11 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 if (CollectionUtils.isNotEmpty(warehouseList)) {
                     String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(childEntity.getWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                     detailEntity.setWarehouseName(warehouseName);
+                }
+                //供应商名称
+                if (CollectionUtils.isNotEmpty(supplierList)) {
+                    String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(childEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                    detailEntity.setSupplierName(supplierName);
                 }
                 handleSupplierTaxPrice(childEntity,Boolean.TRUE);
             }
