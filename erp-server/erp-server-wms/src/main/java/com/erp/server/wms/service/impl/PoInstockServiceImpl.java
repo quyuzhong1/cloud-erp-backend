@@ -615,6 +615,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             dto.setTaxPrice(detailEntity.getTaxPrice());
             //相同采购单号清空后面数据的采购单号和供应商
             boolean contains = list.contains(dto.getPurchaseOrderId());
+
             if (contains) {
                 dto.setPurchaseOrderCode(null);
                 dto.setSupplierName(null);
