@@ -1008,5 +1008,4 @@ ProductDetailController extends BaseController {
         Boolean flag = productDetailService.updateBatchFiled(dto);
         return flag == true ? success() : failure();
     }
-    }
 }
