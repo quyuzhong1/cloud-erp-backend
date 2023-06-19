@@ -871,12 +871,18 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             throw new ServiceException(ApiError.ERROR_9014);
         }
         //人员信息
-        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaserId());
-        entity.setPurchaserName(findUserDTO.getUserName());
+        if (StringUtils.isNotBlank(entity.getPurchaserId())) {
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaserId());
+            entity.setPurchaserName(findUserDTO.getUserName());
+
+        }
 
         //部门信息
-        SysDepartmentDTO sysDepartmentDTO = sysUserFeign.getUserDeptById(entity.getDeptId());
-        entity.setDeptName(sysDepartmentDTO.getName());
+        if (StringUtils.isNotBlank(entity.getDeptId())) {
+            SysDepartmentDTO sysDepartmentDTO = sysUserFeign.getUserDeptById(entity.getDeptId());
+            entity.setDeptName(sysDepartmentDTO.getName());
+        }
+
 
         //采购组织名称
         String purchaseOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
