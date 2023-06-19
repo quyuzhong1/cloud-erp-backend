@@ -28,7 +28,7 @@ public class ProjectReportFormsDTO implements Serializable {
          */
         private List<String> ids;
         /**
-         * 项目状态 plm/common/enumDropDown?type=ProjectReportStatus
+         * 列表头项目状态 plm/common/enumDropDown?type=ProjectReportStatus
          * 状态描述：notApproval：未立项  approval：已立项  finished：已完成
          */
         private String approvalStatus;
@@ -64,7 +64,6 @@ public class ProjectReportFormsDTO implements Serializable {
          * 产品经理
          */
         private List<String> productChargeIdList;
-
         /**
          * 产品经理（后端用）
          */
@@ -74,21 +73,14 @@ public class ProjectReportFormsDTO implements Serializable {
          */
         private String categoryId;
         /**
-         * 计划调研时间
+         * 立项状态
          */
-        private List<LocalDate> planSurveyDateList;
+        private List<Integer> searchApprovalStatusList;
         /**
-         * 计划立项时间
+         * 项目状态
          */
-        private List<LocalDate> planProjectApprovalDateList;
-        /**
-         * 计划首批入库时间
-         */
-        private List<LocalDate> planFirstMassStockInDateList;
-        /**
-         * 计划上市时间
-         */
-        private List<LocalDate> planListingTimeList;
+        private List<Integer> searchProjectStatusList;
+
     }
 
     /**
@@ -294,9 +286,9 @@ public class ProjectReportFormsDTO implements Serializable {
     @NoArgsConstructor
     public static class TaskDetailParam {
         /**
-         * id
+         * ids
          */
-        private String id;
+        private List<String> ids;
         /**
          * 任务名称
          */
@@ -308,11 +300,7 @@ public class ProjectReportFormsDTO implements Serializable {
         /**
          * 本周开始日期
          */
-        private LocalDate startDate;
-        /**
-         * 本周结束日期
-         */
-        private LocalDate endDate;
+        private List<LocalDate> thisWeekDateList;
     }
 
     /**

@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.ProjectReportFormsDTO;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.enums.ApprovalStatusEnum;
@@ -15,10 +17,10 @@ import com.erp.server.plm.mapper.ProjectReportFormsMapper;
 import com.erp.server.plm.service.ProjectReportFormsService;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -67,9 +69,43 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
     }
 
     @Override
-    public List<ProjectReportFormsDTO.TaskDetail> taskDetailView(String id) {
-        List<ProjectReportFormsDTO.TaskDetail> list = baseMapper.taskDetailView(id);
+    public List<ProjectReportFormsDTO.TaskDetail> taskDetailView(ProjectReportFormsDTO.TaskDetailParam dto) {
+        List<ProjectReportFormsDTO.TaskDetail> list = baseMapper.taskDetailView(dto);
         list.forEach(req -> req.setTaskStateName(TaskStateEnum.getName(req.getTaskState())));
         return list;
+    }
+
+    @Override
+    public Boolean exportExcelProjectReportForms(ProjectReportFormsDTO.PagingParam dto, HttpServletResponse response) {
+        List<ProjectReportFormsDTO.PagingView> pagingViewList = baseMapper.projectReportFormsExportExcel(dto);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/exportExcelProjectReportForms.xlsx";
+        String name = "项目报表";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(pagingViewList, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean exportExcelTaskDetail(ProjectReportFormsDTO.TaskDetailParam dto, HttpServletResponse response) {
+        List<ProjectReportFormsDTO.TaskDetail> pagingViewList = baseMapper.taskDetailView(dto);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/exportExcelTaskDetail.xlsx";
+        String name = "项目任务明细";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(pagingViewList, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return Boolean.TRUE;
     }
 }

@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -629,5 +630,49 @@ public class PoInstockDTO implements Serializable {
          * 采购订单明细id
          */
         private String purchaseOrderDetailId;
+    }
+
+    /**
+     * 供应商、单据日期 获取入库批次和入库数量 查询条件
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SupplierInstockParamDTO {
+
+        /**
+         * 供应商id集合
+         */
+        private List<String> supplierIds;
+
+        /**
+         * 单据日期范围
+         */
+        private List<LocalDate> dateList;
+
+    }
+
+    /**
+     * 供应商 入库批次和入库数量
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SupplierInstockInfoDTO {
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 入库批次
+         */
+        private Integer instockCount;
+
+        /**
+         * 已入库量
+         */
+        private Integer instockQty;
+
     }
 }
