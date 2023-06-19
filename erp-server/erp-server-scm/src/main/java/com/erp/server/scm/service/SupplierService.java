@@ -248,4 +248,11 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
      */
     List<BaseIdDTO> listSupplierByCategoryType(String categoryType);
+
+    /**
+     * 获取供应商简单信息
+     * @param ids
+     * @return
+     */
+    Map<String, SupplierDTO.SupplierSimpleDTO> getSupplierSimpleInfo(List<String> ids);
 }

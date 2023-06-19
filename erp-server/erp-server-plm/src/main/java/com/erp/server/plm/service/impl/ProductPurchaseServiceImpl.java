@@ -5,23 +5,32 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.ProductPurchaseDTO;
 import com.erp.model.plm.dto.ProductPurchaseShowDTO;
 import com.erp.model.plm.dto.SkuPurchaseDTO;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
+import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.plm.mapper.ProductPurchaseMapper;
 import com.erp.server.plm.service.ProductPurchaseService;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -34,6 +43,12 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
 
     @Resource
     private ProductPurchaseMapper productPurchaseMapper;
+
+    @Autowired
+    private SysUserFeign sysUserFeign;
+
+    @Autowired
+    private SupplierFeign supplierFeign;
 
     /**
      * @Description 产品采购信息查询列表
@@ -138,11 +153,40 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
             return null;
         }
         List<ProductPurchaseEntity> productPurchaseList = lambdaQuery().in(ProductPurchaseEntity::getSkuId, skuIds).list();
+        if(CollUtil.isEmpty(productPurchaseList)) {
+            return null;
+        }
         // 此处注意，实际发现某些sku存在多条采购信息
         Map<String, List<ProductPurchaseEntity>> skuPurchaseMap = productPurchaseList.stream().collect(Collectors.groupingBy(ProductPurchaseEntity::getSkuId));
 
+        List<String> purchaseUserIds = productPurchaseList.stream().filter(r-> StrUtils.isNotEmpty(r.getPurchaseUserId())).map(ProductPurchaseEntity::getPurchaseUserId).distinct().collect(Collectors.toList());
+        List<String> mainSupplierIds = productPurchaseList.stream().filter(r-> StrUtils.isNotEmpty(r.getMainSupplier())).map(ProductPurchaseEntity::getMainSupplier).distinct().collect(Collectors.toList());
 
-        return null;
+        // 用户信息
+        Map<String, FindUserDTO> userMap = Maps.newHashMap();
+        List<FindUserDTO> userInfos = sysUserFeign.getUserListByUserIds(purchaseUserIds);
+        if(CollUtil.isNotEmpty(userInfos)) {
+            userMap = userInfos.stream().collect(Collectors.toMap(FindUserDTO::getUserId, Function.identity()));
+        }
+
+        // 供应商信息
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
+
+        List<SkuPurchaseDTO.PurchaseInfo> resultList = Lists.newArrayListWithExpectedSize(skuIds.size());
+        for(String skuId : skuIds) {
+            List<ProductPurchaseEntity> skuPurchaseList = skuPurchaseMap.get(skuId);
+            if(CollUtil.isNotEmpty(skuPurchaseList)) {
+                ProductPurchaseEntity productPurchaseEntity = skuPurchaseList.get(0);
+                SkuPurchaseDTO.PurchaseInfo purchaseInfo = new SkuPurchaseDTO.PurchaseInfo();
+                purchaseInfo.setSkuId(skuId);
+                purchaseInfo.setPurchaseUserId(productPurchaseEntity.getPurchaseUserId());
+                purchaseInfo.setPurchaseUserName(userMap.getOrDefault(productPurchaseEntity.getPurchaseUserId(),new FindUserDTO()).getUserName());
+                purchaseInfo.setSupplierId(productPurchaseEntity.getMainSupplier());
+                purchaseInfo.setSupplierName(supplierMap.getOrDefault(productPurchaseEntity.getMainSupplier(), new SupplierDTO.SupplierSimpleDTO()).getName());
+                resultList.add(purchaseInfo);
+            }
+        }
+        return resultList;
     }
 
 }

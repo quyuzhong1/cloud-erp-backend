@@ -706,4 +706,33 @@ public class SupplierDTO implements Serializable {
         private String payCurrency;
     }
 
+    /**
+     * 供应商简单信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SupplierSimpleDTO {
+
+
+        /**
+         * 供应商id
+         */
+        private String id;
+
+        /**
+         * 供应商编码
+         */
+        private String code;
+
+        /**
+         * 供应商名称
+         */
+        private String name;
+
+        /**
+         * 禁用状态
+         */
+        private Boolean disabled;
+    }
+
 }
