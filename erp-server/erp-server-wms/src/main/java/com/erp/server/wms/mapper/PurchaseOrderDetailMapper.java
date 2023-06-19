@@ -2,10 +2,12 @@ package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
+@Mapper
 public interface PurchaseOrderDetailMapper extends BaseMapper<PurchaseOrderDetailEntity> {
     /**
      * 根据ids查询明细信息
