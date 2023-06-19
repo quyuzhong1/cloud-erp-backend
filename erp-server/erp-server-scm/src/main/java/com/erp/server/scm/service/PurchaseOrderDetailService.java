@@ -110,4 +110,20 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @return ViewProductDTO
      */
     List<PurchaseOrderDetailDTO.ViewProductDTO> viewProduct(PurchaseOrderDetailDTO.ProductSearchParamDTO dto);
+    /**
+     * @description: 更新订单到货状态
+     * @author Will
+     * @date: 2023/6/19 15:20
+     * @param entity
+     * @return Boolean
+     */
+    Boolean updatePoArrivalStatus(PurchaseOrderDetailEntity entity);
+    /**
+     * @description: 根据来源明细ids查询
+     * @author Will
+     * @date: 2023/6/19 15:48
+     * @param sourceDetailIds
+     * @return List<PurchaseOrderDetailEntity>
+     */
+    List<PurchaseOrderDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds);
 }

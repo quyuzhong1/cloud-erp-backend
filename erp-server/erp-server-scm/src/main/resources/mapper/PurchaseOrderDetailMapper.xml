@@ -64,4 +64,41 @@
 
     </select>
 
+    <select id="listBySourceDetailIds" resultType="com.erp.model.scm.entity.PurchaseOrderDetailEntity">
+        select
+            pod.id,
+            pod.sku_id ,
+            pod.sku_no,
+            pod.product_name,
+            pod.declare_model,
+            pod.declare_name,
+            pod.tax_price,
+            pod.currency,
+            pod.currency_symbol,
+            pod.purchase_qty,
+            pod.purchase_amount,
+            pod.plan_delivery_date,
+            pod.is_gift,
+            pod.remark,
+            pod.arrival_status,
+            pod.arrival_time,
+            pod.tax_rate,
+            pod.is_urgent,
+            pod.variant_property,
+            pod.is_end_receive,
+            pod.warehouse_location,
+            pod.source_detail_id
+        from purchase_order_detail pod
+        inner join purchase_order po on pod.purchase_order_id = po.id and po.is_deleted = false
+        <where>
+            pod.is_deleted = false and po.invalid_status = false
+            <if test="sourceDetailIds != null and sourceDetailIds.size > 0">
+                and pod.source_detail_id in
+                <foreach collection="sourceDetailIds" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
 </mapper>

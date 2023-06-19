@@ -103,13 +103,13 @@
                 </foreach>
             </if>
             <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
-                and so.warehouse_id in
+                and sod.warehouse_id in
                 <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
             <if test="params.purchaseUserIdList != null and params.purchaseUserIdList.size > 0">
-                and so.purchase_user_id in
+                and so.purchaser_id in
                 <foreach collection="params.purchaseUserIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
@@ -215,13 +215,13 @@
                     </foreach>
                 </if>
                 <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
-                    and so.warehouse_id in
+                    and sod.warehouse_id in
                     <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
                         #{item}
                     </foreach>
                 </if>
                 <if test="params.purchaseUserIdList != null and params.purchaseUserIdList.size > 0">
-                    and so.purchase_user_id in
+                    and so.purchaser_id in
                     <foreach collection="params.purchaseUserIdList" item="item" open="(" close=")" separator=",">
                         #{item}
                     </foreach>

@@ -281,4 +281,12 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param poIds
      */
     void autoApprovePurchaseOrder(List<String> poIds);
+    /**
+     * @description: 来源ids
+     * @author Will
+     * @date: 2023/6/19 14:45
+     * @param sourceIds
+     * @return List<PurchaseOrderEntity>
+     */
+    List<PurchaseOrderEntity> listBySourceIds(List<String> sourceIds);
 }
