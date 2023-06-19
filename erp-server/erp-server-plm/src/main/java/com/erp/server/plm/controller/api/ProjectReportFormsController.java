@@ -1,7 +1,9 @@
 package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.ProjectReportFormsDTO;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -24,8 +27,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/ProjectReportForms")
 public class ProjectReportFormsController extends BaseController {
+    @Resource
+    private ProjectReportFormsService projectReportFormsService;
+
     /**
-     * 项目报表
+     * 项目报表-分页查询
      * @Author Luo_WG
      * @Date 2023/6/12 18:24
      * @param dto dto
@@ -36,8 +42,9 @@ public class ProjectReportFormsController extends BaseController {
             tableField = "create_user_id",
             menuCode = "scm:ProjectReportForms:purchaseBusinessGatherTable",
             tableAlias = "pod")
-    public ApiResult<List<ProjectReportFormsDTO.PagingView>> projectReportFormsPaging(@RequestBody ProjectReportFormsDTO.PagingParam dto) {
-        return null;
+    public ApiResult<PagingVO<List<ProjectReportFormsDTO.PagingView>>> projectReportFormsPaging(@RequestBody PagingDTO<ProjectReportFormsDTO.PagingParam> dto) {
+        PagingVO<List<ProjectReportFormsDTO.PagingView>> listPagingVO = projectReportFormsService.projectReportFormsPaging(dto);
+        return success(listPagingVO);
     }
 
     /**
@@ -54,6 +61,7 @@ public class ProjectReportFormsController extends BaseController {
             serviceClass = ProductInfoService.class,
             keyIdName = "id")
     public ApiResult<List<ProjectReportFormsDTO.TaskDetailParam>> taskDetailView(@RequestBody ProjectReportFormsDTO.TaskDetailParam dto) {
+        
         return null;
     }
 

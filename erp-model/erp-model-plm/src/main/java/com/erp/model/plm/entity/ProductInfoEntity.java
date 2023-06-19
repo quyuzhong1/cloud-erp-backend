@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("product_info")
-public class ProductInfoEntity extends BaseEntity implements Serializable {
+public class ProductInfoEntity extends BaseEntity<ProductInfoEntity> implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

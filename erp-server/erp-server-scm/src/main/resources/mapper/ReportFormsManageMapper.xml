@@ -40,7 +40,6 @@
             AND pos.is_deleted = FALSE
             AND pd.is_deleted = FALSE
             AND pi.is_deleted = FALSE
-            <!--        AND pod.sku_no = 'M009CNA1' AND po.purchase_org_name = '核算公司CC1' AND pos.supplier_name = '验证1' AND pi.spu_no = 'MA09'-->
             <if test="params.billDateList != null and params.billDateList.size > 0">AND
                 po.purchase_date >= #{params.billDateList[0]} AND (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.purchase_date
             </if>
@@ -79,7 +78,6 @@
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
             </if>
-            ORDER BY po.purchase_org_name, pos.supplier_name, po.create_time DESC
         )t
         GROUP BY
         purchase_org_name,
@@ -88,7 +86,7 @@
         sku_no,
         productName,
         spu_no
-
+        ORDER BY purchase_org_name, supplier_name, createTime DESC
     </select>
 
     <select id="exportExcel" resultType="com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO$PagingViewDTO">
@@ -182,7 +180,6 @@
                 <if test="params.permissionSql!=null and params.permissionSql!=''">
                     ${params.permissionSql}
                 </if>
-                ORDER BY po.purchase_org_name, pos.supplier_name, po.create_time DESC
             )t
             WHERE 1 = 1
             GROUP BY
@@ -200,5 +197,6 @@
                 #{id}
             </foreach>
         </if>
+        ORDER BY purchase_org_name, supplier_name, createTime DESC
     </select>
 </mapper>

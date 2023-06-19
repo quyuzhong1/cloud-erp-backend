@@ -84,12 +84,12 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
                 mapEntity.setAvgPrice(mapEntity.getOrderAmount().divide(BigDecimal.valueOf(mapEntity.getOrderQty()), 4, BigDecimal.ROUND_DOWN));
                 computeReceive(mapEntity, record, warehouseReceiveDetailEntities, pagingDTO.getParams(), purchaseOrderDetailEntityList);
                 computeInstock(mapEntity, record, poInstockDetailEntities, pagingDTO.getParams(), purchaseOrderDetailEntityList);
-                computeReturn(mapEntity, record, purchaseReturnOrderDetailEntities, pagingDTO.getParams(), purchaseOrderDetailEntityList);
+                computeReturn(mapEntity, record, purchaseReturnOrderDetailEntities, pagingDTO.getParams());
             } else {
                 map.put(mapKey, record);
                 computeReceive(record, record, warehouseReceiveDetailEntities, pagingDTO.getParams(), purchaseOrderDetailEntityList);
                 computeInstock(record, record, poInstockDetailEntities, pagingDTO.getParams(), purchaseOrderDetailEntityList);
-                computeReturn(record, record, purchaseReturnOrderDetailEntities, pagingDTO.getParams(), purchaseOrderDetailEntityList);
+                computeReturn(record, record, purchaseReturnOrderDetailEntities, pagingDTO.getParams());
             }
         }
         List<PurchaseBusinessGatherTableDTO.PagingViewDTO> viewDTOList = new ArrayList<>();
@@ -126,12 +126,12 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
                 mapEntity.setAvgPrice(mapEntity.getOrderAmount().divide(BigDecimal.valueOf(mapEntity.getOrderQty()), 4, BigDecimal.ROUND_DOWN));
                 computeReceive(mapEntity, record, warehouseReceiveDetailEntities, dto, purchaseOrderDetailEntityList);
                 computeInstock(mapEntity, record, poInstockDetailEntities, dto, purchaseOrderDetailEntityList);
-                computeReturn(mapEntity, record, purchaseReturnOrderDetailEntities, dto, purchaseOrderDetailEntityList);
+                computeReturn(mapEntity, record, purchaseReturnOrderDetailEntities, dto);
             } else {
                 map.put(mapKey, record);
                 computeReceive(record, record, warehouseReceiveDetailEntities, dto, purchaseOrderDetailEntityList);
                 computeInstock(record, record, poInstockDetailEntities, dto, purchaseOrderDetailEntityList);
-                computeReturn(record, record, purchaseReturnOrderDetailEntities, dto, purchaseOrderDetailEntityList);
+                computeReturn(record, record, purchaseReturnOrderDetailEntities, dto);
             }
         }
         List<PurchaseBusinessGatherTableDTO.PagingViewDTO> viewDTOList = new ArrayList<>();
@@ -234,14 +234,12 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
      * @param record 查询的采购单汇总信息
      * @param purchaseReturnOrderDetailEntities 退货单详情信息
      * @param dto 查询参数
-     * @param purchaseOrderDetailEntityList 采购单详情信息
      * @return void
      **/
     private void computeReturn(PurchaseBusinessGatherTableDTO.PagingViewDTO mapEntity,
                                PurchaseBusinessGatherTableDTO.PagingViewDTO record,
                                List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities,
-                               PurchaseBusinessGatherTableDTO.PagingParamDTO dto,
-                               List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList) {
+                               PurchaseBusinessGatherTableDTO.PagingParamDTO dto) {
         //退货
         List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntityList = purchaseReturnOrderDetailEntities.stream().filter(req ->
                 record.getId().contains(req.getPurchaseOrderDetailId())
@@ -251,15 +249,11 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
                 )
         ).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(purchaseReturnOrderDetailEntityList)) {
-            PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntityList.stream().filter(req -> record.getId().contains(req.getId())).findFirst().orElse(new PurchaseOrderDetailEntity());
-            if (ObjectUtils.isEmpty(purchaseOrderDetailEntity)) {
-                purchaseOrderDetailEntity.setTaxPrice(BigDecimal.ZERO);
-            }
             Integer deductAmountQty = purchaseReturnOrderDetailEntityList.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).map(PurchaseReturnOrderDetailEntity::getDeductAmountQty).reduce(MathUtil.ZERO, Integer::sum);
             mapEntity.setRefundQty(mapEntity.getRefundQty() + deductAmountQty);
             Integer replenishQty = purchaseReturnOrderDetailEntityList.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).map(PurchaseReturnOrderDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
             mapEntity.setReplenishQty(mapEntity.getReplenishQty() + replenishQty);
-            mapEntity.setReturnAmount(mapEntity.getReturnAmount().add(purchaseOrderDetailEntity.getTaxPrice().multiply(BigDecimal.valueOf(deductAmountQty + replenishQty))));
+            mapEntity.setReturnAmount(mapEntity.getReturnAmount().add(record.getTaxPrice().multiply(BigDecimal.valueOf(deductAmountQty + replenishQty))));
         }
     }
 }

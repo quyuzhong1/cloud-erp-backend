@@ -11,6 +11,7 @@ import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SkuApproveConfigureEnum;
@@ -45,6 +46,7 @@ import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -169,6 +171,118 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Autowired
     private ProductArchiveService archiveService;
 
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * @Description: 产品明细信息服务类
+ * @Author: Luo_WG
+ * @Date: 2022/9/21 16:25
+ **/
+@Slf4j
+@Service
+public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, ProductDetailEntity> implements ProductDetailService {
+
+    @Resource
+    private ProductDetailMapper productDetailMapper;
+
+    @Resource
+    private ProductCostService productCostService;
+
+    @Resource
+    private ProductPurchaseService productPurchaseService;
+
+    @Resource
+    private ProductSaleService productSaleService;
+
+    @Resource
+    private ProductLogisticsService productLogisticsService;
+
+    @Resource
+    private ProductPackService productPackService;
+
+    @Resource
+    private ProductCertificateService productCertificateService;
+
+    @Resource
+    private ProductInfoService productInfoService;
+
+    @Resource
+    private ProductImagesService productImagesService;
+
+    @Resource
+    private ProductInfoMapper productInfoMapper;
+
+    @Resource
+    private ProductPurchaseRemarkService productPurchaseRemarkService;
+
+    @Resource
+    private ProductVariantOptionService productVariantOptionService;
+
+    @Resource
+    private BasicCategoryService basicCategoryService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Resource
+    private CommonService commonService;
+
+    @Resource
+    private BasicDictService basicDictService;
+
+    @Resource
+    private TaskRefSkuConfigService taskRefSkuConfigService;
+
+    @Resource
+    private SysCodeService sysCodeService;
+
+    @Resource
+    private ProjectTaskRefSkuService projectTaskRefSkuService;
+
+    @Resource
+    private BusinessProcessService businessProcessService;
+
+/*    @Resource
+    private WorkflowFeign workflowFeign;*/
+
+    @Resource
+    private ProductDetailCommentService productDetailCommentService;
+
+    @Resource
+    private ProductDetailApproverService productDetailApproverService;
+
+    @Resource
+    private ProjectInfoService projectInfoService;
+
+    @Resource
+    private ProductVariantService productVariantService;
+
+    @Resource
+    private SysLogService sysLogService;
+
+    @Resource
+    private ProjectTaskService projectTaskService;
+
+    @Resource
+    private SyncKingdeeProductDetailService syncKingdeeProductDetailService;
+
+    @Resource
+    private ProductChangeService productChangeService;
+
+    @Resource
+    private ProductPlanService productPlanService;
+
+    @Resource
+    private ProductAccessoriesService productAccessoriesService;
+
+    @Resource
+    private ProductAttestationService productAttestationService;
+
+    @Autowired
+    private ProductArchiveService archiveService;
+
     @Autowired
     private ProductUnitService productUnitService;
 
@@ -177,6 +291,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Autowired
     private ProductCustomsService productCustomsService;
+
+    @Autowired
+    private ProductUnitService productUnitService;
+
+    @Autowired
+    private ProductVariantPropertyService productVariantPropertyService;
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
