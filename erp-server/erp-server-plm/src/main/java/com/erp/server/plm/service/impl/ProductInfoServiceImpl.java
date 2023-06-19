@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.util.IdUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
@@ -24,6 +25,9 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.TaskExportDTO;
 import com.erp.model.plm.entity.*;
@@ -203,6 +207,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private ProjectTaskProgressService projectTaskProgressService;
 
+    @Autowired
+    private MQProducerService mQProducerService;
+
     private static final String CLASSPATH = String.valueOf(ProductInfoEntity.class);
 
     /**
@@ -282,6 +289,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             entity.setSpuNo(spuNo);
         }
         Boolean flag = this.saveOrUpdate(entity);
+
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+
         /**
          * 表示是新添加的
          * 并且模板id 不为空
@@ -400,6 +411,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         });
         if (CollectionUtils.isNotEmpty(list)) {
             this.saveOrUpdateBatch(list);
+
+            //同步到SCM
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), list, IdUtil.simpleUUID());
+
         }
         return Boolean.TRUE;
     }
@@ -423,6 +438,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             if (!entity.getName().equals(dto.getProductName())) {
                 throw new ServiceException(ApiError.ERROR_95009);
             }
+            entity.setIsDeleted(Boolean.TRUE);
+            //同步到SCM
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+
             flag = this.removeById(productId);
             //当保存成功 就要去删除对应的任务了
             if (flag) {
@@ -981,6 +1000,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(productId).setPid(productId)
                 .setOperation("产品状态变更").setContent("编辑了[产品状态]由[" + ApprovalStatusEnum.getName(productInfoEntity.getApprovalStatus()) + "]改为[" + name + "]"));
         this.update(updateWrapper);
+
+        //同步到SCM
+        ProductInfoEntity infoEntity = this.getById(productId);
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(infoEntity), IdUtil.simpleUUID());
+
     }
 
     /**
@@ -1067,6 +1091,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             productInfoEntity.setSpuNo(spuNo);
         }
         this.saveOrUpdate(productInfoEntity);
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(productInfoEntity), IdUtil.simpleUUID());
+
         return productInfoEntity.getId();
     }
 
@@ -1154,6 +1181,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             }
 
             Boolean updateFlag = this.updateById(newProduct);
+            //同步到SCM
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(newProduct), IdUtil.simpleUUID());
+
             //当修改成功 且是已立项 就要创建项目了
             if (yesApproval && updateFlag) {
                 //异步通知 产品立项
@@ -1485,6 +1515,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 productInfoEntity.setSpuNo(spuNo);
             }
             this.saveOrUpdate(productInfoEntity);
+            //同步到SCM
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(productInfoEntity), IdUtil.simpleUUID());
+
         }
 
     }
@@ -1520,6 +1553,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             throw new ServiceException(ApiError.ERROR_95010);
         }
         entity.setProgressStatus(dto.getProgressStatus());
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
         return this.updateById(entity);
     }
 
@@ -1537,6 +1572,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             throw new ServiceException(ApiError.ERROR_95010);
         }
         entity.setImageUrl(dto.getImageUrl());
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+
         return this.updateById(entity);
     }
 
@@ -1885,6 +1923,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             product.setApprovalStatus(approvalCode);
         }
         Boolean result = this.updateBatchById(productInfoList);
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), productInfoList, IdUtil.simpleUUID());
+
         if (result) {
             //批量添加获取修改产品
             productStatusTimeService.batchSaveOrUpdateProductStatusTime(productIdList, approvalCode);

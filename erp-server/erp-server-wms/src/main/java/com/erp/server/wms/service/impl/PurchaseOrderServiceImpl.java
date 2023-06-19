@@ -8,12 +8,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapper, PurchaseOrderEntity> implements PurchaseOrderService {
+
+    @Override
+    public List<PurchaseOrderEntity> ListPurchaseOrderEntityByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return new ArrayList<>();
+        }
+        return baseMapper.listByIds(ids);
+    }
 
     @Override
     public Boolean saveOrUpdatePurchaseOrder(List<PurchaseOrderEntity> purchaseOrderEntityList) {
@@ -26,7 +35,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<PurchaseOrderEntity> existDetailEntityList = this.listByIds(existIdList);
         List<PurchaseOrderEntity> notExistDetailEntityList = this.listByIds(notExistIdList);
         if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
-            this.updateBatchById(existDetailEntityList);
+            baseMapper.updateBatchSelective(existDetailEntityList);
         }
         if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
             this.saveBatch(notExistDetailEntityList);

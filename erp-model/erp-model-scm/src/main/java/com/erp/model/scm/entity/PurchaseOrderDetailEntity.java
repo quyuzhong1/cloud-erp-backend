@@ -25,6 +25,8 @@ import java.time.LocalDateTime;
 @TableName("purchase_order_detail")
 public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEntity> {
 
+
+
     /**
      * 采购订单id
      */
@@ -74,12 +76,6 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private String currency;
 
     /**
-     * 币别符号
-     */
-    @TableField("currency_symbol")
-    private String currencySymbol;
-
-    /**
      * 采购数量
      */
     @TableField("purchase_qty")
@@ -92,10 +88,22 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private BigDecimal purchaseAmount;
 
     /**
-     * 计划交期
+     * 预计交货日期
      */
     @TableField("plan_delivery_date")
     private LocalDate planDeliveryDate;
+
+    /**
+     * 收料组织id
+     */
+    @TableField("receive_org_id")
+    private String receiveOrgId;
+
+    /**
+     * 收料组织名称
+     */
+    @TableField("receive_org_name")
+    private String receiveOrgName;
 
     /**
      * 是否是赠品（false否，true是）
@@ -128,10 +136,40 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private BigDecimal taxRate;
 
     /**
+     * 签收数量
+     */
+    @TableField("receive_qty")
+    private Integer receiveQty;
+
+    /**
+     * 入库数量
+     */
+    @TableField("stock_in_qty")
+    private Integer stockInQty;
+
+    /**
+     * 交货数量
+     */
+    @TableField("delivery_qty")
+    private Integer deliveryQty;
+
+    /**
+     * 退货数量
+     */
+    @TableField("return_qty")
+    private Integer returnQty;
+
+    /**
      * 是否加急（false否，true是）
      */
     @TableField("is_urgent")
     private Boolean isUrgent;
+
+    /**
+     * 币种符号
+     */
+    @TableField("currency_symbol")
+    private String currencySymbol;
 
     /**
      * 变体信息
@@ -140,21 +178,22 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private String variantProperty;
 
     /**
-     * 是否结束交货
+     * 是否结束收货
      */
     @TableField("is_end_receive")
     private Boolean isEndReceive;
 
     /**
-     * 仓位
+     * 来源明细id
+     */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
+
+    /**
+     * 库位(委外可用)
      */
     @TableField("warehouse_location")
     private String warehouseLocation;
-
-    /**
-     * 来源明细id
-     */
-    private String sourceDetailId;
 
    /**
     *   采购申请明细id(无需传值，后端使用)

@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import com.common.business.service.SuperServiceImpl;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.server.wms.mapper.PurchaseOrderDetailMapper;
@@ -9,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,9 +19,17 @@ import java.util.stream.Collectors;
 public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrderDetailMapper, PurchaseOrderDetailEntity> implements PurchaseOrderDetailService {
 
     @Override
+    public List<PurchaseOrderDetailEntity> ListProductDetailEntityByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return new ArrayList<>();
+        }
+        return baseMapper.listByIds(ids);
+    }
+
+    @Override
     public Boolean saveOrUpdatePurchaseOrderDetail(List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList) {
         List<String> detailIds = purchaseOrderDetailEntityList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
-        List<PurchaseOrderDetailEntity> detailEntityList = this.listByIds(detailIds);
+        List<PurchaseOrderDetailEntity> detailEntityList = this.ListProductDetailEntityByIds(detailIds);
         List<String> ids = purchaseOrderDetailEntityList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
         List<String> dbIds = detailEntityList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
         List<String> existIdList = ids.stream().filter(s -> dbIds.contains(s)).collect(Collectors.toList());
@@ -27,7 +37,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         List<PurchaseOrderDetailEntity> existDetailEntityList = this.listByIds(existIdList);
         List<PurchaseOrderDetailEntity> notExistDetailEntityList = this.listByIds(notExistIdList);
         if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
-            this.updateBatchById(existDetailEntityList);
+            baseMapper.updateBatchSelective(existDetailEntityList);
         }
         if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
             this.saveBatch(notExistDetailEntityList);

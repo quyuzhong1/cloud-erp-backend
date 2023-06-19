@@ -11,12 +11,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseOrderSupplierMapper, PurchaseOrderSupplierEntity> implements PurchaseOrderSupplierService {
+
+    @Override
+    public List<PurchaseOrderSupplierEntity> ListPurchaseOrderSupplierEntityByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return new ArrayList<>();
+        }
+        return baseMapper.listByIds(ids);
+    }
 
     @Override
     public Boolean saveOrUpdatePurchaseOrderSupplier(List<PurchaseOrderSupplierEntity> purchaseOrderSupplierEntityList) {
@@ -29,7 +38,7 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
         List<PurchaseOrderSupplierEntity> existDetailEntityList = this.listByIds(existIdList);
         List<PurchaseOrderSupplierEntity> notExistDetailEntityList = this.listByIds(notExistIdList);
         if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
-            this.updateBatchById(existDetailEntityList);
+            baseMapper.updateBatchSelective(existDetailEntityList);
         }
         if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
             this.saveBatch(notExistDetailEntityList);
