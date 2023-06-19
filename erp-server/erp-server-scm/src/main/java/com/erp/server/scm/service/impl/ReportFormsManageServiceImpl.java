@@ -168,7 +168,7 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
                                 List<WarehouseReceiveDetailEntity> warehouseReceiveDetailEntities,
                                 PurchaseBusinessGatherTableDTO.PagingParamDTO dto,
                                 List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList) {
-        //签收
+        //签收PurchaseOrderDetailEntity
         List<WarehouseReceiveDetailEntity> warehouseReceiveDetailEntityList = warehouseReceiveDetailEntities.stream().filter(req ->
                 record.getId().contains(req.getPurchaseOrderDetailId())
                         && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())
@@ -177,15 +177,18 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
                         )
         ).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(warehouseReceiveDetailEntityList)) {
-            PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntityList.stream().filter(req -> record.getId().contains(req.getId())).findFirst().orElse(new PurchaseOrderDetailEntity());
-            if (ObjectUtils.isEmpty(purchaseOrderDetailEntity)) {
-                purchaseOrderDetailEntity.setTaxPrice(BigDecimal.ZERO);
+            for (WarehouseReceiveDetailEntity warehouseReceiveDetailEntity : warehouseReceiveDetailEntityList) {
+                PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntityList.stream().filter(req -> req.getId().equals(warehouseReceiveDetailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(purchaseOrderDetailEntity)) {
+                    purchaseOrderDetailEntity.setTaxPrice(BigDecimal.ZERO);
+                }
+                if (record.getId().contains(warehouseReceiveDetailEntity.getPurchaseOrderDetailId())) {
+                    mapEntity.setReceiveQty(mapEntity.getReceiveQty() + warehouseReceiveDetailEntity.getReceiveQty());
+                    mapEntity.setReceiveGiftQty(mapEntity.getReceiveGiftQty() + warehouseReceiveDetailEntity.getExceedQty());
+                    mapEntity.setReceiveAmount(mapEntity.getReceiveAmount().add(purchaseOrderDetailEntity.getTaxPrice().multiply(BigDecimal.valueOf(mapEntity.getReceiveQty()))));
+
+                }
             }
-            Integer receiveQty = warehouseReceiveDetailEntityList.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-            mapEntity.setReceiveQty(mapEntity.getReceiveQty() + receiveQty);
-            Integer exceedQty = warehouseReceiveDetailEntityList.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getExceedQty).reduce(MathUtil.ZERO, Integer::sum);
-            mapEntity.setReceiveGiftQty(mapEntity.getReceiveGiftQty() + exceedQty);
-            mapEntity.setReceiveAmount(mapEntity.getReceiveAmount().add(purchaseOrderDetailEntity.getTaxPrice().multiply(BigDecimal.valueOf(receiveQty))));
         }
     }
 
@@ -214,15 +217,18 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
                 )
         ).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(poInstockDetailEntityList)) {
-            PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntityList.stream().filter(req -> record.getId().contains(req.getId())).findFirst().orElse(new PurchaseOrderDetailEntity());
-            if (ObjectUtils.isEmpty(purchaseOrderDetailEntity)) {
-                purchaseOrderDetailEntity.setTaxPrice(BigDecimal.ZERO);
+            for (PoInstockDetailEntity poInstockDetailEntity : poInstockDetailEntityList) {
+                PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntityList.stream().filter(req -> req.getId().equals(poInstockDetailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(purchaseOrderDetailEntity)) {
+                    purchaseOrderDetailEntity.setTaxPrice(BigDecimal.ZERO);
+                }
+                if (record.getId().contains(poInstockDetailEntity.getPurchaseOrderDetailId())) {
+                    mapEntity.setStockInQty(mapEntity.getReceiveQty() + poInstockDetailEntity.getStockInQty());
+                    mapEntity.setStockInGiftQty(mapEntity.getReceiveGiftQty() + poInstockDetailEntity.getExceedQty());
+                    mapEntity.setStockInAmount(mapEntity.getStockInAmount().add(purchaseOrderDetailEntity.getTaxPrice().multiply(BigDecimal.valueOf(mapEntity.getStockInQty()))));
+
+                }
             }
-            Integer stockInQty = poInstockDetailEntityList.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
-            mapEntity.setStockInQty(mapEntity.getStockInQty() + stockInQty);
-            Integer exceedQty = poInstockDetailEntityList.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).map(PoInstockDetailEntity::getExceedQty).reduce(MathUtil.ZERO, Integer::sum);
-            mapEntity.setStockInGiftQty(mapEntity.getStockInGiftQty() + exceedQty);
-            mapEntity.setStockInAmount(mapEntity.getStockInAmount().add(purchaseOrderDetailEntity.getTaxPrice().multiply(BigDecimal.valueOf(stockInQty))));
         }
     }
 
@@ -253,7 +259,7 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
             mapEntity.setRefundQty(mapEntity.getRefundQty() + deductAmountQty);
             Integer replenishQty = purchaseReturnOrderDetailEntityList.stream().filter(req -> record.getId().contains(req.getPurchaseOrderDetailId())).map(PurchaseReturnOrderDetailEntity::getReplenishQty).reduce(MathUtil.ZERO, Integer::sum);
             mapEntity.setReplenishQty(mapEntity.getReplenishQty() + replenishQty);
-            mapEntity.setReturnAmount(mapEntity.getReturnAmount().add(record.getTaxPrice().multiply(BigDecimal.valueOf(deductAmountQty + replenishQty))));
+            mapEntity.setReturnAmount(mapEntity.getReturnAmount().add(record.getAvgPrice().multiply(BigDecimal.valueOf(deductAmountQty + replenishQty))));
         }
     }
 }

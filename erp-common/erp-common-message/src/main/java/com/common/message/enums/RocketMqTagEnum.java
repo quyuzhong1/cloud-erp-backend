@@ -298,14 +298,30 @@ public enum RocketMqTagEnum {
     SYNC_DMP_PRODUCT_SKU_TAG(3006,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_sku_tag"),
 
     /**
-     * 同步产品信息到中台scm
+     * 同步产品信息到scm
      */
     SYNC_SCM_PRODUCT_INFO_TAG(3007,RocketMqTagEnum.SYNC_DMP,"sync_scm_product_info_tag"),
 
     /**
-     * 同步产品sku到中台scm
+     * 同步产品sku到scm
      */
     SYNC_SCM_PRODUCT_SKU_TAG(3008,RocketMqTagEnum.SYNC_DMP,"sync_scm_product_sku_tag"),
+    //-----------------------------SCM编码从4001开始------------------------------------------------------------------
+
+    /**
+     * 同步采购订单到WMS
+     */
+    SYNC_WMS_PURCHASE_ORDER_TAG(4001,RocketMqTagEnum.SYNC_SCM,"sync_wms_purchase_order_tag"),
+
+    /**
+     * 同步采购订单详情到WMS
+     */
+    SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG(4001,RocketMqTagEnum.SYNC_SCM,"sync_wms_purchase_order_detail_tag"),
+
+    /**
+     * 同步采购订单供应商信息到WMS
+     */
+    SYNC_WMS_PURCHASE_ORDER_SUPPLIER_TAG(4001,RocketMqTagEnum.SYNC_SCM,"sync_wms_purchase_order_supplier_tag"),
     //-----------------------------公共信息编码从9001开始------------------------------------------------------------------
 
     /**
@@ -336,6 +352,8 @@ public enum RocketMqTagEnum {
     public static final String MSG_NOTICE = "msg_notice";
 
     public static final String SYNC_WMS = "sync_wms";
+
+    public static final String SYNC_SCM = "sync_scm";
 
     public static final String MSG_WARN = "msg_warn";
 
