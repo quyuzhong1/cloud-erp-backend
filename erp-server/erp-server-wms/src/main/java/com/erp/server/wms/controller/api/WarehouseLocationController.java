@@ -46,7 +46,7 @@ public class WarehouseLocationController extends BaseController {
      * @return
      */
     @PostMapping(value = "/all")
-    public ApiResult<List<WarehouseLocationDTO.LocationSelectDTO>> all(@RequestBody @Validated PagingDTO<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> dto) {
+    public ApiResult<List<WarehouseLocationDTO.LocationSelectDTO>> all() {
         return success(warehouseLocationService.all( ));
     }
 
