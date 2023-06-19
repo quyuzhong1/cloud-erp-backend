@@ -335,7 +335,8 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
     public SubcontractChangeDTO.ViewDTO view(String id) {
         SubcontractChangeEntity subcontractChangeEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到委外变更单数据"));
         SubcontractChangeDTO.ViewDTO data = BeanMapperUtils.map(SubcontractChangeDTO.ViewDTO.class, subcontractChangeEntity);
-        // TODO 查询明细数据（如果有的话）
+        //查询明细
+        subcontractChangeDetailService.listByMainIds(Arrays.asList(id))
 
         return data;
     }
