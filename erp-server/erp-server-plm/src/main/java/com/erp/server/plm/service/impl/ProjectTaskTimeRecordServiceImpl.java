@@ -174,6 +174,27 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
         if (CollectionUtils.isEmpty(productIds)) {
             return Collections.emptyList();
         }
-        return baseMapper.listByProductIds(productIds);
+        SysCalendarDTO.ListDTO listDTO = new SysCalendarDTO.ListDTO();
+        listDTO.setIsWorkDay(Boolean.FALSE);
+        List<SysCalendarListVO> holidayList = sysUserFeign.listCalendar(listDTO);
+        List<LocalDate> holidays = holidayList.stream().map(SysCalendarListVO::getCalendarDate).collect(Collectors.toList());
+        List<ProjectTaskEntity> projectTaskList = projectTaskService.getByProductIds(productIds);
+        List<ProjectTaskTimeRecordDTO.TaskWorkTimeDTO> resultList = new ArrayList<>(projectTaskList.size());
+        for (ProjectTaskEntity item : projectTaskList) {
+            ProjectTaskTimeRecordDTO.TaskWorkTimeDTO result = new ProjectTaskTimeRecordDTO.TaskWorkTimeDTO();
+            result.setProductId(item.getProductId());
+            result.setTaskId(item.getId());
+            Integer planWorkTime = 0;
+            LocalDate planStartTime = item.getPlanStartTime();
+            LocalDate planEndTime = item.getPlanEndTime();
+            if (null != planStartTime && null != planEndTime) {
+                planWorkTime = LocalDateUtil.countDaysForLocalDate(planStartTime, planEndTime, holidays);
+            }
+            result.setTaskTime(planWorkTime * 8);
+            resultList.add(result);
+        }
+
+        return resultList;
+
     }
 }

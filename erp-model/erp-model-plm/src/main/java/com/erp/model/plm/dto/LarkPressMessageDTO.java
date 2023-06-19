@@ -4,6 +4,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import java.util.List;
 
 
 /**
@@ -26,4 +28,25 @@ public class LarkPressMessageDTO {
      */
     @NotBlank(message = "业务类型不能为空")
     private String businessType;
+
+
+    @Data
+    @NoArgsConstructor
+    public static class BatchLarkPressMessageDTO{
+
+        /**
+         * 催办业务ID
+         * 如 taskId
+         */
+        @NotNull(message = "业务ID集合不能为空")
+        private List<String> businessIdList;
+
+        /**
+         * 催办业务类型
+         *  product_task 任务
+         */
+        @NotBlank(message = "业务类型不能为空")
+        private String businessType;
+
+    }
 }

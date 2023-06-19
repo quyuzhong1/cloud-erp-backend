@@ -837,7 +837,7 @@
        SELECT
          p.id,p.name,p.image_url,
          p.name_en AS spuEn,
-         j.charge_id AS projectChargeId,
+         p.project_charge_id AS projectChargeId,
          J.charge_name AS projectChargeName,
          P.charge_id AS productChargeId,
          P.charge_name AS productChargeName,

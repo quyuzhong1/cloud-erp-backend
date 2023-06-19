@@ -37,4 +37,15 @@ public class LarkMessageController  extends BaseController {
         return success(result);
     }
 
+    /**
+     * 飞书批量催办消息【PLM1.3】
+     * @param dto
+     * @return
+     */
+    @PostMapping(value = "/batchPress")
+    public ApiResult batchPress(@RequestBody @Validated LarkPressMessageDTO.BatchLarkPressMessageDTO dto) {
+        Boolean result = larkMessageService.batchPress(dto);
+        return success(result);
+    }
+
 }

@@ -1222,7 +1222,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             if (!Objects.isNull(project)) {
                 Integer terminateStatus = ProjectStateEnum.TERMINATE.getState();
                 //产品终止
-                Integer projectStatus = project.getProjectStatus();
+                Integer projectStatus = dto.getProjectStatus();
                 if (terminateStatus.equals(projectStatus)) {
                     throw new ServiceException(ApiError.ERROR_95175);
                 }
@@ -1958,6 +1958,17 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (projectStatus != null) {
             statusName = ProjectStateEnum.getName(projectStatus);
         }
+        //项目经理
+        String projectChargeId = info.getProjectChargeId();
+        //项目经理
+        String projectChargeName = info.getProjectChargeName();
+        if (StringUtils.isEmpty(projectChargeName)) {
+            FindUserDTO userDTO = sysUserFeign.getUserByUserId(projectChargeId);
+            if (userDTO != null) {
+                projectChargeName = userDTO.getUserName();
+            }
+        }
+        info.setProjectChargeName(projectChargeName);
         info.setStatusName(statusName);
         //分类id
         String categoryId = info.getCategoryId();
@@ -1968,10 +1979,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         info.setProductOwnerOrgName(productOwner.getOrgName());
         //结束时间
         LocalDate endTime = info.getPlanEndTime();
-
         LocalDate now = LocalDate.now();
         LocalDateTime nowTime = LocalDateTime.now();
-
         //是否延期
         Boolean isDelay = Boolean.FALSE;
         if (endTime != null) {
@@ -1986,14 +1995,16 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         info.setIsDelay(isDelay);
         //产品任务
         List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
+        //取消
+        Integer taskClose = TaskStateEnum.CLOSE.getCode();
+        taskList=taskList.stream().filter(t->!taskClose.equals(t.getStatus())).collect(Collectors.toList());
         //任务完成
         Integer taskFinish = TaskStateEnum.FINISH.getCode();
         //进行中
         Integer taskIng = TaskStateEnum.ING.getCode();
         //未开始
         Integer taskNotStart = TaskStateEnum.NOT_START.getCode();
-        //取消
-        Integer taskClose = TaskStateEnum.CLOSE.getCode();
+
         //排期变更的
         String change = ProjectPlanConstant.PROJECT_PLAN_CHANGE;
 
@@ -2038,7 +2049,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         long weekFinishCount = weekTaskList.stream().filter(t -> taskFinish.equals(t.getStatus())).count();
         //完成且延期
         long weekFinishDelayCount = weekTaskList.stream().filter(t -> taskFinish.equals(t.getStatus()) &&
-                t.getRealityEndTime() != null && nowTime.compareTo(t.getRealityEndTime()) > 0).count();
+                t.getRealityEndTime() != null && t.getPlanEndTime()!=null&&
+                t.getRealityEndTime().compareTo(t.getPlanEndTime().atStartOfDay()) > 0).count();
         weekTask.setFinishCount((int) weekFinishCount);
         //进行中
         long weekDoingCount = weekTaskList.stream().filter(t -> taskIng.equals(t.getStatus())).count();
@@ -2103,7 +2115,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<ProjectTaskEntity> preTaskInfoList = taskList.stream().filter(p -> preTaskIdList.contains(p.getId()) &&
                 taskFinish.equals(p.getStatus())).collect(Collectors.toList());
         delayTask.setPreTaskFinishCount(preTaskInfoList.size());
-        delayTask.setPreTaskIdList(preTaskInfoList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList()));
+        delayTask.setPreTaskIdList(unfinishedTaskIdList);
         delayTask.setFinishRate(getFinishRate(delayFinishCount, delayCount));
         info.setDelayTask(delayTask);
         List<String> userIdList = new ArrayList<>(20);
@@ -2124,8 +2136,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //产品经理
         String productChargeId = info.getProductChargeId();
 
-        //项目经理
-        String projectChargeId = info.getProjectChargeId();
         List<String> chargeIdList = new ArrayList<>(10);
         if (StringUtils.isNotBlank(projectChargeId)) {
             chargeIdList.addAll(Arrays.asList(projectChargeId.split(",")));
@@ -2230,7 +2240,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             sb.append(date);
             sb.append(name);
             try {
-                new ExcelPrintUtils().patchSheetExport(list,taskList, response, sb.toString(), excelPath);
+                new ExcelPrintUtils().patchSheetExport(list, taskList, response, sb.toString(), excelPath);
             } catch (IOException e) {
                 log.error("产品列表列表导出出错 >>>>>{}", e);
                 return Boolean.FALSE;
@@ -2318,9 +2328,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
         //两个都是
         if (size == 2) {
-            List<ProductShowDTO> list = baseMapper.listMyProjectExport(params, categoryIdList,userId);
+            List<ProductShowDTO> list = baseMapper.listMyProjectExport(params, categoryIdList, userId);
             fillPagingDb(list);
-            List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.listMyProjectTaskExport(params, categoryIdList,userId);
+            List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.listMyProjectTaskExport(params, categoryIdList, userId);
             for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
                 Integer status = item.getStatus();
                 String statusName = TaskStateEnum.getName(status);
@@ -2333,7 +2343,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             sb.append(date);
             sb.append(name);
             try {
-                new ExcelPrintUtils().patchSheetExport(list,taskList, response, sb.toString(), excelPath);
+                new ExcelPrintUtils().patchSheetExport(list, taskList, response, sb.toString(), excelPath);
             } catch (IOException e) {
                 log.error("产品列表列表导出出错 >>>>>{}", e);
                 return Boolean.FALSE;
@@ -2360,7 +2370,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             }
             //任务导出
             if (ProductConstant.PRODUCT_TASK_EXPORT.equals(flag)) {
-                List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.listMyProjectTaskExport(params, categoryIdList,userId);
+                List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.listMyProjectTaskExport(params, categoryIdList, userId);
                 for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
                     Integer status = item.getStatus();
                     String statusName = TaskStateEnum.getName(status);
@@ -2380,7 +2390,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 }
             }
         }
-
 
 
         return Boolean.TRUE;
@@ -2435,7 +2444,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             sb.append(date);
             sb.append(name);
             try {
-                new ExcelPrintUtils().patchSheetExport(list,taskList, response, sb.toString(), excelPath);
+                new ExcelPrintUtils().patchSheetExport(list, taskList, response, sb.toString(), excelPath);
             } catch (IOException e) {
                 log.error("产品列表列表导出出错 >>>>>{}", e);
                 return Boolean.FALSE;
