@@ -3,6 +3,7 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.dto.ProductPurchaseDTO;
 import com.erp.model.plm.dto.ProductPurchaseShowDTO;
+import com.erp.model.plm.dto.SkuPurchaseDTO;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
 
 import java.util.List;
@@ -63,4 +64,11 @@ public interface ProductPurchaseService extends IService<ProductPurchaseEntity> 
      * @param entity
      */
     void checkProductPurchase (ProductPurchaseEntity entity);
+
+    /**
+     * 根据sku id集合获取供应商和采购员信息
+     * @param skuIds
+     * @return
+     */
+    List<SkuPurchaseDTO.PurchaseInfo> getInfoBySkuIds(List<String> skuIds);
 }

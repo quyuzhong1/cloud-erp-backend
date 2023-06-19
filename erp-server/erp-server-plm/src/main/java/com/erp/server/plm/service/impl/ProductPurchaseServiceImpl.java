@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -11,6 +12,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.ProductPurchaseDTO;
 import com.erp.model.plm.dto.ProductPurchaseShowDTO;
+import com.erp.model.plm.dto.SkuPurchaseDTO;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
 import com.erp.server.plm.mapper.ProductPurchaseMapper;
 import com.erp.server.plm.service.ProductPurchaseService;
@@ -128,6 +130,19 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
                 throw new ServiceException(ApiError.ERROR_95164);
             }
         }
+    }
+
+    @Override
+    public List<SkuPurchaseDTO.PurchaseInfo> getInfoBySkuIds(List<String> skuIds) {
+        if(CollUtil.isEmpty(skuIds)) {
+            return null;
+        }
+        List<ProductPurchaseEntity> productPurchaseList = lambdaQuery().in(ProductPurchaseEntity::getSkuId, skuIds).list();
+        // 此处注意，实际发现某些sku存在多条采购信息
+        Map<String, List<ProductPurchaseEntity>> skuPurchaseMap = productPurchaseList.stream().collect(Collectors.groupingBy(ProductPurchaseEntity::getSkuId));
+
+
+        return null;
     }
 
 }

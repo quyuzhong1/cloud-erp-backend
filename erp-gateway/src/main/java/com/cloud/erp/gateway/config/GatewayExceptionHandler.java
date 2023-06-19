@@ -50,7 +50,7 @@ public class GatewayExceptionHandler extends DefaultErrorWebExceptionHandler {
 			errorMessage = apiError503.msg;
 		}
 		map.put("code", code);
-		map.put("message", errorMessage);
+		map.put("msg", errorMessage);
 		map.put("data", null);
 		map.put("success", false);
 		return map;
