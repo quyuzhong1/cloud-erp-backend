@@ -360,7 +360,7 @@
             </foreach>
         </if>
 
-        <if test="params.taskName != null and params.ids.taskName != ''">
+        <if test="params.taskName != null and params.taskName != ''">
             AND pot.name ILIKE concat('%', #{params.taskName}, '%')
         </if>
 
