@@ -217,4 +217,11 @@ public interface PurchaseReturnOrderService extends SuperService<PurchaseReturnO
      * @return java.lang.Boolean
      */
     Boolean generatePurchaseReturnOrder(PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto);
+
+    /**
+     * 根据供应商id集合、单据日期等条件 查询退货数量信息
+     * @param params
+     * @return
+     */
+    List<PurchaseReturnOrderDTO.SupplierReturnDTO> getReturnInfo(PurchaseReturnOrderDTO.SupplierReturnParamDTO params);
 }

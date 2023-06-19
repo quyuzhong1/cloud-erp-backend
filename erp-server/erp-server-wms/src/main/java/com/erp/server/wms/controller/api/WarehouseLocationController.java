@@ -2,6 +2,8 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
@@ -10,11 +12,9 @@ import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
 import com.erp.model.wms.enums.WarehouseLocationTypeEnum;
 import com.erp.server.wms.service.WarehouseLocationService;
 import lombok.AllArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
 
 import java.util.List;
@@ -42,12 +42,12 @@ public class WarehouseLocationController extends BaseController {
     }
 
     /**
-     * 获取所有仓位
+     * 仓位分页
      * @return
      */
-    @PostMapping(value = "/all")
-    public ApiResult<List<WarehouseLocationDTO.LocationAllDTO>> all( ) {
-        return success(warehouseLocationService.all( ));
+    @PostMapping(value = "/paging")
+    public ApiResult<PagingVO<WarehouseLocationDTO.LocationSelectDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> dto) {
+        return success(warehouseLocationService.paging(dto));
     }
 
     /**

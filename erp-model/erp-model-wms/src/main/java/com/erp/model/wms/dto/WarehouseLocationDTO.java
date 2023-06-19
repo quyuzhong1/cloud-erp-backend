@@ -1,9 +1,11 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * 仓位请求响应实体
@@ -123,11 +125,11 @@ public class WarehouseLocationDTO implements Serializable {
 
 
     /**
-     * 所有仓位下拉（不是仓库维度）
+     * 仓位下拉
      */
     @Data
     @NoArgsConstructor
-    public static class LocationAllDTO {
+    public static class LocationSelectDTO {
 
         /**
          * 编码
@@ -138,6 +140,25 @@ public class WarehouseLocationDTO implements Serializable {
          * 名称
          */
         private String name;
+
+    }
+
+    /**
+     * 仓位查询实体
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseLocationSearchParamDTO extends SortDTO {
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓位编码
+         */
+        private String code;
 
     }
 

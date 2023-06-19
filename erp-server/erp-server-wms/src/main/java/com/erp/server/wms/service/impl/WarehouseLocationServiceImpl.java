@@ -2,9 +2,11 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.StrUtils;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
@@ -106,27 +108,10 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     }
 
     @Override
-    public List<WarehouseLocationDTO.LocationAllDTO> all() {
-        List<WarehouseLocationEntity> warehouseLocationList =  lambdaQuery()
-                .eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.LOCATION.getCode()).list();
-        if(CollUtil.isEmpty(warehouseLocationList)) {
-            return Lists.newArrayList();
-        }
-        List<WarehouseLocationDTO.LocationAllDTO> dataList = Lists.newArrayListWithExpectedSize(warehouseLocationList.size());
-        // 让空仓位排前面
-        warehouseLocationList = warehouseLocationList.stream().sorted(Comparator.comparing(WarehouseLocationEntity::getCode)).collect(Collectors.toList());
-        // 根据编码+名称去重
-        warehouseLocationList = warehouseLocationList.stream().collect(
-                Collectors.collectingAndThen(Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(
-                        o -> StrUtils.null2EmptyWithTrim(o.getCode()) + "-" + StrUtils.null2EmptyWithTrim(o.getName())))), ArrayList::new));
-
-        warehouseLocationList.stream().forEach(warehouseLocation->{
-            WarehouseLocationDTO.LocationAllDTO data = new WarehouseLocationDTO.LocationAllDTO();
-            data.setCode(warehouseLocation.getCode());
-            data.setName(warehouseLocation.getName());
-            dataList.add(data);
-        });
-        return dataList;
+    public PagingVO<WarehouseLocationDTO.LocationSelectDTO> paging(PagingDTO<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<WarehouseLocationDTO.LocationSelectDTO> pageData = this.baseMapper.paging(query, dto.getParams());
+        return new PagingVO<>(pageData);
     }
 
 

@@ -34,4 +34,11 @@ public interface PurchaseReturnOrderMapper extends BaseMapper<PurchaseReturnOrde
     List<ReturnOrderExcelDTO> returnOrderExportExcel(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
 
     Integer listCount(@Param("params") PurchaseReturnOrderDTO.PagingParamDTO params);
+
+    /**
+     * 根据供应商id集合、单据日期查询退货数量
+     * @param params
+     * @return
+     */
+    List<PurchaseReturnOrderDTO.SupplierReturnDTO> getReturnInfo(@Param("params") PurchaseReturnOrderDTO.SupplierReturnParamDTO params);
 }

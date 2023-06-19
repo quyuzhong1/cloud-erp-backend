@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -846,4 +847,54 @@ public class PurchaseReturnOrderDTO {
          */
         private BigDecimal purchaseAmount; 
     }
+
+    /**
+     * 供应商、单据日期 获取质检退货单据量、数量 查询条件
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SupplierReturnParamDTO {
+
+        /**
+         * 供应商id集合
+         */
+        private List<String> supplierIds;
+
+        /**
+         * 单据日期范围
+         */
+        private List<LocalDate> dateList;
+
+        /**
+         * 单据来源
+         */
+        private List<String> sourceTypeList;
+
+    }
+
+    /**
+     * 供应商 获取质检退货单据量、数量
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SupplierReturnDTO {
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 质检退货单量
+         */
+        private Integer qcReturnCount;
+
+        /**
+         * 实退数量
+         */
+        private Integer qcReturnQty;
+
+    }
+
 }

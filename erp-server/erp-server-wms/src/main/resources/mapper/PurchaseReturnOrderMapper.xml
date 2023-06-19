@@ -273,4 +273,26 @@
             ${params.permissionSql}
         </if>
     </select>
+    <select id="getReturnInfo" resultType="com.erp.model.wms.dto.PurchaseReturnOrderDTO$SupplierReturnDTO">
+        select pr.supplier_id,count(distinct pr.id) as qc_return_count,sum(prd.return_qty) as qc_return_qty
+        from po_return pr
+        inner join po_return_detail prd on prd.main_id =  pr.id
+        where pr.approve_status = 'approve' and pr.source_type = 'qcBill' and pr.is_deleted = false
+        <if test="params.supplierIds != null and params.supplierIds.size > 0">
+            and pr.supplier_id in
+            <foreach collection="params.supplierIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.sourceTypeList != null and params.sourceTypeList.size > 0">
+            and pr.source_type in
+            <foreach collection="params.sourceTypeList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.dateList != null and params.dateList.size > 0">AND
+            pr.bill_date >= #{params.dateList[0]} AND (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pr.bill_date
+        </if>
+        group by pr.supplier_id
+    </select>
 </mapper>

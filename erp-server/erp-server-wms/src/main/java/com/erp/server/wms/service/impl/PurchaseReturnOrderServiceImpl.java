@@ -980,6 +980,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<PurchaseReturnOrderDTO.SupplierReturnDTO> getReturnInfo(PurchaseReturnOrderDTO.SupplierReturnParamDTO params) {
+        return this.baseMapper.getReturnInfo(params);
+    }
+
     /**
      * 更新库存信息
      * @param list

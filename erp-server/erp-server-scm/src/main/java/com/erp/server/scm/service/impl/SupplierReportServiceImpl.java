@@ -5,13 +5,16 @@ import com.baomidou.mybatisplus.core.conditions.interfaces.Func;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.SupplierReportDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.SupplierReportMapper;
 import com.erp.server.scm.service.SupplierReportService;
+import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -80,6 +83,19 @@ public class SupplierReportServiceImpl implements SupplierReportService {
                 PoInstockDTO.SupplierInstockInfoDTO supplierPoInfoDTO = supplierPoMap.getOrDefault(record.getId(), new PoInstockDTO.SupplierInstockInfoDTO());
                 record.setInstockCount(Optional.ofNullable(supplierPoInfoDTO.getInstockCount()).orElse(0));
                 record.setInstockQty(Optional.ofNullable(supplierPoInfoDTO.getInstockQty()).orElse(0));
+            });
+        }
+
+        // 质检退货批次、质检退货量
+        List<String> sourceTypeList = Lists.newArrayList(SourceTypeEnum.QC_BILL.getCode());
+        PurchaseReturnOrderDTO.SupplierReturnParamDTO returnParamDTO = new PurchaseReturnOrderDTO.SupplierReturnParamDTO(supplierIds, dateList, sourceTypeList);
+        List<PurchaseReturnOrderDTO.SupplierReturnDTO> supplierReturnInfos = wmsTaskFeign.getReturnInfo(returnParamDTO);
+        if(CollUtil.isNotEmpty(supplierReturnInfos)) {
+            Map<String,PurchaseReturnOrderDTO.SupplierReturnDTO> supplierReturnMap = supplierReturnInfos.stream().collect(Collectors.toMap(PurchaseReturnOrderDTO.SupplierReturnDTO::getSupplierId, Function.identity()));
+            records.stream().forEach(record->{
+                PurchaseReturnOrderDTO.SupplierReturnDTO supplierReturnInfoDTO = supplierReturnMap.getOrDefault(record.getId(), new PurchaseReturnOrderDTO.SupplierReturnDTO());
+                record.setQcReturnCount(Optional.ofNullable(supplierReturnInfoDTO.getQcReturnCount()).orElse(0));
+                record.setQcReturnQty(Optional.ofNullable(supplierReturnInfoDTO.getQcReturnQty()).orElse(0));
             });
         }
 

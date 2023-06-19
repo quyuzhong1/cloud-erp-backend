@@ -66,4 +66,14 @@ public class PurchaseReturnOrderFeignController extends BaseController {
 
     }
 
+    /**
+     * 根据供应商id集合、单据日期等条件 查询退货数量信息
+     * @param params
+     * @return
+     */
+    @PostMapping("/getReturnInfo")
+    public List<PurchaseReturnOrderDTO.SupplierReturnDTO> getReturnInfo(@RequestBody PurchaseReturnOrderDTO.SupplierReturnParamDTO params) {
+        return purchaseReturnOrderService.getReturnInfo(params);
+    }
+
 }

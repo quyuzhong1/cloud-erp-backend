@@ -184,4 +184,12 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/purchaseStockIn/getInstockInfoBySupplierIds")
     List<PoInstockDTO.SupplierInstockInfoDTO> getInstockInfoBySupplierIds(@RequestBody PoInstockDTO.SupplierInstockParamDTO dto);
+
+    /**
+     * 根据供应商id集合获取入库单量和入库数量
+     * @param dto
+     * @return List<PurchaseReturnOrderDTO.SupplierReturnDTO>
+     */
+    @PostMapping("feign/purchaseReturnOrder/getReturnInfo")
+    List<PurchaseReturnOrderDTO.SupplierReturnDTO> getReturnInfo(@RequestBody PurchaseReturnOrderDTO.SupplierReturnParamDTO dto);
 }
