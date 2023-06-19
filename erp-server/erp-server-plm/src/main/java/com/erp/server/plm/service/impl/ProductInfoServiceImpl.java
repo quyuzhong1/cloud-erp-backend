@@ -1086,6 +1086,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //是否已立项
         Boolean yesApproval = false;
         if (!Objects.isNull(product)) {
+            Integer terminateStatus = ApprovalStatusEnum.TERMINATE.getCode();
+            //产品终止
+            Integer productStatus = product.getApprovalStatus();
+            if (terminateStatus.equals(productStatus)) {
+                throw new ServiceException(ApiError.ERROR_95175);
+            }
+
             ProductInfoEntity newProduct = new ProductInfoEntity();
             BeanMapperUtils.copy(product, newProduct);
             String grade = dto.getGrade();
@@ -1182,7 +1189,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (StringUtils.isNotBlank(dto.getProjectId())) {
             ProjectInfoEntity project = projectInfoService.getById(dto.getProjectId());
             if (!Objects.isNull(project)) {
-                Integer projectStatus = dto.getProjectStatus();
+                Integer terminateStatus = ProjectStateEnum.TERMINATE.getState();
+                //产品终止
+                Integer projectStatus = project.getProjectStatus();
+                if (terminateStatus.equals(projectStatus)) {
+                    throw new ServiceException(ApiError.ERROR_95175);
+                }
                 String projectChargeId = dto.getProjectChargeId();
                 if (StringUtils.isNotBlank(projectChargeId)) {
                     String projectChargeName = commonService.getNameById(projectChargeId);
@@ -1916,6 +1928,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         LocalDate endTime = info.getPlanEndTime();
 
         LocalDate now = LocalDate.now();
+        LocalDateTime nowTime = LocalDateTime.now();
+
         //是否延期
         Boolean isDelay = Boolean.FALSE;
         if (endTime != null) {
@@ -1954,12 +1968,16 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //取消
         long totalCancelCount = taskList.stream().filter(t -> taskClose.equals(t.getStatus())).count();
         //变更
-        long totalChangeCount = taskList.stream().filter(t -> change.equals(t.getScheduleType())).count();
+        Integer totalChangeCount = 0;
+        //这个是排期任务的id 集合
+        List<String> planTaskIdList = taskList.stream().filter(t -> change.equals(t.getScheduleType())).map(ProjectTaskEntity::getId).collect(Collectors.toList());
+        //todo 还要更改
+        totalChangeCount = planTaskIdList.size();
         totalTask.setFinishCount((int) totalFinishCount);
         totalTask.setDoingCount((int) totalDoingCount);
         totalTask.setNotStartCount((int) totalNotStartCount);
         totalTask.setCancelCount((int) totalCancelCount);
-        totalTask.setChangeCount((int) totalChangeCount);
+        totalTask.setChangeCount(totalChangeCount);
         totalTask.setFinishRate(getFinishRate(totalFinishCount, totalCount));
         info.setTotalTask(totalTask);
 
@@ -1970,12 +1988,15 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         LocalDate weekStart = now.with(weekFields.dayOfWeek(), 1L);
         //周结束
         LocalDate weekEnd = now.with(weekFields.dayOfWeek(), 7L);
-        List<ProjectTaskEntity> weekTaskList = taskList.stream().filter(t ->t.getPlanEndTime()!=null&& weekStart.compareTo(t.getPlanEndTime()) <= 0 && weekEnd.compareTo(t.getPlanEndTime()) >= 0).
+        List<ProjectTaskEntity> weekTaskList = taskList.stream().filter(t -> t.getPlanEndTime() != null && weekStart.compareTo(t.getPlanEndTime()) <= 0 && weekEnd.compareTo(t.getPlanEndTime()) >= 0).
                 collect(Collectors.toList());
         Integer weekTotal = weekTaskList.size();
         weekTask.setWeekCount(weekTotal);
         //完成
         long weekFinishCount = weekTaskList.stream().filter(t -> taskFinish.equals(t.getStatus())).count();
+        //完成且延期
+        long weekFinishDelayCount = weekTaskList.stream().filter(t -> taskFinish.equals(t.getStatus()) &&
+                t.getRealityEndTime() != null && nowTime.compareTo(t.getRealityEndTime()) > 0).count();
         weekTask.setFinishCount((int) weekFinishCount);
         //进行中
         long weekDoingCount = weekTaskList.stream().filter(t -> taskIng.equals(t.getStatus())).count();
@@ -1985,13 +2006,16 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         weekTask.setNotStartCount((int) weekNotStartCount);
         weekTask.setFinishRate(getFinishRate(weekFinishCount, weekTotal));
         List<Integer> statusList = Arrays.asList(taskNotStart, taskIng);
-        long weekDelayCount = weekTaskList.stream().filter(w -> statusList.contains(w.getStatus()) && now.compareTo(w.getPlanEndTime()) < 0).count();
+        //这个是未完成延期的
+        long weekDelayCount = weekTaskList.stream().filter(w -> statusList.contains(w.getStatus()) &&
+                now.compareTo(w.getPlanEndTime()) > 0).count();
+        weekDelayCount = weekDelayCount + weekFinishDelayCount;
         weekTask.setDelayCount((int) weekDelayCount);
         info.setWeekTask(weekTask);
 
         //到期任务信息
         ProductOverviewDTO.ExpireTaskDTO expireTask = new ProductOverviewDTO.ExpireTaskDTO();
-        List<ProjectTaskEntity> expireTaskList = taskList.stream().filter(t -> t.getPlanEndTime()!=null&&now.compareTo(t.getPlanEndTime()) == 0).collect(Collectors.toList());
+        List<ProjectTaskEntity> expireTaskList = taskList.stream().filter(t -> t.getPlanEndTime() != null && now.compareTo(t.getPlanEndTime()) == 0).collect(Collectors.toList());
         Integer expireCount = expireTaskList.size();
         expireTask.setExpireCount(expireCount);
         //完成
@@ -2006,16 +2030,27 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         expireTask.setFinishRate(getFinishRate(expireFinishCount, expireCount));
         info.setExpireTask(expireTask);
 
+
         //延期的任务
         ProductOverviewDTO.DelayTaskDTO delayTask = new ProductOverviewDTO.DelayTaskDTO();
-        List<ProjectTaskEntity> delayTaskList = taskList.stream().filter(t -> t.getPlanEndTime()!=null&&now.compareTo(t.getPlanEndTime()) > 0).collect(Collectors.toList());
-        Integer delayCount = delayTaskList.size();
+        List<ProjectTaskEntity> delayTaskList = new ArrayList<>(taskList.size());
+        List<ProjectTaskEntity> planDelayTaskList = taskList.stream().filter(t -> t.getPlanEndTime() != null && now.compareTo(t.getPlanEndTime()) > 0).collect(Collectors.toList());
+        List<ProjectTaskEntity> realityDelayTaskList = taskList.stream().filter(t -> t.getRealityEndTime() != null && nowTime.compareTo(t.getRealityEndTime()) > 0).collect(Collectors.toList());
+        delayTaskList.addAll(planDelayTaskList);
+        delayTaskList.addAll(realityDelayTaskList);
+
+        Integer delayCount = Math.toIntExact(delayTaskList.stream().map(ProjectTaskEntity::getId).distinct().count());
         delayTask.setDelayCount(delayCount);
         //完成
-        long delayFinishCount = delayTaskList.stream().filter(t -> taskFinish.equals(t.getStatus())).count();
+        long delayFinishCount = delayTaskList.stream().filter(t -> taskFinish.equals(t.getStatus())&&
+                t.getRealityEndTime() != null && t.getPlanEndTime() !=null
+                &&t.getRealityEndTime().compareTo(t.getPlanEndTime().atStartOfDay()) > 0).count();
         delayTask.setFinishCount((int) delayFinishCount);
         //未完成的任务id
-        List<String> unfinishedTaskIdList = delayTaskList.stream().filter(d -> !taskFinish.equals(d.getStatus())).
+
+        List<String> unfinishedTaskIdList = delayTaskList.stream().filter(d ->
+                statusList.contains(d.getStatus())&&d.getPlanEndTime()!=null
+                &&now.compareTo(d.getPlanEndTime())>0).
                 map(ProjectTaskEntity::getId).collect(Collectors.toList());
         delayTask.setUnfinishedCount(unfinishedTaskIdList.size());
         //获取到前置任务
@@ -2212,6 +2247,5 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return Boolean.TRUE;
 
     }
-
 
 }
