@@ -797,9 +797,9 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/listTaskInfo")
-    public List<ProductTask.TaskInfoDTO> listTaskInfo(@RequestBody List<String> taskIdList) {
+    public ApiResult<List<ProductTask.TaskInfoDTO>> listTaskInfo(@RequestBody List<String> taskIdList) {
         List<ProductTask.TaskInfoDTO> list = taskService.listTaskInfo(taskIdList);
-        return list;
+        return success(list);
 
     }
 }
