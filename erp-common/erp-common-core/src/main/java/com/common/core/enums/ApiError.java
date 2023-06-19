@@ -475,6 +475,7 @@ public enum ApiError implements Serializable {
     ERROR_98076(98076,"采购订单提交失败"),
     ERROR_98077(98077,"采购订单审核失败"),
     ERROR_98078(98078,"委外入库单【{}】不支持反审核"),
+    ERROR_98079(98079,"委外采购订单不支持修改"),
 
 
 
