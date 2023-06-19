@@ -618,6 +618,16 @@ public class SubcontractOrderDTO implements Serializable {
          */
         private Boolean isFirstMassProduct;
 
+        /**
+         * 预计交货日期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
     }
 
 
