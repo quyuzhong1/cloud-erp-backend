@@ -519,49 +519,4 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return java.lang.Boolean
      **/
     Boolean updateBatchFiled(ProductDetailBatchUpdateDTO dto);
-
-    /**
-     * 提交
-     * @Author Luo_WG
-     * @Date 2023/6/14 15:36
-     * @param ids
-     * @return java.lang.Boolean
-     **/
-    Boolean submit(List<String> ids);
-
-    /**
-     * 批量审核
-     * @Author Luo_WG
-     * @Date 2023/6/14 16:38
-     * @param baseApproveParamDTO
-     * @return java.lang.Boolean
-     **/
-    Boolean approve(BaseApproveParamDTO baseApproveParamDTO);
-
-    /**
-     * 批量反审核
-     * @Author Luo_WG
-     * @Date 2023/6/14 17:18
-     * @param ids
-     * @return java.lang.Boolean
-     **/
-    Boolean disApprove(List<String> ids);
-
-    /**
-     * 取消流程
-     * @Author Luo_WG
-     * @Date 2023/6/14 17:28
-     * @param ids
-     * @return java.lang.Boolean
-     **/
-    Boolean cancelProcess(List<String> ids);
-
-    /**
-     * 批量删除
-     * @Author Luo_WG
-     * @Date 2023/6/14 17:42
-     * @param ids
-     * @return java.lang.Boolean
-     **/
-    Boolean deleteBatch(List<String> ids);
 }
