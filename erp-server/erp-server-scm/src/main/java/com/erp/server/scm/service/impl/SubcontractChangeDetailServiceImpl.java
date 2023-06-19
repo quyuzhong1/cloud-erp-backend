@@ -108,6 +108,11 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
         lambdaUpdate().in(SubcontractChangeDetailEntity::getMainId,mainIds).remove();
     }
 
+    @Override
+    public List<SubcontractChangeDetailEntity> listByMainIds(List<String> mainIds) {
+        return lambdaQuery().in(SubcontractChangeDetailEntity::getMainId,mainIds).list();
+    }
+
     /**
      * 根据主表id查询父级SKU数据
      */
@@ -127,8 +132,14 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
         List<String> oldIds = oldList.stream().map(SubcontractChangeDetailEntity::getId).collect(Collectors.toList());
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
-
+    /**
+     * 验证数量
+     */
     private void checkSourceDetailQty (List<SubcontractChangeDetailEntity> list,String mainId){
+        /**
+         * 1、变更数量不能小于采购订单数量
+         *
+         */
 
     }
 

@@ -442,7 +442,7 @@
         </if>
     </select>
     <select id="getQcInfoByPurchaseOrder" resultType="com.erp.model.wms.dto.QcInfoDTO$PurchaseQcInfoDTO">
-        select sum(qr.qc_bad_qty) as qc_bad_qty
+        select sum(qr.qc_bad_qty) as defective_qty
         from qc_info qi
         inner join qc_result qr on qr.main_id = qi.id
         where qi.qc_status = 'finishQc' and qi.is_deleted = false

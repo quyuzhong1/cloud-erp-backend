@@ -1203,6 +1203,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
     }
 
+    @Override
+    public List<PurchaseOrderEntity> listBySourceIds(List<String> sourceIds) {
+        return lambdaQuery().in(PurchaseOrderEntity::getSourceId,sourceIds).eq(PurchaseOrderEntity::getInvalidStatus,Boolean.FALSE).list();
+    }
+
     /**
      * 处理数据id
      */

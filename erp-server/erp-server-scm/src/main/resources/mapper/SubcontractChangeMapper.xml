@@ -42,6 +42,7 @@
         s.name as supplierName,
         sc.approve_status as approveStatus,
         sc.invalid_status as invalidStatus,
+        scd.sku_id as skuId,
         scd.sku_no as skuNo,
         scd.opt_type as optType,
         scd.price,

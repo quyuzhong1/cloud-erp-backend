@@ -6,6 +6,8 @@ import com.erp.model.scm.dto.SupplierReportDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * @Classname: SupplierReportMapper
  * @Description: 供应商报表mapper接口
@@ -22,5 +24,12 @@ public interface SupplierReportMapper {
      * @return
      */
     IPage<SupplierReportDTO.PagingViewDTO> getPurchasePaging(Page query, @Param("params") SupplierReportDTO.PagingSearchParamDTO param);
+
+    /**
+     * 导出查询
+     * @param param
+     * @return
+     */
+    List<SupplierReportDTO.PagingViewDTO> exportList(@Param("params") SupplierReportDTO.ExportSearchParamDTO param);
 
 }

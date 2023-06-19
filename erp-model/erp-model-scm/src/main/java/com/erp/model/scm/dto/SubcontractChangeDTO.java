@@ -147,6 +147,11 @@ public class SubcontractChangeDTO implements Serializable {
         private String invalidStatusName;
 
         /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
          * sku编号
          */
         private String skuNo;

@@ -185,6 +185,12 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         BeanMapperUtils.copy(dto, entity);
         //处理数据id
         doOpHandleDataId(dto.getInWarehouseId(), dto.getOutWarehouseId(), dto.getApplyUserId(), entity);
+
+        //验证调出入仓库是否相同
+        if (dto.getInWarehouseId().equals(dto.getOutWarehouseId())) {
+            throw new ServiceException(new ApiResult(ApiError.ERROR_98069.code,String.format(ApiError.ERROR_98069.msg,"")));
+        }
+
         log.info("调拨申请单新增");
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.DBSQ, BusinessNoTypeEnum.CODE_DBSQ.getCode()));
@@ -224,6 +230,10 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         }
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(old.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
+        }
+        //验证调出入仓库是否相同
+        if (dto.getInWarehouseId().equals(dto.getOutWarehouseId())) {
+            throw new ServiceException(new ApiResult(ApiError.ERROR_98069.code,String.format(ApiError.ERROR_98069.msg,old.getCode())));
         }
 
         TransferApplicationEntity entity = new TransferApplicationEntity();

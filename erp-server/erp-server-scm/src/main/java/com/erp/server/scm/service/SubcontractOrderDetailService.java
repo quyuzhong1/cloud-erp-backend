@@ -23,8 +23,9 @@ public interface SubcontractOrderDetailService extends SuperService<SubcontractO
      * @date: 2023/6/12 17:55
      * @param code
      * @param ids
+     * @param isFinishDelivery
      */
-    void updateArrivalStatusByIds(String code, List<String> ids);
+    void updateArrivalStatusByIds(String code, List<String> ids,Boolean isFinishDelivery);
     /**
      * @description: 根据委外订单ids删除明细
      * @author Will
@@ -80,4 +81,11 @@ public interface SubcontractOrderDetailService extends SuperService<SubcontractO
      * @return List<SubcontractOrderDetailEntity>
      */
     List<SubcontractOrderDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds);
+    /**
+     * @description: 其他模块更新是同步到货状态
+     * @author Will
+     * @date: 2023/6/19 15:35
+     * @param ids
+     */
+    void syncArrivalStatusByIds(List<String> ids);
 }

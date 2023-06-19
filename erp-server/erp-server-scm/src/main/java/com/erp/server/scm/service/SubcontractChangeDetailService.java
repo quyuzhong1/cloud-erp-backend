@@ -40,4 +40,12 @@ public interface SubcontractChangeDetailService extends SuperService<Subcontract
      * @param mainIds
      */
     void removeByMainIds(List<String> mainIds);
+    /**
+     * @description: 根据主表ids查询
+     * @author Will
+     * @date: 2023/6/19 17:29
+     * @param mainIds
+     * @return List<SubcontractChangeDetailEntity>
+     */
+    List<SubcontractChangeDetailEntity> listByMainIds(List<String> mainIds);
 }

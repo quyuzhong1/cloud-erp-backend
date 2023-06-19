@@ -143,8 +143,8 @@ public interface ScmTaskFeign {
      * @Author Luo_WG
      * @Date 2023/4/13 11:20
      **/
-    @PostMapping("feign/purchaseOrder/updatePurchaseOrderDetailById")
-    Boolean updatePurchaseOrderDetailById(@RequestBody PurchaseOrderDetailEntity entity);
+    @PostMapping("feign/purchaseOrder/updatePoArrivalStatus")
+    Boolean updatePoArrivalStatus(@RequestBody PurchaseOrderDetailEntity entity);
 
     /**
      * 批量修改采购订单明细表

@@ -3,15 +3,17 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
-import com.common.business.dto.base.ApproveStatusQtyDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.OptChangeTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -21,11 +23,14 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.entity.SubcontractChangeEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.SubcontractChangeMapper;
 import com.erp.server.scm.service.CommonService;
@@ -57,13 +62,18 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
 
     @Autowired
     private SysUserFeign sysUserFeign;
+
     @Autowired
     private ModuleOperateLogService operateLogService;
+
     @Autowired
     private CommonService commonService;
+
     @Autowired
     private SubcontractChangeDetailService subcontractChangeDetailService;
 
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
 
     @Override
     public PagingVO<SubcontractChangeDTO.ListDTO> paging(PagingDTO<SubcontractChangeDTO.PagingParamDTO> pagingParamDTO) {
@@ -325,7 +335,8 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
     public SubcontractChangeDTO.ViewDTO view(String id) {
         SubcontractChangeEntity subcontractChangeEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到委外变更单数据"));
         SubcontractChangeDTO.ViewDTO data = BeanMapperUtils.map(SubcontractChangeDTO.ViewDTO.class, subcontractChangeEntity);
-        // TODO 查询明细数据（如果有的话）
+        //查询明细
+        subcontractChangeDetailService.listByMainIds(Arrays.asList(id))
 
         return data;
     }
@@ -378,20 +389,56 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         if(CollUtil.isEmpty(list)) {
            return;
         }
+        //产品信息
+        List<String> skuIds = list.stream().map(SubcontractChangeDTO.ListDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
         // 属性赋值
         for(SubcontractChangeDTO.ListDTO data : list) {
+
+            //sku信息
+            if (CollectionUtils.isNotEmpty(skuList)) {
+                SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(data.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(skuVO)) {
+                    data.setProductName(skuVO.getSkuName());
+                }
+            }
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+            data.setOptTypeName(OptChangeTypeEnum.getName(data.getOptType()));
         }
     }
 
     /**
     * 新增修改处理数据
     */
-    private void handleData(SubcontractChangeEntity subcontractChangeEntity) {
-        // TODO 验证数据 & 数据赋值
+    private void handleData(SubcontractChangeEntity entity) {
+        //核算公司信息
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getPurchaseOrgId(), entity.getReceiveOrgId()));
+        if (CollectionUtils.isEmpty(accountingCompanyList)) {
+            throw new ServiceException(ApiError.ERROR_9014);
+        }
+        //人员信息
+        if (StringUtils.isNotBlank(entity.getChangerId())) {
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getChangerId());
+            entity.setChangerName(findUserDTO.getUserName());
+
+        }
+
+        //部门信息
+        if (StringUtils.isNotBlank(entity.getDeptId())) {
+            SysDepartmentDTO sysDepartmentDTO = sysUserFeign.getUserDeptById(entity.getDeptId());
+            entity.setDeptName(sysDepartmentDTO.getName());
+        }
+
+
+        //采购组织名称
+        String purchaseOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        entity.setPurchaseOrgName(purchaseOrgName);
+
+        //收料组织名称
+        String receiveOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+        entity.setReceiveOrgName(receiveOrgName);
     }
 
 }

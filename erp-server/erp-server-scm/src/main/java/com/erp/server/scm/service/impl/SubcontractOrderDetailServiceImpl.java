@@ -13,10 +13,8 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.SubcontractOrderDetailDTO;
-import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
-import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
-import com.erp.model.scm.entity.SubcontractOrderEntity;
-import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.*;
+import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -32,6 +30,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -69,13 +68,18 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
     @Resource
     private SupplierService supplierService;
 
+    @Resource
+    private PurchaseOrderDetailService purchaseOrderDetailService;
+
+
+
     @Override
-    public void updateArrivalStatusByIds(String arrivalStatus, List<String> ids) {
+    public void updateArrivalStatusByIds(String arrivalStatus, List<String> ids,Boolean isFinishDelivery) {
         lambdaUpdate()
                 .in(SubcontractOrderDetailEntity::getId,ids)
                 .set(SubcontractOrderDetailEntity::getArrivalStatus,arrivalStatus)
                 .set(SubcontractOrderDetailEntity::getArrivalTime, LocalDateTime.now())
-                .set(SubcontractOrderDetailEntity::getIsEndReceive,Boolean.TRUE)
+                .set(isFinishDelivery,SubcontractOrderDetailEntity::getIsEndReceive,Boolean.TRUE)
                 .update();
     }
 
@@ -152,6 +156,61 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
     @Override
     public List<SubcontractOrderDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds) {
         return  baseMapper.listBySourceDetailIds(sourceDetailIds);
+    }
+
+    @Override
+    public void syncArrivalStatusByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listBySourceDetailIds(ids);
+        if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
+            return;
+        }
+       for (String id : ids) {
+           List<PurchaseOrderDetailEntity> list = purchaseOrderDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(id)).collect(Collectors.toList());
+           if (CollectionUtils.isEmpty(list)) {
+               return;
+           }
+           //获取交货状态
+           String arrivalStatus = getArrivalStatus(list);
+           updateArrivalStatusByIds(arrivalStatus, Arrays.asList(id),Boolean.FALSE);
+       }
+    }
+
+    /**
+     * @description: 获取交货状态
+     * @author Will
+     * @date: 2023/6/19 16:21
+     * @param list
+     * @return String
+     */
+    private String getArrivalStatus( List<PurchaseOrderDetailEntity> list) {
+
+        String arrivalStatus = ArrivalStatusEnum.NON_ARRIVAL.getCode();
+        //部分交货
+        long count1 = list.stream().filter(obj -> ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode().equals(obj.getArrivalStatus())).count();
+        //未交货
+        long count2 = list.stream().filter(obj -> ArrivalStatusEnum.NON_ARRIVAL.getCode().equals(obj.getArrivalStatus())).count();
+        //已交货
+        long count3 = list.stream().filter(obj -> ArrivalStatusEnum.ARRIVED.getCode().equals(obj.getArrivalStatus())).count();
+        if (count1 > 0) {
+            arrivalStatus = ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode();
+            return arrivalStatus;
+        }
+        if (count2 > 0 && count3 > 0) {
+            arrivalStatus = ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode();
+            return arrivalStatus;
+        }
+        if (count2 > 0 && count3 == 0) {
+            arrivalStatus = ArrivalStatusEnum.NON_ARRIVAL.getCode();
+            return arrivalStatus;
+        }
+        if (count3 > 0 && count2 == 0) {
+            arrivalStatus = ArrivalStatusEnum.ARRIVED.getCode();
+            return arrivalStatus;
+        }
+        return arrivalStatus;
     }
 
     /**
@@ -331,12 +390,12 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 //仓库名称
                 if (CollectionUtils.isNotEmpty(warehouseList)) {
                     String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(childEntity.getWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                    detailEntity.setWarehouseName(warehouseName);
+                    childEntity.setWarehouseName(warehouseName);
                 }
                 //供应商名称
                 if (CollectionUtils.isNotEmpty(supplierList)) {
                     String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(childEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                    detailEntity.setSupplierName(supplierName);
+                    childEntity.setSupplierName(supplierName);
                 }
                 handleSupplierTaxPrice(childEntity,Boolean.TRUE);
             }

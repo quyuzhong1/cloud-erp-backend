@@ -1,12 +1,17 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.dto.SupplierReportDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
@@ -20,6 +25,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -51,6 +59,27 @@ public class SupplierReportServiceImpl implements SupplierReportService {
         fillSupplierRptInfo(pageData.getRecords(), paramDTO.getParams());
 
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public void exportList(SupplierReportDTO.ExportSearchParamDTO paramDTO, HttpServletResponse response) {
+        paramDTO.setPermissionSql(paramDTO.getPermissionSql());
+        List<SupplierReportDTO.PagingViewDTO> dataList = supplierReportMapper.exportList(paramDTO);
+
+        // 填充供应商报表其他字段值
+        fillSupplierRptInfo(dataList, paramDTO);
+
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/supplierRpt.xlsx";
+        String name = "供应商报表导出";
+        String date = com.common.core.utils.date.DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(dataList, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
     }
 
     /**
@@ -98,15 +127,43 @@ public class SupplierReportServiceImpl implements SupplierReportService {
         }
 
         // 次品量
+        Integer orderPartitionSize = 1000;
         records.stream().forEach(record->{
             if(StrUtil.isNotEmpty(record.getPurchaseOrderIds())) {
                 List<String> purchaseOrderIds = Arrays.asList(record.getPurchaseOrderIds().split(","));
-                QcInfoDTO.PurchaseQcParamDTO qcParamDTO = new QcInfoDTO.PurchaseQcParamDTO(paramDTO.getQcType(), purchaseOrderIds);
-                QcInfoDTO.PurchaseQcInfoDTO purchaseQcInfoDTO = wmsTaskFeign.getQcInfoByPurchaseOrder(qcParamDTO);
-                record.setDefectiveQty(0);
-                if(Objects.nonNull(purchaseQcInfoDTO)) {
-                  record.setDefectiveQty(Optional.ofNullable(purchaseQcInfoDTO.getDefectiveQty()).orElse(0));
+                // 此处优化，防止数据量过大，拆分成多次查询（1000个一组），如果还是很慢，则优化成前端异步加载
+                List<List<String>> partitionList = ListUtil.partition(purchaseOrderIds, orderPartitionSize);
+                Integer sumDefectiveQty = 0;
+                for(List<String> purchaseOrderIdList : partitionList) {
+                    QcInfoDTO.PurchaseQcParamDTO qcParamDTO = new QcInfoDTO.PurchaseQcParamDTO(paramDTO.getQcType(), purchaseOrderIdList);
+                    QcInfoDTO.PurchaseQcInfoDTO purchaseQcInfoDTO = wmsTaskFeign.getQcInfoByPurchaseOrder(qcParamDTO);
+
+                    if(Objects.nonNull(purchaseQcInfoDTO)) {
+                        sumDefectiveQty = sumDefectiveQty + Optional.ofNullable(purchaseQcInfoDTO.getDefectiveQty()).orElse(0);
+                    }
                 }
+                record.setDefectiveQty(sumDefectiveQty);
+            }
+        });
+
+        // 合格率(批次)
+        records.stream().forEach(record->{
+            // 合格率（批次）
+            // 1-（退货批次/收货批次）*100%
+            // 如果收货批次为0，则为
+            if(Objects.isNull(record.getReceivedCount()) || (Objects.nonNull(record.getReceivedCount()) && record.getReceivedCount().intValue() == 0 ) ) {
+                record.setPassRateCount(BigDecimal.ZERO);
+            } else {
+                BigDecimal passRateCount = BigDecimal.ONE.subtract(new BigDecimal(record.getQcReturnCount().intValue()).divide(new BigDecimal(record.getReceivedCount().intValue()),4, BigDecimal.ROUND_HALF_UP)).multiply(new BigDecimal("100"));
+                record.setPassRateCount(passRateCount);
+            }
+            // 合格率（量）
+            // （1-退货量/收货量）*100%
+            if(Objects.isNull(record.getReceivedQty())  ||  (Objects.nonNull(record.getReceivedQty()) && record.getReceivedQty().intValue() == 0 ) ) {
+                record.setPassRateQty(BigDecimal.ZERO);
+            } else {
+                BigDecimal passRateQty = BigDecimal.ONE.subtract(new BigDecimal(record.getQcReturnQty()).divide(new BigDecimal(record.getReceivedQty().intValue()),4, BigDecimal.ROUND_HALF_UP)).multiply(new BigDecimal("100"));
+                record.setPassRateQty(passRateQty);
             }
         });
 
