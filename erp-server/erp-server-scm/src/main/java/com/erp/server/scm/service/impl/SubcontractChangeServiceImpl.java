@@ -4,12 +4,14 @@ import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.ApproveStatusQtyDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -22,11 +24,13 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.entity.SubcontractChangeEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.SubcontractChangeMapper;
 import com.erp.server.scm.service.CommonService;
 import com.erp.server.scm.service.ModuleOperateLogService;
+import com.erp.server.scm.service.SubcontractChangeDetailService;
 import com.erp.server.scm.service.SubcontractChangeService;
 import com.google.common.collect.Sets;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -58,6 +62,9 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
     private ModuleOperateLogService operateLogService;
     @Autowired
     private CommonService commonService;
+    @Autowired
+    private SubcontractChangeDetailService subcontractChangeDetailService;
+
 
     @Override
     public PagingVO<SubcontractChangeDTO.ListDTO> paging(PagingDTO<SubcontractChangeDTO.PagingParamDTO> pagingParamDTO) {
@@ -117,18 +124,18 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
 
         log.info("开始新增委外变更单");
         // 生成单号
-        // TODO 此处的null需填写生成单号的分类和类型，category查看BusinessNoConstant，type查看BusinessNoTypeEnum枚举类
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(null, null));
+        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.SUBCH, BusinessNoTypeEnum.CODE_SUBCH.getCode()));
         subcontractChangeEntity.setCode(code);
         boolean save = super.save(subcontractChangeEntity);
         if(!save) {
            throw new ServiceException("委外变更单保存失败");
         }
+        //新增明细
+        subcontractChangeDetailService.add(addDTO.getDetailList(),subcontractChangeEntity.getId());
 
         // 操作日志
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(String.format("新增了一个委外变更单【%s】", code), null, subcontractChangeEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        operateLogService.addModuleOperateLog(String.format("新增了一个委外变更单【%s】", code), ModuleTypeEnum.SUBCONTRACT_CHANGE.getCode(), subcontractChangeEntity.getId(), "新增操作");
+
         return subcontractChangeEntity.getId();
     }
 
@@ -156,12 +163,12 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
            throw new ServiceException("委外变更单保存失败");
         }
 
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        //修改明细
+        subcontractChangeDetailService.update(updateDTO.getDetailList(),subcontractChangeEntity.getId());
 
         // 记录主单操作日志
         log.info("编辑 开始记录委外变更单日志数据，单号：【{}】", subcontractChangeEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, subcontractChangeEntity, null, subcontractChangeEntity.getId(), "", "");
+        operateLogService.addModuleOperateLogByObj(old, subcontractChangeEntity, ModuleTypeEnum.SUBCONTRACT_CHANGE.getCode(), subcontractChangeEntity.getId(), "", "");
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -189,8 +196,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
        // 记录操作日志
        log.info("提交 开始记录委外变更单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-       // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-       operateLogService.batchAddModuleOperateLog("提交了一个委外变更单【%s】", null, pairList, "提交操作");
+       operateLogService.batchAddModuleOperateLog("提交了一个委外变更单【%s】", ModuleTypeEnum.SUBCONTRACT_CHANGE.getCode(), pairList, "提交操作");
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -242,10 +248,9 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         updateForApprove(ids, approveStatus.getStatus());
 
         // 操作日志
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个委外变更单", approveType.getName()).concat("【%s】").concat(StrUtils.isNotEmpty(dto.getComment()) ? String.format("，意见：%s", dto.getComment()) : ""),
-                            null, pairList, "审核操作");
+                ModuleTypeEnum.SUBCONTRACT_CHANGE.getCode(), pairList, "审核操作");
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -267,9 +272,8 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         updateForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("反审核了一个委外变更单【%s】", null, pairList, "反审核操作");
+        operateLogService.batchAddModuleOperateLog("反审核了一个委外变更单【%s】", ModuleTypeEnum.SUBCONTRACT_CHANGE.getCode(), pairList, "反审核操作");
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -288,7 +292,8 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
        log.info("删除 开始删除委外变更单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
        operateLogService.removeByBusinessIds(ids);
 
-       // TODO 删除明细数据（如果有明细数据的话）
+       //删除明细数据
+       subcontractChangeDetailService.removeByMainIds(ids);
 
        // 删除主单数据
        log.info("删除 开始删除委外变更单主单数据，id集合：【{}】", JSONObject.toJSONString(ids));
@@ -316,8 +321,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         //操作日志
         log.info("撤销 开始记录操作日志，id集合：【{}】", JSONObject.toJSONString(ids));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.batchAddModuleOperateLog("委外变更单【%s】取消流程", null, pairList, "取消流程操作");
+        operateLogService.batchAddModuleOperateLog("委外变更单【%s】取消流程", ModuleTypeEnum.SUBCONTRACT_CHANGE.getCode(), pairList, "取消流程操作");
     }
 
     @Override
@@ -325,6 +329,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         SubcontractChangeEntity subcontractChangeEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到委外变更单数据"));
         SubcontractChangeDTO.ViewDTO data = BeanMapperUtils.map(SubcontractChangeDTO.ViewDTO.class, subcontractChangeEntity);
         // TODO 查询明细数据（如果有的话）
+
         return data;
     }
 

@@ -3,12 +3,14 @@ package com.erp.model.scm.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.scm.dto.SubcontractChangeDetailDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
 
 
 /**
@@ -163,6 +165,15 @@ public class SubcontractChangeDetailEntity extends BaseEntity<SubcontractChangeD
     */
     @TableField("is_generate_po")
     private Boolean isGeneratePo;
+
+    @TableField(exist = false)
+    private Boolean isAdd;
+
+    @TableField(exist = false)
+    private String supplierName;
+
+    @TableField(exist = false)
+    private List<SubcontractChangeDetailDTO.UpdateDTO> childList;
 
 
     public static final String MAIN_ID = "main_id";
