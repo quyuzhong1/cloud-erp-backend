@@ -2,10 +2,7 @@ package com.erp.rpc.wms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.erp.model.wms.dto.PoInstockDTO;
-import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
@@ -192,4 +189,12 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/purchaseReturnOrder/getReturnInfo")
     List<PurchaseReturnOrderDTO.SupplierReturnDTO> getReturnInfo(@RequestBody PurchaseReturnOrderDTO.SupplierReturnParamDTO dto);
+
+    /**
+     * 根据采购订单获取质检信息
+     * @param dto
+     * @return List<PurchaseReturnOrderDTO.SupplierReturnDTO>
+     */
+    @PostMapping("/feign/qcBill/getQcInfoByPurchaseOrder")
+    QcInfoDTO.PurchaseQcInfoDTO getQcInfoByPurchaseOrder(@RequestBody QcInfoDTO.PurchaseQcParamDTO dto);
 }

@@ -8,6 +8,7 @@
             sup.code,
             sup.name,
             sup.disabled as supplier_disabled,
+            array_to_string(array_agg(po.id), ',') AS purchase_order_ids,
             count(distinct po.id) as purchase_count,
             sum(pod.purchase_qty) as purchase_qty,
             sum(pod.purchase_amount) as purchase_amount

@@ -42,12 +42,12 @@ public class WarehouseLocationController extends BaseController {
     }
 
     /**
-     * 仓位分页
+     * 所有仓位下拉
      * @return
      */
-    @PostMapping(value = "/paging")
-    public ApiResult<PagingVO<WarehouseLocationDTO.LocationSelectDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> dto) {
-        return success(warehouseLocationService.paging(dto));
+    @PostMapping(value = "/all")
+    public ApiResult<List<WarehouseLocationDTO.LocationSelectDTO>> all(@RequestBody @Validated PagingDTO<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> dto) {
+        return success(warehouseLocationService.all( ));
     }
 
     /**

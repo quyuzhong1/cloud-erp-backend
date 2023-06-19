@@ -8,6 +8,7 @@ import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -763,4 +764,34 @@ public class QcInfoDTO implements Serializable {
          */
         private String approveStatus;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PurchaseQcParamDTO {
+
+        /**
+         * 内外检类型
+         */
+        private String qcType;
+
+        /**
+         * 采购订单编号id集合
+         */
+        private List<String> purchaseOrderIds;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseQcInfoDTO {
+
+
+        /**
+         * 次品数量
+         */
+        private Integer defectiveQty;
+
+    }
+
 }

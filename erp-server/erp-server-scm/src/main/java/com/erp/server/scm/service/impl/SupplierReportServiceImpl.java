@@ -1,7 +1,7 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import com.baomidou.mybatisplus.core.conditions.interfaces.Func;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -10,6 +10,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.SupplierReportDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.SupplierReportMapper;
@@ -19,10 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -50,7 +48,7 @@ public class SupplierReportServiceImpl implements SupplierReportService {
         }
 
         // 填充供应商报表其他字段值
-        fillSupplierRptInfo(pageData.getRecords(), paramDTO.getParams().getDateList());
+        fillSupplierRptInfo(pageData.getRecords(), paramDTO.getParams());
 
         return new PagingVO(pageData);
     }
@@ -59,11 +57,11 @@ public class SupplierReportServiceImpl implements SupplierReportService {
      * 填充供应商报表其他字段值
      * @param records
      */
-    private void fillSupplierRptInfo(List<SupplierReportDTO.PagingViewDTO> records, List<LocalDate> dateList) {
+    private void fillSupplierRptInfo(List<SupplierReportDTO.PagingViewDTO> records, SupplierReportDTO.PagingSearchParamDTO paramDTO) {
         List<String> supplierIds = records.stream().map(SupplierReportDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
 
         // 收货批次、已收货量
-        WarehouseReceiveDTO.SupplierReceiveParamDTO receiveParamDTO = new WarehouseReceiveDTO.SupplierReceiveParamDTO(supplierIds, dateList);
+        WarehouseReceiveDTO.SupplierReceiveParamDTO receiveParamDTO = new WarehouseReceiveDTO.SupplierReceiveParamDTO(supplierIds, paramDTO.getDateList());
         List<WarehouseReceiveDTO.SupplierReceiveInfoDTO> supplierReceiveInfos = wmsTaskFeign.getReceiveInfoBySupplierIds(receiveParamDTO);
         if(CollUtil.isNotEmpty(supplierReceiveInfos)) {
             Map<String,WarehouseReceiveDTO.SupplierReceiveInfoDTO> supplierRecMap = supplierReceiveInfos.stream().collect(Collectors.toMap(WarehouseReceiveDTO.SupplierReceiveInfoDTO::getSupplierId, Function.identity()));
@@ -75,7 +73,7 @@ public class SupplierReportServiceImpl implements SupplierReportService {
         }
 
         // 入库批次、已入库量
-        PoInstockDTO.SupplierInstockParamDTO instockParamDTO = new PoInstockDTO.SupplierInstockParamDTO(supplierIds, dateList);
+        PoInstockDTO.SupplierInstockParamDTO instockParamDTO = new PoInstockDTO.SupplierInstockParamDTO(supplierIds, paramDTO.getDateList());
         List<PoInstockDTO.SupplierInstockInfoDTO> supplierInstockInfos =  wmsTaskFeign.getInstockInfoBySupplierIds(instockParamDTO);
         if(CollUtil.isNotEmpty(supplierInstockInfos)) {
             Map<String,PoInstockDTO.SupplierInstockInfoDTO> supplierPoMap = supplierInstockInfos.stream().collect(Collectors.toMap(PoInstockDTO.SupplierInstockInfoDTO::getSupplierId, Function.identity()));
@@ -88,7 +86,7 @@ public class SupplierReportServiceImpl implements SupplierReportService {
 
         // 质检退货批次、质检退货量
         List<String> sourceTypeList = Lists.newArrayList(SourceTypeEnum.QC_BILL.getCode());
-        PurchaseReturnOrderDTO.SupplierReturnParamDTO returnParamDTO = new PurchaseReturnOrderDTO.SupplierReturnParamDTO(supplierIds, dateList, sourceTypeList);
+        PurchaseReturnOrderDTO.SupplierReturnParamDTO returnParamDTO = new PurchaseReturnOrderDTO.SupplierReturnParamDTO(supplierIds, paramDTO.getDateList(), sourceTypeList);
         List<PurchaseReturnOrderDTO.SupplierReturnDTO> supplierReturnInfos = wmsTaskFeign.getReturnInfo(returnParamDTO);
         if(CollUtil.isNotEmpty(supplierReturnInfos)) {
             Map<String,PurchaseReturnOrderDTO.SupplierReturnDTO> supplierReturnMap = supplierReturnInfos.stream().collect(Collectors.toMap(PurchaseReturnOrderDTO.SupplierReturnDTO::getSupplierId, Function.identity()));
@@ -99,7 +97,18 @@ public class SupplierReportServiceImpl implements SupplierReportService {
             });
         }
 
-        // 外检和内检查询条件在wms质检单中过滤
+        // 次品量
+        records.stream().forEach(record->{
+            if(StrUtil.isNotEmpty(record.getPurchaseOrderIds())) {
+                List<String> purchaseOrderIds = Arrays.asList(record.getPurchaseOrderIds().split(","));
+                QcInfoDTO.PurchaseQcParamDTO qcParamDTO = new QcInfoDTO.PurchaseQcParamDTO(paramDTO.getQcType(), purchaseOrderIds);
+                QcInfoDTO.PurchaseQcInfoDTO purchaseQcInfoDTO = wmsTaskFeign.getQcInfoByPurchaseOrder(qcParamDTO);
+                record.setDefectiveQty(0);
+                if(Objects.nonNull(purchaseQcInfoDTO)) {
+                  record.setDefectiveQty(Optional.ofNullable(purchaseQcInfoDTO.getDefectiveQty()).orElse(0));
+                }
+            }
+        });
 
     }
 
