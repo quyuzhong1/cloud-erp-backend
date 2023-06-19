@@ -1210,6 +1210,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productCostService.removeCost(idList);
         //7.删除任务关联sku 信息
         taskRefSkuConfigService.removeTaskRefSku(idList);
+        //7.删除目的国海关编码
+        productCustomsService.removeBySkuId(idList);
         //8.删除sku信息
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductDetailEntity::getId, skuId);
@@ -1268,6 +1270,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productPurchaseService.removePurchase(skuIds);
         //6.删除成本信息
         productCostService.removeCost(skuIds);
+        //7.删除目的国海关编码
+        productCustomsService.removeBySkuId(skuIds);
         ProductDetailEntity entity = lambdaQuery().eq(ProductDetailEntity::getId, id).one();
         entity.setIsDeleted(Boolean.TRUE);
         //同步到SCM
