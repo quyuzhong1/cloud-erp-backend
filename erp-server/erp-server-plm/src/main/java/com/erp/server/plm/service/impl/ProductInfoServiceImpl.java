@@ -1078,7 +1078,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @date 2022-09-28 17:27
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void updateProduct(UpdateProductDTO dto) {
         LoginUser loginUser = commonService.getUserInfo();
         String productId = dto.getProductId();
@@ -1970,7 +1970,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         LocalDate weekStart = now.with(weekFields.dayOfWeek(), 1L);
         //周结束
         LocalDate weekEnd = now.with(weekFields.dayOfWeek(), 7L);
-        List<ProjectTaskEntity> weekTaskList = taskList.stream().filter(t -> weekStart.compareTo(t.getPlanEndTime()) <= 0 && weekEnd.compareTo(t.getPlanEndTime()) >= 0).
+        List<ProjectTaskEntity> weekTaskList = taskList.stream().filter(t ->t.getPlanEndTime()!=null&& weekStart.compareTo(t.getPlanEndTime()) <= 0 && weekEnd.compareTo(t.getPlanEndTime()) >= 0).
                 collect(Collectors.toList());
         Integer weekTotal = weekTaskList.size();
         weekTask.setWeekCount(weekTotal);
@@ -1991,7 +1991,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
         //到期任务信息
         ProductOverviewDTO.ExpireTaskDTO expireTask = new ProductOverviewDTO.ExpireTaskDTO();
-        List<ProjectTaskEntity> expireTaskList = taskList.stream().filter(t -> now.compareTo(t.getPlanEndTime()) == 0).collect(Collectors.toList());
+        List<ProjectTaskEntity> expireTaskList = taskList.stream().filter(t -> t.getPlanEndTime()!=null&&now.compareTo(t.getPlanEndTime()) == 0).collect(Collectors.toList());
         Integer expireCount = expireTaskList.size();
         expireTask.setExpireCount(expireCount);
         //完成
@@ -2008,7 +2008,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
         //延期的任务
         ProductOverviewDTO.DelayTaskDTO delayTask = new ProductOverviewDTO.DelayTaskDTO();
-        List<ProjectTaskEntity> delayTaskList = taskList.stream().filter(t -> now.compareTo(t.getPlanEndTime()) > 0).collect(Collectors.toList());
+        List<ProjectTaskEntity> delayTaskList = taskList.stream().filter(t -> t.getPlanEndTime()!=null&&now.compareTo(t.getPlanEndTime()) > 0).collect(Collectors.toList());
         Integer delayCount = delayTaskList.size();
         delayTask.setDelayCount(delayCount);
         //完成

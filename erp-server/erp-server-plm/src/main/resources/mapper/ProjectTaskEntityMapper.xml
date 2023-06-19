@@ -389,7 +389,12 @@
 
     <select id="findUndone" resultType="int">
         SELECT COUNT(*) FROM project_task WHERE
-        status!=#{finishState} AND status !=#{approvalPassState} AND is_deleted = FALSE
+        is_deleted = FALSE
+        AND status NOT IN
+        <foreach collection="excludeStatusList" item="status" open="(" separator="," close=")">
+            #{status}
+        </foreach>
+
         <if test="taskIds!=null and taskIds.size>0">
             AND id IN
             <foreach collection="taskIds" item="taskId" open="(" separator="," close=")">

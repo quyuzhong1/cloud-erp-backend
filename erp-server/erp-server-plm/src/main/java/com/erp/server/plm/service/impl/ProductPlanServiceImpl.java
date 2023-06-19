@@ -508,9 +508,13 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             if (ProjectStateEnum.FINISH.getState().equals(projectInfoEntity.getProjectStatus())) {
                 productPlanEntity.setProductStatus(ProductPlanStatusEnum.FINISH.getCode());
             }
-            //中止
+            //暂停
+            if (ProjectStateEnum.SUSPEND.getState().equals(projectInfoEntity.getProjectStatus())) {
+                productPlanEntity.setProductStatus(ProductPlanStatusEnum.SUSPEND.getCode());
+            }
+            //终止
             if (ProjectStateEnum.TERMINATE.getState().equals(projectInfoEntity.getProjectStatus())) {
-                productPlanEntity.setProductStatus(ProductPlanStatusEnum.CANCEL.getCode());
+                productPlanEntity.setProductStatus(ProductPlanStatusEnum.TERMINATE.getCode());
             }
         }
         //同步入库日期和上市日期
@@ -709,9 +713,13 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
                 productPlanEntity.setProductStatus(ProductPlanStatusEnum.APPROVAL.getCode());
                 productPlanEntity.setProjectApprovalDate(LocalDate.now());
             }
+            //已暂停
+            if (ApprovalStatusEnum.SUSPEND.getCode().equals(status)) {
+                productPlanEntity.setProductStatus(ProductPlanStatusEnum.SUSPEND.getCode());
+            }
             //已终止
             if (ApprovalStatusEnum.TERMINATE.getCode().equals(status)) {
-                productPlanEntity.setProductStatus(ProductPlanStatusEnum.CANCEL.getCode());
+                productPlanEntity.setProductStatus(ProductPlanStatusEnum.TERMINATE.getCode());
             }
         }
         //项目状态
@@ -728,9 +736,13 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             if (ProjectStateEnum.FINISH.getState().equals(status)) {
                 productPlanEntity.setProductStatus(ProductPlanStatusEnum.FINISH.getCode());
             }
-            //中止
+            //暂停
+            if (ProjectStateEnum.SUSPEND.getState().equals(status)) {
+                productPlanEntity.setProductStatus(ProductPlanStatusEnum.SUSPEND.getCode());
+            }
+            //终止
             if (ProjectStateEnum.TERMINATE.getState().equals(status)) {
-                productPlanEntity.setProductStatus(ProductPlanStatusEnum.CANCEL.getCode());
+                productPlanEntity.setProductStatus(ProductPlanStatusEnum.TERMINATE.getCode());
             }
         }
         this.updateById(productPlanEntity);
@@ -916,9 +928,14 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
                 planStatus = ProductPlanStatusEnum.APPROVAL.getCode();
                 approvalDate = LocalDate.now();
             }
-            //已中止
+            //已暂停
+            if (ApprovalStatusEnum.SUSPEND.getCode().equals(status)) {
+                planStatus = ProductPlanStatusEnum.SUSPEND.getCode();
+
+            }
+            //已终止
             if (ApprovalStatusEnum.TERMINATE.getCode().equals(status)) {
-                planStatus = ProductPlanStatusEnum.CANCEL.getCode();
+                planStatus = ProductPlanStatusEnum.TERMINATE.getCode();
 
             }
         }
@@ -938,7 +955,11 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             }
             //暂停
             if (ProjectStateEnum.SUSPEND.getState().equals(status)) {
-                planStatus = ProductPlanStatusEnum.CANCEL.getCode();
+                planStatus = ProductPlanStatusEnum.SUSPEND.getCode();
+            }
+            //终止
+            if (ProjectStateEnum.TERMINATE.getState().equals(status)) {
+                planStatus = ProductPlanStatusEnum.TERMINATE.getCode();
 
             }
         }

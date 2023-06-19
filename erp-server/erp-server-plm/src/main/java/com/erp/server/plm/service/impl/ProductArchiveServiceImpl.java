@@ -47,10 +47,10 @@ public class ProductArchiveServiceImpl extends ServiceImpl<ProductArchiveMapper,
     private ProductInfoService productInfoService;
 
     @Override
-    public PagingVO paging(PagingDTO<ProductSearchDTO> dto) {
+    public PagingVO paging(PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        ProductSearchDTO params = dto.getParams();
+        ProductSearchDTO.PagingParamDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params);
         List<ProductArchiveDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {

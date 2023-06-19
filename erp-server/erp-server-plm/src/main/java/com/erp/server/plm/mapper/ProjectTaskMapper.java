@@ -62,7 +62,7 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
     Integer myApprovalPagingCount(@Param("productId") String productId,@Param("userId") String userId,
                                               @Param("statusList") List<Integer> statusList,@Param("processIdList") List<String> processIdList);
 
-    int findUndone(@Param("finishState") Integer finishState,@Param("approvalPassState") Integer approvalPassState, @Param("taskIds") List<String> preTaskIds);
+    int findUndone(@Param("excludeStatusList") List<Integer> excludeStatusList, @Param("taskIds") List<String> preTaskIds);
 
     List<TaskGroupResultDTO> toMeTaskGroup(@Param("params") TaskGroupParamDTO params,@Param("notStateList") List<Integer> notStateList);
 
