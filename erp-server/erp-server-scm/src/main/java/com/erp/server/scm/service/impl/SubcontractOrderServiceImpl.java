@@ -611,6 +611,11 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             generatePoDTO.setReceiveOrgId(mainEntity.getReceiveOrgId());
             //新品首批暂时默认
             generatePoDTO.setIsFirstMassProduct(Boolean.FALSE);
+            //预计交货日期
+            generatePoDTO.setPlanDeliveryDate(detailEntity.getPlanDeliveryDate());
+            //备注
+            generatePoDTO.setRemark(detailEntity.getRemark());
+
         }
         //查询产品信息
         List<String> skuIds = resultList.stream().map(obj -> obj.getSkuId()).collect(Collectors.toList());
@@ -652,6 +657,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 poDetailAddDTO.setProductName(skuVO.getSkuName());
                 poDetailAddDTO.setPurchaseQty(addDetailDTO.getQty());
                 poDetailAddDTO.setWarehouseLocation(addDetailDTO.getWarehouseLocation());
+                poDetailAddDTO.setPlanDeliveryDate(addDetailDTO.getPlanDeliveryDate());
+                poDetailAddDTO.setRemark(addDetailDTO.getRemark());
                 //供应商报价信息
                 PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
                 searchDTO.setSkuId(addDetailDTO.getSkuId());
