@@ -111,7 +111,7 @@
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             AND (pi."name" ILIKE concat('%', #{params.searchKeyword} ,'%')
             OR pi.spu_no ILIKE concat('%', #{params.searchKeyword} ,'%')
-            OR pi.id (SELECT product_id FROM product_detail WHERE sku_no ILIKE concat('%', #{params.searchKeyword} ,'%') GROUP BY product_id)
+            OR pi.id IN (SELECT product_id FROM product_detail WHERE sku_no ILIKE concat('%', #{params.searchKeyword} ,'%') GROUP BY product_id)
             )
         </if>
 
@@ -271,7 +271,7 @@
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             AND (pi."name" ILIKE concat('%', #{params.searchKeyword} ,'%')
             OR pi.spu_no ILIKE concat('%', #{params.searchKeyword} ,'%')
-            OR pi.id (SELECT product_id FROM product_detail WHERE sku_no ILIKE concat('%', #{params.searchKeyword} ,'%') GROUP BY product_id)
+            OR pi.id IN (SELECT product_id FROM product_detail WHERE sku_no ILIKE concat('%', #{params.searchKeyword} ,'%') GROUP BY product_id)
             )
         </if>
 

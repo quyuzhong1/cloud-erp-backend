@@ -24,4 +24,7 @@ public interface ProductCustomsService extends SuperService<ProductCustomsEntity
      * @return java.util.List<com.erp.model.plm.entity.ProductCustomsEntity>
      **/
     List<ProductCustomsEntity> listByProductId(String productId);
+
+
+    Boolean removeBySkuId(List<String> skuIds);
 }

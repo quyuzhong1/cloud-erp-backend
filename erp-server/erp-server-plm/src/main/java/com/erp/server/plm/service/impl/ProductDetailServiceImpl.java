@@ -12,11 +12,13 @@ import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SkuApproveConfigureEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.*;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -49,6 +51,7 @@ import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -750,12 +753,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //9.修改/新增  包装辅料信息
         List<ProductAccessoriesDTO> productAccessoriesList = productNoSpecDTO.getProductAccessoriesList();
         if (CollectionUtils.isNotEmpty(productAccessoriesList)) {
+
             for (ProductAccessoriesDTO accessories : productAccessoriesList) {
                 accessories.setParentSkuId(skuId);
                 accessories.setProductId(id);
             }
+
             //添加包装辅料的日志
             addProductAccessoriesLog(productAccessoriesList, id);
+
             productAccessoriesService.saveOrUpdateBatchAccessories(productAccessoriesList);
         }
 
@@ -765,6 +771,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             for (ProductAttestationDTO attestation : productAttestationList) {
                 attestation.setSkuId(skuId);
             }
+
             addProductAttestationLog(productAttestationList, id);
             productAttestationService.saveOrUpdateBatchAttestation(productAttestationList);
         }
@@ -1203,6 +1210,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productCostService.removeCost(idList);
         //7.删除任务关联sku 信息
         taskRefSkuConfigService.removeTaskRefSku(idList);
+        //7.删除目的国海关编码
+        productCustomsService.removeBySkuId(idList);
         //8.删除sku信息
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductDetailEntity::getId, skuId);
@@ -1261,6 +1270,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productPurchaseService.removePurchase(skuIds);
         //6.删除成本信息
         productCostService.removeCost(skuIds);
+        //7.删除目的国海关编码
+        productCustomsService.removeBySkuId(skuIds);
         ProductDetailEntity entity = lambdaQuery().eq(ProductDetailEntity::getId, id).one();
         entity.setIsDeleted(Boolean.TRUE);
         //同步到SCM
