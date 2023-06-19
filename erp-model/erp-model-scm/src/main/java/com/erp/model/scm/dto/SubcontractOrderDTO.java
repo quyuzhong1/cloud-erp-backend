@@ -480,6 +480,11 @@ public class SubcontractOrderDTO implements Serializable {
          */
         private Integer applyQty;
 
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
     }
 
     @Data

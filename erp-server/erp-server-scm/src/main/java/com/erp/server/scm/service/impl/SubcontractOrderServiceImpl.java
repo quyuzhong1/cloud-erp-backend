@@ -186,6 +186,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean finishDelivery(List<String> ids, String remark) {
         List<SubcontractOrderDetailEntity> detailList = subcontractOrderDetailService.listByIds(ids);
         if (CollectionUtils.isEmpty(detailList)) {
@@ -197,6 +198,12 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         }
         //更新明细中的交货状态
         subcontractOrderDetailService.updateArrivalStatusByIds(ArrivalStatusEnum.ARRIVED.getCode(), ids);
+
+        //关联采购订单结束交货
+        List<String> detailIds = detailList.stream().map(SubcontractOrderDetailEntity::getId).collect(Collectors.toList());
+        List<String> poIds = baseMapper.listPoIdsByDetailIds(detailIds);
+        purchaseOrderService.finishDelivery(poIds);
+
         //操作日志
         List<Pair<String, String>> pairList = detailList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("SKU【%s】结束交货", ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "结束交货操作");
@@ -310,7 +317,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         this.submit(Arrays.asList(dto.getId()));
     }
 
-    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Override
     public void approve(BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
@@ -334,6 +341,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         ApproveStatusEnum approveStatus = Objects.equals(ApproveTypeEnum.PASS, approveType) ? ApproveStatusEnum.APPROVE : ApproveStatusEnum.REJECT;
         if(Objects.equals(ApproveTypeEnum.PASS, approveType)) {
            // TODO 审核通过流程处理
+
+            //自动生成采购订单
+            autoGeneratePo(ids);
+
         } else if (Objects.equals(ApproveTypeEnum.REJECT, approveType)) {
            // TODO 终止审批流程
         }
@@ -346,6 +357,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个委外订单", approveType.getName()).concat("【%s】").concat(StrUtils.isNotEmpty(dto.getComment()) ? String.format("，意见：%s", dto.getComment()) : ""),
                 ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "审核操作");
     }
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -540,6 +552,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void generatePo(ValidList<SubcontractOrderDTO.GeneratePoDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_98004);
@@ -685,6 +698,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void invalid(List<String> ids, String remark) {
         List<SubcontractOrderEntity> list = super.listByIds(ids);
         if (CollUtil.isEmpty(list)) {
@@ -706,6 +720,29 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个委外订单【%s】，作废原因：".concat(remark), ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "作废操作");
+    }
+
+    /**
+     * @description: 自动生成采购订单
+     * @author Will
+     * @date: 2023/6/19 9:59
+     * @param ids
+     */
+    private void autoGeneratePo(List<String> ids) {
+
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        List<SubcontractOrderDTO.ViewGeneratePoDTO> viewGeneratePoDTOS = viewGeneratePo(ids);
+        if (CollectionUtils.isEmpty(viewGeneratePoDTOS)) {
+            return;
+        }
+        ValidList<SubcontractOrderDTO.GeneratePoDTO> list = new ValidList<>();
+
+        //生成采购订单
+        List<SubcontractOrderDTO.GeneratePoDTO> resultLis = BeanMapperUtils.copyList(SubcontractOrderDTO.GeneratePoDTO.class, viewGeneratePoDTOS);
+        list.setList(resultLis);
+        generatePo(list);
     }
 
     /**

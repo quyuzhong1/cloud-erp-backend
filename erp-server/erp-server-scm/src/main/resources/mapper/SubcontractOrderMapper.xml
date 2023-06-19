@@ -267,7 +267,8 @@
             sod.warehouse_id as warehouseId,
             sod.warehouse_name as warehouseName,
             sod.qty,
-            sod.parent_id as parentId
+            sod.parent_id as parentId,
+            sod.supplier_id as supplierId
         from subcontract_order so
         inner join subcontract_order_detail sod on so.id = sod.main_id  and sod.is_deleted = false
         <where>
@@ -280,6 +281,23 @@
             </if>
         </where>
         order by so.create_time desc, sod.id desc
+    </select>
+
+    <select id="listPoIdsByDetailIds" resultType="java.lang.String">
+        select
+               po.id
+        from  subcontract_order_detail sod
+        inner join purchase_order_detail pod on sod.id = pod.source_detail_id and pod.is_deleted = false
+        inner join purchase_order po on pod.purchase_order_id = po.id and po.is_deleted = false
+        <where>
+            sod.is_deleted = false and po.invalid_status = false
+            <if test="detailIds != null and detailIds.size > 0">
+                and sod.id in
+                <foreach collection="detailIds" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
     </select>
 
 </mapper>
