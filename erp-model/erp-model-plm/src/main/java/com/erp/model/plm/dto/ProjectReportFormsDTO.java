@@ -320,7 +320,7 @@ public class ProjectReportFormsDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class taskDetail {
+    public static class TaskDetail {
         /**
          * 阶段名称
          */
@@ -352,7 +352,11 @@ public class ProjectReportFormsDTO implements Serializable {
         /**
          * 任务状态
          */
-        private String taskState;
+        private Integer taskState;
+        /**
+         * 任务状态名称
+         */
+        private String taskStateName;
     }
 
 }

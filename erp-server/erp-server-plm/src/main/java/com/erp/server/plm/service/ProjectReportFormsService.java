@@ -15,4 +15,13 @@ public interface ProjectReportFormsService {
      * @return com.common.business.vo.PagingVO<java.util.List<com.erp.model.plm.dto.ProjectReportFormsDTO.PagingView>>
      **/
     PagingVO<List<ProjectReportFormsDTO.PagingView>> projectReportFormsPaging(PagingDTO<ProjectReportFormsDTO.PagingParam> dto);
+
+    /**
+     * 任务详情
+     * @Author Luo_WG
+     * @Date 2023/6/19 10:27
+     * @param id
+     * @return java.util.List<com.erp.model.plm.dto.ProjectReportFormsDTO.TaskDetailParam>
+     **/
+    List<ProjectReportFormsDTO.TaskDetail> taskDetailView(String id);
 }
