@@ -2214,12 +2214,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         int size = exportDataList.size();
         Integer flag = exportDataList.get(0);
         params.setPermissionSql(params.getPermissionSql());
-        //这个是点击左侧分类获取到的产品id
-        List<String> productIdList = params.getProductIds();
-        //如果productIds 不等于null 就是正常的搜索 ;
-        if (productIdList != null && productIdList.size() == 0) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
@@ -2306,12 +2300,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public Boolean myProjectExport(ProductSearchDTO.ExportDTO params, HttpServletResponse response) {
-        //这个是点击左侧分类获取到的产品id
-        List<String> productIdList = params.getProductIds();
-        //如果productIds 不等于null 就是正常的搜索 ;
-        if (productIdList != null && productIdList.size() == 0) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
@@ -2407,16 +2395,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public Boolean collectExport(ProductSearchDTO.ExportDTO params, HttpServletResponse response) {
-        //这个是点击左侧分类获取到的产品id
-        List<String> productIdList = params.getProductIds();
-        //如果productIds 不等于null 就是正常的搜索 ;
-        if (productIdList != null && productIdList.size() == 0) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
-
         /**
          * 导出数据 类型
          * 0，产品列表
