@@ -199,11 +199,11 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //关联采购订单结束交货
         List<String> detailIds = detailList.stream().map(SubcontractOrderDetailEntity::getId).collect(Collectors.toList());
         List<String> poIds = baseMapper.listPoIdsByDetailIds(detailIds);
-        purchaseOrderService.finishDelivery(poIds);
+        purchaseOrderService.finishDelivery(poIds, remark);
 
         //操作日志
         List<Pair<String, String>> pairList = detailList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("SKU【%s】结束交货", ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "结束交货操作");
+        operateLogService.batchAddModuleOperateLog("SKU【%s】，结束原因：".concat(StrUtils.null2EmptyWithTrim(remark)), ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "结束交货操作");
         return Boolean.TRUE;
     }
 

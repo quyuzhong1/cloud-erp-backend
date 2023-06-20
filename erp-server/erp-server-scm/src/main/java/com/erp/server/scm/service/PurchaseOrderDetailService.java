@@ -126,4 +126,15 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @return List<PurchaseOrderDetailEntity>
      */
     List<PurchaseOrderDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds);
+
+    /**
+     * @description: 根据ids更新
+     * @author zhangchunlin
+     * @date: 2023/6/20 10:33
+     * @param arrivalStatus
+     * @param ids
+     * @param remark
+     *
+     */
+    void updateArrivalStatusByIds(String arrivalStatus, List<String> ids, List<PurchaseOrderDetailEntity> purchaseOrderDetailList, String remark);
 }

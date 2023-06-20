@@ -10,6 +10,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -36,6 +37,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -474,5 +476,42 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     @Override
     public List<PurchaseOrderDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds) {
        return baseMapper.listBySourceDetailIds(sourceDetailIds);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateArrivalStatusByIds(String arrivalStatus, List<String> ids, List<PurchaseOrderDetailEntity> purchaseOrderDetailList, String remark) {
+        List<PurchaseOrderDetailEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+
+        // 结束交货备注追加在原sku备注
+        Map<String,PurchaseOrderDetailEntity> productOrderDetailMap =  purchaseOrderDetailList.stream().collect(Collectors.toMap(PurchaseOrderDetailEntity::getId, Function.identity()));
+        productOrderDetailMap.forEach((detailId, purchaseOrderDetail)->{
+            String oldRemark = purchaseOrderDetail.getRemark();
+            String newRemark = remark;
+            if(StrUtils.isNotEmpty(oldRemark)) {
+                if(oldRemark.endsWith(";") || oldRemark.endsWith("；")) {
+                    newRemark = oldRemark + remark;
+                } else {
+                    newRemark = oldRemark + "；" + remark;
+                }
+            }
+            lambdaUpdate()
+                    .eq(PurchaseOrderDetailEntity::getId,detailId)
+                    .set(PurchaseOrderDetailEntity::getArrivalStatus,arrivalStatus)
+                    .set(PurchaseOrderDetailEntity::getArrivalTime, LocalDateTime.now())
+                    .set(PurchaseOrderDetailEntity::getIsEndReceive,Boolean.TRUE)
+                    .set(PurchaseOrderDetailEntity::getRemark, newRemark)
+                    .update();
+        });
+        list.forEach(req -> req.setIsDeleted(Boolean.TRUE));
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(), list, IdUtil.simpleUUID());
+
+        List<String> sourceDetailIds = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getSourceDetailId())).map(PurchaseOrderDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        //委外订单更新到货状态
+        subcontractOrderDetailService.syncArrivalStatusByIds(sourceDetailIds);
     }
 }

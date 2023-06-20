@@ -338,8 +338,8 @@ public class PurchaseOrderController extends BaseController {
             menuCode = "scm:purchaseOrder:finishDelivery",
             serviceClass = PurchaseOrderService.class,
             keyIdName = "ids")
-    public ApiResult finishDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = purchaseOrderService.finishDelivery(dto.getIds());
+    public ApiResult finishDelivery(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        Boolean result = purchaseOrderService.finishDelivery(dto.getIds(), dto.getRemark());
         return result == true ? success() : failure();
     }
 

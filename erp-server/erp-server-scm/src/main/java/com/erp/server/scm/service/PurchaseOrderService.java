@@ -93,9 +93,10 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @author Will
      * @date: 2023/3/16 11:35
      * @param ids
+     * @param remark
      * @return Boolean
      */
-    Boolean finishDelivery(List<String> ids);
+    Boolean finishDelivery(List<String> ids, String remark);
 
     /**
      * @description: 导出采购合同PDF
