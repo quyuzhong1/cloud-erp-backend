@@ -308,6 +308,28 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productNoSpecDetailAllDTO.setProductCostShowDTOList(costShowDTOList);
         //产品采购信息查询列表
         List<ProductPurchaseShowDTO> purchaseShowDTOList = productPurchaseService.list(productId);
+        if(CollUtil.isNotEmpty(purchaseShowDTOList)) {
+            List<String> supplierIds = Lists.newArrayList();
+            purchaseShowDTOList.stream().forEach(r->{
+                if(StrUtils.isNotEmpty(r.getMainSupplier())) {
+                    supplierIds.add(r.getMainSupplier());
+                }
+                if(StrUtils.isNotEmpty(r.getSecondSupplier())) {
+                    supplierIds.add(r.getSecondSupplier());
+                }
+            });
+            if(CollUtil.isNotEmpty(supplierIds)) {
+                Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
+                purchaseShowDTOList.stream().forEach(r->{
+                    if(StrUtils.isNotEmpty(r.getMainSupplier()) && supplierMap.containsKey(r.getMainSupplier())) {
+                        r.setMainSupplierName(supplierMap.get(r.getMainSupplier()).getName());
+                    }
+                    if(StrUtils.isNotEmpty(r.getSecondSupplier()) && supplierMap.containsKey(r.getSecondSupplier())) {
+                        r.setSecondSupplierName(supplierMap.get(r.getSecondSupplier()).getName());
+                    }
+                });
+            }
+        }
         productNoSpecDetailAllDTO.setProductPurchaseShowDTOList(purchaseShowDTOList);
         //产品采购备注信息查询列表
         List<ProductPurchaseRemarkEntity> remarkEntityList = productPurchaseRemarkService.list(productId);

@@ -20,6 +20,7 @@ public interface SupplierFeign {
 
     /**
      * 批量获取供应商信息
+     * 返回的map不会为空，无需判断
      * @param ids
      * @return
      */
