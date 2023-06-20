@@ -356,4 +356,17 @@ public class QcInfoController extends BaseController {
         return success(generateSoDeliveryViews);
     }
 
+    /**
+     * 导出质检单日报
+     */
+    @PostMapping("/exportDailyQcBill")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "qc_user_id",
+            menuCode = "wms:qcBill:exportQcBill",
+            tableAlias = "qb")
+    public ApiResult exportDailyExcel(@RequestBody @Valid QcInfoDTO.ExportDTO dto, HttpServletResponse response) {
+        qcInfoService.exportDailyExcel(dto, response);
+        return success();
+    }
+
 }

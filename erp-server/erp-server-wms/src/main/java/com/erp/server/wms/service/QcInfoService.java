@@ -242,5 +242,5 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @param dto
      * @param response
      */
-    void exportDailyExcel(QcInfoDTO.PagingParamDTO dto, HttpServletResponse response);
+    void exportDailyExcel(QcInfoDTO.ExportDTO dto, HttpServletResponse response);
 }

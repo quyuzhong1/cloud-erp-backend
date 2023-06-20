@@ -543,12 +543,18 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         XSSFCellStyle contentCellStyle = wb.createCellStyle();
         // 水平居左
         contentCellStyle.setAlignment(HorizontalAlignment.LEFT);
-        contentCellStyle.setVerticalAlignment(VerticalAlignment.CENTER); //垂直居中
-        contentCellStyle.setWrapText(true);//自动换行
-        contentCellStyle.setBorderBottom(BorderStyle.THIN); //下边框
-        contentCellStyle.setBorderLeft(BorderStyle.THIN);//左边框
-        contentCellStyle.setBorderTop(BorderStyle.THIN);//上边框
-        contentCellStyle.setBorderRight(BorderStyle.THIN);//右边框
+        //垂直居中
+        contentCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        //自动换行
+        contentCellStyle.setWrapText(true);
+        //下边框
+        contentCellStyle.setBorderBottom(BorderStyle.THIN);
+        //左边框
+        contentCellStyle.setBorderLeft(BorderStyle.THIN);
+        //上边框
+        contentCellStyle.setBorderTop(BorderStyle.THIN);
+        //右边框
+        contentCellStyle.setBorderRight(BorderStyle.THIN);
 
         Font titleFont = wb.createFont();
         titleFont.setBold(true);

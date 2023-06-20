@@ -1,5 +1,7 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -9,19 +11,13 @@ import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.MathUtil;
+import com.common.core.utils.*;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
@@ -34,6 +30,7 @@ import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.QcInsideTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
@@ -54,15 +51,23 @@ import com.erp.server.wms.mapper.QcInfoMapper;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -157,6 +162,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     @Resource
     private SoOutstockDetailService soOutstockDetailService;
+
+    @Autowired
+    private WmsAttachmentService wmsAttachmentService;
 
     /**
      * 保存 质检单
@@ -1580,8 +1588,18 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     }
 
     @Override
-    public void exportDailyExcel(QcInfoDTO.PagingParamDTO dto, HttpServletResponse response) {
-
+    public void exportDailyExcel(QcInfoDTO.ExportDTO dto, HttpServletResponse response) {
+        String searchType = dto.getSearchType();
+        //如果等于所有
+        if (searchType.equals(SearchType.ALL)) {
+            dto.setSearchType("");
+        }
+        // 查询数据
+        List<QcInfoDTO.PagingViewDTO> dataList = baseMapper.getExport(dto);
+        // 填充数据
+        List<QcInfoDTO.QcDailyReportDTO> resultList = fillQcDailyRptData(dataList);
+        // 导出Excel
+        generateDailyRptExcel(resultList, response);
     }
 
     /**
@@ -1698,6 +1716,418 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                     throw new ServiceException(ApiError.ERROR_99017);
                 }
             }
+        }
+
+    }
+
+    private List<QcInfoDTO.QcDailyReportDTO> fillQcDailyRptData(List<QcInfoDTO.PagingViewDTO> dataList) {
+        List<QcInfoDTO.QcDailyReportDTO> resultList = new ArrayList<>(dataList.size());
+        if (CollectionUtils.isNotEmpty(dataList)) {
+            List<DictBasicEntity> dictList = dictBasicService.getByKeyList(new ArrayList<>());
+            List<String> supplierIdList = dataList.stream().map(QcInfoDTO.PagingViewDTO::getSupplierId).collect(Collectors.toList());
+            List<String> skuIdList = dataList.stream().map(QcInfoDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+            List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIdList);
+            List<String> billIdList = dataList.stream().map(QcInfoDTO.PagingViewDTO::getId).collect(Collectors.toList());
+            List<QcRemarkEntity> billRemarkList = qcRemarkService.getByMainIdList(billIdList);
+            List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+            List<String> billIds = dataList.stream().map(QcInfoDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
+            List<PurchaseOrderEntity> poList = scmTaskFeign.listPurchaseOrderByIds(billIds);
+
+            List<String> productIdList = dataList.stream().map(QcInfoDTO.PagingViewDTO::getProductId).collect(Collectors.toList());
+
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(productIdList);
+
+            Map<String, List<WmsAttachmentDTO.UpdateDTO>> attachmentMap = attachmentList.stream().collect(Collectors.groupingBy(v -> v.getBusinessId() + "_" + v.getType()));
+
+            for (QcInfoDTO.PagingViewDTO item : dataList) {
+                QcInfoDTO.QcDailyReportDTO qcDailyReportDTO = new QcInfoDTO.QcDailyReportDTO();
+
+                qcDailyReportDTO.setQcDate(item.getQcDate());
+                // 是否内检
+                Boolean isInside = item.getIsInside();
+                qcDailyReportDTO.setQcInsideType(Objects.equals(isInside, Boolean.TRUE) ? QcInsideTypeEnum.INSIDE_QC.getCode() : QcInsideTypeEnum.OUTSIDE_QC.getCode());
+                qcDailyReportDTO.setQcInsideTypeName(Objects.equals(isInside, Boolean.TRUE) ? QcInsideTypeEnum.INSIDE_QC.getName() : QcInsideTypeEnum.OUTSIDE_QC.getName());
+
+                String skuNo = skuVOList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
+                qcDailyReportDTO.setSkuNo(skuNo);
+
+                // 是否新品
+                Boolean isFirstMassProduct = poList.stream().filter(p -> p.getId().equals(item.getPurchaseOrderId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getIsFirstMassProduct())).orElse(Boolean.FALSE);
+                qcDailyReportDTO.setIsFirstMassProduct(isFirstMassProduct);
+                qcDailyReportDTO.setFirstMassProductName(Objects.equals(qcDailyReportDTO.getIsFirstMassProduct(), Boolean.TRUE) ? ProductTypeEnum.NEW_PRODUCTS.getName() : ProductTypeEnum.OLD_PRODUCTS.getName());
+
+                String supplierId = item.getSupplierId();
+                String supplierName = supplierList.stream().filter(s -> s.getId().equals(supplierId)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                qcDailyReportDTO.setSupplierName(supplierName);
+
+                String skuId = item.getSkuId();
+                String skuName = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
+                qcDailyReportDTO.setProductName(skuName);
+
+                String productTypeKey = item.getProductId() + "_" + WmsConstant.QC_PRODUCT;
+                if(attachmentMap.containsKey(productTypeKey)) {
+                    List<WmsAttachmentDTO.UpdateDTO> attachList = attachmentMap.get(productTypeKey);
+                    List<String> attachmentUrls = attachList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+                    qcDailyReportDTO.setProductImgUrl(attachmentUrls);
+                }
+                String productBoxKey = item.getProductId() + "_" + WmsConstant.QC_BOX;
+                if(attachmentMap.containsKey(productBoxKey)) {
+                    List<WmsAttachmentDTO.UpdateDTO> attachList = attachmentMap.get(productBoxKey);
+                    List<String> attachmentUrls = attachList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+                    qcDailyReportDTO.setBoxMarkImgUrl(attachmentUrls);
+                }
+
+                qcDailyReportDTO.setTotalQty(item.getTotalQty());
+
+                QcResultEnum qcResultEnum = item.getQcResult();
+                qcDailyReportDTO.setQcResultName(qcResultEnum != null ? qcResultEnum.getName() : "");
+                qcDailyReportDTO.setQcUserName(item.getQcUserName());
+                qcDailyReportDTO.setQcQty(item.getQcQty());
+                qcDailyReportDTO.setQcBadQty(item.getQcBadQty());
+
+                BigDecimal qcBadRate = item.getQcBadRate();
+                qcDailyReportDTO.setQcBadRate(qcBadRate != null ? qcBadRate.toString() + "%" : "");
+
+                String qcProblemDict = item.getQcProblemDict();
+                qcDailyReportDTO.setQcProblemDict(qcProblemDict);
+                String qcProblemName = dictList.stream().filter(d -> d.getValue().equals(qcProblemDict)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                qcDailyReportDTO.setQcProblemName(qcProblemName);
+
+                String handleModeDict = item.getHandleModeDict();
+                String handleModeName = dictList.stream().filter(d -> d.getValue().equals(handleModeDict)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                qcDailyReportDTO.setHandleModeName(handleModeName);
+
+                qcDailyReportDTO.setHandleResultName(qcDailyReportDTO.getQcResultName());
+                qcDailyReportDTO.setBadDescription(item.getBadDescription());
+
+                qcDailyReportDTO.setProductLength(item.getProductLength());
+                qcDailyReportDTO.setProductWidth(item.getProductWidth());
+                qcDailyReportDTO.setProductHeight(item.getProductHeight());
+                qcDailyReportDTO.setBoxLength(item.getBoxLength());
+                qcDailyReportDTO.setBoxWidth(item.getBoxWidth());
+                qcDailyReportDTO.setBoxHeight(item.getBoxHeight());
+                qcDailyReportDTO.setProductNetWeight(item.getProductNetWeight());
+                qcDailyReportDTO.setBoxWeight(item.getBoxWeight());
+
+                String remark = billRemarkList.stream().filter(r -> r.getMainId().equals(item.getId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getRemark())).orElse("");
+                qcDailyReportDTO.setRemark(remark);
+
+                resultList.add(qcDailyReportDTO);
+            }
+        }
+        return resultList;
+    }
+
+    private void generateDailyRptExcel(List<QcInfoDTO.QcDailyReportDTO> resultList, HttpServletResponse response) {
+        OutputStream outputStream = null;
+        // 声明一个工作簿
+        XSSFWorkbook wb = new XSSFWorkbook();
+        XSSFCellStyle contentCellStyle = wb.createCellStyle();
+        // 水平居左
+        contentCellStyle.setAlignment(HorizontalAlignment.LEFT);
+        //垂直居中
+        contentCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        //自动换行
+        contentCellStyle.setWrapText(true);
+        //下边框
+        contentCellStyle.setBorderBottom(BorderStyle.THIN);
+        //左边框
+        contentCellStyle.setBorderLeft(BorderStyle.THIN);
+        //上边框
+        contentCellStyle.setBorderTop(BorderStyle.THIN);
+        //右边框
+        contentCellStyle.setBorderRight(BorderStyle.THIN);
+
+        Font titleFont = wb.createFont();
+        titleFont.setBold(true);
+        titleFont.setFontHeightInPoints((short) 13);
+        CellStyle titleStyle = wb.createCellStyle();
+        // 设置水平居中
+        titleStyle.setAlignment(HorizontalAlignment.LEFT);
+        // 设置垂直对齐的样式为居中对齐;
+        titleStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        titleStyle.setFont(titleFont);
+        // 下边框
+        titleStyle.setBorderBottom(BorderStyle.THIN);
+        // 左边框
+        titleStyle.setBorderLeft(BorderStyle.THIN);
+        //上边框
+        titleStyle.setBorderTop(BorderStyle.THIN);
+        // 右边框
+        titleStyle.setBorderRight(BorderStyle.THIN);
+
+        CellStyle titleNoBorderStyle = wb.createCellStyle();
+        //设置水平居中
+        titleNoBorderStyle.setAlignment(HorizontalAlignment.LEFT);
+        //设置垂直对齐的样式为居中对齐;
+        titleNoBorderStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        titleNoBorderStyle.setFont(titleFont);
+
+        // 创建sheet页
+        XSSFSheet sheet = wb.createSheet("质检日报");
+        sheet.setDefaultColumnWidth(1 * 256);
+        sheet.setColumnWidth(0, 16 * 256);
+        sheet.setColumnWidth(2, 20 * 256);
+        sheet.setColumnWidth(6, 30 * 256);
+        sheet.setColumnWidth(7, 30 * 256);
+        sheet.setColumnWidth(19, 20 * 256);
+        sheet.setColumnWidth(21, 20 * 256);
+
+        int rowNo = 0;
+        // 标题
+        XSSFRow rowTitle0 = sheet.createRow(rowNo);
+        Cell cell;
+        cell = rowTitle0.createCell(0);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("日期");
+        cell = rowTitle0.createCell(1);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("内外检验");
+        cell = rowTitle0.createCell(2);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("SKU");
+        cell = rowTitle0.createCell(3);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("产品状态");
+        cell = rowTitle0.createCell(4);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("产品图片");
+        cell = rowTitle0.createCell(5);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("箱唛图");
+        cell = rowTitle0.createCell(6);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("供应商");
+        cell = rowTitle0.createCell(7);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("产品名称");
+        cell = rowTitle0.createCell(8);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("回仓数量");
+        cell = rowTitle0.createCell(9);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("验货结果");
+        cell = rowTitle0.createCell(10);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("验货员");
+        cell = rowTitle0.createCell(11);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("质检数量");
+        cell = rowTitle0.createCell(12);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("不良品数量");
+        cell = rowTitle0.createCell(13);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("抽检不良率");
+        cell = rowTitle0.createCell(14);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("问题属性");
+        cell = rowTitle0.createCell(15);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("不良现象");
+        cell = rowTitle0.createCell(16);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("不良附图");
+        cell = rowTitle0.createCell(17);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("处理方式");
+        cell = rowTitle0.createCell(18);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("处理结果");
+        cell = rowTitle0.createCell(19);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("产品尺寸（cm）");
+        cell = rowTitle0.createCell(20);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("产品重量（g）");
+        cell = rowTitle0.createCell(21);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("外箱尺寸（cm）");
+        cell = rowTitle0.createCell(22);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("外箱重量（kg)");
+        cell = rowTitle0.createCell(23);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("整箱数量（个)");
+        cell = rowTitle0.createCell(24);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("备注");
+        cell = rowTitle0.createCell(25);
+        cell.setCellStyle(titleStyle);
+        cell.setCellValue("报告");
+
+        // 内容行
+        for(int i = 0;i < resultList.size();i++) {
+            QcInfoDTO.QcDailyReportDTO data =  resultList.get(i);
+
+            ++rowNo;
+
+            XSSFRow rowContent = sheet.createRow(rowNo);
+            rowContent.setHeight((short) (40 * 60));
+            rowContent.setHeightInPoints((short) 50);
+
+            cell = rowContent.createCell(0);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(Objects.nonNull(data.getQcDate()) ? data.getQcDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) : "");
+
+            cell = rowContent.createCell(1);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(data.getQcInsideTypeName());
+
+            cell = rowContent.createCell(2);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(data.getSkuNo());
+
+            cell = rowContent.createCell(3);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(data.getFirstMassProductName());
+
+            cell = rowContent.createCell(4);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue("");
+            // 产品图片
+            if(CollUtil.isNotEmpty(data.getProductImgUrl())) {
+                try {
+                    // 暂只取一张图片
+                    InputStream inputStream = FastDFSClientUtil.getInputStream(data.getProductImgUrl().get(0));
+                    XSSFClientAnchor anchor = new XSSFClientAnchor(0, 0, 255, 255,
+                            4, rowNo, 4 + 1, rowNo + 1);
+                    // 图片自适应单元格大小
+                    anchor.setAnchorType(ClientAnchor.AnchorType.byId(0));
+                    XSSFDrawing patriarch = sheet.createDrawingPatriarch();
+                    patriarch.createPicture(anchor, wb.addPicture(inputStream, XSSFWorkbook.PICTURE_TYPE_WPG));
+                } catch (Exception e) {
+                    log.error("写入图片失败", e);
+                }
+            }
+
+            // 箱唛图
+            cell = rowContent.createCell(5);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue("");
+            if(CollUtil.isNotEmpty(data.getBoxMarkImgUrl())) {
+                try {
+                    // 暂只取一张图片
+                    InputStream inputStream = FastDFSClientUtil.getInputStream(data.getBoxMarkImgUrl().get(0));
+                    XSSFClientAnchor anchor = new XSSFClientAnchor(0, 0, 255, 255,
+                            5, rowNo, 5 + 1, rowNo + 1);
+                    // 图片自适应单元格大小
+                    anchor.setAnchorType(ClientAnchor.AnchorType.byId(0));
+                    XSSFDrawing patriarch = sheet.createDrawingPatriarch();
+                    patriarch.createPicture(anchor, wb.addPicture(inputStream, XSSFWorkbook.PICTURE_TYPE_WPG));
+                } catch (Exception e) {
+                    log.error("写入图片失败", e);
+                }
+            }
+
+            cell = rowContent.createCell(6);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getSupplierName()));
+
+            cell = rowContent.createCell(7);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getProductName()));
+
+            cell = rowContent.createCell(8);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getTotalQty()));
+
+            cell = rowContent.createCell(9);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getQcResultName()));
+
+            cell = rowContent.createCell(10);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getQcUserName()));
+
+            cell = rowContent.createCell(11);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getQcQty()));
+
+            cell = rowContent.createCell(12);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getQcBadQty()));
+
+            cell = rowContent.createCell(13);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getQcBadRate()));
+
+            cell = rowContent.createCell(14);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getQcProblemName()));
+
+            cell = rowContent.createCell(15);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getBadDescription()));
+
+            // 不良附图
+            cell = rowContent.createCell(16);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue("");
+
+            cell = rowContent.createCell(17);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getHandleModeName()));
+
+            cell = rowContent.createCell(18);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getHandleResultName()));
+
+            cell = rowContent.createCell(19);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtil.format("{}*{}*{}", Objects.isNull(data.getProductLength()) ? "0" : data.getProductLength(),
+                    Objects.isNull(data.getProductWidth()) ? "0" : data.getProductWidth(),
+                    Objects.isNull(data.getProductHeight()) ? "0" : data.getProductHeight()));
+
+            cell = rowContent.createCell(20);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getProductNetWeight()));
+
+            cell = rowContent.createCell(21);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtil.format("{}*{}*{}", Objects.isNull(data.getBoxHeight()) ? "0" : data.getBoxHeight(),
+                    Objects.isNull(data.getBoxWidth()) ? "0" : data.getBoxWidth(),
+                    Objects.isNull(data.getBoxHeight()) ? "0" : data.getBoxHeight()));
+
+            cell = rowContent.createCell(22);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getBoxWeight()));
+
+            // 整箱数量
+            cell = rowContent.createCell(23);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue("");
+
+            cell = rowContent.createCell(24);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getRemark()));
+
+            // 报告
+            cell = rowContent.createCell(25);
+            cell.setCellStyle(contentCellStyle);
+            cell.setCellValue("");
+
+        }
+
+        String fileName = StrUtil.format("质检日报数据{}.xlsx", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+        try {
+            response.setCharacterEncoding("utf-8");
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+            outputStream = response.getOutputStream();
+            wb.write(outputStream);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        } finally {
+            IOUtils.closeQuietly(outputStream);
         }
 
     }

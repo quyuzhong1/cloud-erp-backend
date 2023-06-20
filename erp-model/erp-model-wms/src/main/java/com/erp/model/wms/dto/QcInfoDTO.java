@@ -494,6 +494,10 @@ public class QcInfoDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 质检产品id
+         */
+        private String productId;
 
         /**
          * code
@@ -625,6 +629,16 @@ public class QcInfoDTO implements Serializable {
         private String qcResultName;
 
         /**
+         * 问题属性
+         */
+        private String qcProblemDict;
+
+        /**
+         * 问题属性名称
+         */
+        private String qcProblemName;
+
+        /**
          * 处理措施
          * 来源 http://172.16.100.11:3002/project/92/interface/api/8890 type=handleModeType
          */
@@ -679,6 +693,46 @@ public class QcInfoDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 产品长
+         */
+        private BigDecimal productLength;
+
+        /**
+         * 产品宽
+         */
+        private BigDecimal productWidth;
+
+        /**
+         * 产品高
+         */
+        private BigDecimal productHeight;
+
+        /**
+         * 外箱长
+         */
+        private BigDecimal boxLength;
+
+        /**
+         * 外箱宽
+         */
+        private BigDecimal boxWidth;
+
+        /**
+         * 外箱高
+         */
+        private BigDecimal boxHeight;
+
+        /**
+         * 产品净重
+         */
+        private BigDecimal productNetWeight;
+
+        /**
+         * 外箱重量
+         */
+        private BigDecimal boxWeight;
 
     }
 
@@ -834,10 +888,12 @@ public class QcInfoDTO implements Serializable {
         /**
          * 产品图片
          */
+        private List<String> productImgUrl;
 
         /**
          * 箱唛图片
          */
+        private List<String> boxMarkImgUrl;
 
         /**
          * 供应商
@@ -857,7 +913,7 @@ public class QcInfoDTO implements Serializable {
         /**
          * 验货结果
          */
-        private String qcResult;
+        private String qcResultName;
 
         /**
          * 质检员
@@ -877,7 +933,7 @@ public class QcInfoDTO implements Serializable {
         /**
          * 检验不良率
          */
-        private BigDecimal qcBadRate;
+        private String qcBadRate;
 
         /**
          * 问题属性
@@ -908,6 +964,12 @@ public class QcInfoDTO implements Serializable {
          * 处理措施名
          */
         private String handleModeName;
+
+
+        /**
+         * 处理结果
+         */
+        private String handleResultName;
 
         /**
          * 产品长
@@ -957,7 +1019,7 @@ public class QcInfoDTO implements Serializable {
         /**
          * 最新备注
          */
-        private String latestRemark;
+        private String remark;
 
     }
 
