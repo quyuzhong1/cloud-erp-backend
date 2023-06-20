@@ -702,6 +702,9 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 viewGenerateDTO.setSkuNo(childrenSkuDTO.getSkuNo());
                 viewGenerateDTO.setProductName(childrenSkuDTO.getSkuName());
                 viewGenerateDTO.setQuantity(childrenSkuDTO.getQuantity());
+                viewGenerateDTO.setToPushdownQty(null);
+                viewGenerateDTO.setQty(viewDTO.getQty() * viewGenerateDTO.getQuantity());
+                viewGenerateDTO.setDeliveryQty(viewDTO.getDeliveryQty() * viewGenerateDTO.getQuantity());
                 viewGenerateDTO.setIndex(index);
                 index++;
                 generateChildList.add(viewGenerateDTO);

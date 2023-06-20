@@ -844,11 +844,14 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (CollectionUtils.isEmpty(viewGeneratePoDTOS)) {
             return;
         }
-        ValidList<SubcontractOrderDTO.GeneratePoDTO> list = new ValidList<>();
-
         //生成采购订单
-        List<SubcontractOrderDTO.GeneratePoDTO> resultLis = BeanMapperUtils.copyList(SubcontractOrderDTO.GeneratePoDTO.class, viewGeneratePoDTOS);
-        list.setList(resultLis);
+        List<SubcontractOrderDTO.ViewGeneratePoDTO> addList = viewGeneratePoDTOS.stream().filter(obj -> obj.getIsGeneratePo()).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(addList)) {
+            return;
+        }
+        List<SubcontractOrderDTO.GeneratePoDTO> resultList = BeanMapperUtils.copyList(SubcontractOrderDTO.GeneratePoDTO.class, addList);
+        ValidList<SubcontractOrderDTO.GeneratePoDTO> list = new ValidList<>();
+        list.setList(resultList);
         generatePo(list,Boolean.TRUE);
     }
 

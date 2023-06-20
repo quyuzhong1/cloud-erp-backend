@@ -486,6 +486,11 @@ public class SubcontractOrderDTO implements Serializable {
          */
         private String supplierId;
 
+        /**
+         * 是否自动生成采购订单
+         */
+        private Boolean isGeneratePo;
+
     }
 
     @Data
