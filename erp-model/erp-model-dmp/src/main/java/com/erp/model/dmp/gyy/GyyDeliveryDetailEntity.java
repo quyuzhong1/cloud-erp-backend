@@ -112,7 +112,7 @@ public class GyyDeliveryDetailEntity {
      * 是否货到付款
      */
     @SerializedName("cod")
-    private Boolean cod;
+    private Object cod;
     /**
      * 是否退款 0:无退款 1:有退款
      */
@@ -388,7 +388,7 @@ public class GyyDeliveryDetailEntity {
     /**
      * 清洗数据
      */
-    private Boolean isClean;
+    private Object isClean;
 
     @Override
     public String toString() {
