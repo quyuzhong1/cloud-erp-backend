@@ -276,10 +276,10 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager",  propagation = Propagation.REQUIRES_NEW)
     public void addDeliveryOrder(OrderEntity entity) {
         // 更新mongo数据
-        entity.setCleanToDelivery(Boolean.TRUE);
-        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
-        OrderMongoDTO updateDto = new OrderMongoDTO(entity.get_id());
-        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
+//        entity.setCleanToDelivery(Boolean.TRUE);
+//        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
+//        OrderMongoDTO updateDto = new OrderMongoDTO(entity.get_id());
+//        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
         // 构造订单结构
         DmpDeliveryDetailInfoEntity deliveryDetailInfo = initOrderInfoEntity(entity);
         // 异步推送到MQ

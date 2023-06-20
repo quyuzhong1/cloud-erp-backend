@@ -132,7 +132,7 @@ public class GyyDeliveryDetailEntity {
      * 是否取消
      */
     @SerializedName("cancel")
-    private Integer cancel;
+    private Object cancel;
     /**
      * 物流费用
      */
