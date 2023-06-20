@@ -734,7 +734,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             throw new ServiceException(ApiError.ERROR_98017);
         }
 
-        Map<String, List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO>> map = list.stream().collect(Collectors.groupingBy(PurchaseApplicationDTO.GenerateSubcontractOrderDTO::getSourceId));
+        Map<String, List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getPurchaseOrgId()).concat(obj.getReceiveOrgId())));
         for (Map.Entry<String, List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO>> entry :  map.entrySet()) {
             List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> value = entry.getValue();
             PurchaseApplicationDTO.GenerateSubcontractOrderDTO subcontractOrderDTO = entry.getValue().get(0);
@@ -748,6 +748,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             SubcontractOrderDTO.AddDTO addDTO = BeanMapperUtils.map(SubcontractOrderDTO.AddDTO.class, subcontractOrderDTO);
             addDTO.setBillDate(LocalDate.now());
             addDTO.setIsFirstMassProduct(purchaseApplicationEntity.getIsFirstMassProduct());
+            addDTO.setSubcontractOrgId(subcontractOrderDTO.getPurchaseOrgId());
 
             //委外订单明细数据
             List<SubcontractOrderDetailDTO.AddDTO> detailList = new ArrayList<>();
