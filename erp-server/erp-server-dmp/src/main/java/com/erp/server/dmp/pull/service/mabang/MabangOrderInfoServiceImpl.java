@@ -141,7 +141,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
-            SendResult cleanResult = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_DATA_CLEAN_TOPIC, RocketMqTagEnum.MABANG_DELIVERY_ORDER_TAG.getName(),
+            SendResult cleanResult = mqProducerService.syncClassMsgByDelayLevel(RocketMqTopic.DMP_ERP_DATA_CLEAN_TOPIC, RocketMqTagEnum.MABANG_DELIVERY_ORDER_TAG.getName(),
                     msg, StrUtil.format("{}_{}", msg.getPlatformOrderId(), msg.getSalesRecordNumber()));
             if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
