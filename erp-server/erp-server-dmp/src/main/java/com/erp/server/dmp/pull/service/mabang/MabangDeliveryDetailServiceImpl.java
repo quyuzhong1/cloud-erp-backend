@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -272,7 +273,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
         return items;
     }
 
-    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager",  propagation = Propagation.REQUIRES_NEW)
     public void addDeliveryOrder(OrderEntity entity) {
         // 更新mongo数据
         entity.setCleanToDelivery(Boolean.TRUE);

@@ -162,7 +162,7 @@ public class GyyDeliveryDetailEntity {
      * 是否多包裹 true：多包裹 false：单包裹
      */
     @SerializedName("picture_bill")
-    private Boolean pictureBill;
+    private Object pictureBill;
     /**
      * 平台单号
      */
@@ -388,7 +388,7 @@ public class GyyDeliveryDetailEntity {
     /**
      * 清洗数据
      */
-    private Integer isClean;
+    private Boolean isClean;
 
     @Override
     public String toString() {
