@@ -444,7 +444,7 @@ public class OrderEntity extends CleanBaseDTO {
     /**
      * 经度
      */
-    private JSONObject orderTypeNew;
+    private Object orderTypeNew;
     /**
      * ERP系统订单编号
      */
@@ -460,7 +460,7 @@ public class OrderEntity extends CleanBaseDTO {
     /**
      * 拓展属性
      */
-    private JSONObject extendAttr;
+    private Object extendAttr;
     /**
      * 清洗到发货订单 0 未清洗 1 清洗中 2 清洗完成
      */
