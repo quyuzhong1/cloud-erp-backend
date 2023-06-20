@@ -897,12 +897,12 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             purchaseOrderDetailEntity.setArrivalTime(LocalDateTime.now());
             purchaseOrderDetailEntity.setPurchaseOrderId(orderDetailEntity.getPurchaseOrderId());
             purchaseOrderDetailEntity.setSourceDetailId(orderDetailEntity.getSourceDetailId());
-            if (CollectionUtils.isNotEmpty(detailEntityList)) {
+           /* if (CollectionUtils.isNotEmpty(detailEntityList)) {
                 PurchaseOrderDetailEntity entity = detailEntityList.stream().filter(req -> req.getId().equals(orderDetailEntity.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(entity)) {
                     purchaseOrderDetailEntity.setPurchaseAmount(entity.getPurchaseAmount());
                 }
-            }
+            }*/
             scmTaskFeign.updatePoArrivalStatus(purchaseOrderDetailEntity);
         }
     }

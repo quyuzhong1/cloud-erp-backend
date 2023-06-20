@@ -140,6 +140,13 @@
             </foreach>
         </if>
 
+        <if test="params.productChargeIdList != null and params.productChargeIdList.size > 0">
+            AND pi.charge_id IN
+            <foreach collection="params.productChargeIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
         <if test="params.searchApprovalStatusList != null and params.searchApprovalStatusList.size > 0">
             AND pi.approval_status IN
             <foreach collection="params.searchApprovalStatusList" item="item" open="(" close=")" separator=",">

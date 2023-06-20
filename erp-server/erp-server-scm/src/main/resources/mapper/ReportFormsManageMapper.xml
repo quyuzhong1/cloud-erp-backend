@@ -199,4 +199,152 @@
         </if>
         ORDER BY purchase_org_name, supplier_name, createTime DESC
     </select>
+
+    <select id="test" resultType="com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO$PagingViewDTO">
+        SELECT
+		    t.purchase_org_name,
+            t.supplier_name,
+            t.images_url,
+            t.productName,
+            t.spu_no,
+			t.sku_no,
+			sum(t.orderQty),
+		    sum(t.orderAmount),
+			sum(t.receiveQty),
+			sum(t.receiveGiftQty),
+			sum(t.receiveAmount),
+			sum(t.stockInQty),
+			sum(t.stockInGiftQty),
+			sum(t.stockInAmount),
+			sum(t.refundQty),
+			sum(t.replenishQty),
+			sum(t.returnAmount)
+		FROM(
+		    SELECT
+                po.purchase_org_name,
+                pos.supplier_name,
+                pd.images_url,
+                pd."name" AS productName,
+				pd.sku_no,
+                pi.spu_no,
+				count(po.id) AS orderQty,
+				sum(pod.purchase_amount) orderAmount,
+				0 AS receiveQty,
+				0 AS receiveGiftQty,
+				0 AS receiveAmount,
+				0 as stockInQty,
+				0 as stockInGiftQty,
+				0 AS stockInAmount,
+				0 as refundQty,
+				0 as replenishQty,
+				0 AS returnAmount
+            FROM purchase_order_detail pod
+            LEFT JOIN purchase_order po ON pod.purchase_order_id = po.id  AND po.is_deleted = FALSE
+            LEFT JOIN purchase_order_supplier pos ON pos.purchase_order_id = po.id AND pos.is_deleted = FALSE
+            LEFT JOIN product_detail pd ON pod.sku_id = pd.id AND pd.is_deleted = FALSE
+            LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+            WHERE pod.is_deleted = FALSE AND po.approve_status = 'approve'
+			GROUP BY  po.purchase_org_name,
+                pos.supplier_name,
+                pd.images_url,
+                pd."name",
+				pd.sku_no,
+                pi.spu_no
+
+			UNION ALL
+
+			SELECT
+                po.purchase_org_name,
+                pos.supplier_name,
+                pd.images_url,
+                pd."name" AS productName,
+                pd.sku_no,
+                pi.spu_no,
+				0 AS orderQty,
+                0 AS orderAmount,
+				prd.receive_qty as receiveQty,
+				prd.exceed_qty as receiveGiftQty,
+				round(prd.receive_qty * pod.tax_price::numeric ,4) AS receiveAmount,
+				0 as stockInQty,
+				0 as stockInGiftQty,
+				0 AS stockInAmount,
+				0 as refundQty,
+				0 as replenishQty,
+				0 AS returnAmount
+			FROM po_receive_detail prd
+			LEFT JOIN po_receive pr ON prd.main_id = pr."id" AND pr.is_deleted = FALSE
+			LEFT JOIN purchase_order po ON pr.purchase_order_id = po.id AND po.is_deleted = FALSE
+			LEFT JOIN purchase_order_detail pod ON pod.id = prd.purchase_order_detail_id AND pod.is_deleted = FALSE
+			LEFT JOIN purchase_order_supplier pos ON pos.purchase_order_id = po.id AND pos.is_deleted = FALSE
+			LEFT JOIN product_detail pd ON pod.sku_id = pd.id AND pd.is_deleted = FALSE
+            LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+			WHERE prd.is_deleted = FALSE AND pr.approve_status = 'approve'
+
+			UNION ALL
+
+			SELECT
+                po.purchase_org_name,
+                pos.supplier_name,
+                pd.images_url,
+                pd."name" AS productName,
+                pi.spu_no,
+                pd.sku_no,
+				0 AS orderQty,
+                0 AS orderAmount,
+				0 AS receiveQty,
+				0 AS receiveGiftQty,
+				0 AS receiveAmount,
+				pid.stock_in_qty as stockInQty,
+				pid.exceed_qty as stockInGiftQty,
+				round(pid.stock_in_qty * pod.tax_price::numeric ,4) AS stockInAmount,
+				0 as refundQty,
+				0 as replenishQty,
+				0 AS returnAmount
+			FROM po_instock_detail pid
+			LEFT JOIN po_instock pit ON pid.main_id = pit."id" AND pid.is_deleted = FALSE
+			LEFT JOIN purchase_order po ON pit.purchase_order_id = po.id AND po.is_deleted = FALSE
+			LEFT JOIN purchase_order_detail pod ON pod.id = pid.purchase_order_detail_id AND pod.is_deleted = FALSE
+			LEFT JOIN purchase_order_supplier pos ON pos.purchase_order_id = po.id AND pos.is_deleted = FALSE
+			LEFT JOIN product_detail pd ON pod.sku_id = pd.id AND pd.is_deleted = FALSE
+            LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+			WHERE pid.is_deleted = FALSE AND pit.approve_status = 'approve'
+
+			UNION ALL
+
+			SELECT
+                po.purchase_org_name,
+                pos.supplier_name,
+                pd.images_url,
+                pd."name" AS productName,
+                pi.spu_no,
+                pd.sku_no,
+				0 AS orderQty,
+                0 AS orderAmount,
+				0 AS receiveQty,
+				0 AS receiveGiftQty,
+				0 AS receiveAmount,
+				0 as stockInQty,
+				0 as stockInGiftQty,
+				0 AS stockInAmount,
+				prd.deduct_amount_qty as refundQty,
+				prd.replenish_qty as replenishQty,
+				0 AS returnAmount
+			FROM po_return_detail prd
+			LEFT JOIN po_return pr ON prd.main_id = pr."id" AND pr.is_deleted = FALSE
+			LEFT JOIN purchase_order po ON pr.purchase_order_id = po.id AND po.is_deleted = FALSE
+			LEFT JOIN purchase_order_detail pod ON pod.id = prd.purchase_order_detail_id AND pod.is_deleted = FALSE
+			LEFT JOIN purchase_order_supplier pos ON pos.purchase_order_id = po.id AND pos.is_deleted = FALSE
+			LEFT JOIN product_detail pd ON pod.sku_id = pd.id AND pd.is_deleted = FALSE
+            LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+			WHERE prd.is_deleted = FALSE AND pr.approve_status = 'approve'
+		) t
+
+		group by
+		    t.purchase_org_name,
+            t.supplier_name,
+            t.images_url,
+            t.productName,
+            t.spu_no,
+			t.sku_no
+    </select>
 </mapper>
