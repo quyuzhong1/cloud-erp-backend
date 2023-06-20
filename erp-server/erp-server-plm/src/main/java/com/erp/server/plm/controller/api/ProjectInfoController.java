@@ -170,8 +170,8 @@ public class ProjectInfoController extends BaseController {
      * @return
      */
     @PostMapping("/stop")
-    public ApiResult stop(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = projectInfoService.stop(dto.getIds());
+    public ApiResult terminate(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        Boolean flag = projectInfoService.terminate(dto.getIds());
         return flag ? success() : failure();
     }
 

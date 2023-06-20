@@ -105,7 +105,7 @@ public interface ProjectInfoService extends IService<ProjectInfoEntity> {
      * @param ids
      * @return java.lang.Boolean
      */
-    Boolean stop(List<String> ids);
+    Boolean terminate(List<String> ids);
 
     /**
      * 完成项目 ids 是产品ids

@@ -310,7 +310,6 @@ public class ProductInfoController extends BaseController {
      * 数据导出
      */
     @PostMapping(value = "/exportProductData", produces = "application/octet-stream")
-    //@RequestPermissions("plm:product:exportProductData")
     public void exportProductData(@RequestBody @Validated ExportProductDataDTO dto) {
         productInfoService.exportProductData(dto);
     }

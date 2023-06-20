@@ -177,6 +177,10 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95067);
         }
+        Integer status = project.getProjectStatus();
+        if (!ProjectStateEnum.NOT_START.getState().equals(status)) {
+            throw new ServiceException(ApiError.ERROR_95184);
+        }
 
         String chargeId = dto.getChargeId();
         String chargeName = commonService.getNameById(chargeId);
@@ -229,6 +233,11 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         List<ProjectInfoEntity> projectList = this.listByIds(projectIdList);
         if (CollectionUtils.isEmpty(projectList)) {
             throw new ServiceException(ApiError.ERROR_95026);
+        }
+        Integer notStart = ProjectStateEnum.NOT_START.getState();
+        long count = projectList.stream().filter(p -> !p.getProjectStatus().equals(notStart)).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_95184);
         }
         List<String> productIdList = projectList.stream().map(ProjectInfoEntity::getProductId).collect(Collectors.toList());
         List<ProductInfoEntity> productList = productInfoService.listByIds(productIdList);
@@ -622,11 +631,15 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         List<ProjectInfoEntity> projectInfoList = this.getByProductIdList(productIdList);
         //启动的产品ids
         List<String> startProductIdList = projectInfoList.stream().map(ProjectInfoEntity::getProductId).collect(Collectors.toList());
-        Integer terminateState = ProjectStateEnum.TERMINATE.getState();
-        long terminateStateCount = projectInfoList.stream().filter(p -> terminateState.equals(p.getProjectStatus())).count();
-        if (terminateStateCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95175);
+        List<Integer> projectStatusList = new ArrayList<>(3);
+        projectStatusList.add(ProjectStateEnum.SUSPEND.getState());
+        projectStatusList.add(ProjectStateEnum.FINISH.getState());
+        projectStatusList.add(ProjectStateEnum.TERMINATE.getState());
+        long stateCount = projectInfoList.stream().filter(p -> projectStatusList.contains(p.getProjectStatus())).count();
+        if (stateCount > 0) {
+            throw new ServiceException(ApiError.ERROR_95180);
         }
+
         Integer suspend = ProjectStateEnum.SUSPEND.getState();
         for (ProjectInfoEntity item : projectInfoList) {
             //暂停前的状态
@@ -642,9 +655,12 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         if (CollectionUtils.isNotEmpty(unstartProductIdList)) {
             List<ProductInfoEntity> productInfoList = productInfoService.listByIds(unstartProductIdList);
             Integer terminateCode = ApprovalStatusEnum.TERMINATE.getCode();
-            long terminateCount = productInfoList.stream().filter(p -> terminateCode.equals(p.getApprovalStatus())).count();
+            Integer suspendCode = ApprovalStatusEnum.SUSPEND.getCode();
+            Integer approvalCode = ApprovalStatusEnum.APPROVAL.getCode();
+            List<Integer> productStatusList = Arrays.asList(terminateCode, suspendCode, approvalCode);
+            long terminateCount = productInfoList.stream().filter(p -> productStatusList.contains(p.getApprovalStatus())).count();
             if (terminateCount > 0) {
-                throw new ServiceException(ApiError.ERROR_95175);
+                throw new ServiceException(ApiError.ERROR_95181);
             }
             Integer productSuspend = ApprovalStatusEnum.SUSPEND.getCode();
             for (ProductInfoEntity item : productInfoList) {
@@ -674,7 +690,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean stop(List<String> ids) {
+    public Boolean terminate(List<String> ids) {
         List<ProjectInfoEntity> projectInfoList = this.listByIds(ids);
         Integer terminate = ProjectStateEnum.TERMINATE.getState();
         projectInfoList.stream().forEach(p -> p.setProjectStatus(terminate));
@@ -708,12 +724,13 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         if (CollectionUtils.isEmpty(projectInfoList)) {
             throw new ServiceException(ApiError.ERROR_95026);
         }
-        Integer terminateState = ProjectStateEnum.TERMINATE.getState();
-        long terminateStateCount = projectInfoList.stream().filter(p -> terminateState.equals(p.getProjectStatus())).count();
-        if (terminateStateCount > 0) {
-            throw new ServiceException(ApiError.ERROR_95175);
+        List<Integer> statusList = new ArrayList<>(2);
+        statusList.add(ProjectStateEnum.YES_START.getState());
+        statusList.add(ProjectStateEnum.ING.getState());
+        long stateCount = projectInfoList.stream().filter(p -> !statusList.contains(p.getProjectStatus())).count();
+        if (stateCount > 0) {
+            throw new ServiceException(ApiError.ERROR_95182);
         }
-
         List<String> productIds = projectInfoList.stream().map(ProjectInfoEntity::getProductId).collect(Collectors.toList());
         List<ProjectTaskEntity> taskList = projectTaskService.getByProductIds(productIds);
         List<String> taskIdList = taskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
@@ -770,9 +787,12 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     public Boolean batchArchive(List<String> productIdList) {
         LoginUser loginUser = commonService.getUserInfo();
         Integer finishState = ProjectStateEnum.FINISH.getState();
+        List<ProjectInfoEntity> projectList = this.getByProductIdList(productIdList);
+        if(CollectionUtils.isEmpty(projectList)){
+            throw new ServiceException(ApiError.ERROR_95019);
+        }
         //检查项目完成情况
-        int count = this.lambdaQuery().in(ProjectInfoEntity::getProductId, productIdList).
-                ne(ProjectInfoEntity::getProjectStatus, finishState).count();
+        long count = projectList.stream().filter(p->!finishState.equals(p.getProjectStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_95019);
         }
