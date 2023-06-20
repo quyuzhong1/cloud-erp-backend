@@ -387,7 +387,6 @@ public class SubcontractChangeDTO implements Serializable {
         /**
         * 变更原因
         */
-        @NotBlank(message = "变更原因不能为空")
         @Size(max = 255,message = "变更原因最大长度不能超过255位")
         private String changeReason;
 
