@@ -106,9 +106,11 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         }
 
         //采购员编码
-        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
-        if (ObjectUtils.isNotEmpty(findUserDTO)) {
-            resultMap.put("purchaseUserCode",findUserDTO.getCode());
+        if (StringUtils.isNotBlank(entity.getPurchaseUserId())) {
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
+            if (ObjectUtils.isNotEmpty(findUserDTO)) {
+                resultMap.put("purchaseUserCode", findUserDTO.getCode());
+            }
         }
         //供应商联系人
         resultMap.put("contactName",purchaseOrderSupplierEntity.getContactName());

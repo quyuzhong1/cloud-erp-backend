@@ -735,6 +735,68 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         operateLogService.batchAddModuleOperateLog("作废了一个委外订单【%s】，作废原因：".concat(remark), ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "作废操作");
     }
 
+    @Override
+    public SubcontractChangeDTO.ViewDTO viewSubcontractChange(String id) {
+        SubcontractChangeDTO.ViewDTO viewDTO = new SubcontractChangeDTO.ViewDTO();
+        SubcontractOrderEntity entity = this.getById(id);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_98073);
+        }
+        BeanMapperUtils.copy(entity,viewDTO);
+        viewDTO.setId(null);
+        viewDTO.setCode(null);
+        viewDTO.setApproveStatus(null);
+        viewDTO.setSourceId(entity.getId());
+        viewDTO.setSourceCode(entity.getCode());
+        viewDTO.setSourceType(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
+        List<SubcontractOrderDetailEntity> detailList = subcontractOrderDetailService.listByMainId(id);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_98070);
+        }
+        List<String> skuIds = detailList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
+
+        List<SubcontractOrderDetailEntity> parentDetailList = detailList.stream().filter(obj -> StringUtils.isBlank(obj.getParentId())).collect(Collectors.toList());
+        List<SubcontractChangeDetailDTO.ViewDTO> parentList = new ArrayList<>();
+        for (SubcontractOrderDetailEntity parentEntity : parentDetailList) {
+            SubcontractChangeDetailDTO.ViewDTO  parentDTO = BeanMapperUtils.map(SubcontractChangeDetailDTO.ViewDTO.class, parentEntity);
+            parentDTO.setId(null);
+            parentDTO.setSourceDetailId(parentEntity.getId());
+            parentDTO.setOldQty(parentEntity.getQty());
+            parentDTO.setOldPrice(parentEntity.getPrice());
+            parentDTO.setOldAmount(parentEntity.getAmount());
+            parentDTO.setOldDeliveryQty(parentEntity.getDeliveryQty());
+            //产品名称
+            if (CollectionUtils.isNotEmpty(skuList)) {
+                String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(parentEntity.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse(null);
+                parentDTO.setProductName(productName);
+            }
+            //子级
+            List<SubcontractOrderDetailEntity> childDetailList = detailList.stream().filter(obj -> obj.getParentId().equals(parentEntity.getId())).collect(Collectors.toList());
+            List<SubcontractChangeDetailDTO.ChildDTO> childList = new ArrayList<>();
+            for (SubcontractOrderDetailEntity childEntity : childDetailList) {
+                SubcontractChangeDetailDTO.ChildDTO  childDTO = BeanMapperUtils.map(SubcontractChangeDetailDTO.ChildDTO.class, childEntity);
+                childDTO.setId(null);
+                childDTO.setSourceDetailId(childEntity.getSourceDetailId());
+                childDTO.setOldQty(childEntity.getQty());
+                childDTO.setOldPrice(childEntity.getPrice());
+                childDTO.setOldAmount(childEntity.getAmount());
+                childDTO.setOldDeliveryQty(childEntity.getDeliveryQty());
+                //产品名称
+                if (CollectionUtils.isNotEmpty(skuList)) {
+                    String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(childEntity.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse(null);
+                    childDTO.setProductName(productName);
+                }
+                childList.add(childDTO);
+            }
+            parentDTO.setChildList(childList);
+            parentList.add(parentDTO);
+        }
+        viewDTO.setDetailList(parentList);
+        return viewDTO;
+    }
+
     /**
      * @description: 自动生成采购订单
      * @author Will

@@ -7,6 +7,7 @@ import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
 
@@ -187,4 +188,13 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @param ids
      * @param remark
      */
-    void invalid(List<String> ids, String remark);}
+    void invalid(List<String> ids, String remark);
+    /**
+     * @description: 委外变更
+     * @author Will
+     * @date: 2023/6/20 12:14
+     * @param id
+     * @return ViewDTO
+     */
+    SubcontractChangeDTO.ViewDTO viewSubcontractChange(String id);
+}

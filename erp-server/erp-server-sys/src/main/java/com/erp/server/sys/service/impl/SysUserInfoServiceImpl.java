@@ -816,6 +816,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Override
     public FindUserDTO getUserByUserId(String userId) {
+        if (StringUtils.isBlank(userId)) {
+            return new FindUserDTO();
+        }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysUserInfoEntity::getUid, userId);
         queryWrapper.eq(SysUserInfoEntity::getDeleteState, IsConstant.YES);

@@ -8,6 +8,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.server.scm.service.SubcontractOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -351,6 +352,20 @@ public class SubcontractOrderController extends BaseController {
     public ApiResult<List<SubcontractOrderDTO.ViewAddDetailDTO>> viewAddDetail(@RequestBody @Validated SubcontractOrderDTO.ViewAddDetailParamDTO dto) {
         List<SubcontractOrderDTO.ViewAddDetailDTO> list = subcontractOrderService.viewAddDetail(dto);
         return success(list);
+    }
+
+
+    /**
+     * 委外变更数据显示
+     * @author Will
+     * @date: 2023/6/12 16:00
+     * @param id
+     * @return ApiResult<AddDTO>
+     */
+    @GetMapping("/viewSubcontractChange")
+    public ApiResult<SubcontractChangeDTO.ViewDTO> viewSubcontractChange(@RequestParam("id") String id) {
+        SubcontractChangeDTO.ViewDTO viewDTO = subcontractOrderService.viewSubcontractChange(id);
+        return success(viewDTO);
     }
 
 }
