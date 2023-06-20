@@ -54,7 +54,9 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
         IPage<PurchaseBusinessGatherTableDTO.PagingViewDTO> pageData = baseMapper.paging(query, pagingDTO.getParams());
         List<PurchaseBusinessGatherTableDTO.PagingViewDTO> pagingViewDTOList = pageData.getRecords();
         for (PurchaseBusinessGatherTableDTO.PagingViewDTO viewDTO : pagingViewDTOList) {
-            viewDTO.setReturnAmount(viewDTO.getAvgPrice().multiply(BigDecimal.valueOf(viewDTO.getRefundQty() + viewDTO.getReplenishQty())));
+            if (viewDTO.getAvgPrice() != null) {
+                viewDTO.setReturnAmount(viewDTO.getAvgPrice().multiply(BigDecimal.valueOf(viewDTO.getRefundQty() + viewDTO.getReplenishQty())));
+            }
         }
         return new PagingVO(pageData);
 
