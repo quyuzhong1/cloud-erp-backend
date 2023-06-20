@@ -124,6 +124,9 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Autowired
     private TemplateTaskConcernService templateTaskConcernService;
 
+    @Autowired
+    private TaskConcernService taskConcernService;
+
     /**
      * 产品保存模板 保存任务
      *
@@ -377,7 +380,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             return new ArrayList<>();
         }
         List<TemplateTaskEntity> list = this.getByTemplateId(templateId, taskIdList);
-
+        List<TemplateTaskConcernEntity> templateTaskConcernList = templateTaskConcernService.listTemplateConcern(templateId, taskIdList);
         List<ProjectTaskEntity> byProductId = projectTaskService.getByProductId(productId);
 
         LoginUser loginUser = commonService.getUserInfo();
@@ -436,6 +439,11 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.TWO, item.getId());
 
                 setTaskChargeDistribution(taskChargeDistributionList, chargeIds, projectTemplateEntity.getId(), taskEntity.getId(), MathUtil.THREE);
+
+                //新增关注人
+                List<TemplateTaskConcernEntity> concernEntityList = templateTaskConcernList.stream().filter(req -> req.getTemplateTaskId().equals(item.getId())).collect(Collectors.toList());
+                List<String> concernUserIdList = concernEntityList.stream().map(TemplateTaskConcernEntity::getUserId).collect(Collectors.toList());
+                taskConcernService.batchAdd(taskId, productId, concernUserIdList);
             }
         }
 
@@ -876,7 +884,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             return new ArrayList<>();
         }
         List<TemplateTaskEntity> list = this.getByTemplateId(templateId, taskIdList);
-
+        List<TemplateTaskConcernEntity> templateTaskConcernList = templateTaskConcernService.listTemplateConcern(templateId, taskIdList);
         List<ProjectTaskEntity> byProductId = projectTaskService.getByProductId(productId);
 
         LoginUser loginUser = commonService.getUserInfo();
@@ -937,6 +945,11 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.TWO, item.getId());
 
                 setTaskChargeDistribution(taskChargeDistributionList, chargeIds, projectTemplateEntity.getId(), taskEntity.getId(), MathUtil.THREE);
+
+                //新增关注人
+                List<TemplateTaskConcernEntity> concernEntityList = templateTaskConcernList.stream().filter(req -> req.getTemplateTaskId().equals(item.getId())).collect(Collectors.toList());
+                List<String> concernUserIdList = concernEntityList.stream().map(TemplateTaskConcernEntity::getUserId).collect(Collectors.toList());
+                taskConcernService.batchAdd(taskId, productId, concernUserIdList);
             }
         }
 

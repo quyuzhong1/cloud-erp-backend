@@ -50,4 +50,11 @@ public class TemplateTaskConcernServiceImpl extends SuperServiceImpl<TemplateTas
                 .set(TemplateTaskConcernEntity::getIsDeleted, Boolean.TRUE)
                 .update();
     }
+
+    @Override
+    public List<TemplateTaskConcernEntity> listTemplateConcern(String templateId, List<String> taskIds) {
+        return lambdaQuery().eq(TemplateTaskConcernEntity::getTemplateTaskId, taskIds)
+                .in(TemplateTaskConcernEntity::getTemplateTaskId, taskIds)
+                .list();
+    }
 }

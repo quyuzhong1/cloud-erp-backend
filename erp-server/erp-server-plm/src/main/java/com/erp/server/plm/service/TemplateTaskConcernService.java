@@ -16,7 +16,7 @@ import java.util.List;
 public interface TemplateTaskConcernService extends SuperService<TemplateTaskConcernEntity> {
 
     /**
-     *
+     * 模板任务编辑关注人
      * @Author Luo_WG
      * @Date 2023/6/20 17:17
      * @param templateId
@@ -45,4 +45,14 @@ public interface TemplateTaskConcernService extends SuperService<TemplateTaskCon
      * @return void
      **/
     Boolean deleteByTemplateIdAndTaskIds(String templateId,  List<String> taskIds);
+
+    /**
+     * 查询任务关注人
+     * @Author Luo_WG
+     * @Date 2023/6/20 18:12
+     * @param templateId
+     * @param taskIds
+     * @return java.util.List<com.erp.model.plm.entity.TemplateTaskConcernEntity>
+     **/
+    List<TemplateTaskConcernEntity> listTemplateConcern(String templateId, List<String> taskIds);
 }
