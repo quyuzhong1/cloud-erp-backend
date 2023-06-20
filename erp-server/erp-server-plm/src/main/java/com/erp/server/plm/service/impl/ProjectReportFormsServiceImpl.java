@@ -35,15 +35,17 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
         if (ProjectReportStatusEnum.NOTAPPROVAL.getCode().equals(pagingDTO.getParams().getApprovalStatus())) {
             List<Integer> statusCodeList = Arrays.asList(ApprovalStatusEnum.values()).stream().filter(req -> !ApprovalStatusEnum.APPROVAL.getCode().equals(req.getCode())).map(ApprovalStatusEnum::getCode).collect(Collectors.toList());
             statusList.addAll(statusCodeList);
+            pagingDTO.getParams().setApprovalStatusList(statusList);
         }
         if (ProjectReportStatusEnum.APPROVAL.getCode().equals(pagingDTO.getParams().getApprovalStatus())) {
             statusList.add(ApprovalStatusEnum.APPROVAL.getCode());
+            pagingDTO.getParams().setProjectStatusList(statusList);
         }
         if (ProjectReportStatusEnum.FINISHED.getCode().equals(pagingDTO.getParams().getApprovalStatus())) {
             statusList.add(ProjectStateEnum.FINISH.getState());
+            pagingDTO.getParams().setProjectStatusList(statusList);
         }
-        pagingDTO.getParams().setApprovalStatusList(statusList);
-        pagingDTO.getParams().setProjectStatusList(statusList);
+
         IPage<ProjectReportFormsDTO.PagingView> pageData = baseMapper.projectReportFormsPaging(query, pagingDTO.getParams());
         List<ProjectReportFormsDTO.PagingView> pagingViewList = pageData.getRecords();
         for (ProjectReportFormsDTO.PagingView pagingView : pagingViewList) {
@@ -76,6 +78,22 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
 
     @Override
     public Boolean exportExcelProjectReportForms(ProjectReportFormsDTO.PagingParam dto, HttpServletResponse response) {
+        List<Integer> statusList = new ArrayList();
+        dto.setApprovalStatusList(statusList);
+        if (ProjectReportStatusEnum.NOTAPPROVAL.getCode().equals(dto.getApprovalStatus())) {
+            List<Integer> statusCodeList = Arrays.asList(ApprovalStatusEnum.values()).stream().filter(req -> !ApprovalStatusEnum.APPROVAL.getCode().equals(req.getCode())).map(ApprovalStatusEnum::getCode).collect(Collectors.toList());
+            statusList.addAll(statusCodeList);
+            dto.setApprovalStatusList(statusList);
+        }
+        if (ProjectReportStatusEnum.APPROVAL.getCode().equals(dto.getApprovalStatus())) {
+            statusList.add(ApprovalStatusEnum.APPROVAL.getCode());
+            dto.setProjectStatusList(statusList);
+        }
+        if (ProjectReportStatusEnum.FINISHED.getCode().equals(dto.getApprovalStatus())) {
+            statusList.add(ProjectStateEnum.FINISH.getState());
+            dto.setProjectStatusList(statusList);
+        }
+
         List<ProjectReportFormsDTO.PagingView> pagingViewList = baseMapper.projectReportFormsExportExcel(dto);
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/exportExcelProjectReportForms.xlsx";

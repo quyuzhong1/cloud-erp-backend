@@ -330,14 +330,14 @@
 
     <select id="taskDetailView" resultType="com.erp.model.plm.dto.ProjectReportFormsDTO$TaskDetail">
         SELECT
-            pph.name as projectPhase,
+            pph.name as phaseName,
             pot.name AS taskName,
 			pot.charge_name,
 			pot.plan_start_time,
 			pot.plan_end_time,
 			pot.reality_start_time,
 			pot.reality_end_time,
-			pot.status
+			pot.status AS taskState
         FROM project_task pot
         LEFT JOIN (
             SELECT

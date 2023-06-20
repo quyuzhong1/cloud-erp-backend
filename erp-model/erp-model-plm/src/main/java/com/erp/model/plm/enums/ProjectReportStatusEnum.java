@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum  ProjectReportStatusEnum  implements EnumMessage {
+public enum  ProjectReportStatusEnum implements EnumMessage {
     NOTAPPROVAL("notApproval","未立项"),
     APPROVAL("approval","已立项"),
     FINISHED("finished","已完成"),
