@@ -211,7 +211,8 @@
 			sum(t.stockInAmount) AS stockInAmount,
 			sum(t.refundQty) AS refundQty,
 			sum(t.replenishQty) AS replenishQty,
-			sum(t.returnAmount) AS returnAmount
+			sum(t.returnAmount) AS returnAmount,
+            MAX(createTime) AS createTime
 		FROM(
 		    SELECT
                 po.purchase_org_name,
@@ -230,7 +231,8 @@
 				0 AS stockInAmount,
 				0 as refundQty,
 				0 as replenishQty,
-				0 AS returnAmount
+				0 AS returnAmount,
+                MAX(po.create_time) AS createTime
             FROM purchase_order_detail pod
             LEFT JOIN purchase_order po ON pod.purchase_order_id = po.id  AND po.is_deleted = FALSE
             LEFT JOIN purchase_order_supplier pos ON pos.purchase_order_id = po.id AND pos.is_deleted = FALSE
@@ -297,7 +299,8 @@
 				0 AS stockInAmount,
 				0 as refundQty,
 				0 as replenishQty,
-				0 AS returnAmount
+				0 AS returnAmount,
+                pr.create_time AS createTime
 			FROM po_receive_detail prd
 			LEFT JOIN po_receive pr ON prd.main_id = pr."id" AND pr.is_deleted = FALSE
 			LEFT JOIN purchase_order po ON pr.purchase_order_id = po.id AND po.is_deleted = FALSE
@@ -359,7 +362,8 @@
 				round(pid.stock_in_qty * pod.tax_price::numeric ,4) AS stockInAmount,
 				0 as refundQty,
 				0 as replenishQty,
-				0 AS returnAmount
+				0 AS returnAmount,
+                pit.create_time AS createTime
 			FROM po_instock_detail pid
 			LEFT JOIN po_instock pit ON pid.main_id = pit."id" AND pid.is_deleted = FALSE
 			LEFT JOIN purchase_order po ON pit.purchase_order_id = po.id AND po.is_deleted = FALSE
@@ -421,7 +425,8 @@
 				0 AS stockInAmount,
 				prd.deduct_amount_qty as refundQty,
 				prd.replenish_qty as replenishQty,
-				0 AS returnAmount
+				0 AS returnAmount,
+                pr.create_time AS createTime
 			FROM po_return_detail prd
 			LEFT JOIN po_return pr ON prd.main_id = pr."id" AND pr.is_deleted = FALSE
 			LEFT JOIN purchase_order po ON pr.purchase_order_id = po.id AND po.is_deleted = FALSE
@@ -472,5 +477,6 @@
             t.productName,
             t.spu_no,
 			t.sku_no
+        ORDER BY purchase_org_name, supplier_name, createTime DESC
     </select>
 </mapper>
