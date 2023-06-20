@@ -190,7 +190,7 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
             if (null != planStartTime && null != planEndTime) {
                 planWorkTime = LocalDateUtil.countDaysForLocalDate(planStartTime, planEndTime, holidays);
             }
-            result.setTaskTime(planWorkTime * 8);
+            result.setTaskTime(planWorkTime);
             resultList.add(result);
         }
 

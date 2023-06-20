@@ -16,6 +16,17 @@ public interface ProductConstant {
      */
     String PRODUCT_DEVELOPMENT = "productDevelop";
 
+
+    /**
+     * 产品经理
+     */
+    String PRODUCT_CHARGE = "产品经理";
+
+    /**
+     * 项目经理
+     */
+    String PROJECT_CHARGE = "项目经理";
+
     /**
      * 产品管理列表
      */

@@ -11,7 +11,7 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 
 /**
- * 任务-任务关注人
+ * 任务列表-任务评论
  *
  * @author Lambda
  * @since 2023-06-19
@@ -26,7 +26,7 @@ public class TaskConcernController extends BaseController {
 
 
     /**
-     * 获取当前用户是否有关注改任务
+     * 获取当前用户关注改任务信息
      *
      * @param taskId
      * @return

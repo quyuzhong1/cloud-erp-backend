@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 产品开发管理
+ * 任务列表-任务评论
  *
  * @Classname TaskCommentController
  * @Description TODO
@@ -29,7 +29,7 @@ public class TaskCommentController extends BaseController {
 
 
     /**
-     * 项目任务-任务详情-添加评论
+     * 任务详情-添加评论
      *
      * @return
      */
@@ -40,7 +40,7 @@ public class TaskCommentController extends BaseController {
     }
 
     /**
-     * 项目任务-任务详情-任务评论列表
+     * 任务详情-任务评论列表
      *
      * @return
      */
