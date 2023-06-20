@@ -4,22 +4,23 @@ package com.erp.server.sys.controller.api;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.message.dto.email.EmailVerifyCodeDTO;
-import com.erp.model.sys.dto.SysUserThirdDTO;
 import com.erp.model.sys.dto.SysUserBaseDTO;
+import com.erp.model.sys.dto.SysUserThirdDTO;
 import com.erp.model.sys.dto.UpdatePasswordDTO;
 import com.erp.model.sys.dto.UserBaseDTO;
 import com.erp.server.sys.service.SysUserInfoService;
 import com.erp.server.sys.service.SysUserThirdService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 
 /**
- * @Classname MyCenterController
+ * 个人中心
+ *
+ * @Classname
  * @Description TODO
  * @Date 2022-08-02 14:42
  * @Created by yl
@@ -32,13 +33,8 @@ public class MyCenterController extends BaseController {
     private SysUserThirdService sysUserThirdService;
 
 
-
-
     @Autowired
     private SysUserInfoService sysUserInfoService;
-
-
-
 
 
     @RequestMapping("/bindingThirdParty")
@@ -57,14 +53,14 @@ public class MyCenterController extends BaseController {
 
     @RequestMapping("/myCenter")
     public ApiResult myCenter() {
-        UserBaseDTO loginUser= sysUserInfoService.myCenter();
+        UserBaseDTO loginUser = sysUserInfoService.myCenter();
         return success(loginUser);
     }
 
     @RequestMapping("/removeThirdParty")
     public ApiResult removeThirdParty(String bindingThird) {
-        boolean flag=sysUserThirdService.removeThirdParty(bindingThird);
-        return flag==true?success():failure();
+        boolean flag = sysUserThirdService.removeThirdParty(bindingThird);
+        return flag == true ? success() : failure();
     }
 
 
@@ -87,14 +83,21 @@ public class MyCenterController extends BaseController {
     }
 
     @RequestMapping("/removeEmail")
-    public ApiResult sedEmail() {
+    public ApiResult removeEmail() {
         sysUserInfoService.removeEmail();
         return success();
     }
 
-
-
-
+    /**
+     * 个人中心 上传头像【PLM1.3】
+     *
+     * @return
+     */
+    @PostMapping("/uploadHeadPhoto")
+    public ApiResult uploadHeadPhoto(@RequestParam(value = "headPhotoFile") MultipartFile headPhotoFile) {
+        Boolean result = sysUserInfoService.uploadHeadPhoto(headPhotoFile);
+        return result?success():failure();
+    }
 
 
 }

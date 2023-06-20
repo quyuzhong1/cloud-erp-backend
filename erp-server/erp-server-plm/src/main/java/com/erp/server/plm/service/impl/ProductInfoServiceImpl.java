@@ -1962,7 +1962,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String projectChargeId = info.getProjectChargeId();
         //项目经理
         String projectChargeName = info.getProjectChargeName();
-        if (StringUtils.isEmpty(projectChargeName)) {
+        if (StringUtils.isEmpty(projectChargeName)&&StringUtils.isNotBlank(projectChargeId)) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(projectChargeId);
             if (userDTO != null) {
                 projectChargeName = userDTO.getUserName();
@@ -1997,7 +1997,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(productId);
         //取消
         Integer taskClose = TaskStateEnum.CLOSE.getCode();
-        taskList=taskList.stream().filter(t->!taskClose.equals(t.getStatus())).collect(Collectors.toList());
+        taskList = taskList.stream().filter(t -> !taskClose.equals(t.getStatus())).collect(Collectors.toList());
         //任务完成
         Integer taskFinish = TaskStateEnum.FINISH.getCode();
         //进行中
@@ -2049,7 +2049,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         long weekFinishCount = weekTaskList.stream().filter(t -> taskFinish.equals(t.getStatus())).count();
         //完成且延期
         long weekFinishDelayCount = weekTaskList.stream().filter(t -> taskFinish.equals(t.getStatus()) &&
-                t.getRealityEndTime() != null && t.getPlanEndTime()!=null&&
+                t.getRealityEndTime() != null && t.getPlanEndTime() != null &&
                 t.getRealityEndTime().compareTo(t.getPlanEndTime().atStartOfDay()) > 0).count();
         weekTask.setFinishCount((int) weekFinishCount);
         //进行中
@@ -2118,6 +2118,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         delayTask.setPreTaskIdList(unfinishedTaskIdList);
         delayTask.setFinishRate(getFinishRate(delayFinishCount, delayCount));
         info.setDelayTask(delayTask);
+
+
         List<String> userIdList = new ArrayList<>(20);
         //这个是任务负责人
         for (ProjectTaskEntity task : taskList) {
@@ -2129,7 +2131,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         userIdList = userIdList.stream().distinct().collect(Collectors.toList());
         ProductOverviewDTO.TeamMemberDTO teamMember = new ProductOverviewDTO.TeamMemberDTO();
         List<SysDepartmentUserNumberDTO> userDeptList = sysUserFeign.listDeptUserByUserIdList(userIdList);
-        List<String> imgUrlList = userDeptList.stream().map(SysDepartmentUserNumberDTO::getUserHeadIcon).collect(Collectors.toList());
+        Map<String, List<SysDepartmentUserNumberDTO>> map = userDeptList.stream().collect(Collectors.groupingBy(SysDepartmentUserNumberDTO::getUserId));
+        List<String> imgUrlList = new ArrayList<>(map.size());
+        for (Map.Entry<String, List<SysDepartmentUserNumberDTO>> entry : map.entrySet()) {
+            imgUrlList.add(entry.getValue().get(0).getUserHeadIcon());
+        }
         teamMember.setMemberCount(userIdList.size());
         teamMember.setImgUrlList(imgUrlList);
         info.setTeamMember(teamMember);
@@ -2168,6 +2174,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 member.setDeptId(deptUser.getDepartmentId());
                 member.setDeptName(deptUser.getDepartmentName());
                 member.setImgUrl(deptUser.getUserHeadIcon());
+                member.setUserName(deptUser.getUserName());
                 List<ProjectTaskEntity> myTaskList = taskList.stream().filter(t -> Arrays.asList(t.getChargeId().split(",")).
                         contains(userId)).collect(Collectors.toList());
                 member.setTotalTaskCount(myTaskList.size());

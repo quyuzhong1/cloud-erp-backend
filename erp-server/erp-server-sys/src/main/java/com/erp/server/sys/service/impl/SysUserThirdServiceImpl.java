@@ -179,6 +179,6 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
      */
     @Override
     public List<FindUserDTO> listThirdBindUser() {
-        return null;
+        return baseMapper.listThirdBindUser();
     }
 }

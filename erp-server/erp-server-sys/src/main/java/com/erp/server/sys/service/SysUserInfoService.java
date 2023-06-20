@@ -11,6 +11,7 @@ import com.common.business.vo.PagingVO;
 import com.common.message.dto.email.EmailVerifyCodeDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -185,5 +186,12 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      */
     List<FindUserDTO> listBySearchKeyword(String searchKeyword);
 
+
+    /**
+     * 上传头像
+     * @param headPhotoFile
+     * @return
+     */
+    Boolean uploadHeadPhoto(MultipartFile headPhotoFile);
 }
 
