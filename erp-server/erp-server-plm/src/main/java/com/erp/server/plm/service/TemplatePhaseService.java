@@ -53,4 +53,14 @@ public interface TemplatePhaseService extends IService<TemplatePhaseEntity> {
     TemplatePhaseEntity getByIdAndTemplateId(String phaseId, String templateId);
 
     List<TemplatePhaseEntity> getByTemplateIds(List<String> templateIds);
+
+    /**
+     * 根据阶段名查询阶段信息
+     * @Author Luo_WG
+     * @Date 2023/6/20 15:21
+     * @param templateId 模板id
+     * @param phaseName 阶段名称
+     * @return com.erp.model.plm.entity.TemplatePhaseEntity
+     **/
+    TemplatePhaseEntity getProductPhaseByName(String templateId, String phaseName);
 }

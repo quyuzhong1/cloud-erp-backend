@@ -121,6 +121,9 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Autowired
     private ProjectInfoService projectInfoService;
 
+    @Autowired
+    private TemplateTaskConcernService templateTaskConcernService;
+
     /**
      * 产品保存模板 保存任务
      *
@@ -222,8 +225,33 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         templateDeliveryDocsService.removeByTaskIdAndTemplateId(id, templateId);
         //删除任务审核人
         taskChargeDistributionService.removeBySourceAndTaskId(MathUtil.TWO, id);
+        //删除关注人
+        templateTaskConcernService.deleteByTemplateIdAndTaskIds(templateId, Arrays.asList(id));
         //删除模板任务
         return this.remove(queryWrapper);
+    }
+
+    @Override
+    public Boolean removeTaskBatch(List<String> ids, String templateId) {
+        LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(TemplateTaskEntity::getId, ids);
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
+        List<TemplateTaskEntity> list = this.list(queryWrapper);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_95058);
+        }
+        //删除任务交付文档数据
+        templateDeliveryDocsService.removeByTaskIdsAndTemplateId(ids, templateId);
+        //删除任务审核人
+        taskChargeDistributionService.removeBySourceAndTaskIds(MathUtil.TWO, ids);
+        //删除关注人
+        templateTaskConcernService.deleteByTemplateIdAndTaskIds(templateId, ids);
+        //删除模板任务
+        return lambdaUpdate()
+                .in(TemplateTaskEntity::getId, ids)
+                .eq(TemplateTaskEntity::getTemplateId, templateId)
+                .set(TemplateTaskEntity::getIsDeleted, Boolean.TRUE)
+                .update();
     }
 
     /**
@@ -559,6 +587,9 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             templateTaskRefSkuConfigService.removeByTaskId(entity.getId());
         }
 
+        //添加关注人
+        templateTaskConcernService.saveTemplateConcernList(dto.getTemplateId(), dto.getId(), dto.getConcernUserIdList());
+
         //保存前置任务
         templatePreTaskService.saveTemplatePreTaskList(entity.getId(), dto.getPreTaskIdList(), dto.getTemplateId());
         return true;
@@ -575,7 +606,6 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
      */
     public List<TemplateTaskEntity> getByTemplateId(String templateId, List<String> taskIdList) {
         List<TemplateTaskEntity> byTemplateId = baseMapper.getByTemplateId(templateId, taskIdList);
-
  /*       LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
         queryWrapper.orderByAsc(TemplateTaskEntity::getCreateTime);*/
@@ -935,5 +965,14 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
 
     }
 
+    @Override
+    public TemplateTaskEntity getTaskByName(String templateId, String taskName) {
+        return lambdaQuery().eq(TemplateTaskEntity::getTemplateId, templateId)
+                .eq(TemplateTaskEntity::getName, taskName).one();
+    }
 
+    @Override
+    public List<TemplateTaskEntity> listByTemplateId(String templateId) {
+        return lambdaQuery().eq(TemplateTaskEntity::getTemplateId, templateId).list();
+    }
 }

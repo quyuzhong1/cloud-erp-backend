@@ -26,6 +26,8 @@ public interface TemplateDeliveryDocsService extends IService<TemplateDeliveryDo
 
      */
     void removeByTaskIdAndTemplateId(String taskId, String templateId);
+
+    void removeByTaskIdsAndTemplateId(List<String> taskIds, String templateId);
     /**
      * @description: 根据模板id删除
      * @author Will

@@ -262,6 +262,25 @@ public class TemplateTaskDocsNameServiceImpl extends ServiceImpl<TemplateTaskDoc
     }
 
 
+    @Override
+    public String saveDocs(TmeplateDocsNameDTO dto) {
+        String name = dto.getName();
+        String templateId = dto.getTemplateId();
+        List<TemplateTaskDocsNameEntity> docksNames = getByTemplateId(templateId);
+        List<String> names = docksNames.stream().map(TemplateTaskDocsNameEntity::getName).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(names) && names.contains(name)) {
+            throw new ServiceException(ApiError.ERROR_95012);
+        }
+        TemplateTaskDocsNameEntity entity = new TemplateTaskDocsNameEntity();
+        entity.setName(name);
+        entity.setTemplateId(templateId);
+        this.save(entity);
+        LoginUser loginUser = CommonInterceptor.threadLocal.get();
+        if (ObjectUtils.isEmpty(loginUser)) {
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
+        }
+        return entity.getId();
+    }
 }
 
 

@@ -306,6 +306,15 @@ public class TemplatePhaseServiceImpl extends ServiceImpl<TemplatePhaseMapper, T
         resultList.addAll(otherList);
         return resultList;
     }
+
+    @Override
+    public TemplatePhaseEntity getProductPhaseByName(String templateId, String phaseName) {
+        LambdaQueryWrapper<TemplatePhaseEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TemplatePhaseEntity::getName, phaseName);
+        queryWrapper.eq(TemplatePhaseEntity::getTemplateId, templateId);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
+    }
 }
 
 

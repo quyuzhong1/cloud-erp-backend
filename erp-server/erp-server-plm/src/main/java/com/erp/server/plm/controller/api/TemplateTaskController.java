@@ -1,19 +1,38 @@
 package com.erp.server.plm.controller.api;
 
+import com.alibaba.excel.EasyExcel;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.plm.dto.TemplateSearchDTO;
-import com.erp.model.plm.dto.TemplateTaskDTO;
-import com.erp.model.plm.dto.TemplateTaskParamDTO;
-import com.erp.model.plm.dto.TemplateTaskShowDTO;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.dto.*;
+import com.erp.model.plm.dto.excel.ProjectTaskExcelDTO;
+import com.erp.model.plm.dto.excel.TemplateTaskExcelDTO;
 import com.erp.model.plm.vo.TemplateTaskVO;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.plm.listener.TemplateTaskExcelListener;
+import com.erp.server.plm.service.TemplatePhaseService;
+import com.erp.server.plm.service.TemplateTaskDocsNameService;
 import com.erp.server.plm.service.TemplateTaskService;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -31,6 +50,14 @@ public class TemplateTaskController extends BaseController {
 
     @Autowired
     private TemplateTaskService templateTaskService;
+
+    private String templateId;
+
+    private SysUserFeign sysUserFeign;
+
+    private TemplatePhaseService templatePhaseService;
+
+    private TemplateTaskDocsNameService templateTaskDocsNameService;
 
 
     /**
@@ -102,6 +129,90 @@ public class TemplateTaskController extends BaseController {
     public ApiResult<TemplateTaskVO> taskDetails(@RequestBody @Validated TemplateTaskParamDTO dto) {
         TemplateTaskVO taskVO = templateTaskService.taskDetails(dto);
         return success(taskVO);
+    }
+
+    /**
+     * excel导入模板任务
+     * @param excelFile 文件流
+     * @param response  响应
+     * @return com.common.core.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2022/9/28 11:46
+     **/
+    @PostMapping("/importTemplateTaskFile")
+    public ApiResult importTemplateTaskFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "templateId") String templateId, HttpServletResponse response) {
+        TemplateTaskExcelListener excelListenerUtil = new TemplateTaskExcelListener(templateId, sysUserFeign, templatePhaseService, templateTaskService, templateTaskDocsNameService);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), ProjectTaskExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_95124);
+        }
+        List<TemplateTaskExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        List<TemplateTaskExcelDTO> list = excelListenerUtil.getDateList();
+        if (list.size() > 0) {
+            StringBuffer sb = new StringBuffer();
+            String excelPath = "excel/templateTaskError.xlsx";
+            String name = "templateTaskError";
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date);
+            sb.append(name);
+            try {
+                new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_95125);
+            }
+
+            return failure();
+        }
+        return success();
+    }
+
+
+    /**
+     * 下载导入任务模板
+     *
+     * @param request  request
+     * @param response response
+     * @Author Luo_WG
+     * @Date 2022/9/28 11:46
+     **/
+    @GetMapping("/importTemplate")
+    public void importTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/templateTaskExportTemplate.xlsx";
+        String excelName = "templateTaskExportTemplate";
+
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 模板详情-模板任务-批量删除
+     * @Author Luo_WG
+     * @Date 2023/6/20 16:45
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @DeleteMapping("/removeTaskBatch")
+    public ApiResult removeTaskBatch(@RequestBody @Validated TemplateTaskParamsDTO dto) {
+        Boolean flag = templateTaskService.removeTaskBatch(dto.getIds(),dto.getTemplateId());
+        return flag == true ? success() : failure();
     }
 
 }
