@@ -34,6 +34,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.dto.SubcontractChangeDetailDTO;
+import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.dto.SubcontractOrderDetailDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractChangeDetailEntity;
@@ -467,6 +468,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             subcontractOrderDetailService.updateSourceDetailId(pairList);
         }
         //自动下推
+        autoPushdownDetail(addList);
     }
     /**
      * @description: 修改更新数据
@@ -511,6 +513,24 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             subcontractOrderDetailService.update(detailList,entity.getId());
         }
         //自动下推
+        autoPushdownDetail(updateList);
+    }
+
+    private void autoPushdownDetail(List<SubcontractChangeDetailEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<SubcontractOrderDTO.GeneratePoDTO> resultLust = new ArrayList<>();
+        for (SubcontractChangeDetailEntity detailEntity : list) {
+            if (!detailEntity.getIsGeneratePo()) {
+                continue;
+            }
+
+
+
+        }
+
+
     }
 
 
