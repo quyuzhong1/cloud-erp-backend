@@ -138,5 +138,12 @@ public interface SubcontractChangeService extends SuperService<SubcontractChange
     * @return
     */
     void exportList(SubcontractChangeDTO.ExportDTO dto, HttpServletResponse response);
-
+    /**
+     * @description: 作废
+     * @author Will
+     * @date: 2023/6/19 18:50
+     * @param ids
+     * @param remark
+     */
+    void invalid(List<String> ids, String remark);
 }

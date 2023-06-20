@@ -171,39 +171,20 @@ public class SubcontractChangeController extends BaseController {
     }
 
     /**
-    * 反审核
-    * @author will
-    * @date:  2023-06-08
-    * @param dto
-    * @return ApiResult<Void>
-    */
-    @PostMapping("/disApprove")
+     * 批量作废
+     * @author Will
+     * @date: 2023-06-08
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:subcontractChangeOrder:disApprove",
+            menuCode = "scm:subcontractChangeOrder:invalid",
             serviceClass = SubcontractChangeService.class,
             keyIdName = "ids")
-    public ApiResult<Void> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        subcontractChangeService.disApprove(dto.getIds());
-        return success();
-    }
-
-
-    /**
-    * 删除
-    * @author will
-    * @date:  2023-06-08
-    * @param dto
-    * @return ApiResult<Void>
-    */
-    @PostMapping("/delete")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "scm:subcontractChangeOrder:delete",
-            serviceClass = SubcontractChangeService.class,
-            keyIdName = "ids")
-    public ApiResult<Void> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        subcontractChangeService.delete(dto.getIds());
+    public ApiResult<Void> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        subcontractChangeService.invalid(dto.getIds(),dto.getRemark());
         return success();
     }
 
