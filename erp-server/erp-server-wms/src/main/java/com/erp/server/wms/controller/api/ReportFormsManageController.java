@@ -36,10 +36,6 @@ public class ReportFormsManageController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO.PagingViewDTO>>
      **/
     @PostMapping(value = "/purchaseBusinessGatherTablePaging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "scm:ReportFormsManage:purchaseBusinessGatherTablePaging",
-            tableAlias = "pod")
     public ApiResult<PagingVO<List<PurchaseBusinessGatherTableDTO.PagingViewDTO>>> purchaseBusinessGatherTablePaging(@RequestBody PagingDTO<PurchaseBusinessGatherTableDTO.PagingParamDTO> dto) {
         PagingVO<List<PurchaseBusinessGatherTableDTO.PagingViewDTO>> listPagingVO = reportFormsManageService.purchaseBusinessGatherTablePaging(dto);
         return success(listPagingVO);
@@ -54,10 +50,6 @@ public class ReportFormsManageController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/exportExcelPurchaseBusiness")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "scm:ReportFormsManage:exportExcelPurchaseBusiness",
-            tableAlias = "pod")
     public ApiResult exportExcelPurchaseBusiness(@RequestBody PurchaseBusinessGatherTableDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean flag = reportFormsManageService.exportExcelPurchaseBusiness(dto, response);
         return flag == true ? success() : failure();
