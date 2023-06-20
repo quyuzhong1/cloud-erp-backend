@@ -148,6 +148,12 @@ public class SupplierReportServiceImpl implements SupplierReportService {
 
         // 合格率(批次)
         records.stream().forEach(record->{
+            if(Objects.isNull(record.getQcReturnCount())) {
+                record.setQcReturnCount(0);
+            }
+            if(Objects.isNull(record.getQcReturnQty())) {
+                record.setQcReturnQty(0);
+            }
             // 合格率（批次）
             // 1-（退货批次/收货批次）*100%
             // 如果收货批次为0，则为
