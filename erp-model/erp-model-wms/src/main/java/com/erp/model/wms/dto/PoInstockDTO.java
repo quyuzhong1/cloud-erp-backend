@@ -399,6 +399,11 @@ public class PoInstockDTO implements Serializable {
         private String sourceType;
 
         /**
+         * 采购单号
+         */
+        private String purchaseOrderCode;
+
+        /**
          * 明细
          */
         private List<PoInstockDetailDTO.ViewDTO> details;

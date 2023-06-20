@@ -327,6 +327,13 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         }
         BeanMapperUtils.copy(entity, dto);
 
+        //采购信息
+        PurchaseOrderDTO.GetOneDTO purchaseOrderDTO = scmTaskFeign.getByOrderId(entity.getPurchaseOrderId());
+        if (ObjectUtils.isEmpty(purchaseOrderDTO)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        dto.setPurchaseOrderCode(purchaseOrderDTO.getCode());
+
         //明细信息
         List<PoInstockDetailEntity> entityDetails = poInstockDetailService.listByMainId(id);
         if (CollectionUtils.isEmpty(entityDetails)) {
