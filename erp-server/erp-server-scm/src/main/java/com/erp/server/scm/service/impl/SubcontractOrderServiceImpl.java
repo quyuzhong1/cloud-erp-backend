@@ -918,9 +918,12 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if(CollUtil.isEmpty(list)) {
            return;
         }
+        //产品信息
         List<String> skuIds = list.stream().map(SubcontractOrderDTO.ListDTO::getSkuId).collect(Collectors.toList());
-
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
+        //收货数量
+        List<String> ids = list.stream().map(SubcontractOrderDTO.ListDTO::getDetailId).collect(Collectors.toList());
 
         // 属性赋值
         for(SubcontractOrderDTO.ListDTO data : list) {

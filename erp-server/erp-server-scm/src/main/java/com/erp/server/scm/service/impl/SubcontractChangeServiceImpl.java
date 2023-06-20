@@ -13,7 +13,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
@@ -34,10 +33,7 @@ import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.dto.SubcontractChangeDetailDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.dto.SubcontractOrderDetailDTO;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
-import com.erp.model.scm.entity.SubcontractChangeDetailEntity;
-import com.erp.model.scm.entity.SubcontractChangeEntity;
-import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
@@ -791,16 +787,21 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
     * 新增修改处理数据
     */
     private void handleData(SubcontractChangeEntity entity) {
-        //核算公司信息
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getPurchaseOrgId(), entity.getReceiveOrgId()));
-        if (CollectionUtils.isEmpty(accountingCompanyList)) {
-            throw new ServiceException(ApiError.ERROR_9014);
+
+        SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(entity.getSourceId());
+        if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
+            throw new ServiceException(ApiError.ERROR_98073);
         }
+        entity.setPurchaseOrgId(subcontractOrderEntity.getPurchaseOrgId());
+        entity.setPurchaseOrgName(subcontractOrderEntity.getPurchaseOrgName());
+
+        entity.setReceiveOrgId(subcontractOrderEntity.getReceiveOrgId());
+        entity.setReceiveOrgName(subcontractOrderEntity.getReceiveOrgName());
+
         //人员信息
         if (StringUtils.isNotBlank(entity.getChangerId())) {
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getChangerId());
             entity.setChangerName(findUserDTO.getUserName());
-
         }
 
         //部门信息
@@ -808,15 +809,6 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             SysDepartmentDTO sysDepartmentDTO = sysUserFeign.getUserDeptById(entity.getDeptId());
             entity.setDeptName(sysDepartmentDTO.getName());
         }
-
-
-        //采购组织名称
-        String purchaseOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-        entity.setPurchaseOrgName(purchaseOrgName);
-
-        //收料组织名称
-        String receiveOrgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-        entity.setReceiveOrgName(receiveOrgName);
     }
 
 }
