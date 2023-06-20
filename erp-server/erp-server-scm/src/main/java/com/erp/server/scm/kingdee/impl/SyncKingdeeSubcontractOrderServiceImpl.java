@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -75,9 +76,15 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
         //采购日期
         resultMap.put("billDate",entity.getBillDate());
-        
-        //采购组织
-        resultMap.put("purchaseOrgName",entity.getPurchaseOrgName());
+
+        //组织机构编码
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getSubcontractOrgId()));
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            //委外组织编码
+            String subcontractOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getSubcontractOrgId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+            resultMap.put("subcontractOrgCode", subcontractOrgCode);
+        }
 
         //获取用户部门id
         if (StringUtils.isNotBlank(entity.getDeptId())) {

@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
@@ -54,6 +55,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -632,7 +634,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
-
+        List<String> poIds = new ArrayList<>();
         Map<String, List<SubcontractOrderDTO.GeneratePoAddDTO>> map = resultList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getSupplierId()).concat(obj.getDeliveryWarehouseId()).concat(obj.getIsParent().toString())));
         for (Map.Entry<String, List<SubcontractOrderDTO.GeneratePoAddDTO>> entry : map.entrySet()) {
             List<SubcontractOrderDTO.GeneratePoAddDTO> value = entry.getValue();
@@ -640,7 +642,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //采购主表
             PurchaseOrderDTO.AddDTO addDTO = new PurchaseOrderDTO.AddDTO();
             BeanMapperUtils.copy(generatePoAddDTO,addDTO);
-
+            addDTO.setPurchaseDate(LocalDate.now());
             //委外类型
             if (generatePoAddDTO.getIsParent()) {
                 addDTO.setSubcontractType(SubcontractTypeEnum.ENUM_PARENT.getCode());
@@ -685,7 +687,23 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 poDetailList.add(poDetailAddDTO);
             }
             addDTO.setDetails(poDetailList);
-            purchaseOrderService.add(addDTO);
+            String poId = purchaseOrderService.add(addDTO);
+            poIds.add(poId);
+        }
+        if (CollectionUtils.isNotEmpty(poIds)) {
+            //提交
+            Boolean submit = purchaseOrderService.submit(poIds);
+            if (!submit) {
+                throw new ServiceException(ApiError.ERROR_98076);
+            }
+            //审核
+            BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+            baseApproveParamDTO.setIds(poIds);
+            baseApproveParamDTO.setType(ApproveType.PASS);
+            Boolean approve = purchaseOrderService.approve(baseApproveParamDTO);
+            if (!approve) {
+                throw new ServiceException(ApiError.ERROR_98077);
+            }
         }
     }
 
