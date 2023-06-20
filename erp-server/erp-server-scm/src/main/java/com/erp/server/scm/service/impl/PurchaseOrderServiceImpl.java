@@ -58,6 +58,7 @@ import com.erp.server.scm.listener.PurchaseOrderExcelListener;
 import com.erp.server.scm.mapper.PurchaseOrderMapper;
 import com.erp.server.scm.service.*;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -139,6 +140,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Autowired
     private InventoryFeign inventoryFeign;
+
+    @Autowired
+    private PurchaseApplicationService purchaseApplicationService;
 
 
     @Override
@@ -1083,7 +1087,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (CollectionUtils.isEmpty(records)) {
             return;
         }
+        // 采购订单明细id集合
         List<String> podIds = records.stream().map(PurchaseOrderDTO.ListDTO::getPurchaseDetailId).collect(Collectors.toList());
+        // 采购订单id集合
+        List<String> purchaseOrderIds = records.stream().map(PurchaseOrderDTO.ListDTO::getId).collect(Collectors.toList());
         //入库信息
         List<PoInstockDetailEntity> purchaseStockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
 
@@ -1097,6 +1104,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<String> skuIds = records.stream().map(PurchaseOrderDTO.ListDTO::getSkuId).collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
+        //关联信息
+        List<PurchaseApplicationRefPoEntity> refList = purchaseApplicationRefPoService.listByPurchaseOrderIds(purchaseOrderIds);
+        // 采购申请单id集合
+        List<String> purchaseApplicationIds = Lists.newArrayList();
         records.forEach(obj -> {
 
             Integer receiveQty = MathUtil.ZERO;
@@ -1139,7 +1150,47 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
             obj.setArrivalStatusName(ArrivalStatusEnum.getNameByCode(obj.getArrivalStatus()));
+
+            // 采购申请单号
+            if(CollUtil.isNotEmpty(refList)) {
+                // 采购申请单明细id和采购订单明细id是多对多，可能存在多条
+                List<PurchaseApplicationRefPoEntity> filterRefList = refList.stream().filter(r->{
+                    if(Objects.equals(obj.getId(), r.getPurchaseOrderId())
+                    && Objects.equals(obj.getPurchaseDetailId(), r.getPurchaseOrderDetailId())) {
+                        return true;
+                    }
+                    return false;
+                }).collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(filterRefList)) {
+                    List<String> applicationIds = filterRefList.stream().map(PurchaseApplicationRefPoEntity::getPurchaseApplicationId).distinct().collect(Collectors.toList());
+                    purchaseApplicationIds.addAll(applicationIds);
+                    obj.setPurchaseApplicationIds(applicationIds);
+                }
+
+            }
         });
+
+        if(CollUtil.isNotEmpty(purchaseApplicationIds)) {
+           List<PurchaseApplicationEntity> purchaseApplicationList = purchaseApplicationService.listByIds(purchaseApplicationIds);
+            // 采购申请单id和采购申请单对应map
+            Map<String, PurchaseApplicationEntity> refMap = purchaseApplicationList.stream().collect(Collectors.toMap(PurchaseApplicationEntity::getId, Function.identity()));
+
+            records.forEach(obj -> {
+                if(CollUtil.isNotEmpty(obj.getPurchaseApplicationIds())) {
+                    StringBuffer applicationCodes = new StringBuffer("");
+                    obj.getPurchaseApplicationIds().stream().forEach(applicationId->{
+                        PurchaseApplicationEntity refEntity = refMap.get(applicationId);
+                        if(Objects.nonNull(refEntity)) {
+                            applicationCodes.append(refEntity.getCode()).append(",");
+                        }
+                    });
+                    if(applicationCodes.toString().endsWith(",")) {
+                        applicationCodes.deleteCharAt(applicationCodes.length() - 1);
+                    }
+                    obj.setSourceCode(applicationCodes.toString());
+                }
+            });
+        }
     }
 
     @Override

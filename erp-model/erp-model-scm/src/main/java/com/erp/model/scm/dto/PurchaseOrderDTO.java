@@ -2,6 +2,7 @@ package com.erp.model.scm.dto;
 
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.plm.vo.ProductVO;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -196,6 +197,17 @@ public class PurchaseOrderDTO implements Serializable {
          * 来源明细id
          */
         private String sourceDetailId;
+
+        /**
+         * 采购申请单号
+         */
+        private String sourceCode;
+
+        /**
+         * 采购申请单id集合
+         */
+        @JsonIgnore
+        private List<String> purchaseApplicationIds;
     }
 
     @Data
