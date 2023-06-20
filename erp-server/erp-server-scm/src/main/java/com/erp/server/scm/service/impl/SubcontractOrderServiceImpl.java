@@ -692,11 +692,20 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (CollectionUtils.isEmpty(parentList)) {
             throw new ServiceException(ApiError.ERROR_98071);
         }
+
+        //查询产品信息
+        List<String> skuIds = resultList.stream().map(obj -> obj.getSkuId()).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        if (CollectionUtils.isEmpty(skuList)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+
         for (SubcontractOrderDetailEntity parent : parentList) {
             SubcontractOrderDTO.ViewAddDetailDTO parentDTO = new SubcontractOrderDTO.ViewAddDetailDTO();
             BeanMapperUtils.copy(parent,parentDTO);
             parentDTO.setSourceDetailId(parent.getId());
-
+            String parentProductName = skuList.stream().filter(obj -> obj.getSkuId().equals(parent.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
+            parentDTO.setProductName(parentProductName);
             //子集
             List<SubcontractOrderDetailEntity> childList = detailList.stream().filter(obj -> StringUtils.equals(obj.getParentId(), parent.getId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(childList)) {
@@ -707,6 +716,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 SubcontractOrderDTO.ViewAddDetailDTO childDTO = new SubcontractOrderDTO.ViewAddDetailDTO();
                 BeanMapperUtils.copy(child,childDTO);
                 childDTO.setSourceDetailId(child.getId());
+                String childProductName = skuList.stream().filter(obj -> obj.getSkuId().equals(child.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
+                childDTO.setProductName(childProductName);
                 childDTOList.add(childDTO);
             }
             parentDTO.setChildList(childDTOList);
