@@ -794,4 +794,171 @@ public class QcInfoDTO implements Serializable {
 
     }
 
+    /**
+     * 质检日报导出
+     */
+    @Data
+    @NoArgsConstructor
+    public static class QcDailyReportDTO {
+
+        /**
+         * 检验日期
+         */
+        private LocalDate qcDate;
+
+        /**
+         * 内外检类型
+         */
+        private String qcInsideType;
+
+        /**
+         * 内外检类型名称
+         */
+        private String qcInsideTypeName;
+
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+        /**
+         * 是否新品首批
+         */
+        Boolean isFirstMassProduct;
+
+        /**
+         * 产品状态
+         */
+        private String firstMassProductName;
+
+        /**
+         * 产品图片
+         */
+
+        /**
+         * 箱唛图片
+         */
+
+        /**
+         * 供应商
+         */
+        private String supplierName;
+
+        /**
+         * 产品图片
+         */
+        private String productName;
+
+        /**
+         * 回仓数量
+         */
+        private Integer totalQty;
+
+        /**
+         * 验货结果
+         */
+        private String qcResult;
+
+        /**
+         * 质检员
+         */
+        private String qcUserName;
+
+        /**
+         * 质检数量
+         */
+        private Integer qcQty;
+
+        /**
+         * 质检不良量
+         */
+        private Integer qcBadQty;
+
+        /**
+         * 检验不良率
+         */
+        private BigDecimal qcBadRate;
+
+        /**
+         * 问题属性
+         */
+        private String qcProblemDict;
+
+
+        /**
+         * 问题属性名称
+         */
+        private String qcProblemName;
+
+        /**
+         * 不良现象
+         */
+        private String badDescription;
+
+        /**
+         * 不良附图
+         */
+
+        /**
+         * 处理措施
+         */
+        private String handleModeDict;
+
+        /**
+         * 处理措施名
+         */
+        private String handleModeName;
+
+        /**
+         * 产品长
+         */
+        private BigDecimal productLength;
+
+        /**
+         * 产品宽
+         */
+        private BigDecimal productWidth;
+
+        /**
+         * 产品高
+         */
+        private BigDecimal productHeight;
+
+        /**
+         * 产品净重
+         */
+        private BigDecimal productNetWeight;
+
+        /**
+         * 箱长
+         */
+        private BigDecimal boxLength;
+
+        /**
+         * 箱宽
+         */
+        private BigDecimal boxWidth;
+
+        /**
+         * 箱高
+         */
+        private BigDecimal boxHeight;
+
+        /**
+         * 外箱重量
+         */
+        private BigDecimal boxWeight;
+
+        /**
+         * 整箱数量（个）
+         */
+        private Integer fullBoxQty;
+
+        /**
+         * 最新备注
+         */
+        private String latestRemark;
+
+    }
+
 }

@@ -45,7 +45,8 @@ public class WmsSyncProductServiceImpl implements WmsSyncProductService {
     @Override
     public void syncProductSkuToWms(List<ProductDetailEntity> list) {
         log.info("开始同步产品sku到wms系统");
-        List<List<ProductDetailEntity>> partitionList = ListUtil.partition(list, 100);// 按100个拆分
+        // 按100个拆分
+        List<List<ProductDetailEntity>> partitionList = ListUtil.partition(list, 100);
         // 异步推送到MQ
         partitionList.forEach(req -> {
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(),req,  IdUtil.simpleUUID());
@@ -57,7 +58,8 @@ public class WmsSyncProductServiceImpl implements WmsSyncProductService {
     public void syncProductSkuSaleToWms() {
         log.info("开始同步产品sku销售信息到wms系统");
         List<ProductSaleEntity> list = productSaleService.list();
-        List<List<ProductSaleEntity>> partitionList = ListUtil.partition(list, 100);// 按100个拆分
+        // 按100个拆分
+        List<List<ProductSaleEntity>> partitionList = ListUtil.partition(list, 100);
         // 异步推送到MQ
         partitionList.forEach(req -> {
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_SALE_TAG.getName(),req, IdUtil.simpleUUID());
@@ -69,7 +71,8 @@ public class WmsSyncProductServiceImpl implements WmsSyncProductService {
     public void syncProductInfoToWms() {
         log.info("开始同步产品详细信息到wms系统");
         List<ProductInfoEntity> list = productInfoService.getProductInfoAll();
-        List<List<ProductInfoEntity>> partitionList = ListUtil.partition(list, 100);// 按100个拆分
+        // 按100个拆分
+        List<List<ProductInfoEntity>> partitionList = ListUtil.partition(list, 100);
         // 异步推送到MQ
         partitionList.forEach(req -> {
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(),req,  IdUtil.simpleUUID());

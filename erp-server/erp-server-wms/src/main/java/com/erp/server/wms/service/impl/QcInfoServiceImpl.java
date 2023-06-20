@@ -1579,6 +1579,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         return this.baseMapper.getQcInfoByPurchaseOrder(dto);
     }
 
+    @Override
+    public void exportDailyExcel(QcInfoDTO.PagingParamDTO dto, HttpServletResponse response) {
+
+    }
+
     /**
      * 批量完成
      * 质检数量

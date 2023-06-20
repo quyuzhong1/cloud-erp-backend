@@ -236,4 +236,11 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @return
      */
     QcInfoDTO.PurchaseQcInfoDTO getQcInfoByPurchaseOrder(QcInfoDTO.PurchaseQcParamDTO dto);
+
+    /**
+     * 导出质检日报Excel
+     * @param dto
+     * @param response
+     */
+    void exportDailyExcel(QcInfoDTO.PagingParamDTO dto, HttpServletResponse response);
 }

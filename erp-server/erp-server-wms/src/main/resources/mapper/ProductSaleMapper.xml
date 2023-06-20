@@ -25,6 +25,7 @@
             is_finished_video = #{isFinishedVideo},
             sales_platform = #{salesPlatform},
             is_marketable = #{isMarketable},
+            sale_state = #{saleState},
             data_url = #{dataUrl},
             create_user_id = #{createUserId},
             create_user_name = #{createUserName},
