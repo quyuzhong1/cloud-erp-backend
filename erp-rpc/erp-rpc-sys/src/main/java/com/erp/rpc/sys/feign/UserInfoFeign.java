@@ -18,8 +18,14 @@ public interface UserInfoFeign {
 
 
 
-
-
+        
+    /**
+     * 获取第三方绑定的用户信息
+     * @author yl
+     * @date 2023-06-20 10:16
+     * @param
+     * @return java.util.List<com.common.business.dto.FindUserDTO>
+     */
     @GetMapping("feign/user/listThirdBindUser")
     List<FindUserDTO> listThirdBindUserInfo();
 }

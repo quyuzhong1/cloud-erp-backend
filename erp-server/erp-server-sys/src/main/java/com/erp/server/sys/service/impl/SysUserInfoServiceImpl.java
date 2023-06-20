@@ -21,6 +21,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.Md5Util;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
@@ -49,6 +50,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -741,6 +743,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      * @author yl
      * @date 2022-10-15 11:22
      */
+    @Override
     public List<UserRequestPermissionsDTO> getRequestPermissionsList(String userId) {
 
 //        //获取用户角色id
@@ -770,6 +773,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      * @Author Luo_WG
      * @Date 2022/10/19 14:17
      **/
+    @Override
     public List<String> getDepUserList(String userId) {
         List<SysDepartmentTreeDTO> treeList = sysDepartmentMapper.findTree();
         List<String> userDepList = baseMapper.getUserDepList(userId);
@@ -901,7 +905,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                     .filter(superior -> superior.getLevel() >= ChargeSuperiorEnum.DIRECT_SUPERIOR.getCode())
                     .findFirst()
                     .orElse(null);
-            BeanMapperUtils.copy(userSuperiorDTO,newSuperiorDTO);
+            BeanMapperUtils.copy(userSuperiorDTO, newSuperiorDTO);
             newSuperiorDTO.setSuperiorType(ChargeSuperiorEnum.DIRECT_SUPERIOR.getName());
             parentList.add(newSuperiorDTO);
             parentList.addAll(collect);
@@ -1042,6 +1046,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      * @Author Luo_WG
      * @Date 2023/4/20 11:18
      **/
+    @Override
     public Boolean forgotPassword(ForgotPasswordDTO forgotPasswordDTO) {
         SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, forgotPasswordDTO.getUserAccount()).one();
         if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
@@ -1152,6 +1157,29 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             resultList.add(userDTO);
         }
         return resultList;
+    }
+
+
+    /**
+     * 上传头像
+     *
+     * @param headPhotoFile
+     * @return
+     */
+    @Override
+    public Boolean uploadHeadPhoto(MultipartFile headPhotoFile) {
+        String userId = commonService.getUserInfo().getUid();
+        SysUserInfoEntity userInfo = this.getById(userId);
+        if (Objects.isNull(userInfo)) {
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
+        }
+
+        String headPhotoUrl = FastDFSClientUtil.uploadFile(headPhotoFile);
+        if (StringUtils.isNotBlank(headPhotoUrl)) {
+            userInfo.setHeadIcon(headPhotoUrl);
+            return this.updateById(userInfo);
+        }
+        return Boolean.FALSE;
     }
 
     private Boolean sendingEmail(EmailVerifyCodeDTO dto, String subject) {
