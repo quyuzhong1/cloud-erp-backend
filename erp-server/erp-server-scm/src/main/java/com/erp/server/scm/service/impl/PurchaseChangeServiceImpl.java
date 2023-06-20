@@ -282,6 +282,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
                 if (returnQty > receiveQty) {
                     throw new ServiceException(ApiError.ERROR_99030.code, String.format(ApiError.ERROR_99030.msg, req.getSkuNo()));
                 }
+
                 approveArrivalState(returnQty, receiveQty, purchaseQty, req.getPurchaseOrderDetailId());
             });
 

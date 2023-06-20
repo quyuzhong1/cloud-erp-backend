@@ -29,18 +29,22 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     @Override
     public Boolean saveOrUpdatePurchaseOrderDetail(List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList) {
         List<String> detailIds = purchaseOrderDetailEntityList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
-        List<PurchaseOrderDetailEntity> detailEntityList = this.ListProductDetailEntityByIds(detailIds);
+        List<PurchaseOrderDetailEntity> detailEntityList = ListProductDetailEntityByIds(detailIds);
         List<String> ids = purchaseOrderDetailEntityList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
         List<String> dbIds = detailEntityList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
         List<String> existIdList = ids.stream().filter(s -> dbIds.contains(s)).collect(Collectors.toList());
-        List<String> notExistIdList = ids.stream().filter(s -> !dbIds.contains(s)).collect(Collectors.toList());
-        List<PurchaseOrderDetailEntity> existDetailEntityList = this.listByIds(existIdList);
-        List<PurchaseOrderDetailEntity> notExistDetailEntityList = this.listByIds(notExistIdList);
-        if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
-            baseMapper.updateBatchSelective(existDetailEntityList);
+        if (CollectionUtils.isNotEmpty(existIdList)) {
+            List<PurchaseOrderDetailEntity> existDetailEntityList = ListProductDetailEntityByIds(existIdList);
+            if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
+                baseMapper.updateBatchSelective(existDetailEntityList);
+            }
         }
-        if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
-            this.saveBatch(notExistDetailEntityList);
+        List<String> notExistIdList = ids.stream().filter(s -> !dbIds.contains(s)).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(notExistIdList)) {
+            List<PurchaseOrderDetailEntity> notExistDetailEntityList = ListProductDetailEntityByIds(notExistIdList);
+            if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
+                this.saveBatch(notExistDetailEntityList);
+            }
         }
         return Boolean.TRUE;
     }

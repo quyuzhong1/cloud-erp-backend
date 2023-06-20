@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.erp.model.plm.entity.TemplateTaskConcernEntity;
 import com.erp.server.plm.mapper.TemplateTaskConcernMapper;
 import com.erp.server.plm.service.TemplateTaskConcernService;
@@ -27,6 +28,9 @@ public class TemplateTaskConcernServiceImpl extends SuperServiceImpl<TemplateTas
 
     @Override
     public Boolean saveTemplateConcernList(String templateId, String taskId, List<String> concernUserIdList) {
+        if (CollectionUtils.isEmpty(concernUserIdList)) {
+            return Boolean.FALSE;
+        }
         baseMapper.deleteConcernUser(templateId, taskId);
         List<TemplateTaskConcernEntity> list = new ArrayList<>();
         for (String concernUserId : concernUserIdList) {
@@ -34,13 +38,9 @@ public class TemplateTaskConcernServiceImpl extends SuperServiceImpl<TemplateTas
             concernEntity.setTemplateId(templateId);
             concernEntity.setTemplateTaskId(taskId);
             concernEntity.setUserId(concernUserId);
+            list.add(concernEntity);
         }
         return this.saveBatch(list);
-    }
-
-    @Override
-    public Boolean deleteTemplateConcernList(String templateId, String taskId) {
-        return baseMapper.deleteConcernUser(templateId, taskId);
     }
 
     @Override

@@ -43,13 +43,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductDetailEntity> detailEntityList = ListProductDetailByIds(detailIds);
         List<String> ids = productDetailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
         List<String> dbIds = detailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+
         List<String> existIdList = ids.stream().filter(s -> dbIds.contains(s)).collect(Collectors.toList());
-        List<String> notExistIdList = ids.stream().filter(s -> !dbIds.contains(s)).collect(Collectors.toList());
         List<ProductDetailEntity> existDetailEntityList = ListProductDetailByIds(existIdList);
-        List<ProductDetailEntity> notExistDetailEntityList = ListProductDetailByIds(notExistIdList);
         if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
             baseMapper.updateBatchSelective(existDetailEntityList);
         }
+        List<String> notExistIdList = ids.stream().filter(s -> !dbIds.contains(s)).collect(Collectors.toList());
+        List<ProductDetailEntity> notExistDetailEntityList = ListProductDetailByIds(notExistIdList);
+
         if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
             this.saveBatch(notExistDetailEntityList);
         }

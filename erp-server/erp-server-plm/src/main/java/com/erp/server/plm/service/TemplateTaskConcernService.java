@@ -31,16 +31,6 @@ public interface TemplateTaskConcernService extends SuperService<TemplateTaskCon
      * @Author Luo_WG
      * @Date 2023/6/20 17:17
      * @param templateId
-     * @param taskId
-     * @return void
-     **/
-    Boolean deleteTemplateConcernList(String templateId, String taskId);
-
-    /**
-     * 删除模板关注人
-     * @Author Luo_WG
-     * @Date 2023/6/20 17:17
-     * @param templateId
      * @param taskIds
      * @return void
      **/
