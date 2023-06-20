@@ -4,6 +4,7 @@ import com.common.business.service.SuperServiceImpl;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.server.wms.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.wms.service.PurchaseOrderDetailService;
 import lombok.extern.slf4j.Slf4j;
@@ -39,12 +40,15 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                 baseMapper.updateBatchSelective(existDetailEntityList);
             }
         }
-        List<String> notExistIdList = ids.stream().filter(s -> !dbIds.contains(s)).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(notExistIdList)) {
-            List<PurchaseOrderDetailEntity> notExistDetailEntityList = ListProductDetailEntityByIds(notExistIdList);
-            if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
-                this.saveBatch(notExistDetailEntityList);
+        List<String> notExistIdList = detailIds.stream().filter(s -> !dbIds.contains(s)).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> notExistDetailEntityList = new ArrayList<>();
+        for (PurchaseOrderDetailEntity detailEntity : purchaseOrderDetailEntityList) {
+            if (notExistIdList.contains(detailEntity.getId())) {
+                notExistDetailEntityList.add(detailEntity);
             }
+        }
+        if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
+            this.saveBatch(notExistDetailEntityList);
         }
         return Boolean.TRUE;
     }

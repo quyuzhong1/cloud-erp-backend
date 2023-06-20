@@ -40,12 +40,15 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
                 baseMapper.updateBatchSelective(existDetailEntityList);
             }
         }
-        List<String> notExistIdList = ids.stream().filter(s -> !dbIds.contains(s)).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(notExistIdList)) {
-            List<PurchaseOrderSupplierEntity> notExistDetailEntityList = ListPurchaseOrderSupplierEntityByIds(notExistIdList);
-            if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
-                this.saveBatch(notExistDetailEntityList);
+        List<String> notExistIdList = detailIds.stream().filter(s -> !dbIds.contains(s)).collect(Collectors.toList());
+        List<PurchaseOrderSupplierEntity> notExistDetailEntityList = new ArrayList<>();
+        for (PurchaseOrderSupplierEntity detailEntity : purchaseOrderSupplierEntityList) {
+            if (notExistIdList.contains(detailEntity.getId())) {
+                notExistDetailEntityList.add(detailEntity);
             }
+        }
+        if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
+            this.saveBatch(notExistDetailEntityList);
         }
         return Boolean.TRUE;
     }
