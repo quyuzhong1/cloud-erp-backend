@@ -112,7 +112,7 @@ public class GyyDeliveryDetailEntity {
      * 是否货到付款
      */
     @SerializedName("cod")
-    private Boolean cod;
+    private Object cod;
     /**
      * 是否退款 0:无退款 1:有退款
      */
@@ -162,7 +162,7 @@ public class GyyDeliveryDetailEntity {
      * 是否多包裹 true：多包裹 false：单包裹
      */
     @SerializedName("picture_bill")
-    private Boolean pictureBill;
+    private Object pictureBill;
     /**
      * 平台单号
      */
