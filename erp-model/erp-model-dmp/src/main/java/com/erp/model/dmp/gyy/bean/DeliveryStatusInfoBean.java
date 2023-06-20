@@ -45,25 +45,25 @@ public class DeliveryStatusInfoBean {
      */
 
     @SerializedName("scan")
-    private boolean scan;
+    private Object scan;
     @SerializedName("weight")
-    private boolean weight;
+    private Object weight;
     @SerializedName("wms")
     private int wms;
     @SerializedName("delivery")
     private int delivery;
     @SerializedName("cancel")
-    private boolean cancel;
+    private Object cancel;
     @SerializedName("intercept")
-    private boolean intercept;
+    private Object intercept;
     @SerializedName("print_express")
-    private boolean printExpress;
+    private Object printExpress;
     @SerializedName("express_print_name")
     private Object expressPrintName;
     @SerializedName("express_print_date")
     private Object expressPrintDate;
     @SerializedName("print_delivery")
-    private boolean printDelivery;
+    private Object printDelivery;
     @SerializedName("delivery_print_name")
     private Object deliveryPrintName;
     @SerializedName("delivery_print_date")
@@ -99,7 +99,7 @@ public class DeliveryStatusInfoBean {
     @SerializedName("standard_weight")
     private double standardWeight;
     @SerializedName("pick_finish")
-    private boolean pickFinish;
+    private Object pickFinish;
     @SerializedName("logistics_printed_bitch")
     private Object logisticsPrintedBitch;
     @SerializedName("logistics_serial_no")
