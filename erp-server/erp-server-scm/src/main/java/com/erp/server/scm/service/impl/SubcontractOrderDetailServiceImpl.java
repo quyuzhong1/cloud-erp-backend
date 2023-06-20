@@ -398,7 +398,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                         .findFirst().flatMap(obj -> Optional.ofNullable(obj.getApplyQty())).orElse(MathUtil.ZERO);
                 //已下推数量
                 Integer pushdownQty = refDetailList.stream()
-                        .filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId()) && !obj.getId().equals(detailEntity.getId()))
+                        .filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId()) && !obj.getId().equals(detailEntity.getId()) && StringUtils.isBlank(obj.getParentId()))
                         .map(SubcontractOrderDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (detailEntity.getQty() > applyQty - pushdownQty) {
                     throw new ServiceException(new ApiResult(ApiError.ERROR_98091.code,StrUtil.format(ApiError.ERROR_98091.msg,skuVO.getSkuNo(),applyQty - pushdownQty)));
