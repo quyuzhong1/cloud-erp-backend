@@ -276,7 +276,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
         deliveryDetailInfoEntity.setSalesManId("");
         //销售员名称
         deliveryDetailInfoEntity.setSalesManName(businessmanName);
-        Integer status = (null != gyyDeliveryDetailEntity.getCancel() && gyyDeliveryDetailEntity.getCancel()) ? 2 : 1;
+        Integer status = (null != gyyDeliveryDetailEntity.getCancel() && 1 == gyyDeliveryDetailEntity.getCancel()) ? 2 : 1;
         //状态 1.已发货 2..已作废
         deliveryDetailInfoEntity.setStatus(status);
         //平台单据创建时间

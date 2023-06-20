@@ -112,7 +112,7 @@ public class GyyDeliveryDetailEntity {
      * 是否货到付款
      */
     @SerializedName("cod")
-    private Object cod;
+    private Boolean cod;
     /**
      * 是否退款 0:无退款 1:有退款
      */
@@ -132,7 +132,7 @@ public class GyyDeliveryDetailEntity {
      * 是否取消
      */
     @SerializedName("cancel")
-    private Boolean cancel;
+    private Integer cancel;
     /**
      * 物流费用
      */
@@ -162,7 +162,7 @@ public class GyyDeliveryDetailEntity {
      * 是否多包裹 true：多包裹 false：单包裹
      */
     @SerializedName("picture_bill")
-    private Object pictureBill;
+    private Boolean pictureBill;
     /**
      * 平台单号
      */
@@ -388,7 +388,7 @@ public class GyyDeliveryDetailEntity {
     /**
      * 清洗数据
      */
-    private Object isClean;
+    private Boolean isClean;
 
     @Override
     public String toString() {
