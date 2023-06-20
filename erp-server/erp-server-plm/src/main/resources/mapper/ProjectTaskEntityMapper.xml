@@ -36,7 +36,7 @@
         </if>
 
         <if test="params.searchKeyword != null and params.searchKeyword!= ''">
-            AND pt.name LIKE concat('%',#{params.searchKeyword},'%')
+            AND pt.name ILIKE concat('%',#{params.searchKeyword},'%')
         </if>
         <if test="userId !=null and userId!=''">
             AND string_to_array( charge_id,',') &amp;&amp;  string_to_array(#{userId}, ',')
@@ -49,7 +49,7 @@
         </if>
         <if test="params.taskSearchDTO !=null ">
             <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword!=''">
-                AND pt.name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
+                AND pt.name ILIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
             </if>
             <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
                 AND pt.priority in
@@ -147,7 +147,7 @@
         </if>
         <if test="params.taskSearchDTO !=null ">
             <if test="params.taskSearchDTO.searchKeyword != null and params.taskSearchDTO.searchKeyword != ''">
-                AND pt.name LIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
+                AND pt.name ILIKE concat('%',#{params.taskSearchDTO.searchKeyword},'%')
             </if>
             <if test="params.taskSearchDTO.priority != null and params.taskSearchDTO.priority.size > 0">
                 AND pt.priority in
@@ -178,7 +178,7 @@
             ${params.permissionSql}
         </if>
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-            AND pt.name LIKE concat('%',#{params.searchKeyword},'%')
+            AND pt.name ILIKE concat('%',#{params.searchKeyword},'%')
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -311,7 +311,7 @@
         FROM project_task pt
         left join project_phase pp on pt.phase_id = pp.id AND pp.is_deleted = FALSE
         LEFT JOIN product_info pi ON pt.product_id = pi.id AND pi.is_deleted = FALSE
-        WHERE pt.product_id = #{params.productId} AND pt.is_deleted = FALSE <!--AND pid='0'--> AND pt.process_id IN
+        WHERE pt.product_id = #{params.productId} AND pt.is_deleted = FALSE  AND pt.process_id IN
         <foreach collection="processIdList" item="processId" open="(" separator="," close=")">
             #{processId}
         </foreach>
@@ -320,7 +320,7 @@
             AND pt.phase_id = #{params.phaseId}
         </if>
         <if test="params.searchKeyword !=null and params.searchKeyword!=''">
-            AND pt.name LIKE concat('%',#{params.searchKeyword},'%')
+            AND pt.name ILIKE concat('%',#{params.searchKeyword},'%')
         </if>
         <if test="params.statusList !=null and params.statusList.size>0">
             AND pt.status IN
@@ -649,7 +649,10 @@
                 </foreach>
             </if>
             <if test="params.searchKeyword != null and params.searchKeyword!=''">
-                AND pt.name LIKE concat('%',#{params.searchKeyword},'%')
+                AND (
+                   pt.name ILIKE concat('%',#{params.searchKeyword},'%') OR
+                   pdi.name ILIKE concat('%',#{params.searchKeyword},'%')
+                )
             </if>
         <if test="params.isExecutable != null  and params.isExecutable == 1 ">
             AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id AND a.is_deleted = FALSE ) or not EXISTS (select

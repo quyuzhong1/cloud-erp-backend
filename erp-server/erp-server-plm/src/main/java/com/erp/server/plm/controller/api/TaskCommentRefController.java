@@ -27,7 +27,7 @@ public class TaskCommentRefController extends BaseController {
     private TaskCommentRefService taskCommentRefService;
 
     /**
-     * @后获取对应成员信息
+     * @后获取对应成员信息【PLM1.3】
      * @param productId
      * @return
      */

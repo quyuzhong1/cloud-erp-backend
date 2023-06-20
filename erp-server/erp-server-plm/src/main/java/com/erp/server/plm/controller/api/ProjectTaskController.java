@@ -92,7 +92,7 @@ public class ProjectTaskController extends BaseController {
     }
 
     /**
-     * 项目任务-新建任务
+     * 项目任务-新建任务【PLM1.3】
      *
      * @param dto
      * @return
@@ -100,7 +100,7 @@ public class ProjectTaskController extends BaseController {
     @PostMapping("/save")
     public ApiResult save(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = taskService.save(dto);
-        return flag == true ? success() : failure();
+        return flag? success() : failure();
     }
 
     /**
@@ -110,12 +110,6 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/update")
-    //   @RequestPermissions("plm:task:update")
-/*    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "charge_id",
-            menuCode = "plm:task:update",
-            serviceClass = ProjectTaskService.class
-    )*/
     public ApiResult update(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = taskService.updateTask(dto);
         return flag == true ? success() : failure();
@@ -168,17 +162,7 @@ public class ProjectTaskController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-    /**
-     * 项目任务-任务详情-关联前置任务
-     *
-     * @param dto
-     * @return
-     */
-//    @PostMapping("/setPreTask")
-//    public ApiResult setPreTask(@RequestBody @Validated SetPreTaskDTO dto) {
-//        Boolean flag = preTaskService.addPreTask(dto);
-//        return flag == true ? success() : failure();
-//    }
+
 
     /**
      * 更新前置任务列表
@@ -225,7 +209,6 @@ public class ProjectTaskController extends BaseController {
      * @date 2022-10-11 11:23
      */
     @GetMapping("/details")
-
     public ApiResult<ProjectTaskDetailsDTO> details(String taskId) {
         ProjectTaskDetailsDTO detailsDTO = taskService.getTaskDetails(taskId);
         return success(detailsDTO);
@@ -401,7 +384,6 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/approvalReject")
-    //  @RequestPermissions("plm:task:approvalReject")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
             menuCode = "plm:task:tasks:status",
@@ -575,7 +557,6 @@ public class ProjectTaskController extends BaseController {
      *
      * @return
      */
-
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "plm:task:expert:paging:myCreate",
@@ -715,6 +696,12 @@ public class ProjectTaskController extends BaseController {
      * @Date 2023/3/29 18:16
      **/
     @PostMapping("/removeBatch")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:task:removeBatch",
+            serviceClass = ProjectTaskService.class,
+            keyIdName = "ids"
+    )
     public ApiResult removeBatch(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = taskService.removeBatch(dto.getIds());
         return flag == true ? success() : failure();

@@ -213,4 +213,10 @@ public class ProjectTaskDTO  implements Serializable {
      * 辅助字段：project导入任务ID
      */
     private String projectTaskId;
+
+
+    /**
+     * 任务关注人集合
+     */
+    private List<String> concernUserIdList;
 }

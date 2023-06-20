@@ -29,14 +29,14 @@ public class TaskCommentController extends BaseController {
 
 
     /**
-     * 任务详情-添加评论
+     * 任务详情-添加评论【PLM1.3】
      *
      * @return
      */
     @PostMapping("/save")
-    public ApiResult saveTaskComment(@RequestBody @Validated TaskCommentDTO dto) {
+    public ApiResult saveTaskComment(@RequestBody @Validated TaskCommentDTO.AddDTO dto) {
         Boolean result = taskCommentService.saveTaskComment(dto);
-        return result == true ? success() : failure();
+        return result ? success() : failure();
     }
 
     /**

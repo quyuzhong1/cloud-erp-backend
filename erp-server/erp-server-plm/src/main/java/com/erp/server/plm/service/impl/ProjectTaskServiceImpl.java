@@ -147,6 +147,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Autowired
     private ProjectTaskTimeRecordService projectTaskTimeRecordService;
 
+    @Autowired
+    private TaskConcernService taskConcernService;
+
     /**
      * 添加系统的产品任务
      * 只添加立项模板的任务
@@ -516,6 +519,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<DocsDTO> deliveryDocsList = dto.getDeliveryDocsList();
         boolean flag = this.save(taskEntity);
         if (flag) {
+            //保存关注人
+            taskConcernService.batchAdd(taskEntity.getId(),dto.getProductId(),dto.getConcernUserIdList());
+
             //新增操作日志
             sysLogService.addSysLogBySave("新增了一个：[" + taskEntity.getName() + "]", SysLogClassPathEnum.PROJECTTASKENTITY.getDesc(), taskEntity.getId(), null);
             if (StringUtils.isNotBlank(taskEntity.getPid())) {
@@ -1122,7 +1128,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         boolean flag = this.updateById(taskEntity);
         if (flag) {
-
+            //修改关注人
+            taskConcernService.batchUpdate(taskEntity.getId(),dto.getProductId(),dto.getConcernUserIdList());
             //保存交付文档
             taskDeliveryService.saveDeliveryDocs(taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务
@@ -1402,6 +1409,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         resultVO.setPreTaskIdList(pretaskIdList);
 
+        resultVO.setConcernUserIdList(taskConcernService.listByTaskId(taskId));
         return resultVO;
     }
 
@@ -4728,7 +4736,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @Author Luo_WG
      * @Date 2023/3/29 18:00
      **/
-    @Transactional
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean removeBatch(List<String> ids) {
         List<ProjectTaskEntity> entity = this.getByTaskIds(ids);
         if (CollectionUtils.isEmpty(entity)) {

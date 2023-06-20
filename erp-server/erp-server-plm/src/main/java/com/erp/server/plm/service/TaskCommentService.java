@@ -12,7 +12,15 @@ import java.util.List;
  */
 public interface TaskCommentService extends IService<TaskCommentEntity> {
 
-    Boolean saveTaskComment(TaskCommentDTO dto);
+    
+    /**
+     * 保存任务评论
+     * @author yl
+     * @date 2023-06-20 15:35
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean saveTaskComment(TaskCommentDTO.AddDTO dto);
 
     List<TaskCommentEntity> getListByTaskId(String taskId);
 

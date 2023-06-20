@@ -4,6 +4,8 @@ import com.erp.model.plm.dto.TaskConcernDTO;
 import com.erp.model.plm.entity.TaskConcernEntity;
 import com.common.business.service.SuperService;
 
+import java.util.List;
+
 /**
  * <p>
  * 任务关注的人 服务类
@@ -45,4 +47,37 @@ public interface TaskConcernService extends SuperService<TaskConcernEntity> {
      * @return
      */
     Integer getConcernCountByTaskId(String taskId);
+
+    /**
+     * 保存关注人
+     * @author yl
+     * @date 2023-06-20 16:43
+     * @param taskId
+     * @param productId
+     * @param refUserIdList
+     * @return void
+     */
+    void batchAdd(String taskId, String productId, List<String> refUserIdList);
+
+    /**
+     * 更改任务关注人
+     * @author yl
+     * @date 2023-06-20 16:54
+     * @param taskId
+     * @param productId
+     * @param refUserIdList
+     * @return void
+     */
+    void batchUpdate(String taskId, String productId, List<String> refUserIdList);
+
+    
+    /**
+     *
+     *根据任务id 获取到对应关注人信息
+     * @author yl
+     * @date 2023-06-20 17:02
+     * @param taskId
+     * @return java.util.List<java.lang.String>
+     */
+    List<String> listByTaskId(String taskId);
 }

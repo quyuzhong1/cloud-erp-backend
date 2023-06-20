@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
@@ -9,15 +10,14 @@ import com.erp.model.plm.dto.TaskCommentDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskCommentEntity;
 import com.erp.server.plm.mapper.TaskCommentMapper;
-import com.erp.server.plm.service.CommonService;
-import com.erp.server.plm.service.NoticeMessageService;
-import com.erp.server.plm.service.ProjectTaskService;
-import com.erp.server.plm.service.TaskCommentService;
+import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.List;
 import java.util.Objects;
 
@@ -39,6 +39,11 @@ public class TaskCommentServiceImpl extends ServiceImpl<TaskCommentMapper, TaskC
     @Autowired
     private ProjectTaskService projectTaskService;
 
+    @Resource
+    private PlmAttachmentService plmAttachmentService;
+
+
+
 
     /**
      * 添加任务评论
@@ -49,12 +54,11 @@ public class TaskCommentServiceImpl extends ServiceImpl<TaskCommentMapper, TaskC
      * @date 2022-10-13 17:58
      */
     @Override
-    public Boolean saveTaskComment(TaskCommentDTO dto) {
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean saveTaskComment(TaskCommentDTO.AddDTO dto) {
         String taskId = dto.getTaskId();
         TaskCommentEntity entity = new TaskCommentEntity();
         LoginUser loginUser = commonService.getUserInfo();
-        entity.setCreateUserId(loginUser.getUid());
-        entity.setCreateUserName(loginUser.getUserName());
         entity.setTaskId(taskId);
         entity.setComment(dto.getComment());
         ProjectTaskEntity taskEntity = projectTaskService.getById(taskId);
@@ -64,7 +68,16 @@ public class TaskCommentServiceImpl extends ServiceImpl<TaskCommentMapper, TaskC
         Boolean flag = this.save(entity);
         //保存成功 发送评论提醒
         if (flag) {
-            noticeMessageService.remindRemarkNotice(loginUser.getUserName(),taskEntity.getProductId(),taskId,dto.getComment());
+            noticeMessageService.remindRemarkNotice(loginUser.getUserName(), taskEntity.getProductId(), taskId, dto.getComment());
+            Class<TaskCommentEntity> customerClass = TaskCommentEntity.class;
+            TableName tableName = customerClass.getDeclaredAnnotation(TableName.class);
+            //获取到表名
+            String type = tableName.value();
+            //添加附件
+            plmAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), type, entity.getId());
+
+
+
         }
         return flag;
     }

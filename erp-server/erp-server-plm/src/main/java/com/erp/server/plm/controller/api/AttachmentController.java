@@ -1,7 +1,7 @@
 package com.erp.server.plm.controller.api;
 
 import com.common.core.controller.BaseController;
-import com.erp.server.plm.service.AttachmentService;
+import com.erp.server.plm.service.PlmAttachmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AttachmentController extends BaseController {
 
     @Autowired
-    private AttachmentService attachmentService;
+    private PlmAttachmentService plmAttachmentService;
 
 
 

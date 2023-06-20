@@ -1,12 +1,13 @@
 package com.erp.model.plm.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
 
 
 /**
@@ -21,7 +22,7 @@ import lombok.experimental.Accessors;
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("attachment")
-public class AttachmentEntity extends BaseEntity<AttachmentEntity> {
+public class PlmAttachmentEntity extends BaseEntity<PlmAttachmentEntity> {
 
 
     /**

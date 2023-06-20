@@ -7,10 +7,13 @@ import com.erp.server.plm.mapper.TaskConcernMapper;
 import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.TaskConcernService;
 import com.common.business.service.SuperServiceImpl;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <p>
@@ -93,6 +96,82 @@ public class TaskConcernServiceImpl extends SuperServiceImpl<TaskConcernMapper, 
     @Override
     public Integer getConcernCountByTaskId(String taskId) {
         return this.lambdaQuery().eq(TaskConcernEntity::getTaskId, taskId).list().size();
+    }
+
+
+    /**
+     * 保存关注人
+     *
+     * @param taskId
+     * @param productId
+     * @param refUserIdList
+     * @return void
+     * @author yl
+     * @date 2023-06-20 16:43
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchAdd(String taskId, String productId, List<String> refUserIdList) {
+        if (CollectionUtils.isNotEmpty(refUserIdList)) {
+            List<TaskConcernEntity> addList = new ArrayList<>(refUserIdList.size());
+            for (String refUserId : refUserIdList) {
+                TaskConcernEntity taskConcern = new TaskConcernEntity();
+                taskConcern.setUserId(refUserId);
+                taskConcern.setTaskId(taskId);
+                taskConcern.setProductId(productId);
+                addList.add(taskConcern);
+            }
+            this.saveBatch(addList);
+        }
+
+
+    }
+
+
+    /**
+     * 更改任务关注人
+     *
+     * @param taskId
+     * @param productId
+     * @param refUserIdList
+     * @return void
+     * @author yl
+     * @date 2023-06-20 16:54
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchUpdate(String taskId, String productId, List<String> refUserIdList) {
+        this.removeByTaskId(taskId);
+        this.batchAdd(taskId, productId, refUserIdList);
+    }
+
+
+    /**
+     * 根据任务id 获取到对应关注人信息
+     *
+     * @param taskId
+     * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-06-20 17:02
+     */
+    @Override
+    public List<String> listByTaskId(String taskId) {
+        LambdaQueryWrapper<TaskConcernEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.select(TaskConcernEntity::getUserId);
+        queryWrapper.eq(TaskConcernEntity::getTaskId,taskId);
+        return this.listObjs(queryWrapper, Object::toString);
+    }
+
+
+    /**
+     * 根据任务id 删除
+     *
+     * @param taskId
+     */
+    public void removeByTaskId(String taskId) {
+        LambdaQueryWrapper<TaskConcernEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskConcernEntity::getTaskId, taskId);
+        this.remove(queryWrapper);
     }
 
 

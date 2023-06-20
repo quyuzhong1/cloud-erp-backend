@@ -1981,7 +1981,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String projectChargeId = info.getProjectChargeId();
         //项目经理
         String projectChargeName = info.getProjectChargeName();
-        if (StringUtils.isEmpty(projectChargeName)&&StringUtils.isNotBlank(projectChargeId)) {
+        if (StringUtils.isEmpty(projectChargeName) && StringUtils.isNotBlank(projectChargeId)) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(projectChargeId);
             if (userDTO != null) {
                 projectChargeName = userDTO.getUserName();
@@ -2120,7 +2120,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 && t.getRealityEndTime().compareTo(t.getPlanEndTime().atStartOfDay()) > 0).count();
         delayTask.setFinishCount((int) delayFinishCount);
         //未完成的任务id
-
+        statusList.add(TaskStateEnum.TO_BE_RELEASED.getCode());
         List<String> unfinishedTaskIdList = delayTaskList.stream().filter(d ->
                 statusList.contains(d.getStatus()) && d.getPlanEndTime() != null
                         && now.compareTo(d.getPlanEndTime()) > 0).

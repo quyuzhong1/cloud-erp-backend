@@ -6,13 +6,17 @@
     <select id="getByQcType" resultType="com.erp.model.wms.dto.QcReportDTO$ListDTO">
         SELECT
          rp.id AS qcReportId,
-         rp.name AS qcReportName,rp.content AS qcReportContent,
-         ru.disabled
+         rp.name AS qcReportName,
+         rp.content AS qcReportContent,
+         ru.disabled,
+         ru.qc_type
         FROM qc_report rp
         INNER JOIN qc_rule ru
-        on ru.id=rp.qc_rule_id AND ru. is_deleted=false
-        WHERE rp.is_deleted=FALSE AND
-        ru.qc_type=#{qcType} AND ru.approve_status=#{approveStatus}
+        on ru.id=rp.qc_rule_id AND ru. is_deleted=FALSE
+        WHERE rp.is_deleted=FALSE
+        AND ru.qc_type=#{qcType}
+        AND ru.approve_status=#{approveStatus}
+        AND ru.disabled=FALSE
     </select>
 
     <select id="listByQcType" resultType="com.erp.model.wms.dto.QcReportDTO$ListDTO">
