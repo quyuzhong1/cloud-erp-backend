@@ -118,6 +118,16 @@ public class RocketMqConsumerGroup {
      */
     public static final String SYNC_KINGDEE_SO_RETURN = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_return";
 
+    /**
+     * 委外订单
+     */
+    public static final String SYNC_KINGDEE_SUBCONTRACT_ORDER = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_subcontract_order";
+
+    /**
+     * 委外变更订单
+     */
+    public static final String SYNC_KINGDEE_SUBCONTRACT_CHANGE = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_subcontract_change";
+
     //-----------------------------------------------------------------dmp数据更新------------------------------------------------------
 
     /**

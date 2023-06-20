@@ -818,6 +818,17 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         return lambdaQuery().in(SubcontractOrderEntity::getSourceId,sourceIds).eq(SubcontractOrderEntity::getInvalidStatus, Boolean.FALSE).list();
     }
 
+    @Override
+    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+        return this.lambdaUpdate()
+                .in(SubcontractOrderEntity::getId, ids)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), SubcontractOrderEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), SubcontractOrderEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), SubcontractOrderEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncOperate), SubcontractOrderEntity::getSyncOperate, syncOperate)
+                .update();
+    }
+
     /**
      * @description: 自动生成采购订单
      * @author Will

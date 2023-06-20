@@ -383,18 +383,25 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIds);
 
         for (SubcontractOrderDetailEntity detailEntity : newList) {
+
+            //父级SKU信息
+            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(skuVO)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+
             //申请数量校验
             if (CollectionUtils.isNotEmpty(sourceDetailList)) {
                 //申请单数量
                 Integer applyQty = sourceDetailList.stream()
-                        .filter(obj -> obj.getPurchaseApplicationId().equals(detailEntity.getSourceDetailId()))
+                        .filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId()))
                         .findFirst().flatMap(obj -> Optional.ofNullable(obj.getApplyQty())).orElse(MathUtil.ZERO);
                 //已下推数量
                 Integer pushdownQty = refDetailList.stream()
                         .filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId()) && !obj.getId().equals(detailEntity.getId()))
                         .map(SubcontractOrderDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (detailEntity.getQty() > applyQty - pushdownQty) {
-                    throw new ServiceException(new ApiResult(ApiError.ERROR_98091.code,StrUtil.format(ApiError.ERROR_98091.msg,detailEntity.getSkuNo(),applyQty - pushdownQty)));
+                    throw new ServiceException(new ApiResult(ApiError.ERROR_98091.code,StrUtil.format(ApiError.ERROR_98091.msg,skuVO.getSkuNo(),applyQty - pushdownQty)));
                 }
             }
 
@@ -403,11 +410,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
                 throw new ServiceException(ApiError.ERROR_95163);
             }
-            //父级SKU信息
-            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(skuVO)) {
-                throw new ServiceException(ApiError.ERROR_95084);
-            }
+
             detailEntity.setIsAdd(Boolean.FALSE);
             //新增数据手动添加ID
             if (StringUtils.isBlank(detailEntity.getId())) {
