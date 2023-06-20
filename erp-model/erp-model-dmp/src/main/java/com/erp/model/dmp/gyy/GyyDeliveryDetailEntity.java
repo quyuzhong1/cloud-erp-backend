@@ -388,7 +388,7 @@ public class GyyDeliveryDetailEntity {
     /**
      * 清洗数据
      */
-    private Boolean isClean;
+    private Integer isClean;
 
     @Override
     public String toString() {

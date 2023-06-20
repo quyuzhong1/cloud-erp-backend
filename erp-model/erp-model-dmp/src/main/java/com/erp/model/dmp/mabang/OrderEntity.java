@@ -442,7 +442,7 @@ public class OrderEntity {
     /**
      * 经度
      */
-    private JSONObject orderTypeNew;
+    private Object orderTypeNew;
     /**
      * ERP系统订单编号
      */
@@ -458,7 +458,7 @@ public class OrderEntity {
     /**
      * 拓展属性
      */
-    private JSONObject extendAttr;
+    private Object extendAttr;
     /**
      * 清洗数据
      */
