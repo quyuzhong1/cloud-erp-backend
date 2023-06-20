@@ -73,7 +73,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -175,7 +175,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -280,7 +280,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -382,7 +382,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -484,7 +484,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -778,7 +778,7 @@
         </if>
         FROM
         dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
-        WHERE (o.shop_no!='' OR o.shop_no!=NULL)
+        WHERE (o.shop_no!=NULL  OR o.shop_no!='' )
         <if test="params.timeType!=null and params.timeType==0">
             <if test="params.startTime !=null">
                 AND o.platform_create_time &gt;= #{params.startTime}
@@ -828,7 +828,7 @@
         <if test="params.category!=null and params.category.size>0">
             AND i.sku_no IN
             ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-            pi.category IN
+            pi.category_id IN
             <foreach collection="params.category" item="category" open="(" separator="," close=")">
                 #{category}
             </foreach>
@@ -877,10 +877,10 @@
         </if>
         SUM ( i.quantity ) AS salesQuantity,o.shop_no,i.new_sign AS flag
         FROM dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.ID
-        WHERE
+        <where>
         <if test="params.timeType!=null and params.timeType==0">
             <if test="params.startTime !=null">
-                o.platform_create_time &gt;= #{params.startTime}
+                    AND o.platform_create_time &gt;= #{params.startTime}
             </if>
             <if test="params.endTime !=null">
                 AND o.platform_create_time &lt; #{params.endTime}
@@ -934,7 +934,7 @@
         <if test="params.category!=null and params.category.size>0">
             AND i.sku_no IN
             ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-            pi.category IN
+                pi.category_id IN
             <foreach collection="params.category" item="category" open="(" separator="," close=")">
                 #{category}
             </foreach>
@@ -961,7 +961,7 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-
+        </where>
         GROUP BY o.shop_no,i.new_sign
     </select>
 
@@ -1033,7 +1033,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -1134,7 +1134,7 @@
         <if test="params.category!=null and params.category.size>0">
             AND i.sku_no IN
             ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-            pi.category IN
+            pi.category_id IN
             <foreach collection="params.category" item="category" open="(" separator="," close=")">
                 #{category}
             </foreach>
@@ -1231,7 +1231,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -1330,7 +1330,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -1467,7 +1467,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -1567,7 +1567,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -1666,7 +1666,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -1766,7 +1766,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -1866,7 +1866,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -1966,7 +1966,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -2064,7 +2064,7 @@
         <if test="params.category!=null and params.category.size>0">
             AND i.sku_no IN
             ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-            pi.category IN
+            pi.category_id IN
             <foreach collection="params.category" item="category" open="(" separator="," close=")">
                 #{category}
             </foreach>
@@ -2161,7 +2161,7 @@
         <if test="params.category!=null and params.category.size>0">
             AND i.sku_no IN
             ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-            pi.category IN
+            pi.category_id IN
             <foreach collection="params.category" item="category" open="(" separator="," close=")">
                 #{category}
             </foreach>
@@ -2296,7 +2296,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -2431,7 +2431,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -2532,7 +2532,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -2575,7 +2575,7 @@
         COUNT ( DISTINCT ( o.platform_order_id ) ) AS orderCount,
         SUM ( i.quantity ) AS salesQuantity FROM
         dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
-        WHERE  to_char(o.${timeFlag},'yyyy')=#{year}
+        WHERE to_char(o.${timeFlag},'yyyy')=#{year}
         <!-- 部门 -->
         <if test="params.department!=null and params.department.size>0">
             AND o.dept_id IN
@@ -2615,7 +2615,7 @@
         <if test="params.category!=null and params.category.size>0">
             AND i.sku_no IN
             ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-            pi.category IN
+            pi.category_id IN
             <foreach collection="params.category" item="category" open="(" separator="," close=")">
                 #{category}
             </foreach>
@@ -2657,7 +2657,7 @@
         COUNT ( DISTINCT ( o.platform_order_id ) ) AS orderCount,
         SUM ( i.quantity ) AS salesQuantity FROM
         dmp_order_item i LEFT JOIN dmp_order_info o ON i.order_id = o.id
-        WHERE  to_char(o.${timeFlag},'yyyy')=#{year}
+        WHERE to_char(o.${timeFlag},'yyyy')=#{year}
         <!-- 部门 -->
         <if test="params.department!=null and params.department.size>0">
             AND o.dept_id IN
@@ -2697,7 +2697,7 @@
         <if test="params.category!=null and params.category.size>0">
             AND i.sku_no IN
             ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-            pi.category IN
+            pi.category_id IN
             <foreach collection="params.category" item="category" open="(" separator="," close=")">
                 #{category}
             </foreach>
@@ -2740,7 +2740,6 @@
         FROM dmp_order_item i
         LEFT JOIN dmp_order_info o ON i.order_id = o.id
         <where>
-
             <if test="params.timeType!=null and params.timeType==0">
                 <if test="params.startTime !=null">
                     o.platform_create_time &gt;= #{params.startTime}
@@ -2797,7 +2796,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -2861,7 +2860,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -2943,7 +2942,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -3042,7 +3041,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -3140,7 +3139,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
@@ -3241,7 +3240,7 @@
             <if test="params.category!=null and params.category.size>0">
                 AND i.sku_no IN
                 ( SELECT sku_no FROM product_detail pd INNER JOIN product_info pi ON pi.id=pd.product_id WHERE
-                pi.category IN
+                pi.category_id IN
                 <foreach collection="params.category" item="category" open="(" separator="," close=")">
                     #{category}
                 </foreach>
