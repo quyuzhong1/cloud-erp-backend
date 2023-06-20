@@ -46,7 +46,6 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
         pagingDTO.getParams().setProjectStatusList(statusList);
         IPage<ProjectReportFormsDTO.PagingView> pageData = baseMapper.projectReportFormsPaging(query, pagingDTO.getParams());
         List<ProjectReportFormsDTO.PagingView> pagingViewList = pageData.getRecords();
-
         for (ProjectReportFormsDTO.PagingView pagingView : pagingViewList) {
             pagingView.setApprovalStatusName(ApprovalStatusEnum.getName(pagingView.getApprovalStatus()));
             pagingView.setProjectStatusName(ProjectStateEnum.getName(pagingView.getProjectStatus()));

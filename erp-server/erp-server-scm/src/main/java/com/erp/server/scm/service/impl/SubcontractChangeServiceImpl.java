@@ -16,11 +16,9 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.OptChangeTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -34,6 +32,7 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.dto.SubcontractChangeDetailDTO;
+import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.dto.SubcontractOrderDetailDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractChangeDetailEntity;
@@ -101,6 +100,9 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
 
     @Autowired
     private WmsTaskFeign wmsTaskFeign;
+
+    @Autowired
+    private SubcontractOrderService subcontractOrderService;
 
 
     @Override
@@ -467,6 +469,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             subcontractOrderDetailService.updateSourceDetailId(pairList);
         }
         //自动下推
+        autoPushdownDetail(addList);
     }
     /**
      * @description: 修改更新数据
@@ -511,6 +514,53 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             subcontractOrderDetailService.update(detailList,entity.getId());
         }
         //自动下推
+        autoPushdownDetail(updateList);
+    }
+    /**
+     * @description: 自动下推
+     * @author Will
+     * @date: 2023/6/20 11:46
+     * @param list
+     */
+    private void autoPushdownDetail(List<SubcontractChangeDetailEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<String> mainIds = list.stream().map(SubcontractChangeDetailEntity::getMainId).collect(Collectors.toList());
+        List<SubcontractChangeEntity> subcontractChangeList = this.listByIds(mainIds);
+        if (CollectionUtils.isEmpty(subcontractChangeList)) {
+            throw new ServiceException(ApiError.ERROR_98084);
+        }
+        List<String> sourceDetailIds = list.stream().map(SubcontractChangeDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> poList = purchaseOrderDetailService.listBySourceDetailIds(sourceDetailIds);
+
+        List<SubcontractOrderDTO.GeneratePoDTO> resultLust = new ArrayList<>();
+        for (SubcontractChangeDetailEntity detailEntity : list) {
+            if (!detailEntity.getIsGeneratePo()) {
+                continue;
+            }
+            SubcontractChangeEntity subcontractChangeEntity = subcontractChangeList.stream().filter(obj -> obj.getId().equals(detailEntity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(subcontractChangeEntity)) {
+                throw new ServiceException(ApiError.ERROR_98084);
+            }
+            //已下推采购订单数量
+            Integer qty = poList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId())).map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+
+            SubcontractOrderDTO.GeneratePoDTO generatePoDTO = new SubcontractOrderDTO.GeneratePoDTO();
+            generatePoDTO.setSourceDetailId(detailEntity.getSourceDetailId());
+            generatePoDTO.setSourceId(subcontractChangeEntity.getSourceId());
+            generatePoDTO.setSourceCode(subcontractChangeEntity.getSourceCode());
+            generatePoDTO.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
+            generatePoDTO.setSupplierId(detailEntity.getSupplierId());
+            generatePoDTO.setQty(detailEntity.getQty() - qty);
+            resultLust.add(generatePoDTO);
+        }
+        if (CollectionUtils.isNotEmpty(resultLust)) {
+            ValidList<SubcontractOrderDTO.GeneratePoDTO> validList = new ValidList<>();
+            validList.setList(resultLust);
+            subcontractOrderService.generatePo(validList);
+        }
+
     }
 
 
