@@ -1,12 +1,14 @@
 package com.erp.server.wms.service;
 
+import com.common.business.service.SuperService;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 
 import java.util.List;
 
-public interface PurchaseOrderDetailService {
+public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDetailEntity> {
 
     /**
      * 根据主键Id查询表信息
