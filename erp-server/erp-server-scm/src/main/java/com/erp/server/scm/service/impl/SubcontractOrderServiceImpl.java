@@ -30,10 +30,7 @@ import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
-import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
-import com.erp.model.scm.entity.SubcontractOrderEntity;
-import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -41,10 +38,12 @@ import com.erp.model.scm.enums.PurchaseListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.SubcontractOrderMapper;
 import com.erp.server.scm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -97,7 +96,13 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     @Autowired
     private InventoryFeign inventoryFeign;
 
+    @Autowired
+    private PurchaseOrderDetailService purchaseOrderDetailService;
 
+    @Autowired
+    private WmsTaskFeign wmsTaskFeign;
+
+    
     @Override
     public PagingVO<SubcontractOrderDTO.ListDTO> paging(PagingDTO<SubcontractOrderDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -924,9 +929,23 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
         //收货数量
         List<String> ids = list.stream().map(SubcontractOrderDTO.ListDTO::getDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> podList = purchaseOrderDetailService.listBySourceDetailIds(ids);
+        List<WarehouseReceiveDetailEntity> receiveDetailList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(podList)) {
+            List<String> podIds = podList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+            receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+        }
 
         // 属性赋值
         for(SubcontractOrderDTO.ListDTO data : list) {
+
+            if (CollectionUtils.isNotEmpty(podList)) {
+                List<String> podIds = podList.stream().filter(obj -> obj.getSourceDetailId().equals(data.getDetailId())).map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(receiveDetailList)) {
+                    Integer receiveQty = receiveDetailList.stream().filter(obj -> podIds.contains(obj.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                    data.setReceiveQty(receiveQty);
+                }
+            }
             //sku信息
             if (CollectionUtils.isNotEmpty(skuList)) {
                 SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(data.getSkuId())).findFirst().orElse(null);

@@ -435,7 +435,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                     long count = sourceDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(detailValue.get(0).getPurchaseApplicationDetailId())).count();
                     if (count > 0) {
                         log.error("采购申请单【{}】明细SKU【{}】已下推委外订单",entity.getCode(),detailValue.get(0).getSkuId());
-                        throw new ServiceException(new ApiResult(ApiError.ERROR_98089.code,StrUtil.format(ApiError.ERROR_98089.msg,entity.getCode(),detailValue.get(0).getSkuId())));
+                        throw new ServiceException(new ApiResult(ApiError.ERROR_98089.code,StrUtil.format(ApiError.ERROR_98089.msg,entity.getCode(),skuVO.getSkuNo())));
                     }
                 }
 
