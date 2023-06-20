@@ -2,6 +2,7 @@ package com.erp.server.sys.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.FindUserDTO;
 import com.erp.model.sys.dto.FindUserByThirdDTO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
@@ -50,5 +51,14 @@ public interface SysUserThirdService extends IService<SysUserThirdEntity> {
      * @return
      */
     List<ThirdUnionDTO> getUnionByPlatformAndUserIds(String platform, List<String> userIds);
+
+    /**
+     * 获取第三方绑定的用户
+     * @author yl
+     * @date 2023-06-19 20:00
+     * @param
+     * @return java.util.List<com.common.business.dto.FindUserDTO>
+     */
+    List<FindUserDTO> listThirdBindUser();
 }
 
