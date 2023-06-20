@@ -241,7 +241,7 @@ public class DeliveryDetailsBean {
      * 是否赠品
      */
     @SerializedName("is_gift")
-    private Boolean isGift;
+    private Integer isGift;
     /**
      * 商家名称
      */
