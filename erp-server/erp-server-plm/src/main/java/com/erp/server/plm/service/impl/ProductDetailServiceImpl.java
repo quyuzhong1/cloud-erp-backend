@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -12,13 +13,11 @@ import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SkuApproveConfigureEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
-import com.common.business.enums.*;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -26,10 +25,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.AlgorithmUtil;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.MathUtil;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -38,20 +34,22 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
 import com.erp.server.plm.service.*;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -61,7 +59,6 @@ import org.thymeleaf.util.ListUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -187,6 +184,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Autowired
     private MQProducerService mQProducerService;
+
+    @Autowired
+    private SupplierFeign supplierFeign;
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -694,6 +694,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //4.修改/新增 采购信息
         if (ObjectUtils.isNotEmpty(productNoSpecDTO.getProductPurchaseDTO())) {
+            // 验证一级供应商和二级供应商是否正确
+            List<String> supplierIds = Lists.newArrayList();
+            String mainSupplier = productNoSpecDTO.getProductPurchaseDTO().getMainSupplier();
+            String secondSupplier = productNoSpecDTO.getProductPurchaseDTO().getSecondSupplier();
+            if(StrUtils.isNotEmpty(mainSupplier)) {
+                supplierIds.add(mainSupplier);
+            }
+            if(StrUtils.isNotEmpty(secondSupplier)) {
+                supplierIds.add(secondSupplier);
+            }
+            if(CollUtil.isNotEmpty(supplierIds)) {
+                Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
+                if(StrUtils.isNotEmpty(mainSupplier) && !supplierMap.containsKey(mainSupplier)) {
+                    throw new ServiceException("sku采购信息一级供应商不存在");
+                }
+                if(StrUtils.isNotEmpty(secondSupplier) && !supplierMap.containsKey(secondSupplier)) {
+                    throw new ServiceException("sku采购信息二级供应商不存在");
+                }
+            }
             ProductPurchaseDTO productPurchaseDTO = productNoSpecDTO.getProductPurchaseDTO();
             productPurchaseDTO.setSkuId(skuId);
             //SKU操作日志
@@ -778,7 +797,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //11.修改/新增  目的国海关编码信息
         ProductCustomsDTO productCustomsDTO = productNoSpecDTO.getProductCustomsDTO();
-        if (ObjectUtils.isEmpty(productCustomsDTO)) {
+        if (ObjectUtils.isNotEmpty(productCustomsDTO)) {
             ProductCustomsEntity customsEntity = new ProductCustomsEntity();
             BeanMapper.copy(productCustomsDTO, customsEntity);
             productCustomsService.saveOrUpdate(customsEntity);

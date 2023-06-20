@@ -1008,4 +1008,14 @@ ProductDetailController extends BaseController {
         Boolean flag = productDetailService.updateBatchFiled(dto);
         return flag == true ? success() : failure();
     }
+
+    /**
+     * 根据sku id集合获取采购员、供应商信息
+     * @param idsDTO
+     * @return
+     */
+    @PostMapping("/getPurchaseInfoBySkuIds")
+    public ApiResult<List<SkuPurchaseDTO.PurchaseInfo>> getPurchaseInfoBySkuIds(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        return success(productPurchaseService.getInfoBySkuIds(idsDTO.getIds()));
+    }
 }

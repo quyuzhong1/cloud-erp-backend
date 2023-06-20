@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -39,6 +40,7 @@ import com.erp.server.scm.kingdee.SyncKingdeeSupplierService;
 import com.erp.server.scm.listener.SupplierExcelListener;
 import com.erp.server.scm.mapper.SupplierMapper;
 import com.erp.server.scm.service.*;
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -56,6 +58,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -953,7 +956,37 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     public List<BaseIdDTO> listSupplierByCategoryType(String categoryType) {
         String supplierCategory = DictBasicEnum.SUPPLIER_CATEGORY.getType();
-        return baseMapper.listSupplierByCategoryType(supplierCategory,categoryType);
+        return baseMapper.listSupplierByCategoryType(supplierCategory,categoryType, null);
+    }
+
+    @Override
+    public Map<String, SupplierDTO.SupplierSimpleDTO> getSupplierSimpleInfo(List<String> ids) {
+        if(CollUtil.isEmpty(ids)) {
+            return Maps.newHashMap();
+        }
+        ids = ids.stream().distinct().collect(Collectors.toList());
+        List<SupplierEntity> supplierList = lambdaQuery().in(SupplierEntity::getId, ids).list();
+        if(CollUtil.isEmpty(supplierList)) {
+            return Maps.newHashMap();
+        }
+        Map<String,SupplierEntity> supplierEntityMap = supplierList.stream().collect(Collectors.toMap(SupplierEntity::getId, Function.identity()));
+
+        Map<String,SupplierDTO.SupplierSimpleDTO> supplierMap = Maps.newHashMapWithExpectedSize(supplierEntityMap.size());
+        supplierEntityMap.forEach((id, sup)->{
+            SupplierDTO.SupplierSimpleDTO supplierSimpleDTO = new SupplierDTO.SupplierSimpleDTO();
+            supplierSimpleDTO.setId(id);
+            supplierSimpleDTO.setCode(sup.getCode());
+            supplierSimpleDTO.setName(sup.getName());
+            supplierSimpleDTO.setDisabled(sup.getDisabled());
+            supplierMap.put(id, supplierSimpleDTO);
+        });
+        return supplierMap;
+    }
+
+    @Override
+    public List<BaseIdDTO> listApproveSupplierByCategoryType(String categoryType) {
+        String supplierCategory = DictBasicEnum.SUPPLIER_CATEGORY.getType();
+        return baseMapper.listSupplierByCategoryType(supplierCategory,categoryType, ApproveStatusEnum.APPROVE.getStatus());
     }
 
     /**

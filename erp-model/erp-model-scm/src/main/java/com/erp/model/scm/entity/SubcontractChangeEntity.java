@@ -111,6 +111,13 @@ public class SubcontractChangeEntity extends BaseEntity<SubcontractChangeEntity>
     @TableField("invalid_time")
     private LocalDateTime invalidTime;
 
+
+    /**
+     * 作废原因
+     */
+    @TableField("invalid_remark")
+    private String invalidRemark;
+
     /**
     * 审核时间
     */

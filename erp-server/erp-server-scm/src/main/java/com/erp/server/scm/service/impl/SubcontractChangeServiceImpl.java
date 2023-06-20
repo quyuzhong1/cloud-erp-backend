@@ -1,6 +1,8 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -9,7 +11,10 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -17,24 +22,32 @@ import com.common.business.enums.OptChangeTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.dto.SubcontractChangeDetailDTO;
+import com.erp.model.scm.dto.SubcontractOrderDetailDTO;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractChangeDetailEntity;
 import com.erp.model.scm.entity.SubcontractChangeEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.entity.PoInstockDetailEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.SubcontractChangeMapper;
 import com.erp.server.scm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -78,6 +91,16 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
     @Autowired
     private SupplierService supplierService;
 
+    @Autowired
+    private PurchaseOrderDetailService purchaseOrderDetailService;
+
+    @Autowired
+    private SubcontractOrderDetailService subcontractOrderDetailService;
+
+
+    @Autowired
+    private WmsTaskFeign wmsTaskFeign;
+
 
     @Override
     public PagingVO<SubcontractChangeDTO.ListDTO> paging(PagingDTO<SubcontractChangeDTO.PagingParamDTO> pagingParamDTO) {
@@ -94,11 +117,30 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
 
     @Override
     public List<SubcontractChangeDTO.TabListDTO> tabList(PermissionsDTO param) {
-        SubcontractChangeDTO.PagingParamDTO searchParam = new SubcontractChangeDTO.PagingParamDTO();
-        searchParam.setPermissionSql(param.getPermissionSql());
-        List<ApproveStatusQtyDTO> statusList = this.baseMapper.listCount(searchParam);
-
-        return null;
+        PageListTypeEnum[] values = PageListTypeEnum.values();
+        List<SubcontractChangeDTO.TabListDTO> list = new ArrayList<>();
+        for (PageListTypeEnum item: values) {
+            SubcontractChangeDTO.PagingParamDTO searchParamDTO = new SubcontractChangeDTO.PagingParamDTO();
+            searchParamDTO.setPermissionSql(param.getPermissionSql());
+            SubcontractChangeDTO.TabListDTO resultDTO = new SubcontractChangeDTO.TabListDTO();
+            Integer count = MathUtil.ZERO;
+            if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                count = this.baseMapper.listCount(searchParamDTO);
+            }
+            if (PageListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                count = this.baseMapper.listCount(searchParamDTO);
+            }
+            if (PageListTypeEnum.REJECT.getCode().equals(item.getCode())) {
+                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+                count = this.baseMapper.listCount(searchParamDTO);
+            }
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO :count);
+            resultDTO.setSearchType(item.getCode());
+            list.add(resultDTO);
+        }
+        return list;
     }
 
     @Override
@@ -121,6 +163,30 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015);
         }
+    }
+
+    @Override
+    public void invalid(List<String> ids, String remark) {
+        List<SubcontractChangeEntity> list = super.listByIds(ids);
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException("未找到委外变更单数据");
+        }
+        //非待提交和审核不通过不能作废
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98005);
+        }
+        long invalidCount = list.stream().filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
+        if (invalidCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98012);
+        }
+        log.info("委外变更单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
+        //更新订单作废状态
+        updateInvalidStatus(ids, remark);
+
+        //操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("作废了一个委外变更单【%s】，作废原因：".concat(remark), ModuleTypeEnum.SUBCONTRACT_CHANGE.getCode(), pairList, "作废操作");
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -251,6 +317,10 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         ApproveStatusEnum approveStatus = Objects.equals(ApproveTypeEnum.PASS, approveType) ? ApproveStatusEnum.APPROVE : ApproveStatusEnum.REJECT;
         if(Objects.equals(ApproveTypeEnum.PASS, approveType)) {
            // TODO 审核通过流程处理
+
+           //审核通过更新委外订单
+           handleSubcontractOrder(ids,list);
+
         } else if (Objects.equals(ApproveTypeEnum.REJECT, approveType)) {
            // TODO 终止审批流程
         }
@@ -262,6 +332,102 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个委外变更单", approveType.getName()).concat("【%s】").concat(StrUtils.isNotEmpty(dto.getComment()) ? String.format("，意见：%s", dto.getComment()) : ""),
                 ModuleTypeEnum.SUBCONTRACT_CHANGE.getCode(), pairList, "审核操作");
+    }
+
+    private void handleSubcontractOrder(List<String> ids,List<SubcontractChangeEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<SubcontractChangeDetailEntity> detailEntityList = subcontractChangeDetailService.listByMainIds(ids);
+        if (CollectionUtils.isEmpty(detailEntityList)) {
+            throw new ServiceException(ApiError.ERROR_98085);
+        }
+        //新增
+        List<SubcontractChangeDetailEntity> addList = detailEntityList.stream().filter(obj -> OptChangeTypeEnum.ADD.getCode().equals(obj.getOptType())).collect(Collectors.toList());
+        //修改
+        List<SubcontractChangeDetailEntity> updateList = detailEntityList.stream().filter(obj -> OptChangeTypeEnum.UPDATE.getCode().equals(obj.getOptType())).collect(Collectors.toList());
+        //删除
+        List<SubcontractChangeDetailEntity> deleteList = detailEntityList.stream().filter(obj -> OptChangeTypeEnum.DELETE.getCode().equals(obj.getOptType())).collect(Collectors.toList());
+
+        if (CollectionUtils.isNotEmpty(deleteList)) {
+            List<String> sourceDetailIds = deleteList.stream().map(SubcontractChangeDetailEntity::getSourceDetailId).collect(Collectors.toList());
+            List<PurchaseOrderDetailEntity> podList = purchaseOrderDetailService.listBySourceDetailIds(sourceDetailIds);
+            if (CollectionUtils.isNotEmpty(podList)) {
+                String codes = podList.stream().map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
+                log.error("SKU【{}】已存在下推单据，不支持删除变更",codes);
+                throw new ServiceException(new ApiResult(ApiError.ERROR_98086.code, StrUtil.format(ApiError.ERROR_98086.msg,codes)));
+            }
+            //删除委外订单明细
+            subcontractOrderDetailService.removeByIds(sourceDetailIds);
+        }
+        if (CollectionUtils.isNotEmpty(addList)) {
+
+            //明细父级sku
+            List<SubcontractChangeDetailEntity> parentList = addList.stream().filter(obj -> StringUtils.isBlank(obj.getParentId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(parentList)) {
+                throw new ServiceException(ApiError.ERROR_98082);
+            }
+            //新增(根据变更单分组)
+            Map<String, List<SubcontractChangeDetailEntity>> map = parentList.stream().collect(Collectors.groupingBy(SubcontractChangeDetailEntity::getMainId));
+            for (Map.Entry<String, List<SubcontractChangeDetailEntity>> entry : map.entrySet()) {
+                String mainId = entry.getKey();
+                List<SubcontractChangeDetailEntity> value = entry.getValue();
+                SubcontractChangeEntity entity = list.stream().filter(obj -> obj.getId().equals(mainId)).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(entity)) {
+                    throw new ServiceException(ApiError.ERROR_98073);
+                }
+                List<SubcontractOrderDetailDTO.AddDTO> detailList = new ArrayList<>();
+                for (SubcontractChangeDetailEntity addEntity : value) {
+                    SubcontractOrderDetailDTO.AddDTO addDTO = BeanMapperUtils.map(SubcontractOrderDetailDTO.AddDTO.class,addEntity);
+                    //子集SKU
+                    List<SubcontractChangeDetailEntity> childList = addList.stream().filter(obj -> obj.getParentId().equals(addEntity.getId())).collect(Collectors.toList());
+                    if (CollectionUtils.isEmpty(childList)) {
+                        throw new ServiceException(ApiError.ERROR_98083);
+                    }
+                    List<SubcontractOrderDetailDTO.AddDTO> childDTOList = new ArrayList<>();
+                    for (SubcontractChangeDetailEntity childEntity : childList) {
+                        SubcontractOrderDetailDTO.AddDTO childDTO = BeanMapperUtils.map(SubcontractOrderDetailDTO.AddDTO.class,childEntity);
+                        childDTOList.add(childDTO);
+                    }
+                    addDTO.setChildList(childDTOList);
+                    detailList.add(addDTO);
+                }
+                subcontractOrderDetailService.add(detailList,entity.getId());
+            }
+
+            //修改
+            if (CollectionUtils.isNotEmpty(updateList)) {
+                List<String> sourceDetailIds = updateList.stream().map(SubcontractChangeDetailEntity::getSourceDetailId).collect(Collectors.toList());
+                List<PurchaseOrderDetailEntity> podList = purchaseOrderDetailService.listBySourceDetailIds(sourceDetailIds);
+                if (CollectionUtils.isNotEmpty(podList)) {
+                    List<String> podIds = podList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+                    //收货单
+                    List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+                    //入库单
+                    List<PoInstockDetailEntity> poInstockDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+
+                    for (SubcontractChangeDetailEntity updateEntity : updateList) {
+                        PurchaseOrderDetailEntity detailEntity = podList.stream().filter(obj -> obj.getSourceDetailId().equals(updateEntity.getSourceDetailId())).findFirst().orElse(null);
+                        if (ObjectUtils.isEmpty(detailEntity)) {
+                            continue;
+                        }
+                        if (CollectionUtils.isNotEmpty(receiveDetailList)) {
+                            //收货数量
+                            Integer receiveTotalQty = receiveDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+
+                        }
+                        if (CollectionUtils.isNotEmpty(poInstockDetailList)) {
+                            //入库数量
+                            Integer stockInTotalQty = poInstockDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                        }
+                    }
+                }
+            }
+
+            //判断是否需要自动下推采购订单
+        }
+
+
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -357,7 +523,6 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
 
-
         //明细父级sku
         List<SubcontractChangeDetailEntity> parentList = subcontractChangeDetailList.stream().filter(obj -> StringUtils.isBlank(obj.getParentId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(parentList)) {
@@ -368,10 +533,14 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         List<SubcontractChangeDetailDTO.ViewDTO> detailList = new ArrayList<>();
         for (SubcontractChangeDetailDTO.ViewDTO viewDTO : parentDTOList) {
             //产品名称
-            String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse(null);
+            String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId()))
+                    .findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse(null);
             viewDTO.setProductName(productName);
             //供应商名称
-            String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(viewDTO.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse(null);
+            String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(viewDTO.getSupplierId()))
+                    .findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getName())).orElse(null);
             viewDTO.setSupplierName(supplierName);
             //变更类型
             viewDTO.setOptTypeName(OptChangeTypeEnum.getName(viewDTO.getOptType()));
@@ -385,18 +554,35 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             List<SubcontractChangeDetailDTO.ChildDTO> childDTOList = BeanMapperUtils.copyList(SubcontractChangeDetailDTO.ChildDTO.class, childList);
             for (SubcontractChangeDetailDTO.ChildDTO childViewDTO : childDTOList) {
                 //产品名称
-                String childProductName = skuList.stream().filter(obj -> obj.getSkuId().equals(childViewDTO.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse(null);
+                String childProductName = skuList.stream().filter(obj -> obj.getSkuId().equals(childViewDTO.getSkuId()))
+                        .findFirst()
+                        .flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse(null);
                 childViewDTO.setProductName(childProductName);
                 //供应商名称
                 String childSupplierName = supplierList.stream().filter(obj -> obj.getId().equals(childViewDTO.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse(null);
                 childViewDTO.setSupplierName(childSupplierName);
                 //变更类型
-                childViewDTO.setOptTypeName(OptChangeTypeEnum.getName(viewDTO.getOptType()));
+                childViewDTO.setOptTypeName(OptChangeTypeEnum.getName(childViewDTO.getOptType()));
             }
+            viewDTO.setChildList(childDTOList);
         }
-
-
+        data.setDetailList(detailList);
         return data;
+    }
+
+    /**
+     * @param ids
+     * @param reason
+     * @description: 更新作废状态
+     * @author Will
+     */
+    private void updateInvalidStatus(List<String> ids, String reason) {
+        //更新
+        lambdaUpdate().in(SubcontractChangeEntity::getId, ids)
+                .set(SubcontractChangeEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+                .set(SubcontractChangeEntity::getInvalidTime, LocalDateTime.now())
+                .set(SubcontractChangeEntity::getInvalidRemark, reason)
+                .update();
     }
 
     /**

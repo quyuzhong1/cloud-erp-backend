@@ -23,10 +23,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Administrator
@@ -172,6 +170,8 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
     @Override
     public List<SysAccountingCompanyDTO.ListDTO> getList() {
         List<SysAccountingCompanyEntity> list = this.lambdaQuery().eq(SysAccountingCompanyEntity::getDisabled, false).list();
+        // 按创建时间顺序排，最早的排在最前面
+        list = list.stream().sorted(Comparator.comparing(SysAccountingCompanyEntity::getCreateTime)).collect(Collectors.toList());
         return BeanMapper.copyList(list, SysAccountingCompanyDTO.ListDTO.class);
     }
 
