@@ -58,7 +58,6 @@ import com.erp.server.scm.listener.PurchaseOrderExcelListener;
 import com.erp.server.scm.mapper.PurchaseOrderMapper;
 import com.erp.server.scm.service.*;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -1109,23 +1108,22 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         // 采购申请单id集合
         List<String> purchaseApplicationIds = Lists.newArrayList();
         records.forEach(obj -> {
-
+            //已收货数量
             Integer receiveQty = MathUtil.ZERO;
-            Integer deliveryQty = MathUtil.ZERO;
+            //有效收货数量
+            Integer hasQty = MathUtil.ZERO;
+            //退货数量
             Integer returnQty = purchaseReturnOrderDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && req.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
 
             if (CollectionUtils.isNotEmpty(receiveDetailList)) {
                 receiveQty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
                         .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                //已到货数据待收货数量默认给0
-                if (!ArrivalStatusEnum.ARRIVED.getCode().equals(obj.getArrivalStatus())) {
-                    Integer qty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()))
-                            .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                    deliveryQty = obj.getPurchaseQty() + returnQty - qty;
-                }
+                hasQty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()))
+                        .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             }
-            obj.setReceiveQty(receiveQty);
-            obj.setDeliveryQty(deliveryQty);
+           Integer deliveryQty = ArrivalStatusEnum.ARRIVED.getCode().equals(obj.getArrivalStatus()) ? MathUtil.ZERO : obj.getPurchaseQty() + returnQty - hasQty;
+           obj.setReceiveQty(receiveQty);
+           obj.setDeliveryQty(deliveryQty);
 
             //入库数量
             Integer stockInQty = MathUtil.ZERO;

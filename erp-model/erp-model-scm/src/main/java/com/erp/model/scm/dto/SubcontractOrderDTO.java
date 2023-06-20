@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.*;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -628,6 +629,10 @@ public class SubcontractOrderDTO implements Serializable {
          */
         private String remark;
 
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
     }
 
 

@@ -172,7 +172,7 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @date: 2023/6/12 14:16
      * @param list
      */
-    void generatePo(ValidList<SubcontractOrderDTO.GeneratePoDTO> list);
+    void generatePo(ValidList<SubcontractOrderDTO.GeneratePoDTO> list,Boolean isAuto);
     /**
      * 添加已有产品显示
      * @author Will
@@ -197,4 +197,12 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @return ViewDTO
      */
     SubcontractChangeDTO.ViewDTO viewSubcontractChange(String id);
+    /**
+     * @description: 根据来源ids查询
+     * @author Will
+     * @date: 2023/6/20 14:49
+     * @param sourceIds
+     * @return List<SubcontractOrderEntity>
+     */
+    List<SubcontractOrderEntity> listBySourceId(List<String> sourceIds);
 }

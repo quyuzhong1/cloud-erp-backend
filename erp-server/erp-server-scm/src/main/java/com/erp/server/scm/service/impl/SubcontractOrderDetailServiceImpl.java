@@ -352,6 +352,18 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
 
         });
 
+        //申请单下推数量校验
+        List<String> sourceDetailIds = newList.stream().filter(obj->StringUtils.isNotBlank(obj.getSourceDetailId())).map(SubcontractOrderDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        //采购申请单明细数据
+        List<PurchaseApplicationDetailEntity> sourceDetailList = new ArrayList<>();
+        List<SubcontractOrderDetailEntity> refDetailList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(sourceDetailIds)) {
+            //采购申请信息
+            sourceDetailList = purchaseApplicationDetailService.listByIds(sourceDetailIds);
+            //委外明细信息
+            refDetailList = this.listBySourceDetailIds(sourceDetailIds);
+        }
+
         //BOM信息
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(parentSkuIds);
         if (CollectionUtils.isEmpty(bomChildrenList)) {
@@ -371,6 +383,21 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIds);
 
         for (SubcontractOrderDetailEntity detailEntity : newList) {
+            //申请数量校验
+            if (CollectionUtils.isNotEmpty(sourceDetailList)) {
+                //申请单数量
+                Integer applyQty = sourceDetailList.stream()
+                        .filter(obj -> obj.getPurchaseApplicationId().equals(detailEntity.getSourceDetailId()))
+                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getApplyQty())).orElse(MathUtil.ZERO);
+                //已下推数量
+                Integer pushdownQty = refDetailList.stream()
+                        .filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId()) && !obj.getId().equals(detailEntity.getId()))
+                        .map(SubcontractOrderDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+                if (detailEntity.getQty() > applyQty - pushdownQty) {
+                    throw new ServiceException(new ApiResult(ApiError.ERROR_98091.code,StrUtil.format(ApiError.ERROR_98091.msg,detailEntity.getSkuNo(),applyQty - pushdownQty)));
+                }
+            }
+
             //bom信息
             BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
@@ -471,4 +498,5 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         }
         entity.setAmount(MathUtil.multiply(entity.getPrice(),entity.getQty()));
     }
+
 }

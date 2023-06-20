@@ -337,7 +337,7 @@ public class SubcontractOrderController extends BaseController {
      */
     @PostMapping(value = "/generatePo")
     public ApiResult<Void> generatePo(@RequestBody @Validated ValidList<SubcontractOrderDTO.GeneratePoDTO> list) {
-         subcontractOrderService.generatePo(list);
+         subcontractOrderService.generatePo(list,Boolean.FALSE);
         return success();
     }
 

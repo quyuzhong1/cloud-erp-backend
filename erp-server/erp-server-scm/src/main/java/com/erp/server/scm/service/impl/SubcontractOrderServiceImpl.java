@@ -559,7 +559,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void generatePo(ValidList<SubcontractOrderDTO.GeneratePoDTO> list) {
+    public void generatePo(ValidList<SubcontractOrderDTO.GeneratePoDTO> list,Boolean isAuto) {
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
@@ -615,7 +615,11 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             generatePoDTO.setPlanDeliveryDate(detailEntity.getPlanDeliveryDate());
             //备注
             generatePoDTO.setRemark(detailEntity.getRemark());
-
+            //是否赠品
+            generatePoDTO.setIsGift( ObjectUtils.isEmpty(generatePoDTO.getIsGift()) ? detailEntity.getIsGift() : generatePoDTO.getIsGift());
+            if (isAuto) {
+                generatePoDTO.setTaxPrice(detailEntity.getPrice());
+            }
         }
         //查询产品信息
         List<String> skuIds = resultList.stream().map(obj -> obj.getSkuId()).collect(Collectors.toList());
@@ -659,17 +663,18 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 poDetailAddDTO.setWarehouseLocation(addDetailDTO.getWarehouseLocation());
                 poDetailAddDTO.setPlanDeliveryDate(addDetailDTO.getPlanDeliveryDate());
                 poDetailAddDTO.setRemark(addDetailDTO.getRemark());
+                poDetailAddDTO.setIsGift(addDetailDTO.getIsGift());
                 //供应商报价信息
                 PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
                 searchDTO.setSkuId(addDetailDTO.getSkuId());
                 searchDTO.setSupplierId(addDetailDTO.getSupplierId());
                 searchDTO.setPurchaseQty(addDetailDTO.getQty());
-                searchDTO.setSkuNo(skuVO.getSkuNo());
+                searchDTO.setSkuNo(addDetailDTO.getSkuNo());
                 List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList = purchasePriceDetailService.getTaxPrice(searchDTO);
                 PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO viewDTO = taxPriceList.get(0);
                 poDetailAddDTO.setCurrency(viewDTO.getCurrency());
                 poDetailAddDTO.setCurrencySymbol(viewDTO.getCurrencySymbol());
-                poDetailAddDTO.setTaxPrice(viewDTO.getTaxPrice());
+                poDetailAddDTO.setTaxPrice(ObjectUtils.isEmpty(addDetailDTO.getTaxPrice())? viewDTO.getTaxPrice() : addDetailDTO.getTaxPrice());
                 poDetailAddDTO.setDeliveryDay(viewDTO.getDeliveryDay());
                 poDetailAddDTO.setPurchaseAmount(MathUtil.multiply(poDetailAddDTO.getTaxPrice(),poDetailAddDTO.getPurchaseQty()));
                 poDetailList.add(poDetailAddDTO);
@@ -797,6 +802,11 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         return viewDTO;
     }
 
+    @Override
+    public List<SubcontractOrderEntity> listBySourceId(List<String> sourceIds) {
+        return lambdaQuery().in(SubcontractOrderEntity::getSourceId,sourceIds).eq(SubcontractOrderEntity::getInvalidStatus, Boolean.FALSE).list();
+    }
+
     /**
      * @description: 自动生成采购订单
      * @author Will
@@ -817,7 +827,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //生成采购订单
         List<SubcontractOrderDTO.GeneratePoDTO> resultLis = BeanMapperUtils.copyList(SubcontractOrderDTO.GeneratePoDTO.class, viewGeneratePoDTOS);
         list.setList(resultLis);
-        generatePo(list);
+        generatePo(list,Boolean.TRUE);
     }
 
     /**
