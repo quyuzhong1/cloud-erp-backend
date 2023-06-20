@@ -137,6 +137,12 @@ public class SubcontractChangeDetailEntity extends BaseEntity<SubcontractChangeD
     private String warehouseName;
 
     /**
+     * 仓位
+     */
+    @TableField("warehouse_location")
+    private String warehouseLocation;
+
+    /**
     * bom版本
     */
     @TableField("bom_version")

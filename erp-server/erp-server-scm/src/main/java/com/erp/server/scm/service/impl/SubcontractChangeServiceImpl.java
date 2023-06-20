@@ -6,6 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -333,7 +334,13 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个委外变更单", approveType.getName()).concat("【%s】").concat(StrUtils.isNotEmpty(dto.getComment()) ? String.format("，意见：%s", dto.getComment()) : ""),
                 ModuleTypeEnum.SUBCONTRACT_CHANGE.getCode(), pairList, "审核操作");
     }
-
+    /**
+     * @description: 审核通过更新委外订单
+     * @author Will
+     * @date: 2023/6/20 10:08
+     * @param ids
+     * @param list
+     */
     private void handleSubcontractOrder(List<String> ids,List<SubcontractChangeEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
@@ -348,7 +355,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         List<SubcontractChangeDetailEntity> updateList = detailEntityList.stream().filter(obj -> OptChangeTypeEnum.UPDATE.getCode().equals(obj.getOptType())).collect(Collectors.toList());
         //删除
         List<SubcontractChangeDetailEntity> deleteList = detailEntityList.stream().filter(obj -> OptChangeTypeEnum.DELETE.getCode().equals(obj.getOptType())).collect(Collectors.toList());
-
+        //删除
         if (CollectionUtils.isNotEmpty(deleteList)) {
             List<String> sourceDetailIds = deleteList.stream().map(SubcontractChangeDetailEntity::getSourceDetailId).collect(Collectors.toList());
             List<PurchaseOrderDetailEntity> podList = purchaseOrderDetailService.listBySourceDetailIds(sourceDetailIds);
@@ -360,75 +367,152 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             //删除委外订单明细
             subcontractOrderDetailService.removeByIds(sourceDetailIds);
         }
+        //新增
         if (CollectionUtils.isNotEmpty(addList)) {
-
-            //明细父级sku
-            List<SubcontractChangeDetailEntity> parentList = addList.stream().filter(obj -> StringUtils.isBlank(obj.getParentId())).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(parentList)) {
-                throw new ServiceException(ApiError.ERROR_98082);
-            }
-            //新增(根据变更单分组)
-            Map<String, List<SubcontractChangeDetailEntity>> map = parentList.stream().collect(Collectors.groupingBy(SubcontractChangeDetailEntity::getMainId));
-            for (Map.Entry<String, List<SubcontractChangeDetailEntity>> entry : map.entrySet()) {
-                String mainId = entry.getKey();
-                List<SubcontractChangeDetailEntity> value = entry.getValue();
-                SubcontractChangeEntity entity = list.stream().filter(obj -> obj.getId().equals(mainId)).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(entity)) {
-                    throw new ServiceException(ApiError.ERROR_98073);
-                }
-                List<SubcontractOrderDetailDTO.AddDTO> detailList = new ArrayList<>();
-                for (SubcontractChangeDetailEntity addEntity : value) {
-                    SubcontractOrderDetailDTO.AddDTO addDTO = BeanMapperUtils.map(SubcontractOrderDetailDTO.AddDTO.class,addEntity);
-                    //子集SKU
-                    List<SubcontractChangeDetailEntity> childList = addList.stream().filter(obj -> obj.getParentId().equals(addEntity.getId())).collect(Collectors.toList());
-                    if (CollectionUtils.isEmpty(childList)) {
-                        throw new ServiceException(ApiError.ERROR_98083);
-                    }
-                    List<SubcontractOrderDetailDTO.AddDTO> childDTOList = new ArrayList<>();
-                    for (SubcontractChangeDetailEntity childEntity : childList) {
-                        SubcontractOrderDetailDTO.AddDTO childDTO = BeanMapperUtils.map(SubcontractOrderDetailDTO.AddDTO.class,childEntity);
-                        childDTOList.add(childDTO);
-                    }
-                    addDTO.setChildList(childDTOList);
-                    detailList.add(addDTO);
-                }
-                subcontractOrderDetailService.add(detailList,entity.getId());
-            }
-
-            //修改
-            if (CollectionUtils.isNotEmpty(updateList)) {
-                List<String> sourceDetailIds = updateList.stream().map(SubcontractChangeDetailEntity::getSourceDetailId).collect(Collectors.toList());
-                List<PurchaseOrderDetailEntity> podList = purchaseOrderDetailService.listBySourceDetailIds(sourceDetailIds);
-                if (CollectionUtils.isNotEmpty(podList)) {
-                    List<String> podIds = podList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
-                    //收货单
-                    List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
-                    //入库单
-                    List<PoInstockDetailEntity> poInstockDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
-
-                    for (SubcontractChangeDetailEntity updateEntity : updateList) {
-                        PurchaseOrderDetailEntity detailEntity = podList.stream().filter(obj -> obj.getSourceDetailId().equals(updateEntity.getSourceDetailId())).findFirst().orElse(null);
-                        if (ObjectUtils.isEmpty(detailEntity)) {
-                            continue;
-                        }
-                        if (CollectionUtils.isNotEmpty(receiveDetailList)) {
-                            //收货数量
-                            Integer receiveTotalQty = receiveDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-
-                        }
-                        if (CollectionUtils.isNotEmpty(poInstockDetailList)) {
-                            //入库数量
-                            Integer stockInTotalQty = poInstockDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
-                        }
-                    }
-                }
-            }
-
-            //判断是否需要自动下推采购订单
+            generateAdd(addList,list);
         }
+        //修改
+        if (CollectionUtils.isNotEmpty(updateList)) {
+            //收货数量和入库数量校验
+            checkGenerateUpdate(updateList);
+            //更新委外订单数据
+            generateUpdate(updateList,list);
 
-
+        }
     }
+    /**
+     * @description: 数量验证
+     * @author Will
+     * @date: 2023/6/20 10:06
+     * @param updateList
+     */
+    private void checkGenerateUpdate (List<SubcontractChangeDetailEntity> updateList) {
+        List<String> sourceDetailIds = updateList.stream().map(SubcontractChangeDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> podList = purchaseOrderDetailService.listBySourceDetailIds(sourceDetailIds);
+        if (CollectionUtils.isNotEmpty(podList)) {
+            List<String> podIds = podList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+            //收货单
+            List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+            //入库单
+            List<PoInstockDetailEntity> poInstockDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+
+            for (SubcontractChangeDetailEntity updateEntity : updateList) {
+                PurchaseOrderDetailEntity detailEntity = podList.stream().filter(obj -> obj.getSourceDetailId().equals(updateEntity.getSourceDetailId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(detailEntity)) {
+                    continue;
+                }
+                if (CollectionUtils.isNotEmpty(receiveDetailList)) {
+                    //收货数量
+                    Integer receiveTotalQty = receiveDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                    if (receiveTotalQty > updateEntity.getQty()) {
+                        throw new ServiceException(new ApiResult(ApiError.ERROR_98087.code,StrUtil.format(ApiError.ERROR_98087.msg,updateEntity.getSkuNo(),updateEntity.getQty(),receiveTotalQty)));
+                    }
+                }
+                if (CollectionUtils.isNotEmpty(poInstockDetailList)) {
+                    //入库数量
+                    Integer stockInTotalQty = poInstockDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                    if (stockInTotalQty > updateEntity.getQty()) {
+                        throw new ServiceException(new ApiResult(ApiError.ERROR_98088.code,StrUtil.format(ApiError.ERROR_98088.msg,updateEntity.getSkuNo(),updateEntity.getQty(),stockInTotalQty)));
+                    }
+                }
+            }
+        }
+    }
+    /**
+     * @description: 新增生成数据
+     * @author Will
+     * @date: 2023/6/20 10:07
+     * @param addList
+     * @param list
+     */
+    private void generateAdd (List<SubcontractChangeDetailEntity> addList,List<SubcontractChangeEntity> list) {
+        //明细父级sku
+        List<SubcontractChangeDetailEntity> parentList = addList.stream().filter(obj -> StringUtils.isBlank(obj.getParentId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(parentList)) {
+            throw new ServiceException(ApiError.ERROR_98082);
+        }
+        //新增(根据变更单分组)
+        Map<String, List<SubcontractChangeDetailEntity>> map = parentList.stream().collect(Collectors.groupingBy(SubcontractChangeDetailEntity::getMainId));
+        for (Map.Entry<String, List<SubcontractChangeDetailEntity>> entry : map.entrySet()) {
+            String mainId = entry.getKey();
+            List<SubcontractChangeDetailEntity> value = entry.getValue();
+            SubcontractChangeEntity entity = list.stream().filter(obj -> obj.getId().equals(mainId)).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_98073);
+            }
+            List<SubcontractOrderDetailDTO.UpdateDTO> detailList = new ArrayList<>();
+            List<Pair<String,String>> pairList = new ArrayList<>();
+            for (SubcontractChangeDetailEntity addEntity : value) {
+                SubcontractOrderDetailDTO.UpdateDTO addDTO = BeanMapperUtils.map(SubcontractOrderDetailDTO.UpdateDTO.class,addEntity);
+                addDTO.setId(IdWorker.getIdStr());
+                pairList.add(new Pair<>(addEntity.getId(),addDTO.getId()));
+                //子集SKU
+                List<SubcontractChangeDetailEntity> childList = addList.stream().filter(obj -> obj.getParentId().equals(addEntity.getId())).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(childList)) {
+                    throw new ServiceException(ApiError.ERROR_98083);
+                }
+                List<SubcontractOrderDetailDTO.UpdateDTO> childDTOList = new ArrayList<>();
+                for (SubcontractChangeDetailEntity childEntity : childList) {
+                    SubcontractOrderDetailDTO.UpdateDTO childDTO = BeanMapperUtils.map(SubcontractOrderDetailDTO.UpdateDTO.class,childEntity);
+                    childDTO.setId(IdWorker.getIdStr());
+                    pairList.add(new Pair<>(childEntity.getId(),childDTO.getId()));
+                    childDTOList.add(childDTO);
+                }
+                addDTO.setChildList(childDTOList);
+                detailList.add(addDTO);
+            }
+            //委外订单添加明细
+            subcontractOrderDetailService.addByChange(detailList,entity.getId());
+            //更新委外变更单来源明细id
+            subcontractOrderDetailService.updateSourceDetailId(pairList);
+        }
+        //自动下推
+    }
+    /**
+     * @description: 修改更新数据
+     * @author Will
+     * @date: 2023/6/20 10:07
+     * @param updateList
+     * @param list
+     */
+    private void generateUpdate (List<SubcontractChangeDetailEntity> updateList,List<SubcontractChangeEntity> list) {
+        //明细父级sku
+        List<SubcontractChangeDetailEntity> parentList = updateList.stream().filter(obj -> StringUtils.isBlank(obj.getParentId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(parentList)) {
+            throw new ServiceException(ApiError.ERROR_98082);
+        }
+        //新增(根据变更单分组)
+        Map<String, List<SubcontractChangeDetailEntity>> map = parentList.stream().collect(Collectors.groupingBy(SubcontractChangeDetailEntity::getMainId));
+        for (Map.Entry<String, List<SubcontractChangeDetailEntity>> entry : map.entrySet()) {
+            String mainId = entry.getKey();
+            List<SubcontractChangeDetailEntity> value = entry.getValue();
+            SubcontractChangeEntity entity = list.stream().filter(obj -> obj.getId().equals(mainId)).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_98073);
+            }
+            List<SubcontractOrderDetailDTO.UpdateDTO> detailList = new ArrayList<>();
+            for (SubcontractChangeDetailEntity updateEntity : value) {
+                SubcontractOrderDetailDTO.UpdateDTO updateDTO = BeanMapperUtils.map(SubcontractOrderDetailDTO.UpdateDTO.class,updateEntity);
+                updateDTO.setId(updateEntity.getSourceDetailId());
+                //子集SKU
+                List<SubcontractChangeDetailEntity> childList = updateList.stream().filter(obj -> obj.getParentId().equals(updateEntity.getId())).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(childList)) {
+                    throw new ServiceException(ApiError.ERROR_98083);
+                }
+                List<SubcontractOrderDetailDTO.UpdateDTO> childDTOList = new ArrayList<>();
+                for (SubcontractChangeDetailEntity childEntity : childList) {
+                    SubcontractOrderDetailDTO.UpdateDTO childDTO = BeanMapperUtils.map(SubcontractOrderDetailDTO.UpdateDTO.class,childEntity);
+                    childDTO.setId(childDTO.getSourceDetailId());
+                    childDTOList.add(childDTO);
+                }
+                updateDTO.setChildList(childDTOList);
+                detailList.add(updateDTO);
+            }
+            subcontractOrderDetailService.update(detailList,entity.getId());
+        }
+        //自动下推
+    }
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)

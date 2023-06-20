@@ -3,6 +3,7 @@ package com.erp.server.scm.service;
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.SubcontractOrderDetailDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
+import org.apache.commons.math3.util.Pair;
 
 import java.util.List;
 
@@ -88,4 +89,19 @@ public interface SubcontractOrderDetailService extends SuperService<SubcontractO
      * @param ids
      */
     void syncArrivalStatusByIds(List<String> ids);
+    /**
+     * @description: 变更新增明细
+     * @author Will
+     * @date: 2023/6/20 10:34
+     * @param detailList
+     * @param mainId
+     */
+    void addByChange(List<SubcontractOrderDetailDTO.UpdateDTO> detailList, String mainId);
+    /**
+     * @description: 更新来源明细id
+     * @author Will
+     * @date: 2023/6/20 10:40
+     * @param pairList
+     */
+    void updateSourceDetailId(List<Pair<String, String>> pairList);
 }

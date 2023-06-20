@@ -263,9 +263,7 @@
         pad.receive_org_id as receiveOrgId,
         pad.receive_org_name as receiveOrgName,
         pad.dest_warehouse_id as warehouseId,
-        pad.dest_warehouse_name as warehouseName,
-        pad.apply_qty as qty,
-        pad.apply_qty as deliveryQty
+        pad.dest_warehouse_name as warehouseName
         from purchase_application pa
         left join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = false
         <where>

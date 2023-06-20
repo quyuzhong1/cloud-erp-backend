@@ -667,6 +667,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             }
             //可下推数量
             viewDTO.setToPushdownQty(viewDTO.getQty() - pushdownQty);
+            viewDTO.setQty(viewDTO.getToPushdownQty());
+            viewDTO.setDeliveryQty(viewDTO.getToPushdownQty());
             viewDTO.setSourceType(SourceTypeEnum.PURCHASE_APPLICATION.getCode());
             viewDTO.setIndex(index);
             index++;
@@ -682,6 +684,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 viewGenerateDTO.setSkuId(childrenSkuDTO.getSkuId());
                 viewGenerateDTO.setSkuNo(childrenSkuDTO.getSkuNo());
                 viewGenerateDTO.setProductName(childrenSkuDTO.getSkuName());
+                viewGenerateDTO.setQuantity(childrenSkuDTO.getQuantity());
                 viewGenerateDTO.setIndex(index);
                 index++;
                 generateChildList.add(viewGenerateDTO);

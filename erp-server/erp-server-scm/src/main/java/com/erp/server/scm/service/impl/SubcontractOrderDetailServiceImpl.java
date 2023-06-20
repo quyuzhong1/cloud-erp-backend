@@ -26,6 +26,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -108,6 +109,32 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         this.saveBatch(resultList);
     }
 
+
+    @Override
+    public void addByChange(List<SubcontractOrderDetailDTO.UpdateDTO> detailList, String mainId) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        List<SubcontractOrderDetailEntity> list = BeanMapperUtils.copyList(SubcontractOrderDetailEntity.class, detailList);
+        //处理父子级数据
+        List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId);
+        this.saveBatch(resultList);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateSourceDetailId(List<Pair<String, String>> pairList) {
+        if(CollectionUtils.isEmpty(pairList)) {
+            return;
+        }
+        for (Pair<String, String> pair : pairList) {
+            lambdaUpdate()
+                    .eq(SubcontractOrderDetailEntity::getId,pair.getKey()).
+                    set(SubcontractOrderDetailEntity::getSourceDetailId,pair.getValue())
+                    .update();
+        }
+    }
+
     @Override
     public void update(List<SubcontractOrderDetailDTO.UpdateDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
@@ -177,6 +204,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
            updateArrivalStatusByIds(arrivalStatus, Arrays.asList(id),Boolean.FALSE);
        }
     }
+
 
     /**
      * @description: 获取交货状态

@@ -670,6 +670,11 @@ public class PurchaseApplicationDTO implements Serializable {
          * 领料数量
          */
         private Integer deliveryQty;
+
+        /**
+         * bom比率
+         */
+        private Integer quantity;
     }
 
 
