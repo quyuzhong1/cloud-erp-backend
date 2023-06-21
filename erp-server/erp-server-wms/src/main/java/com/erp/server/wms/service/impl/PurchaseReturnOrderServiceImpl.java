@@ -44,6 +44,7 @@ import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
@@ -105,9 +106,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
 
     @Resource
-    private PoInstockService poInstockService;
-
-    @Resource
     private PoInstockDetailService poInstockDetailService;
 
     @Resource
@@ -117,13 +115,13 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
     private SyncKingdeeReturnOrderService syncKingdeeReturnOrderService;
 
     @Resource
-    private WarehouseReceiveService warehouseReceiveService;
-
-    @Resource
     private WarehouseReceiveDetailService warehouseReceiveDetailService;
 
     @Autowired
     private InventoryTransCoreService inventoryTransCoreService;
+
+    @Autowired
+    private InventoryService inventoryService;
 
 
     /**
@@ -186,6 +184,24 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getReturnOrgId());
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getReturnWarehouseId());
+
+        // 增加库存数量验证（库存退货）
+        String sourceType = dto.getSourceType();
+        if(!Objects.equals(sourceType, SourceTypeEnum.QC_BILL.getCode())) {
+            String returnMode = dto.getReturnMode();
+            List<PurchaseReturnOrderDetailDTO.AddDTO> purchasePriceDetailList = dto.getPurchasePriceDetailList();
+            purchasePriceDetailList.stream().forEach(detail->{
+                Integer usableQty = inventoryService.getInventoryTotal(warehouseEntity.getOrgId(), warehouseEntity.getId(), detail.getSkuId(), detail.getWarehouseLocation(), InventoryStatusEnum.USABLE.getCode());
+                if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())
+                   && usableQty < detail.getReplenishQty()) {
+                    throw new ServiceException("可用库存数量不足");
+                } else if (Objects.equals(returnMode, ReturnModeEnum.DEDUCTION.getCode())
+                        && usableQty < detail.getDeductAmountQty()) {
+                    throw new ServiceException("可用库存数量不足");
+                }
+            });
+        }
+
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGTH, BusinessNoTypeEnum.CODE_CGTH.getCode()));
         //设置收货单主表
@@ -251,6 +267,24 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getReturnOrgId());
         //获取仓库信息
         WarehouseEntity warehouseEntity = warehouseService.getById(dto.getReturnWarehouseId());
+
+        // 增加库存数量验证（库存退货）
+        String sourceType = dto.getSourceType();
+        if(!Objects.equals(sourceType, SourceTypeEnum.QC_BILL.getCode())) {
+            String returnMode = dto.getReturnMode();
+            List<PurchaseReturnOrderDetailDTO.UpdateDTO> purchasePriceDetailList = dto.getPurchasePriceDetailList();
+            purchasePriceDetailList.stream().forEach(detail->{
+                Integer usableQty = inventoryService.getInventoryTotal(warehouseEntity.getOrgId(), warehouseEntity.getId(), detail.getSkuId(), detail.getWarehouseLocation(), InventoryStatusEnum.USABLE.getCode());
+                if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())
+                        && usableQty < detail.getReplenishQty()) {
+                    throw new ServiceException("可用库存数量不足");
+                } else if (Objects.equals(returnMode, ReturnModeEnum.DEDUCTION.getCode())
+                        && usableQty < detail.getDeductAmountQty()) {
+                    throw new ServiceException("可用库存数量不足");
+                }
+            });
+        }
+
         //设置收货单主表
         PurchaseReturnOrderEntity purchaseReturnOrderEntity = new PurchaseReturnOrderEntity();
         BeanMapperUtils.copy(dto, purchaseReturnOrderEntity);
