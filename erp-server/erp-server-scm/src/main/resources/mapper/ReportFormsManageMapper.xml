@@ -3,18 +3,18 @@
 <mapper namespace="com.erp.server.scm.mapper.ReportFormsManageMapper">
     <select id="paging" resultType="com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO$PagingViewDTO">
         SELECT
-        array_to_string(array_agg(t.pid), ',') AS id,
-        purchase_org_name,
-        supplier_name,
-        images_url,
-        sku_no,
-        productName,
-        spu_no,
-        avg(tax_price) AS tax_price,
-        round(SUM(orderAmount) / sum(t.purchase_qty)::numeric ,4) AS avgPrice,
-        COUNT(t.id) AS orderQty,
-        SUM(orderAmount) AS orderAmount,
-        max(createTime) AS createTime
+            array_to_string(array_agg(t.pid), ',') AS id,
+            purchase_org_name,
+            supplier_name,
+            images_url,
+            sku_no,
+            productName,
+            spu_no,
+            avg(tax_price) AS tax_price,
+            round(SUM(orderAmount) / sum(t.purchase_qty)::numeric ,4) AS avgPrice,
+            COUNT(t.id) AS orderQty,
+            SUM(orderAmount) AS orderAmount,
+            max(createTime) AS createTime
         FROM (
             SELECT
                 pod.id AS pid,

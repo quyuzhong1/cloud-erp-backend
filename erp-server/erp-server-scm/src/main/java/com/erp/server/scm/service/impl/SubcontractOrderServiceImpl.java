@@ -627,6 +627,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             if (isAuto) {
                 generatePoDTO.setTaxPrice(detailEntity.getPrice());
             }
+            generatePoDTO.setSupplierId(StringUtils.isBlank(generatePoDTO.getSupplierId()) ? detailEntity.getSupplierId() : generatePoDTO.getSupplierId());
         }
         //查询产品信息
         List<String> skuIds = resultList.stream().map(obj -> obj.getSkuId()).collect(Collectors.toList());

@@ -2879,11 +2879,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             }
         }
-        //启动流程
-//        productDetailStartProcess(productDetailEntity);
-        return lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.APPROVAL_ING.getCode())
+        boolean flag = lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.APPROVAL_ING.getCode())
                 .in(ProductDetailEntity::getId, ids)
                 .update();
+        List<ProductDetailEntity> syncDateList = this.listByIds(ids);
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
+        //启动流程
+//        productDetailStartProcess(productDetailEntity);
+        return flag;
     }
 
     @Override
@@ -2933,11 +2939,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             });
             productDetailCommentService.saveBatch(commentEntityList);
         }
-        return lambdaUpdate().set(ProductDetailEntity::getStatus, approveStatus)
+        boolean flag = lambdaUpdate().set(ProductDetailEntity::getStatus, approveStatus)
                 .set(ProductDetailEntity::getUpdateUserId, userInfo.getUid())
                 .set(ProductDetailEntity::getUpdateUserName, userInfo.getUserName())
                 .in(ProductDetailEntity::getId, ids)
                 .update();
+        List<ProductDetailEntity> syncDateList = this.listByIds(ids);
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
+        return flag;
     }
 
 
@@ -2961,10 +2973,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     .setBusinessId(obj.getId()).setOperation("状态变更").setContent("反审核SKU[" + obj.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_ING.getName() + "]"));
         });
         //修改状态为审核中
-        return lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.APPROVAL_ING.getCode())
+        boolean flag = lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.APPROVAL_ING.getCode())
                 .in(ProductDetailEntity::getIsChange, IsConstant.NO)
                 .in(ProductDetailEntity::getId, ids)
                 .update();
+        List<ProductDetailEntity> syncDateList = this.listByIds(ids);
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
+        return flag;
     }
 
     @Override
@@ -2988,11 +3006,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(obj.getProductId())
                     .setBusinessId(obj.getId()).setOperation("状态变更").setContent("取消流程SKU[" + obj.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.WAIT_CONFIRM.getName() + "]"));
         });
-        //修改状态为待提交
-        return lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.WAIT_CONFIRM.getCode())
-                        .set(ProductDetailEntity::getProcessId, "")
-                        .in(ProductDetailEntity::getId, ids)
-                        .update();
+        boolean flag = lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.WAIT_CONFIRM.getCode())
+                .set(ProductDetailEntity::getProcessId, "")
+                .in(ProductDetailEntity::getId, ids)
+                .update();
+        List<ProductDetailEntity> syncDateList = this.listByIds(ids);
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
+        return flag;
     }
 
     @Override

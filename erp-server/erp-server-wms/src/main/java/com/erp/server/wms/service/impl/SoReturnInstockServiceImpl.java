@@ -264,7 +264,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         entity.setCustomerName(customerInfoEntity.getName());
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
         WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-        if (ObjectUtils.isEmpty(updateDTO)) {
+        if (ObjectUtils.isNotEmpty(updateDTO)) {
             entity.setInventoryOrgId(updateDTO.getOrgId());
             entity.setInventoryOrgName(updateDTO.getName());
         }
@@ -324,7 +324,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         entity.setCustomerName(customerInfoEntity.getName());
         List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
         WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
-        if (ObjectUtils.isEmpty(updateDTO)) {
+        if (ObjectUtils.isNotEmpty(updateDTO)) {
             entity.setInventoryOrgId(updateDTO.getOrgId());
             entity.setInventoryOrgName(updateDTO.getName());
         }

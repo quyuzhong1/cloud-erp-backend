@@ -421,7 +421,7 @@
             inner join subcontract_order_detail sod on pod.source_detail_id = sod.id and sod.is_deleted = false
             left join supplier s on sod.supplier_id = s.id and s.is_deleted = false
             <where>
-                po.is_deleted = false and po.invoid_status = false
+                po.is_deleted = false and po.invalid_status = false
                 <if test="sourceId != null and sourceId != ''">
                    and sod.main_id = #{sourceId}
                 </if>
