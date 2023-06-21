@@ -1,5 +1,6 @@
 package com.erp.rpc.plm.feign;
 
+import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -224,9 +225,9 @@ public interface PlmTaskFeign {
 
     /**
      * 根据sku id集合获取采购员、供应商信息
-     * @param skuIds
+     * @param dto
      * @return
      */
     @PostMapping("/feign/product/getPurchaseInfoBySkuIds")
-    List<SkuPurchaseDTO.PurchaseInfo> getPurchaseInfoBySkuIds(@RequestBody @Validated List<String> skuIds);
+    Map<String, SkuPurchaseDTO.PurchaseInfo> getPurchaseInfoBySkuIds(@RequestBody @Validated BaseIdsDTO.IdsDTO dto);
 }

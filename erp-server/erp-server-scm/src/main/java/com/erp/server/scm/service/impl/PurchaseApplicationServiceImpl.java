@@ -329,8 +329,9 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         List<String> strList = new ArrayList<>();
 
         List<String> skuIds = list.stream().map(PurchaseApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuPurchaseDTO.PurchaseInfo> skuPurchaseList = plmTaskFeign.getPurchaseInfoBySkuIds(skuIds);
-        Map<String, SkuPurchaseDTO.PurchaseInfo> skuPurchaseMap = skuPurchaseList.stream().collect(Collectors.toMap(SkuPurchaseDTO.PurchaseInfo::getSkuId, Function.identity()));
+        BaseIdsDTO.IdsDTO skuDTO = new BaseIdsDTO.IdsDTO();
+        skuDTO.setIds(skuIds);
+        Map<String, SkuPurchaseDTO.PurchaseInfo> skuPurchaseMap = plmTaskFeign.getPurchaseInfoBySkuIds(skuDTO);
 
         for (PurchaseApplicationDetailEntity entity :list) {
             PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO dto = new PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO();

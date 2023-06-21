@@ -19,6 +19,8 @@ import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 查询sku
@@ -201,12 +203,13 @@ public class ProductSkuFeignController {
 
     /**
      * 根据sku id集合获取采购员、供应商信息
-     * @param skuIds
+     * @param dto
      * @return
      */
     @PostMapping("/getPurchaseInfoBySkuIds")
-    public List<SkuPurchaseDTO.PurchaseInfo> getPurchaseInfoBySkuIds(@RequestBody @Validated List<String> skuIds) {
-        return productPurchaseService.getInfoBySkuIds(skuIds);
+    public Map<String, SkuPurchaseDTO.PurchaseInfo> getPurchaseInfoBySkuIds(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<SkuPurchaseDTO.PurchaseInfo> dataList = productPurchaseService.getInfoBySkuIds(dto.getIds());
+        return dataList.stream().collect(Collectors.toMap(SkuPurchaseDTO.PurchaseInfo::getSkuId, Function.identity()));
     }
 
 }
