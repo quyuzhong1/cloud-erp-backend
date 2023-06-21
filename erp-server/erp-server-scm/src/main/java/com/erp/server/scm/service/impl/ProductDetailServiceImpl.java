@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.scm.mapper.ProductDetailMapper;
 import com.erp.server.scm.service.ProductDetailService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -41,13 +42,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> dbIds = detailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
         List<String> existIdList = ids.stream().filter(s -> dbIds.contains(s)).collect(Collectors.toList());
         List<String> notExistIdList = ids.stream().filter(s -> !dbIds.contains(s)).collect(Collectors.toList());
-        List<ProductDetailEntity> existDetailEntityList = ListProductDetailByIds(existIdList);
-        List<ProductDetailEntity> notExistDetailEntityList = ListProductDetailByIds(notExistIdList);
-        if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
-            baseMapper.updateBatchSelective(existDetailEntityList);
+        List<ProductDetailEntity> notExistDetailEntityList = new ArrayList<>();
+        List<ProductDetailEntity> existDetailEntityList = new ArrayList<>();
+        for (ProductDetailEntity detailEntity : productDetailEntityList) {
+            if (notExistIdList.contains(detailEntity.getId())) {
+                notExistDetailEntityList.add(detailEntity);
+            }
+            if (existIdList.contains(detailEntity.getId())) {
+                existDetailEntityList.add(detailEntity);
+            }
         }
         if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
             this.saveBatch(notExistDetailEntityList);
+        }
+        if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
+            baseMapper.updateBatchSelective(existDetailEntityList);
         }
         return Boolean.TRUE;
     }

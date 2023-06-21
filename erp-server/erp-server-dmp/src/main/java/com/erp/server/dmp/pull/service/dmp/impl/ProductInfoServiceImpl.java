@@ -40,22 +40,25 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public Boolean saveOrUpdateProductInfo(List<ProductInfoEntity> productInfoEntityList) {
         List<String> detailIds = productInfoEntityList.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
         List<ProductInfoEntity> detailEntityList = ListProductInfoByIds(detailIds);
+        List<String> ids = productInfoEntityList.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
         List<String> dbIds = detailEntityList.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
-
-        List<String> existIdList = detailIds.stream().filter(s -> dbIds.contains(s)).collect(Collectors.toList());
-        List<ProductInfoEntity> existDetailEntityList = ListProductInfoByIds(existIdList);
-        if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
-            baseMapper.updateBatchSelective(existDetailEntityList);
-        }
-        List<String> notExistIdList = detailIds.stream().filter(s -> !dbIds.contains(s)).collect(Collectors.toList());
+        List<String> existIdList = ids.stream().filter(s -> dbIds.contains(s)).collect(Collectors.toList());
+        List<String> notExistIdList = ids.stream().filter(s -> !dbIds.contains(s)).collect(Collectors.toList());
         List<ProductInfoEntity> notExistDetailEntityList = new ArrayList<>();
+        List<ProductInfoEntity> existDetailEntityList = new ArrayList<>();
         for (ProductInfoEntity detailEntity : productInfoEntityList) {
             if (notExistIdList.contains(detailEntity.getId())) {
                 notExistDetailEntityList.add(detailEntity);
             }
+            if (existIdList.contains(detailEntity.getId())) {
+                existDetailEntityList.add(detailEntity);
+            }
         }
         if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
             this.saveBatch(notExistDetailEntityList);
+        }
+        if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
+            baseMapper.updateBatchSelective(existDetailEntityList);
         }
         return Boolean.TRUE;
     }

@@ -32,21 +32,22 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<String> ids = purchaseOrderEntityList.stream().map(PurchaseOrderEntity::getId).collect(Collectors.toList());
         List<String> dbIds = detailEntityList.stream().map(PurchaseOrderEntity::getId).collect(Collectors.toList());
         List<String> existIdList = ids.stream().filter(s -> dbIds.contains(s)).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(existIdList)) {
-            List<PurchaseOrderEntity> existDetailEntityList = ListPurchaseOrderEntityByIds(existIdList);
-            if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
-                baseMapper.updateBatchSelective(existDetailEntityList);
-            }
-        }
         List<String> notExistIdList = detailIds.stream().filter(s -> !dbIds.contains(s)).collect(Collectors.toList());
         List<PurchaseOrderEntity> notExistDetailEntityList = new ArrayList<>();
+        List<PurchaseOrderEntity> existDetailEntityList = new ArrayList<>();
         for (PurchaseOrderEntity detailEntity : purchaseOrderEntityList) {
             if (notExistIdList.contains(detailEntity.getId())) {
                 notExistDetailEntityList.add(detailEntity);
             }
+            if (existIdList.contains(detailEntity.getId())) {
+                existDetailEntityList.add(detailEntity);
+            }
         }
         if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
             this.saveBatch(notExistDetailEntityList);
+        }
+        if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
+            baseMapper.updateBatchSelective(existDetailEntityList);
         }
         return Boolean.TRUE;
     }
