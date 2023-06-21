@@ -118,7 +118,7 @@ ProductDetailController extends BaseController {
     }
 
     /**
-     * 产品信息-无规格-产品详情
+     * 产品信息-无规格-产品详情-PLM-1.3
      *
      * @param productId 产品信息表id
      * @return com.common.core.vo.ApiResult<com.erp.model.plm.dto.ProductNoSpecDetailAllDTO>
@@ -133,7 +133,7 @@ ProductDetailController extends BaseController {
     }
 
     /**
-     * 产品信息-多规格-产品详情
+     * 产品信息-多规格-产品详情-PLM-1.3
      *
      * @param productId 产品信息表id
      * @return com.common.core.vo.ApiResult<com.erp.model.plm.dto.ProductManyDetailDTO>
@@ -149,7 +149,7 @@ ProductDetailController extends BaseController {
 
 
     /**
-     * 产品信息-多规格-产品详情-编辑
+     * 产品信息-多规格-产品详情-编辑-PLM-1.3
      *
      * @param dto 产品信息表id
      * @return com.common.core.vo.ApiResult<com.erp.model.plm.dto.ProductManyDetailDTO>
@@ -170,7 +170,7 @@ ProductDetailController extends BaseController {
     }
 
     /**
-     * 产品信息-无规格-产品详情-编辑
+     * 产品信息-无规格-产品详情-编辑-PLM-1.3
      *
      * @param dto 产品信息表id
      * @return com.common.core.vo.ApiResult<com.erp.model.plm.dto.ProductNoSpecDetailAllDTO>
@@ -192,7 +192,7 @@ ProductDetailController extends BaseController {
     }
 
     /**
-     * 产品信息-无规格-新增/修改
+     * 产品信息-无规格-新增/修改-PLM-1.3
      *
      * @param productNoSpecDTO 新增产品无规格sku信息请求参数
      * @return com.common.core.vo.ApiResult
@@ -207,7 +207,7 @@ ProductDetailController extends BaseController {
     }
 
     /**
-     * 产品信息-多规格-新增/修改
+     * 产品信息-多规格-新增/修改-PLM-1.3
      *
      * @param productManySpecDTO 新增产品多规格sku信息请求参数
      * @return com.common.core.vo.ApiResult
@@ -287,7 +287,7 @@ ProductDetailController extends BaseController {
         return flag == true ? this.success() : this.failure();
     }
 
-    /*    *//**
+    /**
      * 产品信息-多规格sku-批量删除
      * @Author Luo_WG
      * @Date 2022/10/9 10:42
@@ -486,7 +486,7 @@ ProductDetailController extends BaseController {
     }
 
     /**
-     * 产品信息-变体管理-下拉列表-新增/修改
+     * 产品信息-变体管理-下拉列表-新增/修改-PLM-1.3
      *
      * @param productVariantDTO 产品变体类型属性表
      * @return com.common.core.vo.ApiResult
@@ -933,7 +933,7 @@ ProductDetailController extends BaseController {
     }
 
     /**
-     * 提交
+     * 提交-PLM-1.3
      * @Author Luo_WG
      * @Date 2023/4/6 18:52
      * @param dto dto
@@ -945,7 +945,7 @@ ProductDetailController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-    /** 批量审核
+    /** 批量审核-PLM-1.3
      * @Author Luo_WG
      * @Date 2023/4/6 19:06
      * @param baseApproveParamDTO baseApproveParamDTO
@@ -958,7 +958,7 @@ ProductDetailController extends BaseController {
     }
 
     /**
-     * 批量反审核
+     * 批量反审核-PLM-1.3
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
      * @param dto dto
@@ -971,7 +971,7 @@ ProductDetailController extends BaseController {
     }
 
     /**
-     * 取消流程
+     * 取消流程-PLM-1.3
      * @Author Luo_WG
      * @Date 2023/4/13 18:58
      * @param dto dto
@@ -984,7 +984,7 @@ ProductDetailController extends BaseController {
     }
 
     /**
-     * 批量删除
+     * 批量删除-PLM-1.3
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
      * @param idsDTO idsDTO
@@ -997,7 +997,7 @@ ProductDetailController extends BaseController {
     }
 
     /**
-     * 批量更新字段
+     * 批量更新字段-PLM-1.3
      * @Author Luo_WG
      * @Date 2023/6/15 11:32
      * @param dto dto
