@@ -145,6 +145,12 @@ public class ProductDetailEntity extends BaseEntity implements Serializable {
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
 
+    /**
+     * 是否占用 默认 false  占用为true 就不能删除
+     */
+    @TableField("occupy_status")
+    private Boolean occupyStatus;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }
