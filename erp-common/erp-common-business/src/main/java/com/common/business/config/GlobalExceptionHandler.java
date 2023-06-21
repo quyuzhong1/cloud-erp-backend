@@ -47,6 +47,7 @@ import java.util.List;
 
 })
 public class GlobalExceptionHandler {
+
     @ExceptionHandler({ServiceException.class})
     @ResponseStatus(HttpStatus.OK)
     public ApiResult resolveException(ServiceException e) {
@@ -54,6 +55,8 @@ public class GlobalExceptionHandler {
         ApiResult result = new ApiResult();
         result.setCode(e.getCode());
         result.setMsg(e.getMsg());
+        // 某些异常需要返回data
+        result.setData(e.getData());
         return result;
     }
 

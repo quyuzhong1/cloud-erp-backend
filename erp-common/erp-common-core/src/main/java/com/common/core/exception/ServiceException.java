@@ -21,6 +21,11 @@ public class ServiceException extends RuntimeException {
     private String msg;
 
     /**
+     * 异常返回的data
+     */
+    private Object data;
+
+    /**
      * 从结果初始化
      *
      * @param apiResult
@@ -30,6 +35,7 @@ public class ServiceException extends RuntimeException {
         super(apiResult.getMsg());
         this.code = apiResult.getCode();
         this.msg = apiResult.getMsg();
+        this.data = apiResult.getData();
     }
 
     /**

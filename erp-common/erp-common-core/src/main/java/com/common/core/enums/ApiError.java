@@ -636,9 +636,9 @@ public enum ApiError implements Serializable {
     ERROR_92046(92046,"存在被销售订单引用的地址不能删除"),
     ERROR_92047(92047,"存在销售订单处于变更中,无法反审核"),
 
+    ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
     ERROR_end(1000000, "系统错误");
-
 
     public Integer code;
     public String msg;

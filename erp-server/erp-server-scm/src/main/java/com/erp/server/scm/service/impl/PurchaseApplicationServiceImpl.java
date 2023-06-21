@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
@@ -50,6 +51,8 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.listener.PurchaseApplicationExcelListener;
 import com.erp.server.scm.mapper.PurchaseApplicationMapper;
 import com.erp.server.scm.service.*;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -308,7 +311,12 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (CollectionUtils.isEmpty(purchaseApplicationList)) {
             throw new ServiceException(ApiError.ERROR_98016);
         }
-        //可以生成采购订单的明细
+        //必须为审核通过的单据
+        ids = purchaseApplicationList.stream().filter(r->Objects.equals(r.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())).map(PurchaseApplicationEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98015);
+        }
+        //可以生成采购订单的明细（未生成、部分生成）
         List<PurchaseApplicationDetailEntity> list = purchaseApplicationDetailService.listCreatePurchaseOrderDetail(ids);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_98015);
@@ -922,6 +930,10 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_98017);
         }
+
+        // 不允许下推的申请单明细id集合
+        List<PurchaseApplicationDetailEntity> prohibitDetails = Lists.newArrayList();
+        Map<String, PurchaseApplicationEntity> detailMainMap = Maps.newHashMap();
         for (PurchaseApplicationDetailEntity detail : detailList) {
             //已采购数量
             Integer purchaseQty = MathUtil.ZERO;
@@ -932,16 +944,29 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             Integer thisPurchaseQty = list.stream().filter(obj -> obj.getPurchaseApplicationDetailId().equals(detail.getId())).map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
 
             PurchaseApplicationEntity entity = mainList.stream().filter(obj -> obj.getId().equals(detail.getPurchaseApplicationId())).findFirst().orElse(null);
+            detailMainMap.put(detail.getId(), entity);
 
             //申请数量
             Integer applyQty = detail.getApplyQty();
             if (thisPurchaseQty > (applyQty - purchaseQty)) {
-                throw new ServiceException(new ApiResult(1,String.format("采购申请单【%s】下级SKU【%s】采购数量不能大于待申请数量",entity.getCode(),detail.getSkuNo())));
+                // 不允许下推
+                prohibitDetails.add(detail);
             } else if (thisPurchaseQty == (applyQty - purchaseQty)) {
                 detail.setCreatePoType(CreatePoTypeEnum.ALL_GENERATED.getStatus());
             } else {
                 detail.setCreatePoType(CreatePoTypeEnum.PARTIAL_GENERATED.getStatus());
             }
+        }
+
+        if(CollUtil.isNotEmpty(prohibitDetails)) {
+            StringBuffer errMsg = new StringBuffer("");
+            List<String> prohibitDetailIds = prohibitDetails.stream().map(PurchaseApplicationDetailEntity::getId).distinct().collect(Collectors.toList());
+            Map<String, Object> exceptionDataMap = new HashMap(){{put("purchaseApplicationDetailIds", prohibitDetailIds);}};
+            prohibitDetails.stream().forEach(detail->{
+                PurchaseApplicationEntity entity = detailMainMap.get(detail.getId());
+                errMsg.append(StrUtil.format(ApiError.ERROR_99998.msg,entity.getCode(),detail.getSkuNo())).append("</br>");
+            });
+            throw new ServiceException(new ApiResult(ApiError.ERROR_99998.code,errMsg.toString(), exceptionDataMap));
         }
         return  detailList;
     }
