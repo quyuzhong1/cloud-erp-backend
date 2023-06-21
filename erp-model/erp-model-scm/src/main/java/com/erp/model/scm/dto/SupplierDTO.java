@@ -6,6 +6,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.RegularValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -733,6 +734,12 @@ public class SupplierDTO implements Serializable {
          * 供应商名称
          */
         private String name;
+
+        /**
+         * 审核状态
+         */
+        @JsonIgnore
+        private String approveStatus;
 
         /**
          * 禁用状态

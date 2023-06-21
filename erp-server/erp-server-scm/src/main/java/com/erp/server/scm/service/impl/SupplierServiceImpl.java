@@ -1021,7 +1021,16 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     public List<SupplierDTO.SupplierSimpleDTO> listApproveSupplierByCategoryType(String categoryType) {
         String supplierCategory = DictBasicEnum.SUPPLIER_CATEGORY.getType();
-        return baseMapper.listSupplierByCategoryType(supplierCategory,categoryType, ApproveStatusEnum.APPROVE.getStatus());
+        List<SupplierDTO.SupplierSimpleDTO> dataList = baseMapper.listSupplierByCategoryType(supplierCategory,categoryType, null);
+        if(CollUtil.isNotEmpty(dataList)) {
+            // 未审核通过的设置为禁用
+            dataList.stream().forEach(data->{
+                if(!Objects.equals(data.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+                    data.setDisabled(Boolean.TRUE);
+                }
+            });
+        }
+        return dataList;
     }
 
     /**
