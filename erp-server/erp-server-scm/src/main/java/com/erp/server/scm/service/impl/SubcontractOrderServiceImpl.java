@@ -105,7 +105,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     private WmsTaskFeign wmsTaskFeign;
 
     @Autowired
-    private PurchaseApplicationRefPoService purchaseApplicationRefPoService;
+    private SupplierContactService supplierContactService;
 
     @Override
     public PagingVO<SubcontractOrderDTO.ListDTO> paging(PagingDTO<SubcontractOrderDTO.PagingParamDTO> pagingParamDTO) {
@@ -588,6 +588,11 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
+
+        //供应商默认联系人
+        List<String> supplierIds = list.stream().map(SubcontractOrderDTO.GeneratePoDTO::getSupplierId).collect(Collectors.toList());
+        List<SupplierContactEntity> defaultSupplierContactList = supplierContactService.getDefaultBySupplierIdList(supplierIds);
+
         List<String> poIds = new ArrayList<>();
         Map<String, List<SubcontractOrderDTO.GeneratePoAddDTO>> map = resultList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getSupplierId()).concat(obj.getDeliveryWarehouseId()).concat(obj.getIsParent().toString())));
         for (Map.Entry<String, List<SubcontractOrderDTO.GeneratePoAddDTO>> entry : map.entrySet()) {
@@ -607,7 +612,16 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //采购供应商
             PurchaseOrderSupplierDTO.AddDTO supplierDTO = new PurchaseOrderSupplierDTO.AddDTO();
             supplierDTO.setSupplierId(generatePoAddDTO.getSupplierId());
+            //供应商默认联系人
+            if (CollectionUtils.isNotEmpty(defaultSupplierContactList)) {
+                SupplierContactEntity supplierContactEntity = defaultSupplierContactList.stream().filter(obj -> obj.getSupplierId().equals(value.get(0).getSupplierId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(supplierContactEntity)) {
+                    supplierDTO.setSupplierContactId(supplierContactEntity.getId());
+                    supplierDTO.setContactTelNumber(supplierContactEntity.getTelNumber());
+                }
+            }
             addDTO.setPurchaseOrderSupplierDTO(supplierDTO);
+
             //采购明细
             List<PurchaseOrderDetailDTO.AddDTO> poDetailList = new ArrayList<>();
             for (SubcontractOrderDTO.GeneratePoAddDTO addDetailDTO : value) {
