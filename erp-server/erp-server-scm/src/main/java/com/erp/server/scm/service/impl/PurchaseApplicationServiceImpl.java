@@ -137,7 +137,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 boolean contains = list.contains(obj.getId());
                 if (contains) {
                     obj.setCode(null);
-                    obj.setApproveStatus(null);
+                    // obj.setApproveStatus(null);
                     obj.setApproveStatusName(null);
                     obj.setIsFirstMassProduct(null);
                     obj.setCreateUserName(null);
