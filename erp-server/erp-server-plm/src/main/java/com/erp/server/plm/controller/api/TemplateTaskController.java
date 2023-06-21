@@ -209,7 +209,7 @@ public class TemplateTaskController extends BaseController {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @DeleteMapping("/removeTaskBatch")
+    @PostMapping("/removeTaskBatch")
     public ApiResult removeTaskBatch(@RequestBody @Validated TemplateTaskParamsDTO dto) {
         Boolean flag = templateTaskService.removeTaskBatch(dto.getIds(),dto.getTemplateId());
         return flag == true ? success() : failure();
