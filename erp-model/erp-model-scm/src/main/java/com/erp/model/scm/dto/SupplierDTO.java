@@ -399,6 +399,11 @@ public class SupplierDTO implements Serializable {
         @NotNull(message = "供应商状态不能为空")
         private Boolean disabled;
 
+        /**
+         * 付款条件
+         */
+        private String paymentCondition;
+
     }
 
 

@@ -1,5 +1,6 @@
 package com.erp.server.scm.kingdee.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -8,6 +9,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -16,12 +18,16 @@ import com.erp.model.scm.entity.DictBasicEntity;
 import com.erp.model.scm.entity.SupplierAccountEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.entity.SupplierGradeEntity;
+import com.erp.model.sys.dto.DictBasicDTO;
+import com.erp.model.sys.enums.SysDictBasicEnum;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSupplierService;
 import com.erp.server.scm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -59,6 +65,9 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
 
     @Resource
     private SupplierContactService supplierContactService;
+
+    @Autowired
+    private SysDictFeign sysDictFeign;
 
 
     /**
@@ -111,6 +120,15 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
         if (ObjectUtils.isNotEmpty(payMethod)) {
             //结算方式
             resultMap.put("payMethod",payMethod.getValue());
+        }
+
+        // 付款条件
+        if(StrUtils.isNotEmpty(entity.getPaymentCondition())) {
+            List<DictBasicDTO.ViewDTO> dicts = sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+            List<String> dictCodes = dicts.stream().map(DictBasicDTO.ViewDTO::getValue).distinct().collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(dictCodes) && dictCodes.contains(entity.getPaymentCondition())) {
+                resultMap.put("paymentCondition",entity.getPaymentCondition());
+            }
         }
 
         List<JSONObject>  blankList = new ArrayList<>();

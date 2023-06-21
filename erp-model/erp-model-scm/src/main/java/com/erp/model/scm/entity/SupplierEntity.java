@@ -147,6 +147,12 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
     @TableField("sync_operate")
     private String syncOperate;
 
+    /**
+     * 付款条件
+     */
+    @TableField("payment_condition")
+    private String paymentCondition;
+
 
     @Override
     public Serializable pkVal() {

@@ -22,6 +22,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.scm.dto.SupplierAccountDTO;
 import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
@@ -33,7 +34,10 @@ import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.enums.SysDictBasicEnum;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.kingdee.SyncKingdeeSupplierService;
@@ -46,6 +50,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -105,6 +110,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Resource
     private SyncKingdeeSupplierService syncKingdeeSupplierService;
 
+    @Autowired
+    private SysDictFeign sysDictFeign;
+
     /**
      * 保存供应商信息
      *
@@ -125,6 +133,14 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<SupplierCredentialDTO.AddDTO> credentialList = dto.getCredentialList();
         //检查资质日期
         supplierCredentialService.checkDate(credentialList);
+        //验证付款条件是否正确
+        if(StrUtils.isNotEmpty(dto.getPaymentCondition())) {
+            List<DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+            List<String> paymentConditionCodes = paymentConditionList.stream().map(DictBasicDTO.ViewDTO::getValue).distinct().collect(Collectors.toList());
+            if(!paymentConditionCodes.contains(dto.getPaymentCondition())) {
+                throw new ServiceException("付款条件错误");
+            }
+        }
         //供应商id
         String supplierId = IdWorker.getIdStr();
         SupplierEntity addEntity = new SupplierEntity();
@@ -243,6 +259,16 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
+
+        //验证付款条件是否正确
+        if(StrUtils.isNotEmpty(dto.getPaymentCondition())) {
+            List<DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+            List<String> paymentConditionCodes = paymentConditionList.stream().map(DictBasicDTO.ViewDTO::getValue).distinct().collect(Collectors.toList());
+            if(!paymentConditionCodes.contains(dto.getPaymentCondition())) {
+                throw new ServiceException("付款条件错误");
+            }
+        }
+
         //旧的
         SupplierEntity old = new SupplierEntity();
         BeanMapper.copy(supplier, old);

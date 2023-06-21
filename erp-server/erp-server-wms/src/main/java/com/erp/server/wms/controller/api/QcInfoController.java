@@ -21,6 +21,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 质检单
@@ -340,7 +341,7 @@ public class QcInfoController extends BaseController {
     @PostMapping("/returnReceiveGenerateQCSave")
     public ApiResult returnReceiveGenerateQCSave(@RequestBody List<String> ids) {
         Boolean flag = qcInfoService.returnReceiveGenerateQCSave(ids);
-        return flag == Boolean.TRUE ? success() : failure();
+        return Objects.equals(flag, Boolean.TRUE) ? success() : failure();
     }
 
     /**
