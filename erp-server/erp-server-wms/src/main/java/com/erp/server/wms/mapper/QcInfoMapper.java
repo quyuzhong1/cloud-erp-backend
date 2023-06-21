@@ -119,4 +119,14 @@ public interface QcInfoMapper extends BaseMapper<QcInfoEntity> {
      */
     QcInfoDTO.PurchaseQcInfoDTO getQcInfoByPurchaseOrder(@Param("params") QcInfoDTO.PurchaseQcParamDTO dto);
 
+
+    /**
+     * 获取质检日报导出信息
+     * @author yl
+     * @date 2023-04-19 18:44
+     * @param dto
+     * @return java.util.List<com.erp.model.wms.dto.QcBillDTO.PagingViewDTO>
+     */
+    List<QcInfoDTO.DailyListDTO> getDailyExport(@Param("params") QcInfoDTO.ExportDTO dto);
+
 }

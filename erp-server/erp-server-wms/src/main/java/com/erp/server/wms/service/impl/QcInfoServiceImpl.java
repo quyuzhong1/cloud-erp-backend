@@ -54,9 +54,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -79,6 +82,7 @@ import java.util.stream.Collectors;
  * @author lambda
  * @since 2023-04-14
  */
+@RefreshScope
 @Service
 @Slf4j
 public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEntity> implements QcInfoService {
@@ -165,6 +169,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     @Autowired
     private WmsAttachmentService wmsAttachmentService;
+
+    @Value("${fdfs.publicUrl:''}")
+    private String filePublicUrl;
 
     /**
      * 保存 质检单
@@ -1595,7 +1602,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             dto.setSearchType("");
         }
         // 查询数据
-        List<QcInfoDTO.PagingViewDTO> dataList = baseMapper.getExport(dto);
+        List<QcInfoDTO.DailyListDTO> dataList = baseMapper.getDailyExport(dto);
         // 填充数据
         List<QcInfoDTO.QcDailyReportDTO> resultList = fillQcDailyRptData(dataList);
         // 导出Excel
@@ -1720,26 +1727,32 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     }
 
-    private List<QcInfoDTO.QcDailyReportDTO> fillQcDailyRptData(List<QcInfoDTO.PagingViewDTO> dataList) {
+    private List<QcInfoDTO.QcDailyReportDTO> fillQcDailyRptData(List<QcInfoDTO.DailyListDTO> dataList) {
         List<QcInfoDTO.QcDailyReportDTO> resultList = new ArrayList<>(dataList.size());
         if (CollectionUtils.isNotEmpty(dataList)) {
             List<DictBasicEntity> dictList = dictBasicService.getByKeyList(new ArrayList<>());
-            List<String> supplierIdList = dataList.stream().map(QcInfoDTO.PagingViewDTO::getSupplierId).collect(Collectors.toList());
-            List<String> skuIdList = dataList.stream().map(QcInfoDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+            List<String> supplierIdList = dataList.stream().map(QcInfoDTO.DailyListDTO::getSupplierId).collect(Collectors.toList());
+            List<String> skuIdList = dataList.stream().map(QcInfoDTO.DailyListDTO::getSkuId).collect(Collectors.toList());
             List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIdList);
-            List<String> billIdList = dataList.stream().map(QcInfoDTO.PagingViewDTO::getId).collect(Collectors.toList());
+            List<String> billIdList = dataList.stream().map(QcInfoDTO.DailyListDTO::getId).collect(Collectors.toList());
             List<QcRemarkEntity> billRemarkList = qcRemarkService.getByMainIdList(billIdList);
             List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
-            List<String> billIds = dataList.stream().map(QcInfoDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
+            List<String> billIds = dataList.stream().map(QcInfoDTO.DailyListDTO::getId).distinct().collect(Collectors.toList());
             List<PurchaseOrderEntity> poList = scmTaskFeign.listPurchaseOrderByIds(billIds);
 
-            List<String> productIdList = dataList.stream().map(QcInfoDTO.PagingViewDTO::getProductId).collect(Collectors.toList());
+            List<String> productIdList = dataList.stream().map(QcInfoDTO.DailyListDTO::getProductId).collect(Collectors.toList());
 
+            // 产品图片、箱唛
             List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(productIdList);
-
             Map<String, List<WmsAttachmentDTO.UpdateDTO>> attachmentMap = attachmentList.stream().collect(Collectors.groupingBy(v -> v.getBusinessId() + "_" + v.getType()));
 
-            for (QcInfoDTO.PagingViewDTO item : dataList) {
+            // 不良附图
+            List<String> qcResultIdList = dataList.stream().map(QcInfoDTO.DailyListDTO::getQcResultId).collect(Collectors.toList());
+            List<WmsAttachmentDTO.UpdateDTO> badAttachmentList = wmsAttachmentService.getByBusinessIds(qcResultIdList);
+            Map<String, List<WmsAttachmentDTO.UpdateDTO>> badAttachmentMap = badAttachmentList.stream().collect(Collectors.groupingBy(v -> v.getBusinessId() + "_" + v.getType()));
+
+
+            for (QcInfoDTO.DailyListDTO item : dataList) {
                 QcInfoDTO.QcDailyReportDTO qcDailyReportDTO = new QcInfoDTO.QcDailyReportDTO();
 
                 qcDailyReportDTO.setQcDate(item.getQcDate());
@@ -1768,17 +1781,27 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                         findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
                 qcDailyReportDTO.setProductName(skuName);
 
+                // 产品图片
                 String productTypeKey = item.getProductId() + "_" + WmsConstant.QC_PRODUCT;
                 if(attachmentMap.containsKey(productTypeKey)) {
                     List<WmsAttachmentDTO.UpdateDTO> attachList = attachmentMap.get(productTypeKey);
                     List<String> attachmentUrls = attachList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
                     qcDailyReportDTO.setProductImgUrl(attachmentUrls);
                 }
+
+                // 箱唛图片
                 String productBoxKey = item.getProductId() + "_" + WmsConstant.QC_BOX;
                 if(attachmentMap.containsKey(productBoxKey)) {
                     List<WmsAttachmentDTO.UpdateDTO> attachList = attachmentMap.get(productBoxKey);
                     List<String> attachmentUrls = attachList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
                     qcDailyReportDTO.setBoxMarkImgUrl(attachmentUrls);
+                }
+
+                // 不良附件
+                String qcBadKey = item.getQcResultId() + "_" + WmsConstant.BAD;
+                if(badAttachmentMap.containsKey(qcBadKey)) {
+                    List<WmsAttachmentDTO.UpdateDTO> attachList = badAttachmentMap.get(qcBadKey);
+                    qcDailyReportDTO.setBadAttachments(attachList);
                 }
 
                 qcDailyReportDTO.setTotalQty(item.getTotalQty());
@@ -1844,6 +1867,29 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         contentCellStyle.setBorderTop(BorderStyle.THIN);
         //右边框
         contentCellStyle.setBorderRight(BorderStyle.THIN);
+
+        // 超链接样式
+        XSSFCellStyle hyperContentCellStyle = wb.createCellStyle();
+        // 水平居左
+        hyperContentCellStyle.setAlignment(HorizontalAlignment.LEFT);
+        //垂直居中
+        hyperContentCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        //自动换行
+        hyperContentCellStyle.setWrapText(true);
+        //下边框
+        hyperContentCellStyle.setBorderBottom(BorderStyle.THIN);
+        //左边框
+        hyperContentCellStyle.setBorderLeft(BorderStyle.THIN);
+        //上边框
+        hyperContentCellStyle.setBorderTop(BorderStyle.THIN);
+        //右边框
+        hyperContentCellStyle.setBorderRight(BorderStyle.THIN);
+
+        Font hyperFont = wb.createFont();
+        hyperFont.setFontHeightInPoints((short) 12);
+        hyperFont.setColor(IndexedColors.BLUE.getIndex());
+        hyperFont.setUnderline(Font.U_SINGLE);
+        hyperContentCellStyle.setFont(hyperFont);
 
         Font titleFont = wb.createFont();
         titleFont.setBold(true);
@@ -2071,6 +2117,35 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             cell = rowContent.createCell(16);
             cell.setCellStyle(contentCellStyle);
             cell.setCellValue("");
+            if(CollUtil.isNotEmpty(data.getBadAttachments())) {
+                // 判断是否有图片，有图片则显示图片，没有图片则添加超链接
+                List<String> picFormats = Arrays.asList(PicFormatEnum.values()).stream().map(PicFormatEnum::getCode).collect(Collectors.toList());
+                WmsAttachmentDTO.UpdateDTO badAttachment = data.getBadAttachments().stream().filter(r->
+                   r.getAttachUrl().contains(".") && picFormats.contains(r.getAttachUrl().substring(r.getAttachUrl().lastIndexOf(".") + 1))
+                ).findFirst().orElse(null);
+                if(Objects.nonNull(badAttachment)) {
+                    try {
+                        // 暂只取一张图片
+                        InputStream inputStream = FastDFSClientUtil.getInputStream(badAttachment.getAttachUrl());
+                        XSSFClientAnchor anchor = new XSSFClientAnchor(0, 0, 255, 255,
+                                16, rowNo, 16 + 1, rowNo + 1);
+                        // 图片自适应单元格大小
+                        anchor.setAnchorType(ClientAnchor.AnchorType.byId(0));
+                        XSSFDrawing patriarch = sheet.createDrawingPatriarch();
+                        patriarch.createPicture(anchor, wb.addPicture(inputStream, XSSFWorkbook.PICTURE_TYPE_WPG));
+                    } catch (Exception e) {
+                        log.error("写入图片失败", e);
+                    }
+                } else {
+                    // 写入超链接（只能写一个）
+                    badAttachment = data.getBadAttachments().get(0);
+                    Hyperlink hyperlink = wb.getCreationHelper().createHyperlink(HyperlinkType.URL);
+                    hyperlink.setAddress(filePublicUrl + badAttachment.getAttachUrl());
+                    rowContent.getCell(16).setCellStyle(hyperContentCellStyle);
+                    rowContent.getCell(16).setHyperlink(hyperlink);
+                    rowContent.getCell(16).setCellValue(badAttachment.getAttachName());
+                }
+            }
 
             cell = rowContent.createCell(17);
             cell.setCellStyle(contentCellStyle);

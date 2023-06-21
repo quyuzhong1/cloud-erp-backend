@@ -8,6 +8,7 @@ import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -734,6 +735,12 @@ public class QcInfoDTO implements Serializable {
          */
         private BigDecimal boxWeight;
 
+        /**
+         * qc质检id
+         */
+        @JsonIgnore
+        private String qcResultId;
+
     }
 
 
@@ -954,6 +961,7 @@ public class QcInfoDTO implements Serializable {
         /**
          * 不良附图
          */
+        private List<WmsAttachmentDTO.UpdateDTO> badAttachments;
 
         /**
          * 处理措施
@@ -1020,6 +1028,265 @@ public class QcInfoDTO implements Serializable {
          * 最新备注
          */
         private String remark;
+
+    }
+
+    /**
+     * 质检日报信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DailyListDTO {
+        /**
+         * 质检单id
+         */
+        private String id;
+
+        /**
+         * 质检产品id
+         */
+        private String productId;
+
+        /**
+         * code
+         */
+        private String code;
+
+        /**
+         * 质检日期
+         */
+        private LocalDate qcDate;
+
+
+        /**
+         * 采购订单id
+         */
+        private String purchaseOrderId;
+
+
+        /**
+         * 采购订单code
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * 质检员id
+         */
+        private String qcUserId;
+
+
+        /**
+         * 质检员
+         */
+        private String qcUserName;
+
+
+        /**
+         * 质检状态
+         * draft 暂存
+         * waitQc 待质检
+         * exemption 免检
+         * finishQc 已质检
+         * cancel 取消
+         */
+        private QcBillStatusEnum qcStatus;
+
+        /**
+         * 质检状态名
+         */
+        private String qcStatusName;
+
+
+        /**
+         * 质检类型
+         */
+        private QcTypeEnum qcType;
+
+        /**
+         * 质检类型名
+         */
+        private String qcTypeName;
+
+        /**
+         * 是否内检  true 是
+         */
+        private Boolean isInside;
+
+
+        /**
+         * 内检 类型
+         */
+        private String insideType;
+
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名
+         */
+        private String supplierName;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku 名
+         */
+        private String skuName;
+
+
+        /**
+         * sku 名
+         */
+        private String skuNo;
+
+        /**
+         * 总量
+         */
+        private Integer totalQty;
+
+        /**
+         * 质检量
+         */
+        private Integer qcQty;
+
+
+        /**
+         * 质检合格量
+         */
+        private Integer qcGoodQty;
+
+        /**
+         * 质检不良量
+         */
+        private Integer qcBadQty;
+
+        /**
+         * 质检结果
+         */
+        private QcResultEnum qcResult;
+
+        /**
+         * 质检结果名
+         */
+        private String qcResultName;
+
+        /**
+         * 问题属性
+         */
+        private String qcProblemDict;
+
+        /**
+         * 问题属性名称
+         */
+        private String qcProblemName;
+
+        /**
+         * 处理措施
+         * 来源 http://172.16.100.11:3002/project/92/interface/api/8890 type=handleModeType
+         */
+        private String handleModeDict;
+
+        /**
+         * 处理措施名
+         * 来源 http://172.16.100.11:3002/project/92/interface/api/8890 type=handleModeType
+         */
+        private String handleModeName;
+
+        /**
+         * 不良现象
+         */
+        private String badDescription;
+
+
+        /**
+         * 质检合格率
+         */
+        private BigDecimal qcGoodRate;
+
+        /**
+         * 质检不良率
+         */
+        private BigDecimal qcBadRate;
+
+
+        /**
+         * 仓库 id
+         */
+        private String warehouseId;
+
+
+        /**
+         * 仓库名
+         */
+        private String warehouseName;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 产品长
+         */
+        private BigDecimal productLength;
+
+        /**
+         * 产品宽
+         */
+        private BigDecimal productWidth;
+
+        /**
+         * 产品高
+         */
+        private BigDecimal productHeight;
+
+        /**
+         * 外箱长
+         */
+        private BigDecimal boxLength;
+
+        /**
+         * 外箱宽
+         */
+        private BigDecimal boxWidth;
+
+        /**
+         * 外箱高
+         */
+        private BigDecimal boxHeight;
+
+        /**
+         * 产品净重
+         */
+        private BigDecimal productNetWeight;
+
+        /**
+         * 外箱重量
+         */
+        private BigDecimal boxWeight;
+
+        /**
+         * qc质检id
+         */
+        @JsonIgnore
+        private String qcResultId;
 
     }
 
