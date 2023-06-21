@@ -272,11 +272,6 @@ public class PoInstockDTO implements Serializable {
         private String stockInDeptId;
 
         /**
-         * 委外订单类型(child子级，parent父级)
-         */
-        private String subcontractType;
-
-        /**
          * 入库日期
          */
         private LocalDate stockInDate;

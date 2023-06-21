@@ -198,28 +198,6 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         lambdaUpdate().in(PurchaseOrderDetailEntity::getPurchaseOrderId,purchaseOrderIds).remove();
     }
 
-    @Override
-    public void updateArrivalStatusByIds(String arrivalStatus, List<String> ids) {
-        List<PurchaseOrderDetailEntity> list = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_98026);
-        }
-
-        lambdaUpdate()
-                .in(PurchaseOrderDetailEntity::getId,ids)
-                .set(PurchaseOrderDetailEntity::getArrivalStatus,arrivalStatus)
-                .set(PurchaseOrderDetailEntity::getArrivalTime, LocalDateTime.now())
-                .set(PurchaseOrderDetailEntity::getIsEndReceive,Boolean.TRUE)
-                .update();
-        list.forEach(req -> req.setIsDeleted(Boolean.TRUE));
-        //同步到WMS
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(), list, IdUtil.simpleUUID());
-
-        List<String> sourceDetailIds = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getSourceDetailId())).map(PurchaseOrderDetailEntity::getSourceDetailId).collect(Collectors.toList());
-        //委外订单更新到货状态
-        subcontractOrderDetailService.syncArrivalStatusByIds(sourceDetailIds);
-    }
-
     /**
      * 更新生成状态
      */

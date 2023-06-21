@@ -61,10 +61,10 @@ public interface SubcontractOrderDetailService extends SuperService<SubcontractO
      * @description: 根据父级id查询
      * @author Will
      * @date: 2023/6/13 15:25
-     * @param detailId
+     * @param detailIds
      * @return List<SubcontractOrderDetailEntity>
      */
-    List<SubcontractOrderDetailEntity> listByParentId(String detailId);
+    List<SubcontractOrderDetailEntity> listByParentIds(List<String> detailIds);
     /**
      * @description: 根据主表id和Sku集合查询
      * @author Will

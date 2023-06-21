@@ -17,6 +17,7 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.SubcontractOrderDetailMapper;
@@ -166,9 +167,9 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
     }
 
     @Override
-    public List<SubcontractOrderDetailEntity> listByParentId(String detailId) {
+    public List<SubcontractOrderDetailEntity> listByParentIds(List<String> detailIds) {
         return lambdaQuery()
-                .eq(SubcontractOrderDetailEntity::getParentId,detailId)
+                .in(SubcontractOrderDetailEntity::getParentId,detailIds)
                 .list();
     }
 
@@ -194,14 +195,16 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         if (CollectionUtils.isEmpty(purchaseOrderDetailList)) {
             return;
         }
-       for (String id : ids) {
-           List<PurchaseOrderDetailEntity> list = purchaseOrderDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(id)).collect(Collectors.toList());
+        List<SubcontractOrderDetailEntity> subList = this.listByIds(ids);
+
+        for (SubcontractOrderDetailEntity entity : subList) {
+           List<PurchaseOrderDetailEntity> list = purchaseOrderDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(entity.getId())).collect(Collectors.toList());
            if (CollectionUtils.isEmpty(list)) {
                return;
            }
            //获取交货状态
-           String arrivalStatus = getArrivalStatus(list);
-           updateArrivalStatusByIds(arrivalStatus, Arrays.asList(id),Boolean.FALSE);
+           String arrivalStatus = getArrivalStatus(list,entity);
+           updateArrivalStatusByIds(arrivalStatus, Arrays.asList(entity.getId()),Boolean.FALSE);
        }
     }
 
@@ -213,31 +216,23 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
      * @param list
      * @return String
      */
-    private String getArrivalStatus( List<PurchaseOrderDetailEntity> list) {
-
+    private String getArrivalStatus( List<PurchaseOrderDetailEntity> list,SubcontractOrderDetailEntity entity) {
+        List<String> podIds = list.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+        List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+        Integer receiveQty = MathUtil.ZERO;
+        if (CollectionUtils.isNotEmpty(receiveDetailList)) {
+            receiveQty = receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+        }
         String arrivalStatus = ArrivalStatusEnum.NON_ARRIVAL.getCode();
-        //部分交货
-        long count1 = list.stream().filter(obj -> ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode().equals(obj.getArrivalStatus())).count();
-        //未交货
-        long count2 = list.stream().filter(obj -> ArrivalStatusEnum.NON_ARRIVAL.getCode().equals(obj.getArrivalStatus())).count();
-        //已交货
-        long count3 = list.stream().filter(obj -> ArrivalStatusEnum.ARRIVED.getCode().equals(obj.getArrivalStatus())).count();
-        if (count1 > 0) {
+
+        if (entity.getQty().intValue() > receiveQty.intValue() && receiveQty.intValue() > MathUtil.ZERO ) {
             arrivalStatus = ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode();
-            return arrivalStatus;
         }
-        if (count2 > 0 && count3 > 0) {
-            arrivalStatus = ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode();
-            return arrivalStatus;
-        }
-        if (count2 > 0 && count3 == 0) {
-            arrivalStatus = ArrivalStatusEnum.NON_ARRIVAL.getCode();
-            return arrivalStatus;
-        }
-        if (count3 > 0 && count2 == 0) {
+
+        if (receiveQty.intValue() == entity.getQty().intValue()) {
             arrivalStatus = ArrivalStatusEnum.ARRIVED.getCode();
-            return arrivalStatus;
         }
+
         return arrivalStatus;
     }
 

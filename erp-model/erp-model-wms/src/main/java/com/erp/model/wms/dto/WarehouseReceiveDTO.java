@@ -63,11 +63,6 @@ public class WarehouseReceiveDTO {
         private String deliveryWarehouseId;
 
         /**
-         * 委外订单类型(child子级，parent父级)
-         */
-        private String subcontractType;
-
-        /**
          * 报价明细
          */
         @Valid

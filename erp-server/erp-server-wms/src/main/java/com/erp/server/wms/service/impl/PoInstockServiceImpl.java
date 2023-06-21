@@ -870,6 +870,14 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getDeliveryWarehouseId())).map(WarehouseDTO.UpdateDTO::getName).findFirst().orElse(null);
             entity.setDeliveryWarehouseName(warehouseName);
         }
+        //更新委外标识
+        String purchaseOrderId = entity.getPurchaseOrderId();
+        PurchaseOrderDTO.GetOneDTO getOneDTO = scmTaskFeign.getByOrderId(purchaseOrderId);
+        if (ObjectUtils.isEmpty(getOneDTO)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        entity.setSubcontractType(getOneDTO.getSubcontractType());
+
     }
 
     /**
@@ -948,7 +956,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             addDTO.setDeliveryWarehouseId(entity.getDeliveryWarehouseId());
             addDTO.setStockInDeptId(entity.getPurchaseDeptId());
             addDTO.setStockInUserId(entity.getPurchaseUserId());
-            addDTO.setSubcontractType(entity.getSubcontractType());
             List<PoInstockDetailDTO.AddDTO> details = new ArrayList<>();
             for (PurchaseOrderDTO.GenerateStockInDTO generateStockInDTO : value) {
                 PoInstockDetailDTO.AddDTO addDetailDTO = new PoInstockDetailDTO.AddDTO();
@@ -1132,7 +1139,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             addDTO.setSourceId(purchaseOrderEntity.getId());
             addDTO.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
             addDTO.setPurchaseOrderId(purchaseOrderEntity.getId());
-            addDTO.setSubcontractType(purchaseOrderEntity.getSubcontractType());
             addDTO.setDeliveryWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
             addDTO.setStockInUserId(userInfo.getUid());
             List<PoInstockDetailDTO.AddDTO> detailList = new ArrayList<>();

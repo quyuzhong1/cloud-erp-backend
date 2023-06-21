@@ -180,7 +180,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     public List<PurchaseOrderDTO.ListDTO> listPurchaseOrderByDetailId(String detailId) {
         List<String> detailIds = new ArrayList<>();
         detailIds.add(detailId);
-        List<SubcontractOrderDetailEntity> childList = subcontractOrderDetailService.listByParentId(detailId);
+        List<SubcontractOrderDetailEntity> childList = subcontractOrderDetailService.listByParentIds(detailIds);
         if (CollectionUtils.isEmpty(childList)) {
             throw new ServiceException(ApiError.ERROR_98072);
         }
@@ -205,13 +205,18 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98035);
         }
-        //关联采购订单结束交货
-        List<String> detailIds = detailList.stream().map(SubcontractOrderDetailEntity::getId).collect(Collectors.toList());
-        List<String> podIds = baseMapper.listPodIdsByDetailIds(detailIds);
-        if (CollectionUtils.isNotEmpty(podIds)) {
-            purchaseOrderService.finishDelivery(podIds, remark);
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = subcontractOrderDetailService.listByParentIds(ids);
+        if (CollectionUtils.isEmpty(subcontractOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98072);
         }
+        List<String> childList = subcontractOrderDetailList.stream().map(SubcontractOrderDetailEntity::getId).collect(Collectors.toList());
 
+        //关联采购订单结束交货
+        ids.addAll(childList);
+        List<String> podIds = baseMapper.listPodIdsByDetailIds(ids);
+        if (CollectionUtils.isNotEmpty(podIds)) {
+            purchaseOrderService.finishDelivery(podIds, remark,Boolean.FALSE);
+        }
 
         //操作日志
         List<Pair<String, String>> pairList = detailList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
@@ -999,7 +1004,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             if (CollectionUtils.isNotEmpty(podList)) {
                 List<String> podIds = podList.stream().filter(obj -> obj.getSourceDetailId().equals(data.getDetailId())).map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(receiveDetailList)) {
-                    Integer receiveQty = receiveDetailList.stream().filter(obj -> podIds.contains(obj.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                    Integer receiveQty = receiveDetailList.stream().filter(obj -> podIds.contains(obj.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                     data.setReceiveQty(receiveQty);
                 }
             }
