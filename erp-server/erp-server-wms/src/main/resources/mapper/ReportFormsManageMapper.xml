@@ -219,8 +219,8 @@
                 pos.supplier_name,
                 pd.images_url,
                 pd."name" AS productName,
-				pd.sku_no,
                 pi.spu_no,
+				pd.sku_no,
 				count(po.id) AS orderQty,
 				sum(pod.purchase_amount) AS orderAmount,
 				sum(pod.purchase_qty) AS purchaseQty,
@@ -278,9 +278,8 @@
                 pos.supplier_name,
                 pd.images_url,
                 pd."name",
-				pd.sku_no,
-                pi.spu_no
-
+                pi.spu_no,
+                pd.sku_no
 			UNION ALL
 
 			SELECT
@@ -288,8 +287,8 @@
                 pos.supplier_name,
                 pd.images_url,
                 pd."name" AS productName,
-                pd.sku_no,
                 pi.spu_no,
+                pd.sku_no,
 				0 AS orderQty,
                 0 AS orderAmount,
                 0 AS purchaseQty,
