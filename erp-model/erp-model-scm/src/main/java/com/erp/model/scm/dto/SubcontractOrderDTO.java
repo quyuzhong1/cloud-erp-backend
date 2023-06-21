@@ -482,6 +482,11 @@ public class SubcontractOrderDTO implements Serializable {
         private BigDecimal price;
 
         /**
+         * 金额
+         */
+        private BigDecimal amount;
+
+        /**
          * 待申请数量
          */
         private Integer applyQty;
