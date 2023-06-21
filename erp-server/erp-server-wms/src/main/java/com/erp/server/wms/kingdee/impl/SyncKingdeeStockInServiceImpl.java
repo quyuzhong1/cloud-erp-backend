@@ -97,11 +97,13 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         //入库日期
         resultMap.put("billDate", entity.getStockInDate());
 
-        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
-        //采购员
-        resultMap.put("purchaseUserCode", findUserDTO.getCode());
-        //采购员
-        resultMap.put("purchaseUserName", findUserDTO.getUserName());
+        if (StringUtils.isNotBlank(entity.getPurchaseUserId())) {
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
+            //采购员
+            resultMap.put("purchaseUserCode", findUserDTO.getCode());
+            //采购员
+            resultMap.put("purchaseUserName", findUserDTO.getUserName());
+        }
         //新品首批
         if (entity.getIsFirstMassProduct()) {
             resultMap.put("isFirstMassProduct", 1);

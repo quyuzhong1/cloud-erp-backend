@@ -1241,21 +1241,28 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<PurchaseOrderEntity> oldList = this.listByIds(poIds);
         //提交
         List<String> submitIds = oldList.stream().filter(obj -> ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).map(PurchaseOrderEntity::getId).collect(Collectors.toList());
-        Boolean submit = this.submit(submitIds);
-        if (!submit) {
-            throw new ServiceException(ApiError.ERROR_98076);
+        if (CollectionUtils.isNotEmpty(submitIds)) {
+            Boolean submit = this.submit(submitIds);
+            if (!submit) {
+                throw new ServiceException(ApiError.ERROR_98076);
+            }
         }
+
+
         List<PurchaseOrderEntity> newList = this.listByIds(poIds);
         //审核
         List<String> approveIds = newList.stream().filter(obj -> ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).map(PurchaseOrderEntity::getId).collect(Collectors.toList());
-
-        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-        baseApproveParamDTO.setIds(approveIds);
-        baseApproveParamDTO.setType(ApproveType.PASS);
-        Boolean approve = this.approve(baseApproveParamDTO);
-        if (!approve) {
-            throw new ServiceException(ApiError.ERROR_98077);
+        if (CollectionUtils.isNotEmpty(approveIds)) {
+            BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+            baseApproveParamDTO.setIds(approveIds);
+            baseApproveParamDTO.setType(ApproveType.PASS);
+            Boolean approve = this.approve(baseApproveParamDTO);
+            if (!approve) {
+                throw new ServiceException(ApiError.ERROR_98077);
+            }
         }
+
+
     }
 
     @Override

@@ -449,7 +449,7 @@
         inner join purchase_order_detail pod on pod.source_detail_id = sod.id and pod.is_deleted = false
         inner join purchase_order po on po.id = pod.purchase_order_id and po.is_deleted = false
         <where>
-            psod.is_deleted = false and po.invoid_status = false
+            psod.is_deleted = false and po.invalid_status = false
             <if test="parentPodIds != null and parentPodIds.size > 0">
                 AND ppod.id IN
                 <foreach collection="parentPodIds" item="item" open="(" close=")" separator=",">
