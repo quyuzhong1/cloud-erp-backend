@@ -5,10 +5,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.math.BigDecimal;
+
 @Data
 @ToString
 @NoArgsConstructor
 public class KingdeeDeliveryDetailItemEntity {
+
+    @Alias("FEntity_FENTRYID")
+    private String fEntryId;
     @Alias("FBillNo")
     private String fBillNo;
     @Alias("FSoorDerno")
@@ -39,6 +44,9 @@ public class KingdeeDeliveryDetailItemEntity {
     private String fUnitName;
     @Alias("FPrice")
     private String fPrice;
+
+    @Alias("FTaxPrice")
+    private BigDecimal fTaxPrice;
     @Alias("FIsFree")
     private String fIsFree;
     @Alias("FArrivalStatus")
@@ -55,8 +63,49 @@ public class KingdeeDeliveryDetailItemEntity {
     private String fStockName;
     @Alias("F_ulz_Text1")
     private String f_ulz_Text1;
-    @Alias("FEntryCostAmount")
-    private String fEntryCostAmount;
     @Alias("FEntrynote")
     private String fEntryNote;
+    /**
+     * 汇率
+     */
+    @Alias("FExchangeRate")
+    private String fExchangeRate;
+    /**
+     * 金额（本位币）
+     */
+    @Alias("FAmount_LC")
+    private BigDecimal fAmount_LC;
+
+    @Alias("FSrcType")
+    private String fSrcType;
+    /**
+     * 备注
+     */
+    @Alias("FNote")
+    private String fNote;
+    /**
+     * 价税合计（本位币）
+     */
+    @Alias("FAllAmount")
+    private BigDecimal fAllAmount;
+    /**
+     * 价税合计（本位币）
+     */
+    @Alias("FAllAmount_LC")
+    private BigDecimal fAllAmount_LC;
+    /**
+     * 成本价（本位币）
+     */
+    @Alias("FCostPrice")
+    private BigDecimal fCostPrice;
+    /**
+     * 总成本(本位币)
+     */
+    @Alias("FCostAmount_LC")
+    private BigDecimal fCostAmount_LC;
+    /**
+     * 销售成本价
+     */
+    @Alias("FSalCostPrice")
+    private BigDecimal fSalCostPrice;
 }

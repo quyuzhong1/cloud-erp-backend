@@ -7,12 +7,14 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.date.EnumTimePattern;
+import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
+import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderItemEntity;
 import com.erp.model.dmp.enums.MabangSourcePlatformEnum;
@@ -42,6 +44,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -55,7 +58,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
     private MongoService mongoService;
 
     @Autowired
-    private MQProducerService<DmpOrderInfoEntity> mqProducerService;
+    private MQProducerService mqProducerService;
 
     public static void main(String[] args) {
         MabangOrderInfoServiceImpl getOrderInfoService = new MabangOrderInfoServiceImpl();
@@ -129,7 +132,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
                 .map(MabangOrderInfoServiceImpl::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
-
+        Map<String, OrderEntity> orderEntityMap = pushToMqList.stream().collect(Collectors.toMap(OrderEntity::getPlatformOrderId, e -> e));
         // 异步推送到MQ
         entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_SALE_ORDER_TAG.getName(),
@@ -137,10 +140,11 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
-            SendResult cleanResult = mqProducerService.syncClassMsgByDelayLevel(RocketMqTopic.DMP_ERP_DATA_CLEAN_TOPIC, RocketMqTagEnum.MABANG_DELIVERY_ORDER_TAG.getName(),
-                    msg, StrUtil.format("{}_{}", msg.getPlatformOrderId(), msg.getSalesRecordNumber()));
+            DmpDeliveryDetailInfoEntity deliveryDetailInfo = MabangDeliveryDetailServiceImpl.initOrderInfoEntity(orderEntityMap.get(msg.getPlatformOrderId()));
+            SendResult cleanResult = mqProducerService.syncClassMsgByDelayLevel(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_DELIVERY_ORDER_TAG.getName(),
+                    deliveryDetailInfo, StrUtil.format("{}_{}", deliveryDetailInfo.getPlatformOrderId(), deliveryDetailInfo.getBillNo()));
             if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){
-                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                throw new RuntimeException(StrUtil.format("发送马帮发货单MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());
     }
@@ -177,8 +181,8 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
         dmpOrderInfoEntity.setShopNo(orderEntity.getShopId());
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         // 平台订单时间
-        if (!"null".equalsIgnoreCase(orderEntity.getPaidTime()) && StrUtil.isNotBlank(orderEntity.getPaidTime())) {
-            dmpOrderInfoEntity.setPlatformCreateTime(LocalDateTime.parse(orderEntity.getPaidTime(), sdf));
+        if (!"null".equalsIgnoreCase(orderEntity.getCreateDate()) && StrUtil.isNotBlank(orderEntity.getCreateDate())) {
+            dmpOrderInfoEntity.setPlatformCreateTime(LocalDateUtil.strToLocalDateTime(orderEntity.getCreateDate()));
         }
         //订单来源平台
         MabangSourcePlatformEnum sourcePlatformEnum = MabangSourcePlatformEnum.getByCode(orderEntity.getPlatformId());
@@ -211,7 +215,7 @@ public class MabangOrderInfoServiceImpl implements IReportSaveService<OrderEntit
 //        dmpOrderInfoEntity.setCompanyName(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getName());
         //发货时间
         if (!"null".equalsIgnoreCase(orderEntity.getExpressTime()) && StrUtil.isNotBlank(orderEntity.getExpressTime())) {
-            dmpOrderInfoEntity.setDeliveryTime(LocalDateTime.parse(orderEntity.getExpressTime(), sdf));
+            dmpOrderInfoEntity.setDeliveryTime(LocalDateUtil.strToLocalDateTime(orderEntity.getCreateDate()));
         }
         dmpOrderInfoEntity.setCreateTime(LocalDateTime.now());
         dmpOrderInfoEntity.setItemList(initOrderItem(orderEntity));

@@ -10,6 +10,7 @@ import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
+import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.common.message.enums.RocketMqTagEnum;
@@ -30,6 +31,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -43,7 +45,7 @@ public class MabangHistoryOrderInfoServiceImpl implements IReportSaveService<Ord
     private MongoService mongoService;
 
     @Autowired
-    private MQProducerService<DmpOrderInfoEntity> mqProducerService;
+    private MQProducerService mqProducerService;
     /**
      * 拉取订单数据
      *
@@ -94,18 +96,19 @@ public class MabangHistoryOrderInfoServiceImpl implements IReportSaveService<Ord
                 .map(MabangOrderInfoServiceImpl::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
-
+        Map<String, OrderEntity> orderEntityMap = pushToMqList.stream().collect(Collectors.toMap(OrderEntity::getPlatformOrderId, e -> e));
         // 异步推送到MQ
         entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_SALE_ORDER_TAG.getName(),
                     msg, StrUtil.format("{}_{}", msg.getPlatformOrderId(), msg.getSalesRecordNumber()));
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
-                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                throw new RuntimeException(StrUtil.format("发送马帮订单MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
-            SendResult cleanResult = mqProducerService.syncClassMsgByDelayLevel(RocketMqTopic.DMP_ERP_DATA_CLEAN_TOPIC, RocketMqTagEnum.MABANG_DELIVERY_ORDER_TAG.getName(),
-                    msg, StrUtil.format("{}_{}", msg.getPlatformOrderId(), msg.getSalesRecordNumber()));
+            DmpDeliveryDetailInfoEntity deliveryDetailInfo = MabangDeliveryDetailServiceImpl.initOrderInfoEntity(orderEntityMap.get(msg.getPlatformOrderId()));
+            SendResult cleanResult = mqProducerService.syncClassMsgByDelayLevel(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_DELIVERY_ORDER_TAG.getName(),
+                    deliveryDetailInfo, StrUtil.format("{}_{}", deliveryDetailInfo.getPlatformOrderId(), deliveryDetailInfo.getBillNo()));
             if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){
-                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                throw new RuntimeException(StrUtil.format("发送马帮发货单MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());
     }

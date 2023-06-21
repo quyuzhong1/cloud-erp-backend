@@ -1,5 +1,6 @@
 package com.erp.server.dmp.pull.service.kingdee;
 
+import cn.hutool.core.annotation.Alias;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -68,7 +69,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         List<KingdeeDeliveryDetailEntity> insertList = new ArrayList<>();
         List<KingdeeDeliveryDetailEntity> pushToMqList = new ArrayList<>();
         for (KingdeeDeliveryDetailEntity entity : entityList) {
-            KingdeeOutStockDTO outStockDTO = new KingdeeOutStockDTO(entity.getFBillNo(), entity.getFSoorDerno());
+            KingdeeOutStockDTO outStockDTO = new KingdeeOutStockDTO(entity.getFBillNo(), entity.getFId());
             List<KingdeeDeliveryDetailEntity> mongoData = mongoService.findMongoData(outStockDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_DELIVERY_DETAIL, KingdeeDeliveryDetailEntity.class);
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
@@ -123,21 +124,19 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         queryFilters.add(StrUtil.format("FModifyDate >= '{}'", sdf.format(lastTime.minusMinutes(2))));
         queryFilters.add(StrUtil.format("FModifyDate <= '{}'", sdf.format(nextTime)));
-        // 标准销售出库单
-        queryFilters.add(StrUtil.format("FBillTypeID = '{}'", "ad0779a4685a43a08f08d2e42d7bf3e9"));
-        //020 B2B线下国内 021 B2B线下国外 3003 官网线上
-        queryFilters.add(StrUtil.format("F_ulz_BaseProperty2.FNumber in ('{}','{}','{}')", "020","021","3003"));
         // 审核通过
         queryFilters.add(StrUtil.format("FDocumentStatus = '{}'", "C"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillNo,FSoorDerno,FDate,FSaleOrgId,FSaleOrgId.FName," +
+        String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillNo,FSoOrDerNo,FDate,FSaleOrgId,FSaleOrgId.FName," +
                 "FCustomerID,FCustomerID.FName,FSaleDeptID.FName,FSalesManID,FSalesManID.FName,FReceiverID.FName," +
                 "FTransferBizType.FName,F_ulz_BaseProperty2,F_ulz_BaseProperty2.FNumber,FLinkPhone,FLinkMan,FBussinessType,FDocumentStatus," +
                 "FNote,FReceiveAddress,FCreatorId.FName,FCreateDate,FModifierId.FName,FModifyDate,FApproverID.FName," +
-                "FApproveDate,FCancelStatus,FGYDATE,FLogisticsNos,F_ulz_Text3,FSettleCurrID.FCode,FExchangeRate,"+
+                "FApproveDate,FCancelStatus,FGYDATE,FLogisticsNos,F_ulz_Text3,FSettleCurrID.FCode,FExchangeRate," +
+                "FEntity_FENTRYID,FBillAllAmount,FBillAllAmount_LC,FAllAmount,FAllAmount_LC,FAmount_LC,FTaxAmount,FTaxAmount_LC,FBillTaxAmount,FEntryTaxAmount,"+
                 "FSrcBillNo,FCustMatName,F_ulz_BaseProperty1,FMaterialID,FMaterialID.FNumber,FMaterialID.FName," +
                 "FBarcode,FMateriaModel,FMateriaType,FRealQty,FUnitID.FName,FPrice,FIsFree,FArrivalStatus,FArrivalDate," +
-                "FAmount,FStockStatusID,FStockStatusID.FName,FStockID.FName,F_ulz_Text1,FEntryCostAmount,FEntrynote";
+                "FAmount,FStockStatusID,FStockStatusID.FName,FStockID.FName,F_ulz_Text1,FEntryCostAmount,FEntrynote,FSrcBillNo,FSrcType,FTaxPrice," +
+                "FCostPrice,FCostAmount_LC,FSalCostPrice";
 
         Boolean dataSign = true;
         //当前页数
@@ -159,7 +158,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
                     BeanUtil.toBean(shopEntity, KingdeeDeliveryDetailEntity.class)).distinct().collect(Collectors.toList());
 
             Map<String, List<KingdeeDeliveryDetailItemEntity>> itemMap = result.stream().map(entity ->
-                            BeanUtil.toBean(entity, KingdeeDeliveryDetailItemEntity.class))
+                            BeanUtil.toBean(entity, KingdeeDeliveryDetailItemEntity.class)).distinct()
                     .collect(Collectors.groupingBy(m -> StrUtil.format("{}_{}", m.getFBillNo(), m.getFSoorDerno())));
             entityList.stream().peek(m -> m.setKingdeeOutStockItemEntityList(itemMap.get(StrUtil.format("{}_{}", m.getFBillNo(), m.getFSoorDerno()))))
                     .collect(Collectors.toList());
@@ -173,10 +172,16 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
      * 解析出库订单数据
      **/
     private DmpDeliveryDetailInfoEntity initOrderInfoEntity(KingdeeDeliveryDetailEntity kingdeeOutStockEntity) {
+        // 标准销售出库单
+        String fBillTypeID = "ad0779a4685a43a08f08d2e42d7bf3e9";
+        //020 B2B线下国内 021 B2B线下国外 3003 官网线上
+        List<String> list = Arrays.asList("020", "021", "3003");
         // 跳过非唯迹订单
         if (StrUtil.isEmpty(kingdeeOutStockEntity.getFSaleOrgId()) ||
                 ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(kingdeeOutStockEntity.getFSaleOrgId()) ||
-                        ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(kingdeeOutStockEntity.getFSaleOrgId())
+                        ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(kingdeeOutStockEntity.getFSaleOrgId()) ||
+                fBillTypeID.equals(kingdeeOutStockEntity.getFBillTypeID()) ||
+                !list.contains(kingdeeOutStockEntity.getF_ulz_BaseProperty2Code())
         ){
             return null;
         }
@@ -204,8 +209,8 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         BigDecimal orderTotalCost = BigDecimal.ZERO;
         BigDecimal itemTotalCost = BigDecimal.ZERO;
         for (KingdeeDeliveryDetailItemEntity itemEntity : kingdeeOutStockItemEntityList) {
-            orderTotalCost = orderTotalCost.add(new BigDecimal(itemEntity.getFAmount()));
-            itemTotalCost = itemTotalCost.add(new BigDecimal(itemEntity.getFEntryCostAmount()));
+            orderTotalCost = orderTotalCost.add(itemEntity.getFAllAmount_LC());
+            itemTotalCost = itemTotalCost.add(itemEntity.getFCostPrice());
         }
         //订单成本价
         deliveryDetailInfoEntity.setItemTotalCost(itemTotalCost);
@@ -265,7 +270,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
             deliveryDetailInfoEntity.setDeliveryDate(LocalDateTime.parse(kingdeeOutStockEntity.getFDate()));
         }
         //备注
-        deliveryDetailInfoEntity.setRemark(kingdeeOutStockEntity.getFNote());
+        deliveryDetailInfoEntity.setRemark(kingdeeOutStockEntity.getF_ulz_Text3());
         //平台标识
         deliveryDetailInfoEntity.setPlatformSign(PlatformEnum.KINGDEE.getDesc());
         //企业Id
@@ -287,6 +292,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
             DmpDeliveryDetailItemEntity dmpReturnOrderItemEntity = new DmpDeliveryDetailItemEntity();
             //商品id
             dmpReturnOrderItemEntity.setItemId(itemEntity.getFMaterialID());
+            dmpReturnOrderItemEntity.setSaleOrderNo(itemEntity.getFSrcBillNo());
             //平台sku
             dmpReturnOrderItemEntity.setPlatformSku(itemEntity.getF_ulz_BaseProperty1());
             //商品sku编号
@@ -294,12 +300,12 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
             //商品名称
             dmpReturnOrderItemEntity.setItemName(itemEntity.getFMaterialName());
             //商品成本价
-            dmpReturnOrderItemEntity.setCostPrice(new BigDecimal(itemEntity.getFEntryCostAmount()));
+            dmpReturnOrderItemEntity.setCostPrice(itemEntity.getFCostPrice());
             //商品售价
             dmpReturnOrderItemEntity.setSellPrice(new BigDecimal(itemEntity.getFPrice()));
             //商品数量
             dmpReturnOrderItemEntity.setQuantity(Double.valueOf(itemEntity.getFRealQty()).intValue());
-            dmpReturnOrderItemEntity.setAmount((new BigDecimal(itemEntity.getFAmount())));
+            dmpReturnOrderItemEntity.setAmount(itemEntity.getFAllAmount_LC());
             //商品单位
             dmpReturnOrderItemEntity.setProductUnit(itemEntity.getFUnitName());
             //是否是赠品 1. 是 2. 否
