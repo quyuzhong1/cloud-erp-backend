@@ -190,7 +190,7 @@
             pi.progress_status,
             pott.total_task_count,
             pott.finished_count,
-            pott.unfinish_count,
+            pott.unfinished_count,
             pott.delay_finished_count,
             pott.delay_unfinished_count,
             pott.thisWeekTaskCount,
