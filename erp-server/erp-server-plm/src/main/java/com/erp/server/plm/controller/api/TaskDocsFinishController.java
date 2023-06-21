@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import com.common.core.controller.BaseController;
 
 /**
- *产品开发管理
+ * 产品开发管理
  *
  * @author yl
  * @since 2022-09-13
@@ -27,10 +27,11 @@ public class TaskDocsFinishController extends BaseController {
 
     /**
      * 项目任务-任务详情-上传文件
-     * @author yl
-     * @date 2022-10-14 11:05
+     *
      * @param dto
      * @return com.common.core.vo.ApiResult
+     * @author yl
+     * @date 2022-10-14 11:05
      */
     @PostMapping("/importFile")
     public ApiResult uploadFile(@ModelAttribute @Validated TaskUploadFileDTO dto) {
@@ -39,14 +40,13 @@ public class TaskDocsFinishController extends BaseController {
     }
 
 
-
-
     /**
      * 项目任务-任务详情-删除文件
-     * @author yl
-     * @date 2022-10-14 11:05
+     *
      * @param
      * @return com.common.core.vo.ApiResult
+     * @author yl
+     * @date 2022-10-14 11:05
      */
     @PostMapping("/removeFile")
     public ApiResult removeFile(@RequestParam(value = "finishDocsId") String finishDocsId) {
@@ -56,43 +56,44 @@ public class TaskDocsFinishController extends BaseController {
 
     /**
      * 项目任务-任务详情-变更文档
-     * @author yl
-     * @date 2022-10-14 11:05
+     *
      * @param
      * @return com.common.core.vo.ApiResult
+     * @author yl
+     * @date 2022-10-14 11:05
      */
     @PostMapping("/changeFile")
     public ApiResult changeFile(@ModelAttribute @Validated TaskChangeFileDTO dto) {
         Boolean flag = taskDocsFinishService.changeFile(dto);
-        return flag == true ? success() : failure();
+        return flag ? success() : failure();
     }
 
-    /**
-     * 任务列表-变更文档
-     * @author yl
-     * @date 2022-10-14 11:05
-     * @param
-     * @return com.common.core.vo.ApiResult
-     */
-    @PostMapping("/updateFile")
-    public ApiResult updateFile(@ModelAttribute @Validated TaskChangeFileDTO dto) {
-        Boolean flag = taskDocsFinishService.updateFile(dto);
-        return flag == true ? success() : failure();
-    }
+//    /**
+//     * 任务列表-变更文档
+//     * @author yl
+//     * @date 2022-10-14 11:05
+//     * @param
+//     * @return com.common.core.vo.ApiResult
+//     */
+//    @PostMapping("/updateFile")
+//    public ApiResult updateFile(@ModelAttribute @Validated TaskChangeFileDTO dto) {
+//        Boolean flag = taskDocsFinishService.updateFile(dto);
+//        return flag == true ? success() : failure();
+//    }
 
     /**
      * 任务列表-变更文档-发起变更文档流程
-     * @author yl
-     * @date 2022-11-14 18:40
+     *
      * @param dto
      * @return com.common.core.vo.ApiResult
+     * @author yl
+     * @date 2022-11-14 18:40
      */
     @PostMapping("/startChangeDocsProcess")
     public ApiResult startChangeDocsProcess(@Validated BaseIdDTO dto) {
         Boolean flag = taskDocsFinishService.startChangeDocsProcess(dto);
         return flag == true ? success() : failure();
     }
-
 
 
 }
