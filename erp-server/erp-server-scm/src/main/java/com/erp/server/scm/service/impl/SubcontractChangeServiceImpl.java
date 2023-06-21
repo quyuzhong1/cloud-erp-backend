@@ -637,7 +637,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         SubcontractChangeDTO.ViewDTO data = BeanMapperUtils.map(SubcontractChangeDTO.ViewDTO.class, subcontractChangeEntity);
         //查询明细
         List<SubcontractChangeDetailEntity> subcontractChangeDetailList = subcontractChangeDetailService.listByMainIds(Arrays.asList(id));
-        if (CollectionUtils.isNotEmpty(subcontractChangeDetailList)) {
+        if (CollectionUtils.isEmpty(subcontractChangeDetailList)) {
             throw new ServiceException(ApiError.ERROR_98070);
         }
         //产品信息
