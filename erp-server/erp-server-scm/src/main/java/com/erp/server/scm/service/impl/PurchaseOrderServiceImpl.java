@@ -38,6 +38,7 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InstockForcastDTO;
@@ -49,6 +50,7 @@ import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -143,6 +145,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Autowired
     private PurchaseApplicationService purchaseApplicationService;
 
+    @Autowired
+    private SysDictFeign sysDictFeign;
 
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
@@ -542,6 +546,15 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         exportPdfDTO.setSupplierName(supplier.getName());
         exportPdfDTO.setSupplierAddress(supplier.getCompanyAddress());
+
+        // 供应商付款条件
+        if(StrUtils.isNotEmpty(supplier.getPaymentCondition())) {
+            List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+            Map<String, List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO>> paymentConditionMap = paymentConditionList.stream().collect(Collectors.groupingBy(com.erp.model.sys.dto.DictBasicDTO.ViewDTO::getValue));
+            if(paymentConditionMap.containsKey(supplier.getPaymentCondition())) {
+                exportPdfDTO.setPaymentConditionName(paymentConditionMap.get(supplier.getPaymentCondition()).get(0).getName());
+            }
+        }
 
         //供应商联系人信息
         if (StringUtils.isNotBlank(purchaseOrderSupplier.getSupplierContactId())) {

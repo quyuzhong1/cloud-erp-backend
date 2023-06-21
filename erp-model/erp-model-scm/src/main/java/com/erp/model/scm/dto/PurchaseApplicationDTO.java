@@ -378,6 +378,28 @@ public class PurchaseApplicationDTO implements Serializable {
          * 已采购数量
          */
         private Integer purchasedQty;
+
+        /**
+         * 采购员id
+         */
+        private String purchaseUserId;
+
+        /**
+         * 采购员名称
+         */
+        private String purchaseUserName;
+
+        /**
+         * 一级供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 一级供应商名称
+         */
+        private String supplierName;
+
+
     }
 
     @Data

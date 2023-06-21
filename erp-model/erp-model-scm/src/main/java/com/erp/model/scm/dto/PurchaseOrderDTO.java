@@ -581,6 +581,11 @@ public class PurchaseOrderDTO implements Serializable {
         private String supplierEmail;
 
         /**
+         * 付款方式名称
+         */
+        private String paymentConditionName;
+
+        /**
          * 明细信息
          */
         private List<PurchaseOrderDetailDTO.ExportPdfDTO> details;
