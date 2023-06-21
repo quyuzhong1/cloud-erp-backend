@@ -1191,7 +1191,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     if(applicationCodes.toString().endsWith(",")) {
                         applicationCodes.deleteCharAt(applicationCodes.length() - 1);
                     }
-                    obj.setSourceCode(applicationCodes.toString());
+                    obj.setPurchaseApplicationCode(applicationCodes.toString());
                 }
             });
         }

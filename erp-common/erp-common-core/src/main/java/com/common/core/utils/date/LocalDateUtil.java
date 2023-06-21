@@ -1,8 +1,10 @@
 package com.common.core.utils.date;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 
 import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.Date;
@@ -386,6 +388,17 @@ public class LocalDateUtil {
             }
         }
         return planStartDate;
+    }
+
+    public static LocalDateTime strToLocalDateTime(String timeStr) {
+        if (StrUtil.isBlank(timeStr)) {
+            return null;
+        }
+        if(timeStr.contains("T")){
+            timeStr = timeStr.replace("T"," ");
+        }
+        return LocalDateTime.parse(timeStr, DateTimeFormatter.ofPattern(DateUtil.fmt));
+
     }
 }
 

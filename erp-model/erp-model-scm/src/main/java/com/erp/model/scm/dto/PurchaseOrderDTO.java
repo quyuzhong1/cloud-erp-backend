@@ -201,7 +201,7 @@ public class PurchaseOrderDTO implements Serializable {
         /**
          * 采购申请单号
          */
-        private String sourceCode;
+        private String purchaseApplicationCode;
 
         /**
          * 采购申请单id集合
