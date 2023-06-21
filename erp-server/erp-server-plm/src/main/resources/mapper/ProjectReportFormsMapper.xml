@@ -334,24 +334,7 @@
 			pot.reality_end_time AS realityEndDate,
 			pot.status AS taskState
         FROM project_task pot
-        LEFT JOIN (
-            SELECT
-                pt.product_id,
-                COALESCE(MIN(pp.seq),
-                MAX(ppe.seq)) AS seq
-            FROM project_task pt
-            LEFT JOIN project_phase pp ON pt.phase_id = pp.id
-                AND pt.product_id = pp.product_id
-                AND pt.status IN (0,1,2,3,7,9,10)
-                AND pp.is_deleted = FALSE
-            LEFT JOIN project_phase ppe ON pt.phase_id = ppe.id
-                AND pt.product_id = ppe.product_id
-                AND pt.status = 4
-                AND ppe.is_deleted = FALSE
-            WHERE pt.is_deleted = FALSE
-            GROUP BY pt.product_id
-        ) tpp ON pot.product_id = tpp.product_id
-        LEFT JOIN project_phase pph ON tpp.product_id = pph.product_id AND pph.seq = tpp.seq AND pph.is_deleted = FALSE
+        LEFT JOIN project_phase pph on pot.phase_id = pph.id AND pph.is_deleted = FALSE
         LEFT JOIN product_plan pp ON pp.product_id = pot.product_id AND pp.is_deleted = FALSE
         WHERE pot.is_deleted = FALSE
         <if test="params.ids != null and params.ids.size > 0">
