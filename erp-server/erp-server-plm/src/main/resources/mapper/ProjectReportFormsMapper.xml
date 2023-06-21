@@ -89,7 +89,7 @@
             WHERE pot.is_deleted = FALSE
             GROUP BY pot.product_id
         ) pott ON pott.product_id = pi.id
-        WHERE pi.is_deleted = FALSE
+        WHERE pi.is_deleted = FALSE AND pi.is_finished_product_dev = 1
         <if test="params.chargeIdSplit != null and params.chargeIdSplit != ''">
             AND string_to_array(pi.charge_id,',') &amp;&amp; string_to_array(#{params.chargeIdSplit},',')
         </if>
@@ -219,44 +219,44 @@
             GROUP BY pt.product_id
         ) tpp ON pi.id = tpp.product_id
         LEFT JOIN project_phase pph ON tpp.product_id = pph.product_id AND pph.seq = tpp.seq AND pph.is_deleted = FALSE
-        INNER JOIN (
+        LEFT JOIN (
             SELECT
-            pot.product_id,
-            SUM(CASE WHEN pot.status = 4 THEN 1 ELSE 0 END) AS  finished_count,
-            SUM(CASE WHEN pot.status &lt;&gt; 4 THEN 1 ELSE 0 END) AS unfinish_count,
-            SUM(CASE WHEN pot.status = 4 AND pot.plan_end_time &lt; pot.reality_end_time THEN 1 ELSE 0 END) AS  delay_finished_count,
-            SUM(CASE WHEN pot.status &lt;&gt; 4 AND pot.status &lt;&gt; 5 AND pot.plan_end_time &lt; now() THEN 1 ELSE 0 END) AS delay_unfinished_count,
-            SUM(CASE WHEN pot.property = 1 THEN 1 ELSE 0 END) AS approval_task_count,
-            SUM(CASE WHEN (pot.status = 4 OR pot.status = 8) AND pot.property = 1 THEN 1 ELSE 0 END) AS approval_finish_task_count,
-            SUM(CASE WHEN pot.property = 2 THEN 1 ELSE 0 END) AS project_task_count,
-            SUM(CASE WHEN (pot.status = 4 OR pot.status = 8) AND pot.property = 2 THEN 1 ELSE 0 END) AS project_finish_task_count,
-            SUM(CASE
-                WHEN
-                    to_char(pot.plan_end_time, 'YYYY-MM-dd') >= to_char(date_trunc('week', current_date), 'YYYY-MM-dd')
-                    AND to_char(pot.plan_end_time, 'YYYY-MM-dd') &lt; to_char(date_trunc('week', current_date), 'YYYY-MM-dd')
-                THEN 1 ELSE 0 END
-            ) AS thisWeekTaskCount,
-            SUM(CASE
-                WHEN
-                    to_char(pot.plan_end_time, 'YYYY-MM-dd') >= to_char(date_trunc('week', current_date), 'YYYY-MM-dd')
-                    AND to_char(pot.plan_end_time, 'YYYY-MM-dd') &lt; to_char(date_trunc('week', current_date), 'YYYY-MM-dd')
-                    AND (pot.status = 4 OR pot.status = 8)
-                THEN 1 ELSE 0 END
-            ) AS thisWeekFinishedCount,
-            SUM(CASE
-                WHEN
-                    to_char(pot.plan_end_time, 'YYYY-MM-dd') >= to_char(date_trunc('week', current_date), 'YYYY-MM-dd')
-                    AND to_char(pot.plan_end_time, 'YYYY-MM-dd') &lt; to_char(date_trunc('week', current_date), 'YYYY-MM-dd')
-                    AND (pot.status &lt;&gt; 4 AND pot.status &lt;&gt; 5 AND pot.status &lt;&gt; 8)
-                THEN 1 ELSE 0 END
-            ) AS thisWeekUnfinishedCount,
-            count(*) AS total_task_count,
-            to_char(MAX(pot.reality_end_time), 'YYYY-MM-dd') AS reality_end_time
+                pot.product_id,
+                SUM(CASE WHEN pot.status = 4 THEN 1 ELSE 0 END) AS  finished_count,
+                SUM(CASE WHEN pot.status &lt;&gt; 4 THEN 1 ELSE 0 END) AS unfinish_count,
+                SUM(CASE WHEN pot.status = 4 AND pot.plan_end_time &lt; pot.reality_end_time THEN 1 ELSE 0 END) AS  delay_finished_count,
+                SUM(CASE WHEN pot.status &lt;&gt; 4 AND pot.status &lt;&gt; 5 AND pot.plan_end_time &lt; now() THEN 1 ELSE 0 END) AS delay_unfinished_count,
+                SUM(CASE WHEN pot.property = 1 THEN 1 ELSE 0 END) AS approval_task_count,
+                SUM(CASE WHEN (pot.status = 4 OR pot.status = 8) AND pot.property = 1 THEN 1 ELSE 0 END) AS approval_finish_task_count,
+                SUM(CASE WHEN pot.property = 2 THEN 1 ELSE 0 END) AS project_task_count,
+                SUM(CASE WHEN (pot.status = 4 OR pot.status = 8) AND pot.property = 2 THEN 1 ELSE 0 END) AS project_finish_task_count,
+                SUM(CASE
+                    WHEN
+                        to_char(pot.plan_end_time, 'YYYY-MM-dd') >= to_char(date_trunc('week', current_date), 'YYYY-MM-dd')
+                        AND to_char(pot.plan_end_time, 'YYYY-MM-dd') &lt; to_char(date_trunc('week', now()) + INTERVAL '1 week', 'YYYY-MM-dd')
+                    THEN 1 ELSE 0 END
+                ) AS thisWeekTaskCount,
+                SUM(CASE
+                    WHEN
+                        to_char(pot.plan_end_time, 'YYYY-MM-dd') >= to_char(date_trunc('week', current_date), 'YYYY-MM-dd')
+                        AND to_char(pot.plan_end_time, 'YYYY-MM-dd') &lt; to_char(date_trunc('week', now()) + INTERVAL '1 week', 'YYYY-MM-dd')
+                        AND (pot.status = 4 OR pot.status = 8)
+                    THEN 1 ELSE 0 END
+                ) AS thisWeekFinishedCount,
+                SUM(CASE
+                    WHEN
+                        to_char(pot.plan_end_time, 'YYYY-MM-dd') >= to_char(date_trunc('week', current_date), 'YYYY-MM-dd')
+                        AND to_char(pot.plan_end_time, 'YYYY-MM-dd') &lt; to_char(date_trunc('week', now()) + INTERVAL '1 week', 'YYYY-MM-dd')
+                        AND (pot.status &lt;&gt; 4 AND pot.status &lt;&gt; 5 AND pot.status &lt;&gt; 8)
+                    THEN 1 ELSE 0 END
+                ) AS thisWeekUnfinishedCount,
+                count(*) AS total_task_count,
+                to_char(MAX(pot.reality_end_time), 'YYYY-MM-dd') AS reality_end_time
             FROM project_task pot
             WHERE pot.is_deleted = FALSE
             GROUP BY pot.product_id
         ) pott ON pott.product_id = pi.id
-        WHERE pi.is_deleted = FALSE
+        WHERE pi.is_deleted = FALSE AND pi.is_finished_product_dev = 1
         <if test="params.chargeIdSplit != null and params.chargeIdSplit != ''">
             AND string_to_array(pi.charge_id,',') &amp;&amp; string_to_array(#{params.chargeIdSplit},',')
         </if>
