@@ -66,20 +66,20 @@
                 SUM(CASE
                     WHEN
                         to_char(pot.plan_end_time, 'YYYY-MM-dd') >= to_char(date_trunc('week', current_date), 'YYYY-MM-dd')
-                        AND to_char(pot.plan_end_time, 'YYYY-MM-dd') &lt; to_char(date_trunc('week', current_date), 'YYYY-MM-dd')
+                        AND to_char(pot.plan_end_time, 'YYYY-MM-dd') &lt; to_char(date_trunc('week', now()) + INTERVAL '1 week', 'YYYY-MM-dd')
                     THEN 1 ELSE 0 END
                 ) AS thisWeekTaskCount,
                 SUM(CASE
                     WHEN
                         to_char(pot.plan_end_time, 'YYYY-MM-dd') >= to_char(date_trunc('week', current_date), 'YYYY-MM-dd')
-                        AND to_char(pot.plan_end_time, 'YYYY-MM-dd') &lt; to_char(date_trunc('week', current_date), 'YYYY-MM-dd')
+                        AND to_char(pot.plan_end_time, 'YYYY-MM-dd') &lt; to_char(date_trunc('week', now()) + INTERVAL '1 week', 'YYYY-MM-dd')
                         AND (pot.status = 4 OR pot.status = 8)
                     THEN 1 ELSE 0 END
                 ) AS thisWeekFinishedCount,
                 SUM(CASE
                     WHEN
                         to_char(pot.plan_end_time, 'YYYY-MM-dd') >= to_char(date_trunc('week', current_date), 'YYYY-MM-dd')
-                        AND to_char(pot.plan_end_time, 'YYYY-MM-dd') &lt; to_char(date_trunc('week', current_date), 'YYYY-MM-dd')
+                        AND to_char(pot.plan_end_time, 'YYYY-MM-dd') &lt; to_char(date_trunc('week', now()) + INTERVAL '1 week', 'YYYY-MM-dd')
                         AND (pot.status &lt;&gt; 4 AND pot.status &lt;&gt; 5 AND pot.status &lt;&gt; 8)
                     THEN 1 ELSE 0 END
                 ) AS thisWeekUnfinishedCount,
