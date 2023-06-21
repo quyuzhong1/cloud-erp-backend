@@ -305,7 +305,7 @@ public class SupplierController extends BaseController {
      * @return
      */
     @GetMapping("/listApproveSupplierByCategoryType")
-    public ApiResult<List<BaseIdDTO>> listApproveSupplierByCategoryType(@RequestParam("categoryType") String categoryType) {
+    public ApiResult<List<SupplierDTO.SupplierSimpleDTO>> listApproveSupplierByCategoryType(@RequestParam("categoryType") String categoryType) {
         return success(supplierService.listApproveSupplierByCategoryType(categoryType));
     }
 

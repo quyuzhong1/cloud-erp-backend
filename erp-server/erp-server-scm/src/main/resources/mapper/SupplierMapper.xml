@@ -182,9 +182,9 @@
             ${params.permissionSql}
         </if>
     </select>
-    <select id="listSupplierByCategoryType" resultType="com.common.business.dto.base.BaseIdDTO">
+    <select id="listSupplierByCategoryType" resultType="com.erp.model.scm.dto.SupplierDTO$SupplierSimpleDTO">
         SELECT
-          id,name
+          id,code,name,disabled
         FROM  supplier WHERE is_deleted=FALSE
         <if test="approveStatus != null and approveStatus != '' ">
             and approve_status = #{approveStatus}

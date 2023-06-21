@@ -982,7 +982,16 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     public List<BaseIdDTO> listSupplierByCategoryType(String categoryType) {
         String supplierCategory = DictBasicEnum.SUPPLIER_CATEGORY.getType();
-        return baseMapper.listSupplierByCategoryType(supplierCategory,categoryType, null);
+        List<SupplierDTO.SupplierSimpleDTO> dataList = baseMapper.listSupplierByCategoryType(supplierCategory,categoryType, null);
+        if(CollUtil.isNotEmpty(dataList)) {
+            return dataList.stream().map(data->{
+                BaseIdDTO baseIdDTO = new BaseIdDTO();
+                baseIdDTO.setId(data.getId());
+                baseIdDTO.setName(data.getName());
+                return baseIdDTO;
+            }).collect(Collectors.toList());
+        }
+        return null;
     }
 
     @Override
@@ -1010,7 +1019,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     }
 
     @Override
-    public List<BaseIdDTO> listApproveSupplierByCategoryType(String categoryType) {
+    public List<SupplierDTO.SupplierSimpleDTO> listApproveSupplierByCategoryType(String categoryType) {
         String supplierCategory = DictBasicEnum.SUPPLIER_CATEGORY.getType();
         return baseMapper.listSupplierByCategoryType(supplierCategory,categoryType, ApproveStatusEnum.APPROVE.getStatus());
     }

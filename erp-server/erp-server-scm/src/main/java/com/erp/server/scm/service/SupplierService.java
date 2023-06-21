@@ -261,5 +261,5 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      * @param categoryType
      * @return java.util.List<com.common.business.dto.base.BaseIdDTO>
      */
-    List<BaseIdDTO> listApproveSupplierByCategoryType(String categoryType);
+    List<SupplierDTO.SupplierSimpleDTO> listApproveSupplierByCategoryType(String categoryType);
 }
