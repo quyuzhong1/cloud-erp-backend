@@ -162,6 +162,11 @@ public class TaskConcernServiceImpl extends SuperServiceImpl<TaskConcernMapper, 
         return this.listObjs(queryWrapper, Object::toString);
     }
 
+    @Override
+    public List<TaskConcernEntity> listByTaskIds(List<String> taskIds) {
+        return lambdaQuery().in(TaskConcernEntity::getTaskId, taskIds).list();
+    }
+
 
     /**
      * 根据任务id 删除

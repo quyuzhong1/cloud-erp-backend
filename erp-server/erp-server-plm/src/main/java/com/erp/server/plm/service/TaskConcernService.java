@@ -80,4 +80,13 @@ public interface TaskConcernService extends SuperService<TaskConcernEntity> {
      * @return java.util.List<java.lang.String>
      */
     List<String> listByTaskId(String taskId);
+
+    /**
+     * 根据任务ids 获取到对应关注人信息
+     * @Author Luo_WG
+     * @Date 2023/6/21 15:29
+     * @param taskIds
+     * @return java.util.List<java.lang.String>
+     **/
+    List<TaskConcernEntity> listByTaskIds(List<String> taskIds);
 }
