@@ -6,8 +6,8 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.entity.PoInstockEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -135,12 +135,13 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
 
     /**
      * @param ids
+     * @param isInterface
      * @return Boolean
      * @description: 反审核
      * @author Will
      * @date: 2023/4/12 11:58
      */
-    Boolean disApprove(List<String> ids);
+    Boolean disApprove(List<String> ids,Boolean isInterface);
 
     /**
      * @param ids

@@ -503,7 +503,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean disApprove(List<String> ids) {
+    public Boolean disApprove(List<String> ids,Boolean isInterface) {
         //根据ids查询
         List<PoInstockEntity> list = getList(ids);
         //已审核允许反审核
@@ -518,7 +518,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         }
         //委外子级SKU不支持反审核
         List<PoInstockEntity> foundList = list.stream().filter(obj -> SubcontractTypeEnum.ENUM_CHILD.getCode().equals(obj.getSubcontractType())).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(foundList)) {
+        if (CollectionUtils.isNotEmpty(foundList) && isInterface) {
             String codes = foundList.stream().map(PoInstockEntity::getCode).collect(Collectors.joining());
             throw new ServiceException(new ApiResult(ApiError.ERROR_98078.code, StrUtil.format(ApiError.ERROR_98078.msg,codes)));
         }
@@ -1086,7 +1086,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             return;
         }
         List<String> ids = poInstockList.stream().filter(obj -> ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(PoInstockEntity::getId).collect(Collectors.toList());
-        disApprove(ids);
+        disApprove(ids,Boolean.FALSE);
     }
 
     /**
