@@ -638,6 +638,8 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         if (CollectionUtils.isEmpty(parentList)) {
             throw new ServiceException(ApiError.ERROR_98082);
         }
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+
         List<SubcontractChangeDetailDTO.ViewDTO> parentDTOList = BeanMapperUtils.copyList(SubcontractChangeDetailDTO.ViewDTO.class, parentList);
 
         List<SubcontractChangeDetailDTO.ViewDTO> detailList = new ArrayList<>();
@@ -675,6 +677,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
                 childViewDTO.setOptTypeName(OptChangeTypeEnum.getName(childViewDTO.getOptType()));
             }
             viewDTO.setChildList(childDTOList);
+            detailList.add(viewDTO);
         }
         data.setDetailList(detailList);
         return data;

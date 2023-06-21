@@ -267,6 +267,8 @@
             sod.warehouse_id as warehouseId,
             sod.warehouse_name as warehouseName,
             sod.qty,
+            sod.price,
+            sod.is_gift,
             sod.parent_id as parentId,
             sod.supplier_id as supplierId,
             sod.is_generate_po as isGeneratePo
@@ -284,9 +286,9 @@
         order by so.id desc,case sod.parent_id when '' then 1 else 2 end asc
     </select>
 
-    <select id="listPoIdsByDetailIds" resultType="java.lang.String">
+    <select id="listPodIdsByDetailIds" resultType="java.lang.String">
         select
-               po.id
+            pod.id
         from  subcontract_order_detail sod
         inner join purchase_order_detail pod on sod.id = pod.source_detail_id and pod.is_deleted = false
         inner join purchase_order po on pod.purchase_order_id = po.id and po.is_deleted = false

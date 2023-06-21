@@ -58,5 +58,5 @@ public interface SubcontractOrderMapper extends BaseMapper<SubcontractOrderEntit
      * @param detailIds
 
      */
-    List<String> listPoIdsByDetailIds(@Param("detailIds") List<String> detailIds);
+    List<String> listPodIdsByDetailIds(@Param("detailIds") List<String> detailIds);
 }
