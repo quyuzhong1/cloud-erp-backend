@@ -255,6 +255,14 @@
             GROUP BY pot.product_id
         ) pott ON pott.product_id = pi.id
         WHERE pi.is_deleted = FALSE AND pi.is_finished_product_dev = 1
+
+        <if test="params.ids != null and params.ids.size > 0">
+            AND pi.id IN
+            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+
         <if test="params.chargeIdSplit != null and params.chargeIdSplit != ''">
             AND string_to_array(pi.charge_id,',') &amp;&amp; string_to_array(#{params.chargeIdSplit},',')
         </if>
