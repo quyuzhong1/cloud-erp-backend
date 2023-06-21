@@ -281,7 +281,7 @@
                 </foreach>
             </if>
         </where>
-        order by so.create_time desc, sod.id desc
+        order by so.id desc,case sod.parent_id when '' then 1 else 2 end asc
     </select>
 
     <select id="listPoIdsByDetailIds" resultType="java.lang.String">
