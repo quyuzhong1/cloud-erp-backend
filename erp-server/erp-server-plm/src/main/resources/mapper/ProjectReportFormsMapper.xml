@@ -325,6 +325,7 @@
 
     <select id="taskDetailView" resultType="com.erp.model.plm.dto.ProjectReportFormsDTO$TaskDetail">
         SELECT
+            pot.id,
             pph.name as phaseName,
             pot.name AS taskName,
 			pot.charge_name,

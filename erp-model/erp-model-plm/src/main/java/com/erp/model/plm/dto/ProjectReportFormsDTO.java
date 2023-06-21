@@ -310,6 +310,10 @@ public class ProjectReportFormsDTO implements Serializable {
     @NoArgsConstructor
     public static class TaskDetail {
         /**
+         * 任务id
+         */
+        private String id;
+        /**
          * 阶段名称
          */
         private String phaseName;
