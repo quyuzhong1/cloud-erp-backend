@@ -54,11 +54,11 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
             double approvalProgress = 0;
             double projectProgress = 0;
             //立项任务完成
-            if (pagingView.getApprovalTaskCount() != 0) {
+            if (pagingView.getApprovalTaskCount() != null && pagingView.getApprovalTaskCount() != 0) {
                 approvalProgress = ((double) pagingView.getApprovalFinishTaskCount() / pagingView.getApprovalTaskCount()) * 100;
             }
             //项目任务完成
-            if (pagingView.getProjectTaskCount() != 0) {
+            if (pagingView.getProjectTaskCount() != null && pagingView.getProjectTaskCount() != 0) {
                 projectProgress = ((double) pagingView.getProjectFinishTaskCount() / pagingView.getProjectTaskCount()) * 100;
             }
             approvalProgress = Math.round(approvalProgress * 100) / 100;
