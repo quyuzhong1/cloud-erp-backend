@@ -2527,15 +2527,18 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 }
 
                 //这个是审核人
-                /*if (itemPeopleList.contains(NoticeItemPeopleEnum.AUDITOR.getFlag())) {
+                if (itemPeopleList.contains(NoticeItemPeopleEnum.AUDITOR.getFlag())) {
                     if (CollectionUtils.isNotEmpty(taskIdList)) {
-                        List<TaskConcernEntity> taskConcernEntities = taskConcernService.listByTaskIds(taskIdList);
-                        if (CollectionUtils.isNotEmpty(taskConcernEntities)) {
-                            List<String> userIdList = taskConcernEntities.stream().map(TaskConcernEntity::getUserId).distinct().collect(Collectors.toList());
-                            resultList.addAll(userIdList);
+                        List<ProjectTaskEntity> taskEntityList = projectTaskService.listByTaskIds(taskIdList);
+                        if (CollectionUtils.isNotEmpty(taskEntityList)) {
+                            for (ProjectTaskEntity taskEntity : taskEntityList) {
+                                List<AuditorHandleDTO> historyTaskByProcessId = workflowFeign.getHistoryTaskByProcessId(taskEntity.getProcessId());
+                                List<String> userIdList = historyTaskByProcessId.stream().map(AuditorHandleDTO::getHandleUserId).distinct().collect(Collectors.toList());
+                                resultList.addAll(userIdList);
+                            }
                         }
                     }
-                }*/
+                }
             }
         }
         return resultList;
