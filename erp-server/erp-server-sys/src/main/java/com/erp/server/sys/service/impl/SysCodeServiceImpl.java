@@ -2,7 +2,6 @@ package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -244,13 +243,10 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
      * @param num
      */
     public void updateNumByCode (String id,Integer num) {
-        LambdaUpdateWrapper<SysCodeEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.eq(SysCodeEntity::getId,id);
-        updateWrapper.set(SysCodeEntity::getNum,num + 1);
-        updateWrapper.set(SysCodeEntity::getUpdateTime,new Date());
-        this.update(updateWrapper);
-        /*LoginUser loginUser = commonService.getUserInfo();
-        this.baseMapper.updateNum(id, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());*/
+      lambdaUpdate().eq(SysCodeEntity::getId,id)
+              .set(SysCodeEntity::getNum,num + 1)
+              .set(SysCodeEntity::getUpdateTime,new Date())
+              .update();
     }
 
 }
