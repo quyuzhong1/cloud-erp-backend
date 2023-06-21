@@ -163,11 +163,6 @@
                 #{item}
             </foreach>
         </if>
-
-        <!--权限-->
-        <if test="params.permissionSql!=null and params.permissionSql!=''">
-            ${params.permissionSql}
-        </if>
         ORDER BY pi.create_time DESC
     </select>
 
@@ -285,8 +280,11 @@
             )
         </if>
 
-        <if test="params.categoryId != null and params.categoryId != ''">
-            AND pi.category_id = #{params.categoryId}
+        <if test="params.categoryIdList != null and params.categoryIdList != ''">
+            AND pi.category_id IN
+            <foreach collection="params.categoryIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
         </if>
 
         <if test="params.gradeIdList != null and params.gradeIdList.size > 0">
