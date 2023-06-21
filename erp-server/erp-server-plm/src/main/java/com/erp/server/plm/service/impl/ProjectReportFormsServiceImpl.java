@@ -1,22 +1,24 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.utils.ObjectUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.ProjectReportFormsDTO;
 import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.model.plm.enums.ApprovalStatusEnum;
-import com.erp.model.plm.enums.ProjectReportStatusEnum;
-import com.erp.model.plm.enums.ProjectStateEnum;
-import com.erp.model.plm.enums.TaskStateEnum;
+import com.erp.model.plm.enums.*;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.mapper.ProjectReportFormsMapper;
 import com.erp.server.plm.service.ProjectReportFormsService;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -25,7 +27,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectReportFormsMapper, ProductInfoEntity> implements ProjectReportFormsService {
-
+    @Resource
+    private SysUserFeign sysUserFeign;
     @Override
     public PagingVO<List<ProjectReportFormsDTO.PagingView>> projectReportFormsPaging(PagingDTO<ProjectReportFormsDTO.PagingParam> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -45,10 +48,15 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
             statusList.add(ProjectStateEnum.FINISH.getState());
             pagingDTO.getParams().setProjectStatusList(statusList);
         }
-
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
         IPage<ProjectReportFormsDTO.PagingView> pageData = baseMapper.projectReportFormsPaging(query, pagingDTO.getParams());
         List<ProjectReportFormsDTO.PagingView> pagingViewList = pageData.getRecords();
         for (ProjectReportFormsDTO.PagingView pagingView : pagingViewList) {
+            FindUserDTO findUserDTO = userList.stream().filter(req -> req.getUserId().equals(pagingView.getProjectChargeId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(findUserDTO)) {
+                pagingView.setProjectChargeName(findUserDTO.getUserName());
+            }
+            pagingView.setProgressStatusName(ProductProgressStatusEnum.getName(pagingView.getProgressStatus()));
             pagingView.setApprovalStatusName(ApprovalStatusEnum.getName(pagingView.getApprovalStatus()));
             pagingView.setProjectStatusName(ProjectStateEnum.getName(pagingView.getProjectStatus()));
             double approvalProgress = 0;

@@ -23,7 +23,7 @@
             pi.progress_status,
             pott.total_task_count,
             pott.finished_count,
-            pott.unfinish_count,
+            pott.unfinished_count,
             pott.delay_finished_count,
             pott.delay_unfinished_count,
             pott.thisWeekTaskCount,
@@ -56,7 +56,7 @@
             SELECT
                 pot.product_id,
                 SUM(CASE WHEN pot.status = 4 THEN 1 ELSE 0 END) AS  finished_count,
-                SUM(CASE WHEN pot.status &lt;&gt; 4 THEN 1 ELSE 0 END) AS unfinish_count,
+                SUM(CASE WHEN pot.status = 0 OR pot.status = 1 OR pot.status = 3 THEN 1 ELSE 0 END) AS unfinished_count,
                 SUM(CASE WHEN pot.status = 4 AND pot.plan_end_time &lt; pot.reality_end_time THEN 1 ELSE 0 END) AS  delay_finished_count,
                 SUM(CASE WHEN pot.status &lt;&gt; 4 AND pot.status &lt;&gt; 5 AND pot.plan_end_time &lt; now() THEN 1 ELSE 0 END) AS delay_unfinished_count,
                 SUM(CASE WHEN pot.property = 1 THEN 1 ELSE 0 END) AS approval_task_count,
@@ -155,7 +155,7 @@
         </if>
 
         <if test="params.searchProjectStatusList != null and params.searchProjectStatusList.size > 0">
-            AND pi.project_status IN
+            AND poi.project_status IN
             <foreach collection="params.searchProjectStatusList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
@@ -223,7 +223,7 @@
             SELECT
                 pot.product_id,
                 SUM(CASE WHEN pot.status = 4 THEN 1 ELSE 0 END) AS  finished_count,
-                SUM(CASE WHEN pot.status &lt;&gt; 4 THEN 1 ELSE 0 END) AS unfinish_count,
+                SUM(CASE WHEN pot.status = 0 OR pot.status = 1 OR pot.status = 3 THEN 1 ELSE 0 END) AS unfinished_count,
                 SUM(CASE WHEN pot.status = 4 AND pot.plan_end_time &lt; pot.reality_end_time THEN 1 ELSE 0 END) AS  delay_finished_count,
                 SUM(CASE WHEN pot.status &lt;&gt; 4 AND pot.status &lt;&gt; 5 AND pot.plan_end_time &lt; now() THEN 1 ELSE 0 END) AS delay_unfinished_count,
                 SUM(CASE WHEN pot.property = 1 THEN 1 ELSE 0 END) AS approval_task_count,
@@ -315,15 +315,10 @@
         </if>
 
         <if test="params.searchProjectStatusList != null and params.searchProjectStatusList.size > 0">
-            AND pi.project_status IN
+            AND poi.project_status IN
             <foreach collection="params.searchProjectStatusList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
-        </if>
-
-        <!--权限-->
-        <if test="params.permissionSql!=null and params.permissionSql!=''">
-            ${params.permissionSql}
         </if>
         ORDER BY pi.create_time DESC
     </select>
@@ -333,10 +328,10 @@
             pph.name as phaseName,
             pot.name AS taskName,
 			pot.charge_name,
-			pot.plan_start_time,
-			pot.plan_end_time,
-			pot.reality_start_time,
-			pot.reality_end_time,
+			pot.plan_start_time AS planStartDate,
+			pot.plan_end_time AS planEndDate,
+			pot.reality_start_time AS realityStartDate,
+			pot.reality_end_time AS realityEndDate,
 			pot.status AS taskState
         FROM project_task pot
         LEFT JOIN (
