@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.IsConstant;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseSearchDTO;
@@ -31,7 +32,6 @@ import com.erp.model.workflow.dto.AuditorHandleDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.sdk.fs.service.FsService;
-import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.NoticeMessageConstant;
 import com.erp.server.plm.mapper.NoticeMessageMapper;
 import com.erp.server.plm.service.*;
@@ -45,7 +45,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -2171,7 +2170,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     @Async("customExecutor")
-    public Boolean remindRemarkNotice(String userName, String productId, String taskId, String comment) {
+    public Boolean remindRemarkNotice(String taskCommentId,String userName, String productId, String taskId, String comment,List<String> refUserIdList,List<FindUserDTO> refUserList) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -2180,6 +2179,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         //根据节点标示获取到通知消息实体
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
+            //获取飞书的unionid 与用户关系
+            List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
             String noticeMessageId = notice.getId();
             List<String> noticeUserIds = getSetNotice(notice, product);
             //如果包含任务负责人的话
@@ -2199,8 +2200,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             }
             //排除关闭通知的人员 并去重
             List<String> noticeList = eliminateCloseNotice(notice.getId(), noticeUserIds);
-            //获取飞书的unionid 与用户关系
-            List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
+
             List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
             FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
@@ -2232,7 +2232,32 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             }
             //保存发送消息通知记录
             noticeMessageRecordService.saveBatch(messageRecordList);
+
+            //评论的@的人员
+            if(CollectionUtils.isNotEmpty(refUserIdList)){
+                FsBatchSendMessageDTO sendRefMessage = new FsBatchSendMessageDTO();
+                List<ThirdUnionDTO> noticeRefUnionList = getNoticeUnionIds(unionIdList, refUserIdList);
+                List<String> refUnionIds = noticeRefUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+                sendRefMessage.setUnionIds(refUnionIds);
+                String refUserName=refUserList.stream().filter(r->refUserIdList.contains(r.getUserId())).map(FindUserDTO::getUserName).collect(Collectors.joining(","));
+
+                String refMessageContent = String.format(NoticeMessageConstant.REMIND_REMARK_REF, userName,refUserName,comment);
+                Map refContentMap = getCardMessageMap(refMessageContent, projectContent, fsAppUrl);
+                sendRefMessage.setContentMap(refContentMap);
+                //发送消息的结果
+                Boolean sendRefResult = fsService.sendMessage(sendRefMessage);
+                if(sendRefResult){
+
+                }
+
+            }
         }
+
+
+
+
+
+
         return true;
     }
 

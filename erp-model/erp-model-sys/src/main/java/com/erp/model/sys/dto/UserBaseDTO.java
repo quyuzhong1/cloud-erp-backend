@@ -20,6 +20,13 @@ public class UserBaseDTO implements Serializable {
      * 用户名
      */
     private String userName;
+
+
+    /**
+     * 头像
+     */
+    private String headIcon;
+
     /**
      * 真实姓名
      */

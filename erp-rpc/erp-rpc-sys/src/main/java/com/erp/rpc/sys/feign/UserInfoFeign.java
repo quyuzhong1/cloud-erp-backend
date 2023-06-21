@@ -3,6 +3,7 @@ package com.erp.rpc.sys.feign;
 import com.common.business.dto.FindUserDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -28,4 +29,12 @@ public interface UserInfoFeign {
      */
     @GetMapping("feign/user/listThirdBindUser")
     List<FindUserDTO> listThirdBindUserInfo();
+
+    /**
+     * 根据用户ids获取用户信息
+     * @param userIds
+     * @return
+     */
+    @GetMapping("feign/user/getUserListByUserIds")
+    List<FindUserDTO> listByUserIds(@RequestBody List<String> userIds);
 }

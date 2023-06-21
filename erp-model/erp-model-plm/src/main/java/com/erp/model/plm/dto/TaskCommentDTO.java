@@ -41,6 +41,11 @@ public class TaskCommentDTO implements Serializable {
 
 
         /**
+         * 任务评论关联人id集合
+         */
+        private List<String> refUserIdList;
+
+        /**
          * 附件url集合
          */
         private List<String> attachUrlList;
@@ -50,6 +55,47 @@ public class TaskCommentDTO implements Serializable {
          */
         private List<String> attachNameList;
 
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+
+        /**
+         * 任务id
+         */
+        private String taskId;
+
+
+        /**
+         * 评论内容
+         */
+        private String comment;
+
+
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
+
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+
+
+        /**
+         * 任务评论关联人名
+         */
+        private List<String> commentRefUserNameList;
+
+
+        /**
+         * 评论发送的结果
+         */
+        private Integer sendNoticeResultCount;
 
 
     }

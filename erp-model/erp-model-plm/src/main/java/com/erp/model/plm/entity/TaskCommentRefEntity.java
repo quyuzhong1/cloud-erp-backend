@@ -1,12 +1,13 @@
 package com.erp.model.plm.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
 
 
 /**
@@ -35,6 +36,12 @@ public class TaskCommentRefEntity extends BaseEntity<TaskCommentRefEntity> {
     */
     @TableField("ref_user_id")
     private String refUserId;
+
+    /**
+     * 关联人员
+     */
+    @TableField("ref_user_name")
+    private String refUserName;
 
     /**
     * 发送通知结果true 成功

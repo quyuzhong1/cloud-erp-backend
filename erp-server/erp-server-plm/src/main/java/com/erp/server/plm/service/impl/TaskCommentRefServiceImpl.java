@@ -11,7 +11,9 @@ import com.erp.server.plm.mapper.TaskCommentRefMapper;
 import com.erp.server.plm.service.ProjectMembersService;
 import com.erp.server.plm.service.TaskCommentRefService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -86,6 +88,33 @@ public class TaskCommentRefServiceImpl extends SuperServiceImpl<TaskCommentRefMa
         allMember.setCount(userList.size());
         resultList.add(allMember);
         return resultList;
+    }
+
+
+    /**
+     * 添加任务关注人信息
+     *
+     * @param refUserIdList
+     * @param taskId
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addCommentRef(List<String> refUserIdList, String taskId, String commentId,List<FindUserDTO> userList) {
+        if (CollectionUtils.isNotEmpty(refUserIdList)) {
+            List<TaskCommentRefEntity> addList = new ArrayList<>(refUserIdList.size());
+            for (String refUserId : refUserIdList) {
+                TaskCommentRefEntity addEntity = new TaskCommentRefEntity();
+                addEntity.setRefUserId(refUserId);
+                addEntity.setTaskId(taskId);
+                addEntity.setTaskCommentId(commentId);
+                String userName = userList.stream().filter(u -> u.getUserId().equals(refUserId)).findFirst().
+                        map(FindUserDTO::getUserName).orElse("");
+                addEntity.setRefUserName(userName);
+                addList.add(addEntity);
+            }
+            this.saveBatch(addList);
+        }
+
     }
 
     private ProductMemberDTO.TaskRefDTO getTaskMember(String type, String typeName, List<MemberPagingShowDTO> list) {

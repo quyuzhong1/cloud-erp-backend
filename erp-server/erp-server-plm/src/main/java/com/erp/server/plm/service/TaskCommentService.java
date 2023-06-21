@@ -22,7 +22,15 @@ public interface TaskCommentService extends IService<TaskCommentEntity> {
      */
     Boolean saveTaskComment(TaskCommentDTO.AddDTO dto);
 
-    List<TaskCommentEntity> getListByTaskId(String taskId);
 
     void batchSaveTaskComment(List<TaskCommentEntity> taskCommentList);
+
+    /**
+     * 根据任务id 获取到对应任务信息
+     * @author yl
+     * @date 2023-06-21 9:42
+     * @param taskId
+     * @return java.util.List<com.erp.model.plm.dto.TaskCommentDTO.ListDTO>
+     */
+    List<TaskCommentDTO.ListDTO> listByTaskId(String taskId);
 }
