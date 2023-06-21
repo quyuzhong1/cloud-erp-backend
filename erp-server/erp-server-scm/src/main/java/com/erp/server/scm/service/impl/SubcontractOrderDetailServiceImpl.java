@@ -305,7 +305,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             //已下推数量（不包括本明细数量）
             Integer pushdownQty = MathUtil.ZERO;
             if (CollectionUtils.isNotEmpty(foundList)) {
-                pushdownQty = foundList.stream().filter(obj ->obj.getSourceDetailId().equals(detailEntity.getSourceDetailId()) && !StringUtils.equals(obj.getId(),detailEntity.getId()))
+                pushdownQty = foundList.stream().filter(obj ->obj.getSourceDetailId().equals(detailEntity.getSourceDetailId()) && !StringUtils.equals(obj.getId(),detailEntity.getId()) && StringUtils.isBlank(obj.getParentId()))
                         .map(SubcontractOrderDetailEntity::getQty).reduce(MathUtil.ZERO,Integer::sum);
             }
             //下推单据数量验证
