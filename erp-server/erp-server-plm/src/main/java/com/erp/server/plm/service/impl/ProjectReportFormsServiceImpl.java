@@ -39,7 +39,7 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
         }
         if (ProjectReportStatusEnum.APPROVAL.getCode().equals(pagingDTO.getParams().getApprovalStatus())) {
             statusList.add(ApprovalStatusEnum.APPROVAL.getCode());
-            pagingDTO.getParams().setProjectStatusList(statusList);
+            pagingDTO.getParams().setApprovalStatusList(statusList);
         }
         if (ProjectReportStatusEnum.FINISHED.getCode().equals(pagingDTO.getParams().getApprovalStatus())) {
             statusList.add(ProjectStateEnum.FINISH.getState());
