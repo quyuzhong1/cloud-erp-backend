@@ -52,7 +52,7 @@
             GROUP BY pt.product_id
         ) tpp ON pi.id = tpp.product_id
         LEFT JOIN project_phase pph ON tpp.product_id = pph.product_id AND pph.seq = tpp.seq AND pph.is_deleted = FALSE
-        INNER JOIN (
+        LEFT JOIN (
             SELECT
                 pot.product_id,
                 SUM(CASE WHEN pot.status = 4 THEN 1 ELSE 0 END) AS  finished_count,
