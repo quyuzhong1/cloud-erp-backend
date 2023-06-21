@@ -1,6 +1,5 @@
 package com.erp.server.scm.kingdee.impl;
 
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -14,7 +13,6 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -78,21 +76,12 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
         resultMap.put("billDate",entity.getBillDate());
 
         //组织机构编码
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getSubcontractOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getSubcontractOrgId(),entity.getPurchaseOrgId()));
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
             //委外组织编码
             String subcontractOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getSubcontractOrgId()))
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
             resultMap.put("subcontractOrgCode", subcontractOrgCode);
-        }
-
-        //获取用户部门id
-        if (StringUtils.isNotBlank(entity.getDeptId())) {
-            SysDepartmentDTO departmentDTO = sysUserFeign.getUserDeptById(entity.getDeptId());
-            //采购部门
-            if (ObjectUtil.isNotEmpty(departmentDTO)) {
-                resultMap.put("purchaseDeptCode", departmentDTO.getCode());
-            }
         }
 
         //采购员编码
@@ -126,22 +115,30 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
             jsonObject.set("qty",detailEntity.getQty());
             jsonObject.set("planDeliveryDate",detailEntity.getPlanDeliveryDate());
             jsonObject.set("price",detailEntity.getPrice());
-            //部门编码
+            //单据日期
+            resultMap.put("billDate",entity.getBillDate());
+
+            //仓库编码
             if (CollectionUtils.isNotEmpty(warehouseList)) {
                 String kingdeeWarehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse("");
                 jsonObject.set("kingdeeWarehouseCode",kingdeeWarehouseCode);
             }
+
+            //采购组织编码
+            if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+                String purchaseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId()))
+                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+                jsonObject.set("purchaseOrgCode", purchaseOrgCode);
+            }
             //供应商编码
             if (CollectionUtils.isNotEmpty(supplierList)) {
                 String supplierCode = supplierList.stream().filter(obj -> obj.getId().equals(detailEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
-                jsonObject.put("supplierCode",supplierCode);
+                jsonObject.set("supplierCode",supplierCode);
             }
-            jsonObject.set("receiveOrgName",entity.getReceiveOrgName());
-            jsonObject.set("isGift",detailEntity.getIsGift());
             jsonObject.set("detailRemark",detailEntity.getRemark());
             list.add(jsonObject);
         }
-        resultMap.put("list",list);
+        resultMap.put("parentList",list);
 
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
