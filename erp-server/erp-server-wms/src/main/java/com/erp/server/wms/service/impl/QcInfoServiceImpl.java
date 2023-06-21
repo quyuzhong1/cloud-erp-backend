@@ -1751,7 +1751,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             List<WmsAttachmentDTO.UpdateDTO> badAttachmentList = wmsAttachmentService.getByBusinessIds(qcResultIdList);
             Map<String, List<WmsAttachmentDTO.UpdateDTO>> badAttachmentMap = badAttachmentList.stream().collect(Collectors.groupingBy(v -> v.getBusinessId() + "_" + v.getType()));
 
-
             for (QcInfoDTO.DailyListDTO item : dataList) {
                 QcInfoDTO.QcDailyReportDTO qcDailyReportDTO = new QcInfoDTO.QcDailyReportDTO();
 
@@ -1803,6 +1802,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                     List<WmsAttachmentDTO.UpdateDTO> attachList = badAttachmentMap.get(qcBadKey);
                     qcDailyReportDTO.setBadAttachments(attachList);
                 }
+
+                // 报告
+                // TODO 后续需改成批量
+                List<QcReportDetailDTO.ViewDTO> reportList = qcReportDetailService.getByMainId(item.getId());
+                qcDailyReportDTO.setReportList(reportList);
 
                 qcDailyReportDTO.setTotalQty(item.getTotalQty());
 
@@ -2188,6 +2192,17 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             cell = rowContent.createCell(25);
             cell.setCellStyle(contentCellStyle);
             cell.setCellValue("");
+            if(CollUtil.isNotEmpty(data.getReportList())) {
+                // 写入超链接（只能写一个）
+                QcReportDetailDTO.ViewDTO reportAttachment = data.getReportList().stream().filter(r->CollUtil.isNotEmpty(r.getReportUrlList())).findFirst().orElse(null);
+                if(Objects.nonNull(reportAttachment)) {
+                    Hyperlink hyperlink = wb.getCreationHelper().createHyperlink(HyperlinkType.URL);
+                    hyperlink.setAddress(filePublicUrl + reportAttachment.getReportUrlList().get(0));
+                    rowContent.getCell(25).setCellStyle(hyperContentCellStyle);
+                    rowContent.getCell(25).setHyperlink(hyperlink);
+                    rowContent.getCell(25).setCellValue(reportAttachment.getReportNameList().get(0));
+                }
+            }
 
         }
 

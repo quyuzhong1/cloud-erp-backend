@@ -1029,6 +1029,11 @@ public class QcInfoDTO implements Serializable {
          */
         private String remark;
 
+        /**
+         * 报告
+         */
+        private List<QcReportDetailDTO.ViewDTO> reportList;
+
     }
 
     /**
