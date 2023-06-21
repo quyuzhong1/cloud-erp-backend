@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -56,5 +57,22 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
             }
             this.saveBatch(addList);
         }
+    }
+
+    /**
+     * 根据业务表ids 获取附件信息
+     *
+     * @param businessIdList
+     * @return void
+     * @author yl
+     * @date 2023-06-21 12:01
+     */
+    @Override
+    public List<PlmAttachmentEntity> listByBusinessIds(List<String> businessIdList) {
+        if (CollectionUtils.isEmpty(businessIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(PlmAttachmentEntity::getBusinessId, businessIdList).orderByDesc(PlmAttachmentEntity::getId).list();
+
     }
 }

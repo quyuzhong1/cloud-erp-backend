@@ -84,7 +84,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     private ProjectTaskService projectTaskService;
 
     @Autowired
-    private TaskChargeDistributionService taskChargeDistributionService;
+    private TaskCommentRefService taskCommentRefService;
 
     @Autowired
     private WorkflowFeign workflowFeign;
@@ -2182,7 +2182,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     @Async("customExecutor")
-    public Boolean remindRemarkNotice(String taskCommentId,String userName, String productId, String taskId, String comment,List<String> refUserIdList,List<FindUserDTO> refUserList) {
+    public Boolean remindRemarkNotice(String taskCommentId, String userName, String productId, String taskId, String comment, List<String> refUserIdList, List<FindUserDTO> refUserList) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -2246,28 +2246,26 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             noticeMessageRecordService.saveBatch(messageRecordList);
 
             //评论的@的人员
-            if(CollectionUtils.isNotEmpty(refUserIdList)){
+            if (CollectionUtils.isNotEmpty(refUserIdList)) {
                 FsBatchSendMessageDTO sendRefMessage = new FsBatchSendMessageDTO();
                 List<ThirdUnionDTO> noticeRefUnionList = getNoticeUnionIds(unionIdList, refUserIdList);
                 List<String> refUnionIds = noticeRefUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendRefMessage.setUnionIds(refUnionIds);
-                String refUserName=refUserList.stream().filter(r->refUserIdList.contains(r.getUserId())).map(FindUserDTO::getUserName).collect(Collectors.joining(","));
+                String refUserName = refUserList.stream().filter(r -> refUserIdList.contains(r.getUserId())).map(FindUserDTO::getUserName).collect(Collectors.joining(","));
 
-                String refMessageContent = String.format(NoticeMessageConstant.REMIND_REMARK_REF, userName,refUserName,comment);
+                String refMessageContent = String.format(NoticeMessageConstant.REMIND_REMARK_REF, userName, refUserName, comment);
                 Map refContentMap = getCardMessageMap(refMessageContent, projectContent, fsAppUrl);
                 sendRefMessage.setContentMap(refContentMap);
                 //发送消息的结果
                 Boolean sendRefResult = fsService.sendMessage(sendRefMessage);
-                if(sendRefResult){
-
+                if (sendRefResult) {
+                    List<String> acceptUserIds = noticeRefUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
+                    //更改发送结果
+                    taskCommentRefService.updateSendResult(acceptUserIds,taskCommentId,taskId,sendRefResult);
                 }
 
             }
         }
-
-
-
-
 
 
         return true;
@@ -2318,7 +2316,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
-                Date planEndTime = Date.from(task.getPlanEndTime().atStartOfDay().atZone( ZoneId.systemDefault()).toInstant());;
+                Date planEndTime = Date.from(task.getPlanEndTime().atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+                ;
                 //获取计划时间的开始时间
                 Date planEndStartTime = DateUtil.getStartTime(planEndTime);
                 //比较差值

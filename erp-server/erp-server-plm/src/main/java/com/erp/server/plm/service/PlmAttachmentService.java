@@ -27,4 +27,14 @@ public interface PlmAttachmentService extends SuperService<PlmAttachmentEntity> 
      * @return void
      */
     void batchSave(List<String> attachUrlList, List<String> attachNameList, String type, String businessId);
+
+    
+    /**
+     * 根据业务表ids 获取附件信息
+     * @author yl
+     * @date 2023-06-21 12:01
+     * @param businessIdList
+     * @return void
+     */
+    List<PlmAttachmentEntity> listByBusinessIds(List<String> businessIdList);
 }

@@ -1301,6 +1301,23 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 if (finishStatus.equals(currentStatus) || suspendStatus.equals(currentStatus) || terminateStatus.equals(currentStatus)) {
                     throw new ServiceException(ApiError.ERROR_95180);
                 }
+
+            case NOT_START:
+                if (terminateStatus.equals(currentStatus)) {
+                    throw new ServiceException(ApiError.ERROR_95187);
+                }
+            case YES_START:
+                if (terminateStatus.equals(currentStatus)) {
+                    throw new ServiceException(ApiError.ERROR_95187);
+                }
+            case ING:
+                if (terminateStatus.equals(currentStatus)) {
+                    throw new ServiceException(ApiError.ERROR_95187);
+                }
+            case TERMINATE:
+                if (terminateStatus.equals(currentStatus)) {
+                    throw new ServiceException(ApiError.ERROR_95187);
+                }
         }
     }
 
@@ -1328,6 +1345,23 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             case SUSPEND:
                 if (approvalStatus.equals(currentStatus) || suspendStatus.equals(currentStatus) || terminateStatus.equals(currentStatus)) {
                     throw new ServiceException(ApiError.ERROR_95181);
+                }
+
+            case WAIT:
+                if(terminateStatus.equals(currentStatus)){
+                    throw new ServiceException(ApiError.ERROR_95187);
+                }
+            case PROBE:
+                if(terminateStatus.equals(currentStatus)){
+                    throw new ServiceException(ApiError.ERROR_95187);
+                }
+            case ID_DESIGN_ING:
+                if(terminateStatus.equals(currentStatus)){
+                    throw new ServiceException(ApiError.ERROR_95187);
+                }
+            case TERMINATE:
+                if(terminateStatus.equals(currentStatus)){
+                    throw new ServiceException(ApiError.ERROR_95187);
                 }
         }
 
@@ -2196,7 +2230,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //获取到前置任务完成的 任务id
         List<String> preFinishTaskIds = preTaskFinishInfoList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
         List<String> preTaskIds = preTaskList.stream().filter(p -> preFinishTaskIds.contains(p.getPreTaskId())).map(PreTaskEntity::getTaskId).collect(Collectors.toList());
-        delayTask.setPreTaskFinishCount(preTaskFinishInfoList.size());
+        delayTask.setPreTaskFinishCount(preTaskIds.size());
         delayTask.setPreTaskIdList(preTaskIds);
         delayTask.setFinishRate(getFinishRate(delayFinishCount, delayCount));
         info.setDelayTask(delayTask);

@@ -16,9 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -99,7 +97,7 @@ public class TaskCommentRefServiceImpl extends SuperServiceImpl<TaskCommentRefMa
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void addCommentRef(List<String> refUserIdList, String taskId, String commentId,List<FindUserDTO> userList) {
+    public void addCommentRef(List<String> refUserIdList, String taskId, String commentId, List<FindUserDTO> userList) {
         if (CollectionUtils.isNotEmpty(refUserIdList)) {
             List<TaskCommentRefEntity> addList = new ArrayList<>(refUserIdList.size());
             for (String refUserId : refUserIdList) {
@@ -115,6 +113,43 @@ public class TaskCommentRefServiceImpl extends SuperServiceImpl<TaskCommentRefMa
             this.saveBatch(addList);
         }
 
+    }
+
+    /**
+     * 更改发送结果
+     *
+     * @param refUserIds
+     * @param taskCommentId
+     * @param taskId
+     * @param sendRefResult
+     * @return void
+     * @author yl
+     * @date 2023-06-21 11:26
+     */
+    @Override
+    public void updateSendResult(List<String> refUserIds, String taskCommentId, String taskId, Boolean sendRefResult) {
+        if (CollectionUtils.isNotEmpty(refUserIds)) {
+            this.lambdaUpdate().set(TaskCommentRefEntity::getSendNoticeResult, sendRefResult).
+                    eq(TaskCommentRefEntity::getTaskCommentId, taskCommentId).
+                    in(TaskCommentRefEntity::getRefUserId, refUserIds).update();
+        }
+    }
+
+
+    /**
+     * 根据评论id 获取到对应的信息
+     *
+     * @param commentIdList
+     * @return java.util.List<com.erp.model.plm.entity.TaskCommentRefEntity>
+     * @author yl
+     * @date 2023-06-21 11:45
+     */
+    @Override
+    public List<TaskCommentRefEntity> listByCommentIdList(List<String> commentIdList) {
+        if (CollectionUtils.isEmpty(commentIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(TaskCommentRefEntity::getTaskCommentId,commentIdList).list();
     }
 
     private ProductMemberDTO.TaskRefDTO getTaskMember(String type, String typeName, List<MemberPagingShowDTO> list) {

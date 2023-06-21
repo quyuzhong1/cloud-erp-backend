@@ -74,6 +74,12 @@ public class TaskCommentDTO implements Serializable {
          */
         private String comment;
 
+        /**
+         * 评论id
+         */
+        private String commentId;
+
+
 
         /**
          * 附件url集合
@@ -93,9 +99,9 @@ public class TaskCommentDTO implements Serializable {
 
 
         /**
-         * 评论发送的结果
+         * 评论发送成功的结果数
          */
-        private Integer sendNoticeResultCount;
+        private Integer sendSuccessCount;
 
 
     }

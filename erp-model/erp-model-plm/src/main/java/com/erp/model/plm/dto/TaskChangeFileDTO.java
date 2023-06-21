@@ -2,10 +2,10 @@ package com.erp.model.plm.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * @Classname 变更文档
@@ -15,7 +15,8 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class TaskChangeFileDTO  implements Serializable {
+public class TaskChangeFileDTO implements Serializable {
+
 
     @NotBlank(message = "任务id 不能为空")
     private String taskId;
@@ -29,7 +30,24 @@ public class TaskChangeFileDTO  implements Serializable {
     private Integer uploadType;
 
     /**
-     * 上传文件集合
+     * 文件
      */
-    private List<UploadMultipartFileDTO> list;
+    private MultipartFile file;
+
+    /**
+     * 文件url
+     */
+    private String fileUrl;
+
+
+    /**
+     * 已交付完成的id
+     */
+    @NotBlank(message = "已交付完成的id 不能为空")
+    private String finishDocsId;
+
+
 }
+
+
+

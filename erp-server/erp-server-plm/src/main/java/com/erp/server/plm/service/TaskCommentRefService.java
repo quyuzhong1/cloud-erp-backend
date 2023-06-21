@@ -35,4 +35,25 @@ public interface TaskCommentRefService extends SuperService<TaskCommentRefEntity
      * @param userList
      */
     void addCommentRef(List<String> refUserIdList, String taskId,String commentId,List<FindUserDTO> userList);
+
+    /**
+     * 更改发送结果
+     * @author yl
+     * @date 2023-06-21 11:24
+     * @param refUserIds
+     * @param taskCommentId
+     * @param taskId
+     * @param sendRefResult
+     * @return void
+     */
+    void updateSendResult(List<String> refUserIds, String taskCommentId, String taskId, Boolean sendRefResult);
+
+    /**
+     * 根据评论id 获取到对应的信息
+     * @author yl
+     * @date 2023-06-21 11:45
+     * @param commentIdList
+     * @return java.util.List<com.erp.model.plm.entity.TaskCommentRefEntity>
+     */
+    List<TaskCommentRefEntity> listByCommentIdList(List<String> commentIdList);
 }

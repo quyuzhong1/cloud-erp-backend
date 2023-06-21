@@ -33,7 +33,6 @@ public class TaskDocsFinishController extends BaseController {
      * @return com.common.core.vo.ApiResult
      */
     @PostMapping("/importFile")
-    //  @RequestPermissions("plm:finish:docs:importFile")
     public ApiResult uploadFile(@ModelAttribute @Validated TaskUploadFileDTO dto) {
         Boolean flag = taskDocsFinishService.uploadFile(dto);
         return flag == true ? success() : failure();
@@ -50,7 +49,6 @@ public class TaskDocsFinishController extends BaseController {
      * @return com.common.core.vo.ApiResult
      */
     @PostMapping("/removeFile")
-    // @RequestPermissions("plm:finish:docs:removeFile")
     public ApiResult removeFile(@RequestParam(value = "finishDocsId") String finishDocsId) {
         Boolean flag = taskDocsFinishService.removeDocs(finishDocsId);
         return flag == true ? success() : failure();
@@ -64,7 +62,6 @@ public class TaskDocsFinishController extends BaseController {
      * @return com.common.core.vo.ApiResult
      */
     @PostMapping("/changeFile")
-    //   @RequestPermissions("plm:finish:docs:changeFile")
     public ApiResult changeFile(@ModelAttribute @Validated TaskChangeFileDTO dto) {
         Boolean flag = taskDocsFinishService.changeFile(dto);
         return flag == true ? success() : failure();
@@ -78,7 +75,6 @@ public class TaskDocsFinishController extends BaseController {
      * @return com.common.core.vo.ApiResult
      */
     @PostMapping("/updateFile")
-    //   @RequestPermissions("plm:finish:docs:changeFile")
     public ApiResult updateFile(@ModelAttribute @Validated TaskChangeFileDTO dto) {
         Boolean flag = taskDocsFinishService.updateFile(dto);
         return flag == true ? success() : failure();
@@ -92,7 +88,6 @@ public class TaskDocsFinishController extends BaseController {
      * @return com.common.core.vo.ApiResult
      */
     @PostMapping("/startChangeDocsProcess")
-    //   @RequestPermissions("plm:finish:docs:changeFile")
     public ApiResult startChangeDocsProcess(@Validated BaseIdDTO dto) {
         Boolean flag = taskDocsFinishService.startChangeDocsProcess(dto);
         return flag == true ? success() : failure();

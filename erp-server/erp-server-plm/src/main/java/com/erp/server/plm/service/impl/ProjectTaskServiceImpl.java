@@ -520,7 +520,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         boolean flag = this.save(taskEntity);
         if (flag) {
             //保存关注人
-            taskConcernService.batchAdd(taskEntity.getId(),dto.getProductId(),dto.getConcernUserIdList());
+            taskConcernService.batchAdd(taskEntity.getId(), dto.getProductId(), dto.getConcernUserIdList());
 
             //新增操作日志
             sysLogService.addSysLogBySave("新增了一个：[" + taskEntity.getName() + "]", SysLogClassPathEnum.PROJECTTASKENTITY.getDesc(), taskEntity.getId(), null);
@@ -1129,7 +1129,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         boolean flag = this.updateById(taskEntity);
         if (flag) {
             //修改关注人
-            taskConcernService.batchUpdate(taskEntity.getId(),dto.getProductId(),dto.getConcernUserIdList());
+            taskConcernService.batchUpdate(taskEntity.getId(), dto.getProductId(), dto.getConcernUserIdList());
             //保存交付文档
             taskDeliveryService.saveDeliveryDocs(taskEntity.getId(), dto.getProductId(), deliveryDocsList);
             //保存前置任务
@@ -3843,14 +3843,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         });
         sysLogService.addSysLogByBatchSave(sysLogEntityList);
 
-        List<TaskCommentEntity> taskCommentList = new ArrayList<>(taskIds.size());
+        List<TaskCommentDTO.AddDTO> taskCommentList = new ArrayList<>(taskIds.size());
+        //附件名
+        List<String> attachNameList = dto.getAttachNameList();
+        //附件url
+        List<String> attachUrlList = dto.getAttachNameList();
         for (String taskId : taskIds) {
             //添加评论
-            TaskCommentEntity comment = new TaskCommentEntity();
+            TaskCommentDTO.AddDTO comment = new TaskCommentDTO.AddDTO();
             comment.setComment("[审核结果-审核通过]" + dto.getComment());
             comment.setTaskId(taskId);
-            comment.setCreateUserName(loginUser.getUserName());
-            comment.setCreateUserId(loginUser.getUid());
+            comment.setAttachNameList(attachNameList);
+            comment.setAttachUrlList(attachUrlList);
             taskCommentList.add(comment);
         }
         taskCommentService.batchSaveTaskComment(taskCommentList);
@@ -3924,7 +3928,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         ) {
             throw new ServiceException(ApiError.ERROR_95046);
         }
-        List<TaskCommentEntity> taskCommentList = new ArrayList<>(taskIds.size());
+        List<TaskCommentDTO.AddDTO> taskCommentList = new ArrayList<>(taskIds.size());
 
         for (TaskHandleDataDTO entity : taskDataList) {
             String taskId = myToDoList.stream().filter(obj -> entity.getProcessId().equals(obj.getProcessInstanceId())).map(TaskShowDTO::getTaskId).findFirst().orElse("");
@@ -3937,16 +3941,14 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 approveProcess.setComment(dto.getComment());
                 workflowFeign.taskNoPass(approveProcess);
             }
-
             //添加评论
-            TaskCommentEntity comment = new TaskCommentEntity();
+            TaskCommentDTO.AddDTO comment = new TaskCommentDTO.AddDTO();
             comment.setComment("[审核结果-审核不通过]" + dto.getComment());
             comment.setTaskId(entity.getTaskId());
-            comment.setCreateUserName(loginUser.getUserName());
-            comment.setCreateUserId(loginUser.getUid());
+            comment.setAttachNameList(dto.getAttachNameList());
+            comment.setAttachUrlList(dto.getAttachUrlList());
             taskCommentList.add(comment);
         }
-
         List<String> taskIdList = list.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
         boolean flag = this.updateTaskState(taskIdList, TaskStateEnum.APPROVAL_NO_PASS.getCode(), null, null);
         if (flag) {
@@ -4807,7 +4809,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         LocalDate now = LocalDate.now();
         for (ProjectTaskEntity item : taskList) {
             ProductTask.TaskInfoDTO task = new ProductTask.TaskInfoDTO();
-            BeanMapper.copy(item,task);
+            BeanMapper.copy(item, task);
             task.setTaskId(item.getId());
             String chargeId = item.getChargeId();
             task.setChargeIdList(Arrays.asList(chargeId.split(",")));

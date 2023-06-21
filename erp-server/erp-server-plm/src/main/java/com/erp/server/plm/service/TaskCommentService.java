@@ -23,7 +23,7 @@ public interface TaskCommentService extends IService<TaskCommentEntity> {
     Boolean saveTaskComment(TaskCommentDTO.AddDTO dto);
 
 
-    void batchSaveTaskComment(List<TaskCommentEntity> taskCommentList);
+    void batchSaveTaskComment(List<TaskCommentDTO.AddDTO> taskCommentList);
 
     /**
      * 根据任务id 获取到对应任务信息

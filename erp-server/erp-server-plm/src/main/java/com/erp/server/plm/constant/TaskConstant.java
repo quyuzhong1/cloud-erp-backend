@@ -80,5 +80,15 @@ public interface TaskConstant {
     //计划结束时间
     String PLAN_END_TIME = "planEndTime";
 
+    /**
+     * 本地上传
+     */
+    Integer LOCAL_UPLOAD=0;
+
+    /**
+     * 链接
+     */
+    Integer URL=1;
+
 
 }
