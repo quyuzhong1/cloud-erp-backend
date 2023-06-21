@@ -39,8 +39,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.wms.entity.PoInstockDetailEntity;
-import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -387,32 +385,14 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
     private void checkGenerateUpdate (List<SubcontractChangeDetailEntity> updateList) {
         List<String> sourceDetailIds = updateList.stream().map(SubcontractChangeDetailEntity::getSourceDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> podList = purchaseOrderDetailService.listBySourceDetailIds(sourceDetailIds);
-        if (CollectionUtils.isNotEmpty(podList)) {
-            List<String> podIds = podList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
-            //收货单
-            List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
-            //入库单
-            List<PoInstockDetailEntity> poInstockDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
-
-            for (SubcontractChangeDetailEntity updateEntity : updateList) {
-                PurchaseOrderDetailEntity detailEntity = podList.stream().filter(obj -> obj.getSourceDetailId().equals(updateEntity.getSourceDetailId())).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(detailEntity)) {
-                    continue;
-                }
-                if (CollectionUtils.isNotEmpty(receiveDetailList)) {
-                    //收货数量
-                    Integer receiveTotalQty = receiveDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                    if (receiveTotalQty > updateEntity.getQty()) {
-                        throw new ServiceException(new ApiResult(ApiError.ERROR_98087.code,StrUtil.format(ApiError.ERROR_98087.msg,updateEntity.getSkuNo(),updateEntity.getQty(),receiveTotalQty)));
-                    }
-                }
-                if (CollectionUtils.isNotEmpty(poInstockDetailList)) {
-                    //入库数量
-                    Integer stockInTotalQty = poInstockDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
-                    if (stockInTotalQty > updateEntity.getQty()) {
-                        throw new ServiceException(new ApiResult(ApiError.ERROR_98088.code,StrUtil.format(ApiError.ERROR_98088.msg,updateEntity.getSkuNo(),updateEntity.getQty(),stockInTotalQty)));
-                    }
-                }
+        if (CollectionUtils.isEmpty(podList)) {
+            return;
+        }
+        for (SubcontractChangeDetailEntity updateEntity : updateList) {
+            //采购数量
+            Integer purchaseQty = podList.stream().filter(obj -> obj.getSourceDetailId().equals(updateEntity.getSourceDetailId())).map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (purchaseQty > updateEntity.getQty()) {
+                throw new ServiceException(new ApiResult(ApiError.ERROR_98087.code,StrUtil.format(ApiError.ERROR_98087.msg,updateEntity.getSkuNo(),updateEntity.getQty(),purchaseQty)));
             }
         }
     }
