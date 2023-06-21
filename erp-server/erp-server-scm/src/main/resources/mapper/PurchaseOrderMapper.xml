@@ -430,7 +430,6 @@
 
     <select id="listPoRefSubChildByParentPodIds"
             resultType="com.erp.model.scm.dto.PurchaseOrderDTO$SubcontractOrderChildDTO">
-
         select
             ppod.id as parentPodId,
             ppod.sku_id as parentSkuId,
@@ -442,7 +441,7 @@
             pod.sku_no as childSkuNo,
             po.delivery_warehouse_id as childWarehouseId,
             pod.warehouse_location as childWarehouseLocation,
-            po.code as childCode;
+            po.code as childCode,
             po.approve_status as childApproveStatus
         from purchase_order_detail ppod
         inner join subcontract_order_detail psod on psod.id = ppod.source_detail_id and ppod.is_deleted = false
