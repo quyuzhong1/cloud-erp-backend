@@ -730,6 +730,11 @@ public class PurchaseApplicationDTO implements Serializable {
         private String warehouseId;
 
         /**
+         * 库位
+         */
+        private String warehouseLocation;
+
+        /**
          * 供应商id
          */
         @NotBlank(message = "供应商不能为空")
