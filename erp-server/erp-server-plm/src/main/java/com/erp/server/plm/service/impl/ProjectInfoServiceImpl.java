@@ -170,7 +170,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         String projectId = dto.getProjectId();
         ProjectInfoEntity project = this.getById(projectId);
         if (Objects.isNull(project)) {
-            throw new ServiceException(ApiError.ERROR_95026);
+            throw new ServiceException(ApiError.ERROR_95188);
         }
         //检查是否有SKU生成
         List<ProductDetailEntity> skuList = productDetailService.getSkuListByProductId(dto.getProductId());
@@ -232,7 +232,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         List<String> projectIdList = dto.getProjectIdList();
         List<ProjectInfoEntity> projectList = this.listByIds(projectIdList);
         if (CollectionUtils.isEmpty(projectList)) {
-            throw new ServiceException(ApiError.ERROR_95026);
+            throw new ServiceException(ApiError.ERROR_95189);
         }
         Integer notStart = ProjectStateEnum.NOT_START.getState();
         long count = projectList.stream().filter(p -> !p.getProjectStatus().equals(notStart)).count();
