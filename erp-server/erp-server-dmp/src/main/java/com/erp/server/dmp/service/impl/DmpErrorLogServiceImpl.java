@@ -1,12 +1,10 @@
-package com.erp.server.dmp.pull.service.dmp.impl;
+package com.erp.server.dmp.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.server.dmp.pull.mapper.DmpErrorLogMapper;
-import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
+import com.erp.server.dmp.service.DmpErrorLogService;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.Resource;
 
 /**
  * 错误日志服务类

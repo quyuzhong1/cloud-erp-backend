@@ -1,10 +1,10 @@
-package com.erp.server.dmp.pull.service.dmp.impl;
+package com.erp.server.dmp.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.server.dmp.pull.mapper.DmpSkuInfoMapper;
-import com.erp.server.dmp.pull.service.dmp.DmpSkuInfoService;
+import com.erp.server.dmp.service.DmpSkuInfoService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

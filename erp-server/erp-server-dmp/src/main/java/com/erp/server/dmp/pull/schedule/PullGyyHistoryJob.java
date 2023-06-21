@@ -7,7 +7,7 @@ import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.server.dmp.pull.service.IReportHistoryService;
-import com.erp.server.dmp.pull.service.dmp.PlatformApiTaskService;
+import com.erp.server.dmp.service.PlatformApiTaskService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;

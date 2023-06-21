@@ -3,7 +3,6 @@ package com.erp.server.dmp.pull.schedule;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -14,29 +13,23 @@ import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
-import com.erp.server.dmp.pull.service.IReportHistoryService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
-import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
-import com.erp.server.dmp.pull.service.dmp.PlatformApiTaskService;
+import com.erp.server.dmp.service.DmpErrorLogService;
+import com.erp.server.dmp.service.PlatformApiTaskService;
 import com.erp.server.dmp.pull.thread.PullErpDateThread;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ThreadFactory;
 
 @Component
 @Slf4j

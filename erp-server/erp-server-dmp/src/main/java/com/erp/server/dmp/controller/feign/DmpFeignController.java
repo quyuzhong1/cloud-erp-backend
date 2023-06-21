@@ -4,7 +4,7 @@ import cn.hutool.json.JSONObject;
 import com.common.core.controller.BaseController;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.dto.KingdeeDTO;
-import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
+import com.erp.server.dmp.service.DmpShopInfoService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import org.springframework.web.bind.annotation.PostMapping;

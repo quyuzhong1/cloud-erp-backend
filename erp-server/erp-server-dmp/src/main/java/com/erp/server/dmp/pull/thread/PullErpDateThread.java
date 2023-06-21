@@ -1,12 +1,10 @@
 package com.erp.server.dmp.pull.thread;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.utils.RedisUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.RequestDTO;
@@ -14,12 +12,11 @@ import com.erp.model.dmp.entity.DmpErrorLogEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.server.dmp.config.SaveHandler;
 import com.erp.server.dmp.pull.service.ModelService;
-import com.erp.server.dmp.pull.service.dmp.DmpErrorLogService;
-import com.erp.server.dmp.pull.service.dmp.PlatformApiTaskService;
+import com.erp.server.dmp.service.DmpErrorLogService;
+import com.erp.server.dmp.service.PlatformApiTaskService;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;

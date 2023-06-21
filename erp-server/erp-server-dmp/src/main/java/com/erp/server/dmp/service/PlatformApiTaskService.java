@@ -1,4 +1,4 @@
-package com.erp.server.dmp.pull.service.dmp;
+package com.erp.server.dmp.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;

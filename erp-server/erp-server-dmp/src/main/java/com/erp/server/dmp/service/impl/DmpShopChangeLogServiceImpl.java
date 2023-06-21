@@ -1,14 +1,12 @@
-package com.erp.server.dmp.pull.service.dmp.impl;
+package com.erp.server.dmp.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.dmp.entity.DmpShopChangeLogEntity;
 import com.erp.server.dmp.pull.mapper.DmpShopChangeLogMapper;
-import com.erp.server.dmp.pull.service.dmp.DmpShopChangeLogService;
-import org.apache.ibatis.annotations.Param;
+import com.erp.server.dmp.service.DmpShopChangeLogService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Service
 public class DmpShopChangeLogServiceImpl extends ServiceImpl<DmpShopChangeLogMapper, DmpShopChangeLogEntity>

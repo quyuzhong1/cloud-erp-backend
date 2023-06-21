@@ -1,12 +1,9 @@
-package com.erp.server.dmp.pull.service.dmp.impl;
+package com.erp.server.dmp.service.impl;
 
-import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.dmp.pull.mapper.ProductInfoMapper;
-import com.erp.server.dmp.pull.service.dmp.ProductInfoService;
+import com.erp.server.dmp.service.ProductInfoService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
