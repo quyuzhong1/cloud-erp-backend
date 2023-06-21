@@ -217,6 +217,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (CollectionUtils.isNotEmpty(podIds)) {
             purchaseOrderService.finishDelivery(podIds, remark,Boolean.FALSE);
         }
+        //委外订单更新到货状态
+        subcontractOrderDetailService.updateArrivalStatusByIds(ArrivalStatusEnum.ARRIVED.getCode(),ids,Boolean.TRUE);
 
         //操作日志
         List<Pair<String, String>> pairList = detailList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());

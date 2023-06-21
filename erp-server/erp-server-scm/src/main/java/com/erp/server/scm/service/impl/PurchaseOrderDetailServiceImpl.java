@@ -487,9 +487,5 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         list.forEach(req -> req.setIsDeleted(Boolean.TRUE));
         //同步到WMS
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(), list, IdUtil.simpleUUID());
-
-        List<String> sourceDetailIds = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getSourceDetailId())).map(PurchaseOrderDetailEntity::getSourceDetailId).collect(Collectors.toList());
-        //委外订单更新到货状态
-        subcontractOrderDetailService.syncArrivalStatusByIds(sourceDetailIds);
     }
 }
