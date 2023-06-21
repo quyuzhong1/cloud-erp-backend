@@ -46,7 +46,7 @@ public class KingdeeDeliveryDetailItemEntity {
     private String fPrice;
 
     @Alias("FTaxPrice")
-    private BigDecimal fTaxPrice;
+    private String fTaxPrice;
     @Alias("FIsFree")
     private String fIsFree;
     @Alias("FArrivalStatus")
