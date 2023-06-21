@@ -89,6 +89,8 @@ public enum PlatformApiEnum {
     //网店管理
     ECC_SHOP(22, "ECC_Shop", MongoTableNameContant.ORIGINAL_KINGDEE_ECC_SHOP, TaskConstant.KINGDEE_PULL_DATA_TASK),
 
+    STK_TRANSFERDIRECT(23,"STK_TransferDirect", MongoTableNameContant.ORIGINAL_KINGDEE_DIRECT_TRANSFER, TaskConstant.KINGDEE_PULL_DATA_TASK),
+
     IML_OMS_ASN_LIST(23,"getAsnList", MongoTableNameContant.ORIGINAL_IML_INBOUND_ORDER, TaskConstant.IML_PULL_DATA_TASK),
 
     ;

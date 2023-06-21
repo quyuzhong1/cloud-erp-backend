@@ -470,6 +470,7 @@ public class OrderEntity extends CleanBaseDTO {
      */
     private LocalDateTime lastPushDeliveryTime;
 
+
     @Override
     public String toString() {
         return "OrderEntity{" +

@@ -1,4 +1,4 @@
-package com.erp.server.dmp.task;
+package com.erp.server.dmp.pull.schedule;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;

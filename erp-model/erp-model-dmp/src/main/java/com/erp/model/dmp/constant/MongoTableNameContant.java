@@ -119,6 +119,11 @@ public interface MongoTableNameContant {
     String ORIGINAL_KINGDEE_DELIVERY_DETAIL = "original_kingdee_delivery_detail";
 
     /**
+     * 直接调拨单
+     */
+    String ORIGINAL_KINGDEE_DIRECT_TRANSFER = "original_kingdee_direct_transfer";
+
+    /**
      * 谷仓入库单
      */
     String ORIGINAL_GC_INBOUND_ORDER = "original_gc_inbound_order";
@@ -141,7 +146,7 @@ public interface MongoTableNameContant {
             case TaskConstant.GYY_PULL_DATA_TASK:
                 return Arrays.asList(ORIGINAL_GYY_ORDER, ORIGINAL_GYY_SKU, ORIGINAL_GYY_RETURN_ORDER, ORIGINAL_GYY_REFUND, ORIGINAL_GYY_SHOP, ORIGINAL_GYY_DELIVERY_DETAIL);
             case TaskConstant.KINGDEE_PULL_DATA_TASK:
-                return Arrays.asList(ORIGINAL_KINGDEE_ORDER, ORIGINAL_KINGDEE_SKU, ORIGINAL_KINGDEE_RETURN_ORDER, ORIGINAL_KINGDEE_REFUND, ORIGINAL_KINGDEE_SHOP, ORIGINAL_KINGDEE_ECC_SHOP, ORIGINAL_KINGDEE_DELIVERY_DETAIL);
+                return Arrays.asList(ORIGINAL_KINGDEE_ORDER, ORIGINAL_KINGDEE_SKU, ORIGINAL_KINGDEE_RETURN_ORDER, ORIGINAL_KINGDEE_REFUND, ORIGINAL_KINGDEE_SHOP, ORIGINAL_KINGDEE_ECC_SHOP, ORIGINAL_KINGDEE_DELIVERY_DETAIL,ORIGINAL_KINGDEE_DIRECT_TRANSFER);
             case TaskConstant.IML_PULL_DATA_TASK:
                 return Arrays.asList(ORIGINAL_IML_INBOUND_ORDER);
             default:

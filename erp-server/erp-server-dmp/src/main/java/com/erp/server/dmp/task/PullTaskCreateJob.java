@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.server.dmp.pull.service.dmp.DmpOrderInfoService;
-import com.erp.server.dmp.pull.service.dmp.DmpOrderItemService;
 import com.erp.server.dmp.pull.service.dmp.DmpRefundInfoService;
 import com.erp.server.dmp.pull.service.dmp.DmpReturnOrderInfoService;
 import com.erp.server.dmp.service.impl.CreateRequestReportTaskService;
@@ -36,9 +35,6 @@ public class PullTaskCreateJob {
 
     @Resource
     DmpRefundInfoService dmpRefundInfoService;
-
-    @Resource
-    DmpOrderItemService dmpOrderItemService;
 
     /**
      * 定时扫描需要创建拉取任务拉取数据的任务

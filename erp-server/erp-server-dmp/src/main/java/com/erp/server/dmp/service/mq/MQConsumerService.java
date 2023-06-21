@@ -21,6 +21,7 @@ import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.dmp.*;
 import com.erp.server.dmp.service.DmpBomService;
+import com.erp.server.dmp.service.DmpTransferInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
@@ -63,6 +64,8 @@ public class MQConsumerService {
     private DmpBomService dmpBomService;
     @Resource
     private MongoService mongoService;
+    @Resource
+    private DmpTransferInfoService dmpTransferInfoService;
 
     // topic需要和生产者的topic一致，consumerGroup属性是必须指定的，内容可以随意
     // selectorExpression的意思指的就是tag，默认为“*”，不设置的话会监听所有消息
@@ -305,6 +308,24 @@ public class MQConsumerService {
             if ("machining".equals(ext.getRelationType())){
                 OrderMongoDTO updateDto = new OrderMongoDTO(ext.get_id());
                 finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_SKU, SkuInfoEntity.class);
+            }
+        }
+    }
+
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
+            selectorExpression = "kingdee_transfer_direct_tag",
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-erp_transfer_direct_consumer")
+    public class ConsumerErpTransferDirectInfo implements RocketMQListener<DmpTransferInfoEntity> {
+        @Override
+        public void onMessage(DmpTransferInfoEntity ext) {
+            log.info("监听直接调拨单信息消息：entity={}", JSONUtil.toJsonStr(ext));
+            // 调用订单写入与更新
+            dmpTransferInfoService.checkOrder(ext);
+            MapUtil mapUtil = getMapParam();
+            if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = new OrderMongoDTO(ext.getSourceId());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_DIRECT_TRANSFER, KingdeeTransferDirectEntity.class);
             }
         }
     }

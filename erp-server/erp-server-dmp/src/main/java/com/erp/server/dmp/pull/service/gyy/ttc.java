@@ -1,7 +1,14 @@
 package com.erp.server.dmp.pull.service.gyy;
 
 import com.alibaba.fastjson.JSONObject;
+import com.erp.model.dmp.kingdee.KingdeeTransferDirectEntity;
+import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ttc {
 
@@ -9,19 +16,18 @@ public class ttc {
         //读取配置，初始化SDK
         K3CloudApi client = new K3CloudApi();
 
-        String formId = "BD_MATERIAL";
+        String formId = "STK_TransferDirect";
+        String fieldKey = "FId,FBillNo,FBizType,FTransferDirect,FTransferBizType,FSaleOrgId,FSaleOrgId.FName," +
+                "FSettleOrgId,FSettleOrgId.FName,FStockOutOrgId,FStockOutOrgId.FName,FOwnerOutIdHead,FOwnerOutIdHead.FName," +
+                "FStockOrgId,FStockOrgId.FName,FSettleCurrId,FSettleCurrId.FName,FExchangeTypeId,FExchangeTypeId.FName,FExchangeRate," +
+                "FDate,FNote,FBaseCurrId,FBaseCurrId.FName,FDocumentStatus,FDocumentStatus.FCaption,FCreateDate,FModifierId,FModifyDate,FCancelStatus,FCancelStatus.FCaption,FCancelDate," +
+                "FBillEntry_FEntryID,FSrcStockId,FSrcStockId.FName,FDestStockId,FDestStockId.FName," +
+                "FRowType,FMaterialId,FMaterialId.FName,FUnitID,FUnitID.FName,FQty," +
+                "FSrcStockStatusId,FSrcStockStatusId.FName,FDestStockStatusId,FDestStockStatusId.FName,FBusinessDate,FIsFree,FDestMaterialId,FDestMaterialId.FName";
 
-
-        String jsonData = "{\"CreateOrgId\":0,\"Number\":\"0005\",\"Id\":\"\",\"IsSortBySeq\":\"false\"}";
-//调用接口
-        String resultJson = client.view(formId,jsonData);
-
-        System.out.println(resultJson);
-
-        String s = JSONObject.toJSONString(resultJson);
-
-
-        Object parse = JSONObject.parseObject(s);
+        KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(formId, 1);
+        List<Map<String, Object>>objects = kingdeeApiUtils.queryList("", fieldKey, 1000, 1,0);
+        System.out.println(JSONObject.toJSONString(objects));
 
 
     }

@@ -80,6 +80,12 @@ public enum RocketMqTagEnum {
      * 金蝶sku信息tag
      */
     KINGDEE_SKU_INFO_TAG(14,RocketMqTagEnum.SKU_INFO,"kingdee_sku_info_tag"),
+
+    /**
+     * 金蝶直接调拨订单tag
+     */
+
+    KINGDEE_TRANSFER_DIRECT_TAG(15,RocketMqTagEnum.TRANSFER,"kingdee_transfer_direct_tag"),
     /**
      * 马帮销售订单tag
      */
@@ -365,6 +371,8 @@ public enum RocketMqTagEnum {
     public static final String SYNC_SCM = "sync_scm";
 
     public static final String MSG_WARN = "msg_warn";
+
+    public static final String TRANSFER = "transfer";
 
     private Integer code;
 
