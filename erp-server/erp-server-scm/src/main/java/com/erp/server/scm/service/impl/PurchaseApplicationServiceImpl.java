@@ -11,10 +11,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -31,6 +28,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.SkuPurchaseDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchaseApplicationExportExcelDTO;
@@ -69,6 +67,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -328,6 +327,11 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         searchParamDTO.setPurchaseApplicationDetailIds(detailIds);
         List<PurchaseApplicationRefPoDTO.ListDTO> refList = purchaseApplicationRefPoService.list(searchParamDTO);
         List<String> strList = new ArrayList<>();
+
+        List<String> skuIds = list.stream().map(PurchaseApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuPurchaseDTO.PurchaseInfo> skuPurchaseList = plmTaskFeign.getPurchaseInfoBySkuIds(skuIds);
+        Map<String, SkuPurchaseDTO.PurchaseInfo> skuPurchaseMap = skuPurchaseList.stream().collect(Collectors.toMap(SkuPurchaseDTO.PurchaseInfo::getSkuId, Function.identity()));
+
         for (PurchaseApplicationDetailEntity entity :list) {
             PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO dto = new PurchaseApplicationDTO.ViewGeneratePurchaseOrderDTO();
             BeanMapperUtils.copy(entity,dto);
@@ -345,6 +349,13 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 purchaseQty = refList.stream().filter(obj -> entity.getId().equals(obj.getPurchaseApplicationDetailId())).map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(0, Integer::sum);
             }
             dto.setPurchasedQty(purchaseQty);
+
+            // 采购员、供应商
+            SkuPurchaseDTO.PurchaseInfo skuPurchase = skuPurchaseMap.getOrDefault(entity.getSkuId(), new SkuPurchaseDTO.PurchaseInfo());
+            dto.setPurchaseUserId(skuPurchase.getPurchaseUserId());
+            dto.setPurchaseUserName(skuPurchase.getPurchaseUserName());
+            dto.setSupplierId(skuPurchase.getSupplierId());
+            dto.setSupplierName(skuPurchase.getSupplierName());
 
             //清空第一条明细后其他明细中的单号
             boolean contains = strList.contains(entity.getPurchaseApplicationId());

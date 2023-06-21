@@ -221,4 +221,12 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/bom/listBomByParentSkuIds")
     List<BomInfoEntity> listBomByParentSkuIds(List<String> skuIds);
+
+    /**
+     * 根据sku id集合获取采购员、供应商信息
+     * @param skuIds
+     * @return
+     */
+    @PostMapping("/feign/product/getPurchaseInfoBySkuIds")
+    List<SkuPurchaseDTO.PurchaseInfo> getPurchaseInfoBySkuIds(@RequestBody @Validated List<String> skuIds);
 }

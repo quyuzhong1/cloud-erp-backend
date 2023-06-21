@@ -1,10 +1,9 @@
 package com.erp.server.plm.controller.feign;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
-import com.erp.model.plm.dto.BasicCategoryDTO;
-import com.erp.model.plm.dto.CleanSkuDto;
-import com.erp.model.plm.dto.ProductDetailDTO;
-import com.erp.model.plm.dto.ProductInfoDTO;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.vo.ProductVO;
@@ -12,6 +11,8 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeService;
 import com.erp.server.plm.service.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -50,6 +51,9 @@ public class ProductSkuFeignController {
 
     @Resource
     private WorkOptionService workOptionService;
+
+    @Autowired
+    private ProductPurchaseService productPurchaseService;
 
     /**
      * 根据sku查询sku表信息
@@ -193,6 +197,16 @@ public class ProductSkuFeignController {
     @PostMapping("/getRolePeople")
     public List<ProductInfoDTO.ProductRolePeopleDTO> getRolePeople(@RequestBody List<String> skuIds) {
         return productInfoService.getRolePeople(skuIds);
+    }
+
+    /**
+     * 根据sku id集合获取采购员、供应商信息
+     * @param skuIds
+     * @return
+     */
+    @PostMapping("/getPurchaseInfoBySkuIds")
+    public List<SkuPurchaseDTO.PurchaseInfo> getPurchaseInfoBySkuIds(@RequestBody @Validated List<String> skuIds) {
+        return productPurchaseService.getInfoBySkuIds(skuIds);
     }
 
 }
