@@ -333,9 +333,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         purchaseOrderSupplierService.deleteByPurchaseOrderIds(ids);
         //删除明细数据
         purchaseOrderDetailService.removeByPurchaseOrderIds(ids);
+        //同步到WMS
         List<PurchaseOrderEntity> entityList = lambdaQuery().in(PurchaseOrderEntity::getId, ids).list();
         entityList.forEach(req -> req.setIsDeleted(Boolean.TRUE));
-        //同步到WMS
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), entityList, IdUtil.simpleUUID());
         //删除主表数据
         this.removeByIds(ids);
@@ -383,8 +383,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //更新单据状态
             updateApproveStatusForApprove(ids, ApproveStatusEnum.REJECT.getStatus());
         }
+
         //同步到WMS
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), list, IdUtil.simpleUUID());
+        List<PurchaseOrderEntity> toWmsList = this.getList(ids);
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), toWmsList, IdUtil.simpleUUID());
 
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -434,7 +436,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //审核通过发送金蝶
         list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
         //同步到WMS
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), list, IdUtil.simpleUUID());
+        List<PurchaseOrderEntity> toWmsList = this.getList(ids);
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), toWmsList, IdUtil.simpleUUID());
 
         return Boolean.TRUE;
     }
@@ -460,7 +463,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("采购订单【%s】取消流程", ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "取消流程操作");
         //同步到WMS
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), list, IdUtil.simpleUUID());
+        List<PurchaseOrderEntity> toWmsList = this.getList(ids);
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), toWmsList, IdUtil.simpleUUID());
 
         return Boolean.TRUE;
     }
@@ -655,7 +659,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购订单【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "提交操作");
         //同步到WMS
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), list, IdUtil.simpleUUID());
+        List<PurchaseOrderEntity> toWmsList = this.getList(ids);
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), toWmsList, IdUtil.simpleUUID());
         return Boolean.TRUE;
     }
 
@@ -741,7 +746,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //审核通过发送金蝶
         list.forEach(obj -> syncKingdeePurchaseOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
         //同步到WMS
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), list, IdUtil.simpleUUID());
+        List<PurchaseOrderEntity> toWmsList = this.getList(ids);
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), toWmsList, IdUtil.simpleUUID());
         return Boolean.TRUE;
     }
 

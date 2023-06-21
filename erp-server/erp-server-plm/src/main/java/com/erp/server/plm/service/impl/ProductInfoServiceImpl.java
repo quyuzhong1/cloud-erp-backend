@@ -1007,9 +1007,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 .setOperation("产品状态变更").setContent("编辑了[产品状态]由[" + ApprovalStatusEnum.getName(productInfoEntity.getApprovalStatus()) + "]改为[" + name + "]"));
         this.update(updateWrapper);
 
-        //同步到SCM
         ProductInfoEntity infoEntity = this.getById(productId);
+        //同步到SCM
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(infoEntity), IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(infoEntity), IdUtil.simpleUUID());
 
     }
 
