@@ -5,8 +5,10 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
+import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -15,6 +17,7 @@ import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
+import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -198,16 +201,16 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         //平台单据创建时间
         if (StringUtils.isNotBlank(orderEntity.getCreateDate()) && !"null".equals(orderEntity.getCreateDate())) {
-            deliveryDetailInfoEntity.setPlatformCreateTime(LocalDateTime.parse(orderEntity.getCreateDate()));
+            deliveryDetailInfoEntity.setPlatformCreateTime(LocalDateUtil.strToLocalDateTime(orderEntity.getCreateDate()));
         }
 
         //平台单据修改时间
         if (StringUtils.isNotBlank(orderEntity.getOperTime()) && !"null".equals(orderEntity.getOperTime())) {
-            deliveryDetailInfoEntity.setPlatformUpdateTime(LocalDateTime.parse(orderEntity.getOperTime()));
+            deliveryDetailInfoEntity.setPlatformUpdateTime(LocalDateUtil.strToLocalDateTime(orderEntity.getCreateDate()));
         }
         //发货时间
         if (StringUtils.isNotBlank(orderEntity.getExpressTime()) && !"null".equals(orderEntity.getExpressTime())) {
-            deliveryDetailInfoEntity.setDeliveryDate(LocalDateTime.parse(orderEntity.getExpressTime()));
+            deliveryDetailInfoEntity.setDeliveryDate(LocalDateUtil.strToLocalDateTime(orderEntity.getCreateDate()));
         }
         //备注
         deliveryDetailInfoEntity.setRemark(orderEntity.getRemark());
@@ -217,7 +220,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
         deliveryDetailInfoEntity.setCompanyId(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getCode());
         //企业名称
         deliveryDetailInfoEntity.setCompanyName(ApiKingdeeOrganizationEnum.ORGANIZATION_WEIJI.getName());
-        deliveryDetailInfoEntity.setPlatformApproveTime(LocalDateTime.parse(orderEntity.getCreateDate()));
+        deliveryDetailInfoEntity.setPlatformApproveTime(LocalDateUtil.strToLocalDateTime(orderEntity.getCreateDate()));
         //创建时间
         deliveryDetailInfoEntity.setCreateTime(LocalDateTime.now());
         deliveryDetailInfoEntity.setDetails(initOrderItem(orderEntity));
@@ -276,10 +279,10 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager",  propagation = Propagation.REQUIRES_NEW)
     public void addDeliveryOrder(OrderEntity entity) {
         // 更新mongo数据
-//        entity.setCleanToDelivery(Boolean.TRUE);
-//        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
-//        OrderMongoDTO updateDto = new OrderMongoDTO(entity.get_id());
-//        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
+        OrderMongoDTO updateDto = OrderMongoDTO.getByOrderIdAndSaleNum(entity.getPlatformOrderId(), entity.getSalesRecordNumber());
+        entity.setCleanToDelivery(Boolean.TRUE);
+        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
+        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
         // 构造订单结构
         DmpDeliveryDetailInfoEntity deliveryDetailInfo = initOrderInfoEntity(entity);
         // 异步推送到MQ
