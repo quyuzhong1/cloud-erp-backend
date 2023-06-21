@@ -691,7 +691,10 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean terminate(List<String> ids) {
-        List<ProjectInfoEntity> projectInfoList = this.listByIds(ids);
+        List<ProjectInfoEntity> projectInfoList = this.listByProductIds(ids);
+        if (CollectionUtils.isEmpty(projectInfoList)) {
+            throw new ServiceException(ApiError.ERROR_95026);
+        }
         Integer terminate = ProjectStateEnum.TERMINATE.getState();
         projectInfoList.stream().forEach(p -> p.setProjectStatus(terminate));
         Boolean result = this.updateBatchById(projectInfoList);
@@ -788,11 +791,11 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         LoginUser loginUser = commonService.getUserInfo();
         Integer finishState = ProjectStateEnum.FINISH.getState();
         List<ProjectInfoEntity> projectList = this.getByProductIdList(productIdList);
-        if(CollectionUtils.isEmpty(projectList)){
+        if (CollectionUtils.isEmpty(projectList)) {
             throw new ServiceException(ApiError.ERROR_95019);
         }
         //检查项目完成情况
-        long count = projectList.stream().filter(p->!finishState.equals(p.getProjectStatus())).count();
+        long count = projectList.stream().filter(p -> !finishState.equals(p.getProjectStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_95019);
         }
