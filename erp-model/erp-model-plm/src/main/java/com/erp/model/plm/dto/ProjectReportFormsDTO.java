@@ -71,7 +71,7 @@ public class ProjectReportFormsDTO implements Serializable {
         /**
          * 产品分类
          */
-        private String categoryId;
+        private List<String> categoryIdList;
         /**
          * 立项状态
          */
