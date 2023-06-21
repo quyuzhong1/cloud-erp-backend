@@ -101,8 +101,31 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
             statusList.add(ProjectStateEnum.FINISH.getState());
             dto.setProjectStatusList(statusList);
         }
-
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<ProjectReportFormsDTO.PagingView> pagingViewList = baseMapper.projectReportFormsExportExcel(dto);
+        for (ProjectReportFormsDTO.PagingView pagingView : pagingViewList) {
+            FindUserDTO findUserDTO = userList.stream().filter(req -> req.getUserId().equals(pagingView.getProjectChargeId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(findUserDTO)) {
+                pagingView.setProjectChargeName(findUserDTO.getUserName());
+            }
+            pagingView.setProgressStatusName(ProductProgressStatusEnum.getName(pagingView.getProgressStatus()));
+            pagingView.setApprovalStatusName(ApprovalStatusEnum.getName(pagingView.getApprovalStatus()));
+            pagingView.setProjectStatusName(ProjectStateEnum.getName(pagingView.getProjectStatus()));
+            double approvalProgress = 0;
+            double projectProgress = 0;
+            //立项任务完成
+            if (pagingView.getApprovalTaskCount() != null && pagingView.getApprovalTaskCount() != 0) {
+                approvalProgress = ((double) pagingView.getApprovalFinishTaskCount() / pagingView.getApprovalTaskCount()) * 100;
+            }
+            //项目任务完成
+            if (pagingView.getProjectTaskCount() != null && pagingView.getProjectTaskCount() != 0) {
+                projectProgress = ((double) pagingView.getProjectFinishTaskCount() / pagingView.getProjectTaskCount()) * 100;
+            }
+            approvalProgress = Math.round(approvalProgress * 100) / 100;
+            projectProgress = Math.round(projectProgress * 100) / 100;
+            pagingView.setApprovalProgress(BigDecimal.valueOf(approvalProgress));
+            pagingView.setProjectProgress(BigDecimal.valueOf(projectProgress));
+        }
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/exportExcelProjectReportForms.xlsx";
         String name = "项目报表";
@@ -120,6 +143,7 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
     @Override
     public Boolean exportExcelTaskDetail(ProjectReportFormsDTO.TaskDetailParam dto, HttpServletResponse response) {
         List<ProjectReportFormsDTO.TaskDetail> pagingViewList = baseMapper.taskDetailView(dto);
+        pagingViewList.forEach(req -> req.setTaskStateName(TaskStateEnum.getName(req.getTaskState())));
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/exportExcelTaskDetail.xlsx";
         String name = "项目任务明细";
