@@ -1284,6 +1284,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @param targetStatus  目标状态
      */
     private void checkProjectStatus(Integer currentStatus, Integer targetStatus) {
+        if (Objects.isNull(targetStatus)) {
+            return;
+        }
         ProjectStateEnum status = ProjectStateEnum.getEnum(targetStatus);
         Integer suspendStatus = ProjectStateEnum.SUSPEND.getState();
         Integer terminateStatus = ProjectStateEnum.TERMINATE.getState();
@@ -1293,7 +1296,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         switch (status) {
             //完成
             case FINISH:
-                if (!Arrays.asList(yesStartStatus,ingStatus).contains(currentStatus)) {
+                if (!Arrays.asList(yesStartStatus, ingStatus).contains(currentStatus)) {
                     throw new ServiceException(ApiError.ERROR_95182);
                 }
                 //暂停
@@ -1331,6 +1334,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @date 2023-06-20 18:11
      */
     private void checkProductStatus(Integer currentStatus, Integer targetStatus) {
+        if (Objects.isNull(targetStatus)) {
+            return;
+        }
         ApprovalStatusEnum status = ApprovalStatusEnum.getEnum(targetStatus);
         Integer approvalStatus = ApprovalStatusEnum.APPROVAL.getCode();
         Integer suspendStatus = ApprovalStatusEnum.SUSPEND.getCode();
@@ -1348,19 +1354,19 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 }
 
             case WAIT:
-                if(terminateStatus.equals(currentStatus)){
+                if (terminateStatus.equals(currentStatus)) {
                     throw new ServiceException(ApiError.ERROR_95187);
                 }
             case PROBE:
-                if(terminateStatus.equals(currentStatus)){
+                if (terminateStatus.equals(currentStatus)) {
                     throw new ServiceException(ApiError.ERROR_95187);
                 }
             case ID_DESIGN_ING:
-                if(terminateStatus.equals(currentStatus)){
+                if (terminateStatus.equals(currentStatus)) {
                     throw new ServiceException(ApiError.ERROR_95187);
                 }
             case TERMINATE:
-                if(terminateStatus.equals(currentStatus)){
+                if (terminateStatus.equals(currentStatus)) {
                     throw new ServiceException(ApiError.ERROR_95187);
                 }
         }
@@ -2136,7 +2142,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         totalTask.setNotStartCount((int) totalNotStartCount);
         totalTask.setCancelCount(totalCancelCount);
         totalTask.setChangeCount(totalChangeCount);
-        totalTask.setFinishRate(getFinishRate(totalFinishCount, totalCount-totalCancelCount));
+        totalTask.setFinishRate(getFinishRate(totalFinishCount, totalCount - totalCancelCount));
         info.setTotalTask(totalTask);
 
         //周任务
@@ -2155,7 +2161,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //完成且延期
         long weekFinishDelayCount = weekTaskList.stream().filter(t -> taskFinish.equals(t.getStatus()) &&
                 t.getRealityEndTime() != null && t.getPlanEndTime() != null &&
-                t.getRealityEndTime().compareTo(t.getPlanEndTime().atStartOfDay()) > 0).count();
+                t.getRealityEndTime().compareTo(t.getPlanEndTime().atTime(23,59)) > 0).count();
         weekTask.setFinishCount((int) weekFinishCount);
         //进行中
         long weekDoingCount = weekTaskList.stream().filter(t -> taskIng.equals(t.getStatus())).count();
@@ -2167,7 +2173,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //取消
         Integer weekCancelCount = Math.toIntExact(weekTaskList.stream().filter(t -> taskClose.equals(t.getStatus())).count());
 
-        weekTask.setFinishRate(getFinishRate(weekFinishCount, weekTotal-weekCancelCount));
+        weekTask.setFinishRate(getFinishRate(weekFinishCount, weekTotal - weekCancelCount));
         List<Integer> statusList = Arrays.asList(taskNotStart, taskIng);
         //这个是未完成延期的
         long weekDelayCount = weekTaskList.stream().filter(w -> statusList.contains(w.getStatus()) &&
@@ -2192,15 +2198,17 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //未开始
         long expireNotStartCount = expireTaskList.stream().filter(t -> taskNotStart.equals(t.getStatus())).count();
         expireTask.setNotStartCount((int) expireNotStartCount);
-        expireTask.setFinishRate(getFinishRate(expireFinishCount, expireCount-expireCancelCount));
+        expireTask.setFinishRate(getFinishRate(expireFinishCount, expireCount - expireCancelCount));
         info.setExpireTask(expireTask);
 
 
         //延期的任务
         ProductOverviewDTO.DelayTaskDTO delayTask = new ProductOverviewDTO.DelayTaskDTO();
         List<ProjectTaskEntity> delayTaskList = new ArrayList<>(taskList.size());
+        //这个是未完成
         List<ProjectTaskEntity> planDelayTaskList = taskList.stream().filter(t -> t.getPlanEndTime() != null && now.compareTo(t.getPlanEndTime()) > 0).collect(Collectors.toList());
-        List<ProjectTaskEntity> realityDelayTaskList = taskList.stream().filter(t -> t.getRealityEndTime() != null && t.getPlanEndTime() != null&&t.getRealityEndTime().compareTo(t.getPlanEndTime().atStartOfDay()) > 0).collect(Collectors.toList());
+        List<ProjectTaskEntity> realityDelayTaskList = taskList.stream().filter(t -> t.getRealityEndTime() != null && t.getPlanEndTime() != null &&
+                t.getRealityEndTime().compareTo(t.getPlanEndTime().atTime(23,59)) > 0).collect(Collectors.toList());
         delayTaskList.addAll(planDelayTaskList);
         delayTaskList.addAll(realityDelayTaskList);
 
@@ -2209,7 +2217,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //完成
         long delayFinishCount = delayTaskList.stream().filter(t -> taskFinish.equals(t.getStatus()) &&
                 t.getRealityEndTime() != null && t.getPlanEndTime() != null
-                && t.getRealityEndTime().compareTo(t.getPlanEndTime().atStartOfDay()) > 0).count();
+                && t.getRealityEndTime().compareTo(t.getPlanEndTime().atTime(23,59)) > 0).map(ProjectTaskEntity::getId).distinct().count();
         delayTask.setFinishCount((int) delayFinishCount);
         //未完成的任务id
         Integer toBeReleasedCode = TaskStateEnum.TO_BE_RELEASED.getCode();
@@ -2601,5 +2609,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return Boolean.TRUE;
 
     }
+
+
 
 }

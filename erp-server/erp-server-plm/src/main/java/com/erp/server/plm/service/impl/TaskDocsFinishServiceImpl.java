@@ -54,8 +54,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
     @Autowired
     private DocsChangeRecordService docsChangeRecordService;
 
-    @Autowired
-    private ProductOperateRecordService productOperateRecordService;
+
 
     @Autowired
     private BusinessProcessService businessProcessService;
@@ -75,6 +74,11 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 
     @Autowired
     private TaskChargeDistributionService taskChargeDistributionService;
+
+    @Autowired
+    private   TaskDocHistoryService taskDocHistoryService;
+
+
 
     /**
      * 根据任务id 集合获取对应数据
@@ -369,10 +373,11 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                     .setOperation("文档操作")
                     .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
             sysLogService.addSysLogByOther(sysLogEntity);
+            //启动流程
+            startChangeDocsProcess(loginUser.getUid(), taskEntity);
         }
-        //启动流程
-        startChangeDocsProcess(loginUser.getUid(), taskEntity);
-        return Boolean.TRUE;
+
+        return result;
     }
 
 
