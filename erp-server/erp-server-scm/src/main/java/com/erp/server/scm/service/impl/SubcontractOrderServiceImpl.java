@@ -588,6 +588,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                  purchaseQty = purchaseOrderList.stream().filter(obj -> obj.getSourceDetailId().equals(dto.getSourceDetailId())).map(PurchaseOrderDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             dto.setApplyQty(dto.getQty() - purchaseQty);
+            dto.setQty(dto.getApplyQty());
         }
         return list;
     }
@@ -682,8 +683,11 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             String poId = purchaseOrderService.add(addDTO);
             poIds.add(poId);
         }
+
         //采购订单提交审核
         if (CollectionUtils.isNotEmpty(poIds)) {
+            //更新采购申请单采购订单创建类型
+            purchaseOrderService.updateCreatePoType(poIds);
             //提交
             Boolean submit = purchaseOrderService.submit(poIds);
             if (!submit) {

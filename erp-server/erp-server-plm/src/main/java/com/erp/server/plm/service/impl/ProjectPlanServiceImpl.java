@@ -109,24 +109,15 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
     private static final String CLASSPATH = String.valueOf(ProjectPlanEntity.class);
 
-    /**
-     * 提交项目计划
-     *
-     * @param dto
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-02-03 17:08
-     */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean submitSchedule(HandleTaskScheduleDTO dto) {
+    public String saveSchedule (HandleTaskScheduleDTO dto) {
         List<String> taskIds = dto.getTaskIdList();
         if (CollectionUtils.isEmpty(taskIds)) {
-            return false;
+            throw new ServiceException(ApiError.ERROR_98004);
         }
         List<ProjectTaskEntity> taskList = taskService.getByTaskIds(taskIds);
         String productId = dto.getProductId();
-        String userName = commonService.getUserInfo().getUserName();
         checkAuditor();
         if (CollectionUtils.isNotEmpty(taskIds)) {
             checkTaskTime(taskList);
@@ -152,25 +143,49 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         projectPlan.setPhase(phase);
         projectPlan.setId(id);
         Boolean saveResult = this.save(projectPlan);
-        if (saveResult) {
-            String nowTime = DateUtil.conversionDate(new Date(), DateUtil.fmt);
-            projectPlanTaskService.savePlanTask(id, dto.getProductId(), taskList);
-            //发起流程啊
-            startScheduleTaskProcess(id);
-            //给第一个人发信息
-            noticeMessageService.scheduleTaskAuditor(userName, taskList, productId, Arrays.asList(pmoCharge));
-            StringBuffer sb = new StringBuffer();
-            sb.append(userName).append(" ").append(nowTime).append(" ").append("提交");
-            for(ProjectTaskEntity task:taskList){
-                sb.append(task.getName()).append(" ");
-                sb.append(task.getPlanStartTime()).append(" ").append(task.getPlanEndTime());
-            }
-            sysLogService.addSysLogBySave(sb.toString(), CLASSPATH, id, id);
-
+        if (!saveResult) {
+            throw new ServiceException(ApiError.ERROR_1002);
         }
+        return id;
+    }
+
+    /**
+     * 提交项目计划
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-02-03 17:08
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean submitSchedule(HandleTaskScheduleDTO dto) {
+        List<String> taskIds = dto.getTaskIdList();
+        if (CollectionUtils.isEmpty(taskIds)) {
+            return false;
+        }
+        List<ProjectTaskEntity> taskList = taskService.getByTaskIds(taskIds);
+        String productId = dto.getProductId();
+        String userName = commonService.getUserInfo().getUserName();
+        String id = saveSchedule(dto);
+
+        String nowTime = DateUtil.conversionDate(new Date(), DateUtil.fmt);
+        projectPlanTaskService.savePlanTask(id, dto.getProductId(), taskList);
+        //发起流程啊
+        startScheduleTaskProcess(id);
+        //给第一个人发信息
+        noticeMessageService.scheduleTaskAuditor(userName, taskList, productId, Arrays.asList(pmoCharge));
+        StringBuffer sb = new StringBuffer();
+        sb.append(userName).append(" ").append(nowTime).append(" ").append("提交");
+        for(ProjectTaskEntity task:taskList){
+            sb.append(task.getName()).append(" ");
+            sb.append(task.getPlanStartTime()).append(" ").append(task.getPlanEndTime());
+        }
+        sysLogService.addSysLogBySave(sb.toString(), CLASSPATH, id, id);
+
         //异步发送消息
         noticeMessageService.scheduleTaskSubmit(userName, taskList, productId);
-        return saveResult;
+        return Boolean.TRUE;
     }
 
 
@@ -1187,8 +1202,8 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         HandleTaskScheduleDTO dto = new HandleTaskScheduleDTO();
         dto.setProductId(productId);
         dto.setTaskIdList(taskIdList);
-        Boolean flag = this.submitSchedule(dto);
-        return flag;
+        this.saveSchedule(dto);
+        return Boolean.TRUE;
     }
 
 

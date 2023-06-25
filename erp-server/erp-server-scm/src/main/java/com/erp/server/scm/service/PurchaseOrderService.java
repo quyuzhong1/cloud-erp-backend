@@ -291,4 +291,11 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return List<PurchaseOrderEntity>
      */
     List<PurchaseOrderEntity> listBySourceIds(List<String> sourceIds);
+    /**
+     * @description: 更新申请单创建采购订单类型
+     * @author Will
+     * @date: 2023/6/25 11:44
+     * @param purchaseOrderIds
+     */
+     void updateCreatePoType(List<String> purchaseOrderIds);
 }
