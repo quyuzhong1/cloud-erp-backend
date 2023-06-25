@@ -2,6 +2,8 @@ package com.erp.server.wms.service;
 
 import com.erp.model.workflow.dto.WorkOptionDTO;
 
+import java.util.List;
+
 /**
  * 工作台服务类
  * @Author Luo_WG
@@ -14,5 +16,5 @@ public interface WorkOptionService {
      * @Author Luo_WG
      * @Date 2023/4/21 15:34
      **/
-    Integer getTableNum(WorkOptionDTO.TableNumDTO tableNumDTO);
+    List<WorkOptionDTO.MyWorkOptionDTO> getTableNum(List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList);
 }

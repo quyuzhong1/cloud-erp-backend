@@ -149,6 +149,11 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          * 入参（预留）
          */
         private String moduleParam;
+
+        /**
+         * 代办数量
+         */
+        private Integer tableNumber;
     }
 
     /**
@@ -445,6 +450,16 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          * 参数
          */
         private String moduleParam;
+
+        /**
+         * 数量
+         */
+        private Integer tableNumber;
+
+        /**
+         * 系统分类
+         */
+        private String sysClassify;
     }
 
 }

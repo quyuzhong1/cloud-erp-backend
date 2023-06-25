@@ -12,13 +12,13 @@ import java.util.List;
 
 @Mapper
 public interface WorkOptionMapper {
-    Integer getTableNum(WorkOptionDTO.TableNumDTO tableNumDTO);
+    Integer getTableNum(WorkOptionDTO.MyWorkOptionDTO tableNumDTO);
 
-    Integer getProductDetailNum(WorkOptionDTO.TableNumDTO tableNumDTO, @Param("status") Integer status);
+    Integer getProductDetailNum(@Param("params") WorkOptionDTO.MyWorkOptionDTO tableNumDTO, @Param("status") Integer status);
 
-    Integer getProductChangeNum(WorkOptionDTO.TableNumDTO tableNumDTO, @Param("status") Integer status);
+    Integer getProductChangeNum(@Param("params") WorkOptionDTO.MyWorkOptionDTO tableNumDTO, @Param("status") Integer status);
 
-    Integer getProductBomInfoNum(WorkOptionDTO.TableNumDTO tableNumDTO, @Param("status") Integer status);
+    Integer getProductBomInfoNum(@Param("params") WorkOptionDTO.MyWorkOptionDTO tableNumDTO, @Param("status") Integer status);
 
     List<WorkOptionDTO.StageViewDTO> stageView(@Param("optionUserId") String optionUserId);
 
