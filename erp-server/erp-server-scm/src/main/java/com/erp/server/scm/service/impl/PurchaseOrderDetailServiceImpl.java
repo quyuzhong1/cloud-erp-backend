@@ -24,9 +24,11 @@ import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -61,6 +63,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     private WmsTaskFeign wmsTaskFeign;
 
     @Resource
+    private PlmTaskFeign plmTaskFeign;
+
+    @Resource
     private PurchaseApplicationRefPoService purchaseApplicationRefPoService;
 
     @Resource
@@ -80,6 +85,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public void add(List<PurchaseOrderDetailDTO.AddDTO> details, String purchaseOrderId) {
         if (CollectionUtils.isEmpty(details)) {
@@ -94,9 +100,11 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         //批量新增
         boolean flag = this.saveBatch(list);
         if (flag) {
+            //更新sku为不可删除标识
+            List<String> skuIds = list.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
+            plmTaskFeign.updateOccupyStatus(skuIds);
             //同步到WMS
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(), list, IdUtil.simpleUUID());
-
             //新增关联关系
             List<PurchaseApplicationRefPoEntity> refList = new ArrayList<>();
 
@@ -169,7 +177,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
         //新增或修改采购订单明细
         this.saveOrUpdateBatch(newList);
-
+        //更新sku为不可删除标识
+        List<String> skuIds = newList.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
+        plmTaskFeign.updateOccupyStatus(skuIds);
         //同步到WMS
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(), newList, IdUtil.simpleUUID());
 

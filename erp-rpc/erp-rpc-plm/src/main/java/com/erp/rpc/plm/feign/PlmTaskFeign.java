@@ -230,4 +230,14 @@ public interface PlmTaskFeign {
      */
     @PostMapping("/feign/product/getPurchaseInfoBySkuIds")
     Map<String, SkuPurchaseDTO.PurchaseInfo> getPurchaseInfoBySkuIds(@RequestBody @Validated BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 更新不可删除标识
+     * @Author Luo_WG
+     * @Date 2023/6/15 11:32
+     * @param skuIds skuIds
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/feign/product/updateOccupyStatus")
+    Boolean updateOccupyStatus(@RequestBody @Validated List<String> skuIds);
 }

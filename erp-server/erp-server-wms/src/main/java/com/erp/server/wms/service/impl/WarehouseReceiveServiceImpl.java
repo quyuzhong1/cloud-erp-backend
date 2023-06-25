@@ -171,15 +171,14 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(null);
-                if (ObjectUtil.isEmpty(productDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_95107);
+                if (ObjectUtil.isNotEmpty(productDetailEntity)) {
+                    obj.setProductName(productDetailEntity.getName());
                 }
+
                 PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(obj.getPurchaseOrderDetailId())).findFirst().orElse(null);
-                if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_99006);
+                if (ObjectUtils.isNotEmpty(purchaseOrderDetailEntity)) {
+                    obj.setPurchaseQty(purchaseOrderDetailEntity.getPurchaseQty());
                 }
-                obj.setPurchaseQty(purchaseOrderDetailEntity.getPurchaseQty());
-                obj.setProductName(productDetailEntity.getName());
                 list.add(obj.getId());
             });
         }

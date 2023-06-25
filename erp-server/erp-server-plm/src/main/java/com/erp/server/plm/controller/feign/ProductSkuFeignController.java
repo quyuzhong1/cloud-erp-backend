@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.feign;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.*;
@@ -210,6 +211,21 @@ public class ProductSkuFeignController {
     public Map<String, SkuPurchaseDTO.PurchaseInfo> getPurchaseInfoBySkuIds(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<SkuPurchaseDTO.PurchaseInfo> dataList = productPurchaseService.getInfoBySkuIds(dto.getIds());
         return dataList.stream().collect(Collectors.toMap(SkuPurchaseDTO.PurchaseInfo::getSkuId, Function.identity()));
+    }
+
+    /**
+     * 更新不可删除标识
+     * @Author Luo_WG
+     * @Date 2023/6/15 11:32
+     * @param skuIds skuIds
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/updateOccupyStatus")
+    public Boolean updateOccupyStatus(@RequestBody List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Boolean.FALSE;
+        }
+        return productDetailService.updateOccupyStatus(skuIds);
     }
 
 }

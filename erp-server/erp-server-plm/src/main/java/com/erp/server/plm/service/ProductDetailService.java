@@ -519,4 +519,13 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return java.lang.Boolean
      **/
     Boolean updateBatchFiled(ProductDetailBatchUpdateDTO dto);
+
+    /**
+     * 更新不可删除标识
+     * @Author Luo_WG
+     * @Date 2023/6/15 11:32
+     * @param skuIds skuIds
+     * @return java.lang.Boolean
+     **/
+    Boolean updateOccupyStatus(List<String> skuIds);
 }
