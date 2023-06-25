@@ -69,7 +69,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         List<KingdeeDeliveryDetailEntity> insertList = new ArrayList<>();
         List<KingdeeDeliveryDetailEntity> pushToMqList = new ArrayList<>();
         for (KingdeeDeliveryDetailEntity entity : entityList) {
-            KingdeeOutStockDTO outStockDTO = new KingdeeOutStockDTO(entity.getFBillNo(), entity.getFId());
+            KingdeeOutStockDTO outStockDTO = new KingdeeOutStockDTO(entity.getFBillNo(), entity.getFSoorDerno());
             List<KingdeeDeliveryDetailEntity> mongoData = mongoService.findMongoData(outStockDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_DELIVERY_DETAIL, KingdeeDeliveryDetailEntity.class);
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
