@@ -506,6 +506,12 @@ public class SubcontractOrderDTO implements Serializable {
          */
         private Boolean isGeneratePo;
 
+        /**
+         * bom用量
+         */
+        private Integer quantity;
+
+
     }
 
     @Data

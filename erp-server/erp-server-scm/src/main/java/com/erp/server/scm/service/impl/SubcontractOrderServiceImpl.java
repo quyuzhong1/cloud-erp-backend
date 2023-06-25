@@ -570,7 +570,26 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //下推采购订单信息
         List<PurchaseOrderDTO.ListDTO> purchaseOrderList = purchaseOrderService.listBySourceDetailIds(sourceDetailIds);
 
+        List<String> parentSkuIds = list.stream().filter(obj -> StringUtils.isBlank(obj.getSourceDetailId())).map(SubcontractOrderDTO.ViewGeneratePoDTO::getSkuId).collect(Collectors.toList());
+        //BOM信息
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(parentSkuIds);
+        if (CollectionUtils.isEmpty(bomChildrenList)) {
+            throw new ServiceException(ApiError.ERROR_95163);
+        }
+
+
         for (SubcontractOrderDTO.ViewGeneratePoDTO dto : list) {
+
+            //bom信息
+            if (StringUtils.isNotBlank(dto.getParentId())) {
+                String parentSkuId = list.stream().filter(obj -> obj.getSourceDetailId().equals(dto.getParentId())).map(SubcontractOrderDTO.ViewGeneratePoDTO::getSkuId).findFirst().orElse(null);
+                BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(parentSkuId) && obj.getSkuId().equals(dto.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
+                    throw new ServiceException(ApiError.ERROR_95163);
+                }
+                dto.setQuantity(bomChildrenSkuDTO.getQuantity());
+            }
+
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(skuVO)) {
                 throw new ServiceException(ApiError.ERROR_95084);
@@ -604,7 +623,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<SubcontractOrderDTO.GeneratePoAddDTO> resultList = BeanMapperUtils.copyList(SubcontractOrderDTO.GeneratePoAddDTO.class, addList);
 
         //处理生成数据
-        fillGeneratePoDTO(resultList,isAuto);
+        fillGeneratePoDTO(resultList);
         //查询产品信息
         List<String> skuIds = resultList.stream().map(obj -> obj.getSkuId()).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
@@ -705,13 +724,12 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     }
 
     /**
-     * @description: 处理生成采购订单数控
+     * @description: 处理生成采购订单数据
      * @author Will
      * @date: 2023/6/21 12:15
      * @param resultList
-     * @param isAuto
      */
-    private void fillGeneratePoDTO (List<SubcontractOrderDTO.GeneratePoAddDTO> resultList,Boolean isAuto) {
+    private void fillGeneratePoDTO (List<SubcontractOrderDTO.GeneratePoAddDTO> resultList) {
         //委外订单主表信息
         List<String> sourceIds = resultList.stream().map(SubcontractOrderDTO.GeneratePoDTO::getSourceId).collect(Collectors.toList());
         List<SubcontractOrderEntity> mainList = this.listByIds(sourceIds);
@@ -763,9 +781,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             generatePoDTO.setRemark(detailEntity.getRemark());
             //是否赠品
             generatePoDTO.setIsGift( ObjectUtils.isEmpty(generatePoDTO.getIsGift()) ? detailEntity.getIsGift() : generatePoDTO.getIsGift());
-            if (isAuto) {
-                generatePoDTO.setTaxPrice(detailEntity.getPrice());
-            }
+            generatePoDTO.setTaxPrice(detailEntity.getPrice());
             generatePoDTO.setSupplierId(StringUtils.isBlank(generatePoDTO.getSupplierId()) ? detailEntity.getSupplierId() : generatePoDTO.getSupplierId());
             generatePoDTO.setPurchaseApplicationId(mainEntity.getSourceId());
             generatePoDTO.setPurchaseApplicationDetailId(detailEntity.getSourceDetailId());
