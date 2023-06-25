@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
 import java.util.List;
 
-import com.erp.model.dmp.kingdee.item.KingdeeTransferDirectItemEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -174,11 +173,36 @@ public class DmpTransferInfoEntity extends BaseEntity<DmpTransferInfoEntity> {
 
     @TableField("remark")
     private String remark;
+
+
+    /**
+     * 调入仓库code
+     */
+    @TableField("in_warehouse_code")
+    private String inWarehouseCode;
+
+    /**
+     * 调入仓库名称
+     */
+    @TableField("in_warehouse_name")
+    private String inWarehouseName;
+
+    /**
+     * 调出仓库code
+     */
+    @TableField("out_warehouse_code")
+    private String outWarehouseCode;
+
+    /**
+     * 调出仓库名称
+     */
+    @TableField("out_warehouse_name")
+    private String outWarehouseName;
     /**
      * 调拨单明细
      */
     @TableField(exist = false)
-    private List<DmpTransferInfoDetailEntity> itemList;
+    private List<DmpTransferInfoDetailEntity> detailList;
 
 
     public static final String CODE = "code";
@@ -223,11 +247,15 @@ public class DmpTransferInfoEntity extends BaseEntity<DmpTransferInfoEntity> {
 
     public static final String SOURCE_ID = "source_id";
 
-    public static final String PLAFORM_SIGN = "plaform_sign";
+    public static final String PLATFORM_SIGN = "platform_sign";
 
-    public static final String SYNC_MB_STATUS = "sync_mb_status";
+    public static final String IN_WAREHOUSE_CODE = "in_warehouse_code";
 
-    public static final String LAST_SYNC_MB_TIME = "last_sync_mb_time";
+    public static final String IN_WAREHOUSE_NAME = "in_warehouse_name";
+
+    public static final String OUT_WAREHOUSE_CODE = "out_warehouse_code";
+
+    public static final String OUT_WAREHOUSE_NAME = "out_warehouse_name";
 
     @Override
     public Serializable pkVal() {

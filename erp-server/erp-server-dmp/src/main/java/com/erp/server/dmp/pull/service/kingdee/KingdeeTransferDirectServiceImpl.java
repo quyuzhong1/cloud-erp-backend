@@ -231,7 +231,14 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
         resultEntity.setLastUpdatedUserName(entity.getFModifierIdFName());
         resultEntity.setSourceId(entity.getId());
         resultEntity.setPlatformSign(PlatformEnum.KINGDEE.getDesc());
-        resultEntity.setItemList(initOrderItem(entity));
+        if(CollectionUtil.isNotEmpty(entity.getItemList())){
+            KingdeeTransferDirectItemEntity itemEntity = entity.getItemList().get(0);
+            resultEntity.setInWarehouseCode(itemEntity.getFDestStockId());
+            resultEntity.setInWarehouseName(itemEntity.getFDestStockIdFName());
+            resultEntity.setOutWarehouseCode(itemEntity.getFSrcStockId());
+            resultEntity.setOutWarehouseName(itemEntity.getFSrcStockIdFName());
+        }
+        resultEntity.setDetailList(initOrderItem(entity));
         return resultEntity;
     }
 
@@ -243,10 +250,8 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
         List<DmpTransferInfoDetailEntity> orderItemList = new ArrayList<>();
         for (KingdeeTransferDirectItemEntity item : itemList) {
             DmpTransferInfoDetailEntity itemEntity = new DmpTransferInfoDetailEntity();
-            itemEntity.setInSkuNo(item.getFDestMaterialId());
-            itemEntity.setInProductName(item.getFDestMaterialIdFName());
-            itemEntity.setOutSkuNo(item.getFMaterialId());
-            itemEntity.setOutProductName(item.getFMaterialIdFName());
+            itemEntity.setSkuNo(item.getFDestMaterialId());
+            itemEntity.setProductName(item.getFDestMaterialIdFName());
             itemEntity.setUnit(item.getFUnitIDFName());
             itemEntity.setQty(item.getFQty());
             itemEntity.setSourceDetailId(item.getFEntryId());
@@ -255,10 +260,6 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
             itemEntity.setInStockStatusName(item.getFDestStockStatusIdFName());
             itemEntity.setOutStockStatusCode(item.getFSrcStockStatusId());
             itemEntity.setOutStockStatusName(item.getFSrcStockStatusIdFName());
-            itemEntity.setInWarehouseCode(item.getFDestStockId());
-            itemEntity.setInWarehouseName(item.getFDestStockIdFName());
-            itemEntity.setOutWarehouseCode(item.getFSrcStockId());
-            itemEntity.setOutWarehouseName(item.getFSrcStockIdFName());
             orderItemList.add(itemEntity);
         }
         return orderItemList;
