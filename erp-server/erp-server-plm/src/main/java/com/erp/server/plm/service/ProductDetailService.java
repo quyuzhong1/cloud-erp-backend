@@ -528,4 +528,5 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return java.lang.Boolean
      **/
     Boolean updateOccupyStatus(List<String> skuIds);
+
 }

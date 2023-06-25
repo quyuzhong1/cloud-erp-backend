@@ -27,4 +27,13 @@ public interface ProductCustomsService extends SuperService<ProductCustomsEntity
 
 
     Boolean removeBySkuId(List<String> skuIds);
+
+
+    /**
+     * 临时接口-添加产品国外海关编码
+     * @Author Luo_WG
+     * @Date 2023/6/25 10:07
+     * @return java.lang.Boolean
+     **/
+    Boolean addProductCustoms();
 }

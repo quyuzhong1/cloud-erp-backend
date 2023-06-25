@@ -102,6 +102,22 @@ ProductDetailController extends BaseController {
     @Resource
     private ProductDetailApproverService productDetailApproverService;
 
+    @Resource
+    private ProductCustomsService productCustomsService;
+
+
+    /**
+     * 临时接口-添加产品国外海关编码
+     * @Author Luo_WG
+     * @Date 2023/6/25 10:06
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/addProductCustoms")
+    public ApiResult addProductCustoms() {
+        Boolean flag = productCustomsService.addProductCustoms();
+        return flag == true ? this.success() : this.failure();
+    }
+
     /**
      * 产品信息-主页列表-查询1
      *
