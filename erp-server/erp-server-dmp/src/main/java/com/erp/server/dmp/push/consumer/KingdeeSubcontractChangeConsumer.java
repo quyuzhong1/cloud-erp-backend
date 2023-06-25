@@ -30,13 +30,13 @@ import java.util.stream.Collectors;
 /**
  * @author Will
  * @version 1.0
-
+ * @description: TODO
  * @date 2023/4/20 11:12
  */
 @Service
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_subcontract_order_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SUBCONTRACT_ORDER)
-public class KingdeeSubcontractOrderConsumer implements RocketMQListener<Map<String, Object>> {
+public class KingdeeSubcontractChangeConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
     private KingdeeCommonService kingdeeCommonService;
@@ -45,7 +45,7 @@ public class KingdeeSubcontractOrderConsumer implements RocketMQListener<Map<Str
 
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SUB_SUBREQORDER.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SUB_REQCHANGE.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FBillNo = '%s'", "PO23042400006"));
         String filterStr = String.join(" and ", queryFilters);
@@ -65,7 +65,7 @@ public class KingdeeSubcontractOrderConsumer implements RocketMQListener<Map<Str
     @Transactional(rollbackFor = Exception.class)
     public void onMessage(Map<String, Object> map) {
         //模块类型
-        Integer type = ApiModuleTypeEnum.SUBCONTRACT_ORDER.getCode();
+        Integer type = ApiModuleTypeEnum.SUBCONTRACT_CHAGE.getCode();
         //业务id
         String  businessId = String.valueOf(map.get("id"));
         //业务编码
@@ -76,7 +76,7 @@ public class KingdeeSubcontractOrderConsumer implements RocketMQListener<Map<Str
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SUB_SUBREQORDER.getCode());
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SUB_REQCHANGE.getCode());
 
         //根据录入值和字段配置生成JSONObject
         JSONObject json = kingdeeCommonService.makeApiFieldJson(map, platformEntity.getId(),type);
@@ -133,4 +133,5 @@ public class KingdeeSubcontractOrderConsumer implements RocketMQListener<Map<Str
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
         }
     }
+
 }

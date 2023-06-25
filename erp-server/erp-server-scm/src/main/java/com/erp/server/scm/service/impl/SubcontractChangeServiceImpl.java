@@ -28,6 +28,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.dto.SubcontractChangeDetailDTO;
@@ -293,6 +294,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         this.submit(Arrays.asList(dto.getId()));
     }
 
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void approve(BaseApproveParamDTO dto) {
@@ -330,6 +332,17 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个委外变更单", approveType.getName()).concat("【%s】").concat(StrUtils.isNotEmpty(dto.getComment()) ? String.format("，意见：%s", dto.getComment()) : ""),
                 ModuleTypeEnum.SUBCONTRACT_CHANGE.getCode(), pairList, "审核操作");
     }
+
+    @Override
+    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+        return this.lambdaUpdate()
+                .in(SubcontractChangeEntity::getId, ids)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), SubcontractChangeEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), SubcontractChangeEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), SubcontractChangeEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncOperate), SubcontractChangeEntity::getSyncOperate, syncOperate)
+                .update();
+    }
     /**
      * @description: 审核通过更新委外订单
      * @author Will
@@ -353,15 +366,17 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         List<SubcontractChangeDetailEntity> deleteList = detailEntityList.stream().filter(obj -> OptChangeTypeEnum.DELETE.getCode().equals(obj.getOptType())).collect(Collectors.toList());
         //删除
         if (CollectionUtils.isNotEmpty(deleteList)) {
-            List<String> sourceDetailIds = deleteList.stream().map(SubcontractChangeDetailEntity::getSourceDetailId).collect(Collectors.toList());
-            List<PurchaseOrderDetailEntity> podList = purchaseOrderDetailService.listBySourceDetailIds(sourceDetailIds);
-            if (CollectionUtils.isNotEmpty(podList)) {
-                String codes = podList.stream().map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
-                log.error("SKU【{}】已存在下推单据，不支持删除变更",codes);
-                throw new ServiceException(new ApiResult(ApiError.ERROR_98086.code, StrUtil.format(ApiError.ERROR_98086.msg,codes)));
+            List<String> sourceDetailIds = deleteList.stream().filter(obj -> StringUtils.isNotBlank(obj.getSourceDetailId())).map(SubcontractChangeDetailEntity::getSourceDetailId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sourceDetailIds)) {
+                List<PurchaseOrderDetailEntity> podList = purchaseOrderDetailService.listBySourceDetailIds(sourceDetailIds);
+                if (CollectionUtils.isNotEmpty(podList)) {
+                    String codes = podList.stream().map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
+                    log.error("SKU【{}】已存在下推单据，不支持删除变更",codes);
+                    throw new ServiceException(new ApiResult(ApiError.ERROR_98086.code, StrUtil.format(ApiError.ERROR_98086.msg,codes)));
+                }
+                //删除委外订单明细
+                subcontractOrderDetailService.removeByIds(sourceDetailIds);
             }
-            //删除委外订单明细
-            subcontractOrderDetailService.removeByIds(sourceDetailIds);
         }
         //新增
         if (CollectionUtils.isNotEmpty(addList)) {
@@ -383,7 +398,10 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
      * @param updateList
      */
     private void checkGenerateUpdate (List<SubcontractChangeDetailEntity> updateList) {
-        List<String> sourceDetailIds = updateList.stream().map(SubcontractChangeDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<String> sourceDetailIds = updateList.stream().filter(obj -> StringUtils.isNotBlank(obj.getSourceDetailId())).map(SubcontractChangeDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(sourceDetailIds)) {
+            return;
+        }
         List<PurchaseOrderDetailEntity> podList = purchaseOrderDetailService.listBySourceDetailIds(sourceDetailIds);
         if (CollectionUtils.isEmpty(podList)) {
             return;
@@ -423,6 +441,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             for (SubcontractChangeDetailEntity addEntity : value) {
                 SubcontractOrderDetailDTO.UpdateDTO addDTO = BeanMapperUtils.map(SubcontractOrderDetailDTO.UpdateDTO.class,addEntity);
                 addDTO.setId(IdWorker.getIdStr());
+                addEntity.setSourceDetailId(addDTO.getId());
                 pairList.add(new Pair<>(addEntity.getId(),addDTO.getId()));
                 //子集SKU
                 List<SubcontractChangeDetailEntity> childList = addList.stream().filter(obj -> obj.getParentId().equals(addEntity.getId())).collect(Collectors.toList());
@@ -433,6 +452,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
                 for (SubcontractChangeDetailEntity childEntity : childList) {
                     SubcontractOrderDetailDTO.UpdateDTO childDTO = BeanMapperUtils.map(SubcontractOrderDetailDTO.UpdateDTO.class,childEntity);
                     childDTO.setId(IdWorker.getIdStr());
+                    childEntity.setSourceDetailId(childDTO.getId());
                     pairList.add(new Pair<>(childEntity.getId(),childDTO.getId()));
                     childDTOList.add(childDTO);
                 }
@@ -473,6 +493,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             for (SubcontractChangeDetailEntity updateEntity : value) {
                 SubcontractOrderDetailDTO.UpdateDTO updateDTO = BeanMapperUtils.map(SubcontractOrderDetailDTO.UpdateDTO.class,updateEntity);
                 updateDTO.setId(updateEntity.getSourceDetailId());
+                updateDTO.setSourceDetailId(null);
                 //子集SKU
                 List<SubcontractChangeDetailEntity> childList = updateList.stream().filter(obj -> obj.getParentId().equals(updateEntity.getId())).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(childList)) {
@@ -487,7 +508,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
                 updateDTO.setChildList(childDTOList);
                 detailList.add(updateDTO);
             }
-            subcontractOrderDetailService.update(detailList,entity.getId());
+            subcontractOrderDetailService.update(detailList,entity.getSourceId());
         }
         //自动下推
         autoPushdownDetail(updateList);
@@ -638,6 +659,15 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         if (CollectionUtils.isEmpty(parentList)) {
             throw new ServiceException(ApiError.ERROR_98082);
         }
+
+        List<String> parentSkuIds = parentList.stream().map(SubcontractChangeDetailEntity::getSkuId).collect(Collectors.toList());
+        //BOM信息
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(parentSkuIds);
+        if (org.apache.commons.collections4.CollectionUtils.isEmpty(bomChildrenList)) {
+            throw new ServiceException(ApiError.ERROR_95163);
+        }
+
+
         data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
 
         List<SubcontractChangeDetailDTO.ViewDTO> parentDTOList = BeanMapperUtils.copyList(SubcontractChangeDetailDTO.ViewDTO.class, parentList);
@@ -665,6 +695,14 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             }
             List<SubcontractChangeDetailDTO.ChildDTO> childDTOList = BeanMapperUtils.copyList(SubcontractChangeDetailDTO.ChildDTO.class, childList);
             for (SubcontractChangeDetailDTO.ChildDTO childViewDTO : childDTOList) {
+
+                //bom信息
+                BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(viewDTO.getSkuId()) && obj.getSkuId().equals(childViewDTO.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
+                    throw new ServiceException(ApiError.ERROR_95163);
+                }
+                childViewDTO.setQuantity(bomChildrenSkuDTO.getQuantity());
+
                 //产品名称
                 String childProductName = skuList.stream().filter(obj -> obj.getSkuId().equals(childViewDTO.getSkuId()))
                         .findFirst()

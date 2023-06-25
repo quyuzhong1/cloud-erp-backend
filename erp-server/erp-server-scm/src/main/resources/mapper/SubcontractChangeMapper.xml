@@ -68,7 +68,7 @@
         inner join subcontract_change_detail scd on  sc.id = scd.main_id and scd.is_deleted = false
         left join supplier s  on scd.supplier_id = s.id and s.is_deleted = false
         <where>
-            sc.is_deleted = false
+            sc.is_deleted = false and scd.parent_id = ''
             <if test="params.searchType != null and params.searchType != ''">
                 and sc.approve_status like concat('%',#{params.searchType},'%')
             </if>
@@ -81,6 +81,12 @@
             <if test="params.skuNoList != null and params.skuNoList.size > 0">
                 and scd.sku_no in
                 <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
+                and scd.supplier_id in
+                <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>

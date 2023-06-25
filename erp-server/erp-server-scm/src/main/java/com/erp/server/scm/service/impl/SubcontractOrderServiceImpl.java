@@ -29,6 +29,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
@@ -490,6 +491,13 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (CollectionUtils.isEmpty(parentList)) {
             throw new ServiceException(ApiError.ERROR_98071);
         }
+        List<String> parentSkuIds = parentList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
+        //BOM信息
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(parentSkuIds);
+        if (org.apache.commons.collections4.CollectionUtils.isEmpty(bomChildrenList)) {
+            throw new ServiceException(ApiError.ERROR_95163);
+        }
+
         List<SubcontractOrderDetailDTO.ViewDTO> parentDTOList = BeanMapperUtils.copyList(SubcontractOrderDetailDTO.ViewDTO.class, parentList);
         for (SubcontractOrderDetailDTO.ViewDTO viewDTO : parentDTOList) {
             //产品名称
@@ -513,6 +521,13 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             }
             List<SubcontractOrderDetailDTO.ChildDTO> childDTOList = BeanMapperUtils.copyList(SubcontractOrderDetailDTO.ChildDTO.class, childList);
             for (SubcontractOrderDetailDTO.ChildDTO childViewDTO : childDTOList) {
+                //bom信息
+                BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(viewDTO.getSkuId()) && obj.getSkuId().equals(childViewDTO.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
+                    throw new ServiceException(ApiError.ERROR_95163);
+                }
+                childViewDTO.setQuantity(bomChildrenSkuDTO.getQuantity());
+
                 //产品名称
                 String childProductName = skuList.stream().filter(obj -> obj.getSkuId().equals(childViewDTO.getSkuId())).findFirst().flatMap(e -> Optional.ofNullable(e.getSkuName())).orElse("");
                 childViewDTO.setProductName(childProductName);
@@ -838,11 +853,20 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_98070);
         }
+        //产品信息
         List<String> skuIds = detailList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
 
         List<SubcontractOrderDetailEntity> parentDetailList = detailList.stream().filter(obj -> StringUtils.isBlank(obj.getParentId())).collect(Collectors.toList());
+
+        //BOM信息
+        List<String> parentSkuIds = parentDetailList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(parentSkuIds);
+        if (org.apache.commons.collections4.CollectionUtils.isEmpty(bomChildrenList)) {
+            throw new ServiceException(ApiError.ERROR_95163);
+        }
+
         List<SubcontractChangeDetailDTO.ViewDTO> parentList = new ArrayList<>();
         for (SubcontractOrderDetailEntity parentEntity : parentDetailList) {
             SubcontractChangeDetailDTO.ViewDTO  parentDTO = BeanMapperUtils.map(SubcontractChangeDetailDTO.ViewDTO.class, parentEntity);
@@ -873,6 +897,14 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                     String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(childEntity.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse(null);
                     childDTO.setProductName(productName);
                 }
+
+                //bom信息
+                BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(parentEntity.getSkuId()) && obj.getSkuId().equals(childEntity.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(bomChildrenSkuDTO)) {
+                    throw new ServiceException(ApiError.ERROR_95163);
+                }
+                childDTO.setQuantity(bomChildrenSkuDTO.getQuantity());
+
                 childList.add(childDTO);
             }
             parentDTO.setChildList(childList);

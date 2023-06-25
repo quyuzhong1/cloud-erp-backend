@@ -43,6 +43,11 @@ public class PoInstockDTO implements Serializable {
         private String purchaseOrderDetailId;
 
         /**
+         * 采购单id
+         */
+        private String purchaseOrderId;
+
+        /**
          * 采购单号
          */
         private String purchaseOrderCode;

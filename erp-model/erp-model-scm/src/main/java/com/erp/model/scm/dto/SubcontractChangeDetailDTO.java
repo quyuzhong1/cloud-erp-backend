@@ -175,6 +175,11 @@ public class SubcontractChangeDetailDTO implements Serializable {
          * bom版本
          */
         private Integer bomVersion;
+
+        /**
+         * bom用量
+         */
+        private Integer quantity;
     }
 
     /**

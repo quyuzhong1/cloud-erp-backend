@@ -8,6 +8,7 @@
             psi.id,
             psi.code,
             psid.purchase_order_detail_id,
+            psi.purchase_order_id,
             psi.purchase_order_code,
             psi.supplier_name,
             psi.approve_status,

@@ -67,7 +67,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -689,7 +688,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         List<String> skuIds = list.stream().map(PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO::getSkuId).collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildList = plmTaskFeign.listBomChildBySkuIds(skuIds);
         if (CollectionUtils.isEmpty(bomChildList)) {
-            return Collections.EMPTY_LIST;
+            throw new ServiceException(ApiError.ERROR_98093);
         }
         Integer index = MathUtil.ONE;
         List<PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO> resultList = new ArrayList<>();
@@ -712,7 +711,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             //填充BOM子件信息
             List<BomChildrenSkuDTO> childList = bomChildList.stream().filter(obj -> obj.getParentSkuId().equals(viewDTO.getSkuId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(childList)) {
-               continue;
+                throw new ServiceException(ApiError.ERROR_98093);
             }
             List<PurchaseApplicationDTO.ViewChildGenerateSubcontractOrderDTO> generateChildList = new ArrayList<>();
             for (BomChildrenSkuDTO childrenSkuDTO : childList) {

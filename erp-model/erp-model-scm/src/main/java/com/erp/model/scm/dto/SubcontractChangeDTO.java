@@ -67,6 +67,11 @@ public class SubcontractChangeDTO implements Serializable {
          private List<String> skuNoList;
 
          /**
+          * 供应商id
+          */
+         private List<String> supplierIdList;
+
+         /**
           * 审核状态（waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
           */
          private List<String> approveStatusList;

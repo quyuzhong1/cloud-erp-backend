@@ -1,8 +1,10 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -11,17 +13,16 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.SubcontractChangeDetailDTO;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractChangeDetailEntity;
+import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.SubcontractChangeDetailMapper;
-import com.erp.server.scm.service.ModuleOperateLogService;
-import com.erp.server.scm.service.PurchasePriceDetailService;
-import com.erp.server.scm.service.SubcontractChangeDetailService;
-import com.erp.server.scm.service.SupplierService;
+import com.erp.server.scm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -59,6 +60,12 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
 
     @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
+
+    @Resource
+    private SubcontractOrderDetailService subcontractOrderDetailService;
+
+    @Resource
+    private PurchaseOrderDetailService purchaseOrderDetailService;
 
     @Override
     public void add(List<SubcontractChangeDetailDTO.AddDTO> detailList, String mainId) {
@@ -137,10 +144,25 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
      */
     private void checkSourceDetailQty (List<SubcontractChangeDetailEntity> list,String mainId){
         /**
-         * 1、变更数量不能小于采购订单数量
-         *
+         * 变更数量不能小于采购订单数量
          */
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        List<String> sourceDetailIds = list.stream().filter(obj -> StringUtils.isNotBlank(obj.getSourceDetailId())).map(SubcontractChangeDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(sourceDetailIds)) {
+            return;
+        }
+        List<PurchaseOrderDetailEntity> poList = purchaseOrderDetailService.listBySourceDetailIds(sourceDetailIds);
 
+        for (SubcontractChangeDetailEntity detailEntity : list) {
+            if (CollectionUtils.isNotEmpty(poList)) {
+                Integer purchaseQty = poList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId())).map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+                if (purchaseQty > detailEntity.getQty()) {
+                    throw new ServiceException(new ApiResult(ApiError.ERROR_98087.code, StrUtil.format(ApiError.ERROR_98087.msg,detailEntity.getSkuNo(),purchaseQty)));
+                }
+            }
+        }
     }
 
     /**
@@ -192,6 +214,13 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
         //仓库信息
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIds);
 
+        //委外变更单明细数据
+        List<String> sourceDetailIds = newList.stream().map(SubcontractChangeDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = subcontractOrderDetailService.listByIds(sourceDetailIds);
+        if (CollectionUtils.isEmpty(subcontractOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98070);
+        }
+
         for (SubcontractChangeDetailEntity detailEntity : newList) {
             //bom信息
             BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
@@ -223,6 +252,16 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
                 String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(detailEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                 detailEntity.setSupplierName(supplierName);
             }
+            //委外原数据
+            SubcontractOrderDetailEntity subEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(subEntity)) {
+                throw new ServiceException(ApiError.ERROR_98070);
+            }
+            detailEntity.setOldQty(subEntity.getQty());
+            detailEntity.setOldPrice(subEntity.getPrice());
+            detailEntity.setOldAmount(subEntity.getAmount());
+            detailEntity.setOldDeliveryQty(subEntity.getDeliveryQty());
+
             handleSupplierTaxPrice(detailEntity,Boolean.FALSE);
             //子集SKU信息
             List<SubcontractChangeDetailEntity>   childList = BeanMapperUtils.copyList(SubcontractChangeDetailEntity.class, detailEntity.getChildList());
@@ -247,6 +286,16 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
                     String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(childEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
                     detailEntity.setSupplierName(supplierName);
                 }
+                //委外原数据
+                SubcontractOrderDetailEntity childSubEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(childSubEntity)) {
+                    throw new ServiceException(ApiError.ERROR_98070);
+                }
+                detailEntity.setOldQty(childSubEntity.getQty());
+                detailEntity.setOldPrice(childSubEntity.getPrice());
+                detailEntity.setOldAmount(childSubEntity.getAmount());
+                detailEntity.setOldDeliveryQty(childSubEntity.getDeliveryQty());
+
                 handleSupplierTaxPrice(childEntity,Boolean.TRUE);
             }
             resultList.add(detailEntity);

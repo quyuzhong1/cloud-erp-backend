@@ -34,6 +34,8 @@ public enum KingdeePushModuleEnum {
     SAL_RETURNSTOCK("SAL_RETURNSTOCK","销售退货单"),
     BD_COMMONCONTACT("BD_CommonContact","联系人"),
     SUB_SUBREQORDER("SUB_SUBREQORDER","委外订单"),
+    SUB_REQCHANGE("SUB_ReqChange","委外变更单"),
+
     ;
     private String code;
 

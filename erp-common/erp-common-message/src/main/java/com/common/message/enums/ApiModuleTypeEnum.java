@@ -36,6 +36,7 @@ public enum ApiModuleTypeEnum {
     CUSTOMER_GROUP(25, "customerGroup", "客户分组","oms"),
     CUSTOMER_CONTACT(26, "customerContact", "客户联系人","oms"),
     SUBCONTRACT_ORDER(27, "subcontractOrder", "委外订单","scm"),
+    SUBCONTRACT_CHAGE(28, "subcontractChange", "委外变更单","scm"),
 
     ;
     private Integer code;

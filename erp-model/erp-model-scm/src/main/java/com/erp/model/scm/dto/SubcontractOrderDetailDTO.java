@@ -146,9 +146,15 @@ public class SubcontractOrderDetailDTO implements Serializable {
         private Integer bomVersion;
 
         /**
+         * bom用量
+         */
+        private Integer quantity;
+
+        /**
          * 即时库存数量
          */
         private Integer curInventoryQty;
+
     }
 
     /**

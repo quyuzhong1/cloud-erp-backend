@@ -146,4 +146,16 @@ public interface SubcontractChangeService extends SuperService<SubcontractChange
      * @param remark
      */
     void invalid(List<String> ids, String remark);
+
+    /**
+     * 修改金蝶同步信息
+     * @Author Luo_WG
+     * @Date 2023/5/25 10:43
+     * @param ids
+     * @param syncKingdeeStatus
+     * @param syncKingdeeId
+     * @param syncOperate
+     * @return java.lang.Boolean
+     **/
+    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
 }
