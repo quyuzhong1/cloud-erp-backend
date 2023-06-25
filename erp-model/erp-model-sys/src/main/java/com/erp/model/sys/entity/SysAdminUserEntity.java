@@ -7,7 +7,7 @@ import java.util.Date;
 
 /**
  * @Classname SysUserInfoEntity
- * @Description TODO
+
  * @Date 2022-07-01 16:27
  * @Created by yl
  */

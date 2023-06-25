@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/3/20 9:30
  */
 public enum ApproveTypeEnum {

@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * @Classname SysDepartmentDTO
- * @Description TODO
+
  * @Date 2022-07-11 17:20
  * @Created by yl
  */

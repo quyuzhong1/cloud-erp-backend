@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * @Classname: NoticeMsgWrapInfoDTP
- * @Description: TODO
+
  * @CreateTime: 2023-04-21  15:51
  * @Author: zhangchunlin
  */

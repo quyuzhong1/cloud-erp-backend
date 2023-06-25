@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 /**
  * @Classname RemoveProductDTO
- * @Description TODO
+
  * @Date 2022-09-17 11:33
  * @Created by yl
  */

@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2022/12/15 18:16
  */
 @Mapper

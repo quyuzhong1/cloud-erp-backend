@@ -11,7 +11,7 @@ import java.io.Serializable;
 
 /**
  * @Classname: TransactionRuleEntity
- * @Description: TODO
+
  * @CreateTime: 2023-04-26  10:14
  * @Author: zhangchunlin
  */

@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * @Classname: InventoryInitDetailDTO
- * @Description: TODO
+
  * @CreateTime: 2023-05-08  17:09
  * @Author: zhangchunlin
  */

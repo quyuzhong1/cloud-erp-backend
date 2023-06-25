@@ -9,7 +9,7 @@ import java.io.Serializable;
 /**
  * 统计数据共同的vo
  * @Classname
- * @Description TODO
+
  * @Date 2022-12-15 14:45
  * @Created by yl
  */

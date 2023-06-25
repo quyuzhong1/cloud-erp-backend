@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * @Classname: FeiShuSendSingleParam
- * @Description: TODO
+
  * @CreateTime: 2023-04-20  15:03
  * @Author: zhangchunlin
  */

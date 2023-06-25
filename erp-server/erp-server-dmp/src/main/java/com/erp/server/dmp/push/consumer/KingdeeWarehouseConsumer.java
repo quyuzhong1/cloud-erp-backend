@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * 对接金蝶仓库
  * @author Lambda
  * @Classname KingdeeWarehouseConsumer
- * @Description TODO
+
  * @Date 2023-04-25 14:29
  * @Created by yl
  */

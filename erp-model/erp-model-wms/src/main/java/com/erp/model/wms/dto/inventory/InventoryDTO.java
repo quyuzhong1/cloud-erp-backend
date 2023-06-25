@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * @Classname: InventoryDTO
- * @Description: TODO
+
  * @CreateTime: 2023-05-08  18:42
  * @Author: zhangchunlin
  */

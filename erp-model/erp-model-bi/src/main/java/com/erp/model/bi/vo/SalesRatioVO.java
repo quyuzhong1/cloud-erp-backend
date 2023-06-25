@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 
 /**
  * @Classname SalesRatioVO
- * @Description TODO
+
  * @Date 2022-12-26 14:20
  * @Created by yl
  */

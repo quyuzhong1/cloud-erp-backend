@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 /**
  * @Classname ProcessBaseDTO
- * @Description TODO
+
  * @Date 2022-08-11 14:27
  * @Created by yl
  */

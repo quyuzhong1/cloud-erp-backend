@@ -6,7 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 
 /**
  * @Classname: MsgConfigMapper
- * @Description: TODO
+
  * @CreateTime: 2023-04-21  11:59
  * @Author: zhangchunlin
  */

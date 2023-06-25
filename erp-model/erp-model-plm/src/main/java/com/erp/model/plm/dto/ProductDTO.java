@@ -12,7 +12,7 @@ import java.util.List;
 
 /**
  * @Classname ProductDTO
- * @Description TODO
+
  * @Date 2022-09-16 16:12
  * @Created by yl
  */

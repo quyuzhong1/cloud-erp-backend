@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 /**
  * @Classname UpdatePasswordDTO
- * @Description TODO
+
  * @Date 2022-07-18 11:00
  * @Created by yl
  */

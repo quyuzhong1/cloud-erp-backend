@@ -11,7 +11,7 @@ import java.util.Optional;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/5/15 16:55
  */
 public enum TransferTypeEnum implements EnumMessage {

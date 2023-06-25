@@ -11,7 +11,7 @@ import java.util.Date;
 
 /**
  * @Classname ProductArchiveEntity
- * @Description TODO
+
  * @Date 2022-10-09 11:38
  * @Created by yl
  */

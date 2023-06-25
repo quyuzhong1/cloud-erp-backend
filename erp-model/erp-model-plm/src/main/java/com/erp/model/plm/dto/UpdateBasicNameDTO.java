@@ -8,7 +8,7 @@ import javax.validation.constraints.NotBlank;
 
 /**
  * @Classname UpdateBasicCategoryDTO
- * @Description TODO
+
  * @Date 2022-09-13 14:03
  * @Created by yl
  */

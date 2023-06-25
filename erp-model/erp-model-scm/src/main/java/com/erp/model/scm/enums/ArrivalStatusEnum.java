@@ -3,7 +3,7 @@ package com.erp.model.scm.enums;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/3/27 19:13
  */
 public enum ArrivalStatusEnum {

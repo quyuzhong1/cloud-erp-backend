@@ -2,7 +2,7 @@ package com.common.business.enums;
 
 /**
  * @Classname ModuleEnum
- * @Description TODO
+
  * @Date 2023-02-09 10:40
  * @Created by yl
  */

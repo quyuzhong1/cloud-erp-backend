@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 /**
  * @author Lambda
  * @Classname SyncKingdeeSoServiceImpl
- * @Description TODO
+
  * @Date 2023-05-30 11:46
  * @Created by yl
  */

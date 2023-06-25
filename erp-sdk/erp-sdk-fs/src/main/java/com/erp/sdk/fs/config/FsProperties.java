@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * @Classname FsProperties
- * @Description TODO
+
  * @Date 2022-07-20 17:57
  * @Created by yl
  */

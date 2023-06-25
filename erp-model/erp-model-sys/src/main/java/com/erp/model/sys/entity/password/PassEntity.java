@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * @Classname PassEntity
- * @Description TODO
+
  * @Date 2022-07-06 11:47
  * @Created by yl
  */

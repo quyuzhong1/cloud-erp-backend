@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2022/12/15 18:14
  */
 public interface BiDataSourceCostDetailService  extends IService<BiDataSourceCostDetailEntity> {

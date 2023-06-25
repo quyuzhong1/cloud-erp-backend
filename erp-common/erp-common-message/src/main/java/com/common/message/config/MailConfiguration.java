@@ -14,7 +14,7 @@ import javax.annotation.Resource;
 
 /**
  * @Classname 邮件配置
- * @Description TODO
+
  * @Date 2022-07-28 11:15
  * @Created by yl
  */

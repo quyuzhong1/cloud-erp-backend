@@ -8,7 +8,7 @@ import java.util.List;
 
 /**
  * @Classname: FeishuSingleMsgResultVO
- * @Description: TODO
+
  * @CreateTime: 2023-04-20  17:42
  * @Author: zhangchunlin
  */

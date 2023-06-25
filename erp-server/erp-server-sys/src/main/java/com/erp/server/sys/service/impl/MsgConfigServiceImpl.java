@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * @Classname: MsgConfigServiceImpl
- * @Description: TODO
+
  * @CreateTime: 2023-04-21  12:01
  * @Author: zhangchunlin
  */

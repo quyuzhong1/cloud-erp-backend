@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /** 从数据库查询部门树结构
  * @Classname SysDepartmentTreeVO
- * @Description TODO
+
  * @Date 2022-08-01 14:04
  * @Created by yl
  */

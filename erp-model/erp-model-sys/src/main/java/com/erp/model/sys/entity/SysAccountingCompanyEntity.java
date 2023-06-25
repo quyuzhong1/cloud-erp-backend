@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 /**
  * @author Administrator
  * @Classname ysAccountingCompanyEntity
- * @Description TODO
+
  * @Date 2022-07-12 9:39
  * @Created by yl
  */

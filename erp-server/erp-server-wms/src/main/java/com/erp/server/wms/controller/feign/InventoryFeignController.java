@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * @Classname: InventoryFeignController
- * @Description: TODO
+
  * @CreateTime: 2023-04-27  10:31
  * @Author: zhangchunlin
  */

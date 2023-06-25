@@ -10,7 +10,7 @@ import java.io.Serializable;
  *
  * @author
  * @Classname UserKingdeePostDTO
- * @Description TODO
+
  * @Date 2023-06-05 9:59
  * @Created by yl
  */

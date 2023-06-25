@@ -5,7 +5,7 @@ import java.util.Objects;
 
 /**
  * @Classname: InventoryBizTypeEnum
- * @Description: TODO
+
  * @CreateTime: 2023-05-04  15:09
  * @Author: zhangchunlin
  */

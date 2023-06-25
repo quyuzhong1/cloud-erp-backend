@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * @author Lambda
  * @Classname FeignErrorDecoder
- * @Description TODO
+
  * @Date 2023-05-06 10:13
  * @Created by yl
  */

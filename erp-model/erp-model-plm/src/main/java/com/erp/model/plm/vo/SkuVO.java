@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @Classname SkuVO
- * @Description TODO
+
  * @Date 2023-01-11 14:28
  * @Created by yl
  */

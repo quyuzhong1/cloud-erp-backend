@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 /**
  * @Classname: MsgLog
- * @Description: TODO
+
  * @CreateTime: 2023-04-23  11:54
  * @Author: zhangchunlin
  */

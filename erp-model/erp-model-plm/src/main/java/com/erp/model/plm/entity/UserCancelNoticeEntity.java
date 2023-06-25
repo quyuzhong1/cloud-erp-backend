@@ -10,7 +10,7 @@ import java.util.Date;
 
 /**
  * @Classname UserCancelNoticeEntity
- * @Description TODO
+
  * @Date 2022-11-10 15:01
  * @Created by yl
  */

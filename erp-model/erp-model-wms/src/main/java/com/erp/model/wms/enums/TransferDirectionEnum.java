@@ -11,7 +11,7 @@ import java.util.Objects;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/5/15 16:43
  */
 public enum TransferDirectionEnum implements EnumMessage {

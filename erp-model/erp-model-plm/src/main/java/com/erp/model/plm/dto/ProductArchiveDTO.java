@@ -9,7 +9,7 @@ import java.util.Date;
 
 /**
  * @Classname ProductArchiveDTO
- * @Description TODO
+
  * @Date 2022-10-09 11:35
  * @Created by yl
  */

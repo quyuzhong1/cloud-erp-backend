@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname ProductSearchDTO
- * @Description TODO
+
  * @Date 2022-09-17 14:41
  * @Created by yl
  */

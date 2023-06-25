@@ -5,7 +5,7 @@ import com.erp.model.sys.entity.SysDepartmentEntity;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/4/10 14:40
  */
 public interface SyncKingdeeSysDeptService {

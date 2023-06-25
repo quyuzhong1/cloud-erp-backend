@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 /**
  * @Classname CopyRoleDTO
- * @Description TODO
+
  * @Date 2022-11-17 12:24
  * @Created by yl
  */

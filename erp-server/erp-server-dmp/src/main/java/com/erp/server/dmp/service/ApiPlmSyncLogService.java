@@ -7,7 +7,7 @@ import com.erp.model.dmp.entity.ApiPlmSyncLogEntity;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/1/11 11:38
  */
 public interface ApiPlmSyncLogService extends IService<ApiPlmSyncLogEntity> {

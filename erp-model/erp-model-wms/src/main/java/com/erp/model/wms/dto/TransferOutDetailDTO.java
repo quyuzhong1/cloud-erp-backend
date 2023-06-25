@@ -9,7 +9,7 @@ import java.io.Serializable;
 /**
  * @author Lambda
  * @Classname TransferInDTO
- * @Description TODO
+
  * @Date 2023-05-11 11:59
  * @Created by yl
  */

@@ -7,7 +7,7 @@ import com.erp.server.msg.model.MsgSendChannelWrapParam;
 
 /**
  * @Classname: IMessageSend
- * @Description: TODO
+
  * @CreateTime: 2023-04-19  11:08
  * @Author: zhangchunlin
  */

@@ -9,7 +9,7 @@ import java.io.Serializable;
 /**
  * @author Lambda
  * @Classname CurrencyDTO
- * @Description TODO
+
  * @Date 2023-03-21 17:13
  * @Created by yl
  */

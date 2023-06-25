@@ -8,7 +8,7 @@ import java.util.*;
 
 /**
  * @Classname FsBatchSendMessageDTO
- * @Description TODO
+
  * @Date 2022-11-15 11:21
  * @Created by yl
  */

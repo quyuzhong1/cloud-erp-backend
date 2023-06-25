@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 /**
  * @Classname SysDepartmentUserNumber
- * @Description TODO
+
  * @Date 2022-07-18 14:09
  * @Created by yl
  */

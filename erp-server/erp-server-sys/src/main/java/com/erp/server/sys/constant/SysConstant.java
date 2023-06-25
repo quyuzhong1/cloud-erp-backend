@@ -2,7 +2,7 @@ package com.erp.server.sys.constant;
 
 /**
  * @Classname 系统常量
- * @Description TODO
+
  * @Date 2022-07-18 11:18
  * @Created by yl
  */

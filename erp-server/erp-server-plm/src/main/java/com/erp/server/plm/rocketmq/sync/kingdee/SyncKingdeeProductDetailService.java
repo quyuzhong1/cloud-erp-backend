@@ -5,7 +5,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/3/8 18:17
  */
 public interface SyncKingdeeProductDetailService {

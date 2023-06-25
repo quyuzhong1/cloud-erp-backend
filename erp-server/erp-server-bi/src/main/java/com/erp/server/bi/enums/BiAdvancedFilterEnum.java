@@ -3,7 +3,7 @@ package com.erp.server.bi.enums;
 /**
  *  bi 专题 筛选条件
  * @Classname
- * @Description TODO
+
  * @Date 2022-12-15 19:47
  * @Created by yl
  */

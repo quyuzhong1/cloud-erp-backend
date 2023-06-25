@@ -2,7 +2,7 @@ package com.erp.model.plm.enums;
 
 /**
  * @Classname BomTypeEnum
- * @Description TODO
+
  * @Date 2023-01-29 18:05
  * @Created by yl
  */

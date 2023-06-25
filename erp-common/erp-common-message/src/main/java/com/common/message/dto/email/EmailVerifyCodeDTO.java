@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @Classname EmailVerifyCodeDTO
- * @Description TODO
+
  * @Date 2022-08-02 10:17
  * @Created by yl
  */

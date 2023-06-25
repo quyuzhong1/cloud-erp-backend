@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname QcRuleDTO
- * @Description TODO
+
  * @Date 2023-04-13 10:00
  * @Created by yl
  */

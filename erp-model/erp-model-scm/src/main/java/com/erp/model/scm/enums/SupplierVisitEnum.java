@@ -8,7 +8,7 @@ import java.util.Arrays;
  * 供应商的拜访类型枚举
  * @author Lambda
  * @Classname SupplierVisitEnum
- * @Description TODO
+
  * @Date 2023-03-21 10:09
  * @Created by yl
  */

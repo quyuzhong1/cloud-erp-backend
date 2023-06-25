@@ -31,7 +31,7 @@ import java.util.List;
 /** 
  *
  * @Classname: GlobalExceptionHandler
- * @Description: TODO
+
  * @CreateTime: 2023-04-13  19:34
  * @Author: zhangchunlin
  */

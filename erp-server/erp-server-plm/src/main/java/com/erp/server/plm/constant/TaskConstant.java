@@ -2,7 +2,7 @@ package com.erp.server.plm.constant;
 
 /**
  * @Classname 任务属性
- * @Description TODO
+
  * @Date 2022-09-19 9:48
  * @Created by yl
  */

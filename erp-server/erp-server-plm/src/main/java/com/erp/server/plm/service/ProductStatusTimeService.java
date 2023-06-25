@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/2/20 20:02
  */
 public interface ProductStatusTimeService extends IService<ProductStatusTimeEntity> {

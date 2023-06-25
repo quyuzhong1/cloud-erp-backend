@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/6/19 14:30
  */
 public enum OptChangeTypeEnum implements EnumMessage {

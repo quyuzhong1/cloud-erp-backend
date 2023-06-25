@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @Classname ProductBomChangeDTO
- * @Description TODO
+
  * @Date 2023-01-31 16:48
  * @Created by yl
  */

@@ -11,7 +11,7 @@ import java.io.Serializable;
 /**
  * @author Lambda
  * @Classname InvoiceDTO
- * @Description TODO
+
  * @Date 2023-05-10 17:08
  * @Created by yl
  */

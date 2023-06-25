@@ -3,7 +3,7 @@ package com.erp.model.wms.enums;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/4/18 11:30
  */
 public enum ViewQcTrendEnum {

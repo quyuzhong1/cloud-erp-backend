@@ -10,7 +10,7 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
 /**
  * @Classname CorsConfig
- * @Description TODO
+
  * @Date 2022-07-07 12:27
  * @Created by yl
  */

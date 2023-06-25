@@ -9,7 +9,7 @@ import java.io.Serializable;
 
 /**
  * @Classname ProductChangeListSearchDTO
- * @Description TODO
+
  * @Date 2023-01-28 17:18
  * @Created by yl
  */

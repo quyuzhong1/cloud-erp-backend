@@ -5,7 +5,7 @@ import com.common.core.constant.EnumMessage;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/2/22 10:31
  */
 public enum ProductStyleEnum implements EnumMessage {

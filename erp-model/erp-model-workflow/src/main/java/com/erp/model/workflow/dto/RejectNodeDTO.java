@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * @Classname RejectNodeDTO
- * @Description TODO
+
  * @Date 2022-08-17 11:55
  * @Created by yl
  */

@@ -9,7 +9,7 @@ import java.io.Serializable;
 
 /**
  * @Classname SetProductProgressStatusDTO
- * @Description TODO
+
  * @Date 2023-02-23 18:09
  * @Created by yl
  */

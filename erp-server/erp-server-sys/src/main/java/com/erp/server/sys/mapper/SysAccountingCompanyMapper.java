@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Param;
 
 /**
  * @Classname SysAccountingCompanyMapper
- * @Description TODO
+
  * @Date 2022-07-12 9:50
  * @Created by yl
  */

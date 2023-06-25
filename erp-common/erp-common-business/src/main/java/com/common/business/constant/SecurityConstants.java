@@ -2,7 +2,7 @@ package com.common.business.constant;
 
 /**
  * @Classname SecurityConstants
- * @Description TODO
+
  * @Date 2022-07-21 11:04
  * @Created by yl
  */

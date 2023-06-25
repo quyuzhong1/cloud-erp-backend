@@ -6,7 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 
 /**
  * @Classname BiSkuInfoMapper
- * @Description TODO
+
  * @Date 2022-12-26 16:35
  * @Created by yl
  */

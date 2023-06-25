@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @Classname SysUserBindingThirdDTO
- * @Description TODO
+
  * @Date 2022-07-13 17:08
  * @Created by yl
  */

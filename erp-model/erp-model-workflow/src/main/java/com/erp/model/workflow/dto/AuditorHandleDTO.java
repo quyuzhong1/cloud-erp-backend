@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @Classname ApproveRecordVO
- * @Description TODO
+
  * @Date 2022-08-18 11:17
  * @Created by yl
  */

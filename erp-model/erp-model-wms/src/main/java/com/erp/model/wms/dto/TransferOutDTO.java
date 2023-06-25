@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname TransferOutDTO
- * @Description TODO
+
  * @Date 2023-05-11 14:08
  * @Created by yl
  */

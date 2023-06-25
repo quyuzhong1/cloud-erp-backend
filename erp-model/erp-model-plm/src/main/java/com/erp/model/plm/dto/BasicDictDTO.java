@@ -9,7 +9,7 @@ import java.io.Serializable;
 
 /**
  * @Classname BasicDictDTO
- * @Description TODO
+
  * @Date 2022-09-16 11:20
  * @Created by yl
  */

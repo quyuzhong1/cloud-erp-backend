@@ -6,7 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 
 /**
  * @Classname ProductBomSkuHistoryMapper
- * @Description TODO
+
  * @Date 2023-01-11 14:12
  * @Created by yl
  */

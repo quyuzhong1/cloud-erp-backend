@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @Classname SubjectVO
- * @Description TODO
+
  * @Date 2023-01-05 18:20
  * @Created by yl
  */

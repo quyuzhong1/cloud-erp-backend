@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @Classname BasicCategoryTreeDTO
- * @Description TODO
+
  * @Date 2023-03-02 15:06
  * @Created by yl
  */

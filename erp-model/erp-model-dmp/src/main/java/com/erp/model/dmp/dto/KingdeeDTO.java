@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * @author Lambda
  * @Classname KingdeeDTO
- * @Description TODO
+
  * @Date 2023-06-06 18:56
  * @Created by yl
  */

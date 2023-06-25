@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Param;
 
 /**
  * @Classname ProductArchiveMapper
- * @Description TODO
+
  * @Date 2022-10-09 11:39
  * @Created by yl
  */

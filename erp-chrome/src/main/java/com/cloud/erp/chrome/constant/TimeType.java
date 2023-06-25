@@ -2,7 +2,7 @@ package com.cloud.erp.chrome.constant;
 
 /**
  * @Classname TimeType
- * @Description TODO
+
  * @Date 2022-08-30 14:21
  * @Created by yl
  */

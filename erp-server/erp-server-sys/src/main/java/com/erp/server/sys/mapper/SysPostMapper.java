@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
 
 /**
  * @Classname SysPostMapper
- * @Description TODO
+
  * @Date 2022-07-12 16:10
  * @Created by yl
  */

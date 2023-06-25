@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 /**
  * @Classname ThirdUnionDTO
- * @Description TODO
+
  * @Date 2022-11-15 11:00
  * @Created by yl
  */

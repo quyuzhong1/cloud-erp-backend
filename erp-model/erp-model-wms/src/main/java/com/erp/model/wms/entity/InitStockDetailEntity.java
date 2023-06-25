@@ -9,7 +9,7 @@ import lombok.experimental.Accessors;
 
 /**
  * @Classname: InitStockDetailEntity
- * @Description: TODO
+
  * @CreateTime: 2023-05-11  10:27
  * @Author: zhangchunlin
  */

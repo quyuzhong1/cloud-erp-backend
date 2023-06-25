@@ -9,7 +9,7 @@ import java.util.Arrays;
  * 质检结果枚举
  * @author Lambda
  * @Classname QcResultEnum
- * @Description TODO
+
  * @Date 2023-04-17 9:59
  * @Created by yl
  */

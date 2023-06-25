@@ -3,7 +3,7 @@ package com.erp.model.dmp.enums;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/3/3 11:46
  */
 public enum KingdeePushModuleEnum {

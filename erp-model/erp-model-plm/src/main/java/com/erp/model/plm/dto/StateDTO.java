@@ -9,7 +9,7 @@ import javax.validation.constraints.NotNull;
 
 /**
  * @Classname StateDTO
- * @Description TODO
+
  * @Date 2022-09-15 10:00
  * @Created by yl
  */

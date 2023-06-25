@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * 入库预报请求实体
  * @Classname: InstockForcastDTO
- * @Description: TODO
+
  * @CreateTime: 2023-05-09  15:28
  * @Author: zhangchunlin
  */

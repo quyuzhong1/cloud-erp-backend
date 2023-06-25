@@ -8,7 +8,7 @@ import java.util.Date;
 
 /**
  * @Classname SysLoginIpDTO
- * @Description TODO
+
  * @Date 2022-07-15 12:23
  * @Created by yl
  */

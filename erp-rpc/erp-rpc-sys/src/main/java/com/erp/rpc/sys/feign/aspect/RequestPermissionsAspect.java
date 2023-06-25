@@ -24,7 +24,7 @@ import java.util.Objects;
  * 实现 RequestPermissions 请求权限的注解
  *
  * @Classname
- * @Description TODO
+
  * @Date 2022-10-15 10:21
  * @Created by yl
  */

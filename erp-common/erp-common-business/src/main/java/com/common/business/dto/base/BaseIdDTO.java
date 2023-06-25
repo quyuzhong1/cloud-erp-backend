@@ -7,7 +7,7 @@ import javax.validation.constraints.NotBlank;
 
 /**
  * @Classname BaseIdDTO
- * @Description TODO
+
  * @Date 2022-09-20 11:18
  * @Created by yl
  */

@@ -6,7 +6,7 @@ import java.io.Serializable;
 
 /**
  * @Classname: FeishuConfigParam
- * @Description: TODO
+
  * @CreateTime: 2023-04-21  15:05
  * @Author: zhangchunlin
  */

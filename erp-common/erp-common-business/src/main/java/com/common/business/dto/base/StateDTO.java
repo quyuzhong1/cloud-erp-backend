@@ -10,7 +10,7 @@ import java.io.Serializable;
 
 /**
  * @Classname StateDTO
- * @Description TODO
+
  * @Date 2022-07-12 10:22
  * @Created by yl
  */

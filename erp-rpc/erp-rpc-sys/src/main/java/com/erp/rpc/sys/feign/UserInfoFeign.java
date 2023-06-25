@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname UserInfoFeign
- * @Description TODO
+
  * @Date 2023-06-19 19:52
  * @Created by yl
  */

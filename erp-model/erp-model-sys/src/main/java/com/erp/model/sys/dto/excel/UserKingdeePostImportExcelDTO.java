@@ -11,7 +11,7 @@ import java.io.Serializable;
 /**
  * @author Lambda
  * @Classname UserKingdeePostImportExcelDTO
- * @Description TODO
+
  * @Date 2023-06-02 16:08
  * @Created by yl
  */

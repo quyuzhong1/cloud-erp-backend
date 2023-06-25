@@ -10,7 +10,7 @@ import java.io.Serializable;
 
 /**
  * @Classname NoticeNodeDTO
- * @Description TODO
+
  * @Date 2022-11-07 10:39
  * @Created by yl
  */

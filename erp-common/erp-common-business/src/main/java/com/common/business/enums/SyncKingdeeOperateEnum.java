@@ -3,7 +3,7 @@ package com.common.business.enums;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/4/11 17:13
  */
 public enum SyncKingdeeOperateEnum {

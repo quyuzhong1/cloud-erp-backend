@@ -10,7 +10,7 @@ import java.util.Map;
 
 /**
  * @Classname: SupplierFeign
- * @Description: TODO
+
  * @CreateTime: 2023-06-19  19:22
  * @Author: zhangchunlin
  */

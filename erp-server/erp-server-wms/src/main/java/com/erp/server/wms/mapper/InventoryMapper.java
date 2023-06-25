@@ -16,7 +16,7 @@ import java.util.List;
 
 /**
  * @Classname: InventoryMapper
- * @Description: TODO
+
  * @CreateTime: 2023-04-25  15:30
  * @Author: zhangchunlin
  */

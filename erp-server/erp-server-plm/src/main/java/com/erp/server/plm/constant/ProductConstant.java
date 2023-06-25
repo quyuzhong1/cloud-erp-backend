@@ -2,7 +2,7 @@ package com.erp.server.plm.constant;
 
 /**
  * @Classname ProductConstant
- * @Description TODO
+
  * @Date 2022-10-13 10:34
  * @Created by yl
  */

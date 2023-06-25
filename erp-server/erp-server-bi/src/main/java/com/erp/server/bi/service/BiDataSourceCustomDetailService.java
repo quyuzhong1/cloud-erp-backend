@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2022/12/15 18:15
  */
 public interface BiDataSourceCustomDetailService  extends IService<BiDataSourceCustomDetailEntity> {

@@ -3,7 +3,7 @@ package com.erp.server.scm.constant;
 /**
  * @author Lambda
  * @Classname ScmConstant1
- * @Description TODO
+
  * @Date 2023-03-20 19:54
  * @Created by yl
  */

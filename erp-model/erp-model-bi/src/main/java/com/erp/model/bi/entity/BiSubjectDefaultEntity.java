@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 /**
  * @Classname BiSubjectDefaultEntity
- * @Description TODO
+
  * @Date 2022-12-09 14:15
  * @Created by yl
  */

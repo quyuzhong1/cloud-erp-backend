@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @Classname: MsgConfigFeignController
- * @Description: TODO
+
  * @CreateTime: 2023-04-21  14:19
  * @Author: zhangchunlin
  */

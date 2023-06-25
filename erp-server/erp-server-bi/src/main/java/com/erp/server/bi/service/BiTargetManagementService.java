@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2022/12/21 17:35
  */
 public interface BiTargetManagementService extends IService<BiTargetManagementEntity> {

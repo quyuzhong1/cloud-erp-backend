@@ -11,7 +11,7 @@ import java.time.LocalDate;
 
 /**
  * @Classname: InventoryBaseInfoDTO
- * @Description: TODO
+
  * @CreateTime: 2023-04-27  19:51
  * @Author: zhangchunlin
  */

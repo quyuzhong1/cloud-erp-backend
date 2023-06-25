@@ -8,7 +8,7 @@ import javax.validation.constraints.NotNull;
 
 /**
  * @Classname MabaOrderDTO
- * @Description TODO
+
  * @Date 2022-08-26 9:15
  * @Created by yl
  */

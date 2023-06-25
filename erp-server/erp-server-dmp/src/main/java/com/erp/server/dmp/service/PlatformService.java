@@ -6,7 +6,7 @@ import com.erp.model.dmp.entity.PlatformEntity;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/1/11 14:41
  */
 public interface PlatformService extends IService<PlatformEntity> {

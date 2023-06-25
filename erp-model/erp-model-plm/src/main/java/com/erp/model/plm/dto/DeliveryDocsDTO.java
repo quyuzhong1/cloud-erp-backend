@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 /**
  * @Classname 交付物
- *  TODO
+ *
  * @Date 2022-09-23 10:28
  * @Created by yl
  */
