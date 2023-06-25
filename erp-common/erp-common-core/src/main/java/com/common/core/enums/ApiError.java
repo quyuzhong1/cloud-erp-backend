@@ -155,6 +155,7 @@ public enum ApiError implements Serializable {
     ERROR_940022(94022,"模块已存在请不要重复操作"),
 
     TASK_NOT_EXIST(94023,"任务已审核或不存在"),
+    PROCESS_BUSINESS_KEY_EXIST(94024,"业务对应流程定义已存在"),
 
 
 

@@ -123,7 +123,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.PROCESS_ALREADY_START);
         }
         // 查询业务数据和关联流程定义
-        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey());
+        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"");
         if (null == processBusiness) {
            // 业务未绑定流程定义
            throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_BIND);

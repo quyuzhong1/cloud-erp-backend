@@ -25,7 +25,7 @@ public interface ProcessDefinitionService extends SuperService<ProcessDefinition
      * @param dto
      * @return
      */
-    boolean saveOrUpdate(ProcessDefinitionDTO.AddOrUpdateDTO dto);
+    boolean addOrUpdate(ProcessDefinitionDTO.AddOrUpdateDTO dto);
 
     /**
      * 分页查询流程定义
