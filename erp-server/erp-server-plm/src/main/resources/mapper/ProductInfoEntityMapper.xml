@@ -53,9 +53,9 @@
         </if>
         <if test="params.stateList !=null and params.stateList.size>0">
             AND P.approval_status IN
-            <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
-                #{state}
-            </foreach>
+                <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                    #{state}
+                </foreach>
         </if>
 
         <if test="params.productIds !=null and params.productIds.size>0">
