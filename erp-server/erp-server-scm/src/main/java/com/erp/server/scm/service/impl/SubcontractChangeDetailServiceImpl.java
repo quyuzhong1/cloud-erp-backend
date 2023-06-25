@@ -253,7 +253,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
                 detailEntity.setSupplierName(supplierName);
             }
             //委外原数据
-            SubcontractOrderDetailEntity subEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
+            SubcontractOrderDetailEntity subEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(subEntity)) {
                 throw new ServiceException(ApiError.ERROR_98070);
             }
@@ -287,7 +287,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
                     detailEntity.setSupplierName(supplierName);
                 }
                 //委外原数据
-                SubcontractOrderDetailEntity childSubEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
+                SubcontractOrderDetailEntity childSubEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(childSubEntity)) {
                     throw new ServiceException(ApiError.ERROR_98070);
                 }
