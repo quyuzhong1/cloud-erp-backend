@@ -363,6 +363,7 @@ public enum ApiError implements Serializable {
     ERROR_95187(95187, "已终止的项目进行状态更改"),
     ERROR_95188(95188, "项目未立项"),
     ERROR_95189(95189, "存在未立项的项目"),
+    ERROR_95190(95190, "仅在待审核,审核中可申请撤销"),
 
 
     /**

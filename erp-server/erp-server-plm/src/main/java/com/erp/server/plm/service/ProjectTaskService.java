@@ -313,4 +313,12 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     List<ProductTask.TaskInfoDTO> listTaskInfo(List<String> taskIdList);
 
 
+    /**
+     * 撤销流程
+     * @author yl
+     * @date 2023-06-25 17:11
+     * @param taaskIdList
+     * @return java.lang.Boolean
+     */
+    Boolean cancelProcess(List<String> taaskIdList);
 }

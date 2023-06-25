@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -93,6 +92,15 @@ public class ProcessFeignController extends BaseController {
     @PostMapping("/withDraw")
     public void withDraw(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.withDrawProcess(dto);
+    }
+
+    /**
+     * 批量撤销流程 就是删除流程
+     * @param processIdList
+     */
+    @PostMapping("/batchCancelProcess")
+    public Boolean batchCancelProcess(@RequestBody @Validated List<String> processIdList) {
+       return workflowService.batchCancelProcess(processIdList);
     }
 
     //取回流程

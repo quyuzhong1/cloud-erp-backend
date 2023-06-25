@@ -414,6 +414,25 @@ public class ProjectTaskController extends BaseController {
         return result == true ? success() : failure();
     }
 
+    /**
+     * 项目任务-任务分页列表 -状态操作-撤销【PLM1.3】
+     *
+     * @return
+     */
+    @PostMapping("/cancelProcess")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:task:tasks:cancelProcess",
+            serviceClass = ProjectTaskService.class,
+            keyIdName = "taskIdList"
+    )
+    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result = projectTaskService.cancelProcess(dto.getIds());
+        return result ? success() : failure();
+    }
+
+
+
 
     /**
      * 项目任务-任务分页列表 -状态操作-重新开始

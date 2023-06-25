@@ -141,4 +141,12 @@ public interface WorkflowFeign {
      */
     @PostMapping("feign/process/withDrawByBusiness")
     Boolean withDrawByBusiness(@RequestBody WithDrawProcessBusinessDTO dto);
+
+    /**
+     * 根据业务表id 撤销流程
+     * @param processIdList
+     * @return
+     */
+    @PostMapping("feign/process/batchCancelProcess")
+    Boolean batchCancelProcess(@RequestBody List<String> processIdList);
 }

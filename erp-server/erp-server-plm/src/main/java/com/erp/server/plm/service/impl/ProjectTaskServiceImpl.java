@@ -43,6 +43,7 @@ import com.erp.server.plm.constant.ProjectPlanConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProjectTaskMapper;
 import com.erp.server.plm.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -72,9 +73,6 @@ import java.util.stream.Collectors;
 public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, ProjectTaskEntity> implements ProjectTaskService {
 
 
-
-
-
     @Autowired
     private TaskDeliveryService taskDeliveryService;
 
@@ -90,7 +88,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     @Autowired
     private CommonService commonService;
-
 
 
     @Autowired
@@ -149,7 +146,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     private TaskConcernService taskConcernService;
 
     @Autowired
-    private TaskDocHistoryService  taskDocHistoryService;
+    private TaskDocHistoryService taskDocHistoryService;
 
     /**
      * 添加系统的产品任务
@@ -3988,6 +3985,58 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
 
     /**
+     * 撤销流程
+     *
+     * @param taskIdList
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-06-25 17:11
+     */
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean cancelProcess(List<String> taskIdList) {
+        //根据任务id 获取所有的任务列表
+        List<ProjectTaskEntity> taskList = this.getByTaskIds(taskIdList);
+        if (CollectionUtils.isEmpty(taskList)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+        Integer waitConfirm = TaskStateEnum.WAIT_CONFIRM.getCode();
+        Integer approvalIng = TaskStateEnum.APPROVAL_ING.getCode();
+        List<Integer> statusList = new ArrayList<>(2);
+        statusList.add(waitConfirm);
+        statusList.add(approvalIng);
+        long count = taskList.stream().filter(l -> !statusList.contains(l.getStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_95190);
+        }
+        //流程id 集合
+        List<String> processIdList = taskList.stream().map(ProjectTaskEntity::getProcessId).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(processIdList)) {
+            Boolean result = workflowFeign.batchCancelProcess(processIdList);
+            if (result) {
+                //变更文档的
+                List<ProjectTaskEntity> changeDocTaskList = taskList.stream().filter(t -> t.getIsChangeDocs()).collect(Collectors.toList());
+                List<ProjectTaskEntity> otherTaskList = taskList.stream().filter(t -> !t.getIsChangeDocs()).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(changeDocTaskList)) {
+                    Integer finishStatus = TaskStateEnum.FINISH.getCode();
+                    changeDocTaskList.forEach(c -> c.setStatus(finishStatus));
+                    this.updateBatchById(changeDocTaskList);
+                }
+                if (CollectionUtils.isNotEmpty(otherTaskList)) {
+                    Integer ingStatus = TaskStateEnum.ING.getCode();
+                    otherTaskList.forEach(c -> c.setStatus(ingStatus));
+                    this.updateBatchById(otherTaskList);
+                }
+            }
+            return result;
+        }
+
+
+        return Boolean.FALSE;
+    }
+
+
+    /**
      * 从新开始
      *
      * @param dto
@@ -4080,7 +4129,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //是否是变更任务
             Boolean isChangeDocs = taskEntity.getIsChangeDocs();
             //如果是变更任务就要更改历史文档状态
-            if(isChangeDocs){
+            if (isChangeDocs) {
                 taskDocHistoryService.updateChangeResult(taskEntity.getId());
             }
 
@@ -4748,6 +4797,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @Author Luo_WG
      * @Date 2023/3/29 14:08
      **/
+    @Override
     public ProjectTaskEntity getTaskByName(String productId, String name) {
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProjectTaskEntity::getName, name);
@@ -4852,9 +4902,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         return resultList;
     }
-
-
-
 
 
 }

@@ -14,7 +14,9 @@ import java.util.List;
  */
 public interface WorkflowService {
 
-    //撤销流程
+    /**
+     *  撤销流程
+     */
     void withDrawProcess(ProcessBaseDTO dto);
 
     void fetchBackProcess(ApproveProcessDTO dto);
@@ -56,4 +58,13 @@ public interface WorkflowService {
 
      */
     void cancelProcess(List<String> ids);
+
+    /**
+     * 批量取消流程
+     * @author yl
+     * @date 2023-06-25 18:12
+     * @param processIdList
+     * @return void
+     */
+    Boolean batchCancelProcess(List<String> processIdList);
 }
