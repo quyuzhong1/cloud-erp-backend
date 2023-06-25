@@ -4,9 +4,11 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.TaskDTO;
+import com.erp.model.plm.dto.TaskPagingDTO;
 import com.erp.model.plm.dto.TaskPagingShowDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -28,4 +30,13 @@ public interface TaskService extends IService<ProjectTaskEntity> {
     PagingVO<List<TaskPagingShowDTO>> allExecutablePaging(PagingDTO<TaskDTO.TaskPagingParamDTO> searchParamDTO);
 
 
+    /**
+     * 导出
+     * @author yl
+     * @date 2023-06-25 12:10
+     * @param dto
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean exportTask(TaskPagingDTO.ExportDTO dto, HttpServletResponse response);
 }

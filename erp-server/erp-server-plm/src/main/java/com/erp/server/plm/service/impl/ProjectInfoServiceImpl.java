@@ -317,8 +317,8 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      * @date 2023-06-16 15:16
      */
     @Override
-    public List<ProductDTO.CountBaseDTO> listCollectStatusCount() {
-        return baseMapper.listCollectStatusCount();
+    public List<ProductDTO.CountBaseDTO> listCollectStatusCount(String userId) {
+        return baseMapper.listCollectStatusCount(userId);
 
     }
 

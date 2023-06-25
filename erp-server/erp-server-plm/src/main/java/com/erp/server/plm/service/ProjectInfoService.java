@@ -144,5 +144,5 @@ public interface ProjectInfoService extends IService<ProjectInfoEntity> {
      * @param
      * @return java.util.List<com.erp.model.plm.dto.ProductDTO.CountBaseDTO>
      */
-    List<ProductDTO.CountBaseDTO> listCollectStatusCount();
+    List<ProductDTO.CountBaseDTO> listCollectStatusCount(String userId);
 }

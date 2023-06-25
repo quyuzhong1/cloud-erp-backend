@@ -40,6 +40,11 @@ public class TaskSearchDTO implements Serializable {
     private List<Integer> status;
 
     /**
+     * 关联的skuIdList
+     */
+    private List<String> skuIdList;
+
+    /**
      * 开始时间
      */
     private LocalDate startTime;

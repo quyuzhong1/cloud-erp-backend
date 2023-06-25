@@ -116,7 +116,7 @@ public class ProductInfoController extends BaseController {
     }
 
     /**
-     * 收藏的统计【PLM1.3】
+     * 我收藏的统计【PLM1.3】
      *
      * @param
      * @return

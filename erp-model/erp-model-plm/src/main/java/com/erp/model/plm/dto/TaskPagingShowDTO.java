@@ -53,8 +53,6 @@ public class TaskPagingShowDTO implements Serializable {
 
 
 
-
-
     /**
      * 阶段id
      */
@@ -77,6 +75,8 @@ public class TaskPagingShowDTO implements Serializable {
      * 任务类型 0 一般任务 1：审核任务
      */
     private Integer type;
+
+
 
     /**
      * 计划开始时间
@@ -112,6 +112,11 @@ public class TaskPagingShowDTO implements Serializable {
      * 任务优先级 1 低级 2 中级 3 高级
      */
     private Integer priority;
+
+    /**
+     * 任务优先级 1 低级 2 中级 3 高级
+     */
+    private String priorityName;
 
     /**
      * 任务状态 任务状态 0:待发布 1:未开始 2:待审核 3 进行中, 4.已完成 5.已关闭
@@ -233,4 +238,9 @@ public class TaskPagingShowDTO implements Serializable {
      * 工期
      */
     private Integer workPeriod;
+
+    /**
+     * 是否文档变更 true 是 false 不是
+     */
+    private Boolean isChangeDocs;
 }

@@ -30,6 +30,8 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
 
     IPage<TaskPagingShowDTO> paging(Page query,@Param("params") TaskPagingDTO params,@Param("userId") String userId);
 
+    List<TaskDTO.TaskExportDTO> waitMyFinishExport(@Param("params") TaskPagingDTO.ExportDTO params, @Param("userId")String userId);
+
     Integer pagingCount(@Param("productId") String productId,@Param("userId") String userId,
                                     @Param("statusList") List<Integer> statusList, @Param("param") String param
     );
@@ -40,6 +42,31 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      * @return
      */
     IPage<TaskPagingShowDTO> allPaging(Page query, @Param("params") TaskPagingDTO params);
+
+    /**
+     * 所有导出
+     * @param params
+     * @return
+     */
+    List<TaskDTO.TaskExportDTO> allExport(@Param("params") TaskPagingDTO.ExportDTO params);
+
+    /**
+     * 变更导出
+     * @param params
+     * @return
+     */
+    List<TaskDTO.TaskExportDTO> changeExport(@Param("params") TaskPagingDTO.ExportDTO params);
+
+    /**
+     * 这个是变更的任务
+     * @author yl
+     * @date 2023-06-25 11:39
+     * @param query
+     * @param params
+     * @return com.baomidou.mybatisplus.core.metadata.IPage
+     */
+    IPage<TaskPagingShowDTO> changePaging(Page query,@Param("params") TaskPagingDTO params);
+
 
     Integer allPagingCount( @Param("productId") String productId,@Param("param") String param);
 
@@ -58,6 +85,14 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
     List<TaskPagingShowDTO> allChildrenList(@Param("productId") String productId);
 
     IPage<TaskPagingShowDTO> myApprovalPaging(Page query,@Param("params") TaskPagingDTO params,@Param("processIdList") List<String> processIdList);
+
+    /**
+     * 待我审核
+     * @param params
+     * @param processIds
+     * @return
+     */
+    List<TaskDTO.TaskExportDTO> myApprovaExport(@Param("params")TaskPagingDTO.ExportDTO params, @Param("processIdList")List<String> processIds);
 
     Integer myApprovalPagingCount(@Param("productId") String productId,@Param("userId") String userId,
                                               @Param("statusList") List<Integer> statusList,@Param("processIdList") List<String> processIdList);
@@ -136,6 +171,14 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      * @return java.util.List<com.erp.model.plm.vo.ProductTaskVO>
      */
     List<ProductTaskVO> getScheduleTask(@Param("dto") ProjectPlanTaskConditionDTO dto);
+    /**
+     * 导出排期的任务列表
+     * @author yl
+     * @date 2023-06-25 15:51
+     * @param dto
+     * @return java.util.List<com.erp.model.plm.dto.TaskDTO.TaskExportDTO>
+     */
+    List<TaskDTO.TaskExportDTO> listScheduleTaskExport(@Param("dto") ProjectPlanTaskConditionDTO dto);
 
     /**
      * 更改任务排期状态
@@ -171,5 +214,8 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
      * @return
      */
     List<String> listProductIdByTaskChargeId(@Param("chargeId") String userId);
+
+
+
 }
 

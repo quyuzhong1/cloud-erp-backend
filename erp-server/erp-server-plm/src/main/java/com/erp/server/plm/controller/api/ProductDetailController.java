@@ -1034,4 +1034,16 @@ ProductDetailController extends BaseController {
     public ApiResult<List<SkuPurchaseDTO.PurchaseInfo>> getPurchaseInfoBySkuIds(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
         return success(productPurchaseService.getInfoBySkuIds(idsDTO.getIds()));
     }
+
+    /**
+     * 根据产品id 获取到产品下的sku信息【PLM1.3】
+     * @author yl
+     * @date 2023-06-25 10:17
+     * @param productId
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.plm.dto.SkuPurchaseDTO.PurchaseInfo>>
+     */
+    @PostMapping("/listSkuByProductId")
+    public ApiResult<List<ProductDetailEntity>> listSkuByProductId(@RequestParam("productId") String productId) {
+        return success(productDetailService.queryByProductId(productId));
+    }
 }

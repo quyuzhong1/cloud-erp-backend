@@ -72,8 +72,7 @@ import java.util.stream.Collectors;
 public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, ProjectTaskEntity> implements ProjectTaskService {
 
 
-    @Autowired
-    private ProjectTaskSysService projectTaskSysService;
+
 
 
     @Autowired
@@ -92,8 +91,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
     @Autowired
     private CommonService commonService;
 
-    @Autowired
-    private ProductOperateRecordService productOperateRecordService;
+
 
     @Autowired
     private WorkflowFeign workflowFeign;
@@ -149,6 +147,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
     @Autowired
     private TaskConcernService taskConcernService;
+
+    @Autowired
+    private TaskDocHistoryService  taskDocHistoryService;
 
     /**
      * 添加系统的产品任务
@@ -314,6 +315,24 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //这个是全部
         if (TaskConstant.ALL_FINISH_TASK.equals(taskFlag)) {
             pageData = baseMapper.allPaging(query, params);
+            List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
+            //获取流程集合
+            List<String> processIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(processIds)) {
+                //要给流程任务的id
+                List<TaskPagingShowDTO> list = pageData.getRecords();
+                for (TaskPagingShowDTO show : list) {
+                    TaskShowDTO showDTO = myToDoList.stream().filter(t -> t.getProcessInstanceId().equals(show.getProcessId())).findFirst().orElse(null);
+                    if (showDTO != null) {
+                        show.setProcessTaskId(showDTO.getTaskId());
+                    }
+                }
+            }
+        }
+
+        //这个是变更任务
+        if (TaskConstant.CHANGE_TASK.equals(taskFlag)) {
+            pageData = baseMapper.changePaging(query, params);
             List<TaskShowDTO> myToDoList = workflowFeign.queryMyToDo(userId);
             //获取流程集合
             List<String> processIds = myToDoList.stream().map(TaskShowDTO::getProcessInstanceId).collect(Collectors.toList());
@@ -4058,6 +4077,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         ProjectTaskEntity taskEntity = this.getOne(queryWrapper);
         Integer notFinish = IsConstant.NO;
         if (!Objects.isNull(taskEntity)) {
+            //是否是变更任务
+            Boolean isChangeDocs = taskEntity.getIsChangeDocs();
+            //如果是变更任务就要更改历史文档状态
+            if(isChangeDocs){
+                taskDocHistoryService.updateChangeResult(taskEntity.getId());
+            }
+
             List<ProjectTaskRefSkuEntity> list = projectTaskRefSkuService.getByTaskId(taskEntity.getId());
             List<String> skuIdList = list.stream().filter(ref -> notFinish.equals(ref.getIsFinishTask())).map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(skuIdList)) {
@@ -4826,6 +4852,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         }
         return resultList;
     }
+
+
+
 
 
 }

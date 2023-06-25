@@ -1,13 +1,13 @@
 package com.erp.model.plm.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
 
 
 /**
@@ -65,7 +65,7 @@ public class TaskDocHistoryEntity extends BaseEntity<TaskDocHistoryEntity> {
     * 文件大小
     */
     @TableField("file_size")
-    private BigDecimal fileSize;
+    private Double fileSize;
 
     /**
     * 文件后缀
@@ -84,6 +84,18 @@ public class TaskDocHistoryEntity extends BaseEntity<TaskDocHistoryEntity> {
     */
     @TableField("upload_type")
     private Integer uploadType;
+
+    /**
+     * 是否变更成功
+     */
+    @TableField("is_change_success")
+    private Boolean isChangeSuccess;
+
+    /**
+     * 变更版本
+     */
+    @TableField("change_version")
+    private Integer changeVersion;
 
 
     public static final String TASK_ID = "task_id";

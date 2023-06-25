@@ -65,8 +65,8 @@ public class ProjectPlanTaskController extends BaseController {
      */
     @PostMapping("/exportExcel")
     public ApiResult export(@RequestBody @Validated ProjectPlanTaskConditionDTO dto, HttpServletResponse response) {
-        projectPlanTaskService.exportExcel(dto, response);
-        return success();
+       Boolean result= projectPlanTaskService.exportExcel(dto, response);
+        return result?success():failure();
     }
 
     /**

@@ -83,6 +83,7 @@ public enum ApiError implements Serializable {
      * 警告信息 从800 开始
      */
     ERROR_800(800,"存在[%s]尚未填写完成，是否确认提交"),
+    ERROR_801(801,"存在[%s]的任务未完成"),
 
     /**
      * 系统错误码

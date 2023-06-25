@@ -26,7 +26,7 @@ public class TaskConcernController extends BaseController {
 
 
     /**
-     * 获取当前用户关注改任务信息
+     * 获取当前用户关注改任务信息【PLM1.3】
      *
      * @param taskId
      * @return
@@ -38,7 +38,7 @@ public class TaskConcernController extends BaseController {
     }
 
     /**
-     * 关注任务
+     * 关注任务【PLM1.3】
      *
      * @param dto
      * @return
@@ -50,7 +50,7 @@ public class TaskConcernController extends BaseController {
     }
 
     /**
-     * 取消关注
+     * 取消关注【PLM1.3】
      *
      * @param dto
      * @return

@@ -17,6 +17,7 @@ import com.erp.server.plm.service.TaskDocsNameService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -142,6 +143,7 @@ public class TaskDocsNameServiceImpl extends ServiceImpl<TaskDocsNameMapper, Tas
      * @return java.lang.String
      **/
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String saveDocs(DocsNameDTO dto) {
         String name = dto.getName();
         String productId = dto.getProductId();

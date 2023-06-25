@@ -28,7 +28,7 @@ public interface ProjectPlanTaskService  extends IService<ProjectPlanTaskEntity>
      */
     ProductItemScheduleVO getTaskList(ProjectPlanTaskConditionDTO dto);
 
-    void exportExcel(ProjectPlanTaskConditionDTO dto, HttpServletResponse response);
+    Boolean exportExcel(ProjectPlanTaskConditionDTO dto, HttpServletResponse response);
 
     Boolean importTaskSchedule(MultipartFile excelFile,String productId, HttpServletResponse response);
 

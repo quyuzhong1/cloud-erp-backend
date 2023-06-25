@@ -51,7 +51,11 @@ import java.util.*;
 public class ProjectTaskController extends BaseController {
 
     @Autowired
-    private ProjectTaskService taskService;
+    private ProjectTaskService projectTaskService;
+
+
+    @Autowired
+    private TaskService taskService;
 
     @Autowired
     private PreTaskService preTaskService;
@@ -87,8 +91,24 @@ public class ProjectTaskController extends BaseController {
             tableAlias = "pt"
     )
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> paging(@RequestBody @Validated PagingDTO<TaskPagingDTO> dto) {
-        PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.paging(dto);
+        PagingVO<List<TaskPagingShowDTO>> pagingVO = projectTaskService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * 导出任务【plm1.3】
+     *
+     * @param dto
+     * @param response
+     * @return void
+     * @author yl
+     * @date 2023-06-25 11:55
+     */
+    @PostMapping("/exportTask")
+    public ApiResult exportTask(@RequestBody @Validated TaskPagingDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result =taskService.exportTask(dto,response);
+        return result ? success() : failure();
+
     }
 
     /**
@@ -99,8 +119,8 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/save")
     public ApiResult save(@RequestBody @Validated ProjectTaskDTO dto) {
-        Boolean flag = taskService.save(dto);
-        return flag? success() : failure();
+        Boolean flag = projectTaskService.save(dto);
+        return flag ? success() : failure();
     }
 
     /**
@@ -111,13 +131,13 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated ProjectTaskDTO dto) {
-        Boolean flag = taskService.updateTask(dto);
+        Boolean flag = projectTaskService.updateTask(dto);
         return flag == true ? success() : failure();
     }
 
     @PostMapping("/saveSonTask")
     public ApiResult saveSonTask(@RequestBody @Validated ProjectTaskDTO dto) {
-        Boolean flag = taskService.save(dto);
+        Boolean flag = projectTaskService.save(dto);
         return flag == true ? success() : failure();
     }
 
@@ -129,7 +149,7 @@ public class ProjectTaskController extends BaseController {
      */
     @GetMapping("/list")
     public ApiResult list(String productId) {
-        List<Map<String, Object>> list = taskService.getTaskListByProductId(productId);
+        List<Map<String, Object>> list = projectTaskService.getTaskListByProductId(productId);
         return success(list);
     }
 
@@ -146,7 +166,7 @@ public class ProjectTaskController extends BaseController {
             serviceClass = ProjectTaskService.class
     )
     public ApiResult<ProjectTaskVO> taskDetails(String taskId) {
-        ProjectTaskVO taskVO = taskService.taskDetails(taskId);
+        ProjectTaskVO taskVO = projectTaskService.taskDetails(taskId);
         return success(taskVO);
     }
 
@@ -158,10 +178,9 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/removeTask")
     public ApiResult remove(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean flag = taskService.removeTask(dto.getId());
+        Boolean flag = projectTaskService.removeTask(dto.getId());
         return flag == true ? success() : failure();
     }
-
 
 
     /**
@@ -210,7 +229,7 @@ public class ProjectTaskController extends BaseController {
      */
     @GetMapping("/details")
     public ApiResult<ProjectTaskDetailsDTO> details(String taskId) {
-        ProjectTaskDetailsDTO detailsDTO = taskService.getTaskDetails(taskId);
+        ProjectTaskDetailsDTO detailsDTO = projectTaskService.getTaskDetails(taskId);
         return success(detailsDTO);
     }
 
@@ -226,7 +245,7 @@ public class ProjectTaskController extends BaseController {
             tableAlias = "project_task"
     )
     public ApiResult<ProductTaskCountDTO> getProductTaskCount(@RequestBody ProductTaskCountShowDTO showDTO) {
-        ProductTaskCountDTO dto = taskService.getProductTaskCount(showDTO, new Date());
+        ProductTaskCountDTO dto = projectTaskService.getProductTaskCount(showDTO, new Date());
         return success(dto);
     }
 
@@ -242,7 +261,7 @@ public class ProjectTaskController extends BaseController {
             tableAlias = "project_task"
     )
     public ApiResult<List<ProductTaskCategoryCountDTO>> listProductTaskCategoryCount(@RequestBody TaskPagingDTO dto) {
-        List<ProductTaskCategoryCountDTO> list = taskService.listProductTaskCategoryCount(dto);
+        List<ProductTaskCategoryCountDTO> list = projectTaskService.listProductTaskCategoryCount(dto);
         return success(list);
     }
 
@@ -271,7 +290,7 @@ public class ProjectTaskController extends BaseController {
             keyIdName = "taskId"
     )
     public ApiResult updateTask(@RequestBody @Validated UpdateTaskDTO dto, HttpServletRequest request) {
-        Boolean result = taskService.updateBaseTask(dto);
+        Boolean result = projectTaskService.updateBaseTask(dto);
         return result == true ? success() : failure();
     }
 
@@ -288,7 +307,7 @@ public class ProjectTaskController extends BaseController {
             keyIdName = "taskIdList"
     )
     public ApiResult publishTask(@RequestBody @Validated OperateBaseTaskDTO dto) {
-        Boolean result = taskService.publishTask(dto);
+        Boolean result = projectTaskService.publishTask(dto);
         return result == true ? success() : failure();
     }
 
@@ -305,7 +324,7 @@ public class ProjectTaskController extends BaseController {
             keyIdName = "taskIdList"
     )
     public ApiResult cancelPublishTask(@RequestBody OperateBaseTaskDTO dto) {
-        Boolean result = taskService.cancelPublishTask(dto);
+        Boolean result = projectTaskService.cancelPublishTask(dto);
         return result == true ? success() : failure();
     }
 
@@ -322,7 +341,7 @@ public class ProjectTaskController extends BaseController {
             keyIdName = "taskIdList"
     )
     public ApiResult startTask(@RequestBody OperateBaseTaskDTO dto) {
-        Boolean result = taskService.startTask(dto);
+        Boolean result = projectTaskService.startTask(dto);
         return result == true ? success() : failure();
     }
 
@@ -339,7 +358,7 @@ public class ProjectTaskController extends BaseController {
             keyIdName = "taskIdList"
     )
     public ApiResult closeTask(@RequestBody OperateBaseTaskDTO dto) {
-        Boolean result = taskService.closeTask(dto);
+        Boolean result = projectTaskService.closeTask(dto);
         return result == true ? success() : failure();
     }
 
@@ -357,7 +376,7 @@ public class ProjectTaskController extends BaseController {
             keyIdName = "taskIdList"
     )
     public ApiResult finishTask(@RequestBody OperateBaseTaskDTO dto) {
-        Boolean result = taskService.finishTask(dto);
+        Boolean result = projectTaskService.finishTask(dto);
         return result == true ? success() : failure();
     }
 
@@ -374,7 +393,7 @@ public class ProjectTaskController extends BaseController {
             keyIdName = "taskIdList"
     )
     public ApiResult approvalPass(@RequestBody @Validated TaskOperateDTO dto) {
-        Boolean result = taskService.approvalPass(dto);
+        Boolean result = projectTaskService.approvalPass(dto);
         return result == true ? success() : failure();
     }
 
@@ -391,7 +410,7 @@ public class ProjectTaskController extends BaseController {
             keyIdName = "taskIdList"
     )
     public ApiResult approvalNoPass(@RequestBody @Validated TaskOperateDTO dto) {
-        Boolean result = taskService.approvalReject(dto);
+        Boolean result = projectTaskService.approvalReject(dto);
         return result == true ? success() : failure();
     }
 
@@ -409,7 +428,7 @@ public class ProjectTaskController extends BaseController {
             keyIdName = "taskIdList"
     )
     public ApiResult restartTask(@RequestBody @Validated OperateBaseTaskDTO dto) {
-        Boolean result = taskService.restartTask(dto);
+        Boolean result = projectTaskService.restartTask(dto);
         return result == true ? success() : failure();
     }
 
@@ -420,7 +439,7 @@ public class ProjectTaskController extends BaseController {
      */
     @GetMapping("/findTaskProcess")
     public ApiResult<List<TaskProcessNodeDTO>> findTaskProcess(String taskId) {
-        List<TaskProcessNodeDTO> taskProcess = taskService.findTaskProcess(taskId);
+        List<TaskProcessNodeDTO> taskProcess = projectTaskService.findTaskProcess(taskId);
         return success(taskProcess);
     }
 
@@ -434,7 +453,7 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/workflow/pass")
     public ApiResult processPass(String processId) {
-        taskService.approvalTaskPass(processId);
+        projectTaskService.approvalTaskPass(processId);
         return success();
     }
 
@@ -451,7 +470,7 @@ public class ProjectTaskController extends BaseController {
             tableAlias = "t,tcd"
     )
     public ApiResult<List<TaskGroupResultDTO>> groupConditionList(@Validated @RequestBody TaskGroupParamDTO dto) {
-        List<TaskGroupResultDTO> resultList = taskService.getGroupCondition(dto);
+        List<TaskGroupResultDTO> resultList = projectTaskService.getGroupCondition(dto);
         return success(resultList);
     }
 
@@ -467,7 +486,7 @@ public class ProjectTaskController extends BaseController {
             tableAlias = "t,tcd"
     )
     public ApiResult<List<TaskGroupResultDTO>> groupAssignToMeConditionList(@Validated @RequestBody TaskGroupParamDTO dto) {
-        List<TaskGroupResultDTO> resultList = taskService.getGroupAssignToMeCondition(dto);
+        List<TaskGroupResultDTO> resultList = projectTaskService.getGroupAssignToMeCondition(dto);
         return success(resultList);
     }
 
@@ -483,7 +502,7 @@ public class ProjectTaskController extends BaseController {
             tableAlias = "t"
     )
     public ApiResult<List<TaskGroupResultDTO>> groupMyCreateConditionList(@Validated @RequestBody TaskGroupParamDTO dto) {
-        List<TaskGroupResultDTO> resultList = taskService.groupMyCreateConditionList(dto);
+        List<TaskGroupResultDTO> resultList = projectTaskService.groupMyCreateConditionList(dto);
         return success(resultList);
     }
 
@@ -499,7 +518,7 @@ public class ProjectTaskController extends BaseController {
     )
     @PostMapping("/all/paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> expertPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
-        PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.expertPaging(searchParamDTO);
+        PagingVO<List<TaskPagingShowDTO>> pagingVO = projectTaskService.expertPaging(searchParamDTO);
         return success(pagingVO);
     }
 
@@ -516,7 +535,7 @@ public class ProjectTaskController extends BaseController {
     )
     @PostMapping("/assignToMe/paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> assignToMePaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
-        PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.assignToMePaging(searchParamDTO);
+        PagingVO<List<TaskPagingShowDTO>> pagingVO = projectTaskService.assignToMePaging(searchParamDTO);
         return success(pagingVO);
     }
 
@@ -532,7 +551,7 @@ public class ProjectTaskController extends BaseController {
     )
     @PostMapping("/assignToMe/waitFinish/paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> assignToMeWaitFinishPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
-        PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.assignToMePaging(searchParamDTO);
+        PagingVO<List<TaskPagingShowDTO>> pagingVO = projectTaskService.assignToMePaging(searchParamDTO);
         return success(pagingVO);
     }
 
@@ -548,7 +567,7 @@ public class ProjectTaskController extends BaseController {
     )
     @PostMapping("/assignToMe/waitAudit/paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> assignToMeWaitAuditPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
-        PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.assignToMeWaitAuditPaging(searchParamDTO);
+        PagingVO<List<TaskPagingShowDTO>> pagingVO = projectTaskService.assignToMeWaitAuditPaging(searchParamDTO);
         return success(pagingVO);
     }
 
@@ -564,7 +583,7 @@ public class ProjectTaskController extends BaseController {
     )
     @PostMapping("/myCreate/paging")
     public ApiResult<PagingVO<List<TaskPagingShowDTO>>> myCreatePaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
-        PagingVO<List<TaskPagingShowDTO>> pagingVO = taskService.myCreatePaging(searchParamDTO);
+        PagingVO<List<TaskPagingShowDTO>> pagingVO = projectTaskService.myCreatePaging(searchParamDTO);
         return success(pagingVO);
     }
 
@@ -576,7 +595,7 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/operate/moreList")
     public ApiResult<List<Map<String, Object>>> operateMoreList(@Validated @RequestBody BaseIdDTO dto) {
-        List<Map<String, Object>> list = taskService.operateMoreList(dto.getId());
+        List<Map<String, Object>> list = projectTaskService.operateMoreList(dto.getId());
         return success(list);
     }
 
@@ -629,7 +648,7 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping(value = "/finishSku")
     public ApiResult finishSku(@RequestBody @Validated TaskFinishSkuDTO dto) {
-        taskService.taskFinishSku(dto);
+        projectTaskService.taskFinishSku(dto);
         return success();
     }
 
@@ -643,7 +662,7 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping(value = "/skuChangeResult")
     public ApiResult skuChangeResult(@RequestBody @Validated StateDTO dto) {
-        taskService.skuChangeResult(dto);
+        projectTaskService.skuChangeResult(dto);
         return success();
     }
 
@@ -657,7 +676,7 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping(value = "/flyingBookReminder")
     public ApiResult flyingBookReminder(@RequestBody @Validated FlyingBookReminderDTO dto) {
-        taskService.flyingBookReminder(dto);
+        projectTaskService.flyingBookReminder(dto);
         return success();
     }
 
@@ -703,12 +722,12 @@ public class ProjectTaskController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult removeBatch(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = taskService.removeBatch(dto.getIds());
+        Boolean flag = projectTaskService.removeBatch(dto.getIds());
         return flag == true ? success() : failure();
     }
 
     /**
-     * 项目任务-excel导入产品任务
+     * 项目任务-excel导入产品任务【PLM1.3】
      *
      * @param excelFile 文件流
      * @param response  响应
@@ -717,8 +736,8 @@ public class ProjectTaskController extends BaseController {
      * @Date 2022/9/28 11:46
      **/
     @PostMapping("/importProjectTaskFile")
-    public ApiResult importProjectTaskFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, @RequestParam(value = "productId") String productId, HttpServletResponse response) {
-        ProjectTaskExcelListener excelListenerUtil = new ProjectTaskExcelListener(importType, productId, taskService, productInfoService, sysUserFeign, projectPhaseService, taskDocsNameService, taskChargeDistributionService);
+    public ApiResult importProjectTaskFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "productId") String productId, HttpServletResponse response) {
+        ProjectTaskExcelListener excelListenerUtil = new ProjectTaskExcelListener(productId, projectTaskService, productInfoService, sysUserFeign, projectPhaseService, taskDocsNameService, taskChargeDistributionService);
         try {
             EasyExcel.read(excelFile.getInputStream(), ProjectTaskExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
@@ -778,14 +797,17 @@ public class ProjectTaskController extends BaseController {
         }
     }
 
+
+
     /**
      * 概览获取任务明细【PLM1.3】
+     *
      * @param taskIdList
      * @return
      */
     @PostMapping("/listTaskInfo")
     public ApiResult<List<ProductTask.TaskInfoDTO>> listTaskInfo(@RequestBody List<String> taskIdList) {
-        List<ProductTask.TaskInfoDTO> list = taskService.listTaskInfo(taskIdList);
+        List<ProductTask.TaskInfoDTO> list = projectTaskService.listTaskInfo(taskIdList);
         return success(list);
 
     }

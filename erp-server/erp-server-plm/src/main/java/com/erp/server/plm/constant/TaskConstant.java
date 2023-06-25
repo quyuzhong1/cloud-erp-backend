@@ -30,6 +30,8 @@ public interface TaskConstant {
     Integer MY_FINISH_TASK = 0;
     Integer MY_APPROVAL_TASK = 1;
     Integer ALL_FINISH_TASK = 2;
+    //变更任务
+    Integer CHANGE_TASK = 3;
 
 
     //高级任务
