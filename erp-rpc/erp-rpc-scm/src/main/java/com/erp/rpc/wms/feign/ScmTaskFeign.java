@@ -162,7 +162,7 @@ public interface ScmTaskFeign {
      * @Date 2023/4/21 15:34
      **/
     @PostMapping("feign/scmWorkOption/getTableNum")
-    Integer getTableNum(@RequestBody WorkOptionDTO.TableNumDTO tableNumDTO);
+    List<WorkOptionDTO.MyWorkOptionDTO> getTableNum(@RequestBody List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList);
 
     /**
      * 更新业务单据状态

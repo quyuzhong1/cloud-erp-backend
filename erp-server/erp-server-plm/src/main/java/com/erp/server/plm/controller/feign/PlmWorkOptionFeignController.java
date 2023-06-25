@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 @RestController
 @RequestMapping("feign/plmWorkOption")
@@ -41,8 +42,8 @@ public class PlmWorkOptionFeignController {
      * @Date 2023/4/21 15:34
      **/
     @PostMapping("/getTableNum")
-    public Integer getTableNum(@RequestBody WorkOptionDTO.TableNumDTO tableNumDTO) {
-        return workOptionService.getTableNum(tableNumDTO);
+    public List<WorkOptionDTO.MyWorkOptionDTO> getTableNum(@RequestBody List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList) {
+        return workOptionService.getTableNum(myWorkOptionDTOList);
     }
 
     /**

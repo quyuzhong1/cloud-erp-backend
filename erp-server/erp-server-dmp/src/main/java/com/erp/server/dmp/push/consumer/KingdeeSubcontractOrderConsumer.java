@@ -47,9 +47,9 @@ public class KingdeeSubcontractOrderConsumer implements RocketMQListener<Map<Str
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SUB_SUBREQORDER.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "PO23042400006"));
+        queryFilters.add(String.format("FBillNo = '%s'", "SUB00001027"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FId,FPOOrderEntry_FEntryID,FMaterialId.FNumber,F_ulz_Base.FNumber";
+        String fieldKeys = "FId,FBillType.FNUMBER";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
         System.out.println(queryList);
 

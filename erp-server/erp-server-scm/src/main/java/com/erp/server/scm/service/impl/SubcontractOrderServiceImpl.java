@@ -891,7 +891,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             for (SubcontractOrderDetailEntity childEntity : childDetailList) {
                 SubcontractChangeDetailDTO.ChildDTO  childDTO = BeanMapperUtils.map(SubcontractChangeDetailDTO.ChildDTO.class, childEntity);
                 childDTO.setId(null);
-                childDTO.setSourceDetailId(childEntity.getSourceDetailId());
+                childDTO.setSourceDetailId(childEntity.getId());
                 childDTO.setOldQty(childEntity.getQty());
                 childDTO.setOldPrice(childEntity.getPrice());
                 childDTO.setOldAmount(childEntity.getAmount());

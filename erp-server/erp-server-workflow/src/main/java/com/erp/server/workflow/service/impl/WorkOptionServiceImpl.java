@@ -13,8 +13,10 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.ObjectUtils;
 import com.erp.model.plm.dto.AuditParamDTO;
 import com.erp.model.plm.dto.ProductDetailOperateDTO;
 import com.erp.model.plm.dto.TaskHandleDataDTO;
@@ -36,6 +38,7 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.workflow.mapper.WorkOptionMapper;
 import com.erp.server.workflow.service.*;
 import com.erp.server.workflow.utils.GetHttpGatewayIpPortUtils;
+import com.jgoodies.common.bean.Bean;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -44,6 +47,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -227,8 +231,8 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      * @Author Luo_WG
      * @Date 2023/4/11 18:48
      **/
-    @Override
-    public List<WorkOptionDTO.PendingViewDTO> listPendingView() {
+   /* @Override
+    public List<WorkOptionDTO.PendingViewDTO> listPendingViewTest() {
         List<WorkOptionDTO.PendingViewDTO> list = new ArrayList<>();
         LoginUser userInfo = commonService.getUserInfo();
         List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
@@ -264,7 +268,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             list.add(pendingViewDTO);
         }
         return list;
-    }
+    }*/
 
     /**
      * 常用列表
@@ -323,29 +327,64 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         return this.removeById(id);
     }
 
-    private void getPlmModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
-        Integer tableNum = plmTaskFeign.getTableNum(tableNumDTO);
-        BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
-        pendingViewDetailDTO.setCount(tableNum);
-        pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
-        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT + myWorkOptionDTO.getModuleUrl());
+    private List<WorkOptionDTO.MyWorkOptionDTO> listTableNum(List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList, String sysClassify) {
+        switch (SysClassifyEnum.getEnumByCode(sysClassify)) {
+            case PLM:
+                return plmTaskFeign.getTableNum(myWorkOptionDTOList);
+            case SCM:
+                return scmTaskFeign.getTableNum(myWorkOptionDTOList);
+            case WMS:
+                return wmsTaskFeign.getTableNum(myWorkOptionDTOList);
+            default:
+                break;
+        }
+        return new ArrayList<>();
+    }
+    /**
+     * 代办列表
+     *
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO < com.erp.model.wms.dto.PurchaseReturnOrderDTO.PagingViewDTO>>
+     * @Author Luo_WG
+     * @Date 2023/4/11 18:48
+     **/
+    @Override
+    public List<WorkOptionDTO.PendingViewDTO> listPendingView() {
+        List<WorkOptionDTO.PendingViewDTO> list = new ArrayList<>();
+        LoginUser userInfo = commonService.getUserInfo();
+        List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
+        List<SysClassifyEnum> sysClassifyEnums = SysClassifyEnum.getAll();
+        for (SysClassifyEnum searchOptionEnum : sysClassifyEnums) {
+            WorkOptionDTO.PendingViewDTO pendingViewDTO = new WorkOptionDTO.PendingViewDTO();
+            List<WorkOptionDTO.PendingViewDetailDTO> pendingViewDetailDTOList = new ArrayList<>();
+            pendingViewDTO.setSysClassify(searchOptionEnum.getCode());
+            List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList = myWorkOptionDTOS.stream().filter(req -> req.getSysClassify().equals(searchOptionEnum.getCode())).collect(Collectors.toList());
+            List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionList = listTableNum(myWorkOptionDTOList, searchOptionEnum.getCode());
+            for (WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO : myWorkOptionList) {
+                WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO = new WorkOptionDTO.PendingViewDetailDTO();
+                myWorkOptionDTO.setPath(myWorkOptionDTO.getModuleUrl());
+                BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
+                pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
+                switch (SysClassifyEnum.getEnumByCode(myWorkOptionDTO.getSysClassify())) {
+                    case PLM:
+                        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT + myWorkOptionDTO.getModuleUrl());
+                        break;
+                    case SCM:
+                        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.SCM_PORT + myWorkOptionDTO.getModuleUrl());
+                        break;
+                    case WMS:
+                        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + myWorkOptionDTO.getModuleUrl());
+                        break;
+                    default:
+                        break;
+                }
+                pendingViewDetailDTOList.add(pendingViewDetailDTO);
+            }
+            pendingViewDTO.setList(pendingViewDetailDTOList);
+            list.add(pendingViewDTO);
+        }
+        return list;
     }
 
-    private void getScmModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
-        Integer tableNum = scmTaskFeign.getTableNum(tableNumDTO);
-        BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
-        pendingViewDetailDTO.setCount(tableNum);
-        pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
-        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.SCM_PORT + myWorkOptionDTO.getModuleUrl());
-    }
-
-    private void getWmsModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
-        Integer tableNum = wmsTaskFeign.getTableNum(tableNumDTO);
-        BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
-        pendingViewDetailDTO.setCount(tableNum);
-        pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
-        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + myWorkOptionDTO.getModuleUrl());
-    }
 
     /**
      * 审批中心-下拉搜索选项

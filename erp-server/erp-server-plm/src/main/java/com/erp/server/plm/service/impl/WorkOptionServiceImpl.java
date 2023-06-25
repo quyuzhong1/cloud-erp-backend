@@ -52,42 +52,32 @@ public class WorkOptionServiceImpl implements WorkOptionService {
     @Resource
     private WorkflowFeign workflowFeign;
 
-    /**
-     * 根据入参查询单据数量
-     * @Author Luo_WG
-     * @Date 2023/4/21 15:34
-     **/
     @Override
-    public Integer getTableNum(WorkOptionDTO.TableNumDTO tableNumDTO) {
-        //assignExecutable
-        //assignNotStarted
-        //waitAuditExecutable
-        //waitAuditNotStarted
-        if (tableNumDTO.getTableName().equals("project_task")) {
-            PagingDTO pagingDTO = JSONObject.parseObject(tableNumDTO.getModuleParam(), PagingDTO.class);
-            TaskSearchParamDTO params = JSONObject.parseObject(JSONObject.toJSONString(pagingDTO.getParams()), TaskSearchParamDTO.class);
-/*            pagingDTO.setPageSize(99999);
-            pagingDTO.setParams(params);
-            PagingVO<List<TaskPagingShowDTO>> listPagingVO = projectTaskService.assignToMePaging(pagingDTO);*/
-            if (tableNumDTO.getApproveStatus().equals("assignNotStarted") || tableNumDTO.getApproveStatus().equals("assignExecutable")) {
-                return getWaitFinishCount(params);
-            } else {
-                return getWaitAuditCount(params);
+    public List<WorkOptionDTO.MyWorkOptionDTO> getTableNum(List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList) {
+        for (WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO : myWorkOptionDTOList) {
+            if (myWorkOptionDTO.getModuleCode().equals("project_task")) {
+                PagingDTO pagingDTO = JSONObject.parseObject(myWorkOptionDTO.getModuleParam(), PagingDTO.class);
+                TaskSearchParamDTO params = JSONObject.parseObject(JSONObject.toJSONString(pagingDTO.getParams()), TaskSearchParamDTO.class);
+                if (myWorkOptionDTO.getModuleStatus().equals("assignNotStarted") || myWorkOptionDTO.getModuleStatus().equals("assignExecutable")) {
+                    myWorkOptionDTO.setTableNumber(getWaitFinishCount(params));
+                } else {
+                    myWorkOptionDTO.setTableNumber(getWaitAuditCount(params));
+                }
+            }
+            if (myWorkOptionDTO.getModuleCode().equals("product_detail")) {
+                Integer status = Integer.valueOf(myWorkOptionDTO.getModuleStatus());
+                myWorkOptionDTO.setTableNumber(workOptionMapper.getProductDetailNum(myWorkOptionDTO, status));
+            }
+            if (myWorkOptionDTO.getModuleCode().equals("product_bom_info")) {
+                Integer status = Integer.valueOf(myWorkOptionDTO.getModuleStatus());
+                myWorkOptionDTO.setTableNumber(workOptionMapper.getProductBomInfoNum(myWorkOptionDTO, status));
+            }
+            if (myWorkOptionDTO.getModuleCode().equals("product_change")) {
+                Integer status = Integer.valueOf(myWorkOptionDTO.getModuleStatus());
+                myWorkOptionDTO.setTableNumber(workOptionMapper.getProductChangeNum(myWorkOptionDTO, status));
             }
         }
-        if (tableNumDTO.getTableName().equals("product_detail")) {
-            Integer status = Integer.valueOf(tableNumDTO.getApproveStatus());
-            return workOptionMapper.getProductDetailNum(tableNumDTO, status);
-        }
-        if (tableNumDTO.getTableName().equals("product_bom_info")) {
-            Integer status = Integer.valueOf(tableNumDTO.getApproveStatus());
-            return workOptionMapper.getProductBomInfoNum(tableNumDTO, status);
-        }
-        if (tableNumDTO.getTableName().equals("product_change")) {
-            Integer status = Integer.valueOf(tableNumDTO.getApproveStatus());
-            return workOptionMapper.getProductChangeNum(tableNumDTO, status);
-        }
-        return 0;
+        return myWorkOptionDTOList;
     }
 
     /**
