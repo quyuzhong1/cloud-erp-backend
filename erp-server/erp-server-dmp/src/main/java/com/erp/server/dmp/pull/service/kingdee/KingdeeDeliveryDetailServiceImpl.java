@@ -154,12 +154,14 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
             if (CollectionUtil.isEmpty(result)) {
                 return Collections.emptyList();
             }
+            // 金蝶发货单主数据
             List<KingdeeDeliveryDetailEntity> entityList = result.stream().map(shopEntity ->
                     BeanUtil.toBean(shopEntity, KingdeeDeliveryDetailEntity.class)).distinct().collect(Collectors.toList());
-
+            // 金蝶发货单明细数据拆单
             Map<String, List<KingdeeDeliveryDetailItemEntity>> itemMap = result.stream().map(entity ->
                             BeanUtil.toBean(entity, KingdeeDeliveryDetailItemEntity.class)).distinct()
                     .collect(Collectors.groupingBy(m -> StrUtil.format("{}_{}", m.getFBillNo(), m.getFSoorDerno())));
+            // 金蝶发货单主数据关联明细数据
             entityList.stream().peek(m -> m.setKingdeeOutStockItemEntityList(itemMap.get(StrUtil.format("{}_{}", m.getFBillNo(), m.getFSoorDerno()))))
                     .collect(Collectors.toList());
             infoArrayList.addAll(entityList);
