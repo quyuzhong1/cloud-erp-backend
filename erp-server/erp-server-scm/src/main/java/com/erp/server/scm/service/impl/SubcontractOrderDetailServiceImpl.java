@@ -137,6 +137,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void update(List<SubcontractOrderDetailDTO.UpdateDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;

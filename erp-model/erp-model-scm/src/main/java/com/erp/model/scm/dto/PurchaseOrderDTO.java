@@ -1006,29 +1006,55 @@ public class PurchaseOrderDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SubcontractOrderChildDTO {
-
+        /**
+         * 父级采购明细id
+         */
         private String parentPodId;
-
+        /**
+         * 父级采购明细id
+         */
         private String parentSkuId;
-
+        /**
+         * 子级采购id
+         */
         private String childPoId;
-
+        /**
+         * 子级采购明细id
+         */
         private String childPodId;
-
+        /**
+         * 父级委外明细id
+         */
         private String subParentDetailId;
-
+        /**
+         * 子级委外明细id
+         */
         private String subChildDetailId;
-
+        /**
+         * 子级skuid
+         */
         private String childSkuId;
-
+        /**
+         * 子级sku编号
+         */
         private String childSkuNo;
-
+        /**
+         * 子级仓库
+         */
         private String childWarehouseId;
-
+        /**
+         * 子级库位
+         */
         private String childWarehouseLocation;
-
+        /**
+         * 子级单据状态
+         */
         private String childApproveStatus;
-
+        /**
+         * 子级采购订单编码
+         */
         private String childCode;
     }
+
+
 }

@@ -441,6 +441,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             for (SubcontractChangeDetailEntity addEntity : value) {
                 SubcontractOrderDetailDTO.UpdateDTO addDTO = BeanMapperUtils.map(SubcontractOrderDetailDTO.UpdateDTO.class,addEntity);
                 addDTO.setId(IdWorker.getIdStr());
+                addDTO.setSourceDetailId(null);
                 addEntity.setSourceDetailId(addDTO.getId());
                 pairList.add(new Pair<>(addEntity.getId(),addDTO.getId()));
                 //子集SKU
@@ -452,6 +453,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
                 for (SubcontractChangeDetailEntity childEntity : childList) {
                     SubcontractOrderDetailDTO.UpdateDTO childDTO = BeanMapperUtils.map(SubcontractOrderDetailDTO.UpdateDTO.class,childEntity);
                     childDTO.setId(IdWorker.getIdStr());
+                    childDTO.setSourceDetailId(null);
                     childEntity.setSourceDetailId(childDTO.getId());
                     pairList.add(new Pair<>(childEntity.getId(),childDTO.getId()));
                     childDTOList.add(childDTO);
@@ -462,7 +464,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             //委外订单添加明细
             subcontractOrderDetailService.addByChange(detailList,entity.getId());
             //更新委外变更单来源明细id
-            subcontractOrderDetailService.updateSourceDetailId(pairList);
+            subcontractChangeDetailService.updateSourceDetailId(pairList);
         }
         //自动下推
         autoPushdownDetail(addList);
@@ -503,6 +505,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
                 for (SubcontractChangeDetailEntity childEntity : childList) {
                     SubcontractOrderDetailDTO.UpdateDTO childDTO = BeanMapperUtils.map(SubcontractOrderDetailDTO.UpdateDTO.class,childEntity);
                     childDTO.setId(childDTO.getSourceDetailId());
+                    childDTO.setSourceDetailId(null);
                     childDTOList.add(childDTO);
                 }
                 updateDTO.setChildList(childDTOList);

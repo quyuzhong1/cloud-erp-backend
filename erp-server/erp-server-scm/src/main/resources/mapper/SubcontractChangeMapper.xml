@@ -97,7 +97,7 @@
                 </foreach>
             </if>
             <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
-                and sc.warehouse_id in
+                and scd.warehouse_id in
                 <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>

@@ -3,6 +3,7 @@ package com.erp.server.scm.service;
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.SubcontractChangeDetailDTO;
 import com.erp.model.scm.entity.SubcontractChangeDetailEntity;
+import org.apache.commons.math3.util.Pair;
 
 import java.util.List;
 
@@ -48,4 +49,11 @@ public interface SubcontractChangeDetailService extends SuperService<Subcontract
      * @return List<SubcontractChangeDetailEntity>
      */
     List<SubcontractChangeDetailEntity> listByMainIds(List<String> mainIds);
+    /**
+     * @description: 委外变更单变更明细id
+     * @author Will
+     * @date: 2023/6/25 17:21
+     * @param pairList
+     */
+    void updateSourceDetailId(List<Pair<String, String>> pairList);
 }

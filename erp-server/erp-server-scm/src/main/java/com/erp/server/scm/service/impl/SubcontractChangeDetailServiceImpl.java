@@ -120,6 +120,19 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
         return lambdaQuery().in(SubcontractChangeDetailEntity::getMainId,mainIds).list();
     }
 
+    @Override
+    public void updateSourceDetailId(List<Pair<String, String>> pairList) {
+        if(CollectionUtils.isEmpty(pairList)) {
+            return;
+        }
+        for (Pair<String, String> pair : pairList) {
+            lambdaUpdate()
+                    .eq(SubcontractChangeDetailEntity::getId,pair.getKey()).
+                    set(SubcontractChangeDetailEntity::getSourceDetailId,pair.getValue())
+                    .update();
+        }
+    }
+
     /**
      * 根据主表id查询父级SKU数据
      */
@@ -178,6 +191,9 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
         List<String> warehouseIds = new ArrayList<>();
         //供应商Ids
         List<String> supplierIds = new ArrayList<>();
+
+        //来源明细ids
+        List<String> sourceDetailIds = new ArrayList<>();
         newList.forEach(obj -> {
 
             parentSkuIds.add(obj.getSkuId());
@@ -193,6 +209,11 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
             supplierIds.add(obj.getSupplierId());
             List<String> supplierIdList = obj.getChildList().stream().map(SubcontractChangeDetailDTO.UpdateDTO::getSupplierId).collect(Collectors.toList());
             supplierIds.addAll(supplierIdList);
+
+            sourceDetailIds.add(obj.getSourceDetailId());
+            List<String> sourceDetailList = obj.getChildList().stream().map(SubcontractChangeDetailDTO.UpdateDTO::getSourceDetailId).collect(Collectors.toList());
+            sourceDetailIds.addAll(sourceDetailList);
+
 
         });
 
@@ -215,7 +236,6 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIds);
 
         //委外变更单明细数据
-        List<String> sourceDetailIds = newList.stream().map(SubcontractChangeDetailEntity::getSourceDetailId).collect(Collectors.toList());
         List<SubcontractOrderDetailEntity> subcontractOrderDetailList = subcontractOrderDetailService.listByIds(sourceDetailIds);
         if (CollectionUtils.isEmpty(subcontractOrderDetailList)) {
             throw new ServiceException(ApiError.ERROR_98070);
@@ -254,13 +274,13 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
             }
             //委外原数据
             SubcontractOrderDetailEntity subEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(subEntity)) {
-                throw new ServiceException(ApiError.ERROR_98070);
+            if (ObjectUtils.isNotEmpty(subEntity)) {
+                detailEntity.setOldQty(subEntity.getQty());
+                detailEntity.setOldPrice(subEntity.getPrice());
+                detailEntity.setOldAmount(subEntity.getAmount());
+                detailEntity.setOldDeliveryQty(subEntity.getDeliveryQty());
             }
-            detailEntity.setOldQty(subEntity.getQty());
-            detailEntity.setOldPrice(subEntity.getPrice());
-            detailEntity.setOldAmount(subEntity.getAmount());
-            detailEntity.setOldDeliveryQty(subEntity.getDeliveryQty());
+
 
             handleSupplierTaxPrice(detailEntity,Boolean.FALSE);
             //子集SKU信息
@@ -287,14 +307,13 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
                     detailEntity.setSupplierName(supplierName);
                 }
                 //委外原数据
-                SubcontractOrderDetailEntity childSubEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(childSubEntity)) {
-                    throw new ServiceException(ApiError.ERROR_98070);
+                SubcontractOrderDetailEntity childSubEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(childEntity.getSourceDetailId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(childSubEntity)) {
+                    childEntity.setOldQty(childSubEntity.getQty());
+                    childEntity.setOldPrice(childSubEntity.getPrice());
+                    childEntity.setOldAmount(childSubEntity.getAmount());
+                    childEntity.setOldDeliveryQty(childSubEntity.getDeliveryQty());
                 }
-                detailEntity.setOldQty(childSubEntity.getQty());
-                detailEntity.setOldPrice(childSubEntity.getPrice());
-                detailEntity.setOldAmount(childSubEntity.getAmount());
-                detailEntity.setOldDeliveryQty(childSubEntity.getDeliveryQty());
 
                 handleSupplierTaxPrice(childEntity,Boolean.TRUE);
             }

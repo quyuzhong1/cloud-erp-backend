@@ -483,6 +483,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
      * @Date 2023/4/6 19:06
      **/
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean approve(BaseApproveParamDTO baseApproveParamDTO) {
         List<String> ids = baseApproveParamDTO.getIds();
@@ -897,6 +898,8 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
      * @Date 2023/4/28 11:37
      **/
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public void updateArrivalState(String PurchaseOrderId, List<PurchaseOrderDetailEntity> detailEntityList) {
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailByOrderId(PurchaseOrderId);
         List<String> podIds = purchaseOrderDetailEntities.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
@@ -931,12 +934,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             purchaseOrderDetailEntity.setArrivalTime(LocalDateTime.now());
             purchaseOrderDetailEntity.setPurchaseOrderId(orderDetailEntity.getPurchaseOrderId());
             purchaseOrderDetailEntity.setSourceDetailId(orderDetailEntity.getSourceDetailId());
-           /* if (CollectionUtils.isNotEmpty(detailEntityList)) {
-                PurchaseOrderDetailEntity entity = detailEntityList.stream().filter(req -> req.getId().equals(orderDetailEntity.getId())).findFirst().orElse(null);
-                if (ObjectUtils.isNotEmpty(entity)) {
-                    purchaseOrderDetailEntity.setPurchaseAmount(entity.getPurchaseAmount());
-                }
-            }*/
+            purchaseOrderDetailEntity.setReceiveQty(receiveQty);
+
+
             scmTaskFeign.updatePoArrivalStatus(purchaseOrderDetailEntity);
         }
     }
