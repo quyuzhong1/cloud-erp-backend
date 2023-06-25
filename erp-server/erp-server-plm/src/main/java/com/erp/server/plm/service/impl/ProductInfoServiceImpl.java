@@ -577,8 +577,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+        String userId = commonService.getUserInfo().getUid();
         //收藏的项目
-        IPage pageData = baseMapper.collect(query, params, categoryIdList);
+        IPage pageData = baseMapper.collect(query, params, categoryIdList, userId);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
         return new PagingVO(pageData);
@@ -638,12 +639,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public ProductDTO.ProductCountDTO collectCount() {
+        String userId = commonService.getUserInfo().getUid();
         //产品的统计
-        List<ProductDTO.CountBaseDTO> productCountList = baseMapper.listCollectStatusCount();
+        List<ProductDTO.CountBaseDTO> productCountList = baseMapper.listCollectStatusCount(userId);
         //产品延期的统计
-        List<ProductDTO.CountBaseStrDTO> progressCountList = baseMapper.listCollectProgressStatusCount();
+        List<ProductDTO.CountBaseStrDTO> progressCountList = baseMapper.listCollectProgressStatusCount(userId);
         //项目的统计
-        List<ProductDTO.CountBaseDTO> projectCountList = projectInfoService.listCollectStatusCount();
+        List<ProductDTO.CountBaseDTO> projectCountList = projectInfoService.listCollectStatusCount(userId);
         return getProductCount(productCountList, projectCountList, progressCountList);
 
     }
@@ -2161,7 +2163,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //完成且延期
         long weekFinishDelayCount = weekTaskList.stream().filter(t -> taskFinish.equals(t.getStatus()) &&
                 t.getRealityEndTime() != null && t.getPlanEndTime() != null &&
-                t.getRealityEndTime().compareTo(t.getPlanEndTime().atTime(23,59)) > 0).count();
+                t.getRealityEndTime().compareTo(t.getPlanEndTime().atTime(23, 59)) > 0).count();
         weekTask.setFinishCount((int) weekFinishCount);
         //进行中
         long weekDoingCount = weekTaskList.stream().filter(t -> taskIng.equals(t.getStatus())).count();
@@ -2208,7 +2210,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //这个是未完成
         List<ProjectTaskEntity> planDelayTaskList = taskList.stream().filter(t -> t.getPlanEndTime() != null && now.compareTo(t.getPlanEndTime()) > 0).collect(Collectors.toList());
         List<ProjectTaskEntity> realityDelayTaskList = taskList.stream().filter(t -> t.getRealityEndTime() != null && t.getPlanEndTime() != null &&
-                t.getRealityEndTime().compareTo(t.getPlanEndTime().atTime(23,59)) > 0).collect(Collectors.toList());
+                t.getRealityEndTime().compareTo(t.getPlanEndTime().atTime(23, 59)) > 0).collect(Collectors.toList());
         delayTaskList.addAll(planDelayTaskList);
         delayTaskList.addAll(realityDelayTaskList);
 
@@ -2217,7 +2219,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //完成
         long delayFinishCount = delayTaskList.stream().filter(t -> taskFinish.equals(t.getStatus()) &&
                 t.getRealityEndTime() != null && t.getPlanEndTime() != null
-                && t.getRealityEndTime().compareTo(t.getPlanEndTime().atTime(23,59)) > 0).map(ProjectTaskEntity::getId).distinct().count();
+                && t.getRealityEndTime().compareTo(t.getPlanEndTime().atTime(23, 59)) > 0).map(ProjectTaskEntity::getId).distinct().count();
         delayTask.setFinishCount((int) delayFinishCount);
         //未完成的任务id
         Integer toBeReleasedCode = TaskStateEnum.TO_BE_RELEASED.getCode();
@@ -2609,7 +2611,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return Boolean.TRUE;
 
     }
-
 
 
 }

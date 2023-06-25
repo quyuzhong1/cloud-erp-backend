@@ -375,6 +375,8 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             sysLogService.addSysLogByOther(sysLogEntity);
             //启动流程
             startChangeDocsProcess(loginUser.getUid(), taskEntity);
+            //添加历史
+            taskDocHistoryService.addHistory(oldDocs);
         }
 
         return result;
@@ -571,6 +573,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             taskEntity.setProcessId(processId);
             taskEntity.setStatus(TaskStateEnum.WAIT_CONFIRM.getCode());
             taskEntity.setBusinessProcessId(businessProcess.getId());
+            taskEntity.setIsChangeDocs(Boolean.TRUE);
             return projectTaskService.updateById(taskEntity);
         }
         return Boolean.TRUE;

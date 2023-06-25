@@ -55,7 +55,7 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
      * @param categoryIdList
      * @return
      */
-    IPage<ProductShowDTO> collect(Page query, @Param("params") ProductSearchDTO.PagingParamDTO params, @Param("categoryIdList")List<String> categoryIdList);
+    IPage<ProductShowDTO> collect(Page query, @Param("params") ProductSearchDTO.PagingParamDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId")String userId);
 
     List<ProductShowDTO> collectExport(@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList);
 
@@ -123,9 +123,9 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
      * @param
      * @return java.util.List<com.erp.model.plm.dto.ProductDTO.CountBaseDTO>
      */
-    List<ProductDTO.CountBaseDTO> listCollectStatusCount();
+    List<ProductDTO.CountBaseDTO> listCollectStatusCount(@Param("userId") String userId);
 
-    List<ProductDTO.CountBaseStrDTO> listCollectProgressStatusCount();
+    List<ProductDTO.CountBaseStrDTO> listCollectProgressStatusCount(@Param("userId") String userId);
 
 
 }

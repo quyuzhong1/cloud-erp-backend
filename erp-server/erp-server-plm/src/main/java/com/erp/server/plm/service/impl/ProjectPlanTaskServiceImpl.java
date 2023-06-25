@@ -9,8 +9,8 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.BaseStatusEnum;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.date.DateUtil;
@@ -88,7 +88,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
 
 
     @Resource
-    private  CommonService commonService;
+    private CommonService commonService;
 
     @Autowired
     private SysLogService sysLogService;
@@ -140,7 +140,12 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 parentVO.setId(parentId);
                 parentVO.setParentId(IsConstant.NO);
                 List<ProductTaskVO> phaseTaskList = item.getValue();
-                phaseTaskList = phaseTaskList.stream().sorted(Comparator.comparing(ProductTaskVO::getCreateTime)).collect(Collectors.toList());
+                List<ProductTaskVO> showList = new ArrayList<>(phaseTaskList.size());
+                //排序
+                List<ProductTaskVO> planEndTimeList = phaseTaskList.stream().filter(p -> p.getPlanEndTime() != null).sorted(Comparator.comparing(ProductTaskVO::getCreateTime)).collect(Collectors.toList());
+                showList.addAll(planEndTimeList);
+                List<ProductTaskVO> createTimeList = phaseTaskList.stream().filter(p -> p.getPlanEndTime() == null).sorted(Comparator.comparing(ProductTaskVO::getCreateTime)).collect(Collectors.toList());
+                showList.addAll(createTimeList);
                 //最小计划开始时间
                 String minStartTime = phaseTaskList.stream().filter(obj -> ObjectUtils.isNotNull(obj.getPlanStartTime())).sorted(Comparator.comparing(ProductTaskVO::getPlanStartTime)).map(ProductTaskVO::getPlanStartTime).findFirst().orElse(null);
                 //最大计划结束时间
@@ -156,7 +161,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 parentVO.setPlanEndTime(StringUtils.isEmpty(maxEndTime) ? maxEndTime : maxEndTime.concat(" 23:59:59"));
                 parentId++;
 
-                for (ProductTaskVO vo : phaseTaskList) {
+                for (ProductTaskVO vo : showList) {
                     String taskId = vo.getTaskId();
                     List<String> preTaskIds = preTaskList.stream().filter(p -> p.getTaskId().equals(taskId)).
                             map(PreTaskEntity::getPreTaskId).collect(Collectors.toList());
@@ -258,27 +263,59 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
      * 数据
      */
     @Override
-    public void exportExcel(ProjectPlanTaskConditionDTO dto, HttpServletResponse response) {
-        List<ProductTaskVO> taskList = projectTaskMapper.getScheduleTask(dto);
-
-
-        List<ProductTaskVO> exportList = new ArrayList<>(taskList.size());
-        //根据阶段分组
-        TreeMap<Integer, List<ProductTaskVO>> map = taskList.stream().
-                collect(Collectors.groupingBy(ProductTaskVO::getPhaseSeq, TreeMap::new, Collectors.toList()));
-
-        for (Map.Entry<Integer, List<ProductTaskVO>> item : map.entrySet()) {
-            exportList.addAll(item.getValue());
+    public Boolean exportExcel(ProjectPlanTaskConditionDTO dto, HttpServletResponse response) {
+        List<TaskDTO.TaskExportDTO> resultList = projectTaskMapper.listScheduleTaskExport(dto);
+        if (CollectionUtils.isEmpty(resultList)) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
-        for (ProductTaskVO vo : exportList) {
-            String scheduleStatus = vo.getScheduleStatus();
-            Integer taskStatus = vo.getStatus();
-            vo.setScheduleStatusName(BaseStatusEnum.getName(scheduleStatus));
-            vo.setStatusName(TaskStateEnum.getName(taskStatus));
+        //获取到任务id 集合
+        List<String> taskIds = resultList.stream().map(TaskDTO.TaskExportDTO::getTaskId).collect(Collectors.toList());
+        List<PreTaskEntity> preTaskList = preTaskService.getPreTaskListBytaskIds(taskIds);
+        List<TaskDeliveryDocsEntity> deliveryDocsList = taskDeliveryService.getByProductId(dto.getProductId());
+        //前置任务
+        List<ProjectTaskEntity> preTaskEntityList = projectTaskService.getByTaskIds(preTaskList.stream().map(PreTaskEntity::getPreTaskId).collect(Collectors.toList()));
+        for (TaskDTO.TaskExportDTO item : resultList) {
+            String taskId = item.getTaskId();
+            Integer type = item.getType();
+            String typeName = "一般任务";
+            if (type.equals(TaskConstant.REVIEW_TASK)) {
+                typeName = "评审任务";
+            }
+            item.setTypeName(typeName);
+            Integer priority = item.getPriority();
+            String priorityName = "低";
+            if (priority.equals(TaskConstant.INTERMEDIATE_TASK)) {
+                priorityName = "中";
+            }
+            if (priority.equals(TaskConstant.ADVANCED_TASK)) {
+                priorityName = "高";
+            }
+            item.setPriorityName(priorityName);
+            Integer isMilepost = item.getIsMilepost();
+            String isMilepostStr = "是";
+            if (0 == isMilepost) {
+                isMilepostStr = "否";
+            }
+            item.setIsMilepostStr(isMilepostStr);
+            List<String> preTaskIds = preTaskList.stream().filter(p -> p.getTaskId().equals(item.getTaskId())).map(PreTaskEntity::getPreTaskId).collect(Collectors.toList());
+            String preTaskName = preTaskEntityList.stream().filter(t -> preTaskIds.contains(t.getId())).map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
+            item.setPreTaskName(preTaskName);
+            String docsName = deliveryDocsList.stream().filter(f -> taskId.equals(f.getTaskId())).map(TaskDeliveryDocsEntity::getDocsName).distinct().collect(Collectors.joining(","));
+            item.setDocsName(docsName);
         }
-        List<ScheduleTaskExportExcelVO> excelList = BeanMapper.copyList(exportList, ScheduleTaskExportExcelVO.class);
-        String fileName = "任务数据";
-        ExcelUtil.export(fileName, "task", excelList, ScheduleTaskExportExcelVO.class, response);
+        String name = "产品任务列表";
+        StringBuffer sb = new StringBuffer();
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        String excelPath = "excel/productTaskInfo.xlsx";
+        try {
+            new ExcelPrintUtils().patchExport(resultList, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("排期任务列表导出出错 >>>>>{}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
     }
 
 
@@ -636,7 +673,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             addList.add(entity);
         }
         Boolean saveResult = this.saveBatch(addList);
-        if(saveResult){
+        if (saveResult) {
             sysLogService.addSysLogBySave(sb.toString(), CLASSPATH, projectPlanId, projectPlanId);
         }
 

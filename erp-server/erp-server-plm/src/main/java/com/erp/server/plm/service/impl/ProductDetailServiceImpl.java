@@ -1989,9 +1989,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     List<String> configTaskIds = hasConfigList.stream().map(TaskRefSkuConfigEntity::getTaskId).collect(Collectors.toList());
 
                     //验证关联任务是否已全部完成
-                    long relatedCount = taskAllList.stream().filter(obj -> !RelatedSkuTypeEnum.NOT_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId())).count();
-                    if (relatedCount > 0) {
-                        throw new ServiceException(ApiError.ERROR_95083);
+                    List<ProjectTaskEntity> relatedTaskList = taskAllList.stream().filter(obj -> !RelatedSkuTypeEnum.NOT_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId())).collect(Collectors.toList());
+                    if (relatedTaskList.size()>0) {
+                        String warning = ApiError.ERROR_801.msg;
+                        String taskNames=relatedTaskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
+                        String warningMsg = String.format(warning, taskNames);
+                        throw new ServiceException(ApiError.ERROR_801.code, warningMsg);
+
                     }
                 }
             }
@@ -2873,9 +2877,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 if (CollectionUtils.isNotEmpty(hasConfigList)) {
                     List<String> configTaskIds = hasConfigList.stream().map(TaskRefSkuConfigEntity::getTaskId).collect(Collectors.toList());
                     //验证关联任务是否已全部完成
-                    long relatedCount = taskAllList.stream().filter(obj -> !RelatedSkuTypeEnum.NOT_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId())).count();
-                    if (relatedCount > 0) {
-                        throw new ServiceException(ApiError.ERROR_95083);
+                    List<ProjectTaskEntity> relatedTaskList = taskAllList.stream().filter(obj -> !RelatedSkuTypeEnum.NOT_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId())).collect(Collectors.toList());
+                    if (relatedTaskList.size() > 0) {
+                        String warning = ApiError.ERROR_801.msg;
+                        String taskNames=relatedTaskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
+                        String warningMsg = String.format(warning, taskNames);
+                        throw new ServiceException(ApiError.ERROR_801.code, warningMsg);
                     }
                 }
             }

@@ -39,7 +39,7 @@ public class TaskCommentController extends BaseController {
     }
 
     /**
-     * 任务详情-任务评论列表
+     * 任务详情-任务评论列表【PLM1.3】
      *
      * @return
      */

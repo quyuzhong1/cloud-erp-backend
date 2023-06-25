@@ -209,6 +209,14 @@ public class ProjectTaskEntity extends BaseEntity implements Serializable {
     @TableField("work_period")
     private Integer workPeriod;
 
+
+    /**
+     * 是否是文档变更
+     * true 是
+     */
+    @TableField("is_change_docs")
+    private Boolean isChangeDocs;
+
     public ProjectTaskEntity(String taskId, LocalDateTime realityStart, LocalDateTime realityEnd) {
         super(taskId);
         if(null != realityEnd){

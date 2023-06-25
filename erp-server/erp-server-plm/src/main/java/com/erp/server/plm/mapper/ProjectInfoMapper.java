@@ -38,5 +38,5 @@ public interface ProjectInfoMapper extends BaseMapper<ProjectInfoEntity> {
 
     List<ProductDTO.CountBaseDTO> listMyProjectStatusCount(@Param("userId") String userId);
 
-    List<ProductDTO.CountBaseDTO> listCollectStatusCount();
+    List<ProductDTO.CountBaseDTO> listCollectStatusCount(@Param("userId") String userId);
 }
