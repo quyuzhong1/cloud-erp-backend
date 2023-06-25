@@ -811,6 +811,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 List<SubcontractOrderDetailDTO.AddDTO> childList = new ArrayList<>();
                 for (PurchaseApplicationDTO.GenerateSubcontractOrderDTO generateChild : generateChildList) {
                     SubcontractOrderDetailDTO.AddDTO child = BeanMapperUtils.map(SubcontractOrderDetailDTO.AddDTO.class, generateChild);
+                    child.setSourceDetailId("");
                     childList.add(child);
                 }
                 detail.setChildList(childList);
