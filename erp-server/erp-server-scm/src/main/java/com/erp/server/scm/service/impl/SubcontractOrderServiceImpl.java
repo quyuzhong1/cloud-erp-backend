@@ -570,7 +570,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //下推采购订单信息
         List<PurchaseOrderDTO.ListDTO> purchaseOrderList = purchaseOrderService.listBySourceDetailIds(sourceDetailIds);
 
-        List<String> parentSkuIds = list.stream().filter(obj -> StringUtils.isBlank(obj.getSourceDetailId())).map(SubcontractOrderDTO.ViewGeneratePoDTO::getSkuId).collect(Collectors.toList());
+        List<String> parentSkuIds = list.stream().filter(obj -> StringUtils.isBlank(obj.getParentId())).map(SubcontractOrderDTO.ViewGeneratePoDTO::getSkuId).collect(Collectors.toList());
         //BOM信息
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(parentSkuIds);
         if (CollectionUtils.isEmpty(bomChildrenList)) {
