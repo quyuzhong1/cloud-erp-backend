@@ -237,9 +237,6 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
 
         //委外变更单明细数据
         List<SubcontractOrderDetailEntity> subcontractOrderDetailList = subcontractOrderDetailService.listByIds(sourceDetailIds);
-        if (CollectionUtils.isEmpty(subcontractOrderDetailList)) {
-            throw new ServiceException(ApiError.ERROR_98070);
-        }
 
         for (SubcontractChangeDetailEntity detailEntity : newList) {
             //bom信息
