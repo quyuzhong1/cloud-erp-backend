@@ -579,6 +579,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             throw new ServiceException(ApiError.ERROR_95163);
         }
 
+        List<SubcontractOrderDTO.ViewGeneratePoDTO> resultList = new ArrayList<>();
 
         for (SubcontractOrderDTO.ViewGeneratePoDTO dto : list) {
 
@@ -610,8 +611,16 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             }
             dto.setApplyQty(dto.getQty() - purchaseQty);
             dto.setQty(dto.getApplyQty());
+            //待下推数量为0则无需显示
+            if (MathUtil.compareTo(dto.getApplyQty(),MathUtil.ZERO) == MathUtil.ZERO) {
+                continue;
+            }
+            resultList.add(dto);
         }
-        return list;
+        if (CollectionUtils.isEmpty(resultList)) {
+            throw new ServiceException(ApiError.ERROR_98092);
+        }
+        return resultList;
     }
 
     @Override
