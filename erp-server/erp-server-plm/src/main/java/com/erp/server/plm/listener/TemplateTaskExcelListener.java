@@ -79,7 +79,7 @@ public class TemplateTaskExcelListener extends AnalysisEventListener<TemplateTas
             TemplateTaskEntity templateTaskEntity = templateTaskService.getTaskByName(templateId, templateTaskExcelDTO.getName());
 
             if (ObjectUtil.isNotEmpty(templateTaskEntity)) {
-                errorMsgList.add("[任务名称]在系统中已存在，不可重复");
+                errorMsgList.add("[任务名称]在模板中已存在，不可重复");
             }
 
         List<String> chargeNameList = new ArrayList<>();
@@ -162,6 +162,7 @@ public class TemplateTaskExcelListener extends AnalysisEventListener<TemplateTas
             list.add(templateTaskExcelDTO);
             return;
         }
+        templateTaskDTO.setTemplateId(templateId);
         templateTaskDTO.setName(templateTaskExcelDTO.getName());
 
         templateTaskDTO.setChargeIds(chargeNameList);
@@ -189,6 +190,7 @@ public class TemplateTaskExcelListener extends AnalysisEventListener<TemplateTas
         templateTaskDTO.setDescription(templateTaskExcelDTO.getDescription());
         templateTaskDTO.setApprovalList(TaskChargeDistributionlist);
         templateTaskDTO.setDeliveryDocsList(docsNameList);
+        templateTaskDTO.setDistributionType(1);
         if (StringUtils.isNotBlank(templateTaskExcelDTO.getRefSku())) {
             if (templateTaskExcelDTO.getRefSku().equals("关联")) {
                 templateTaskDTO.setRelatedSkuType(RelatedSkuTypeEnum.ALL_RELATED.getCode());

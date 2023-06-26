@@ -41,14 +41,15 @@ public class TemplateTaskExcelDTO implements Serializable {
     /**
      * 前置任务
      */
-    @ExcelProperty(value = "*前置任务", index = 4)
-    @FieldValid(fieldName = "前置任务", isNotBlank = true)
+    @ExcelProperty(value = "前置任务", index = 4)
     private String preTask;
 
     /**
      * 阶段名称
      */
-    @ExcelProperty(value = "阶段名称", index = 5)
+    @ExcelProperty(value = "*阶段名称", index = 5)
+    @FieldValid(fieldName = "阶段名称", isNotBlank = true)
+
     private String phaseName;
 
     /**

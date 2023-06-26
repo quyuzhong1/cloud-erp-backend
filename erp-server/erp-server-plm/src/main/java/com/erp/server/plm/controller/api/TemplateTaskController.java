@@ -27,6 +27,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -51,12 +52,13 @@ public class TemplateTaskController extends BaseController {
     @Autowired
     private TemplateTaskService templateTaskService;
 
-    private String templateId;
-
+    @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
     private TemplatePhaseService templatePhaseService;
 
+    @Resource
     private TemplateTaskDocsNameService templateTaskDocsNameService;
 
 
@@ -143,7 +145,7 @@ public class TemplateTaskController extends BaseController {
     public ApiResult importTemplateTaskFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "templateId") String templateId, HttpServletResponse response) {
         TemplateTaskExcelListener excelListenerUtil = new TemplateTaskExcelListener(templateId, sysUserFeign, templatePhaseService, templateTaskService, templateTaskDocsNameService);
         try {
-            EasyExcel.read(excelFile.getInputStream(), ProjectTaskExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(excelFile.getInputStream(), TemplateTaskExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             throw new ServiceException(ApiError.ERROR_95124);
         }
