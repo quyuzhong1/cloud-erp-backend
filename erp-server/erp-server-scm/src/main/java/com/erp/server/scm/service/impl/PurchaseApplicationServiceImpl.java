@@ -422,6 +422,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             addDTO.setPurchaseOrgId(value.get(0).getPurchaseOrgId());
             addDTO.setPurchaseDate(LocalDate.now());
             addDTO.setDeliveryWarehouseId(value.get(0).getDestWarehouseId());
+            addDTO.setPurchaseUserId(value.get(0).getPurchaseUserId());
 
             //采购订单供应商信息
             PurchaseOrderSupplierDTO.AddDTO supplierDTO = new PurchaseOrderSupplierDTO.AddDTO();

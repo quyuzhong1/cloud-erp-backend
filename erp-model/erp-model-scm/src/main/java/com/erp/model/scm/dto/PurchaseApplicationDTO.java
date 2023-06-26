@@ -482,6 +482,11 @@ public class PurchaseApplicationDTO implements Serializable {
          */
         private Integer deliveryDay;
 
+        /**
+         * 采购员id
+         */
+        private String purchaseUserId;
+
     }
 
     @Data

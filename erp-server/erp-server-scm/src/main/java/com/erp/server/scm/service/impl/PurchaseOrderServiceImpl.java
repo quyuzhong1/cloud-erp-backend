@@ -237,6 +237,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         BeanMapperUtils.copy(entity, dto);
 
+        // 采购员名称
+        if(StrUtils.isNotEmpty(dto.getPurchaseUserId())) {
+            FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(dto.getPurchaseUserId());
+            if (ObjectUtils.isEmpty(purchaseUser)) {
+                dto.setPurchaseUserName(purchaseUser.getUserName());
+            }
+        }
+
         //供应商信息
         PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(id);
         PurchaseOrderSupplierDTO.UpdateDTO supplierUpdateDTO = new PurchaseOrderSupplierDTO.UpdateDTO();

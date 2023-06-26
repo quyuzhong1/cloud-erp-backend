@@ -52,6 +52,11 @@ public class PurchaseOrderSupplierDTO implements Serializable {
          * 联系人电话
          */
         private String contactTelNumber;
+
+        /**
+         * 采购员id
+         */
+        private String purchaseUserId;
     }
 
     @Data
