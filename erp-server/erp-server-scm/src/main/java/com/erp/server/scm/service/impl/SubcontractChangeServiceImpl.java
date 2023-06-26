@@ -462,7 +462,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
                 detailList.add(addDTO);
             }
             //委外订单添加明细
-            subcontractOrderDetailService.addByChange(detailList,entity.getId());
+            subcontractOrderDetailService.addByChange(detailList,entity.getSourceId());
             //更新委外变更单来源明细id
             subcontractChangeDetailService.updateSourceDetailId(pairList);
         }
