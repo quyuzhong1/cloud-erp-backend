@@ -47,6 +47,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.server.scm.kingdee.SyncKingdeeSubcontractOrderService;
 import com.erp.server.scm.mapper.SubcontractOrderMapper;
 import com.erp.server.scm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -108,6 +109,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Autowired
     private SupplierContactService supplierContactService;
+
+    @Autowired
+    private SyncKingdeeSubcontractOrderService syncKingdeeSubcontractOrderService;
+
 
     @Override
     public PagingVO<SubcontractOrderDTO.ListDTO> paging(PagingDTO<SubcontractOrderDTO.PagingParamDTO> pagingParamDTO) {
@@ -365,6 +370,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //自动生成采购订单
             autoGeneratePo(ids);
 
+            //审核通过发送金蝶
+            list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+
         } else if (Objects.equals(ApproveTypeEnum.REJECT, approveType)) {
            // TODO 终止审批流程
         }
@@ -405,6 +413,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
         // 更新审核信息
         updateForDisApprove(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+
+        //审核通过发送金蝶
+        list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
 
         // 操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -892,6 +903,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         log.info("采购订单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
         //更新订单作废状态
         updateInvalidStatus(ids, remark);
+
+        //审核通过发送金蝶
+        list.forEach(obj -> syncKingdeeSubcontractOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_INVALID.getCode()));
 
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());

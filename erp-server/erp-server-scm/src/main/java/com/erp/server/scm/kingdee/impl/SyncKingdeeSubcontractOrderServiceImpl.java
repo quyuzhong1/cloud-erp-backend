@@ -7,13 +7,17 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSubcontractOrderService;
@@ -58,6 +62,8 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     /**
      * 组装数据发送到金蝶
@@ -97,9 +103,12 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
 
         //采购明细
         List<SubcontractOrderDetailEntity> details = subcontractOrderDetailService.listByMainId(entity.getId());
-        if (CollectionUtils.isEmpty(details)) {
-            return;
+        //父级数据
+        List<SubcontractOrderDetailEntity> parentList = details.stream().filter(obj -> StringUtils.isBlank(obj.getParentId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(parentList)) {
+            throw new ServiceException(ApiError.ERROR_98070);
         }
+
         //仓库信息
         List<String> warehouseIds = details.stream().map(SubcontractOrderDetailEntity::getWarehouseId).collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIds);
@@ -108,9 +117,14 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
         List<String> supplierIds = details.stream().map(SubcontractOrderDetailEntity::getSupplierId).collect(Collectors.toList());
         List<SupplierEntity> supplierList = supplierService.listByIds(supplierIds);
 
+        //根据明细skuIds查询bom
+        List<String> skuIds = parentList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
+        List<BomInfoEntity> bomInfoList = plmTaskFeign.listBomByParentSkuIds(skuIds);
+
         List<JSONObject> list = new ArrayList<>();
-        for (SubcontractOrderDetailEntity detailEntity : details) {
+        for (SubcontractOrderDetailEntity detailEntity : parentList) {
             JSONObject jsonObject = new JSONObject();
+            jsonObject.set("detailId",detailEntity.getId());
             jsonObject.set("skuNo",detailEntity.getSkuNo());
             jsonObject.set("qty",detailEntity.getQty());
             jsonObject.set("planDeliveryDate",detailEntity.getPlanDeliveryDate());
@@ -135,10 +149,16 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
                 String supplierCode = supplierList.stream().filter(obj -> obj.getId().equals(detailEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
                 jsonObject.set("supplierCode",supplierCode);
             }
+            if (CollectionUtils.isNotEmpty(bomInfoList)) {
+                String referenceVersion = bomInfoList.stream().filter(obj -> obj.getParentSkuId().equals(detailEntity.getSkuId()))
+                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getSerialNumber()+ "_"+ obj.getVersion())).orElse(null);
+                //参照版本
+                jsonObject.set("referenceVersion", referenceVersion);
+            }
             jsonObject.set("detailRemark",detailEntity.getRemark());
             list.add(jsonObject);
         }
-        resultMap.put("parentList",list);
+        resultMap.put("list",list);
 
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);

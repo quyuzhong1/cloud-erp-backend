@@ -42,7 +42,7 @@ import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.server.scm.kingdee.SyncKingdeeSubcontractChangeService;
 import com.erp.server.scm.mapper.SubcontractChangeMapper;
 import com.erp.server.scm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -94,7 +94,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
 
 
     @Autowired
-    private WmsTaskFeign wmsTaskFeign;
+    private SyncKingdeeSubcontractChangeService syncKingdeeSubcontractChangeService;
 
     @Autowired
     private SubcontractOrderService subcontractOrderService;
@@ -320,6 +320,9 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
            //审核通过更新委外订单
            handleSubcontractOrder(ids,list);
 
+            //审核通过发送金蝶
+            list.forEach(obj -> syncKingdeeSubcontractChangeService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+
         } else if (Objects.equals(ApproveTypeEnum.REJECT, approveType)) {
            // TODO 终止审批流程
         }
@@ -378,17 +381,17 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
                 subcontractOrderDetailService.removeByIds(sourceDetailIds);
             }
         }
-        //新增
-        if (CollectionUtils.isNotEmpty(addList)) {
-            generateAdd(addList,list);
-        }
+
         //修改
         if (CollectionUtils.isNotEmpty(updateList)) {
             //收货数量和入库数量校验
             checkGenerateUpdate(updateList);
             //更新委外订单数据
             generateUpdate(updateList,list);
-
+        }
+        //新增
+        if (CollectionUtils.isNotEmpty(addList)) {
+            generateAdd(addList,list);
         }
     }
     /**
@@ -443,6 +446,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
                 addDTO.setId(IdWorker.getIdStr());
                 addDTO.setSourceDetailId(null);
                 addEntity.setSourceDetailId(addDTO.getId());
+
                 pairList.add(new Pair<>(addEntity.getId(),addDTO.getId()));
                 //子集SKU
                 List<SubcontractChangeDetailEntity> childList = addList.stream().filter(obj -> obj.getParentId().equals(addEntity.getId())).collect(Collectors.toList());

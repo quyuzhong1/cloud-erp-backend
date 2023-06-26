@@ -180,6 +180,11 @@ public class SubcontractOrderDetailEntity extends BaseEntity<SubcontractOrderDet
     @TableField("remark")
     private String remark;
 
+    /**
+     * 金蝶id
+     */
+    @TableField("kingdee_detail_id")
+    private String kingdeeDetailId;
 
 
     @TableField(exist = false)

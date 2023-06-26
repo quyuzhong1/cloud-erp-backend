@@ -1,6 +1,9 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.SuperServiceImpl;
@@ -137,6 +140,22 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
     }
 
     @Override
+    public void updateKingdeeDetailId(JSONArray list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (Object obj : list) {
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
+            String detailId = (String) jsonObject.get("detailId");
+            String kingdeeDetailId = (String) jsonObject.get("kingdeeDetailId");
+            this.lambdaUpdate()
+                    .set(SubcontractOrderDetailEntity::getKingdeeDetailId, kingdeeDetailId)
+                    .eq(SubcontractOrderDetailEntity::getId, detailId)
+                    .update();
+        }
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void update(List<SubcontractOrderDetailDTO.UpdateDTO> detailList, String mainId) {
         if (CollectionUtils.isEmpty(detailList)) {
@@ -145,13 +164,19 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         List<SubcontractOrderDetailEntity> list = BeanMapperUtils.copyList(SubcontractOrderDetailEntity.class, detailList);
 
         //原明细数据
-        List<SubcontractOrderDetailEntity> oldList = this.listParentByMainId(mainId);
+        List<SubcontractOrderDetailEntity> oldList = this.listByMainId(mainId);
+        //将子级SKU添加入集合判断是否删除
+        List<SubcontractOrderDetailDTO.UpdateDTO> allDetailList = new ArrayList<>();
+        allDetailList.addAll(detailList);
+        detailList.forEach(obj -> {
+            allDetailList.addAll(obj.getChildList());
+        });
         List<String> deleteIds = getDeleteIds(detailList, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<SubcontractOrderDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
-            moduleOperateLogService.batchAddModuleOperateLog("删除了一个父级SKU【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(),pairList,"编辑操作");
+            moduleOperateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
         checkSourceDetailQty(list,mainId);

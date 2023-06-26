@@ -1,5 +1,6 @@
 package com.erp.server.scm.service;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.SubcontractOrderDetailDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
@@ -97,4 +98,12 @@ public interface SubcontractOrderDetailService extends SuperService<SubcontractO
      * @param pairList
      */
     void updateSourceDetailId(List<Pair<String, String>> pairList);
+
+    /**
+     * @description: 更新明细金蝶id
+     * @author Will
+     * @date: 2023/5/4 18:36
+     * @param list
+     */
+    void updateKingdeeDetailId(JSONArray list);
 }

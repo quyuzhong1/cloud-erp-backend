@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_subcontract_order_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SUBCONTRACT_ORDER)
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_subcontract_order_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SUBCONTRACT_CHANGE)
 public class KingdeeSubcontractChangeConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
@@ -47,10 +47,10 @@ public class KingdeeSubcontractChangeConsumer implements RocketMQListener<Map<St
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SUB_REQCHANGE.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "PO23042400006"));
+        queryFilters.add(String.format("FBillNo = '%s'", "SUBCH000003"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FId,FPOOrderEntry_FEntryID,FMaterialId.FNumber,F_ulz_Base.FNumber";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
+        String fieldKeys = "FId,FBillNo,FBillType.FNUMBER,FChangeType";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,0);
         System.out.println(queryList);
 
 

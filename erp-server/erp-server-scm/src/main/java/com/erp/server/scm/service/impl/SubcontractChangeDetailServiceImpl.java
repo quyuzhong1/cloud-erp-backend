@@ -172,7 +172,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
             if (CollectionUtils.isNotEmpty(poList)) {
                 Integer purchaseQty = poList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId())).map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (purchaseQty > detailEntity.getQty()) {
-                    throw new ServiceException(new ApiResult(ApiError.ERROR_98087.code, StrUtil.format(ApiError.ERROR_98087.msg,detailEntity.getSkuNo(),purchaseQty)));
+                    throw new ServiceException(new ApiResult(ApiError.ERROR_98087.code, StrUtil.format(ApiError.ERROR_98087.msg,detailEntity.getSkuNo(),detailEntity.getQty(),purchaseQty)));
                 }
             }
         }
