@@ -126,4 +126,12 @@ public interface InventoryFeign {
     @PostMapping("feign/inventory/listSkuInventoryByParam")
     List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventoryByParam(@RequestBody InventoryQtyDTO.SkuInventoryParamDTO paramDTO);
 
+
+    /**
+     * 采购订单结束交货（批量）
+     * @param dataList
+     */
+    @PostMapping(value = "/feign/instockForcast/finishDeliveryBatch")
+    void finishDeliveryBatch(@RequestBody @Valid List<InstockForcastDTO.FinishDeliveryDTO> dataList);
+
 }

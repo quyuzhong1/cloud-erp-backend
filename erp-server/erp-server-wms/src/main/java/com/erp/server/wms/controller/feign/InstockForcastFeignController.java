@@ -72,4 +72,13 @@ public class InstockForcastFeignController extends BaseController {
         instockForcastService.poChange(dto);
     }
 
+    /**
+     * 采购订单结束交货（批量）
+     * @param dataList
+     */
+    @PostMapping(value = "/finishDeliveryBatch")
+    public void finishDeliveryBatch(@RequestBody @Valid List<InstockForcastDTO.FinishDeliveryDTO> dataList) {
+        instockForcastService.finishDeliveryBatch(dataList);
+    }
+
 }

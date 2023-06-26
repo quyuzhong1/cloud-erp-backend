@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.List;
+import java.util.Objects;
 
 /** 
  *
@@ -56,7 +57,9 @@ public class GlobalExceptionHandler {
         result.setCode(e.getCode());
         result.setMsg(e.getMsg());
         // 某些异常需要返回data
-        result.setData(e.getData());
+        if(Objects.nonNull(e.getData())) {
+            result.setData(e.getData());
+        }
         return result;
     }
 

@@ -33,7 +33,13 @@ public class FeignErrorDecoder implements ErrorDecoder {
                 if (trace.contains("ServiceException")) {
                     String codeStr = StrUtil.subBetween(trace, "ServiceException(code=", ", msg");
                     Integer code = Integer.valueOf(codeStr);
-                    String msg = StrUtil.subBetween(trace, "msg=", ")");
+                    String msg = "";
+                    // 有些异常会返回data
+                    if (!trace.contains(", data=")) {
+                        msg = StrUtil.subBetween(trace, "msg=", ")");
+                    } else {
+                        msg = StrUtil.subBetween(trace, "msg=", ", data");
+                    }
                     return  new FeignServiceException(code, msg);
                 }else{
                     return  new FeignServiceException(ApiError.Default);

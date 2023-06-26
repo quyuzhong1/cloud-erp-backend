@@ -55,4 +55,11 @@ public interface InstockForcastService extends SuperService<InstockForcastEntity
      */
     void poChange(InstockForcastDTO.PoChangeDTO dto);
 
+    /**
+     * 采购订单结束交货（批量）
+     * 主要是为解决seata xa模式有问题
+     * @param dataList
+     */
+    void finishDeliveryBatch(List<InstockForcastDTO.FinishDeliveryDTO> dataList);
+
 }

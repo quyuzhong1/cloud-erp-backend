@@ -1587,6 +1587,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //退货数量
         List<PurchaseReturnOrderDetailEntity> purchaseReturnOrderDetailEntities = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
 
+        List<InstockForcastDTO.FinishDeliveryDTO> inventoryList = Lists.newArrayList();
+
         poMap.forEach((mainId, po)->{
             InstockForcastDTO.FinishDeliveryDTO inventoryDTO = new InstockForcastDTO.FinishDeliveryDTO();
             inventoryDTO.setPurchaseOrderId(mainId);
@@ -1626,8 +1628,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 inventoryMembers.add(inventoryMember);
             });
             inventoryDTO.setMembers(inventoryMembers);
-            inventoryFeign.finishDelivery(inventoryDTO);
+            inventoryList.add(inventoryDTO);
         });
+        inventoryFeign.finishDeliveryBatch(inventoryList);
     }
 
 

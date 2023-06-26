@@ -326,5 +326,14 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         }
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void finishDeliveryBatch(List<InstockForcastDTO.FinishDeliveryDTO> dataList) {
+        if(CollUtil.isEmpty(dataList)) {
+            throw new ServiceException("库存交易数据不能为空");
+        }
+        dataList.stream().forEach(data->finishDelivery(data));
+    }
+
 
 }
