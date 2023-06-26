@@ -70,6 +70,15 @@ public interface ProjectTaskMapper extends BaseMapper<ProjectTaskEntity> {
 
     Integer allPagingCount( @Param("productId") String productId,@Param("param") String param);
 
+    /**
+     * 统计变更任务数
+     * @param productId
+     * @param param
+     * @param scheduleType
+     * @return
+     */
+    Integer changeCount(@Param("productId")String productId,@Param("param") String param,@Param("scheduleType") String scheduleType);
+
     List<TaskExcelDTO> getExportTask(@Param("productIds") List<String> productIds);
 
     /**

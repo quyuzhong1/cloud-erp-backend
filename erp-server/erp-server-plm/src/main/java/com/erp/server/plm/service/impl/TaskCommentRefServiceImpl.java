@@ -73,16 +73,16 @@ public class TaskCommentRefServiceImpl extends SuperServiceImpl<TaskCommentRefMa
         resultList.add(projectChargeMemberList);
 
         ProductMemberDTO.TaskRefDTO allMember = new ProductMemberDTO.TaskRefDTO();
-        allMember.setMemberType("all");
-        allMember.setMemberTypeName("所有成员");
-        List<ProductMemberDTO.MemberDTO> allList = new ArrayList<>(userList.size());
+        allMember.setMemberId("all");
+        allMember.setMemberName("所有成员");
+        List<ProductMemberDTO.TaskRefDTO> allList = new ArrayList<>(userList.size());
         for (FindUserDTO member : userList) {
-            ProductMemberDTO.MemberDTO memberDTO = new ProductMemberDTO.MemberDTO();
-            memberDTO.setUserId(member.getUserId());
-            memberDTO.setUserName(member.getUserName());
+            ProductMemberDTO.TaskRefDTO memberDTO = new ProductMemberDTO.TaskRefDTO();
+            memberDTO.setMemberId(member.getUserId());
+            memberDTO.setMemberName(member.getUserName());
             allList.add(memberDTO);
         }
-        allMember.setMemberList(allList);
+        allMember.setChildrenList(allList);
         allMember.setCount(userList.size());
         resultList.add(allMember);
         return resultList;
@@ -154,17 +154,17 @@ public class TaskCommentRefServiceImpl extends SuperServiceImpl<TaskCommentRefMa
 
     private ProductMemberDTO.TaskRefDTO getTaskMember(String type, String typeName, List<MemberPagingShowDTO> list) {
         ProductMemberDTO.TaskRefDTO itemMember = new ProductMemberDTO.TaskRefDTO();
-        itemMember.setMemberType(type);
-        itemMember.setMemberTypeName(typeName);
+        itemMember.setMemberId(type);
+        itemMember.setMemberName(typeName);
         itemMember.setCount(list.size());
-        List<ProductMemberDTO.MemberDTO> memberList = new ArrayList<>(list.size());
+        List<ProductMemberDTO.TaskRefDTO> memberList = new ArrayList<>(list.size());
         for (MemberPagingShowDTO member : list) {
-            ProductMemberDTO.MemberDTO memberDTO = new ProductMemberDTO.MemberDTO();
-            memberDTO.setUserId(member.getMemberId());
-            memberDTO.setUserName(member.getMemberName());
+            ProductMemberDTO.TaskRefDTO memberDTO = new ProductMemberDTO.TaskRefDTO();
+            memberDTO.setMemberId(member.getMemberId());
+            memberDTO.setMemberName(member.getMemberName());
             memberList.add(memberDTO);
         }
-        itemMember.setMemberList(memberList);
+        itemMember.setChildrenList(memberList);
         return itemMember;
     }
 }

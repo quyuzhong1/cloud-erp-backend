@@ -747,6 +747,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String approve = ApproveStatusEnum.APPROVE.getStatus();
         ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.getByStatus(approve);
         queryWrapper.eq(CustomerInfoEntity::getApproveStatus, approveStatusEnum);
+        queryWrapper.orderByDesc(CustomerInfoEntity::getDisabled);
         List<CustomerInfoEntity> list = this.list(queryWrapper);
         return BeanMapper.copyList(list, CustomerDTO.InfoDTO.class);
     }
@@ -838,7 +839,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
      * @date 2023-05-15 16:05
      */
     @Override
-    public List<CustomerDTO.InfoDTO> listEnable() {
+    public List<CustomerDTO.InfoDTO> listEnable(String permissionSql) {
         LambdaQueryWrapper<CustomerInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(CustomerInfoEntity::getId,
                 CustomerInfoEntity::getCode,
@@ -846,6 +847,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 CustomerInfoEntity::getApproveStatus,
                 CustomerInfoEntity::getDisabled);
         queryWrapper.eq(CustomerInfoEntity::getDisabled, Boolean.FALSE);
+        if(StringUtils.isNotBlank(permissionSql)){
+            queryWrapper.last(permissionSql);
+        }
         List<CustomerInfoEntity> list = this.list(queryWrapper);
         List<CustomerDTO.InfoDTO> resultList = BeanMapper.copyList(list, CustomerDTO.InfoDTO.class);
         List<ApproveStatusEnum> statusList = new ArrayList<>(1);
@@ -855,6 +859,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 item.setDisabled(true);
             }
         }
+        resultList=resultList.stream().sorted(Comparator.comparing(CustomerDTO.InfoDTO::getDisabled)).collect(Collectors.toList());
         return resultList;
     }
 
@@ -876,6 +881,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         base.setId(customer.getId());
         base.setCode(customer.getCode());
+        //币别
+        base.setCurrency(customer.getCurrency());
         List<CustomerContactDTO.ViewDTO> contactList = customerContactService.listByMainId(customerId);
         CustomerContactDTO.ViewDTO contact = contactList.stream().filter(c -> c.getIsDefault()).findFirst().orElse(null);
         if (contact != null) {

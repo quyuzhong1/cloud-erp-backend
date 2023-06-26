@@ -137,6 +137,13 @@ public class TaskPagingShowDTO implements Serializable {
      */
     private String scheduleStatus;
 
+
+    /**
+     * 排期类型
+     * change 变更
+     */
+    private String scheduleType;
+
     /**
      * 状态名
      */
@@ -240,7 +247,12 @@ public class TaskPagingShowDTO implements Serializable {
     private Integer workPeriod;
 
     /**
-     * 是否文档变更 true 是 false 不是
+     * 是否是变更 true 是 false 不是
+     */
+    private Boolean isChange;
+
+    /**
+     * 是否变更文档
      */
     private Boolean isChangeDocs;
 }

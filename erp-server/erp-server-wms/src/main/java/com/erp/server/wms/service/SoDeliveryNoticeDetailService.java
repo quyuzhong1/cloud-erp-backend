@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
+import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 
 import java.util.List;
@@ -100,6 +101,12 @@ public interface SoDeliveryNoticeDetailService extends SuperService<SoDeliveryNo
      */
     void closeBySoDetailIds(List<String> soDetailIds);
 
-
-
+    /**
+     * 根据来源id 获取到对应的明细
+     * @author yl
+     * @date 2023-06-26 10:10
+     * @param sourceIdList
+     * @return java.util.List<com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO.ListDTO>
+     */
+    List<SoDeliveryNoticeDetailDTO.ListDTO> listBySourceIdList(List<String> sourceIdList);
 }

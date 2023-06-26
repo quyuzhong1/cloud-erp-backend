@@ -18,6 +18,7 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -57,7 +58,16 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_92008);
             }
-
+            List<LocalDate> dateList = new ArrayList<>(sellerList.size());
+            for (SellerDTO.AddDTO item : sellerList) {
+                dateList.add(item.getStartDate());
+            }
+            //判断是否按序排序
+            for (int i = 0; i < dateList.size() - 1; i++) {
+                if (dateList.get(i).compareTo(dateList.get(i + 1)) > 0) {
+                    throw new ServiceException(ApiError.ERROR_92048);
+                }
+            }
         }
 
     }
@@ -114,11 +124,12 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
 
     /**
      * 批量修改发票信息
-     * @author yl
-     * @date 2023-05-15 11:21
+     *
      * @param mainId
      * @param sellerList
      * @return void
+     * @author yl
+     * @date 2023-05-15 11:21
      */
     @Override
     public void updateBatchSeller(String mainId, List<SellerDTO.ViewDTO> sellerList) {
@@ -168,11 +179,11 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
         for (CustomerSellerEntity update : updateEntityList) {
             String id = update.getId();
             CustomerSellerEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
-            if(old!=null){
-                operateLogService.addModuleOperateLogByObj(old,update, ModuleTypeEnum.CUSTOMER.getCode(),mainId,"","");
+            if (old != null) {
+                operateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.CUSTOMER.getCode(), mainId, "", "");
             }
         }
-        if(CollectionUtils.isNotEmpty(saveOrUpdateList)){
+        if (CollectionUtils.isNotEmpty(saveOrUpdateList)) {
             this.saveOrUpdateBatch(saveOrUpdateList);
         }
     }
@@ -180,11 +191,12 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
 
     /**
      * 获取删除字段的信息
-     * @author yl
-     * @date 2023-05-15 11:04
+     *
      * @param sellerList
      * @param dbList
      * @return java.util.List<java.lang.String>
+     * @author yl
+     * @date 2023-05-15 11:04
      */
     private List<String> getDeleteIds(List<SellerDTO.ViewDTO> sellerList, List<CustomerSellerEntity> dbList) {
         List<String> ids = sellerList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).

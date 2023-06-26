@@ -162,4 +162,63 @@ public class SoDeliveryNoticeDetailDTO {
          */
         private List<String> attachUrlList;
     }
+
+
+    /**
+     * 查询详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+        /**
+         * id
+         */
+        private String detailId;
+        /**
+         * 主表id
+         */
+        private String mainId;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+        /**
+         * sku表id
+         */
+        private String skuId;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 是否关闭
+         */
+        private Boolean isClose;
+        /**
+         * 备注
+         */
+        private String remark;
+
+    }
 }

@@ -125,7 +125,6 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             List<String> scheduleStatusList = new ArrayList<>();
             scheduleStatusList.add(BaseStatusEnum.WAIT_AUDIT.getStatus());
             scheduleStatusList.add(BaseStatusEnum.AUDIT_ING.getStatus());
-            scheduleStatusList.add(BaseStatusEnum.WAIT_AUDIT.getStatus());
 
             //根据阶段分组
             TreeMap<Integer, List<ProductTaskVO>> map = taskList.stream().
@@ -142,9 +141,9 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 List<ProductTaskVO> phaseTaskList = item.getValue();
                 List<ProductTaskVO> showList = new ArrayList<>(phaseTaskList.size());
                 //排序
-                List<ProductTaskVO> planEndTimeList = phaseTaskList.stream().filter(p -> p.getPlanEndTime() != null).sorted(Comparator.comparing(ProductTaskVO::getCreateTime)).collect(Collectors.toList());
+                List<ProductTaskVO> planEndTimeList = phaseTaskList.stream().filter(p -> p.getPlanEndTime() != null).sorted(Comparator.comparing(ProductTaskVO::getCreateTime).reversed()).collect(Collectors.toList());
                 showList.addAll(planEndTimeList);
-                List<ProductTaskVO> createTimeList = phaseTaskList.stream().filter(p -> p.getPlanEndTime() == null).sorted(Comparator.comparing(ProductTaskVO::getCreateTime)).collect(Collectors.toList());
+                List<ProductTaskVO> createTimeList = phaseTaskList.stream().filter(p -> p.getPlanEndTime() == null).sorted(Comparator.comparing(ProductTaskVO::getCreateTime).reversed()).collect(Collectors.toList());
                 showList.addAll(createTimeList);
                 //最小计划开始时间
                 String minStartTime = phaseTaskList.stream().filter(obj -> ObjectUtils.isNotNull(obj.getPlanStartTime())).sorted(Comparator.comparing(ProductTaskVO::getPlanStartTime)).map(ProductTaskVO::getPlanStartTime).findFirst().orElse(null);

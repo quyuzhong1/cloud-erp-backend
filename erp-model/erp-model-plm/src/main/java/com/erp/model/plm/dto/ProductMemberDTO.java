@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -25,22 +26,25 @@ public class ProductMemberDTO implements Serializable {
         /**
          * 人数
          */
-        private Integer count;
+        private Integer count=0;
+
+
 
         /**
-         * 成员类型
+         * 成员id
          */
-        private String memberType;
+        private String memberId;
 
         /**
-         * 成员类型名
+         * 成员名
          */
-        private String memberTypeName;
+        private String memberName;
 
         /**
          * 成员信息
          */
-        private List<MemberDTO> memberList;
+        @JsonInclude(value= JsonInclude.Include.NON_EMPTY)
+        private List<TaskRefDTO> childrenList;
     }
 
 

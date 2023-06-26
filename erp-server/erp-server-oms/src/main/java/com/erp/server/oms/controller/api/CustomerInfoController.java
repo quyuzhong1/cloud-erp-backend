@@ -265,9 +265,14 @@ public class CustomerInfoController extends BaseController {
     /**
      * 启用的客户列表
      */
-    @GetMapping("/listEnable")
-    public ApiResult<List<CustomerDTO.InfoDTO>> listEnable() {
-        List<CustomerDTO.InfoDTO> list = customerInfoService.listEnable();
+    @PostMapping("/listEnable")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "oms:customer:paging",
+            tableAlias = "customer_info"
+    )
+    public ApiResult<List<CustomerDTO.InfoDTO>> listEnable(PermissionsDTO dto) {
+        List<CustomerDTO.InfoDTO> list = customerInfoService.listEnable(dto.getPermissionSql());
         return success(list);
     }
 

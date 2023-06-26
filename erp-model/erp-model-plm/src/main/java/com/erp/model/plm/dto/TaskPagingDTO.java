@@ -37,7 +37,7 @@ public class TaskPagingDTO extends SortDTO implements Serializable {
       * 2全部
       * 3 变更任务
       */
-     @StateEnumValue(intValues = {0,1,2}, message = "任务类型有误")
+     @StateEnumValue(intValues = {0,1,2,3}, message = "任务类型有误")
      private Integer taskFlag;
 
      /**
