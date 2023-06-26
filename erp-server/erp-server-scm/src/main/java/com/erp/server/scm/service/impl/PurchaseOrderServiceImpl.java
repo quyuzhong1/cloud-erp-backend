@@ -1623,6 +1623,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                             && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode()))
                             .map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
+                // 此处会有问题，采购订单增加的在途，收货单，采购订单直接生成入库单减少的在途未必一样
                 Integer deliveryQty = member.getPurchaseQty() + returnQty - receiveQty - poQty;
                 inventoryMember.setQty(deliveryQty);
                 inventoryMembers.add(inventoryMember);
