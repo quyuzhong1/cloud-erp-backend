@@ -228,6 +228,14 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         BeanMapper.copy(supplier, result);
         result.setApproveStatus(supplier.getApproveStatus().getStatus());
         result.setPhase(supplier.getPhase().getPhase());
+        //付款条件
+        List<DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+        if(StrUtils.isNotEmpty(result.getPaymentCondition())) {
+            DictBasicDTO.ViewDTO dict =  paymentConditionList.stream().filter(r->Objects.equals(r.getValue(), result.getPaymentCondition())).findFirst().orElse(null);
+            if(Objects.nonNull(dict)) {
+                result.setPaymentConditionName(dict.getName());
+            }
+        }
         //根据供应商id 查询 联系人信息
         List<SupplierContactDTO.UpdateDTO> contactList = supplierContactService.listBySupplierId(supplierId);
         result.setContactList(contactList);

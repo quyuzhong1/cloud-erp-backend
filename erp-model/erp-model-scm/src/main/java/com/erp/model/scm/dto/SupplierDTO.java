@@ -291,6 +291,15 @@ public class SupplierDTO implements Serializable {
          */
         private Boolean disabled;
 
+        /**
+         * 付款条件
+         */
+        private String paymentCondition;
+
+        /**
+         * 付款条件名称
+         */
+        private String paymentConditionName;
 
         /**
          * 供应商联系信息
