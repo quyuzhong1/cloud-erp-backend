@@ -107,11 +107,11 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     @Resource
     private ProjectPhaseService projectPhaseService;
 
-    private static final String CLASSPATH = String.valueOf(ProjectPlanEntity.class);
+    private static final String CLASSPATH = String.valueOf(ProjectTaskEntity.class);
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String saveSchedule (HandleTaskScheduleDTO dto) {
+    public String saveSchedule(HandleTaskScheduleDTO dto) {
         List<String> taskIds = dto.getTaskIdList();
         if (CollectionUtils.isEmpty(taskIds)) {
             throw new ServiceException(ApiError.ERROR_98004);
@@ -175,13 +175,15 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         startScheduleTaskProcess(id);
         //给第一个人发信息
         noticeMessageService.scheduleTaskAuditor(userName, taskList, productId, Arrays.asList(pmoCharge));
-        StringBuffer sb = new StringBuffer();
-        sb.append(userName).append(" ").append(nowTime).append(" ").append("提交");
-        for(ProjectTaskEntity task:taskList){
-            sb.append(task.getName()).append(" ");
-            sb.append(task.getPlanStartTime()).append(" ").append(task.getPlanEndTime());
+
+        for (ProjectTaskEntity task : taskList) {
+            StringBuffer sb = new StringBuffer();
+            sb.append(userName).append(" ").append(nowTime).append(" ").append("提交 ");
+            sb.append("计划开始时间  ");
+            sb.append(task.getPlanStartTime()).append("  计划结束时间 ").append(task.getPlanEndTime());
+            sysLogService.addSysLogBySave(sb.toString(), CLASSPATH, task.getId(), task.getId());
         }
-        sysLogService.addSysLogBySave(sb.toString(), CLASSPATH, id, id);
+
 
         //异步发送消息
         noticeMessageService.scheduleTaskSubmit(userName, taskList, productId);
@@ -785,12 +787,16 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                 if (CollectionUtils.isNotEmpty(auditorList)) {
                     noticeMessageService.scheduleTaskAuditor(userName, taskEntityList, plan.getProductId(), auditorList);
                 }
-                StringBuffer sb = new StringBuffer();
-                sb.append(userName).append(" ").append(nowTime).append(" ").append("审核通过");
-                for(ProjectPlanTaskEntity task:taskList){
-                    sb.append(task.getOriginStartTime()).append(" ").append(task.getOriginEndTime());
+
+                for (ProjectPlanTaskEntity task : taskList) {
+                    String taskId = task.getTaskId();
+                    StringBuffer sb = new StringBuffer();
+                    sb.append(userName).append(" ").append(nowTime).append(" ").append("审核通过");
+                    sb.append("计划开始时间 ");
+                    sb.append(task.getOriginStartTime()).append("  计划结束时间").append(task.getOriginEndTime());
+                    sysLogService.addSysLogBySave(sb.toString(), CLASSPATH, taskId, taskId);
                 }
-                sysLogService.addSysLogBySave(sb.toString(), CLASSPATH, id, id);
+
             }
         } else {
             throw new ServiceException(ApiError.ERROR_94005);
@@ -1091,11 +1097,11 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
         List<String> oldPhaseNameList = oldPhaseList.stream().map(ProjectPhaseEntity::getName).distinct().collect(Collectors.toList());
         //添加阶段名称
-         for (ProjectImportDTO projectImportDTO : phaseList) {
-             if (!oldPhaseNameList.contains(projectImportDTO.getTaskName())) {
-                 oldPhaseNameList.add(projectImportDTO.getTaskName());
-             }
-         }
+        for (ProjectImportDTO projectImportDTO : phaseList) {
+            if (!oldPhaseNameList.contains(projectImportDTO.getTaskName())) {
+                oldPhaseNameList.add(projectImportDTO.getTaskName());
+            }
+        }
 
         //新增阶段名称
         projectPhaseService.batchSaveOrUpdatePhase(oldPhaseNameList, productId);
@@ -1206,12 +1212,6 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             projectTaskService.save(projectTaskDTO);
         }
 
-        //新增任务排期
-        List<String> taskIdList = projectTaskList.stream().map(ProjectTaskDTO::getId).collect(Collectors.toList());
-        HandleTaskScheduleDTO dto = new HandleTaskScheduleDTO();
-        dto.setProductId(productId);
-        dto.setTaskIdList(taskIdList);
-        this.saveSchedule(dto);
         return Boolean.TRUE;
     }
 
