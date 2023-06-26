@@ -296,12 +296,12 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
                 //仓库名称
                 if (CollectionUtils.isNotEmpty(warehouseList)) {
                     String warehouseName = warehouseList.stream().filter(obj -> obj.getId().equals(childEntity.getWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                    detailEntity.setWarehouseName(warehouseName);
+                    childEntity.setWarehouseName(warehouseName);
                 }
                 //供应商名称
                 if (CollectionUtils.isNotEmpty(supplierList)) {
                     String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(childEntity.getSupplierId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
-                    detailEntity.setSupplierName(supplierName);
+                    childEntity.setSupplierName(supplierName);
                 }
                 //委外原数据
                 SubcontractOrderDetailEntity childSubEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(childEntity.getSourceDetailId())).findFirst().orElse(null);
