@@ -443,6 +443,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //产品采购信息查询列表
         List<ProductPurchaseShowDTO> purchaseShowDTOList = productPurchaseService.list(productId);
         List<FindUserDTO> userList = sysUserFeign.getUserList();
+
+        List<String> supplierIds = Lists.newArrayList();
+        List<String> mainSupplierIds = purchaseShowDTOList.stream().map(ProductPurchaseShowDTO::getMainSupplier).distinct().collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(mainSupplierIds)) {
+            supplierIds.addAll(mainSupplierIds);
+        }
+        List<String> secondSupplierIds = purchaseShowDTOList.stream().map(ProductPurchaseShowDTO::getSecondSupplier).distinct().collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(secondSupplierIds)) {
+            supplierIds.addAll(secondSupplierIds);
+        }
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
+
         purchaseShowDTOList.forEach(req -> {
             FindUserDTO findUserDTO = userList.stream().filter(user -> user.getUserId().equals(req.getPurchaseUserId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(findUserDTO)) {
@@ -453,6 +465,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //采购信息 禁用字段
             List<String> purchaseDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_PURCHASE_SHOW_LIST, skuFiledConfigList);
             req.setDisableFieldList(purchaseDisableFields);
+
+            if(StrUtils.isNotEmpty(req.getMainSupplier()) && supplierMap.containsKey(req.getMainSupplier())) {
+                req.setMainSupplierName(supplierMap.get(req.getMainSupplier()).getName());
+            }
+            if(StrUtils.isNotEmpty(req.getSecondSupplier()) && supplierMap.containsKey(req.getSecondSupplier())) {
+                req.setSecondSupplierName(supplierMap.get(req.getSecondSupplier()).getName());
+            }
 
         });
 
