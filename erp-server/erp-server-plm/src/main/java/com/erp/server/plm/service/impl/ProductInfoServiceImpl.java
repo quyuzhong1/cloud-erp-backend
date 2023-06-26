@@ -1295,6 +1295,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         Integer yesStartStatus = ProjectStateEnum.YES_START.getState();
         Integer finishStatus = ProjectStateEnum.FINISH.getState();
         Integer ingStatus = ProjectStateEnum.ING.getState();
+        //当前状态为终止的时候
+        if(terminateStatus.equals(currentStatus)){
+            throw new ServiceException(ApiError.ERROR_95187);
+        }
         switch (status) {
             //完成
             case FINISH:
@@ -1308,20 +1312,20 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 }
 
             case NOT_START:
-                if (terminateStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95187);
+                if (suspendStatus.equals(currentStatus)) {
+                    throw new ServiceException(ApiError.ERROR_95193);
                 }
             case YES_START:
-                if (terminateStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95187);
+                if (suspendStatus.equals(currentStatus)) {
+                    throw new ServiceException(ApiError.ERROR_95193);
                 }
             case ING:
-                if (terminateStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95187);
+                if (suspendStatus.equals(currentStatus)) {
+                    throw new ServiceException(ApiError.ERROR_95193);
                 }
             case TERMINATE:
                 if (terminateStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95187);
+                    throw new ServiceException(ApiError.ERROR_95192);
                 }
         }
     }
@@ -1343,6 +1347,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         Integer approvalStatus = ApprovalStatusEnum.APPROVAL.getCode();
         Integer suspendStatus = ApprovalStatusEnum.SUSPEND.getCode();
         Integer terminateStatus = ApprovalStatusEnum.TERMINATE.getCode();
+        //当前状态为终止的时候
+        if(terminateStatus.equals(currentStatus)){
+            throw new ServiceException(ApiError.ERROR_95187);
+        }
         switch (status) {
             //立项
             case APPROVAL:
@@ -1356,20 +1364,20 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 }
 
             case WAIT:
-                if (terminateStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95187);
+                if (suspendStatus.equals(currentStatus)) {
+                    throw new ServiceException(ApiError.ERROR_95193);
                 }
             case PROBE:
-                if (terminateStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95187);
+                if (suspendStatus.equals(currentStatus)) {
+                    throw new ServiceException(ApiError.ERROR_95193);
                 }
             case ID_DESIGN_ING:
-                if (terminateStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95187);
+                if (suspendStatus.equals(currentStatus)) {
+                    throw new ServiceException(ApiError.ERROR_95193);
                 }
             case TERMINATE:
                 if (terminateStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95187);
+                    throw new ServiceException(ApiError.ERROR_95192);
                 }
         }
 
@@ -2136,7 +2144,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //变更
         Integer totalChangeCount = 0;
         //这个是排期任务的id 集合
-        List<String> planTaskIdList = taskList.stream().filter(t -> change.equals(t.getScheduleType())).map(ProjectTaskEntity::getId).collect(Collectors.toList());
+        List<String> planTaskIdList = taskList.stream().filter(t -> change.equals(t.getScheduleType())||t.getIsChangeDocs()).map(ProjectTaskEntity::getId).collect(Collectors.toList());
         //todo 还要更改
         totalChangeCount = planTaskIdList.size();
         totalTask.setFinishCount((int) totalFinishCount);

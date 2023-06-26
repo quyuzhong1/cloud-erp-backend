@@ -1,6 +1,5 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -17,7 +16,10 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.*;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
@@ -55,9 +57,10 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.apache.poi.common.usermodel.HyperlinkType;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
@@ -66,7 +69,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
@@ -1221,7 +1223,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //收货数量
         List<WarehouseReceiveEntity> receiveList = warehouseReceiveService.listByPurchaseOrderIds(poIds);
         //收货单ids
-        List<String> receiveIds=receiveList.stream().map(WarehouseReceiveEntity::getId).collect(Collectors.toList());
+        List<String> receiveIds = receiveList.stream().map(WarehouseReceiveEntity::getId).collect(Collectors.toList());
         //收货sku 明细信息
         List<WarehouseReceiveDetailEntity> receiveSkuList = warehouseReceiveDetailService.listDetailByMainIds(receiveIds);
         List<PurchaseReturnOrderDTO.AddDTO> addList = new ArrayList<>();
@@ -1251,13 +1253,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             for (PoInstockDTO.GeneratePurchaseReturnOrderDTO detail : value) {
                 PurchaseReturnOrderDetailDTO.AddDTO addDetailDTO = new PurchaseReturnOrderDetailDTO.AddDTO();
                 //收货单的ids
-                List<String> receiveIdList= receiveList.stream().filter(r->r.getPurchaseOrderId().equals(detail.getPurchaseOrderId())).map(WarehouseReceiveEntity::getId).collect(Collectors.toList());
+                List<String> receiveIdList = receiveList.stream().filter(r -> r.getPurchaseOrderId().equals(detail.getPurchaseOrderId())).map(WarehouseReceiveEntity::getId).collect(Collectors.toList());
                 //验证 sku 收货数量
                 Integer receiveQty = receiveSkuList.stream().filter(
-                        obj -> obj.getSkuId().equals(detail.getSkuId())&&
+                        obj -> obj.getSkuId().equals(detail.getSkuId()) &&
                                 receiveIdList.contains(obj.getMainId())
                 ).mapToInt(e -> e.getReceiveQty()).sum();
-                if (receiveQty==0) {
+                if (receiveQty == 0) {
                     throw new ServiceException(1, String.format("SKU【%s】未找到对应收货数量", detail.getSkuNo()));
                 }
                 if (MathUtil.compareTo(detail.getRealityReturnQty(), receiveQty) > 0) {
@@ -1396,10 +1398,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     /**
      * 退货签收单下推质检单-保存
-     * @Author Luo_WG
-     * @Date 2023/5/23 14:05
+     *
      * @param receiveIds receiveIds
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/5/23 14:05
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -1486,10 +1489,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     /**
      * 下推退货入库单-列表查询
-     * @Author Luo_WG
-     * @Date 2023/5/23 15:52
+     *
      * @param ids
      * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.GenerateSoReturnInstockView>
+     * @Author Luo_WG
+     * @Date 2023/5/23 15:52
      **/
     @Override
     public List<SoReturnInstockDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(List<String> ids) {
@@ -1568,10 +1572,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     /**
      * 根据来源id查询质检单
-     * @Author Luo_WG
-     * @Date 2023/5/10 18:12
+     *
      * @param sourceId sourceId
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/5/10 18:12
      **/
     @Override
     public List<QcInfoEntity> listQCBySourceId(String sourceId) {
@@ -1580,10 +1585,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     /**
      * 根据来源ids查询质检单
-     * @Author Luo_WG
-     * @Date 2023/5/10 18:12
+     *
      * @param sourceIds
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/5/10 18:12
      **/
     @Override
     public List<QcInfoEntity> listQCBySourceIds(List<String> sourceIds) {
@@ -1698,6 +1704,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             Integer qcQty = qcInfo.getQcQty() != null ? qcInfo.getQcQty() : 0;
             //质检总量
             Integer totalQty = qcInfo.getTotalQty() != null ? qcInfo.getTotalQty() : 0;
+            if (qcQty > totalQty) {
+                throw new ServiceException(ApiError.ERROR_99073);
+            }
+
             if (goodQty + badQty > qcQty) {
                 throw new ServiceException(ApiError.ERROR_99016);
             }
@@ -1786,7 +1796,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
                 // 产品图片
                 String productTypeKey = item.getProductId() + "_" + WmsConstant.QC_PRODUCT;
-                if(attachmentMap.containsKey(productTypeKey)) {
+                if (attachmentMap.containsKey(productTypeKey)) {
                     List<WmsAttachmentDTO.UpdateDTO> attachList = attachmentMap.get(productTypeKey);
                     List<String> attachmentUrls = attachList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
                     qcDailyReportDTO.setProductImgUrl(attachmentUrls);
@@ -1794,7 +1804,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
                 // 箱唛图片
                 String productBoxKey = item.getProductId() + "_" + WmsConstant.QC_BOX;
-                if(attachmentMap.containsKey(productBoxKey)) {
+                if (attachmentMap.containsKey(productBoxKey)) {
                     List<WmsAttachmentDTO.UpdateDTO> attachList = attachmentMap.get(productBoxKey);
                     List<String> attachmentUrls = attachList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
                     qcDailyReportDTO.setBoxMarkImgUrl(attachmentUrls);
@@ -1802,7 +1812,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
                 // 不良附件
                 String qcBadKey = item.getQcResultId() + "_" + WmsConstant.BAD;
-                if(badAttachmentMap.containsKey(qcBadKey)) {
+                if (badAttachmentMap.containsKey(qcBadKey)) {
                     List<WmsAttachmentDTO.UpdateDTO> attachList = badAttachmentMap.get(qcBadKey);
                     qcDailyReportDTO.setBadAttachments(attachList);
                 }
@@ -1862,6 +1872,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     /**
      * 生成供应商报表excel
+     *
      * @param resultList
      * @param response
      */
