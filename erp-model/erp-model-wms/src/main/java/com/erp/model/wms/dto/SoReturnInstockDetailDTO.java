@@ -30,15 +30,6 @@ public class SoReturnInstockDetailDTO {
         @Max(value = 999999999, message = "签收数量最大值为999999999")
         private Integer receiveQty;
         /**
-         * 退货类型 wms/common/enumDropDown?type=ReturnType
-         * 描述：refund 退货扣款 replenishment 退货补货
-         */
-        private String returnTypeDict;
-        /**
-         * 退货原因
-         */
-        private String returnReasonDict;
-        /**
          * 仓位
          */
         private String warehouseLocation;

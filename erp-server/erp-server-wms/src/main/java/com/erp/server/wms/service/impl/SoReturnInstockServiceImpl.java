@@ -714,8 +714,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 SoReturnInstockDetailDTO.Add detailAddDTO = new SoReturnInstockDetailDTO.Add();
                 detailAddDTO.setRealQty(view.getRealQty());
                 detailAddDTO.setReceiveQty(view.getReceiveQty());
-                detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
-                detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
                 detailAddDTO.setWarehouseLocation(view.getWarehouseLocation());
                 detailAddDTO.setRemark(view.getRemark());
                 detailAddDTO.setSourceDetailId(id);

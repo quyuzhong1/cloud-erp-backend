@@ -46,17 +46,9 @@ import java.util.stream.Collectors;
  */
 @Service
 public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNoticeDetailMapper, SoReturnNoticeDetailEntity> implements SoReturnNoticeDetailService {
-    @Resource
-    private SoInfoFeign soInfoFeign;
 
     @Resource
     private SoReturnFeign soReturnFeign;
-
-    @Resource
-    private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
-
-    @Resource
-    private SoOutstockDetailService soOutstockDetailService;
 
     @Resource
     private OperateLogService operateLogService;
@@ -86,8 +78,9 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
             detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
             detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
             detailEntity.setReturnQty(detailDto.getReturnQty());
-            detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
-            detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
+            detailEntity.setRemark(detailDto.getRemark());
+            detailEntity.setReturnReasonDict(soReturnDetailEntity.getReturnReasonDict());
+            detailEntity.setReturnTypeDict(soReturnDetailEntity.getReturnTypeDict());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
             list.add(detailEntity);

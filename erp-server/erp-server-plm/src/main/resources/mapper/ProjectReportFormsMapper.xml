@@ -370,5 +370,6 @@
             AND pot.plan_end_time >= #{params.thisWeekDateList[0]}
             AND (#{params.thisWeekDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pot.plan_end_time
         </if>
+        ORDER BY pph.name, pot.plan_end_time, pot.create_time
     </select>
 </mapper>
