@@ -103,7 +103,7 @@ public class ProjectImportDTO {
     /**
      * 阶段计划工期
      */
-    private String taskDuration;
+    private Double taskDuration;
 
     /**
      * 计划工期单位

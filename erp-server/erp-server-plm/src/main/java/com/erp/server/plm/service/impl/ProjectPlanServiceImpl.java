@@ -1178,6 +1178,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             projectTaskDTO.setPhaseName(phaseName);
             projectTaskDTO.setPlanStartTime(projectImportDTO.getTaskStartDate());
             projectTaskDTO.setPlanEndTime(projectImportDTO.getTaskFinishDate());
+            projectTaskDTO.setWorkPeriod(ObjectUtils.isNotEmpty(projectImportDTO.getTaskDuration()) ? Integer.valueOf((int)Math.round(projectImportDTO.getTaskDuration()))  : null );
             projectTaskList.add(projectTaskDTO);
         }
 

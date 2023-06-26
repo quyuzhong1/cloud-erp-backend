@@ -96,6 +96,11 @@ public class BomSkuPageDTO {
         private String brandName;
 
         /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
          * bom版本
          */
         private String bomVersion;
