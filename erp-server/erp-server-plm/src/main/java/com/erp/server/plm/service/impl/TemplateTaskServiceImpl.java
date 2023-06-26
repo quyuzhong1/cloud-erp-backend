@@ -598,7 +598,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         }
 
         //添加关注人
-        templateTaskConcernService.saveTemplateConcernList(dto.getTemplateId(), dto.getId(), dto.getConcernUserIdList());
+        templateTaskConcernService.saveTemplateConcernList(dto.getTemplateId(), entity.getId(), dto.getConcernUserIdList());
 
         //保存前置任务
         templatePreTaskService.saveTemplatePreTaskList(entity.getId(), dto.getPreTaskIdList(), dto.getTemplateId());
