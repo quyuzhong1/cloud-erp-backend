@@ -431,6 +431,11 @@ public class SoOutstockDetailDTO implements Serializable {
          */
         private Integer actualQty;
 
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+
 
         /**
          * 来源明细id

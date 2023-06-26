@@ -592,7 +592,10 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         if (CollectionUtils.isNotEmpty(unstartProductIdList)) {
             Integer productSuspend = ApprovalStatusEnum.SUSPEND.getCode();
             List<ProductInfoEntity> productInfoList = productInfoService.listByIds(unstartProductIdList);
-            productInfoList = productInfoList.stream().filter(p -> productSuspend.equals(p.getApprovalStatus())).collect(Collectors.toList());
+            long productCount = productInfoList.stream().filter(p -> !productSuspend.equals(p.getApprovalStatus())).count();
+            if (productCount > 0) {
+                throw new ServiceException(ApiError.ERROR_95174);
+            }
             for (ProductInfoEntity item : productInfoList) {
                 //暂停前的状态
                 Integer suspendBeforeStatus = item.getSuspendBeforeStatus();
@@ -692,22 +695,39 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Transactional(rollbackFor = Exception.class)
     public Boolean terminate(List<String> ids) {
         List<ProjectInfoEntity> projectInfoList = this.listByProductIds(ids);
-        if (CollectionUtils.isEmpty(projectInfoList)) {
-            throw new ServiceException(ApiError.ERROR_95026);
-        }
-        Integer terminate = ProjectStateEnum.TERMINATE.getState();
-        projectInfoList.stream().forEach(p -> p.setProjectStatus(terminate));
-        Boolean result = this.updateBatchById(projectInfoList);
-        if (result) {
-            List<String> productIds = projectInfoList.stream().map(ProjectInfoEntity::getProductId).collect(Collectors.toList());
-            productDetailService.updateProductStateByProductIdList(productIds, ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode());
-            //批量更改产品规划的产品状态
-            productPlanService.updateBatchPlanStatus(productIds, terminate, MathUtil.TWO);
-            //记录项目状态更新时间
-            for (ProjectInfoEntity item : projectInfoList) {
-                projectStatusTimeService.saveOrUpdateProjectStatusTime(item.getId(), item.getProductId(), terminate);
+        Boolean result = Boolean.TRUE;
+        if (CollectionUtils.isNotEmpty(projectInfoList)) {
+            Integer terminate = ProjectStateEnum.TERMINATE.getState();
+            long projectCount = projectInfoList.stream().filter(p -> terminate.equals(p.getProjectStatus())).count();
+            if (projectCount > 0) {
+                throw new ServiceException(ApiError.ERROR_95192);
+            }
+            projectInfoList.stream().forEach(p -> p.setProjectStatus(terminate));
+            result = this.updateBatchById(projectInfoList);
+            if (result) {
+                List<String> productIds = projectInfoList.stream().map(ProjectInfoEntity::getProductId).collect(Collectors.toList());
+                productDetailService.updateProductStateByProductIdList(productIds, ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode());
+                //批量更改产品规划的产品状态
+                productPlanService.updateBatchPlanStatus(productIds, terminate, MathUtil.TWO);
+                //记录项目状态更新时间
+                for (ProjectInfoEntity item : projectInfoList) {
+                    projectStatusTimeService.saveOrUpdateProjectStatusTime(item.getId(), item.getProductId(), terminate);
+                }
             }
         }
+        //产品的
+        List<ProductInfoEntity> productList = productInfoService.listByIds(ids);
+        if(CollectionUtils.isNotEmpty(productList)){
+            Integer terminate = ApprovalStatusEnum.TERMINATE.getCode();
+            long productCount = productList.stream().filter(p -> terminate.equals(p.getApprovalStatus())).count();
+            if (productCount > 0) {
+                throw new ServiceException(ApiError.ERROR_95192);
+            }
+            productList.stream().forEach(p -> p.setApprovalStatus(terminate));
+            result = productInfoService.updateBatchById(productList);
+        }
+
+
         return result;
     }
 
