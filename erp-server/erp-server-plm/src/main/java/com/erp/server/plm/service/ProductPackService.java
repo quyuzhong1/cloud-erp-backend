@@ -66,4 +66,11 @@ public interface ProductPackService extends IService<ProductPackEntity> {
      * @return java.util.List<com.erp.model.plm.vo.ProductVO.ProductPackVO>
      */
     List<ProductVO.ProductPackVO> getBySkuIds(List<String> skuIds);
+
+    /**
+     * 根据sku id集合获取包装信息
+     * @param skuIds
+     * @return
+     */
+    List<ProductPackEntity> findBySkuIds(List<String> skuIds);
 }

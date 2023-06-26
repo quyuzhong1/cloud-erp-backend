@@ -47,6 +47,7 @@ import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
 import com.erp.server.plm.service.*;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -2163,7 +2164,20 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isEmpty(skuIds)) {
             return Collections.emptyList();
         }
-        return baseMapper.getSkuInfoBySkuIds(skuIds);
+        List<SkuVO> skuList = baseMapper.getSkuInfoBySkuIds(skuIds);
+        if(CollUtil.isNotEmpty(skuList)) {
+            List<ProductPackEntity> productPackList = productPackService.findBySkuIds(skuIds);
+            Map<String, List<ProductPackEntity>> productPackMap = Maps.newHashMap();
+            if(CollUtil.isNotEmpty(productPackList)) {
+                productPackMap = productPackList.stream().collect(Collectors.groupingBy(ProductPackEntity::getSkuId));
+            }
+            for(SkuVO skuVO : skuList) {
+                if(productPackMap.containsKey(skuVO.getSkuId())) {
+                    skuVO.setUnitQty(productPackMap.get(skuVO.getSkuId()).get(0).getBoxQty().intValue());
+                }
+            }
+        }
+        return skuList;
 
     }
 

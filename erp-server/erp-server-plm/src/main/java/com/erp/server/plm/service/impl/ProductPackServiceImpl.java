@@ -189,6 +189,11 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
 
         return resultList;
     }
+
+    @Override
+    public List<ProductPackEntity> findBySkuIds(List<String> skuIds) {
+        return this.lambdaQuery().in(ProductPackEntity::getSkuId, skuIds).list();
+    }
 }
 
 

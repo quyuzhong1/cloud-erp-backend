@@ -67,7 +67,7 @@ public class QcUtils {
         cell.setCellValue("验货结果");
         cell = rowTitle0.createCell(10);
         cell.setCellStyle(titleStyle);
-        cell.setCellValue("验货员");
+        cell.setCellValue("质检员");
         cell = rowTitle0.createCell(11);
         cell.setCellStyle(titleStyle);
         cell.setCellValue("质检数量");
@@ -284,7 +284,7 @@ public class QcUtils {
 
             cell = rowContent.createCell(21);
             cell.setCellStyle(contentCellStyle);
-            cell.setCellValue(StrUtil.format("{}*{}*{}", Objects.isNull(data.getBoxHeight()) ? "0" : data.getBoxHeight(),
+            cell.setCellValue(StrUtil.format("{}*{}*{}", Objects.isNull(data.getBoxLength()) ? "0" : data.getBoxLength(),
                     Objects.isNull(data.getBoxWidth()) ? "0" : data.getBoxWidth(),
                     Objects.isNull(data.getBoxHeight()) ? "0" : data.getBoxHeight()));
 
@@ -295,7 +295,7 @@ public class QcUtils {
             // 整箱数量
             cell = rowContent.createCell(23);
             cell.setCellStyle(contentCellStyle);
-            cell.setCellValue("");
+            cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getFullBoxQty()));
 
             cell = rowContent.createCell(24);
             cell.setCellStyle(contentCellStyle);
