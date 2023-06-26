@@ -2172,8 +2172,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 productPackMap = productPackList.stream().collect(Collectors.groupingBy(ProductPackEntity::getSkuId));
             }
             for(SkuVO skuVO : skuList) {
-                if(productPackMap.containsKey(skuVO.getSkuId())) {
-                    skuVO.setUnitQty(productPackMap.get(skuVO.getSkuId()).get(0).getBoxQty().intValue());
+                if(productPackMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productPackMap.get(skuVO.getSkuId())) ) {
+                    ProductPackEntity packEntity = productPackMap.get(skuVO.getSkuId()).get(0);
+                    skuVO.setUnitQty(Objects.nonNull(packEntity.getBoxQty()) ? packEntity.getBoxQty().intValue() : null);
                 }
             }
         }
