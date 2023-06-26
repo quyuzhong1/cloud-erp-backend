@@ -40,6 +40,7 @@ import com.erp.model.scm.enums.PurchaseListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -804,12 +805,32 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             throw new ServiceException(ApiError.ERROR_95084);
         }
 
+        List<String> sourceDetailIds = detailList.stream().map(obj -> obj.getId()).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> podList = purchaseOrderDetailService.listBySourceDetailIds(sourceDetailIds);
+        List<String> podIds = podList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+        //收货信息
+        List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+        //入库信息
+        List<PoInstockDetailEntity> poInstockDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+
         for (SubcontractOrderDetailEntity parent : parentList) {
             SubcontractOrderDTO.ViewAddDetailDTO parentDTO = new SubcontractOrderDTO.ViewAddDetailDTO();
             BeanMapperUtils.copy(parent,parentDTO);
             parentDTO.setSourceDetailId(parent.getId());
             String parentProductName = skuList.stream().filter(obj -> obj.getSkuId().equals(parent.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
             parentDTO.setProductName(parentProductName);
+
+
+            List<String> parentPodIds = podList.stream().filter(obj -> obj.getSourceDetailId().equals(parent.getId())).map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(parentPodIds)) {
+                //收货数量
+                Integer receiveQty = receiveDetailList.stream().filter(obj -> parentPodIds.contains(obj.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                parentDTO.setReceiveQty(receiveQty);
+                //入库数量
+                Integer instockQty = poInstockDetailList.stream().filter(obj -> parentPodIds.contains(obj.getPurchaseOrderDetailId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                parentDTO.setInstockQty(instockQty);
+            }
+
             //子集
             List<SubcontractOrderDetailEntity> childList = detailList.stream().filter(obj -> StringUtils.equals(obj.getParentId(), parent.getId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(childList)) {
@@ -822,6 +843,18 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 childDTO.setSourceDetailId(child.getId());
                 String childProductName = skuList.stream().filter(obj -> obj.getSkuId().equals(child.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
                 childDTO.setProductName(childProductName);
+
+                //采购订单明细id
+                List<String> childPodIds = podList.stream().filter(obj -> obj.getSourceDetailId().equals(child.getId())).map(PurchaseOrderDetailEntity::getSourceDetailId).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(childPodIds)) {
+                    //收货数量
+                    Integer receiveQty = receiveDetailList.stream().filter(obj -> childPodIds.contains(obj.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                    childDTO.setReceiveQty(receiveQty);
+                    //入库数量
+                    Integer instockQty = poInstockDetailList.stream().filter(obj -> childPodIds.contains(obj.getPurchaseOrderDetailId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                    childDTO.setInstockQty(instockQty);
+                }
+
                 childDTOList.add(childDTO);
             }
             parentDTO.setChildList(childDTOList);
