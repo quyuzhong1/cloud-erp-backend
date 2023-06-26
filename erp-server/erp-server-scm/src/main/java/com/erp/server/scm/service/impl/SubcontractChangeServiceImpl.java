@@ -40,8 +40,11 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.entity.PoInstockDetailEntity;
+import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSubcontractChangeService;
 import com.erp.server.scm.mapper.SubcontractChangeMapper;
 import com.erp.server.scm.service.*;
@@ -99,6 +102,8 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
     @Autowired
     private SubcontractOrderService subcontractOrderService;
 
+    @Autowired
+    private WmsTaskFeign wmsTaskFeign;
 
     @Override
     public PagingVO<SubcontractChangeDTO.ListDTO> paging(PagingDTO<SubcontractChangeDTO.PagingParamDTO> pagingParamDTO) {
@@ -409,11 +414,44 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         if (CollectionUtils.isEmpty(podList)) {
             return;
         }
+
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = subcontractOrderDetailService.listByIds(sourceDetailIds);
+        if (CollectionUtils.isEmpty(subcontractOrderDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98070);
+        }
+
+        List<String> podIds = podList.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+        //收货单
+        List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+        //入库单
+        List<PoInstockDetailEntity> poInstockDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+
         for (SubcontractChangeDetailEntity updateEntity : updateList) {
+
+            SubcontractOrderDetailEntity detailEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(updateEntity.getSourceDetailId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(detailEntity)) {
+                throw new ServiceException(ApiError.ERROR_98070);
+            }
             //采购数量
             Integer purchaseQty = podList.stream().filter(obj -> obj.getSourceDetailId().equals(updateEntity.getSourceDetailId())).map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
             if (purchaseQty > updateEntity.getQty()) {
                 throw new ServiceException(new ApiResult(ApiError.ERROR_98087.code,StrUtil.format(ApiError.ERROR_98087.msg,updateEntity.getSkuNo(),updateEntity.getQty(),purchaseQty)));
+            }
+            //仓库和供应商未改变则直接跳过
+            if (updateEntity.getWarehouseId().equals(detailEntity.getWarehouseId()) && updateEntity.getSupplierId().equals(detailEntity.getSupplierId())) {
+                continue;
+            }
+            List<String> podIdList = podList.stream().filter(obj -> obj.getSourceDetailId().equals(updateEntity.getSourceDetailId())).map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+            //收货数量
+            long receiveCount = receiveDetailList.stream().filter(obj -> podIdList.contains(obj.getPurchaseOrderDetailId())).count();
+            if (receiveCount > 0) {
+                throw new ServiceException(new ApiResult(ApiError.ERROR_98094.code,StrUtil.format(ApiError.ERROR_98094.msg,updateEntity.getSkuNo())));
+            }
+
+            //入库数量
+            long instockCount = poInstockDetailList.stream().filter(obj -> podIdList.contains(obj.getPurchaseOrderDetailId())).count();
+            if (instockCount > 0) {
+                throw new ServiceException(new ApiResult(ApiError.ERROR_98095.code,StrUtil.format(ApiError.ERROR_98095.msg,updateEntity.getSkuNo())));
             }
         }
     }
