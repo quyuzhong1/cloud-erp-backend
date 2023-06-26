@@ -196,6 +196,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean finishDelivery(List<String> ids, String remark) {
         List<SubcontractOrderDetailEntity> detailList = subcontractOrderDetailService.listByIds(ids);
