@@ -238,6 +238,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> sourceIds = list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
         List<String> changeIngSourceIds = productChangeService.getBySourceId(sourceIds);
 
+        List<String> mainSupplierIds = list.stream().map(ProductDetailShowDTO::getMainSupplier).distinct().collect(Collectors.toList());
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
+
         for (ProductDetailShowDTO item : list) {
             item.setStatusName(ProductDetailStatusEnum.getName(item.getStatus()));
             Boolean isChangeIng = changeIngSourceIds.contains(item.getId());
@@ -267,7 +270,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     equals(item.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getChargeName())).orElse("");
             item.setProjectChargeName(projectChargeName);
 
-
+            // 一级供应商名称
+            if(StrUtils.isNotEmpty(item.getMainSupplier()) && supplierMap.containsKey(item.getMainSupplier())) {
+                item.setMainSupplierName(supplierMap.get(item.getMainSupplier()).getName());
+            }
         }
 
         return new PagingVO(pageData);

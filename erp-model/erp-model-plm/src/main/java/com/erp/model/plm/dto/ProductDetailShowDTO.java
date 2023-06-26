@@ -201,6 +201,11 @@ public class ProductDetailShowDTO implements Serializable {
     private String mainSupplier;
 
     /**
+     * 一级供应商名称
+     */
+    private String mainSupplierName;
+
+    /**
      * 年度销量
      * product_sale
      */
