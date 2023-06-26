@@ -60,8 +60,6 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         return MessageChannelEnum.FEISHU;
     }
 
-    private static final String EXCEPTION_KEY_WORLD = "系统预警";
-
     /**
      * 获取飞书tenantAccessToken
      * @return
@@ -390,9 +388,7 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             }
             WarnMsgContentDTO warnMsgContentDTO = new WarnMsgContentDTO();
             // 由于采用关键字（系统预警）
-            if(!StrUtils.null2EmptyWithTrim(warnMsgInfo.getTitle()).contains(EXCEPTION_KEY_WORLD)) {
-                warnMsgContentDTO.setTitle(EXCEPTION_KEY_WORLD + "：" + warnMsgInfo.getTitle());
-            }
+            warnMsgContentDTO.setTitle(warnMsgTypeEnum.getName() + "：" + warnMsgInfo.getTitle());
             // 组装预警内容
             String msgContent = StrUtil.format("所属项目：{}\n业务名称：{}\n异常日志表名及表id：{} {}\n关键信息：{}\n发生时间：{}",
                     warnMsgInfo.getErpServerModuleEnum().getCode(), StrUtils.null2EmptyWithTrim(warnMsgInfo.getBizName()),

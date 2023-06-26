@@ -1,11 +1,9 @@
 package com.erp.model.msg.enums;
 
-import com.google.common.collect.Lists;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -22,7 +20,7 @@ public enum WarnMsgTypeEnum {
      * 需在nacos中对应配置
      */
 
-    SYS_EXCEPTION("sys_exception", "系统异常预警"),
+    SYS_EXCEPTION("sys_exception", "系统预警"),
 
     ;
 
@@ -31,6 +29,9 @@ public enum WarnMsgTypeEnum {
      */
     private String code;
 
+    /**
+     * 异常关键字（飞书机器人那里的需要跟这里一样）
+     */
     private String name;
 
     public static WarnMsgTypeEnum of(String code) {
