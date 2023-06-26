@@ -337,6 +337,12 @@ public enum RocketMqTagEnum {
      * 同步采购订单供应商信息到WMS
      */
     SYNC_WMS_PURCHASE_ORDER_SUPPLIER_TAG(4001,RocketMqTagEnum.SYNC_SCM,"sync_wms_purchase_order_supplier_tag"),
+    //-----------------------------0MS数据更新从5001开始------------------------------------------------------------------
+    /**
+     * 金蝶退货单同步到OMS
+     */
+    SYNC_KINGDEE_RETURN_ORDER_TAG(5001,RocketMqTagEnum.SYNC_OMS,"sync_kingdee_return_order_tag"),
+
     //-----------------------------公共信息编码从9001开始------------------------------------------------------------------
 
     /**
@@ -369,6 +375,8 @@ public enum RocketMqTagEnum {
     public static final String SYNC_WMS = "sync_wms";
 
     public static final String SYNC_SCM = "sync_scm";
+
+    public static final String SYNC_OMS = "sync_oms";
 
     public static final String MSG_WARN = "msg_warn";
 

@@ -56,9 +56,9 @@
             SELECT
                 pot.product_id,
                 SUM(CASE WHEN pot.status = 4 THEN 1 ELSE 0 END) AS  finished_count,
-                SUM(CASE WHEN pot.status = 0 OR pot.status = 1 OR pot.status = 3 THEN 1 ELSE 0 END) AS unfinished_count,
+                SUM(CASE WHEN pot.status &lt;&gt; 4 AND pot.status &lt;&gt; 5 THEN 1 ELSE 0 END) AS unfinished_count,
                 SUM(CASE WHEN pot.status = 4 AND pot.plan_end_time &lt; pot.reality_end_time THEN 1 ELSE 0 END) AS  delay_finished_count,
-                SUM(CASE WHEN (pot.status = 0 OR pot.status = 1 OR pot.status = 3)  AND pot.plan_end_time &lt; current_date THEN 1 ELSE 0 END) AS delay_unfinished_count,
+                SUM(CASE WHEN pot.status &lt;&gt; 4 AND pot.status &lt;&gt; 5 AND pot.plan_end_time &lt; current_date THEN 1 ELSE 0 END) AS delay_unfinished_count,
                 SUM(CASE WHEN pot.property = 1 THEN 1 ELSE 0 END) AS approval_task_count,
                 SUM(CASE WHEN (pot.status = 4 OR pot.status = 8) AND pot.property = 1 THEN 1 ELSE 0 END) AS approval_finish_task_count,
                 SUM(CASE WHEN pot.property = 2 THEN 1 ELSE 0 END) AS project_task_count,
@@ -221,9 +221,9 @@
             SELECT
                 pot.product_id,
                 SUM(CASE WHEN pot.status = 4 THEN 1 ELSE 0 END) AS  finished_count,
-                SUM(CASE WHEN pot.status = 0 OR pot.status = 1 OR pot.status = 3 THEN 1 ELSE 0 END) AS unfinished_count,
+                SUM(CASE WHEN pot.status &lt;&gt; 4 AND pot.status &lt;&gt; 5 THEN 1 ELSE 0 END) AS unfinished_count,
                 SUM(CASE WHEN pot.status = 4 AND pot.plan_end_time &lt; pot.reality_end_time THEN 1 ELSE 0 END) AS  delay_finished_count,
-                SUM(CASE WHEN (pot.status = 0 OR pot.status = 1 OR pot.status = 3)  AND pot.plan_end_time &lt; current_date THEN 1 ELSE 0 END) AS delay_unfinished_count,
+                SUM(CASE WHEN pot.status &lt;&gt; 4 AND pot.status &lt;&gt; 5 AND pot.plan_end_time &lt; current_date THEN 1 ELSE 0 END) AS delay_unfinished_count,
                 SUM(CASE WHEN pot.property = 1 THEN 1 ELSE 0 END) AS approval_task_count,
                 SUM(CASE WHEN (pot.status = 4 OR pot.status = 8) AND pot.property = 1 THEN 1 ELSE 0 END) AS approval_finish_task_count,
                 SUM(CASE WHEN pot.property = 2 THEN 1 ELSE 0 END) AS project_task_count,

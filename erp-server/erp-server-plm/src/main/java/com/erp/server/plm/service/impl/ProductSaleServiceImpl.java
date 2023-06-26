@@ -12,9 +12,11 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.model.plm.dto.ProductSaleDTO;
 import com.erp.model.plm.dto.ProductSaleShowDTO;
+import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.server.plm.mapper.ProductSaleMapper;
+import com.erp.server.plm.service.BasicDictService;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProductSaleService;
 import org.apache.commons.lang3.StringUtils;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +45,9 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
     @Resource
     private ProductDetailService productDetailService;
 
+    @Resource
+    private BasicDictService basicDictService;
+
     /**
      * @Description 产品销售信息查询列表
      * @Author Luo_WG
@@ -51,7 +57,16 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
      **/
     @Override
     public List<ProductSaleShowDTO> list(String productId){
-        return productSaleMapper.list(productId);
+        List<ProductSaleShowDTO> list = productSaleMapper.list(productId);
+        for (ProductSaleShowDTO productSaleShowDTO : list) {
+            if (StringUtils.isNotBlank(productSaleShowDTO.getSaleCountry())) {
+                List<String> saleCountryList = Arrays.asList(productSaleShowDTO.getSaleCountry().split(","));
+                List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(saleCountryList);
+                List<String> saleCountryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                productSaleShowDTO.setSaleCountryName(StringUtils.join(saleCountryNameList, ","));
+            }
+        }
+        return list;
     }
 
     /**

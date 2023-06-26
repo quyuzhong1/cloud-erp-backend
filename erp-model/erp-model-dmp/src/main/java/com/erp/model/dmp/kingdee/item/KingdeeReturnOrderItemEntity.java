@@ -59,10 +59,12 @@ public class KingdeeReturnOrderItemEntity {
     private String fProjectNo;
     @Alias("F_ulz_KHSKU")
     private String f_ulz_KHSKU;
-
     /**
      * 价税合计
      */
     @Alias("FAllAmount")
     private BigDecimal fAllAmount;
+    @Alias("FReturnType")
+    private String fReturnType;
+
 }

@@ -45,6 +45,11 @@ public class RocketMqTopic {
     public static final String SYNC_SCM_TO_WMS_PURCHASE_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_scm_to_wms_purchase_topic";
 
     /**
+     * 同步金蝶销售信息到OMS
+     */
+    public static final String SYNC_KINGDEE_TO_OMS_SALES_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_to_oms_sales_topic";
+
+    /**
      * 发送预警消息到消息服务主题
      */
     public static final String WARN_MSG_TOPIC = "${spring.cloud.nacos.discovery.namespace}-warn_msg_topic";

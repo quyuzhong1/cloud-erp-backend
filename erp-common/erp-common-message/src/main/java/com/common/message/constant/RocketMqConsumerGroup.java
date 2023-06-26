@@ -151,5 +151,9 @@ public class RocketMqConsumerGroup {
     public static final String PRODUCT_LISTING_UPDATE = "${spring.cloud.nacos.discovery.namespace}-product_listing_update";
 
 
-
+    //-----------------------------------------------------------------oms数据更新------------------------------------------------------
+    /**
+     * 金蝶退货单同步
+     */
+    public static final String SYNC_KINGDEE_RETURN_ORDER_TO_OMS = "${spring.cloud.nacos.discovery.namespace}-SYNC_KINGDEE_RETURN_ORDER_TO_OMS";
 }

@@ -2,6 +2,7 @@ package com.erp.server.dmp.pull.service.kingdee;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -52,7 +53,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
     private MongoService mongoService;
 
     @Resource
-    private MQProducerService<DmpReturnOrderInfoEntity> mqProducerService;
+    private MQProducerService mqProducerService;
     @Resource
     private CfgSettingService cfgSettingService;
 
@@ -87,6 +88,9 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
             OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_RETURN_ORDER, KingdeeReturnOrderEntity.class);
         }
+        //同步到OMS销售退货单
+        pushToMqList.forEach(req -> mqProducerService.asyncClassMsg(RocketMqTopic.SYNC_KINGDEE_TO_OMS_SALES_TOPIC, RocketMqTagEnum.SYNC_KINGDEE_RETURN_ORDER_TAG.getName(),Arrays.asList(req), req.getFBillNo()));
+
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_KINGDEE_RETURN_ORDER);
         }
@@ -168,9 +172,9 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillTypeID.FNumber,FBillNo,FDate,FDocumentStatus,FSaleOrgId,FSaleOrgId.FName,FRetcustId," +
                 "FRetcustId.FName,FSalesManId,FSalesManId.FName,FCreateDate,FModifyDate,FCancelStatus,FReceiverCountry,FLinkMan,FExchangeRate," +
-                "FApproveDate,FBussinessType,FOwnerTypeIdHead,FSettleCurrId.FCode,FDelTime,FHeadNote,"
+                "FApproveDate,FBussinessType,FOwnerTypeIdHead,FSettleCurrId.FCode,FDelTime,FHeadNote,FReturnReason"
                 + "FOrderNo,FAmount,FMustqty,FUnitID.FName,FMaterialId,FMaterialId.FNumber,FMaterialName,FAuxpropId,FMaterialType,FPrice,FStockId," +
-                "FStocklocId,FStockstatusId,FNote,FSrcBillNo,FSrcBillTypeID,FIsFree,FMaterialModel,FRealQty,FSOBILLTYPEID,FSalUnitQty,FProjectNo,F_ulz_KHSKU,FAllAmount";
+                "FStocklocId,FStockstatusId,FNote,FSrcBillNo,FSrcBillTypeID,FIsFree,FMaterialModel,FRealQty,FSOBILLTYPEID,FSalUnitQty,FProjectNo,F_ulz_KHSKU,FAllAmount,FReturnType";
 
         Boolean dataSign = true;
         //当前页数
