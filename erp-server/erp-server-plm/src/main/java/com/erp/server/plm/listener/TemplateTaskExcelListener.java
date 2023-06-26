@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.core.utils.FieldValidUtil;
+import com.common.core.utils.ObjectUtils;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.TemplateTaskExcelDTO;
 import com.erp.model.plm.entity.*;
@@ -76,11 +77,12 @@ public class TemplateTaskExcelListener extends AnalysisEventListener<TemplateTas
         }
         List<TaskChargeDistributionDTO> TaskChargeDistributionlist = new ArrayList<>();
 
-            TemplateTaskEntity templateTaskEntity = templateTaskService.getTaskByName(templateId, templateTaskExcelDTO.getName());
+        TemplateTaskEntity templateTaskEntity = templateTaskService.getTaskByName(templateId, templateTaskExcelDTO.getName());
 
-            if (ObjectUtil.isNotEmpty(templateTaskEntity)) {
-                errorMsgList.add("[任务名称]在模板中已存在，不可重复");
-            }
+        if (ObjectUtil.isNotEmpty(templateTaskEntity)) {
+            templateTaskDTO.setId(templateTaskEntity.getId());
+//              errorMsgList.add("[任务名称]在模板中已存在，不可重复");
+        }
 
         List<String> chargeNameList = new ArrayList<>();
         String chargeName = templateTaskExcelDTO.getChargeName();
@@ -197,8 +199,13 @@ public class TemplateTaskExcelListener extends AnalysisEventListener<TemplateTas
             } else {
                 templateTaskDTO.setRelatedSkuType(RelatedSkuTypeEnum.NOT_RELATED.getCode());
             }
+        } else {
+            if (ObjectUtil.isNotEmpty(templateTaskEntity)) {
+                templateTaskDTO.setRelatedSkuType(templateTaskEntity.getRelatedSkuType());
+            } else {
+                templateTaskDTO.setRelatedSkuType(RelatedSkuTypeEnum.NOT_RELATED.getCode());
+            }
         }
-
         templateTaskDTO.setWorkPeriod(templateTaskExcelDTO.getWorkPeriod());
         if (StringUtils.isNotBlank(templateTaskExcelDTO.getIsFixed())) {
             if (templateTaskExcelDTO.getIsFixed().equals("是")) {

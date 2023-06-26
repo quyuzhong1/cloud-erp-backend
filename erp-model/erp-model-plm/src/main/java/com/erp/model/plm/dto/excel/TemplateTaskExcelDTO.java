@@ -102,4 +102,8 @@ public class TemplateTaskExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "错误信息", index = 13)
     private String errorMsg;
+
+    public TemplateTaskExcelDTO() {
+        this.workPeriod = 0;
+    }
 }
