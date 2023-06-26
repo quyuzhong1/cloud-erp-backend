@@ -2,9 +2,15 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
+import com.common.business.enums.ErpServerModuleEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpBomEntity;
 import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.model.dmp.mabang.ComboSkuInfoEntity;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.server.dmp.mapper.DmpBomMapper;
 import com.erp.server.dmp.service.DmpBomService;
 import com.common.business.service.SuperServiceImpl;
@@ -14,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.Resource;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,6 +36,8 @@ import java.util.stream.Collectors;
 @Service
 public class DmpBomServiceImpl extends SuperServiceImpl<DmpBomMapper, DmpBomEntity> implements DmpBomService {
 
+    @Resource
+    private MQProducerService mqProducerService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -48,6 +57,24 @@ public class DmpBomServiceImpl extends SuperServiceImpl<DmpBomMapper, DmpBomEnti
             this.removeByIds(bomList.stream().map(DmpBomEntity::getId).collect(Collectors.toList()));
         }
         this.saveBatch(bomEntityList);
+        // 预警
+        if("machining".equals(ext.getRelationType())){
+            // 预警
+            WarnMsgInfoDTO warnMsgInfo = getWarnMsgInfoDTO(ext, bomList);
+            mqProducerService.sendWarnMsg(warnMsgInfo);
+        }
+    }
+
+    private static WarnMsgInfoDTO getWarnMsgInfoDTO(ComboSkuInfoEntity ext, List<DmpBomEntity> bomList) {
+        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+        warnMsgInfo.setTitle(StrUtil.format("加工SKU变更:sku:【{}】", ext.getComboSku()));
+        warnMsgInfo.setBizName(StrUtil.format("加工SKU{}:sku:【{}】", CollectionUtil.isNotEmpty(bomList)? "更新" : "新增", ext.getComboSku()));
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
+        warnMsgInfo.setTableName(SqlHelper.table(DmpBomEntity.class).getTableName());
+        warnMsgInfo.setTableId("");
+        warnMsgInfo.setKeyInfo(StrUtil.format("【{}】平台加工SKU【{}】发生变更，请及时更新plm BOM信息系统", ext.getPlatformSign(), ext.getComboSku()));
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.MACHINING_SKU_NOTICE);
+        return warnMsgInfo;
     }
 
     private List<DmpBomEntity> getBomEntityList(ComboSkuInfoEntity ext) {

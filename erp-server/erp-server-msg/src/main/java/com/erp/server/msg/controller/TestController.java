@@ -3,7 +3,9 @@ package com.erp.server.msg.controller;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -54,6 +56,7 @@ public class TestController extends BaseController {
      */
     @RequestMapping("/sendMsg")
     public ApiResult sendMsg() {
+        
         NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
         noticeMsgInfoDTO.setReceiverUserIds(new ArrayList<>(Arrays.asList("1645710077245652993")));
         noticeMsgInfoDTO.setTitle("产品提醒: 张三 新建产品名称【iphone14】");
@@ -100,6 +103,7 @@ public class TestController extends BaseController {
         warnMsgInfoDTO.setTitle("销售出库单推送金蝶异常");
         warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
         warnMsgInfoDTO.setBizName("销售出库单推送金蝶");
+        // SqlHelper.table(SoOutstockEntity.class).getTableName()
         warnMsgInfoDTO.setTableName("so_outstock");
         warnMsgInfoDTO.setTableId("1661275939021000706");
         warnMsgInfoDTO.setKeyInfo("单据编号: SO001002003");
@@ -116,6 +120,7 @@ public class TestController extends BaseController {
         warnMsgInfoDTO.setTitle("销售出库单推送金蝶异常");
         warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
         warnMsgInfoDTO.setBizName("销售出库单推送金蝶");
+        // SqlHelper.table(SoOutstockEntity.class).getTableName()
         warnMsgInfoDTO.setTableName("so_outstock");
         warnMsgInfoDTO.setTableId("1661275939021000706");
         warnMsgInfoDTO.setKeyInfo("单据编号: SO001002003");

@@ -16,7 +16,7 @@ public enum ErpServerModuleEnum {
     ERP_SERVER_AUTH("erp-server-auth","权限系统"),
     ERP_SERVER_SYS("erp-server-sys","系统服务"),
     ERP_SERVER_BI("erp-server-bi","BI系统"),
-    ERP_SERVER_DMP("erp-server-bi","数据管理系统"),
+    ERP_SERVER_DMP("erp-server-dmp","数据管理系统"),
     ERP_SERVER_MSG("erp-server-msg","消息中心系统"),
     ERP_SERVER_OMS("erp-server-oms","订单管理系统"),
     ERP_SERVER_PLM("erp-server-plm","产品计划系统"),
