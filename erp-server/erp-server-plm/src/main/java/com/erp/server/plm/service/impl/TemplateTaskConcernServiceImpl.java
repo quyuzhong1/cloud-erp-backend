@@ -56,7 +56,7 @@ public class TemplateTaskConcernServiceImpl extends SuperServiceImpl<TemplateTas
         if (CollectionUtils.isEmpty(taskIds)) {
             return new ArrayList<>();
         }
-        return lambdaQuery().eq(TemplateTaskConcernEntity::getTemplateTaskId, taskIds)
+        return lambdaQuery().eq(TemplateTaskConcernEntity::getTemplateId, templateId)
                 .in(TemplateTaskConcernEntity::getTemplateTaskId, taskIds)
                 .list();
     }

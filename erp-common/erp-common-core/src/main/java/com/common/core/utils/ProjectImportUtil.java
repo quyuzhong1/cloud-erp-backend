@@ -73,7 +73,7 @@ public class ProjectImportUtil {
         //该循环是遍历所有的子任务
         for (int i = 0; i < tasks.size(); i++) {
             // 说明还是在父任务层
-            if (tasks.get(i).getResourceAssignments().size() == 0) {
+            if (tasks.get(i).getChildTasks().size() > 0) {
                 //生成projectDTO
                 generateProjectDTO(tasks.get(i),list,customFields);
                 // 继续进行递归，当前保存的只是父任务的信息
@@ -189,7 +189,7 @@ public class ProjectImportUtil {
         //实际工作量单位
         pro.setTaskActualWorkUnits(taskWorkUnits);
         //计划工期
-        pro.setTaskDuration(String.valueOf(taskDuration));
+        pro.setTaskDuration(taskDuration);
         //计划工期单位
         pro.setTaskDurationUnits(taskDurationUnits);
         //计划开始时间

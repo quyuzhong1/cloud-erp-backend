@@ -36,6 +36,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -45,10 +46,7 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.InventoryFeign;
-import com.erp.rpc.wms.feign.ScmTaskFeign;
-import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.mapper.SoInfoMapper;
 import com.erp.server.oms.service.*;
@@ -105,6 +103,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private SoOutstockFeign soOutstockFeign;
+
+
+    @Resource
+    private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -352,9 +354,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
+        //销售订单id集合
+        List<String> soIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getId).collect(Collectors.toList());
+        //发货通知单的
+        List<SoDeliveryNoticeDetailDTO.ListDTO> soDeliveryNoticeList = soDeliveryNoticeFeign.listBySourceIdList(soIdList);
         //详情id
         List<String> detailIds = list.stream().map(SoInfoDTO.PagingViewDTO::getDetailId).collect(Collectors.toList());
+        //出库
         List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockFeign.listDetailBySoDetailIds(detailIds);
+
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         soOutstockDetailList = soOutstockDetailList.stream().filter(s -> s.getApproveStatus().equals(approveStatus)).collect(Collectors.toList());
         List<String> skuIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
@@ -401,11 +409,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             ).mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
             /**
              * 缺货数量
-             * 当可用即时库存数量小于销售数量时，
-             * 缺货数量=销售数量-可用即时库存数量；
+             * 当可用即时库存数量小于销售数量时，缺货数量=销售数量-发货通知单审核通过数量 -可用即时库存数量；
+             *
              * 当可用即时库存数量大于销售数量时，缺货数量为0
              */
             Integer scarceQty = 0;
+            //是否大于销售数量
             Boolean isGre = curInventoryQty >= qty;
 
             Boolean isScarce = !isGre;
@@ -419,7 +428,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
              */
             Integer availableQty = 0;
             if (!isGre) {
-                scarceQty = qty - curInventoryQty;
+                //缺货数量=销售数量-发货通知单审核通过数量 -可用即时库存数量；
+                Integer deliveryNoticeQty = soDeliveryNoticeList.stream().filter(f -> f.getSourceId().equals(item.getId())).
+                        mapToInt(SoDeliveryNoticeDetailDTO.ListDTO::getDeliveryQty).sum();
+                scarceQty = curInventoryQty-(qty-deliveryNoticeQty);
+                //当为正数的时候不缺货
+                scarceQty = scarceQty > 0 ? 0 : Math.abs(scarceQty);
                 availableQty = curInventoryQty;
 
             } else {
@@ -895,7 +909,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
+        //销售订单id集合
+        List<String> soIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getId).collect(Collectors.toList());
 
+        //发货通知单的
+        List<SoDeliveryNoticeDetailDTO.ListDTO> soDeliveryNoticeList = soDeliveryNoticeFeign.listBySourceIdList(soIdList);
         //详情id
         List<String> detailIds = list.stream().map(SoInfoDTO.PagingViewDTO::getDetailId).collect(Collectors.toList());
         List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockFeign.listDetailBySoDetailIds(detailIds);
@@ -940,8 +958,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             ).mapToInt(InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal).sum();
             /**
              * 缺货数量
-             * 当可用即时库存数量小于销售数量时，
-             * 缺货数量=销售数量-可用即时库存数量；
+             * 当可用即时库存数量小于销售数量时， 缺货数量=可用即时库存数量-(销售数量-发货通知单数量)；
+             *
              * 当可用即时库存数量大于销售数量时，缺货数量为0
              */
             Integer scarceQty = 0;
@@ -958,7 +976,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
              */
             Integer availableQty = 0;
             if (!isGre) {
-                scarceQty = qty;
+                Integer deliveryNoticeQty = soDeliveryNoticeList.stream().filter(f -> f.getSourceId().equals(item.getId())).
+                        mapToInt(SoDeliveryNoticeDetailDTO.ListDTO::getDeliveryQty).sum();
+                scarceQty = curInventoryQty-(qty -deliveryNoticeQty);
+                //当为正数的时候不缺货
+                scarceQty = scarceQty > 0 ? 0 : Math.abs(scarceQty);
                 availableQty = curInventoryQty;
             } else {
                 availableQty = qty;
@@ -1159,7 +1181,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isEmpty(skuList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
-
+        List<String> soIdList = list.stream().map(SoInfoDTO.ViewGenerateSalesDemandDTO::getSourceId).collect(Collectors.toList());
+        //发货通知单的
+        List<SoDeliveryNoticeDetailDTO.ListDTO> soDeliveryNoticeList = soDeliveryNoticeFeign.listBySourceIdList(soIdList);
         Map<String, List<SoInfoDTO.ViewGenerateSalesDemandDTO>> map = list.stream().collect(Collectors.groupingBy(SoInfoDTO.ViewGenerateSalesDemandDTO::getSourceId));
 
         for (Map.Entry<String, List<SoInfoDTO.ViewGenerateSalesDemandDTO>> entry : map.entrySet()) {
@@ -1189,14 +1213,19 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
                 /**
                  * 缺货数量
-                 * 当可用即时库存数量小于销售数量时，
+                 * 当可用即时库存数量小于销售数量时， 缺货数量=可用即时库存数量-(销售数量-发货通知单数量)；
                  * 缺货数量=销售数量-可用即时库存数量；
                  * 当可用即时库存数量大于销售数量时，缺货数量为0
                  */
                 Integer scarceQty = 0;
                 Boolean isGre = curInventoryQty >= qty;
                 if (!isGre) {
-                    scarceQty = qty - curInventoryQty;;
+                    Integer deliveryNoticeQty = soDeliveryNoticeList.stream().filter(f -> f.getSourceId().equals(viewDTO.getSourceId())).
+                            mapToInt(SoDeliveryNoticeDetailDTO.ListDTO::getDeliveryQty).sum();
+                    scarceQty = curInventoryQty-(qty -deliveryNoticeQty);
+                    //当为正数的时候不缺货
+                    scarceQty = scarceQty > 0 ? 0 : Math.abs(scarceQty);
+
                 }
                 viewDTO.setScarceQty(scarceQty);
 

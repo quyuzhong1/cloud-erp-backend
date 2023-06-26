@@ -373,7 +373,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 String taskId = item.getId();
                 Integer state = item.getStatus();
                 item.setStatusName(TaskStateEnum.getName(state));
-
+                Boolean isChangeDocs = item.getIsChangeDocs();
+                String scheduleType = item.getScheduleType();
+                if(isChangeDocs||ProjectPlanConstant.PROJECT_PLAN_CHANGE.equals(scheduleType)){
+                    item.setIsChange(Boolean.TRUE);
+                }else{
+                    item.setIsChange(Boolean.FALSE);
+                }
                 String chargeId = item.getChargeId();
                 String quoteSysTaskId = item.getQuoteSysTaskId();
                 if (StringUtils.isNotBlank(quoteSysTaskId)) {
@@ -2233,6 +2239,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         taskDTO3.setCount(count3);
         taskDTO3.setType(TaskConstant.ALL_FINISH_TASK);
         list.add(taskDTO3);
+
+        //这个是变更
+        ProductTaskCategoryCountDTO taskDTO4 = new ProductTaskCategoryCountDTO();
+        Integer count4 = baseMapper.changeCount(productId, param,ProjectPlanConstant.PROJECT_PLAN_CHANGE);
+        taskDTO4.setCount(count4);
+        taskDTO4.setType(TaskConstant.CHANGE_TASK);
+        list.add(taskDTO4);
         return list;
     }
 

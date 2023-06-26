@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -203,7 +204,6 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
     }
 
 
-
     /**
      * 根据销售订单详情id 获取对应 下推的数据
      *
@@ -244,6 +244,24 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             soOutstockDetailService.closeBySoDetailIds(soDetailIds);
         }
 
+    }
+
+
+    /**
+     * 根据来源id 获取到对应的明细
+     *
+     * @param sourceIdList
+     * @return java.util.List<com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO.ListDTO>
+     * @author yl
+     * @date 2023-06-26 10:10
+     */
+    @Override
+    public List<SoDeliveryNoticeDetailDTO.ListDTO> listBySourceIdList(List<String> sourceIdList) {
+        if (CollectionUtils.isEmpty(sourceIdList)) {
+            return Collections.emptyList();
+        }
+        String approveStatus= ApproveStatusEnum.APPROVE.getStatus();
+        return baseMapper.listBySourceIdList(sourceIdList,approveStatus);
     }
 
 

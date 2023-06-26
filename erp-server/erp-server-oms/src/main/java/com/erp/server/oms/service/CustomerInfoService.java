@@ -183,7 +183,7 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @param
      * @return java.util.List<com.erp.model.oms.dto.CustomerDTO.InfoDTO>
      */
-    List<CustomerDTO.InfoDTO> listEnable();
+    List<CustomerDTO.InfoDTO> listEnable(String permissionSql);
 
     
     /**

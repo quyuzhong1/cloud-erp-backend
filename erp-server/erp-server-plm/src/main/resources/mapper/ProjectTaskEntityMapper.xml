@@ -27,7 +27,8 @@
         pt.distribution_type as distributionType,
         pt.related_sku_type as relatedSkuType,
         pp.seq,
-        pi.spu_no
+        pi.spu_no,
+        pt.schedule_type
         FROM project_task pt
         left join project_phase pp on pt.phase_id = pp.id AND pp.is_deleted = FALSE
         LEFT JOIN product_info pi ON pt.product_id = pi.id AND pi.is_deleted = FALSE
@@ -245,7 +246,8 @@
         pt.distribution_type as distributionType,
         pt.related_sku_type as relatedSkuType,
         pp.seq,
-        pi.spu_no
+        pi.spu_no,
+        pt.schedule_type
         FROM project_task pt
         left join project_phase pp on pt.phase_id = pp.id AND pp.is_deleted = FALSE
         LEFT JOIN product_info pi ON pt.product_id = pi.id AND pi.is_deleted = FALSE
@@ -631,6 +633,15 @@
         </if>
     </select>
 
+    <select id="changeCount" resultType="java.lang.Integer">
+        SELECT count(0) FROM project_task
+        WHERE product_id = #{productId} AND is_deleted = FALSE
+        AND (is_change_docs=TRUE OR schedule_type=#{scheduleType})
+        <if test="param != null and param != ''">
+            ${param}
+        </if>
+    </select>
+
     <select id="getExportTask" resultType="com.erp.model.plm.dto.TaskExcelDTO">
         SELECT t.id AS taskId ,t.name AS taskName, to_char(t.plan_start_time,'yyyy-MM-dd') AS planStartTime,
         to_char(t.plan_end_time,'yyyy-MM-dd') AS planEndTime,t.charge_name,
@@ -734,7 +745,8 @@
         pt.related_sku_type as relatedSkuType,
         pt.work_period as workPeriod,
         pp.seq,
-        pi.spu_no
+        pi.spu_no,
+        pt.schedule_type
         FROM project_task pt
         left join project_phase pp on pt.phase_id = pp.id AND pp.is_deleted = FALSE
         LEFT JOIN product_info pi ON pt.product_id = pi.id AND pi.is_deleted = FALSE
@@ -1807,6 +1819,7 @@
         SELECT distinct product_id FROM  project_task
         WHERE string_to_array( charge_id,',') &amp;&amp;  string_to_array(#{chargeId}, ',')
     </select>
+
 
 
     <update id="updateScheduleStatus">

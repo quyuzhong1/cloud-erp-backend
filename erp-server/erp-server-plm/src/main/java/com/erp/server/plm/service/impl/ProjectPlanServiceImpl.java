@@ -1087,12 +1087,20 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         if (CollectionUtils.isEmpty(phaseList)) {
             throw new ServiceException(new ApiResult(ApiError.ERROR_1034.code, StrUtil.format(ApiError.ERROR_1034.msg, "二级")));
         }
-        List<String> phaseNameList = phaseList.stream().map(ProjectImportDTO::getTaskName).collect(Collectors.toList());
+        List<ProjectPhaseEntity> oldPhaseList = projectPhaseService.getByProductId(productId);
+
+        List<String> oldPhaseNameList = oldPhaseList.stream().map(ProjectPhaseEntity::getName).distinct().collect(Collectors.toList());
+        //添加阶段名称
+         for (ProjectImportDTO projectImportDTO : phaseList) {
+             if (!oldPhaseNameList.contains(projectImportDTO.getTaskName())) {
+                 oldPhaseNameList.add(projectImportDTO.getTaskName());
+             }
+         }
 
         //新增阶段名称
-        projectPhaseService.batchSaveOrUpdatePhase(phaseNameList, productId);
+        projectPhaseService.batchSaveOrUpdatePhase(oldPhaseNameList, productId);
         //查询阶段
-        List<ProjectPhaseEntity> projectPhaseList = projectPhaseService.listByPhaseNames(phaseNameList, productId);
+        List<ProjectPhaseEntity> projectPhaseList = projectPhaseService.listByPhaseNames(oldPhaseNameList, productId);
         if (CollectionUtils.isEmpty(projectPhaseList)) {
             throw new ServiceException(ApiError.ERROR_95041);
         }
@@ -1170,6 +1178,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             projectTaskDTO.setPhaseName(phaseName);
             projectTaskDTO.setPlanStartTime(projectImportDTO.getTaskStartDate());
             projectTaskDTO.setPlanEndTime(projectImportDTO.getTaskFinishDate());
+            projectTaskDTO.setWorkPeriod(ObjectUtils.isNotEmpty(projectImportDTO.getTaskDuration()) ? Integer.valueOf((int)Math.round(projectImportDTO.getTaskDuration()))  : null );
             projectTaskList.add(projectTaskDTO);
         }
 

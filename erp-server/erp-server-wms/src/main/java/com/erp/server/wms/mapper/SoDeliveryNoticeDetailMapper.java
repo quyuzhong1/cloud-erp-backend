@@ -1,5 +1,6 @@
 package com.erp.server.wms.mapper;
 
+import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
@@ -34,4 +35,6 @@ public interface SoDeliveryNoticeDetailMapper extends BaseMapper<SoDeliveryNotic
      * @return java.util.List<com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity>
      **/
     List<SoDeliveryNoticeDetailEntity> listDetailBySourceDetailIds(@Param("ids") List<String> sourceDetailIds);
+
+    List<SoDeliveryNoticeDetailDTO.ListDTO> listBySourceIdList(@Param("sourceIdList")List<String> sourceIdList,@Param("status")String status);
 }

@@ -353,7 +353,9 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             resultVO.setFieldJson(skuConfigEntity.getFieldJson());
             resultVO.setFieldConfigType(skuConfigEntity.getFieldConfigType());
         }
-
+        List<TemplateTaskConcernEntity> concernEntityList = templateTaskConcernService.listTemplateConcern(dto.getTemplateId(), Arrays.asList(dto.getId()));
+        List<String> concernUserIdList = concernEntityList.stream().map(TemplateTaskConcernEntity::getUserId).collect(Collectors.toList());
+        resultVO.setConcernUserIdList(concernUserIdList);
         return resultVO;
     }
 

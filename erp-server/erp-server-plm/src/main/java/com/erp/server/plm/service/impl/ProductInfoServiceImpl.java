@@ -2221,11 +2221,13 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 t.getRealityEndTime() != null && t.getPlanEndTime() != null
                 && t.getRealityEndTime().compareTo(t.getPlanEndTime().atTime(23, 59)) > 0).map(ProjectTaskEntity::getId).distinct().count();
         delayTask.setFinishCount((int) delayFinishCount);
-        //未完成的任务id
-        Integer toBeReleasedCode = TaskStateEnum.TO_BE_RELEASED.getCode();
-        List<Integer> delayStatusList = Arrays.asList(taskNotStart, taskIng, toBeReleasedCode);
+        //完成的任务
+        Integer finishCode = TaskStateEnum.FINISH.getCode();
+        Integer closeCode = TaskStateEnum.CLOSE.getCode();
+
+        List<Integer> delayStatusList = Arrays.asList(finishCode,closeCode);
         List<String> unfinishedTaskIdList = delayTaskList.stream().filter(d ->
-                delayStatusList.contains(d.getStatus()) && d.getPlanEndTime() != null
+                !delayStatusList.contains(d.getStatus()) && d.getPlanEndTime() != null
                         && now.compareTo(d.getPlanEndTime()) > 0).
                 map(ProjectTaskEntity::getId).collect(Collectors.toList());
         delayTask.setUnfinishedCount(unfinishedTaskIdList.size());
