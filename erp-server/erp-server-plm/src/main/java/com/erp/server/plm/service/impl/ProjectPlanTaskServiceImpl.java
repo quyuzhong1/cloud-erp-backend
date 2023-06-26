@@ -8,6 +8,7 @@ import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.BaseStatusEnum;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -93,7 +94,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     @Autowired
     private SysLogService sysLogService;
 
-    private static final String CLASSPATH = String.valueOf(ProjectPlanEntity.class);
+    private static final String CLASSPATH = String.valueOf(ProjectTaskEntity.class);
 
 
     /**
@@ -628,13 +629,17 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
     public void saveChangePlanTask(String projectPlanId, String productId, List<ProjectTaskEntity> taskList, List<ChangeTaskScheduleDTO> list) {
         List<ProjectPlanTaskEntity> addList = new ArrayList<>(list.size());
         String nowTime = DateUtil.conversionDate(new Date(), DateUtil.fmt);
-        String userName = commonService.getUserInfo().getUserName();
+        LoginUser loginUser = commonService.getUserInfo();
+        String userName = loginUser.getUserName();
+        String userId = loginUser.getUid();
 
-        StringBuffer sb = new StringBuffer();
-        sb.append(userName).append(" ").append(nowTime).append(" ").append("变更");
-
+        List<SysLogEntity> addSyslogList = new ArrayList<>(taskList.size());
 
         for (ProjectTaskEntity item : taskList) {
+            SysLogEntity sysLogEntity = new SysLogEntity();
+
+            StringBuffer sb = new StringBuffer();
+            sb.append(userName).append(" ").append(nowTime).append(" ").append("变更");
             String taskId = item.getId();
             ProjectPlanTaskEntity entity = new ProjectPlanTaskEntity();
             entity.setProjectPlanId(projectPlanId);
@@ -645,7 +650,6 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             entity.setProductId(productId);
             sb.append(item.getName()).append(" ");
             sb.append("原始计划开始时间 ").append(item.getPlanStartTime()).append("变更为 ");
-
 
             ChangeTaskScheduleDTO changeTask = list.stream().filter(t -> t.getTaskId().equals(taskId)).findFirst().orElse(null);
             //从参数里面取
@@ -669,11 +673,18 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
             sb.append(entity.getChangeStartTime()).append(" ");
             sb.append("原始计划结束时间 ").append(item.getPlanStartTime()).append("变更为 ");
             sb.append(entity.getChangeEndTime()).append(" ");
+            sysLogEntity.setClassPath(CLASSPATH);
+            sysLogEntity.setBusinessId(taskId);
+            sysLogEntity.setContent(sb.toString());
+            sysLogEntity.setCreateUserId(userId);
+            sysLogEntity.setCreateUserName(userName);
+
             addList.add(entity);
+            addSyslogList.add(sysLogEntity);
         }
         Boolean saveResult = this.saveBatch(addList);
         if (saveResult) {
-            sysLogService.addSysLogBySave(sb.toString(), CLASSPATH, projectPlanId, projectPlanId);
+            sysLogService.addSysLogByBatchSave(addSyslogList);
         }
 
 

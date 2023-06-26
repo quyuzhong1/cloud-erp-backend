@@ -2225,25 +2225,33 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         Integer finishCode = TaskStateEnum.FINISH.getCode();
         Integer closeCode = TaskStateEnum.CLOSE.getCode();
 
-        List<Integer> delayStatusList = Arrays.asList(finishCode,closeCode);
+        List<Integer> delayStatusList = Arrays.asList(finishCode, closeCode);
+        //这是预期未完成的任务
         List<String> unfinishedTaskIdList = delayTaskList.stream().filter(d ->
                 !delayStatusList.contains(d.getStatus()) && d.getPlanEndTime() != null
                         && now.compareTo(d.getPlanEndTime()) > 0).
                 map(ProjectTaskEntity::getId).collect(Collectors.toList());
         delayTask.setUnfinishedCount(unfinishedTaskIdList.size());
-        //获取到前置任务
+        //获取到未完成的前置任务 一个任务可能对应多个前置任务
         List<PreTaskEntity> preTaskList = preTaskService.getPreTaskListBytaskIds(unfinishedTaskIdList);
+        Map<String, List<PreTaskEntity>> preTaskMap = preTaskList.stream().collect(Collectors.groupingBy(PreTaskEntity::getTaskId));
+        //延期但是前置任务完成的任务id
+        List<String> wantTaskIdList = new ArrayList<>(5);
+        for (Map.Entry<String, List<PreTaskEntity>> item : preTaskMap.entrySet()) {
+            //对应前置任务ids
+            List<String> preTaskIdList = item.getValue().stream().map(PreTaskEntity::getPreTaskId).collect(Collectors.toList());
+            //前置任务完成
+            List<ProjectTaskEntity> preTaskFinishInfoList = taskList.stream().filter(p -> preTaskIdList.contains(p.getId()) &&
+                    taskFinish.equals(p.getStatus())).collect(Collectors.toList());
+            //表示的都完成了
+            if(preTaskIdList.size()==preTaskFinishInfoList.size()){
+                //获取到前置任务完成的 任务id
+                wantTaskIdList.add(item.getKey());
+            }
+        }
 
-        //前置任务ids
-        List<String> preTaskIdList = preTaskList.stream().map(PreTaskEntity::getPreTaskId).collect(Collectors.toList());
-        //前置任务完成
-        List<ProjectTaskEntity> preTaskFinishInfoList = taskList.stream().filter(p -> preTaskIdList.contains(p.getId()) &&
-                taskFinish.equals(p.getStatus())).collect(Collectors.toList());
-        //获取到前置任务完成的 任务id
-        List<String> preFinishTaskIds = preTaskFinishInfoList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
-        List<String> preTaskIds = preTaskList.stream().filter(p -> preFinishTaskIds.contains(p.getPreTaskId())).map(PreTaskEntity::getTaskId).collect(Collectors.toList());
-        delayTask.setPreTaskFinishCount(preTaskIds.size());
-        delayTask.setPreTaskIdList(preTaskIds);
+        delayTask.setPreTaskFinishCount(wantTaskIdList.size());
+        delayTask.setPreTaskIdList(wantTaskIdList);
         delayTask.setFinishRate(getFinishRate(delayFinishCount, delayCount));
         info.setDelayTask(delayTask);
 
