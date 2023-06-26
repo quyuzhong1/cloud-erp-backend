@@ -195,6 +195,12 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     @TableField("warehouse_location")
     private String warehouseLocation;
 
+    /**
+     * 委外到货状态
+     */
+    @TableField(exist = false)
+    private String subArrivalStatus;
+
    /**
     *   采购申请明细id(无需传值，后端使用)
     */

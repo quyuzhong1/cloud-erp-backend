@@ -252,4 +252,16 @@ public class PurchaseOrderFeignController {
     public void autoApprovePurchaseOrder(@RequestBody List<String> poIds) {
          purchaseOrderService.autoApprovePurchaseOrder(poIds);
     }
+
+    /**
+     * @description: 根据来源ids查询采购明细
+     * @author Will
+     * @date: 2023/6/26 10:20
+     * @param sourceDetailIds
+     * @return List<PurchaseOrderDetailEntity>
+     */
+    @PostMapping("/listPodBySourceDetailIds")
+    public List<PurchaseOrderDetailEntity> listPodBySourceDetailIds(@RequestBody List<String> sourceDetailIds) {
+        return purchaseOrderDetailService.listBySourceDetailIds(sourceDetailIds);
+    }
 }

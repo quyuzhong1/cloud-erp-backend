@@ -1,6 +1,5 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperServiceImpl;
@@ -9,11 +8,11 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDetailDTO;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
-import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -276,6 +275,30 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
 
     @Override
     public List<WarehouseReceiveDetailEntity> listWarehouseReceiveByPodIds(List<String> purchaseDetailIds) {
+        if (CollectionUtils.isEmpty(purchaseDetailIds)) {
+            return Collections.EMPTY_LIST;
+        }
         return baseMapper.listWarehouseReceiveByPodIds(purchaseDetailIds);
     }
+
+    @Override
+    public String getSubArrivalStatus(List<String> podIds, Integer qty) {
+        List<WarehouseReceiveDetailEntity> receiveDetailList = this.listWarehouseReceiveByPodIds(podIds);
+        Integer receiveQty = MathUtil.ZERO;
+        if (CollectionUtils.isNotEmpty(receiveDetailList)) {
+            receiveQty = receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+        }
+        String arrivalStatus = ArrivalStatusEnum.NON_ARRIVAL.getCode();
+
+        if (qty.intValue() > receiveQty.intValue() && receiveQty.intValue() > MathUtil.ZERO ) {
+            arrivalStatus = ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode();
+        }
+
+        if (receiveQty.intValue() == qty.intValue()) {
+            arrivalStatus = ArrivalStatusEnum.ARRIVED.getCode();
+        }
+
+        return arrivalStatus;
+    }
+
 }

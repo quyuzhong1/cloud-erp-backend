@@ -197,4 +197,5 @@ public interface WmsTaskFeign {
      */
     @PostMapping("/feign/qcBill/getQcInfoByPurchaseOrder")
     QcInfoDTO.PurchaseQcInfoDTO getQcInfoByPurchaseOrder(@RequestBody QcInfoDTO.PurchaseQcParamDTO dto);
+
 }

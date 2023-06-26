@@ -20,10 +20,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
-import com.erp.model.scm.entity.SupplierContactEntity;
-import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -122,7 +119,6 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
     @Autowired
     private InventoryService inventoryService;
-
 
     /**
      * 主页分页查询
@@ -905,6 +901,14 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         List<String> podIds = purchaseOrderDetailEntities.stream().map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
         List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listReturnOrderDetailByPodIds(podIds);
         List<WarehouseReceiveDetailEntity> receiveDetailEntityList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
+
+        //委外订单下采购订单
+        List<String> sourceDetailIds = purchaseOrderDetailEntities.stream().map(PurchaseOrderDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPodBySourceDetailIds(sourceDetailIds);
+
+        //委外订单
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByIds(sourceDetailIds);
+
         for (PurchaseOrderDetailEntity orderDetailEntity : purchaseOrderDetailEntities) {
             //结束交货的订单无需变更到货状态
             if (orderDetailEntity.getIsEndReceive()) {
@@ -936,8 +940,14 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             purchaseOrderDetailEntity.setSourceDetailId(orderDetailEntity.getSourceDetailId());
             purchaseOrderDetailEntity.setReceiveQty(receiveQty);
 
+            //查询委外到货状态
+            List<String> purchaseOrderDetailIds = purchaseOrderDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(orderDetailEntity.getSourceDetailId())).map(PurchaseOrderDetailEntity::getId).collect(Collectors.toList());
+            Integer subQty = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(orderDetailEntity.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(MathUtil.ZERO);
+            String subArrivalStatus = warehouseReceiveDetailService.getSubArrivalStatus(purchaseOrderDetailIds, subQty);
+            purchaseOrderDetailEntity.setSubArrivalStatus(subArrivalStatus);
 
             scmTaskFeign.updatePoArrivalStatus(purchaseOrderDetailEntity);
+
         }
     }
 

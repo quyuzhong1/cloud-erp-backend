@@ -462,7 +462,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             return Boolean.TRUE;
         }
         //委外订单更新到货状态
-        subcontractOrderDetailService.syncArrivalStatusByIds(Arrays.asList(entity.getSourceDetailId()));
+        subcontractOrderDetailService.updateArrivalStatusByIds(entity.getSubArrivalStatus(),Arrays.asList(entity.getSourceDetailId()),Boolean.FALSE);
         return Boolean.TRUE;
     }
 

@@ -83,13 +83,6 @@ public interface SubcontractOrderDetailService extends SuperService<SubcontractO
      */
     List<SubcontractOrderDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds);
     /**
-     * @description: 其他模块更新是同步到货状态
-     * @author Will
-     * @date: 2023/6/19 15:35
-     * @param ids
-     */
-    void syncArrivalStatusByIds(List<String> ids);
-    /**
      * @description: 变更新增明细
      * @author Will
      * @date: 2023/6/20 10:34

@@ -264,4 +264,16 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/purchaseOrder/autoApprovePurchaseOrder")
     void autoApprovePurchaseOrder(@RequestBody List<String> poIds);
+
+    /**
+     * 根据来源ids查询采购明细
+     */
+    @PostMapping("feign/purchaseOrder/listPodBySourceDetailIds")
+    List<PurchaseOrderDetailEntity> listPodBySourceDetailIds(@RequestBody List<String> sourceDetailIds);
+
+    /**
+     * 根据ids查询委外订单明细
+     */
+    @PostMapping("feign/subcontractOrder/listSubcontractDetailByIds")
+    List<SubcontractOrderDetailEntity> listSubcontractDetailByIds(@RequestBody List<String> sourceDetailIds);
 }
