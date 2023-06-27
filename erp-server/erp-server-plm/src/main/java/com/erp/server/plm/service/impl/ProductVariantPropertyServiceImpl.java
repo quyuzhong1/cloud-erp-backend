@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  **/
 @Service
 public class ProductVariantPropertyServiceImpl extends ServiceImpl<ProductVariantPropertyMapper, ProductVariantPropertyEntity>
-    implements ProductVariantPropertyService {
+        implements ProductVariantPropertyService {
 
     @Resource
     private ProductVariantService productVariantService;
@@ -119,7 +119,7 @@ public class ProductVariantPropertyServiceImpl extends ServiceImpl<ProductVarian
         }
         return lambdaUpdate()
                 .set(ProductVariantPropertyEntity::getOccupyStatus, Boolean.TRUE)
-                .in(ProductVariantPropertyEntity::getId, propertyValueList)
+                .in(ProductVariantPropertyEntity::getPropertyValue, propertyValueList)
                 .in(ProductVariantPropertyEntity::getVariantId, propertyTypeIds)
                 .update();
     }

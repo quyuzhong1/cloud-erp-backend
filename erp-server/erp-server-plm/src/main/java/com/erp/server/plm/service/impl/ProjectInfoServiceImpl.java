@@ -744,11 +744,13 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean terminate(List<String> ids) {
+        //这个是项目的
         List<ProjectInfoEntity> projectInfoList = this.listByProductIds(ids);
         Boolean result = Boolean.TRUE;
         if (CollectionUtils.isNotEmpty(projectInfoList)) {
             Integer terminate = ProjectStateEnum.TERMINATE.getState();
             long projectCount = projectInfoList.stream().filter(p -> terminate.equals(p.getProjectStatus())).count();
+
             if (projectCount > 0) {
                 throw new ServiceException(ApiError.ERROR_95192);
             }
@@ -773,7 +775,8 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
             if (productCount > 0) {
                 throw new ServiceException(ApiError.ERROR_95192);
             }
-            productList.stream().forEach(p -> p.setApprovalStatus(terminate));
+            Integer approval = ApprovalStatusEnum.APPROVAL.getCode();
+            productList.stream().filter(p->!approval.equals(p.getApprovalStatus())).forEach(p -> p.setApprovalStatus(terminate));
             result = productInfoService.updateBatchById(productList);
         }
 
