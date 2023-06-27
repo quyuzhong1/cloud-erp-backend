@@ -84,7 +84,7 @@ public class PoInStockController extends BaseController {
             serviceClass = PoInstockService.class,
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated PoInstockDTO.AddDTO dto) {
-        String id = poInstockService.add(dto);
+        String id = poInstockService.add(dto,Boolean.FALSE);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
 

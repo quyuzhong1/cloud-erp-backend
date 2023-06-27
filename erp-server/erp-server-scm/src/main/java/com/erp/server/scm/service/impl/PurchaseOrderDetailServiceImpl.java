@@ -357,6 +357,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
      **/
     @Override
     public List<PurchaseOrderDetailEntity> listDetailByIds(List<String> ids){
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.EMPTY_LIST;
+        }
         LambdaQueryWrapper<PurchaseOrderDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.in(PurchaseOrderDetailEntity::getId, ids);
         return this.list(queryWrapper);

@@ -47,7 +47,7 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
      * @author Will
      * @date: 2023/4/12 11:41
      */
-    String add(PoInstockDTO.AddDTO dto);
+    String add(PoInstockDTO.AddDTO dto,Boolean isNotCheck);
 
     /**
      * @param dto
