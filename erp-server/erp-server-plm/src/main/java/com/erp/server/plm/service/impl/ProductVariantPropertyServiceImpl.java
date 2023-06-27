@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  **/
 @Service
 public class ProductVariantPropertyServiceImpl extends ServiceImpl<ProductVariantPropertyMapper, ProductVariantPropertyEntity>
-    implements ProductVariantPropertyService {
+        implements ProductVariantPropertyService {
 
     @Resource
     private ProductVariantService productVariantService;

@@ -272,7 +272,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             item.setProjectChargeName(projectChargeName);
 
             // 一级供应商名称
-            if(StrUtils.isNotEmpty(item.getMainSupplier()) && supplierMap.containsKey(item.getMainSupplier())) {
+            if (StrUtils.isNotEmpty(item.getMainSupplier()) && supplierMap.containsKey(item.getMainSupplier())) {
                 item.setMainSupplierName(supplierMap.get(item.getMainSupplier()).getName());
             }
         }
@@ -315,23 +315,23 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productNoSpecDetailAllDTO.setProductCostShowDTOList(costShowDTOList);
         //产品采购信息查询列表
         List<ProductPurchaseShowDTO> purchaseShowDTOList = productPurchaseService.list(productId);
-        if(CollUtil.isNotEmpty(purchaseShowDTOList)) {
+        if (CollUtil.isNotEmpty(purchaseShowDTOList)) {
             List<String> supplierIds = Lists.newArrayList();
-            purchaseShowDTOList.stream().forEach(r->{
-                if(StrUtils.isNotEmpty(r.getMainSupplier())) {
+            purchaseShowDTOList.stream().forEach(r -> {
+                if (StrUtils.isNotEmpty(r.getMainSupplier())) {
                     supplierIds.add(r.getMainSupplier());
                 }
-                if(StrUtils.isNotEmpty(r.getSecondSupplier())) {
+                if (StrUtils.isNotEmpty(r.getSecondSupplier())) {
                     supplierIds.add(r.getSecondSupplier());
                 }
             });
-            if(CollUtil.isNotEmpty(supplierIds)) {
+            if (CollUtil.isNotEmpty(supplierIds)) {
                 Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
-                purchaseShowDTOList.stream().forEach(r->{
-                    if(StrUtils.isNotEmpty(r.getMainSupplier()) && supplierMap.containsKey(r.getMainSupplier())) {
+                purchaseShowDTOList.stream().forEach(r -> {
+                    if (StrUtils.isNotEmpty(r.getMainSupplier()) && supplierMap.containsKey(r.getMainSupplier())) {
                         r.setMainSupplierName(supplierMap.get(r.getMainSupplier()).getName());
                     }
-                    if(StrUtils.isNotEmpty(r.getSecondSupplier()) && supplierMap.containsKey(r.getSecondSupplier())) {
+                    if (StrUtils.isNotEmpty(r.getSecondSupplier()) && supplierMap.containsKey(r.getSecondSupplier())) {
                         r.setSecondSupplierName(supplierMap.get(r.getSecondSupplier()).getName());
                     }
                 });
@@ -447,11 +447,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         List<String> supplierIds = Lists.newArrayList();
         List<String> mainSupplierIds = purchaseShowDTOList.stream().map(ProductPurchaseShowDTO::getMainSupplier).distinct().collect(Collectors.toList());
-        if(CollUtil.isNotEmpty(mainSupplierIds)) {
+        if (CollUtil.isNotEmpty(mainSupplierIds)) {
             supplierIds.addAll(mainSupplierIds);
         }
         List<String> secondSupplierIds = purchaseShowDTOList.stream().map(ProductPurchaseShowDTO::getSecondSupplier).distinct().collect(Collectors.toList());
-        if(CollUtil.isNotEmpty(secondSupplierIds)) {
+        if (CollUtil.isNotEmpty(secondSupplierIds)) {
             supplierIds.addAll(secondSupplierIds);
         }
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
@@ -467,10 +467,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> purchaseDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_PURCHASE_SHOW_LIST, skuFiledConfigList);
             req.setDisableFieldList(purchaseDisableFields);
 
-            if(StrUtils.isNotEmpty(req.getMainSupplier()) && supplierMap.containsKey(req.getMainSupplier())) {
+            if (StrUtils.isNotEmpty(req.getMainSupplier()) && supplierMap.containsKey(req.getMainSupplier())) {
                 req.setMainSupplierName(supplierMap.get(req.getMainSupplier()).getName());
             }
-            if(StrUtils.isNotEmpty(req.getSecondSupplier()) && supplierMap.containsKey(req.getSecondSupplier())) {
+            if (StrUtils.isNotEmpty(req.getSecondSupplier()) && supplierMap.containsKey(req.getSecondSupplier())) {
                 req.setSecondSupplierName(supplierMap.get(req.getSecondSupplier()).getName());
             }
 
@@ -751,18 +751,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> supplierIds = Lists.newArrayList();
             String mainSupplier = productNoSpecDTO.getProductPurchaseDTO().getMainSupplier();
             String secondSupplier = productNoSpecDTO.getProductPurchaseDTO().getSecondSupplier();
-            if(StrUtils.isNotEmpty(mainSupplier)) {
+            if (StrUtils.isNotEmpty(mainSupplier)) {
                 supplierIds.add(mainSupplier);
             }
-            if(StrUtils.isNotEmpty(secondSupplier)) {
+            if (StrUtils.isNotEmpty(secondSupplier)) {
                 supplierIds.add(secondSupplier);
             }
-            if(CollUtil.isNotEmpty(supplierIds)) {
+            if (CollUtil.isNotEmpty(supplierIds)) {
                 Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
-                if(StrUtils.isNotEmpty(mainSupplier) && !supplierMap.containsKey(mainSupplier)) {
+                if (StrUtils.isNotEmpty(mainSupplier) && !supplierMap.containsKey(mainSupplier)) {
                     throw new ServiceException("sku采购信息一级供应商不存在");
                 }
-                if(StrUtils.isNotEmpty(secondSupplier) && !supplierMap.containsKey(secondSupplier)) {
+                if (StrUtils.isNotEmpty(secondSupplier) && !supplierMap.containsKey(secondSupplier)) {
                     throw new ServiceException("sku采购信息二级供应商不存在");
                 }
             }
@@ -1950,6 +1950,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public List<SkuVO> getSkuBySkuNos(List<String> skuNoList) {
+        if (CollectionUtils.isEmpty(skuNoList)) {
+            return Collections.emptyList();
+        }
         return baseMapper.getSkuBySkuNos(skuNoList);
     }
 
@@ -2025,9 +2028,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
                     //验证关联任务是否已全部完成
                     List<ProjectTaskEntity> relatedTaskList = taskAllList.stream().filter(obj -> !RelatedSkuTypeEnum.NOT_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId())).collect(Collectors.toList());
-                    if (relatedTaskList.size()>0) {
+                    if (relatedTaskList.size() > 0) {
                         String warning = ApiError.ERROR_801.msg;
-                        String taskNames=relatedTaskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
+                        String taskNames = relatedTaskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
                         String warningMsg = String.format(warning, taskNames);
                         throw new ServiceException(ApiError.ERROR_801.code, warningMsg);
 
@@ -2144,7 +2147,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId) {
-        Boolean flag =  this.lambdaUpdate()
+        Boolean flag = this.lambdaUpdate()
                 .eq(ProductDetailEntity::getId, id)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), ProductDetailEntity::getSyncKingdeeStatus, syncKingdeeStatus)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), ProductDetailEntity::getSyncKingdeeTime, LocalDateTime.now())
@@ -2174,14 +2177,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return Collections.emptyList();
         }
         List<SkuVO> skuList = baseMapper.getSkuInfoBySkuIds(skuIds);
-        if(CollUtil.isNotEmpty(skuList)) {
+        if (CollUtil.isNotEmpty(skuList)) {
             List<ProductPackEntity> productPackList = productPackService.findBySkuIds(skuIds);
             Map<String, List<ProductPackEntity>> productPackMap = Maps.newHashMap();
-            if(CollUtil.isNotEmpty(productPackList)) {
+            if (CollUtil.isNotEmpty(productPackList)) {
                 productPackMap = productPackList.stream().collect(Collectors.groupingBy(ProductPackEntity::getSkuId));
             }
-            for(SkuVO skuVO : skuList) {
-                if(productPackMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productPackMap.get(skuVO.getSkuId())) ) {
+            for (SkuVO skuVO : skuList) {
+                if (productPackMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productPackMap.get(skuVO.getSkuId()))) {
                     ProductPackEntity packEntity = productPackMap.get(skuVO.getSkuId()).get(0);
                     skuVO.setUnitQty(Objects.nonNull(packEntity.getBoxQty()) ? packEntity.getBoxQty().intValue() : null);
                 }
@@ -2894,8 +2897,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isEmpty(productIdList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(ProductDetailEntity::getProductId,productIdList).list();
+        return this.lambdaQuery().in(ProductDetailEntity::getProductId, productIdList).list();
     }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean submit(List<String> ids) {
@@ -2933,7 +2937,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     List<ProjectTaskEntity> relatedTaskList = taskAllList.stream().filter(obj -> !RelatedSkuTypeEnum.NOT_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId())).collect(Collectors.toList());
                     if (relatedTaskList.size() > 0) {
                         String warning = ApiError.ERROR_801.msg;
-                        String taskNames=relatedTaskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
+                        String taskNames = relatedTaskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
                         String warningMsg = String.format(warning, taskNames);
                         throw new ServiceException(ApiError.ERROR_801.code, warningMsg);
                     }
