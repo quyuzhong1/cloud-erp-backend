@@ -1432,30 +1432,35 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (Objects.isNull(projectState)) {
             return;
         }
+        List<ProductDetailEntity> detailEntityList = productDetailService.listSkuByProductIds(productInfoIds);
+        List<String> detailIds = detailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+
         switch (ProjectStateEnum.getEnum(projectState)) {
             case YES_START:
                 //如果状态为已启动，更新产品信息{产品开发状态}：开发中
                 productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DEVELOP_AFOOT.getCode());
+                productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, 0).in(ProductSaleEntity::getSkuId, detailIds).update();
                 break;
             case ING:
                 //如果状态为进行中，更新产品信息{产品开发状态}：开发中
                 productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DEVELOP_AFOOT.getCode());
+                productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, 0).in(ProductSaleEntity::getSkuId, detailIds).update();
                 break;
             case FINISH:
                 //如果状态改为已完成，更新产品信息{产品开发状态}：开发完成；
                 productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DEVELOP_FINISH.getCode());
-                List<ProductDetailEntity> detailEntityList = productDetailService.listSkuByProductIds(productInfoIds);
                 //{销售状态}更新为是
-                List<String> detailIds = detailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
-                productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, Boolean.TRUE).in(ProductSaleEntity::getSkuId, detailIds).update();
+                productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, 1).in(ProductSaleEntity::getSkuId, detailIds).update();
                 break;
             case TERMINATE:
                 //如果状态改为已中止，更新产品信息{产品开发状态}：中止开发；
                 productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode());
+                productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, 0).in(ProductSaleEntity::getSkuId, detailIds).update();
                 break;
             case SUSPEND:
                 //如果状态改为暂停，更新产品信息{产品开发状态}：暂停；
                 productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.SUSPEND_DEVELOP.getCode());
+                productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, 0).in(ProductSaleEntity::getSkuId, detailIds).update();
                 break;
             default:
                 break;

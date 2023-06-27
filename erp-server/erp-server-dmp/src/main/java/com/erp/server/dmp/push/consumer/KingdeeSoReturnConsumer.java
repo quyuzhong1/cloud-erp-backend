@@ -59,6 +59,7 @@ public class KingdeeSoReturnConsumer implements RocketMQListener<Map<String, Obj
                 "FStocklocId,FStockstatusId,FNote,FSrcBillNo,FSrcBillTypeID,FIsFree,FMaterialModel,FRealQty,FSOBILLTYPEID,FSalUnitQty,FProjectNo,F_ulz_KHSKU,FAllAmount," +
                 "FReturnType,FSOEntryId,FOrderNo,FStockId,FStockId.FNumber,FStockId.FName";
         map.put("groupName", "XSCKD01_SYS，XSCKD07_SYS");
+        System.out.println(filterStr);
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);
         System.out.println(queryList);
     }
