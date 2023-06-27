@@ -946,7 +946,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             });
             addDTO.setDetails(detailDTOList);
 
-            poInstockService.add(addDTO);
+            poInstockService.add(addDTO,Boolean.FALSE);
         }
         return true;
     }

@@ -1,8 +1,8 @@
 package com.common.core.exception;
 
-import com.common.core.enums.ApiError;
+import cn.hutool.core.util.StrUtil;
 import com.common.core.controller.vo.ApiResult;
-import lombok.AllArgsConstructor;
+import com.common.core.enums.ApiError;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -38,6 +38,7 @@ public class ServiceException extends RuntimeException {
         this.data = apiResult.getData();
     }
 
+
     /**
      * 从枚举中获取参数
      *
@@ -48,6 +49,19 @@ public class ServiceException extends RuntimeException {
         super(apiError.msg);
         this.code = apiError.code;
         this.msg = apiError.msg;
+    }
+
+    /**
+     * 从枚举中获取参数
+     *
+     * @param apiError
+     * @param objects
+     */
+    public ServiceException(ApiError apiError,Object... objects) {
+        // 加上super，否则会显示null
+        super(apiError.msg);
+        this.code = apiError.code;
+        this.msg = StrUtil.format(apiError.msg,objects) ;
     }
 
     /**
