@@ -130,7 +130,7 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
             jsonObject.set("planDeliveryDate",detailEntity.getPlanDeliveryDate());
             jsonObject.set("price",detailEntity.getPrice());
             //单据日期
-            resultMap.put("billDate",entity.getBillDate());
+            jsonObject.put("billDate",entity.getBillDate());
 
             //仓库编码
             if (CollectionUtils.isNotEmpty(warehouseList)) {
