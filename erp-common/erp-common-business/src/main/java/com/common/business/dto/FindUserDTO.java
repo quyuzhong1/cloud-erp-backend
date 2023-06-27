@@ -26,4 +26,8 @@ public class FindUserDTO implements Serializable {
     private String mobile;
 
     private Integer isMyState;
+
+    private String departmentId;
+
+    private String departmentName;
 }

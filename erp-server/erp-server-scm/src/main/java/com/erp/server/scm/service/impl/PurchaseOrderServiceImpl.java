@@ -1356,8 +1356,13 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 throw new ServiceException(ApiError.USER_NOT_EXIST);
             }
             entity.setPurchaseUserName(purchaseUser.getUserName());
+
+            // 部门
+            entity.setPurchaseDeptId(purchaseUser.getDepartmentId());
+            entity.setPurchaseDeptName(purchaseUser.getDepartmentName());
         }
         //申请部门
+        /*
         if (StringUtils.isNotBlank(purchaseDeptId)) {
             SysDepartmentDTO depart = sysUserFeign.getUserDeptById(purchaseDeptId);
             if (ObjectUtils.isEmpty(depart)) {
@@ -1365,6 +1370,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             entity.setPurchaseDeptName(depart.getName());
         }
+         */
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(purchaseOrgId, receiveOrgId));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
             throw new ServiceException(ApiError.ERROR_9029);

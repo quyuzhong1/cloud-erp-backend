@@ -418,7 +418,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             }
             addDTO.setPurchaseUserId(entity.getApproveUserId());
             addDTO.setReceiveOrgId(value.get(0).getReceiveOrgId());
-            addDTO.setPurchaseDeptId(entity.getApplyDeptId());
+            // addDTO.setPurchaseDeptId(entity.getApplyDeptId());
             addDTO.setPurchaseOrgId(value.get(0).getPurchaseOrgId());
             addDTO.setPurchaseDate(LocalDate.now());
             addDTO.setDeliveryWarehouseId(value.get(0).getDestWarehouseId());

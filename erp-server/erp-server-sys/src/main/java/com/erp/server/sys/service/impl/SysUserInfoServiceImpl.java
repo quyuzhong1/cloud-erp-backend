@@ -824,12 +824,17 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         queryWrapper.eq(SysUserInfoEntity::getDeleteState, IsConstant.YES);
         SysUserInfoEntity entity = this.getOne(queryWrapper);
         if (!Objects.isNull(entity)) {
+            SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO = sysDepartmentUserService.getDeptByUserId(userId);
             FindUserDTO userDTO = new FindUserDTO();
             userDTO.setUserId(entity.getUid());
             userDTO.setUserName(entity.getUserName());
             userDTO.setCode(entity.getCode());
             userDTO.setMobile(entity.getMobile());
             userDTO.setIsMyState(0);
+            if(Objects.nonNull(sysDepartmentUserNumberDTO)) {
+                userDTO.setDepartmentId(sysDepartmentUserNumberDTO.getDepartmentId());
+                userDTO.setDepartmentName(sysDepartmentUserNumberDTO.getDepartmentName());
+            }
             return userDTO;
         }
         return new FindUserDTO();
