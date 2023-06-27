@@ -194,5 +194,10 @@ public class BomSkuPageDTO {
          * 变体属性
          */
         private String variantProperty;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
     }
 }

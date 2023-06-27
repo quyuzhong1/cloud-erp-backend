@@ -176,11 +176,13 @@
             pi.brand_name as brandName,
             pbi.bom_version as bomVersion,
             pbs.quantity,
-            pd.variant_property
+            pd.variant_property as variantProperty,
+            pp.main_supplier as supplierId
         from product_bom_info pbi
         inner join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
         left join product_detail pd on pbs.sku_no = pd.sku_no and pd.is_deleted = false
         left join product_info pi on pd.product_id = pi.id and pi.is_deleted = false
+        left join product_purchase pp on pd.id = pp.sku_id and pp.is_deleted = false
         <where>
             pbi.is_deleted = false and pbi.state = 4
             <if test="bomIds !=null and bomIds.size>0">
