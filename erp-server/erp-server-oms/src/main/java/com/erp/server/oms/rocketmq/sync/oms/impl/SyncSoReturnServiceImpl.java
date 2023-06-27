@@ -22,6 +22,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,10 +36,13 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         List<SoReturnEntity> returnEntityList = new ArrayList<>();
         for (KingdeeReturnOrderEntity kingdeeReturnOrderEntity : list) {
             //退货单明细
-            List<KingdeeReturnOrderItemEntity> itemEntityList = kingdeeReturnOrderEntity.getItemEntityList();
+            Map<String, List<KingdeeReturnOrderItemEntity>> collect = kingdeeReturnOrderEntity.getItemEntityList()
+                    .stream().collect(Collectors.groupingBy(KingdeeReturnOrderItemEntity::getFStockNumber));
 
+
+            List<KingdeeReturnOrderItemEntity> itemEntityList = kingdeeReturnOrderEntity.getItemEntityList();
             //如果金蝶退货单明细有不一样的仓库，这里分开存到OMS
-            List<String> returnOrderList = itemEntityList.stream().map(KingdeeReturnOrderItemEntity::getFStockName).distinct().collect(Collectors.toList());
+            List<String> returnOrderList = itemEntityList.stream().map(KingdeeReturnOrderItemEntity::getFStockNumber).distinct().collect(Collectors.toList());
             for (String order : returnOrderList) {
                 //如果不是B2C类型的单跳过
                 if (!kingdeeReturnOrderEntity.getFBillTypeID().equals("559351ce1d0252")) {
