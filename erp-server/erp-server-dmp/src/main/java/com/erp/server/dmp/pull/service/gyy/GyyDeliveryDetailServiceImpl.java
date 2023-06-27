@@ -123,7 +123,7 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(GyyDeliveryDetailEntity deliveryEntity) {
         DmpDeliveryDetailInfoEntity deliveryDetailInfo = initOrderInfoEntity(deliveryEntity);
-        OrderMongoDTO updateDto = new OrderMongoDTO(gyyOrderEntity.get_id());
+        OrderMongoDTO updateDto = new OrderMongoDTO(deliveryEntity.get_id());
         if(null == deliveryDetailInfo){
             deliveryEntity.setIsClean(CleanStatusEnum.CLEANED.getCode());
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(deliveryEntity), MapUtil.class);
