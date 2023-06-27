@@ -36,9 +36,10 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         for (KingdeeReturnOrderEntity kingdeeReturnOrderEntity : list) {
             //退货单明细
             List<KingdeeReturnOrderItemEntity> itemEntityList = kingdeeReturnOrderEntity.getItemEntityList();
-            List<String> returnOrderList = itemEntityList.stream().map(KingdeeReturnOrderItemEntity::getFStockId).distinct().collect(Collectors.toList());
-            for (String order : returnOrderList) {
 
+            //如果金蝶退货单明细有不一样的仓库，这里分开存到OMS
+            List<String> returnOrderList = itemEntityList.stream().map(KingdeeReturnOrderItemEntity::getFst).distinct().collect(Collectors.toList());
+            for (String order : returnOrderList) {
                 //如果不是B2C类型的单跳过
                 if (!kingdeeReturnOrderEntity.getFBillTypeID().equals("559351ce1d0252")) {
                     continue;

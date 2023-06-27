@@ -79,26 +79,11 @@ public class ProductVariantServiceImpl extends ServiceImpl<ProductVariantMapper,
     public Boolean saveOrUpdate(ProductVariantDTO productVariantDTO) {
         ProductVariantEntity variantEntity = new ProductVariantEntity();
         BeanMapper.copy(productVariantDTO, variantEntity);
-        if (StringUtils.isBlank(productVariantDTO.getId())) {
-            List<ProductVariantEntity> list = lambdaQuery().eq(ProductVariantEntity::getPropertyType, productVariantDTO.getPropertyType()).list();
-            if (CollectionUtils.isNotEmpty(list)) {
-                throw new ServiceException(ApiError.ERROR_95194);
-            }
-        }
-        //获取变体值数据
-        List<ProductVariantPropertyDTO> productVariantPropertyList = productVariantDTO.getProductVariantPropertyList();
-        List<String> propertyValueList = productVariantPropertyList.stream().map(ProductVariantPropertyDTO::getPropertyValue).distinct().collect(Collectors.toList());
-        if (propertyValueList.size() != productVariantPropertyList.size()) {
-            throw new ServiceException(ApiError.ERROR_95195);
-        }
-        if (productVariantDTO.getPropertyType().equals("颜色")) {
-            List<String> propertyCodeList = productVariantPropertyList.stream().map(ProductVariantPropertyDTO::getPropertyCode).distinct().collect(Collectors.toList());
-            if (propertyCodeList.size() != productVariantPropertyList.size()) {
-                throw new ServiceException(ApiError.ERROR_95196);
-            }
-        }
         //编辑变体类型
         boolean flag = this.saveOrUpdate(variantEntity);
+
+        //获取变体值数据
+        List<ProductVariantPropertyDTO> productVariantPropertyList = productVariantDTO.getProductVariantPropertyList();
 
         //去重
         List<ProductVariantPropertyDTO> distinctList = productVariantPropertyList.stream().collect(

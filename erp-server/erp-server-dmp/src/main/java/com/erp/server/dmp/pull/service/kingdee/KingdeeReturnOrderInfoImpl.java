@@ -175,7 +175,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
                 "FApproveDate,FBussinessType,FOwnerTypeIdHead,FSettleCurrId.FCode,FDelTime,FHeadNote,FReturnReason,FSaledeptid.FNumber,FSaledeptid.FName"
                 + "FOrderNo,FAmount,FMustqty,FUnitID.FName,FMaterialId,FMaterialId.FNumber,FMaterialName,FAuxpropId,FMaterialType,FPrice,FStockId," +
                 "FStocklocId,FStockstatusId,FNote,FSrcBillNo,FSrcBillTypeID,FIsFree,FMaterialModel,FRealQty,FSOBILLTYPEID,FSalUnitQty,FProjectNo,F_ulz_KHSKU,FAllAmount," +
-                "FReturnType,FSOEntryId,FOrderNo";
+                "FReturnType,FSOEntryId";
 
         Boolean dataSign = true;
         //当前页数
