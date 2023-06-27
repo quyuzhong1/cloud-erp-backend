@@ -40,7 +40,6 @@ import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -91,11 +90,6 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Resource
     private OmsTaskFeign omsTaskFeign;
 
-    @Value("${openApi.kingdee.authName}")
-    private String kingdeeUserName;
-
-    @Value("${openApi.kingdee.pwd}")
-    private String kingdeeUserPwd;
 
 
     @Override
@@ -633,16 +627,12 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @SneakyThrows
     @Override
     public String createkingdeeSoChange(Map<String, Object> paramMap) {
-        String authUrl = KingdeeUtils.AUTH_URL;
-        String userName = kingdeeUserName;
-        String userPwd = kingdeeUserPwd;
 
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER_CHANGE.getCode());
         K3CloudApi client = apiUtils.client;
         RepoResult  repoResult= client.CheckAuthInfo();
         repoResult.getId();
-        // String url = kingdeeServerUrl + KingdeeUtils.SO_CHANGE_URL;
         String url = KingdeeUtils.SO_CHANGE_URL;
         String paramStr = JSONUtil.toJsonStr(paramMap);
         log.info("createkingdeeSoChange  paramStr==={}",paramStr);

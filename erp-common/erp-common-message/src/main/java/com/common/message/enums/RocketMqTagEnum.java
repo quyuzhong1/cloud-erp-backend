@@ -331,17 +331,32 @@ public enum RocketMqTagEnum {
     /**
      * 同步采购订单详情到WMS
      */
-    SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG(4001,RocketMqTagEnum.SYNC_SCM,"sync_wms_purchase_order_detail_tag"),
+    SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG(4002,RocketMqTagEnum.SYNC_SCM,"sync_wms_purchase_order_detail_tag"),
 
     /**
      * 同步采购订单供应商信息到WMS
      */
-    SYNC_WMS_PURCHASE_ORDER_SUPPLIER_TAG(4001,RocketMqTagEnum.SYNC_SCM,"sync_wms_purchase_order_supplier_tag"),
+    SYNC_WMS_PURCHASE_ORDER_SUPPLIER_TAG(4003,RocketMqTagEnum.SYNC_SCM,"sync_wms_purchase_order_supplier_tag"),
+
+
+
+
     //-----------------------------0MS数据更新从5001开始------------------------------------------------------------------
     /**
      * 金蝶退货单同步到OMS
      */
     SYNC_KINGDEE_RETURN_ORDER_TAG(5001,RocketMqTagEnum.SYNC_OMS,"sync_kingdee_return_order_tag"),
+
+
+
+    //---------------------------------WMS 数据更新从6001开始---------------------------------------------------------------------------------
+
+    /**
+     * 金蝶同步销售出库单到WMS
+     */
+    SYNC_KINGDEE_SO_OUTSTOCK_TAG(6001,RocketMqTagEnum.SYNC_WMS,"sync_kingdee_so_outatock_tag"),
+
+
 
     //-----------------------------公共信息编码从9001开始------------------------------------------------------------------
 

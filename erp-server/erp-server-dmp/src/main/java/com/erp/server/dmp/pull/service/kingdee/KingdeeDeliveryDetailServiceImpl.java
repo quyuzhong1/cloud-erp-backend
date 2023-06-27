@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 
 
 /**
- * 金蝶云星空出库详情
+ * 金蝶云星空销售出库单详情
  */
 @Slf4j
 @Component
@@ -55,7 +55,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
     private MongoService mongoService;
 
     @Autowired
-    private MQProducerService<DmpDeliveryDetailInfoEntity> mqProducerService;
+    private MQProducerService mqProducerService;
     @Resource
     private CfgSettingService cfgSettingService;
 
@@ -71,9 +71,11 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         List<KingdeeDeliveryDetailEntity> pushToMqList = new ArrayList<>();
         for (KingdeeDeliveryDetailEntity entity : entityList) {
             KingdeeOutStockDTO outStockDTO = new KingdeeOutStockDTO(entity.getFBillNo(), entity.getFSoorDerno());
+            //从mongo里面查询
             List<KingdeeDeliveryDetailEntity> mongoData = mongoService.findMongoData(outStockDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_DELIVERY_DETAIL, KingdeeDeliveryDetailEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
             entity.setDownloadTime(LocalDateTime.now());
+            //当没有查询到的时候 就添加
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
                 pushToMqList.add(entity);
@@ -89,6 +91,9 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
             OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_DELIVERY_DETAIL, KingdeeDeliveryDetailEntity.class);
         }
+
+
+
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_KINGDEE_DELIVERY_DETAIL);
         }
@@ -96,6 +101,11 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
             log.warn("金蝶发货订单, 无需推送到MQ dto={}", JSONUtil.toJsonStr(dto));
             return;
         }
+        // 异步推送到 销售出库单 到MQ
+        pushToMqList.forEach(p->mqProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_TO_WMS_TOPIC, RocketMqTagEnum.SYNC_KINGDEE_SO_OUTSTOCK_TAG.getName(),p,p.getFBillNo()));
+
+
+
         // 构造订单结构
         List<DmpDeliveryDetailInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)

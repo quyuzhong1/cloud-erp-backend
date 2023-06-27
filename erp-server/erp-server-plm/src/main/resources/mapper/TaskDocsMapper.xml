@@ -102,7 +102,7 @@
 
     <select id="getTaskDocsCountByProductId" resultType="com.erp.model.plm.dto.CountDTO">
         SELECT product_id AS flagId  ,count(*) AS count FROM task_delivery_docs
-        WHERE product_id !='' AND is_deleted = FALSE GROUP BY product_id
+        WHERE product_id !='' AND is_deleted = FALSE  AND task_id !='' GROUP BY product_id
     </select>
 
     <select id="getDocsByTaskId" resultType="com.erp.model.plm.dto.DocsDTO">
