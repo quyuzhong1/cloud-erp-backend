@@ -2362,6 +2362,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         result.setProductAttestationDTO(productAttestationDTO);
 
+        //查询目的国海关编码
+        List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(productId);
+        result.setProductCustomsList(productCustomsEntityList);
+
         //产品包装辅料
         List<ProductAccessoriesDTO> accessoriesList = productAccessoriesService.getByProductId(productId);
         for (ProductAccessoriesDTO item : accessoriesList) {
