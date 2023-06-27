@@ -171,7 +171,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
         detailList.forEach(obj -> {
             allDetailList.addAll(obj.getChildList());
         });
-        List<String> deleteIds = getDeleteIds(detailList, oldList);
+        List<String> deleteIds = getDeleteIds(allDetailList, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<SubcontractOrderDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志

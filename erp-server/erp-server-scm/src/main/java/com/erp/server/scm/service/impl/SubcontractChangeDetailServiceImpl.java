@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -93,13 +94,19 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
         List<SubcontractChangeDetailEntity> list = BeanMapperUtils.copyList(SubcontractChangeDetailEntity.class, detailList);
 
         //原明细数据
-        List<SubcontractChangeDetailEntity> oldList = this.listParentByMainId(mainId);
-        List<String> deleteIds = getDeleteIds(detailList, oldList);
+        List<SubcontractChangeDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
+        //将子级SKU添加入集合判断是否删除
+        List<SubcontractChangeDetailDTO.UpdateDTO> allDetailList = new ArrayList<>();
+        allDetailList.addAll(detailList);
+        detailList.forEach(obj -> {
+            allDetailList.addAll(obj.getChildList());
+        });
+        List<String> deleteIds = getDeleteIds(allDetailList, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<SubcontractChangeDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             //操作日志
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
-            moduleOperateLogService.batchAddModuleOperateLog("删除了一个父级SKU【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(),pairList,"编辑操作");
+            moduleOperateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
         checkSourceDetailQty(list,mainId);
