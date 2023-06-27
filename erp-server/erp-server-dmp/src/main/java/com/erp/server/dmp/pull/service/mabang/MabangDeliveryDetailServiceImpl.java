@@ -271,6 +271,8 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
             delivery.setStockName(itemEntity.getStockWarehouseName());
             //库位
             delivery.setWarehouseLocation(itemEntity.getStockGrid());
+            delivery.setPlatformOrderId(orderEntity.getSalesRecordNumber());
+            delivery.setSaleOrderNo(orderEntity.getPlatformOrderId());
             items.add(delivery);
         }
         return items;

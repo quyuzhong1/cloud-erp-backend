@@ -15,9 +15,6 @@ public class KingdeeDeliveryDetailEntity{
     private String _id;
     @Alias("FID")
     private String fId;
-
-    @Alias("FSoorDerno")
-    private String fSoorDerno;
     /**
      * 单据编号
      */
@@ -188,6 +185,8 @@ public class KingdeeDeliveryDetailEntity{
 
     @Alias("FEntryCostAmount")
     private String fEntryCostAmount;
+    @Alias("FISGENFORIOS")
+    private Boolean FIsGenForIos;
 
     private List<KingdeeDeliveryDetailItemEntity> kingdeeOutStockItemEntityList;
     /**
@@ -199,7 +198,6 @@ public class KingdeeDeliveryDetailEntity{
         return "KingdeeDeliveryDetailEntity{" +
                 "fId='" + fId + '\'' +
                 ", fBillNo='" + fBillNo + '\'' +
-                ", fSoorDerno='" + fSoorDerno + '\'' +
                 ", fBillTypeID='" + fBillTypeID + '\'' +
                 ", fBillTypeName='" + fBillTypeName + '\'' +
                 ", fDate='" + fDate + '\'' +
@@ -230,6 +228,7 @@ public class KingdeeDeliveryDetailEntity{
                 ", f_ulz_Text3='" + f_ulz_Text3 + '\'' +
                 ", fSettleCurrCode='" + fSettleCurrCode + '\'' +
                 ", fExchangeRate='" + fExchangeRate + '\'' +
+                ", FIsGenForIos='" + FIsGenForIos + '\'' +
                 ", kingdeeOutStockItemEntityList=" + kingdeeOutStockItemEntityList +
                 '}';
     }

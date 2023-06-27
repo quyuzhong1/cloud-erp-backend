@@ -116,6 +116,9 @@ public class DmpDeliveryDetailItemEntity implements Serializable {
     @TableField(value = "sale_order_no")
     private String saleOrderNo;
 
+    @TableField(value = "platform_order_id")
+    private String platformOrderId;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 
@@ -136,8 +139,9 @@ public class DmpDeliveryDetailItemEntity implements Serializable {
                 ", itemRemark='" + itemRemark + '\'' +
                 ", stockName='" + stockName + '\'' +
                 ", warehouseLocation='" + warehouseLocation + '\'' +
-                ", amount=" + amount +
-                ", saleOrderNo=" + saleOrderNo +
+                ", amount=" + amount  + '\'' +
+                ", saleOrderNo=" + saleOrderNo  + '\'' +
+                ", platformOrderId=" + platformOrderId + '\'' +
                 '}';
     }
 }
