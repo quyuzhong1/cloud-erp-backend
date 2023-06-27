@@ -33,7 +33,8 @@ public enum SourceTypeEnum {
     SO_INFO("soInfo", "销售订单"),
     TRANSFER_OUT("transferOut", "分布式调出单"),
 
-
+    //Kingdee
+    SAL_RETURNSTOCK("SAL_RETURNSTOCK", "金蝶销售退货单"),
     ;
 
     /**

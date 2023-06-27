@@ -7,6 +7,7 @@ import com.erp.model.sys.dto.DeptUserDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -51,6 +52,11 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
      * 根据部门id查询
      */
     SysDepartmentDTO getDepartmentById(String deptId);
+
+    /**
+     * 根据部门code查询
+     */
+    SysDepartmentDTO getUserDeptByCode(String code);
 
     /**
      * 部门列表

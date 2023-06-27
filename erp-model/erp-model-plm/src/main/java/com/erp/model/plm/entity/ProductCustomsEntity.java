@@ -38,6 +38,12 @@ public class ProductCustomsEntity extends BaseEntity<ProductCustomsEntity> {
     private String skuNo;
 
     /**
+    * 图片
+    */
+    @TableField("images_url")
+    private String imagesUrl;
+
+    /**
     * 国家
     */
     @TableField("country")

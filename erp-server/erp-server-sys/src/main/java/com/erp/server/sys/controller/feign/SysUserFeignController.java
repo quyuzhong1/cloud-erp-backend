@@ -254,6 +254,18 @@ public class SysUserFeignController extends BaseController {
     }
 
     /**
+     * 根据部门金蝶Code查询部门
+     * @Author Luo_WG
+     * @Date 2023/6/27 14:12
+     * @param code
+     * @return com.erp.model.sys.dto.SysDepartmentDTO
+     **/
+    @PostMapping("/getUserDeptByCode")
+    public SysDepartmentDTO getUserDeptByCode(@RequestBody String code) {
+        return sysDepartmentService.getUserDeptByCode(code);
+    }
+
+    /**
      * @param userIds
      * @return List<UserDTO>
      * @description: 根据用户id查询所有上级用户

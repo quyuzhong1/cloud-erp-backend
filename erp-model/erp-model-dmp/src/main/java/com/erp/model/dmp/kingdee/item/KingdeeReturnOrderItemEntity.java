@@ -66,5 +66,7 @@ public class KingdeeReturnOrderItemEntity {
     private BigDecimal fAllAmount;
     @Alias("FReturnType")
     private String fReturnType;
+    @Alias("FSOEntryId")
+    private String fSOEntryId;
 
 }

@@ -196,6 +196,16 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     }
 
     @Override
+    public SysDepartmentDTO getUserDeptByCode(String code) {
+        SysDepartmentEntity sysDepartmentEntity = lambdaQuery().eq(SysDepartmentEntity::getCode, code).one();
+        SysDepartmentDTO dto = new SysDepartmentDTO();
+        if (ObjectUtils.isNotEmpty(sysDepartmentEntity)) {
+            BeanMapperUtils.copy(sysDepartmentEntity, dto);
+        }
+        return dto;
+    }
+
+    @Override
     public List<SysDepartmentEntity> listDept() {
         List<SysDepartmentEntity> list = lambdaQuery()
                 .in(SysDepartmentEntity::getType, new ArrayList<>(Arrays.asList(1, 2)))

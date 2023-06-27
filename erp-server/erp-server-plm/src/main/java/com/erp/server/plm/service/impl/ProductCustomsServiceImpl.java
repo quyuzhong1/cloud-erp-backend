@@ -38,7 +38,7 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
 
     @Override
     public Boolean removeBySkuId(List<String> skuIds) {
-        return lambdaUpdate().eq(ProductCustomsEntity::getIsDeleted, Boolean.TRUE).in(ProductCustomsEntity::getSkuId, skuIds).update();
+        return lambdaUpdate().set(ProductCustomsEntity::getIsDeleted, Boolean.TRUE).in(ProductCustomsEntity::getSkuId, skuIds).update();
     }
 
     @Override

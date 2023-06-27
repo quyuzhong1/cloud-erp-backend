@@ -67,6 +67,10 @@ public class KingdeeReturnOrderEntity extends CleanBaseDTO {
     private String FHeadNote;
     @Alias("FReturnReason")
     private String fReturnReason;
+    @Alias("FSaledeptid.FNumber")
+    private String fSaledeptNumber;
+    @Alias("FSaledeptid.FName")
+    private String fSaledeptName;
     private List<KingdeeReturnOrderItemEntity> itemEntityList;
     @Override
     public String toString() {

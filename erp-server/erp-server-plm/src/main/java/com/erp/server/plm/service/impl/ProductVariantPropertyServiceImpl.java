@@ -119,7 +119,7 @@ public class ProductVariantPropertyServiceImpl extends ServiceImpl<ProductVarian
         }
         return lambdaUpdate()
                 .set(ProductVariantPropertyEntity::getOccupyStatus, Boolean.TRUE)
-                .in(ProductVariantPropertyEntity::getId, propertyValueList)
+                .in(ProductVariantPropertyEntity::getPropertyValue, propertyValueList)
                 .in(ProductVariantPropertyEntity::getVariantId, propertyTypeIds)
                 .update();
     }
