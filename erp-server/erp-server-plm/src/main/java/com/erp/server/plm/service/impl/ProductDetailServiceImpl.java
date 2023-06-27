@@ -849,11 +849,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         //11.修改/新增  目的国海关编码信息
-        ProductCustomsDTO productCustomsDTO = productNoSpecDTO.getProductCustomsDTO();
-        if (ObjectUtils.isNotEmpty(productCustomsDTO)) {
-            ProductCustomsEntity customsEntity = new ProductCustomsEntity();
-            BeanMapper.copy(productCustomsDTO, customsEntity);
-            productCustomsService.saveOrUpdate(customsEntity);
+        List<ProductCustomsDTO> productCustomsDTO = productNoSpecDTO.getProductCustomsList();
+        if (CollectionUtils.isNotEmpty(productCustomsDTO)) {
+            List<ProductCustomsEntity> customsEntityList = new ArrayList<>();
+            for (ProductCustomsDTO customsDTO : productCustomsDTO) {
+                ProductCustomsEntity customsEntity = new ProductCustomsEntity();
+                BeanMapper.copy(customsDTO, customsEntity);
+                customsEntityList.add(customsEntity);
+            }
+            productCustomsService.saveOrUpdateBatch(customsEntityList);
         }
         return true;
     }
@@ -995,10 +999,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         //11.修改/新增  目的国海关编码信息
-        List<ProductCustomsDTO> productCustomsDTOList = productManySpecDTO.getProductCustomsDTOList();
-        if (CollectionUtils.isNotEmpty(productCustomsDTOList)) {
-            List<ProductCustomsEntity> list = BeanMapper.copyList(productCustomsDTOList, ProductCustomsEntity.class);
-            productCustomsService.saveOrUpdateBatch(list);
+        List<ProductCustomsDTO> productCustomsDTO = productManySpecDTO.getProductCustomsList();
+        if (CollectionUtils.isNotEmpty(productCustomsDTO)) {
+            List<ProductCustomsEntity> customsEntityList = new ArrayList<>();
+            for (ProductCustomsDTO customsDTO : productCustomsDTO) {
+                ProductCustomsEntity customsEntity = new ProductCustomsEntity();
+                BeanMapper.copy(customsDTO, customsEntity);
+                customsEntityList.add(customsEntity);
+            }
+            productCustomsService.saveOrUpdateBatch(customsEntityList);
         }
         return true;
     }
@@ -2352,6 +2361,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productAttestationDTO.setSkuImagesUrl(productDetail.getImagesUrl());
         }
         result.setProductAttestationDTO(productAttestationDTO);
+
+        //查询目的国海关编码
+        List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(productId);
+        result.setProductCustomsList(productCustomsEntityList);
 
         //产品包装辅料
         List<ProductAccessoriesDTO> accessoriesList = productAccessoriesService.getByProductId(productId);

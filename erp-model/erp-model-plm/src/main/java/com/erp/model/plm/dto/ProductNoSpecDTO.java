@@ -84,5 +84,5 @@ public class ProductNoSpecDTO {
      * 目的国海关编码信息
      */
     @Valid
-    private ProductCustomsDTO productCustomsDTO;
+    private List<ProductCustomsDTO> productCustomsList;
 }

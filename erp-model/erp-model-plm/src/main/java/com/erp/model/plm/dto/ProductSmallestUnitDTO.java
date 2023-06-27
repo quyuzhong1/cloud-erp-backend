@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
 import lombok.Data;
@@ -78,5 +79,10 @@ public class ProductSmallestUnitDTO implements Serializable {
      * 产品包装辅料
      */
     private List<ProductAccessoriesDTO> productAccessoriesList;
+
+    /**
+     * 目的国海关编码信息
+     */
+    private List<ProductCustomsEntity> productCustomsList;
 
 }

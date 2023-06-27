@@ -22,6 +22,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class SyncSoReturnServiceImpl implements SyncSoReturnService {
@@ -35,37 +36,40 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         for (KingdeeReturnOrderEntity kingdeeReturnOrderEntity : list) {
             //退货单明细
             List<KingdeeReturnOrderItemEntity> itemEntityList = kingdeeReturnOrderEntity.getItemEntityList();
+            List<String> returnOrderList = itemEntityList.stream().map(KingdeeReturnOrderItemEntity::getFStockId).distinct().collect(Collectors.toList());
+            for (String order : returnOrderList) {
 
+                //如果不是B2C类型的单跳过
+                if (!kingdeeReturnOrderEntity.getFBillTypeID().equals("559351ce1d0252")) {
+                    continue;
+                }
+                //如果退货单号不是XSTHD开头的跳过，避免接收到OMS同步到金蝶的单
+                if (!kingdeeReturnOrderEntity.getFBillNo().contains("XSTHD")) {
+                    continue;
+                }
+                SoReturnEntity soReturnEntity = new SoReturnEntity();
+                soReturnEntity.setCode(kingdeeReturnOrderEntity.getFBillNo());
+                soReturnEntity.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
+                soReturnEntity.setType(BillTypeEnum.B2C.getCode());
+                soReturnEntity.setSourceType(SourceTypeEnum.SAL_RETURNSTOCK.getCode());
+                soReturnEntity.setSalesOrgName(kingdeeReturnOrderEntity.getFSaleOrgName());
+                SysDepartmentDTO userDeptByCode = sysUserFeign.getUserDeptByCode(kingdeeReturnOrderEntity.getFSaledeptNumber());
+                if (ObjectUtil.isNotEmpty(userDeptByCode)) {
+                    soReturnEntity.setSalesDeptId(userDeptByCode.getId());
+                }
+                soReturnEntity.setSalesDeptName(kingdeeReturnOrderEntity.getFSaledeptName());
+                soReturnEntity.setSellerName(kingdeeReturnOrderEntity.getFSalesManName());
+                soReturnEntity.setBillDate(LocalDate.parse(kingdeeReturnOrderEntity.getFDate()));
+                soReturnEntity.setWarehouseName(order);
 
-            //如果不是B2C类型的单跳过
-            if (!kingdeeReturnOrderEntity.getFBillTypeID().equals("559351ce1d0252")) {
-                continue;
+                if (CollectionUtils.isNotEmpty(itemEntityList)) {
+                    KingdeeReturnOrderItemEntity kingdeeReturnOrderItemEntity = itemEntityList.get(MathUtil.ZERO);
+                    soReturnEntity.setSourceCode(kingdeeReturnOrderItemEntity.getFOrderNo());
+                    soReturnEntity.setSourceId(kingdeeReturnOrderItemEntity.getFSOEntryId());
+                }
+                returnEntityList.add(soReturnEntity);
             }
-            //如果退货单号不是XSTHD开头的跳过，避免接收到OMS同步到金蝶的单
-            if (!kingdeeReturnOrderEntity.getFBillNo().contains("XSTHD")) {
-                continue;
-            }
-            SoReturnEntity soReturnEntity = new SoReturnEntity();
-            soReturnEntity.setCode(kingdeeReturnOrderEntity.getFBillNo());
-            soReturnEntity.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
-            soReturnEntity.setType(BillTypeEnum.B2C.getCode());
-            soReturnEntity.setSourceType(SourceTypeEnum.SAL_RETURNSTOCK.getCode());
-            soReturnEntity.setSalesOrgName(kingdeeReturnOrderEntity.getFSaleOrgName());
-            SysDepartmentDTO userDeptByCode = sysUserFeign.getUserDeptByCode(kingdeeReturnOrderEntity.getFSaledeptNumber());
-            if (ObjectUtil.isNotEmpty(userDeptByCode)) {
-                soReturnEntity.setSalesDeptId(userDeptByCode.getId());
-            }
-            soReturnEntity.setSalesDeptName(kingdeeReturnOrderEntity.getFSaledeptName());
-            soReturnEntity.setSellerName(kingdeeReturnOrderEntity.getFSalesManName());
-            soReturnEntity.setBillDate(LocalDate.parse(kingdeeReturnOrderEntity.getFDate()));
 
-
-            if (CollectionUtils.isNotEmpty(itemEntityList)) {
-                KingdeeReturnOrderItemEntity kingdeeReturnOrderItemEntity = itemEntityList.get(MathUtil.ZERO);
-                soReturnEntity.setSourceCode(kingdeeReturnOrderItemEntity.getFOrderNo());
-                soReturnEntity.setSourceId(kingdeeReturnOrderItemEntity.getFSOEntryId());
-            }
-            returnEntityList.add(soReturnEntity);
         }
     }
 }
