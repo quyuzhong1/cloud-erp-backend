@@ -375,4 +375,14 @@ public class SysUserFeignController extends BaseController {
         return sysUserThirdService.listThirdBindUser();
     }
 
+    /**
+     * 根据金蝶code 获取到用户信息
+     *
+     * @return
+     */
+    @GetMapping("/listUserByKingdeeCode")
+    public List<FindUserDTO> listUserByKingdeeCode(@RequestBody List<String> kingdeeCodeList) {
+        return sysUserInfoService.listUserByKingdeeCode(kingdeeCodeList);
+    }
+
 }

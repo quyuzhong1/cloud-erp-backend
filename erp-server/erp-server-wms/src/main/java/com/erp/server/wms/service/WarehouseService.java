@@ -193,4 +193,12 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
     WarehouseDTO.UpdateDTO detailWithCache(String id);
 
 
+    /**
+     * 根据金蝶仓库code 获取到对应仓库信息
+     * @author yl
+     * @date 2023-06-27 16:34
+     * @param kingdeeWarehouseCodeList
+     * @return java.util.List<com.erp.model.wms.entity.WarehouseEntity>
+     */
+    List<WarehouseEntity> listByKingdeeCodeList(List<String> kingdeeWarehouseCodeList);
 }

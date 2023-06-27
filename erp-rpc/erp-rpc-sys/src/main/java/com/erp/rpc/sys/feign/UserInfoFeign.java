@@ -37,4 +37,12 @@ public interface UserInfoFeign {
      */
     @GetMapping("feign/user/getUserListByUserIds")
     List<FindUserDTO> listByUserIds(@RequestBody List<String> userIds);
+
+    /**
+     * 根据金蝶code 获取用户信息
+     * @param kingdeeCodeList
+     * @return
+     */
+    @GetMapping("feign/user/listUserByKingdeeCode")
+    List<FindUserDTO> listUserByKingdeeCode(@RequestBody List<String> kingdeeCodeList);
 }

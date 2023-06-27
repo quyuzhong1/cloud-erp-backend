@@ -497,7 +497,8 @@
         pi.spu_no,
         pi.name AS spuName,
         pd.sku_no,
-        pd.name AS skuName
+        pd.name AS skuName,
+        pd.id AS skuId
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         WHERE  pd.is_deleted = FALSE

@@ -26,10 +26,19 @@ public class KingdeeDeliveryDetailItemEntity {
     private String fCustMatID;
     @Alias("FCustMatName")
     private String fCustMatName;
+
+    /**
+     * sku
+     */
     @Alias("FMaterialID")
     private String fMaterialID;
+
+    /**
+     * sku no
+     */
     @Alias("FMaterialID.FNumber")
     private String fMaterialNumber;
+
     @Alias("FMaterialID.FName")
     private String fMaterialName;
     @Alias("FBarcode")
@@ -38,8 +47,14 @@ public class KingdeeDeliveryDetailItemEntity {
     private String fMateriaModel;
     @Alias("FMateriaType")
     private String fMateriaType;
+
+
+    /**
+     *实发数量
+     */
     @Alias("FRealQty")
     private String fRealQty;
+
     @Alias("FUnitID.FName")
     private String fUnitName;
     @Alias("FPrice")
@@ -59,8 +74,34 @@ public class KingdeeDeliveryDetailItemEntity {
     private String fStockStatusID;
     @Alias("FStockStatusID.FName")
     private String fStockStatusName;
+
+
+
+
     @Alias("FStockID.FName")
     private String fStockName;
+
+    /**
+     * 仓库
+     */
+    @Alias("FStockID.FNumber")
+    private String fStockNumber;
+
+
+    /**
+     * 仓位名
+     */
+    @Alias("FStockLocID.FName")
+    private String fStockLocName;
+
+    /**
+     * 仓位编号
+     */
+    @Alias("FStockLocID.FNumber")
+    private String fStockLocNumber;
+
+
+
     @Alias("F_ulz_Text1")
     private String f_ulz_Text1;
     @Alias("FEntrynote")

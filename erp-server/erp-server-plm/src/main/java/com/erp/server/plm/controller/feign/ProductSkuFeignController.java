@@ -3,7 +3,6 @@ package com.erp.server.plm.controller.feign;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.base.BaseIdsDTO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
@@ -139,6 +138,20 @@ public class ProductSkuFeignController {
         List<SkuVO> skuList = productDetailService.getSkuInfoBySkuIds(skuIds);
         return skuList;
     }
+
+   /**
+    * 根据sku no 获取sku 信息
+    * @author yl
+    * @date 2023-06-27 17:51
+    * @param skuNoList
+    * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+    */
+    @PostMapping("/listBySkuNos")
+    public List<SkuVO> listBySkuNos(@RequestBody List<String> skuNoList) {
+        List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
+        return skuList;
+    }
+
     /**
      * @description: 获取已审核sku
      * @author Will

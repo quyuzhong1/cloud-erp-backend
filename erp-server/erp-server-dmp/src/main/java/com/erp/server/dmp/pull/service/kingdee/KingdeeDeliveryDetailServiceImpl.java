@@ -92,8 +92,6 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_DELIVERY_DETAIL, KingdeeDeliveryDetailEntity.class);
         }
 
-
-
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_KINGDEE_DELIVERY_DETAIL);
         }
@@ -175,15 +173,15 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         // 审核通过
         queryFilters.add(StrUtil.format("FDocumentStatus = '{}'", "C"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillNo,FSoOrDerNo,FDate,FSaleOrgId,FSaleOrgId.FName," +
-                "FCustomerID,FCustomerID.FName,FSaleDeptID.FName,FSalesManID,FSalesManID.FName,FReceiverID.FName," +
+        String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillNo,FSoOrDerNo,FDate,FSaleOrgId,FSaleOrgId.FName,FCarriageNO,FStockerID.FNumber,FStockerID.FName," +
+                "FCustomerID,FCustomerID.FName,FCustomerID.FNumber,FSaleDeptID.FName,FSalesManID,FSalesManID.FName,FSalesManID.FNumber,FReceiverID.FName,FStockerID.FNumber" +
                 "FTransferBizType.FName,F_ulz_BaseProperty2,F_ulz_BaseProperty2.FNumber,FLinkPhone,FLinkMan,FBussinessType,FDocumentStatus," +
                 "FNote,FReceiveAddress,FCreatorId.FName,FCreateDate,FModifierId.FName,FModifyDate,FApproverID.FName," +
                 "FApproveDate,FCancelStatus,FGYDATE,FLogisticsNos,F_ulz_Text3,FSettleCurrID.FCode,FExchangeRate,FISGENFORIOS," +
                 "FEntity_FENTRYID,FBillAllAmount,FBillAllAmount_LC,FAllAmount,FAllAmount_LC,FAmount_LC,FTaxAmount,FTaxAmount_LC,FBillTaxAmount,FEntryTaxAmount,"+
-                "FSrcBillNo,FCustMatName,F_ulz_BaseProperty1,FMaterialID,FMaterialID.FNumber,FMaterialID.FName," +
+                "FSrcBillNo,FCustMatName,F_ulz_BaseProperty1,FMaterialID,FMaterialID.FNumber,FMaterialID.FName,FStockLocID.FName,FStockLocID.FNumber" +
                 "FBarcode,FMateriaModel,FMateriaType,FRealQty,FUnitID.FName,FPrice,FIsFree,FArrivalStatus,FArrivalDate," +
-                "FAmount,FStockStatusID,FStockStatusID.FName,FStockID.FName,F_ulz_Text1,FEntryCostAmount,FEntrynote,FSrcBillNo,FSrcType,FTaxPrice," +
+                "FAmount,FStockStatusID,FStockStatusID.FName,FStockID.FName,FStockID.FNumber,F_ulz_Text1,FEntryCostAmount,FEntrynote,FSrcBillNo,FSrcType,FTaxPrice," +
                 "FCostPrice,FCostAmount_LC,FSalCostPrice";
 
         Boolean dataSign = true;

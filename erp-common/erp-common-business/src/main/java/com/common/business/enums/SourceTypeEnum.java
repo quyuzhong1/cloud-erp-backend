@@ -10,6 +10,7 @@ import java.util.Objects;
 @NoArgsConstructor
 public enum SourceTypeEnum {
     SELF_ADD("selfAdd", "手动新增"),
+    KINGDEE("kingdee", "金蝶"),
 
     //SCM
     PURCHASE_ORDER("purchaseOrder", "采购订单"),

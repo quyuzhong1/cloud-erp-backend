@@ -76,6 +76,17 @@ public interface PlmTaskFeign {
     @PostMapping("feign/product/getSkuInfoByIds")
     List<SkuVO> getSkuInfoByIds(@RequestBody List<String> skuIds);
 
+    
+    /**
+     * 根据sku no 获取信息
+     * @author yl
+     * @date 2023-06-27 17:48
+     * @param skuNoList
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     */
+    @PostMapping("feign/product/listBySkuNos")
+    List<SkuVO> listBySkuNoList(@RequestBody List<String> skuNoList);
+
     /**
      * @description: 获取已审核sku
      * @author Will

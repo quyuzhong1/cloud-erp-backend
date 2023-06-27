@@ -157,6 +157,13 @@ public class RocketMqConsumerGroup {
      */
     public static final String SYNC_KINGDEE_RETURN_ORDER_TO_OMS = "${spring.cloud.nacos.discovery.namespace}-SYNC_KINGDEE_RETURN_ORDER_TO_OMS";
 
+    //-----------------------------------------------------------------wms数据更新------------------------------------------------------
+    /**
+     * 金蝶B2C 销售出库单同步
+     */
+    public static final String SYNC_KINGDEE_SO_OUTSTOCK_TO_WMS = "${spring.cloud.nacos.discovery.namespace}-SYNC_SO_OUTSTOCK_TO_WMS";
+
+
 
     /**
      * ERP直接调拨单->马帮

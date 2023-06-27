@@ -831,7 +831,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             userDTO.setCode(entity.getCode());
             userDTO.setMobile(entity.getMobile());
             userDTO.setIsMyState(0);
-            if(Objects.nonNull(sysDepartmentUserNumberDTO)) {
+            if (Objects.nonNull(sysDepartmentUserNumberDTO)) {
                 userDTO.setDepartmentId(sysDepartmentUserNumberDTO.getDepartmentId());
                 userDTO.setDepartmentName(sysDepartmentUserNumberDTO.getDepartmentName());
             }
@@ -1188,6 +1188,32 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             return this.updateById(userInfo);
         }
         return Boolean.FALSE;
+    }
+
+    /**
+     * 根据金蝶code获取用户信息
+     *
+     * @param kingdeeCodeList
+     * @return java.util.List<com.common.business.dto.FindUserDTO>
+     * @author yl
+     * @date 2023-06-27 15:31
+     */
+    @Override
+    public List<FindUserDTO> listUserByKingdeeCode(List<String> kingdeeCodeList) {
+        if (CollectionUtils.isEmpty(kingdeeCodeList)) {
+            return Collections.emptyList();
+        }
+        List<SysUserInfoEntity> userList = this.lambdaQuery().in(SysUserInfoEntity::getCode, kingdeeCodeList).list();
+        List<FindUserDTO> resultList = new ArrayList<>(userList.size());
+        for (SysUserInfoEntity item : userList) {
+            FindUserDTO findUser = new FindUserDTO();
+            findUser.setUserId(item.getUid());
+            findUser.setUserName(item.getUserName());
+            findUser.setRealName(item.getRealName());
+            findUser.setCode(item.getCode());
+            resultList.add(findUser);
+        }
+        return resultList;
     }
 
     private Boolean sendingEmail(EmailVerifyCodeDTO dto, String subject) {

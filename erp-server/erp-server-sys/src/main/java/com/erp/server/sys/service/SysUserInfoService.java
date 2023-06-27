@@ -193,5 +193,14 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @return
      */
     Boolean uploadHeadPhoto(MultipartFile headPhotoFile);
+
+    /**
+     * 根据金蝶code获取用户信息
+     * @author yl
+     * @date 2023-06-27 15:31
+     * @param kingdeeCodeList
+     * @return java.util.List<com.common.business.dto.FindUserDTO>
+     */
+    List<FindUserDTO> listUserByKingdeeCode(List<String> kingdeeCodeList);
 }
 
