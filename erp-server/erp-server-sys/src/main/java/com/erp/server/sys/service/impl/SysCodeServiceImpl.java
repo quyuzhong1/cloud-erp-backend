@@ -23,7 +23,6 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -162,8 +161,8 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NOT_SUPPORTED)
-    @GlobalTransactional(propagation = io.seata.tm.api.transaction.Propagation.NOT_SUPPORTED, rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public String getBusinessNo(SysCodeDTO dto) {
         //加锁
         RLock lock = redisson.getLock(DistributedLockEnum.SYS_GEN_DOCNO.getCode() + ":" + dto.getType());
