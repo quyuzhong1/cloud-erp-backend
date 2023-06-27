@@ -352,5 +352,10 @@ public class PurchaseOrderDetailDTO implements Serializable {
          */
         private String currencySymbol;
 
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+
     }
 }

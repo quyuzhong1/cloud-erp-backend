@@ -1203,7 +1203,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
             //操作请求实体
             InOutStockDTO inOutStockDTO = new InOutStockDTO();
-            inOutStockDTO.setSourceType(InventorySourceTypeEnum.PURCHASE_ORDER);
+            if (isDelivery) {
+                inOutStockDTO.setSourceType(InventorySourceTypeEnum.RECEIVE_MATERIAL);
+            } else {
+                inOutStockDTO.setSourceType(InventorySourceTypeEnum.RETURN_MATERIAL);
+            }
             inOutStockDTO.setSourceId(childDTO.getSubChildId());
             inOutStockDTO.setSourceCode(childDTO.getSubChildCode());
             inOutStockDTO.setSourceDetailId(childDTO.getSubChildDetailId());

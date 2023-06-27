@@ -18,7 +18,6 @@ public enum InventorySourceTypeEnum {
 
     INIT_STOCK("initStock", "期初库存"),
     WAREHOUSE_RECEIVE("warehouseReceive", "收货单"),
-    PURCHASE_ORDER("purchaseOrder", "采购订单"),
     PURCHASE_STOCK_IN("purchaseStockIn", "采购入库单"),
     PURCHASE_RETURN_ORDER("purchaseReturnOrder", "采购退货单"),
     TRANSFER_APPLY("transferApplication", "调拨申请单"),
@@ -32,7 +31,8 @@ public enum InventorySourceTypeEnum {
     OTHER_INSTOCK("otherInstock", "其他入库单"),
     OTHER_OUTSTOCK("otherOutstock", "其他出库单"),
     INSTOCK_FORCAST("instockForcast", "入库预报"),
-
+    RECEIVE_MATERIAL("receiveMaterial", "领料"),
+    RETURN_MATERIAL("returnMaterial", "退料"),
     ;
 
     /**
