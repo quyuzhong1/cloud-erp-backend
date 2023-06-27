@@ -37,7 +37,6 @@ import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.SysCodeDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -1604,12 +1603,17 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<InstockForcastDTO.FinishDeliveryDTO> inventoryList = Lists.newArrayList();
 
         poMap.forEach((mainId, po)->{
+
             InstockForcastDTO.FinishDeliveryDTO inventoryDTO = new InstockForcastDTO.FinishDeliveryDTO();
             inventoryDTO.setPurchaseOrderId(mainId);
             List<PurchaseOrderDetailEntity> detailMembers = detailMap.get(mainId);
 
             List<InventoryFinishDeliveryDetailDTO.AddDTO> inventoryMembers = Lists.newArrayListWithExpectedSize(detailMembers.size());
             detailMembers.stream().forEach(member->{
+                //已到货的无需再次结束交货
+                if (ArrivalStatusEnum.ARRIVED.getCode().equals(member.getArrivalStatus())) {
+                    return;
+                }
                 InventoryFinishDeliveryDetailDTO.AddDTO inventoryMember = new InventoryFinishDeliveryDetailDTO.AddDTO();
                 inventoryMember.setSkuId(member.getSkuId());
                 inventoryMember.setSkuNo(member.getSkuNo());
@@ -1642,10 +1646,15 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 inventoryMember.setQty(deliveryQty);
                 inventoryMembers.add(inventoryMember);
             });
+            if (CollectionUtils.isEmpty(inventoryMembers)) {
+                return;
+            }
             inventoryDTO.setMembers(inventoryMembers);
             inventoryList.add(inventoryDTO);
         });
-        inventoryFeign.finishDeliveryBatch(inventoryList);
+        if (CollectionUtils.isNotEmpty(inventoryList)) {
+            inventoryFeign.finishDeliveryBatch(inventoryList);
+        }
     }
 
 

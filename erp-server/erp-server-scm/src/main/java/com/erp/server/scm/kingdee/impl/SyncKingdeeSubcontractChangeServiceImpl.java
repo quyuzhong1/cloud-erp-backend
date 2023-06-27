@@ -122,7 +122,7 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
             jsonObject.set("qty",detailEntity.getQty());
             jsonObject.set("price",detailEntity.getPrice());
             //单据日期
-            resultMap.put("billDate",entity.getBillDate());
+            jsonObject.set("billDate",entity.getBillDate());
             //仓库编码
             if (CollectionUtils.isNotEmpty(warehouseList)) {
                 String kingdeeWarehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse("");
