@@ -1291,6 +1291,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         }
         ProjectStateEnum status = ProjectStateEnum.getEnum(targetStatus);
         Integer suspendStatus = ProjectStateEnum.SUSPEND.getState();
+        Integer notStart= ProjectStateEnum.NOT_START.getState();
         Integer terminateStatus = ProjectStateEnum.TERMINATE.getState();
         Integer yesStartStatus = ProjectStateEnum.YES_START.getState();
         Integer finishStatus = ProjectStateEnum.FINISH.getState();
@@ -1299,6 +1300,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if(terminateStatus.equals(currentStatus)){
             throw new ServiceException(ApiError.ERROR_95187);
         }
+        //目标状态
         switch (status) {
             //完成
             case FINISH:
@@ -1307,8 +1309,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 }
                 //暂停
             case SUSPEND:
-                if (finishStatus.equals(currentStatus) || suspendStatus.equals(currentStatus) || terminateStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95180);
+                if (!Arrays.asList(notStart,yesStartStatus,ingStatus).contains(currentStatus)) {
+                    throw new ServiceException(ApiError.ERROR_95197);
                 }
 
             case NOT_START:

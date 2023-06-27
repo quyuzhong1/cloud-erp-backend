@@ -45,8 +45,11 @@ public class KingdeeDeliveryDetailItemEntity {
     private String fBarcode;
     @Alias("FMateriaModel")
     private String fMateriaModel;
+
     @Alias("FMateriaType")
     private String fMateriaType;
+
+
 
 
     /**
@@ -88,17 +91,13 @@ public class KingdeeDeliveryDetailItemEntity {
     private String fStockNumber;
 
 
-    /**
-     * 仓位名
-     */
-    @Alias("FStockLocID.FName")
-    private String fStockLocName;
 
     /**
-     * 仓位编号
+     * 仓位
+     * 没有
      */
-    @Alias("FStockLocID.FNumber")
-    private String fStockLocNumber;
+    @Alias("FStockLocID")
+    private String fStockLoc;
 
 
 
