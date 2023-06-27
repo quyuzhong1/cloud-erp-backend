@@ -816,6 +816,10 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private Integer exceedQty;
 
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
     }
 
     @Data
