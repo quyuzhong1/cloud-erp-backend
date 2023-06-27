@@ -156,4 +156,10 @@ public class RocketMqConsumerGroup {
      * 金蝶退货单同步
      */
     public static final String SYNC_KINGDEE_RETURN_ORDER_TO_OMS = "${spring.cloud.nacos.discovery.namespace}-SYNC_KINGDEE_RETURN_ORDER_TO_OMS";
+
+
+    /**
+     * ERP直接调拨单->马帮
+     */
+    public static final String SYNC_MABANG_TRANSFER_INFO = "${spring.cloud.nacos.discovery.namespace}-sync_mabang_transfer_info";
 }

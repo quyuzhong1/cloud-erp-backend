@@ -530,8 +530,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             ++rowNo;
 
             XSSFRow rowContent = sheet.createRow(rowNo);
-            rowContent.setHeight((short) (40 * 20));
-            rowContent.setHeightInPoints((short) 50);
+            rowContent.setHeight((short) (45 * 20));
+            rowContent.setHeightInPoints((short) 60);
             cell = rowContent.createCell(0);
             cell.setCellStyle(contentCellStyle);
             cell.setCellValue(StrUtil.format("{}\n{}", data.getSkuNo(), data.getProductName()));
@@ -549,19 +549,21 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getTotalInstockQty()));
             cell = rowContent.createCell(5);
             cell.setCellStyle(contentCellStyle);
-            cell.setCellValue(StrUtil.format("采购入库：{}盘盈入库：{}\n其他入库：{}退货入库：{}\n调拨入库：{}加工入库：{}",
+            cell.setCellValue(StrUtil.format("采购入库：{}盘盈入库：{}\n其他入库：{}退货入库：{}\n调拨入库：{}加工入库：{}\n退料入库：{}",
                     StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getPurchaseInstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getInventoryProfitInstockQty()), 10, " "),
                     StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getOtherInstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getSaleReturnQty()), 10, " "),
-                    StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getTransferInstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getMachineInstockQty()), 10, " " )));
+                    StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getTransferInstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getMachineInstockQty()), 10, " " ),
+                    StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getReturnMaterielQty()), 10, " ")));
             cell = rowContent.createCell(6);
             cell.setCellStyle(contentCellStyle);
             cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getTotalOutstockQty()));
             cell = rowContent.createCell(7);
             cell.setCellStyle(contentCellStyle);
-            cell.setCellValue(StrUtil.format("采购退货：{}调拨出库：{}\n销售出库：{}盘亏出库：{}\n其他出库：{}加工出库：{}",
+            cell.setCellValue(StrUtil.format("采购退货：{}调拨出库：{}\n销售出库：{}盘亏出库：{}\n其他出库：{}加工出库：{}\n领料出库：{}",
                     StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getPurchaseReturnQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getTransferOutstockQty()), 10, " "),
                     StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getSaleOutstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getInventoryLossOutstockQty()), 10, " "),
-                    StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getOtherOutstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getMachineOutstockQty()),10, " ") ));
+                    StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getOtherOutstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getMachineOutstockQty()),10, " "),
+                    StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getReceiveMaterielQty()),10, " ")));
         }
 
         String fileName = StrUtil.format("出入库列表数据{}.xlsx", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));

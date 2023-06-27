@@ -64,4 +64,9 @@ public class RocketMqTopic {
      */
     public static final String DMP_ERP_DATA_CLEAN_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_erp_data_clean_topic";
 
+    /**
+     * 推送数据到马帮
+     */
+    public static final String SYNC_ERP_TO_MABANG_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_erp_to_mabang_topic";
+
 }
