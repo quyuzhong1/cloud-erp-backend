@@ -188,6 +188,21 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateByChange(List<SubcontractOrderDetailDTO.UpdateDTO> detailList, String mainId) {
+        if (CollectionUtils.isEmpty(detailList)) {
+            return;
+        }
+        List<SubcontractOrderDetailEntity> list = BeanMapperUtils.copyList(SubcontractOrderDetailEntity.class, detailList);
+
+        checkSourceDetailQty(list,mainId);
+        //处理父子级数据
+        List<SubcontractOrderDetailEntity> resultList = generateResultDetail(list, mainId);
+
+        this.saveOrUpdateBatch(resultList);
+    }
+
+    @Override
     public List<SubcontractOrderDetailEntity> listByMainId(String mainId) {
        return lambdaQuery().eq(SubcontractOrderDetailEntity::getMainId,mainId).list();
     }

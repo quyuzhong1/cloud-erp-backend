@@ -1039,16 +1039,19 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //查询委外订单所有子级SKU生成的采购订单信息
         List<PurchaseOrderDTO.SubcontractOrderChildDTO> childList = scmTaskFeign.listPoRefSubChildByParentPodIds(parentPodIds);
         if (CollectionUtils.isEmpty(childList)) {
-            //无子级采购订单无需自动入库
-            return;
+            throw new ServiceException(ApiError.ERROR_98073);
         }
         //自动审核采购订单
         List<String> childPoIds = childList.stream().map(PurchaseOrderDTO.SubcontractOrderChildDTO::getChildPoId).distinct().collect(Collectors.toList());
-        scmTaskFeign.autoApprovePurchaseOrder(childPoIds);
+        //无子级采购订单无需自动入库
+        if (CollectionUtils.isNotEmpty(childPoIds)) {
 
-        log.info("生成入库单，childPoIds = {}",childPoIds);
-        //生成入库单
-        autoGeneratePoInstock(childPoIds,childList);
+           scmTaskFeign.autoApprovePurchaseOrder(childPoIds);
+
+           log.info("生成入库单，childPoIds = {}",childPoIds);
+           //生成入库单
+           autoGeneratePoInstock(childPoIds,childList);
+       }
 
         //生成领料出库单，需要按比例出库（父级SKU入库数量/父级SKU采购数量）（现没有领料出库单据，则直接调用领料库存变化逻辑）
         autoOutStockInventory(childList,poInstockDetailList,Boolean.TRUE);
@@ -1087,7 +1090,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         autoOutStockInventory(childList,poInstockDetailList,Boolean.FALSE);
 
         //反审核子级SKU入库
-        List<String> childPoIds = childList.stream().map(PurchaseOrderDTO.SubcontractOrderChildDTO::getChildPoId).distinct().collect(Collectors.toList());
+        List<String> childPoIds = childList.stream().filter(obj -> StringUtils.isNotBlank(obj.getChildPoId())).map(PurchaseOrderDTO.SubcontractOrderChildDTO::getChildPoId).distinct().collect(Collectors.toList());
         List<PoInstockEntity> poInstockList = this.listByPoIds(childPoIds);
         if (CollectionUtils.isEmpty(poInstockList)) {
             return;
@@ -1186,19 +1189,24 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<BomChildrenSkuDTO> bomList = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
         List<InOutStockDTO>  inOutStockList = new ArrayList<>();
-        for (PurchaseOrderDTO.SubcontractOrderChildDTO childDTO : childList) {
+        List<String> subChildDetailIds = childList.stream().map(PurchaseOrderDTO.SubcontractOrderChildDTO::getSubChildDetailId).distinct().collect(Collectors.toList());
+
+        for (String subChildDetailId : subChildDetailIds) {
+            //子级SKU委外明细信息
+            PurchaseOrderDTO.SubcontractOrderChildDTO childDTO = childList.stream().filter(obj -> obj.getSubChildDetailId().equals(subChildDetailId)).findFirst().orElse(null);
+
             //父子级SKU子件比例
             Integer quantity = bomList.stream().filter(obj -> obj.getParentSkuId().equals(childDTO.getParentSkuId()) && obj.getSkuId().equals(childDTO.getChildSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getQuantity())).orElse(MathUtil.ZERO);
 
-            //采购订单明细本次入库数量
+            //本次入库数量
             Integer instockQty = poInstockDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(childDTO.getParentPodId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
 
             //操作请求实体
             InOutStockDTO inOutStockDTO = new InOutStockDTO();
             inOutStockDTO.setSourceType(InventorySourceTypeEnum.PURCHASE_ORDER);
-            inOutStockDTO.setSourceId(childDTO.getChildPoId());
-            inOutStockDTO.setSourceCode(childDTO.getChildCode());
-            inOutStockDTO.setSourceDetailId(childDTO.getChildPodId());
+            inOutStockDTO.setSourceId(childDTO.getSubChildId());
+            inOutStockDTO.setSourceCode(childDTO.getSubChildCode());
+            inOutStockDTO.setSourceDetailId(childDTO.getSubChildDetailId());
             inOutStockDTO.setBillDate(LocalDate.now());
             inOutStockDTO.setSkuId(childDTO.getChildSkuId());
             inOutStockDTO.setSkuNo(childDTO.getChildSkuNo());

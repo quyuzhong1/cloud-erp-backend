@@ -1032,10 +1032,6 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private String subParentDetailId;
         /**
-         * 子级委外明细id
-         */
-        private String subChildDetailId;
-        /**
          * 子级skuid
          */
         private String childSkuId;
@@ -1056,9 +1052,18 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private String childApproveStatus;
         /**
-         * 子级采购订单编码
+         * 子级委外订单id
          */
-        private String childCode;
+        private String subChildId;
+        /**
+         * 子级委外订单编码
+         */
+        private String subChildCode;
+
+        /**
+         * 子级委外明细id
+         */
+        private String subChildDetailId;
     }
 
 

@@ -553,7 +553,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
                 updateDTO.setChildList(childDTOList);
                 detailList.add(updateDTO);
             }
-            subcontractOrderDetailService.update(detailList,entity.getSourceId());
+            subcontractOrderDetailService.updateByChange(detailList,entity.getSourceId());
         }
         //自动下推
         autoPushdownDetail(updateList);
