@@ -33,6 +33,10 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
     public void syncKingdeeReturnOrderToSoReturn(List<KingdeeReturnOrderEntity> list) {
         List<SoReturnEntity> returnEntityList = new ArrayList<>();
         for (KingdeeReturnOrderEntity kingdeeReturnOrderEntity : list) {
+            //退货单明细
+            List<KingdeeReturnOrderItemEntity> itemEntityList = kingdeeReturnOrderEntity.getItemEntityList();
+
+
             //如果不是B2C类型的单跳过
             if (!kingdeeReturnOrderEntity.getFBillTypeID().equals("559351ce1d0252")) {
                 continue;
@@ -55,7 +59,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             soReturnEntity.setSellerName(kingdeeReturnOrderEntity.getFSalesManName());
             soReturnEntity.setBillDate(LocalDate.parse(kingdeeReturnOrderEntity.getFDate()));
 
-            List<KingdeeReturnOrderItemEntity> itemEntityList = kingdeeReturnOrderEntity.getItemEntityList();
+
             if (CollectionUtils.isNotEmpty(itemEntityList)) {
                 KingdeeReturnOrderItemEntity kingdeeReturnOrderItemEntity = itemEntityList.get(MathUtil.ZERO);
                 soReturnEntity.setSourceCode(kingdeeReturnOrderItemEntity.getFOrderNo());
