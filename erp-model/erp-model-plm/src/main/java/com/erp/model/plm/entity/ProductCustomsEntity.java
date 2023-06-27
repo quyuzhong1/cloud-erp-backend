@@ -40,7 +40,7 @@ public class ProductCustomsEntity extends BaseEntity<ProductCustomsEntity> {
     /**
     * 图片
     */
-    @TableField("images_url")
+    @TableField(exist = false)
     private String imagesUrl;
 
     /**

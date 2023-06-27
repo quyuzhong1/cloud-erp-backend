@@ -14,10 +14,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.model.plm.entity.ProjectInfoEntity;
-import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.SourceType;
@@ -102,6 +99,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
 
     @Autowired
     private BasicCategoryService basicCategoryService;
+
+    @Autowired
+    private ProductSaleService productSaleService;
 
     /**
      * 项目概述
@@ -584,6 +584,8 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                     projectStatusTimeService.saveOrUpdateProjectStatusTime(item.getId(), item.getProductId(), item.getProjectStatus());
                     productPlanService.updateProductPlanStatus(item.getProductId(), item.getProjectStatus(), MathUtil.TWO);
                 }
+                //修改产品开发状态
+                updateProductStateByProjectState(startProductIdList, ProductDetailStateEnum.DEVELOP_AFOOT.getCode());
             }
         }
 
@@ -610,6 +612,7 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                     //修改产品开发状态
                     List<String> productIds = projectInfoList.stream().map(ProjectInfoEntity::getProductId).collect(Collectors.toList());
                     productDetailService.updateProductStateByProductIdList(productIds, ProductDetailStateEnum.DEVELOP_AFOOT.getCode());
+
                 }
             }
 
@@ -617,6 +620,48 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         return result;
     }
 
+    /**
+     * 同步修改产品开发状态
+     *
+     * @param productInfoIds
+     * @param projectState
+     * @return void
+     * @Author Luo_WG
+     * @Date 2023/6/15 15:32
+     **/
+    private void updateProductStateByProjectState(List<String> productInfoIds, Integer projectState) {
+        if (Objects.isNull(projectState)) {
+            return;
+        }
+        switch (ProjectStateEnum.getEnum(projectState)) {
+            case YES_START:
+                //如果状态为已启动，更新产品信息{产品开发状态}：开发中
+                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DEVELOP_AFOOT.getCode());
+                break;
+            case ING:
+                //如果状态为进行中，更新产品信息{产品开发状态}：开发中
+                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DEVELOP_AFOOT.getCode());
+                break;
+            case FINISH:
+                //如果状态改为已完成，更新产品信息{产品开发状态}：开发完成；
+                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DEVELOP_FINISH.getCode());
+                List<ProductDetailEntity> detailEntityList = productDetailService.listSkuByProductIds(productInfoIds);
+                //{销售状态}更新为是
+                List<String> detailIds = detailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+                productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, Boolean.TRUE).in(ProductSaleEntity::getSkuId, detailIds).update();
+                break;
+            case TERMINATE:
+                //如果状态改为已中止，更新产品信息{产品开发状态}：中止开发；
+                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode());
+                break;
+            case SUSPEND:
+                //如果状态改为暂停，更新产品信息{产品开发状态}：暂停；
+                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.SUSPEND_DEVELOP.getCode());
+                break;
+            default:
+                break;
+        }
+    }
 
     /**
      * 暂停项目
