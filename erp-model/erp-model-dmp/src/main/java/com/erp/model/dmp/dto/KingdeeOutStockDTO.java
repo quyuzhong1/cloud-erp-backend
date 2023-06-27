@@ -14,8 +14,7 @@ public class KingdeeOutStockDTO {
     @Panno(findType = PannoEnum.EQ,field = "fSoorDerno")
     private String soorDerno;
 
-    public KingdeeOutStockDTO(String fBillNo, String fSoorDerno) {
+    public KingdeeOutStockDTO(String fBillNo) {
         this.billNo = fBillNo;
-        this.soorDerno = fSoorDerno;
     }
 }

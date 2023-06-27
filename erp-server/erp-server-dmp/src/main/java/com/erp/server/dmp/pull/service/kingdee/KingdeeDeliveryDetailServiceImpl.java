@@ -70,8 +70,8 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         List<KingdeeDeliveryDetailEntity> insertList = new ArrayList<>();
         List<KingdeeDeliveryDetailEntity> pushToMqList = new ArrayList<>();
         for (KingdeeDeliveryDetailEntity entity : entityList) {
-            KingdeeOutStockDTO outStockDTO = new KingdeeOutStockDTO(entity.getFBillNo(), entity.getFSoorDerno());
             //从mongo里面查询
+            KingdeeOutStockDTO outStockDTO = new KingdeeOutStockDTO(entity.getFBillNo());
             List<KingdeeDeliveryDetailEntity> mongoData = mongoService.findMongoData(outStockDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_DELIVERY_DETAIL, KingdeeDeliveryDetailEntity.class);
             entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
             entity.setDownloadTime(LocalDateTime.now());
@@ -179,7 +179,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
                 "FCustomerID,FCustomerID.FName,FSaleDeptID.FName,FSalesManID,FSalesManID.FName,FReceiverID.FName," +
                 "FTransferBizType.FName,F_ulz_BaseProperty2,F_ulz_BaseProperty2.FNumber,FLinkPhone,FLinkMan,FBussinessType,FDocumentStatus," +
                 "FNote,FReceiveAddress,FCreatorId.FName,FCreateDate,FModifierId.FName,FModifyDate,FApproverID.FName," +
-                "FApproveDate,FCancelStatus,FGYDATE,FLogisticsNos,F_ulz_Text3,FSettleCurrID.FCode,FExchangeRate," +
+                "FApproveDate,FCancelStatus,FGYDATE,FLogisticsNos,F_ulz_Text3,FSettleCurrID.FCode,FExchangeRate,FISGENFORIOS," +
                 "FEntity_FENTRYID,FBillAllAmount,FBillAllAmount_LC,FAllAmount,FAllAmount_LC,FAmount_LC,FTaxAmount,FTaxAmount_LC,FBillTaxAmount,FEntryTaxAmount,"+
                 "FSrcBillNo,FCustMatName,F_ulz_BaseProperty1,FMaterialID,FMaterialID.FNumber,FMaterialID.FName," +
                 "FBarcode,FMateriaModel,FMateriaType,FRealQty,FUnitID.FName,FPrice,FIsFree,FArrivalStatus,FArrivalDate," +
@@ -208,9 +208,9 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
             // 金蝶发货单明细数据拆单
             Map<String, List<KingdeeDeliveryDetailItemEntity>> itemMap = result.stream().map(entity ->
                             BeanUtil.toBean(entity, KingdeeDeliveryDetailItemEntity.class)).distinct()
-                    .collect(Collectors.groupingBy(m -> StrUtil.format("{}_{}", m.getFBillNo(), m.getFSoorDerno())));
+                    .collect(Collectors.groupingBy(m ->  m.getFBillNo()));
             // 金蝶发货单主数据关联明细数据
-            entityList.stream().peek(m -> m.setKingdeeOutStockItemEntityList(itemMap.get(StrUtil.format("{}_{}", m.getFBillNo(), m.getFSoorDerno()))))
+            entityList.stream().peek(m -> m.setKingdeeOutStockItemEntityList(itemMap.get(m.getFBillNo())))
                     .collect(Collectors.toList());
             infoArrayList.addAll(entityList);
             pageIndex ++;
@@ -235,12 +235,19 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         ){
             return null;
         }
+        // 跳过 跨组织结算自动生成的单据
+        if (ObjectUtil.isNotEmpty(kingdeeOutStockEntity.getFIsGenForIos()) && kingdeeOutStockEntity.getFIsGenForIos()){
+            return null;
+        }
         DmpDeliveryDetailInfoEntity deliveryDetailInfoEntity = new DmpDeliveryDetailInfoEntity();
         //单据编号
         deliveryDetailInfoEntity.setBillNo(kingdeeOutStockEntity.getFBillNo());
         //订单编号
-        deliveryDetailInfoEntity.setOrderNo(kingdeeOutStockEntity.getFSoorDerno());
-        deliveryDetailInfoEntity.setPlatformOrderId(kingdeeOutStockEntity.getFSoorDerno());
+        List<KingdeeDeliveryDetailItemEntity> itemEntityList = kingdeeOutStockEntity.getKingdeeOutStockItemEntityList();
+        if (CollectionUtil.isNotEmpty(itemEntityList)) {
+            deliveryDetailInfoEntity.setOrderNo(itemEntityList.get(0).getFSrcBillNo());
+        }
+        deliveryDetailInfoEntity.setPlatformOrderId(kingdeeOutStockEntity.getFBillNo());
         //物流单号
         deliveryDetailInfoEntity.setLogisticsNo(kingdeeOutStockEntity.getFLogisticsNos());
         //客户名称
@@ -343,6 +350,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
             //商品id
             dmpReturnOrderItemEntity.setItemId(itemEntity.getFMaterialID());
             dmpReturnOrderItemEntity.setSaleOrderNo(itemEntity.getFSrcBillNo());
+            dmpReturnOrderItemEntity.setPlatformOrderId(itemEntity.getFSrcBillNo());
             //平台sku
             dmpReturnOrderItemEntity.setPlatformSku(itemEntity.getF_ulz_BaseProperty1());
             //商品sku编号

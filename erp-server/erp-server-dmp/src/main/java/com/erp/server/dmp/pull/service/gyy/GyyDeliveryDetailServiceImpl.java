@@ -122,29 +122,9 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(GyyDeliveryDetailEntity deliveryEntity) {
-
-        List<DmpDeliveryDetailInfoEntity> entityToMqlist = new ArrayList<>();
-        if (CollectionUtil.isEmpty(deliveryEntity.getDetails()) ||  1 == deliveryEntity.getDetails().size()) {
-            entityToMqlist.add(initOrderInfoEntity(deliveryEntity));
-        }else {
-            // 对应多个销售订单时进行拆单操作
-            Map<String, List<DeliveryDetailsBean>> tradeCodeItemMap = deliveryEntity.getDetails().stream()
-                    .collect(Collectors.groupingBy(DeliveryDetailsBean::getTradeCode));
-            if (1 == tradeCodeItemMap.keySet().size()) {
-                entityToMqlist.add(initOrderInfoEntity(deliveryEntity));
-            }else {
-                tradeCodeItemMap.keySet().forEach(tradeCode -> {
-                    List<DeliveryDetailsBean> itemList = tradeCodeItemMap.get(tradeCode);
-                    GyyDeliveryDetailEntity deliveryInfoEntity = new GyyDeliveryDetailEntity();
-                    BeanUtil.copyProperties(deliveryEntity, deliveryInfoEntity);
-                    deliveryInfoEntity.setDetails(itemList);
-                    entityToMqlist.add(initOrderInfoEntity(deliveryInfoEntity));
-                });
-            }
-        }
-
-        OrderMongoDTO updateDto = new OrderMongoDTO(deliveryEntity.get_id());
-        if(CollectionUtil.isEmpty(entityToMqlist)){
+        DmpDeliveryDetailInfoEntity deliveryDetailInfo = initOrderInfoEntity(deliveryEntity);
+        OrderMongoDTO updateDto = new OrderMongoDTO(gyyOrderEntity.get_id());
+        if(null == deliveryDetailInfo){
             deliveryEntity.setIsClean(CleanStatusEnum.CLEANED.getCode());
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(deliveryEntity), MapUtil.class);
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
@@ -153,13 +133,11 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
         MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(deliveryEntity), MapUtil.class);
         mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
         // 异步推送到MQ
-        List<DmpDeliveryDetailInfoEntity> collect = entityToMqlist.stream().peek(msg -> {
-            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_DELIVERY_ORDER_TAG.getName(),
-                    msg, StrUtil.format("{}_{}", msg.getBillNo(), msg.getOrderNo()));
-            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-            }
-        }).collect(Collectors.toList());
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_DELIVERY_ORDER_TAG.getName(),
+                deliveryDetailInfo, deliveryDetailInfo.getBillNo());
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+        }
     }
 
     @Override
@@ -339,8 +317,10 @@ public class GyyDeliveryDetailServiceImpl implements IReportSaveService<GyyDeliv
             dmpReturnOrderItemEntity.setStockName(gyyDeliveryDetailEntity.getWarehouseName());
             //库位
             dmpReturnOrderItemEntity.setWarehouseLocation(itemEntity.getLocationCode());
-            // 对应销售单号 管易
+            // 对应管易销售单号
             dmpReturnOrderItemEntity.setSaleOrderNo(itemEntity.getTradeCode());
+            // 对应平台销售单号
+            dmpReturnOrderItemEntity.setPlatformOrderId(itemEntity.getPlatformCode());
             orderItemList.add(dmpReturnOrderItemEntity);
         });
        return orderItemList;
