@@ -1,5 +1,7 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -11,9 +13,11 @@ import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.*;
+import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.SkuApproveConfigureEnum;
+import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -21,29 +25,32 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.AlgorithmUtil;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.MathUtil;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
 import com.erp.server.plm.service.*;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,6 +61,7 @@ import org.thymeleaf.util.ListUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -172,6 +180,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Autowired
     private ProductVariantPropertyService productVariantPropertyService;
 
+    @Autowired
+    private ProductCustomsService productCustomsService;
+
+    @Autowired
+    private MQProducerService mQProducerService;
+
+    @Autowired
+    private SupplierFeign supplierFeign;
+
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
     private String financial;
@@ -222,6 +239,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> sourceIds = list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
         List<String> changeIngSourceIds = productChangeService.getBySourceId(sourceIds);
 
+        List<String> mainSupplierIds = list.stream().map(ProductDetailShowDTO::getMainSupplier).distinct().collect(Collectors.toList());
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
+
         for (ProductDetailShowDTO item : list) {
             item.setStatusName(ProductDetailStatusEnum.getName(item.getStatus()));
             Boolean isChangeIng = changeIngSourceIds.contains(item.getId());
@@ -251,7 +271,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     equals(item.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getChargeName())).orElse("");
             item.setProjectChargeName(projectChargeName);
 
-
+            // 一级供应商名称
+            if(StrUtils.isNotEmpty(item.getMainSupplier()) && supplierMap.containsKey(item.getMainSupplier())) {
+                item.setMainSupplierName(supplierMap.get(item.getMainSupplier()).getName());
+            }
         }
 
         return new PagingVO(pageData);
@@ -292,6 +315,28 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productNoSpecDetailAllDTO.setProductCostShowDTOList(costShowDTOList);
         //产品采购信息查询列表
         List<ProductPurchaseShowDTO> purchaseShowDTOList = productPurchaseService.list(productId);
+        if(CollUtil.isNotEmpty(purchaseShowDTOList)) {
+            List<String> supplierIds = Lists.newArrayList();
+            purchaseShowDTOList.stream().forEach(r->{
+                if(StrUtils.isNotEmpty(r.getMainSupplier())) {
+                    supplierIds.add(r.getMainSupplier());
+                }
+                if(StrUtils.isNotEmpty(r.getSecondSupplier())) {
+                    supplierIds.add(r.getSecondSupplier());
+                }
+            });
+            if(CollUtil.isNotEmpty(supplierIds)) {
+                Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
+                purchaseShowDTOList.stream().forEach(r->{
+                    if(StrUtils.isNotEmpty(r.getMainSupplier()) && supplierMap.containsKey(r.getMainSupplier())) {
+                        r.setMainSupplierName(supplierMap.get(r.getMainSupplier()).getName());
+                    }
+                    if(StrUtils.isNotEmpty(r.getSecondSupplier()) && supplierMap.containsKey(r.getSecondSupplier())) {
+                        r.setSecondSupplierName(supplierMap.get(r.getSecondSupplier()).getName());
+                    }
+                });
+            }
+        }
         productNoSpecDetailAllDTO.setProductPurchaseShowDTOList(purchaseShowDTOList);
         //产品采购备注信息查询列表
         List<ProductPurchaseRemarkEntity> remarkEntityList = productPurchaseRemarkService.list(productId);
@@ -339,6 +384,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             attestation.setSkuImagesUrl(skuImagesUrl);
         }
         productNoSpecDetailAllDTO.setProductAttestationList(productAttestationList);
+
+        //查询目的国海关编码
+        List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(productId);
+        productNoSpecDetailAllDTO.setProductCustomsList(productCustomsEntityList);
         return productNoSpecDetailAllDTO;
     }
 
@@ -395,6 +444,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //产品采购信息查询列表
         List<ProductPurchaseShowDTO> purchaseShowDTOList = productPurchaseService.list(productId);
         List<FindUserDTO> userList = sysUserFeign.getUserList();
+
+        List<String> supplierIds = Lists.newArrayList();
+        List<String> mainSupplierIds = purchaseShowDTOList.stream().map(ProductPurchaseShowDTO::getMainSupplier).distinct().collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(mainSupplierIds)) {
+            supplierIds.addAll(mainSupplierIds);
+        }
+        List<String> secondSupplierIds = purchaseShowDTOList.stream().map(ProductPurchaseShowDTO::getSecondSupplier).distinct().collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(secondSupplierIds)) {
+            supplierIds.addAll(secondSupplierIds);
+        }
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
+
         purchaseShowDTOList.forEach(req -> {
             FindUserDTO findUserDTO = userList.stream().filter(user -> user.getUserId().equals(req.getPurchaseUserId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(findUserDTO)) {
@@ -405,6 +466,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //采购信息 禁用字段
             List<String> purchaseDisableFields = getByFileldFlag(ProductManyDetailConstant.PRODUCT_PURCHASE_SHOW_LIST, skuFiledConfigList);
             req.setDisableFieldList(purchaseDisableFields);
+
+            if(StrUtils.isNotEmpty(req.getMainSupplier()) && supplierMap.containsKey(req.getMainSupplier())) {
+                req.setMainSupplierName(supplierMap.get(req.getMainSupplier()).getName());
+            }
+            if(StrUtils.isNotEmpty(req.getSecondSupplier()) && supplierMap.containsKey(req.getSecondSupplier())) {
+                req.setSecondSupplierName(supplierMap.get(req.getSecondSupplier()).getName());
+            }
 
         });
 
@@ -494,6 +562,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             attestation.setSkuImagesUrl(skuImagesUrl);
         }
         productManyDetail.setProductAttestationList(productAttestationList);
+
+        //查询目的国海关编码
+        List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(productId);
+        productManyDetail.setProductCustomsList(productCustomsEntityList);
         return productManyDetail;
     }
 
@@ -562,6 +634,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         detailEntity.setIsChange(IsConstant.NO);
         productUnitService.setupOccupy(Arrays.asList(detailEntity.getUnitId()));
         this.saveOrUpdate(detailEntity);
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(detailEntity), IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(detailEntity), IdUtil.simpleUUID());
+
         return detailEntity.getId();
     }
 
@@ -580,6 +657,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         });
         List<String> unitList = list.stream().map(ProductDetailEntity::getUnitId).collect(Collectors.toList());
         productUnitService.setupOccupy(unitList);
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), list, IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), list, IdUtil.simpleUUID());
+
         return this.saveOrUpdateBatch(list);
     }
 
@@ -603,9 +685,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         //如果是修改允许保留原来的产品名称不变
-        if (this.checkName(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getName(), productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getId())) {
+  /*      if (this.checkName(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getName(), productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95007);
-        }
+        }*/
         ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
         productSpuBaseInfoDTO.setSpecType(1);
         //产品等级
@@ -648,6 +730,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             isAdd = true;
         }
         String skuId = this.saveOrUpdate(productSkuBaseInfoDTO);
+
         //SKU新增操作日志
         if (isAdd) {
             sysLogService.addSysLogBySave("生成了一个SKU：[" + productSkuBaseInfoDTO.getSkuNo() + "]", SKUCLASSPATH, skuId, id);
@@ -664,6 +747,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //4.修改/新增 采购信息
         if (ObjectUtils.isNotEmpty(productNoSpecDTO.getProductPurchaseDTO())) {
+            // 验证一级供应商和二级供应商是否正确
+            List<String> supplierIds = Lists.newArrayList();
+            String mainSupplier = productNoSpecDTO.getProductPurchaseDTO().getMainSupplier();
+            String secondSupplier = productNoSpecDTO.getProductPurchaseDTO().getSecondSupplier();
+            if(StrUtils.isNotEmpty(mainSupplier)) {
+                supplierIds.add(mainSupplier);
+            }
+            if(StrUtils.isNotEmpty(secondSupplier)) {
+                supplierIds.add(secondSupplier);
+            }
+            if(CollUtil.isNotEmpty(supplierIds)) {
+                Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(supplierIds);
+                if(StrUtils.isNotEmpty(mainSupplier) && !supplierMap.containsKey(mainSupplier)) {
+                    throw new ServiceException("sku采购信息一级供应商不存在");
+                }
+                if(StrUtils.isNotEmpty(secondSupplier) && !supplierMap.containsKey(secondSupplier)) {
+                    throw new ServiceException("sku采购信息二级供应商不存在");
+                }
+            }
             ProductPurchaseDTO productPurchaseDTO = productNoSpecDTO.getProductPurchaseDTO();
             productPurchaseDTO.setSkuId(skuId);
             //SKU操作日志
@@ -746,6 +848,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productAttestationService.saveOrUpdateBatchAttestation(productAttestationList);
         }
 
+        //11.修改/新增  目的国海关编码信息
+        List<ProductCustomsDTO> productCustomsDTO = productNoSpecDTO.getProductCustomsList();
+        if (CollectionUtils.isNotEmpty(productCustomsDTO)) {
+            List<ProductCustomsEntity> customsEntityList = new ArrayList<>();
+            for (ProductCustomsDTO customsDTO : productCustomsDTO) {
+                ProductCustomsEntity customsEntity = new ProductCustomsEntity();
+                BeanMapper.copy(customsDTO, customsEntity);
+                customsEntityList.add(customsEntity);
+            }
+            productCustomsService.saveOrUpdateBatch(customsEntityList);
+        }
         return true;
     }
 
@@ -766,9 +879,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         //如果是修改允许保留原来的产品名称不变
-        if (this.checkName(productManySpecDTO.getProductInfoDTO().getName(), productManySpecDTO.getProductInfoDTO().getId())) {
+/*        if (this.checkName(productManySpecDTO.getProductInfoDTO().getName(), productManySpecDTO.getProductInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95007);
-        }
+        }*/
         List<ProductDetailDTO> productDetailList = productManySpecDTO.getProductDetailList();
         //检查sku是否重复
         for (int i = 0; i < productDetailList.size(); i++) {
@@ -808,6 +921,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 addProductDetailLog(obj, oldEntity, obj.getId(), productInfoDTO.getId());
             });
             this.saveOrUpdateBatch(productManySpecDTO.getProductDetailList());
+
         }
 
         //3.修改/新增 成本信息
@@ -884,7 +998,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productAttestationService.saveOrUpdateBatchAttestation(productAttestationList);
         }
 
-
+        //11.修改/新增  目的国海关编码信息
+        List<ProductCustomsDTO> productCustomsDTO = productManySpecDTO.getProductCustomsList();
+        if (CollectionUtils.isNotEmpty(productCustomsDTO)) {
+            List<ProductCustomsEntity> customsEntityList = new ArrayList<>();
+            for (ProductCustomsDTO customsDTO : productCustomsDTO) {
+                ProductCustomsEntity customsEntity = new ProductCustomsEntity();
+                BeanMapper.copy(customsDTO, customsEntity);
+                customsEntityList.add(customsEntity);
+            }
+            productCustomsService.saveOrUpdateBatch(customsEntityList);
+        }
         return true;
     }
 
@@ -1006,9 +1130,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         //如果是修改允许保留原来的产品名称不变
-        if (this.checkName(variantAutoAddDTO.getProductSpuBaseInfoDTO().getName(), variantAutoAddDTO.getProductSpuBaseInfoDTO().getId())) {
+/*        if (this.checkName(variantAutoAddDTO.getProductSpuBaseInfoDTO().getName(), variantAutoAddDTO.getProductSpuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95007);
-        }
+        }*/
         ProductInfoDTO productSpuBaseInfoDTO = variantAutoAddDTO.getProductSpuBaseInfoDTO();
         productSpuBaseInfoDTO.setSpecType(2);
         //产品等级
@@ -1071,6 +1195,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productDetailEntity.setVariantProperty(req);
             productDetailEntity.setProductId(id);
             productDetailEntity.setName(variantAutoAddDTO.getProductSpuBaseInfoDTO().getName());
+            productDetailEntity.setNameEn(variantAutoAddDTO.getProductSpuBaseInfoDTO().getNameEn());
             //获取颜色
             List<String> split = Arrays.asList(req.split(","));
             //查询变体信息
@@ -1101,6 +1226,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         boolean bool = this.saveBatch(list);
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), list, IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), list, IdUtil.simpleUUID());
+
         if (!bool) {
             throw new ServiceException(1, "新增sku明细失败！");
         }
@@ -1164,6 +1294,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productCostService.removeCost(idList);
         //7.删除任务关联sku 信息
         taskRefSkuConfigService.removeTaskRefSku(idList);
+        //7.删除目的国海关编码
+        productCustomsService.removeBySkuId(idList);
         //8.删除sku信息
         LambdaQueryWrapper<ProductDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductDetailEntity::getId, skuId);
@@ -1173,6 +1305,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<ProductDetailEntity> skuListByProductId = this.getSkuListByProductId(productDetailEntity.getProductId());
             if (ObjectUtils.isNotEmpty(productInfoEntity)) {
                 if (skuListByProductId.size() == 1 && productInfoEntity.getIsFinishedProductDev() == null) {
+                    ProductInfoEntity infoEntity = productInfoService.getById(productInfoEntity.getId());
+                    infoEntity.setIsDeleted(Boolean.TRUE);
+                    //同步到SCM
+                    mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), infoEntity, IdUtil.simpleUUID());
+                    //同步到WMS
+                    mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), infoEntity, IdUtil.simpleUUID());
+
                     productInfoService.removeById(productInfoEntity.getId());
                 }
                 //添加操作日志
@@ -1180,6 +1319,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 sysLogService.addSysLogByOther(sysLogEntity);
             }
         }
+        ProductDetailEntity entity = lambdaQuery().eq(ProductDetailEntity::getId, skuId).one();
+        entity.setIsDeleted(Boolean.TRUE);
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+
         return this.remove(queryWrapper);
     }
 
@@ -1213,6 +1359,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productPurchaseService.removePurchase(skuIds);
         //6.删除成本信息
         productCostService.removeCost(skuIds);
+        //7.删除目的国海关编码
+        productCustomsService.removeBySkuId(skuIds);
+        ProductDetailEntity entity = lambdaQuery().eq(ProductDetailEntity::getId, id).one();
+        entity.setIsDeleted(Boolean.TRUE);
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+
         return this.remove(queryWrapper);
     }
 
@@ -1280,7 +1435,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public Boolean checkSpuNo(String spuNo, String id) {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.in(ProductInfoEntity::getSpuNo, spuNo);
-        queryWrapper.eq(ProductInfoEntity::getDeleteState, IsConstant.NO);
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(ProductInfoEntity::getId, id);
         }
@@ -1303,7 +1457,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public Boolean checkName(String name, String id) {
         LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(ProductInfoEntity::getName, name);
-        queryWrapper.eq(ProductInfoEntity::getDeleteState, IsConstant.NO);
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(ProductInfoEntity::getId, id);
         }
@@ -1468,6 +1621,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<ProductDetailExcelDTO> list = productDetailMapper.getExportSkuExcel(productSkuExcelDTO);
         list.forEach(req -> {
+            List<BasicCategoryEntity> categoryList = basicCategoryService.listParentEntity(req.getCategoryId());
+            //一级品类
+            BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(bestEntity)) {
+                req.setMainCategory(bestEntity.getName());
+                //二级品类
+                BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> bestEntity.getId().equals(obj.getPid())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(secondEntity)) {
+                    req.setSecondaryCategory(secondEntity.getName());
+                }
+            }
+
             //销售状态编码转换成中文
             req.setProductStateName(ProductDetailStateEnum.getNameByCode(Integer.valueOf(req.getProductStateName())));
             if (StringUtils.isNotBlank(req.getSaleState())) {
@@ -1661,6 +1826,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
                 .setOperation("状态变更").setContent("审核SKU[" + entity.getSkuNo() + "],操作[" + statusName + "]为[" + ProductDetailStatusEnum.APPROVAL_PASS.getName() + "]"));
 
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
 
         return this.updateById(entity);
     }
@@ -1686,6 +1855,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         updateWrapper.set(ProductDetailEntity::getUpdateUserName, loginUser.getUserName());
         updateWrapper.eq(ProductDetailEntity::getId, id);
         boolean flag = this.update(updateWrapper);
+        ProductDetailEntity detailEntity = this.getById(id);
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(detailEntity), IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(detailEntity), IdUtil.simpleUUID());
+
         if (flag) {
             //新增操作日志
             sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
@@ -1713,6 +1888,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         entity.setStatus(ProductDetailStatusEnum.APPROVAL_ING.getCode());
         //反审核后更新是否申请变更
         entity.setIsChange(IsConstant.NO);
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(entity.getProductId())
                 .setBusinessId(entity.getId()).setOperation("状态变更").setContent("反审核SKU[" + entity.getSkuNo() + "],操作[" + statusName + "]为[" + ProductDetailStatusEnum.APPROVAL_ING.getName() + "]"));
@@ -1735,6 +1915,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setBusinessId(entity.getId()).setPid(entity.getProductId())
                 .setOperation("重启审核流程").setContent("SKU[" + entity.getSkuNo() + "]重启审核流程"));
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+
         //反审核后用新的流程审核人员审核
         return this.updateById(entity);
     }
@@ -1802,6 +1987,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         updateWrapper.eq(ProductDetailEntity::getProductId, productId);
         updateWrapper.set(ProductDetailEntity::getProductState, state);
         this.update(updateWrapper);
+        ProductDetailEntity detailEntity = lambdaQuery().eq(ProductDetailEntity::getProductId, productId).one();
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(detailEntity), IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(detailEntity), IdUtil.simpleUUID());
+
     }
 
     @Override
@@ -1833,9 +2024,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     List<String> configTaskIds = hasConfigList.stream().map(TaskRefSkuConfigEntity::getTaskId).collect(Collectors.toList());
 
                     //验证关联任务是否已全部完成
-                    long relatedCount = taskAllList.stream().filter(obj -> !RelatedSkuTypeEnum.NOT_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId()) ).count();
-                    if (relatedCount > 0) {
-                        throw new ServiceException(ApiError.ERROR_95083);
+                    List<ProjectTaskEntity> relatedTaskList = taskAllList.stream().filter(obj -> !RelatedSkuTypeEnum.NOT_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId())).collect(Collectors.toList());
+                    if (relatedTaskList.size()>0) {
+                        String warning = ApiError.ERROR_801.msg;
+                        String taskNames=relatedTaskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
+                        String warningMsg = String.format(warning, taskNames);
+                        throw new ServiceException(ApiError.ERROR_801.code, warningMsg);
+
                     }
                 }
             }
@@ -1843,6 +2038,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //启动流程
 //        productDetailStartProcess(productDetailEntity);
         productDetailEntity.setStatus(ProductDetailStatusEnum.APPROVAL_ING.getCode());
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(productDetailEntity), IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(productDetailEntity), IdUtil.simpleUUID());
+
         return this.updateById(productDetailEntity);
     }
 
@@ -1865,6 +2065,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productDetailEntity.setProcessId("");
         //更新审核状态
         productDetailEntity.setStatus(ProductDetailStatusEnum.WAIT_COMMIT.getCode());
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(productDetailEntity), IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(productDetailEntity), IdUtil.simpleUUID());
+
         return this.updateById(productDetailEntity);
     }
 
@@ -1901,7 +2106,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> chargIds = Arrays.stream(obj.getChargeId().split(",")).collect(Collectors.toList());
             Boolean flag = false;
             List<String> chargIdList = new ArrayList<>();
-            for (String chargeName: chargeNames) {
+            for (String chargeName : chargeNames) {
                 String chargId = userList.stream().filter(e -> e.getUserName().equals(chargeName)).map(FindUserDTO::getUserId).findFirst().orElse("");
                 if (!chargIds.contains(chargId)) {
                     flag = true;
@@ -1910,13 +2115,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             if (flag) {
                 if (CollectionUtils.isNotEmpty(chargIdList)) {
-                    obj.setChargeId(String.join(",",chargIdList));
+                    obj.setChargeId(String.join(",", chargIdList));
                 }
                 resultList.add(obj);
             }
         });
         if (CollectionUtils.isNotEmpty(resultList)) {
             this.updateBatchById(resultList);
+            //同步到SCM
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), resultList, IdUtil.simpleUUID());
+            //同步到WMS
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), resultList, IdUtil.simpleUUID());
+
         }
 
     }
@@ -1933,13 +2143,20 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId) {
-        return this.lambdaUpdate()
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId) {
+        Boolean flag =  this.lambdaUpdate()
                 .eq(ProductDetailEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),ProductDetailEntity::getSyncKingdeeStatus, syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),ProductDetailEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId),ProductDetailEntity::getSyncKingdeeId,syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), ProductDetailEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), ProductDetailEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), ProductDetailEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
+        ProductDetailEntity byId = this.getById(id);
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(byId), IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(byId), IdUtil.simpleUUID());
+
+        return flag;
     }
 
 
@@ -1956,13 +2173,27 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isEmpty(skuIds)) {
             return Collections.emptyList();
         }
-        return baseMapper.getSkuInfoBySkuIds(skuIds);
+        List<SkuVO> skuList = baseMapper.getSkuInfoBySkuIds(skuIds);
+        if(CollUtil.isNotEmpty(skuList)) {
+            List<ProductPackEntity> productPackList = productPackService.findBySkuIds(skuIds);
+            Map<String, List<ProductPackEntity>> productPackMap = Maps.newHashMap();
+            if(CollUtil.isNotEmpty(productPackList)) {
+                productPackMap = productPackList.stream().collect(Collectors.groupingBy(ProductPackEntity::getSkuId));
+            }
+            for(SkuVO skuVO : skuList) {
+                if(productPackMap.containsKey(skuVO.getSkuId()) && CollUtil.isNotEmpty(productPackMap.get(skuVO.getSkuId())) ) {
+                    ProductPackEntity packEntity = productPackMap.get(skuVO.getSkuId()).get(0);
+                    skuVO.setUnitQty(Objects.nonNull(packEntity.getBoxQty()) ? packEntity.getBoxQty().intValue() : null);
+                }
+            }
+        }
+        return skuList;
 
     }
 
     @Override
     public List<SkuVO> searchSkuInfo(ProductDetailDTO.SearchDTO dto) {
-        return baseMapper.searchSku(dto.getSearchKeyword(),dto.getStatus());
+        return baseMapper.searchSku(dto.getSearchKeyword(), dto.getStatus());
     }
 
 
@@ -2199,6 +2430,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (detailEntity != null) {
             detailEntity.setSyncKingdeeStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
             this.updateById(detailEntity);
+            //同步到SCM
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(detailEntity), IdUtil.simpleUUID());
+            //同步到WMS
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(detailEntity), IdUtil.simpleUUID());
+
         }
         //3.修改/新增 成本信息
         ProductCostShowDTO costShowDTO = skuDTO.getProductCostShowDTO();
@@ -2364,7 +2600,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         updateWrapper.set(ProductDetailEntity::getUpdateUserId, userId);
         updateWrapper.set(ProductDetailEntity::getUpdateUserName, userName);
         updateWrapper.eq(ProductDetailEntity::getId, id);
-        return this.update(updateWrapper);
+        Boolean flag = this.update(updateWrapper);
+        ProductDetailEntity entity = this.getById(id);
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+
+        return flag;
     }
 
 
@@ -2601,14 +2844,54 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     /**
      * 获取所有明细信息包括删除，用来同步到DMP
+     *
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      * @Author Luo_WG
      * @Date 2023/4/19 16:12
-     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      **/
     public List<ProductDetailEntity> getProductDetailAll() {
         return baseMapper.getProductDetailAll();
     }
 
+    /**
+     * 更改产品状态
+     *
+     * @param productIds
+     * @param
+     * @return void
+     * @author yl
+     * @date 2023-06-14 11:12
+     */
+    @Override
+    public void updateProductStateByProductIdList(List<String> productIds, Integer productState) {
+        if (CollectionUtils.isNotEmpty(productIds)) {
+            this.lambdaUpdate().in(ProductDetailEntity::getProductId, productIds).
+                    set(ProductDetailEntity::getProductState, productState).update();
+            //同步到SCM
+            List<ProductDetailEntity> list = lambdaQuery().in(ProductDetailEntity::getProductId, productIds).list();
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), list, IdUtil.simpleUUID());
+            //同步到WMS
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), list, IdUtil.simpleUUID());
+
+        }
+    }
+
+
+    /**
+     * 根据产品id 集合获取数据
+     *
+     * @param productIdList
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     * @author yl
+     * @date 2023-06-14 18:33
+     */
+    @Override
+    public List<ProductDetailEntity> listSkuByProductIds(List<String> productIdList) {
+        if (CollectionUtils.isEmpty(productIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(ProductDetailEntity::getProductId,productIdList).list();
+    }
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean submit(List<String> ids) {
@@ -2620,7 +2903,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //待提交、审核不通过才可以提交
         long count = entityList.stream().filter(entity ->
                 entity.getStatus().equals(ProductDetailStatusEnum.WAIT_COMMIT.getCode())
-                || entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode())
+                        || entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode())
         ).count();
 
         if (count != entityList.size()) {
@@ -2643,18 +2926,27 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 if (CollectionUtils.isNotEmpty(hasConfigList)) {
                     List<String> configTaskIds = hasConfigList.stream().map(TaskRefSkuConfigEntity::getTaskId).collect(Collectors.toList());
                     //验证关联任务是否已全部完成
-                    long relatedCount = taskAllList.stream().filter(obj -> !RelatedSkuTypeEnum.NOT_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId())).count();
-                    if (relatedCount > 0) {
-                        throw new ServiceException(ApiError.ERROR_95083);
+                    List<ProjectTaskEntity> relatedTaskList = taskAllList.stream().filter(obj -> !RelatedSkuTypeEnum.NOT_RELATED.getCode().equals(obj.getRelatedSkuType()) && !TaskStateEnum.FINISH.getCode().equals(obj.getStatus()) && configTaskIds.contains(obj.getId())).collect(Collectors.toList());
+                    if (relatedTaskList.size() > 0) {
+                        String warning = ApiError.ERROR_801.msg;
+                        String taskNames=relatedTaskList.stream().map(ProjectTaskEntity::getName).collect(Collectors.joining(","));
+                        String warningMsg = String.format(warning, taskNames);
+                        throw new ServiceException(ApiError.ERROR_801.code, warningMsg);
                     }
                 }
             }
         }
-        //启动流程
-//        productDetailStartProcess(productDetailEntity);
-        return lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.APPROVAL_ING.getCode())
+        boolean flag = lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.APPROVAL_ING.getCode())
                 .in(ProductDetailEntity::getId, ids)
                 .update();
+        List<ProductDetailEntity> syncDateList = this.listByIds(ids);
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
+        //启动流程
+//        productDetailStartProcess(productDetailEntity);
+        return flag;
     }
 
     @Override
@@ -2668,7 +2960,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //判断是否是审核中的状态
         long count = deliveryNoticeEntityList.stream().filter(entity ->
                 entity.getStatus().equals(ProductDetailStatusEnum.WAIT_CONFIRM.getCode())
-                || entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_ING.getCode())
+                        || entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_ING.getCode())
         ).count();
 
         if (count != deliveryNoticeEntityList.size()) {
@@ -2704,11 +2996,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             });
             productDetailCommentService.saveBatch(commentEntityList);
         }
-        return lambdaUpdate().set(ProductDetailEntity::getStatus, approveStatus)
+        boolean flag = lambdaUpdate().set(ProductDetailEntity::getStatus, approveStatus)
                 .set(ProductDetailEntity::getUpdateUserId, userInfo.getUid())
                 .set(ProductDetailEntity::getUpdateUserName, userInfo.getUserName())
                 .in(ProductDetailEntity::getId, ids)
                 .update();
+        List<ProductDetailEntity> syncDateList = this.listByIds(ids);
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
+        return flag;
     }
 
 
@@ -2732,10 +3030,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     .setBusinessId(obj.getId()).setOperation("状态变更").setContent("反审核SKU[" + obj.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_ING.getName() + "]"));
         });
         //修改状态为审核中
-        return lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.APPROVAL_ING.getCode())
+        boolean flag = lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.APPROVAL_ING.getCode())
                 .in(ProductDetailEntity::getIsChange, IsConstant.NO)
                 .in(ProductDetailEntity::getId, ids)
                 .update();
+        List<ProductDetailEntity> syncDateList = this.listByIds(ids);
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
+        return flag;
     }
 
     @Override
@@ -2759,11 +3063,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(obj.getProductId())
                     .setBusinessId(obj.getId()).setOperation("状态变更").setContent("取消流程SKU[" + obj.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.WAIT_CONFIRM.getName() + "]"));
         });
-        //修改状态为待提交
-        return lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.WAIT_CONFIRM.getCode())
-                        .set(ProductDetailEntity::getProcessId, "")
-                        .in(ProductDetailEntity::getId, ids)
-                        .update();
+        boolean flag = lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.WAIT_CONFIRM.getCode())
+                .set(ProductDetailEntity::getProcessId, "")
+                .in(ProductDetailEntity::getId, ids)
+                .update();
+        List<ProductDetailEntity> syncDateList = this.listByIds(ids);
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), syncDateList, IdUtil.simpleUUID());
+        return flag;
     }
 
     @Override
@@ -2794,6 +3103,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<ProductDetailEntity> skuListByProductId = this.getSkuListByProductId(productDetailEntity.getProductId());
             if (ObjectUtils.isNotEmpty(productInfoEntity)) {
                 if (skuListByProductId.size() == 1 && productInfoEntity.getIsFinishedProductDev() == null) {
+                    ProductInfoEntity infoEntity = productInfoService.getById(productInfoEntity.getId());
+                    infoEntity.setIsDeleted(Boolean.TRUE);
+                    //同步到SCM
+                    mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), infoEntity, IdUtil.simpleUUID());
+                    //同步到WMS
+                    mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), infoEntity, IdUtil.simpleUUID());
+
                     productInfoService.removeById(productInfoEntity.getId());
                 }
                 //添加操作日志
@@ -2801,6 +3117,77 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 sysLogService.addSysLogByOther(sysLogEntity);
             }
         }
+        List<ProductDetailEntity> detailEntityList = this.listByIds(ids);
+        detailEntityList.forEach(req -> req.setIsDeleted(Boolean.TRUE));
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), detailEntityList, IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), detailEntityList, IdUtil.simpleUUID());
+
         return this.remove(queryWrapper);
     }
+
+    @Override
+    public Boolean updateBatchFiled(ProductDetailBatchUpdateDTO dto) {
+        List<ProductDetailEntity> entityList = this.listByIds(dto.getIds());
+        if (CollectionUtils.isEmpty(entityList)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+
+        List<ProductDetailEntity> detailApprovalList = entityList.stream().filter(req -> ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(req.getStatus())).collect(Collectors.toList());
+        //审核通过后支持批量更新【销售状态】【是否可销售】【产品开发状态】
+        long count = entityList.stream().filter(entity ->
+                entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())
+                        && (ProductBatchFieldEnum.SALE_STATE.getCode().equals(dto.getUpdateFiledCode())
+                        || ProductBatchFieldEnum.IS_MARKETABLE.getCode().equals(dto.getUpdateFiledCode())
+                        || ProductBatchFieldEnum.SALE_STATE.getCode().equals(dto.getUpdateFiledCode()))
+        ).count();
+
+        if (count != detailApprovalList.size()) {
+            throw new ServiceException(ApiError.ERROR_95176);
+        }
+        Boolean flag = Boolean.FALSE;
+        //如果是产品经理需要查询name
+        if (ProductBatchFieldEnum.CHARGE_ID.getCode().equals(dto.getUpdateFiledCode())) {
+            if (ObjectUtils.isEmpty(dto.getValues())) {
+                throw new ServiceException(ApiError.ERROR_9030);
+            }
+            List<ProductDetailEntity> detailEntityList = this.listByIds(dto.getIds());
+            List<String> productIds = detailEntityList.stream().map(ProductDetailEntity::getProductId).distinct().collect(Collectors.toList());
+            String chargeName = commonService.getNameByIds(Arrays.asList(dto.getValues().toString().split(",")));
+            flag = productInfoService.lambdaUpdate()
+                    .set(ProductInfoEntity::getCategoryId, dto.getValues())
+                    .set(ProductInfoEntity::getCategory, chargeName).in(ProductInfoEntity::getId, productIds)
+                    .update();
+            List<ProductInfoEntity> productInfoEntities = productInfoService.listByIds(productIds);
+            //同步到SCM
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), productInfoEntities, IdUtil.simpleUUID());
+            //同步到WMS
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), productInfoEntities, IdUtil.simpleUUID());
+
+        } else {
+            if (ProductBatchFieldEnum.DECLARE_PRICE.getCode().equals(dto.getUpdateFiledCode())) {
+                dto.setValues(BigDecimal.valueOf(Double.valueOf(dto.getValues().toString())));
+            }
+            if (ProductBatchFieldEnum.SALE_STATE.getCode().equals(dto.getUpdateFiledCode())) {
+                dto.setValues(Integer.valueOf(dto.getValues().toString()));
+            }
+            ProductBatchFieldEnum enumByCode = ProductBatchFieldEnum.getEnumByCode(dto.getUpdateFiledCode());
+            flag = baseMapper.updateFiledBatch(dto.getIds(), enumByCode.getTableName(), dto.getUpdateFiledCode(), dto.getValues(), enumByCode.getKeyName());
+        }
+        List<ProductDetailEntity> list = lambdaQuery().in(ProductDetailEntity::getIsDeleted, dto.getIds()).list();
+        //同步到SCM
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), list, IdUtil.simpleUUID());
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), list, IdUtil.simpleUUID());
+
+        return flag;
+    }
+
+    @Override
+    public Boolean updateOccupyStatus(List<String> skuIds) {
+        return lambdaUpdate().set(ProductDetailEntity::getOccupyStatus, Boolean.TRUE).in(ProductDetailEntity::getId, skuIds).update();
+    }
+
+
 }

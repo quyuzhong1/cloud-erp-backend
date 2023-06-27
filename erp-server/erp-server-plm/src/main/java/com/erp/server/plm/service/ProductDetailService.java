@@ -447,6 +447,16 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     List<ProductDetailEntity> getProductDetailAll();
 
     /**
+     * 更改产品状态
+     * @author yl
+     * @date 2023-06-14 11:12
+     * @param productIds
+     * @param code
+     * @return void
+     */
+    void updateProductStateByProductIdList(List<String> productIds, Integer code);
+
+    /**
      * 提交
      * @Author Luo_WG
      * @Date 2023/6/14 15:36
@@ -490,4 +500,33 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return java.lang.Boolean
      **/
     Boolean deleteBatch(List<String> ids);
+
+
+    /**
+     * 根据产品id 集合获取数据
+     * @author yl
+     * @date 2023-06-14 18:33
+     * @param productIdList
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     */
+    List<ProductDetailEntity> listSkuByProductIds(List<String> productIdList);
+
+    /**
+     * 批量更新字段
+     * @Author Luo_WG
+     * @Date 2023/6/15 11:32
+     * @param dto dto
+     * @return java.lang.Boolean
+     **/
+    Boolean updateBatchFiled(ProductDetailBatchUpdateDTO dto);
+
+    /**
+     * 更新不可删除标识
+     * @Author Luo_WG
+     * @Date 2023/6/15 11:32
+     * @param skuIds skuIds
+     * @return java.lang.Boolean
+     **/
+    Boolean updateOccupyStatus(List<String> skuIds);
+
 }
