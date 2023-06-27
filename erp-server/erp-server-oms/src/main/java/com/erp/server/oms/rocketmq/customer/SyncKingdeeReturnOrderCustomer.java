@@ -23,7 +23,7 @@ import java.util.Map;
 @Service
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_TO_OMS_SALES_TOPIC, selectorExpression = "sync_kingdee_return_order_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_RETURN_ORDER_TO_OMS)
-public class ProductListingTimeCustomer implements RocketMQListener<List<KingdeeReturnOrderEntity>> {
+public class SyncKingdeeReturnOrderCustomer implements RocketMQListener<List<KingdeeReturnOrderEntity>> {
 
     @Resource
     private SoReturnService soReturnService;
