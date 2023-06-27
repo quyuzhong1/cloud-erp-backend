@@ -23,7 +23,7 @@
         SELECT
         pc.id,
         pd.id AS skuId,
-        pd.images_url
+        pd.images_url,
         pd.sku_no,
         pc.country,
         pc.customs_code,
