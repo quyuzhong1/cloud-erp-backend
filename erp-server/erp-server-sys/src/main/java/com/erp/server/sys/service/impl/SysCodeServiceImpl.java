@@ -162,8 +162,8 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
-    @GlobalTransactional(propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.NOT_SUPPORTED)
+    @GlobalTransactional(propagation = io.seata.tm.api.transaction.Propagation.NOT_SUPPORTED, rollbackFor = Exception.class)
     public String getBusinessNo(SysCodeDTO dto) {
         //加锁
         RLock lock = redisson.getLock(DistributedLockEnum.SYS_GEN_DOCNO.getCode() + ":" + dto.getType());

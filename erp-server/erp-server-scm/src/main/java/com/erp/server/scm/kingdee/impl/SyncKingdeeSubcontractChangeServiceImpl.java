@@ -4,6 +4,7 @@ import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.OptChangeTypeEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.enums.ApiError;
@@ -15,6 +16,7 @@ import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.scm.entity.*;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSubcontractChangeService;
 import com.erp.server.scm.service.*;
@@ -57,6 +59,9 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Resource
     private SubcontractOrderService subcontractOrderService;
 
     @Resource
@@ -77,7 +82,8 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
         //采购日期
         resultMap.put("billDate",entity.getBillDate());
-
+        //变更原因
+        resultMap.put("changeReason",entity.getChangeReason());
 
         //采购明细
         List<SubcontractChangeDetailEntity> details = subcontractChangeDetailService.listByMainIds(Arrays.asList(entity.getId()));
@@ -106,6 +112,19 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
         SubcontractOrderEntity subcontractOrderEntity = subcontractOrderService.getById(entity.getSourceId());
         if (ObjectUtils.isEmpty(subcontractOrderEntity)) {
             throw new ServiceException(ApiError.ERROR_98073);
+        }
+
+        //组织机构编码
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(subcontractOrderEntity.getSubcontractOrgId(),entity.getPurchaseOrgId()));
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            //委外组织编码
+            String subcontractOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(subcontractOrderEntity.getSubcontractOrgId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+            resultMap.put("subcontractOrgCode", subcontractOrgCode);
+            //采购组织编码
+            String purchaseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+            resultMap.put("purchaseOrgCode", purchaseOrgCode);
         }
 
 
@@ -140,7 +159,7 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
                 jsonObject.set("referenceVersion", referenceVersion);
             }
             //金蝶委外明细id
-            String kingdeeSubEntryId = subcontractOrderDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(detailEntity.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeDetailId())).orElse("");
+            String kingdeeSubEntryId = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeDetailId())).orElse("");
             jsonObject.set("kingdeeSubEntryId",kingdeeSubEntryId);
             //金蝶委外id
             jsonObject.set("kingdeeSubId",subcontractOrderEntity.getSyncKingdeeId());
