@@ -596,6 +596,12 @@ public class PurchaseApplicationDTO implements Serializable {
         private Integer deliveryQty;
 
         /**
+         * 供应商id
+         */
+        private String supplierId;
+
+
+        /**
          * 子集
          */
         private List<ViewChildGenerateSubcontractOrderDTO> childList;
@@ -702,6 +708,11 @@ public class PurchaseApplicationDTO implements Serializable {
          * bom比率
          */
         private Integer quantity;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
     }
 
 

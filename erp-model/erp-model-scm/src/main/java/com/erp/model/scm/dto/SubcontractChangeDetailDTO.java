@@ -291,6 +291,10 @@ public class SubcontractChangeDetailDTO implements Serializable {
         @NotNull(message = "是否自动生成采购订单不能为空")
         private Boolean isGeneratePo;
 
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
     }
 
 

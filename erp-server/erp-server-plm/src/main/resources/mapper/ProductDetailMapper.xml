@@ -631,7 +631,8 @@
         ps.sale_state as saleState,
         pd.unit_name,
         pd.status,
-        pp.moq
+        pp.moq,
+        pp.main_supplier as supplierId
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
