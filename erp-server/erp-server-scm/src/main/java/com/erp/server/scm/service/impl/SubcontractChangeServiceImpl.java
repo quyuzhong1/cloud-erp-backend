@@ -322,11 +322,11 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         if(Objects.equals(ApproveTypeEnum.PASS, approveType)) {
            // TODO 审核通过流程处理
 
-           //审核通过更新委外订单
-           handleSubcontractOrder(ids,list);
-
-            //审核通过发送金蝶
+            //审核通过发送金蝶(防止数据先删除导致查不到，需要先发送金蝶)
             list.forEach(obj -> syncKingdeeSubcontractChangeService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+
+            //审核通过更新委外订单
+            handleSubcontractOrder(ids,list);
 
         } else if (Objects.equals(ApproveTypeEnum.REJECT, approveType)) {
            // TODO 终止审批流程
