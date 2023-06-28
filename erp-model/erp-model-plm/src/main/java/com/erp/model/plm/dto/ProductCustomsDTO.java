@@ -14,6 +14,16 @@ public class ProductCustomsDTO {
     private String id;
 
     /**
+     * skuId
+     */
+    private String skuId;
+
+    /**
+     * skuNo
+     */
+    private String skuNo;
+
+    /**
      * 国家
      */
     private String country;

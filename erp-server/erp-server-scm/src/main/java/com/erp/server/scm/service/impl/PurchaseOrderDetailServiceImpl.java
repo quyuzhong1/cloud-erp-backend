@@ -101,7 +101,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         boolean flag = this.saveBatch(list);
         if (flag) {
             //更新sku为不可删除标识
-            List<String> skuIds = list.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
+            List<String> skuIds = list.stream().map(PurchaseOrderDetailEntity::getSkuId).distinct().collect(Collectors.toList());
             plmTaskFeign.updateOccupyStatus(skuIds);
             //同步到WMS
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(), list, IdUtil.simpleUUID());
