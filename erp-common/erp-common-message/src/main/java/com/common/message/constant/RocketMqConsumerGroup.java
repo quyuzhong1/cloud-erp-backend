@@ -168,5 +168,11 @@ public class RocketMqConsumerGroup {
     /**
      * ERP直接调拨单->DMP
      */
-    public static final String SYNC_ERP_TRANSFER_INFO_TO_WMS = "${spring.cloud.nacos.discovery.namespace}-sync_erp_transfer_info_to_wms";
+    public static final String SYNC_ERP_TRANSFER_INFO_TO_DMP = "${spring.cloud.nacos.discovery.namespace}-sync_erp_transfer_info_to_dmp";
+
+    /**
+     * DMP出入库->马帮
+     */
+    public static final String SYNC_DMP_TRANSFER_INFO_TO_MABANG = "${spring.cloud.nacos.discovery.namespace}-sync_dmp_transfer_info_to_mabang";
+
 }

@@ -4,7 +4,6 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncKingdeeOperateEnum;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
@@ -45,8 +44,8 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_WMS_TO_DMP_TOPIC, selectorExpression = "erp_dmp_transfer_info_tag", consumerGroup = RocketMqConsumerGroup.SYNC_ERP_TRANSFER_INFO_TO_WMS)
-public class MabangTransferInfoConsume implements RocketMQListener<MabangTransferInfoDTO> {
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_WMS_TO_DMP_TOPIC, selectorExpression = "erp_dmp_transfer_info_tag", consumerGroup = RocketMqConsumerGroup.SYNC_ERP_TRANSFER_INFO_TO_DMP)
+public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTransferInfoDTO> {
 
     @Autowired
     private MabangCommonService mabangCommonService;
@@ -92,14 +91,14 @@ public class MabangTransferInfoConsume implements RocketMQListener<MabangTransfe
             mabangCommonService.insertLogWriteBackSyncMabangStatus(platformEntity, transferInfo.getId(), "", StrUtil.format("ERP直接调拨单同步到马帮出入库未配置监控仓库", PlatformEnum.MABANG.getDesc()), type, ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
-        List<String> warehouseNameList = Arrays.asList(value.split(","));
-        log.info("ERP直接调拨单同步到马帮出入库配置的监控仓库为：【{}】", JSONObject.toJSONString(warehouseNameList));
+        List<String> warehouseCodeList = Arrays.asList(value.split(","));
+        log.info("ERP直接调拨单同步到马帮出入库配置的监控仓库为：【{}】", JSONObject.toJSONString(warehouseCodeList));
         // 调入仓
         String inWarehouseCode =  StrUtils.null2EmptyWithTrim(transferInfo.getInWarehouseCode());
         // 调出仓
         String outWarehouseCode = StrUtils.null2EmptyWithTrim(transferInfo.getOutWarehouseCode());
         Map<String, DmpWarehouseMappingEntity> warehouseMap = dmpWarehouseMappingService.getByWarehouseCodes(Arrays.asList(inWarehouseCode, outWarehouseCode));
-        Map<String, Object> warehouseCheckMap = MabangUtil.checkTransferInOutWarehouse(inWarehouseCode, outWarehouseCode, warehouseMap, warehouseNameList);
+        Map<String, Object> warehouseCheckMap = MabangUtil.checkTransferInOutWarehouse(inWarehouseCode, outWarehouseCode, warehouseMap, warehouseCodeList);
         boolean warehouseStop = (boolean) warehouseCheckMap.get("stop");
         if(warehouseStop) {
             return;
@@ -112,12 +111,12 @@ public class MabangTransferInfoConsume implements RocketMQListener<MabangTransfe
 
         // 审核
         if (Objects.equals(SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode(), operate)) {
-            if(warehouseNameList.contains(inWarehouseName)) {
+            if(warehouseCodeList.contains(inWarehouseCode)) {
                 // 手工入库
                 MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(inWarehouseCode, inWarehouseName, productDetailList, transferInfo, transferDetailList);
                 mabangInOutStockService.inStock(platformEntity, mabangInOutStockDTO, transferInfo, sourceType);
             }
-            if(warehouseNameList.contains(outWarehouseName)) {
+            if(warehouseCodeList.contains(outWarehouseCode)) {
                 // 手工出库
                 MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(outWarehouseCode, outWarehouseName, productDetailList, transferInfo, transferDetailList);
                 mabangInOutStockService.outStock(platformEntity, mabangInOutStockDTO, transferInfo, sourceType);
@@ -126,12 +125,12 @@ public class MabangTransferInfoConsume implements RocketMQListener<MabangTransfe
         // 反审核
         if (Objects.equals(SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode(), operate)) {
             // 操作跟审核相反，审核的入库为出库，审核的出库为入库
-            if(warehouseNameList.contains(inWarehouseName)) {
+            if(warehouseCodeList.contains(inWarehouseCode)) {
                 // 手工出库
                 MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(inWarehouseCode, inWarehouseName, productDetailList, transferInfo, transferDetailList);
                 mabangInOutStockService.outStock(platformEntity, mabangInOutStockDTO, transferInfo, sourceType);
             }
-            if(warehouseNameList.contains(outWarehouseName)) {
+            if(warehouseCodeList.contains(outWarehouseCode)) {
                 // 手工入库
                 MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(outWarehouseCode, outWarehouseName, productDetailList, transferInfo, transferDetailList);
                 mabangInOutStockService.inStock(platformEntity, mabangInOutStockDTO, transferInfo, sourceType);

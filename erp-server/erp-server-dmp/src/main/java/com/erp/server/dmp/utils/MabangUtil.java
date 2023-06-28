@@ -28,12 +28,12 @@ public class MabangUtil {
      * @param inWarehouseCode
      * @param outWarehouseCode
      * @param warehouseMap
-     * @param warehouseNameList
+     * @param warehouseCodeList
      * @return
      */
     public static Map<String, Object> checkTransferInOutWarehouse(String inWarehouseCode, String outWarehouseCode,
                                                                   Map<String, DmpWarehouseMappingEntity> warehouseMap,
-                                                                  List<String> warehouseNameList) {
+                                                                  List<String> warehouseCodeList) {
         Map<String, Object> resultMap = Maps.newHashMap();
         String inWarehouseName = "", outWarehouseName = "";
         if(Objects.isNull(warehouseMap.get(inWarehouseCode)) && Objects.isNull(warehouseMap.get(outWarehouseCode))) {
@@ -48,8 +48,8 @@ public class MabangUtil {
         if(Objects.nonNull(warehouseMap.get(outWarehouseCode))) {
             outWarehouseName = warehouseMap.get(outWarehouseCode).getWarehouseName();
         }
-        if(!warehouseNameList.contains(inWarehouseName) && !warehouseNameList.contains(outWarehouseName)) {
-            String msg = StrUtil.format("ERP直接调拨单同步到马帮出入库调入仓和调出仓不在监控仓库范围内，调入仓【{}】，调出仓【{}】,不需要推送马帮出入库", inWarehouseName, outWarehouseName);
+        if(!warehouseCodeList.contains(inWarehouseCode) && !warehouseCodeList.contains(outWarehouseCode)) {
+            String msg = StrUtil.format("ERP直接调拨单同步到马帮出入库调入仓和调出仓不在监控仓库范围内，调入仓【{}】，调出仓【{}】,不需要推送马帮出入库", inWarehouseCode, outWarehouseCode);
             log.info(msg);
             resultMap.put("stop", true);
             return resultMap;

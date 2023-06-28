@@ -35,6 +35,7 @@ public enum SourceTypeEnum {
     SO_RETURN_INSTOCK("soReturnInstock", "销售退货入库单","so_return_instock"),
     SO_DELIVERY_NOTICE("soDeliveryNotice", "销售发货通知单","so_delivery_notice"),
     TRANSFER_OUT("transferOut", "分布式调出单","transfer_out"),
+    TRANSFER_INFO("transferInfo", "直接调拨单","transfer_info"),
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),
