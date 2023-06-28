@@ -351,6 +351,17 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
                 .set(StringUtils.isNotBlank(syncOperate), SubcontractChangeEntity::getSyncOperate, syncOperate)
                 .update();
     }
+
+    @Override
+    public List<SubcontractChangeEntity> listBySourceIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return  Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(SubcontractChangeEntity::getSourceId,ids)
+                .eq(SubcontractChangeEntity::getInvalidStatus,Boolean.FALSE)
+                .list();
+    }
+
     /**
      * @description: 审核通过更新委外订单
      * @author Will

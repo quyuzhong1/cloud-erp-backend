@@ -199,6 +199,12 @@ public class TransferInfoEntity extends BaseEntity<TransferInfoEntity> {
     @TableField(exist = false)
     private String outWarehouseCode;
 
+    /**
+     * 第三方系统
+     */
+    @TableField("third_party_system")
+    private String thirdPartySystem;
+
 
     public static final String CODE = "code";
 

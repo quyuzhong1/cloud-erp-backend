@@ -158,4 +158,13 @@ public interface SubcontractChangeService extends SuperService<SubcontractChange
      * @return java.lang.Boolean
      **/
     Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
+
+    /**
+     * @description: 查询变更单
+     * @author Will
+     * @date: 2023/6/28 14:58
+     * @param ids
+     * @return List<SubcontractChangeEntity>
+     */
+    List<SubcontractChangeEntity> listBySourceIds(List<String> ids);
 }

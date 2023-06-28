@@ -1,7 +1,6 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -21,7 +20,6 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -113,6 +111,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     @Autowired
     private SyncKingdeeSubcontractOrderService syncKingdeeSubcontractOrderService;
 
+    @Autowired
+    private SubcontractChangeService subcontractChangeService;
 
     @Override
     public PagingVO<SubcontractOrderDTO.ListDTO> paging(PagingDTO<SubcontractOrderDTO.PagingParamDTO> pagingParamDTO) {
@@ -400,13 +400,22 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        // 判断是否存在下推的采购订单
+        //委外变更单
+        List<SubcontractChangeEntity> subcontractChangeList = subcontractChangeService.listBySourceIds(ids);
+        //采购订单
         List<PurchaseOrderEntity> purchaseOrderList = purchaseOrderService.listBySourceIds(ids);
         for (SubcontractOrderEntity entity : list) {
+            // 判断是否存在下推的采购订单
             List<PurchaseOrderEntity> foundList = purchaseOrderList.stream().filter(obj -> obj.getSourceId().equals(entity.getId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(foundList)) {
                 String codes = purchaseOrderList.stream().map(PurchaseOrderEntity::getCode).collect(Collectors.joining(","));
-                throw new ServiceException(new ApiResult(ApiError.ERROR_98080.code, StrUtil.format(ApiError.ERROR_98080.msg,entity.getCode(),codes)));
+                throw new ServiceException(ApiError.ERROR_98080,entity.getCode(),codes);
+            }
+            // 判断是否存在下推的变更单
+            List<SubcontractChangeEntity> subChangeList = subcontractChangeList.stream().filter(obj -> obj.getSourceId().equals(entity.getId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(subChangeList)) {
+                String codes = subcontractChangeList.stream().map(SubcontractChangeEntity::getCode).collect(Collectors.joining(","));
+                throw new ServiceException(ApiError.ERROR_SUB_PUSH_CHANGE,entity.getCode(),codes);
             }
         }
 
