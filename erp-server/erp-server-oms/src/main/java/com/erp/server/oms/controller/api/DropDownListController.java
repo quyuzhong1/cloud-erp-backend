@@ -33,7 +33,7 @@ public class DropDownListController extends BaseController {
      *  settleMode 客户结算方式
      *  collectionTerms 收款条件
      *  invoiceType 发票类型
-     *
+     *  platform 平台类型
      * @return
      */
     @GetMapping("/dict/list")
