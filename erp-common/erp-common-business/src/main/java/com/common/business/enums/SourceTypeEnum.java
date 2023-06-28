@@ -28,11 +28,12 @@ public enum SourceTypeEnum {
     SO_RETURN_RECEIVE("soReturnReceive", "销售退货签收单"),
     SO_RETURN_INSTOCK("soReturnInstock", "销售退货入库单"),
     SO_DELIVERY_NOTICE("soDeliveryNotice", "销售发货通知单"),
+    TRANSFER_OUT("transferOut", "分布式调出单"),
+    TRANSFER_INFO("transferInfo", "直接调拨单"),
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单"),
     SO_INFO("soInfo", "销售订单"),
-    TRANSFER_OUT("transferOut", "分布式调出单"),
 
     //Kingdee
     SAL_RETURNSTOCK("SAL_RETURNSTOCK", "金蝶销售退货单"),

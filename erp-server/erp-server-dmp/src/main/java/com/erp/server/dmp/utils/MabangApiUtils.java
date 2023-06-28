@@ -8,9 +8,11 @@ import com.common.core.security.HmacSHA256Utils;
 import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.UrlContant;
+import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.mabang.*;
 import com.erp.model.dmp.vo.ParamHeaderVO;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -323,6 +325,62 @@ public class MabangApiUtils {
             }
         }
         return infoArrayList;
+    }
+
+    private static ParamHeaderVO getParamMap(String method, Map<String,Object> params) {
+        Map<String, Object> paramMap = new HashMap(16);
+        paramMap.put("api", method);
+        paramMap.put("appkey", MabangApiUtils.APP_KEY);
+        paramMap.put("version", 1);
+        paramMap.put("timestamp", new Long(System.currentTimeMillis() / 1000).toString());
+        paramMap.put("data",params);
+        String paramStr = JSONUtil.toJsonStr(paramMap);
+        log.info("发送至马帮的请求参数【{}】", paramStr);
+        String sign = HmacSHA256Utils.hmacSHA256(paramStr, MabangApiUtils.SECRET_KEY);
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put("Content-Type", "application/json");
+        headerMap.put("Authorization", sign);
+        return new ParamHeaderVO(paramStr, headerMap);
+    }
+
+    public static JSONObject inStorage(String method, MabangInOutStockDTO mabangInOutStockDTO) {
+        HashMap<String, Object> params = new HashMap<>(10);
+        params.put("warehouseName", mabangInOutStockDTO.getWarehouseName());
+        params.put("employeeName", mabangInOutStockDTO.getEmployeeName());
+        params.put("typeName", "");
+        params.put("remark", mabangInOutStockDTO.getRemark());
+        params.put("data", mabangInOutStockDTO.getData());
+
+        ParamHeaderVO paramVo = getParamMap(method, params);
+        log.info("开始调用马帮手工入库请求内容【{}】", paramVo.getParamsStr());
+        JSONObject response = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
+        log.info("调用马帮手工入库响应内容【{}】", JSONObject.toJSONString(response));
+        if (!Objects.equals(response.getInteger("code"), 200)) {
+            log.error("调用url={} param={} {}马帮手工入库失败 response={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(response));
+            throw new RuntimeException(StrUtil.format("调用url={} param={} {}马帮手工入库失败 responseMap={}",
+                    UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(response)));
+        }
+        return response.getJSONObject("data");
+    }
+
+    public static JSONObject outStorage(String method, MabangInOutStockDTO mabangInOutStockDTO) {
+        HashMap<String, Object> params = new HashMap<>(10);
+        params.put("warehouseName", mabangInOutStockDTO.getWarehouseName());
+        params.put("employeeName", mabangInOutStockDTO.getEmployeeName());
+        params.put("typeName", "");
+        params.put("remark", mabangInOutStockDTO.getRemark());
+        params.put("data", mabangInOutStockDTO.getData());
+
+        ParamHeaderVO paramVo = getParamMap(method, params);
+        log.info("开始调用马帮手工出库请求内容【{}】", paramVo.getParamsStr());
+        JSONObject response = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
+        log.info("调用马帮手工出库响应内容【{}】", JSONObject.toJSONString(response));
+        if (!Objects.equals(response.getInteger("code"), 200)) {
+            log.error("调用url={} param={} {}马帮手工出库失败 response={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(response));
+            throw new RuntimeException(StrUtil.format("调用url={} param={} {}马帮手工出库失败 responseMap={}",
+                    UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(response)));
+        }
+        return response.getJSONObject("data");
     }
 
     public static void main(String[] args) {

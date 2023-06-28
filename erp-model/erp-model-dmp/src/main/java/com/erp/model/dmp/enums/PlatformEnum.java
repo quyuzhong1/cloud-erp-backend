@@ -11,7 +11,8 @@ public enum PlatformEnum {
     MABANG(1, "mabang", "马帮"),
     GYY(2, "gyy", "管易云"),
     KINGDEE(3, "kingdee", "金蝶云星空"),
-    KINGDEE_ECC(4, "kingdeeEcc", "金蝶云星空ECC");
+    KINGDEE_ECC(4, "kingdeeEcc", "金蝶云星空ECC"),
+    ERP(5, "erp", "自研ERP");
 
     private Integer code;
 

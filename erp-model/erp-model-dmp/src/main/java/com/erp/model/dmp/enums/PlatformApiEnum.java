@@ -40,6 +40,16 @@ public enum PlatformApiEnum {
      */
     STOCK_DO_SEARCH_COMBO_SKU(29,"stock-do-search-combo-sku", MongoTableNameContant.ORIGINAL_MABANG_COMBO_SKU, TaskConstant.MABANG_PULL_DATA_TASK),
 
+    /**
+     * 马帮手工出库
+     */
+    MABANG_OUT_STORAGE(30,"warehouse-do-add-storage-out", "", ""),
+
+    /**
+     * 马帮手工入库
+     */
+    MABANG_IN_STORAGE(31,"warehouse-do-add-storage-in", "", ""),
+
 
     /**
      * 管易云api

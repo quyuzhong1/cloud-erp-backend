@@ -357,6 +357,19 @@ public enum RocketMqTagEnum {
     SYNC_KINGDEE_SO_OUTSTOCK_TAG(6001,RocketMqTagEnum.SYNC_WMS,"sync_kingdee_so_outatock_tag"),
 
 
+    //---------------------------------马帮数据同步code从7001开始------------------------------------------------------------------------------------------
+
+    /**
+     * ERP直接调拨单同步DMP出入库
+     */
+    ERP_DMP_TRANSFER_INFO_TAG(7001, RocketMqTagEnum.SYNC_DMP,"erp_dmp_transfer_info_tag"),
+
+    /**
+     * DMP出入库同步到马帮
+     */
+    DMP_MABANG_TRANSFER_INFO_TAG(7002, RocketMqTagEnum.SYNC_MABANG,"dmp_mabang_transfer_info_tag"),
+
+
 
     //-----------------------------公共信息编码从9001开始------------------------------------------------------------------
 
@@ -396,6 +409,8 @@ public enum RocketMqTagEnum {
     public static final String MSG_WARN = "msg_warn";
 
     public static final String TRANSFER = "transfer";
+
+    public static final String SYNC_MABANG = "sync_mabang";
 
     private Integer code;
 
