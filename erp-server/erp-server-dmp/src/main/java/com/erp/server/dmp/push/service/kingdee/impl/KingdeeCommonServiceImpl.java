@@ -384,8 +384,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
                 apiUtils.auditById(ids);
             } catch (Exception e) {
                 //审核失败操作日志及定时任务
-                log.error("审核失败", e);
-                insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), "审核失败", e.getMessage(), type, ApiSendStatusEnum.FAILURE.getCode());
+                log.error("审核失败", JSONUtil.toJsonStr(viewMap));
+                insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(viewMap), e.getMessage(), type, ApiSendStatusEnum.FAILURE.getCode());
                 return;
             }
             //审核成功操作日志
