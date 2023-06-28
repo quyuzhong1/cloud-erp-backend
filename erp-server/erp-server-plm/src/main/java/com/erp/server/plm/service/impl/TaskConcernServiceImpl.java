@@ -1,19 +1,23 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.service.SuperServiceImpl;
 import com.erp.model.plm.dto.TaskConcernDTO;
 import com.erp.model.plm.entity.TaskConcernEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.mapper.TaskConcernMapper;
 import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.TaskConcernService;
-import com.common.business.service.SuperServiceImpl;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -28,6 +32,9 @@ public class TaskConcernServiceImpl extends SuperServiceImpl<TaskConcernMapper, 
 
     @Resource
     private CommonService commonService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     /**
      * 获取到任务id是否被登录人关注
@@ -47,7 +54,10 @@ public class TaskConcernServiceImpl extends SuperServiceImpl<TaskConcernMapper, 
         } else {
             result.setIsConcern(Boolean.FALSE);
         }
-        Integer concernCount = getConcernCountByTaskId(taskId);
+        List<String> userIdList = listByTaskId(taskId);
+        List<FindUserDTO> userList=  sysUserFeign.getUserListByUserIds(userIdList);
+        result.setUserNameList(userList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList()));
+        Integer concernCount = userIdList.size();
         result.setConcernCount(concernCount);
         return result;
     }
@@ -158,12 +168,15 @@ public class TaskConcernServiceImpl extends SuperServiceImpl<TaskConcernMapper, 
     public List<String> listByTaskId(String taskId) {
         LambdaQueryWrapper<TaskConcernEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.select(TaskConcernEntity::getUserId);
-        queryWrapper.eq(TaskConcernEntity::getTaskId,taskId);
-        return this.listObjs(queryWrapper, Object::toString);
+        queryWrapper.eq(TaskConcernEntity::getTaskId, taskId);
+        return this.listObjs(queryWrapper, Object::toString).stream().distinct().collect(Collectors.toList());
     }
 
     @Override
     public List<TaskConcernEntity> listByTaskIds(List<String> taskIds) {
+        if (CollectionUtils.isEmpty(taskIds)) {
+            return Collections.emptyList();
+        }
         return lambdaQuery().in(TaskConcernEntity::getTaskId, taskIds).list();
     }
 
