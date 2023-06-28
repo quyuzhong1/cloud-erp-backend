@@ -13,6 +13,7 @@ import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.mabang.*;
 import com.erp.model.dmp.vo.ParamHeaderVO;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -343,44 +344,52 @@ public class MabangApiUtils {
         return new ParamHeaderVO(paramStr, headerMap);
     }
 
-    public static JSONObject inStorage(String method, MabangInOutStockDTO mabangInOutStockDTO) {
+    public static Map<String,Object> inStorage(String method, MabangInOutStockDTO mabangInOutStockDTO) {
+        Map<String,Object> resultMap = Maps.newHashMap();
+
         HashMap<String, Object> params = new HashMap<>(10);
         params.put("warehouseName", mabangInOutStockDTO.getWarehouseName());
         params.put("employeeName", mabangInOutStockDTO.getEmployeeName());
-        params.put("typeName", "");
+        // params.put("typeName", "");
         params.put("remark", mabangInOutStockDTO.getRemark());
         params.put("data", mabangInOutStockDTO.getData());
 
         ParamHeaderVO paramVo = getParamMap(method, params);
+        resultMap.put("request", paramVo.getParamsStr());
+
         log.info("开始调用马帮手工入库请求内容【{}】", paramVo.getParamsStr());
         JSONObject response = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
         log.info("调用马帮手工入库响应内容【{}】", JSONObject.toJSONString(response));
         if (!Objects.equals(response.getInteger("code"), 200)) {
-            log.error("调用url={} param={} {}马帮手工入库失败 response={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(response));
-            throw new RuntimeException(StrUtil.format("调用url={} param={} {}马帮手工入库失败 responseMap={}",
-                    UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(response)));
+            log.error("调用url={} param={} {}，马帮手工入库失败 response={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(response));
+            throw new RuntimeException(JSONUtil.toJsonStr(response));
         }
-        return response.getJSONObject("data");
+        resultMap.put("result", response.getJSONObject("data"));
+        return resultMap;
     }
 
-    public static JSONObject outStorage(String method, MabangInOutStockDTO mabangInOutStockDTO) {
+    public static Map<String,Object> outStorage(String method, MabangInOutStockDTO mabangInOutStockDTO) {
+        Map<String,Object> resultMap = Maps.newHashMap();
+
         HashMap<String, Object> params = new HashMap<>(10);
         params.put("warehouseName", mabangInOutStockDTO.getWarehouseName());
         params.put("employeeName", mabangInOutStockDTO.getEmployeeName());
-        params.put("typeName", "");
+        // params.put("typeName", "");
         params.put("remark", mabangInOutStockDTO.getRemark());
         params.put("data", mabangInOutStockDTO.getData());
 
         ParamHeaderVO paramVo = getParamMap(method, params);
+        resultMap.put("request", paramVo.getParamsStr());
+
         log.info("开始调用马帮手工出库请求内容【{}】", paramVo.getParamsStr());
         JSONObject response = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
         log.info("调用马帮手工出库响应内容【{}】", JSONObject.toJSONString(response));
         if (!Objects.equals(response.getInteger("code"), 200)) {
-            log.error("调用url={} param={} {}马帮手工出库失败 response={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(response));
-            throw new RuntimeException(StrUtil.format("调用url={} param={} {}马帮手工出库失败 responseMap={}",
-                    UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(response)));
+            log.error("调用url={} param={} {}，马帮手工出库失败 response={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(response));
+            throw new RuntimeException(JSONUtil.toJsonStr(response));
         }
-        return response.getJSONObject("data");
+        resultMap.put("result", response.getJSONObject("data"));
+        return resultMap;
     }
 
     public static void main(String[] args) {

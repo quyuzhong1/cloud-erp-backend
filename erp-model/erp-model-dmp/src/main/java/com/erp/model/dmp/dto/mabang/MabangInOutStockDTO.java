@@ -16,6 +16,12 @@ import java.util.List;
 public class MabangInOutStockDTO {
 
     /**
+     * erp单据编号
+     */
+    @JsonIgnore
+    private String erpSourceCode;
+
+    /**
      * 仓库编码
      */
     @JsonIgnore
@@ -30,6 +36,11 @@ public class MabangInOutStockDTO {
      * 员工名称
      */
     private String employeeName;
+
+    /**
+     * 入库类型
+     */
+    private String typeName;
 
     /**
      * 备注

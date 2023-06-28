@@ -15,7 +15,8 @@ public enum SettingEnum {
 
     CLEAN_JOB_DELAY_MINUTE("clean_job_delay_minute", "data_clean","清洗第三方erp数据任务延迟时间"),
     KD_TO_MB_TRANSFER_DIRECT_WAREHOUSE_CODE("kd_to_mb_transfer_direct_warehouse_code", "cross_platform_doc_conversion","金蝶直接调拨单同步库存到马帮仓库编码"),
-    ERP_TO_MB_WAREHOUSE_NAME("erp_to_mb_warehouse_name", "erp_to_mb_direct_transfer","ERP直接调拨单同步到马帮仓库名称"),
+    ERP_TO_MB_WAREHOUSE_NAME("erp_to_mb_warehouse_name", "erp_to_mb_direct_transfer","ERP直接调拨单同步到马帮，仓库名称"),
+    ERP_TO_MB_EMPLOYEE_NAME("erp_to_mb_employee_name", "erp_to_mb_direct_transfer","ERP直接调拨单推送马帮仓库，员工名称"),
     ;
 
     @EnumValue

@@ -1,6 +1,7 @@
 package com.erp.server.dmp.push.service.mabang;
 
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
+import com.erp.model.dmp.entity.DmpOutInStockEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.wms.entity.TransferInfoEntity;
 
@@ -15,21 +16,43 @@ import com.erp.model.wms.entity.TransferInfoEntity;
 public interface MabangInOutStockService {
 
     /**
-     * 手工入库
+     * 记录出入库
      * @param platformEntity
      * @param mabangInOutStock
      * @param transferInfo
      * @param sourceType
+     * @param approveType
      */
-    void inStock(PlatformEntity platformEntity,MabangInOutStockDTO mabangInOutStock, TransferInfoEntity transferInfo, String sourceType);
+    void inStock(PlatformEntity platformEntity,MabangInOutStockDTO mabangInOutStock, TransferInfoEntity transferInfo,
+                 String sourceType, String approveType);
+
+    /**
+     * 记录出入库
+     * @param platformEntity
+     * @param mabangInOutStock
+     * @param transferInfo
+     * @param sourceType
+     * @param approveType
+     */
+    void outStock(PlatformEntity platformEntity, MabangInOutStockDTO mabangInOutStock, TransferInfoEntity transferInfo,
+                  String sourceType, String approveType);
+
+    /**
+     * 手工入库
+     * @param dmpOutInStockEntity
+     * @param mabangInOutStock
+     * @param platformEntity
+     */
+    void sendToMabangInStock(DmpOutInStockEntity dmpOutInStockEntity, MabangInOutStockDTO mabangInOutStock, PlatformEntity platformEntity,
+                             Integer type, String approveType);
 
     /**
      * 手工出库
-     * @param platformEntity
+     * @param dmpOutInStockEntity
      * @param mabangInOutStock
-     * @param transferInfo
-     * @param sourceType
+     * @param platformEntity
      */
-    void outStock(PlatformEntity platformEntity, MabangInOutStockDTO mabangInOutStock, TransferInfoEntity transferInfo, String sourceType);
+    void sendToMabangOutStock(DmpOutInStockEntity dmpOutInStockEntity, MabangInOutStockDTO mabangInOutStock, PlatformEntity platformEntity,
+                              Integer type, String approveType);
 
 }

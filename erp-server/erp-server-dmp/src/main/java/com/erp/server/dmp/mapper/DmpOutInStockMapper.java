@@ -3,6 +3,7 @@ import com.erp.model.dmp.entity.DmpOutInStockEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.springframework.stereotype.Repository;
 
 
 /**
@@ -13,6 +14,7 @@ import org.apache.ibatis.annotations.Mapper;
  * @author Cloud
  * @since 2023-06-25
  */
+@Repository
 @Mapper
 public interface DmpOutInStockMapper extends BaseMapper<DmpOutInStockEntity> {
 

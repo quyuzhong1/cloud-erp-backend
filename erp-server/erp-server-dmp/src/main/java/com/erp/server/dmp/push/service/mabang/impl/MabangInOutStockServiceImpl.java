@@ -2,6 +2,8 @@ package com.erp.server.dmp.push.service.mabang.impl;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -11,11 +13,13 @@ import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
 import com.erp.model.dmp.entity.DmpOutInStockDetailEntity;
 import com.erp.model.dmp.entity.DmpOutInStockEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
+import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.server.dmp.push.service.mabang.MabangInOutStockService;
 import com.erp.server.dmp.service.DmpOutInStockDetailService;
 import com.erp.server.dmp.service.DmpOutInStockService;
+import com.erp.server.dmp.utils.MabangApiUtils;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -25,8 +29,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -49,7 +53,8 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void inStock(PlatformEntity platformEntity, MabangInOutStockDTO mabangInOutStock, TransferInfoEntity transferInfo, String sourceType) {
+    public void inStock(PlatformEntity platformEntity, MabangInOutStockDTO mabangInOutStock, TransferInfoEntity transferInfo,
+                        String sourceType, String approveType) {
         // 新增出入库数据
         DmpOutInStockEntity dmpOutInStockEntity = new DmpOutInStockEntity();
         dmpOutInStockEntity.setWarehouseCode(mabangInOutStock.getWarehouseCode());
@@ -63,7 +68,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         dmpOutInStockEntity.setPlatformSign(PlatformEnum.ERP.getDesc());
         // 未同步
         dmpOutInStockEntity.setSyncMbStatus("0");
-        dmpOutInStockEntity.setLastSyncMbTime(LocalDateTime.now());
+        dmpOutInStockEntity.setLastSyncMbTime(null);
         dmpOutInStockEntity.setTargetPlatformSign(PlatformEnum.MABANG.getDesc());
 
         dmpOutInStockEntity.setTargetOrderCode("");
@@ -90,6 +95,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         DmpMabangInOutStockMsgDTO dmpMabangInOutStockMsgDTO = new DmpMabangInOutStockMsgDTO();
         dmpMabangInOutStockMsgDTO.setDmpOutInStockId(dmpOutInStockEntity.getId());
         dmpMabangInOutStockMsgDTO.setMabangInOutStock(mabangInOutStock);
+        dmpMabangInOutStockMsgDTO.setApproveType(approveType);
 
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.SYNC_DMP_TO_MABANG_TOPIC, RocketMqTagEnum.DMP_MABANG_TRANSFER_INFO_TAG.getName(),
                 dmpMabangInOutStockMsgDTO, dmpOutInStockEntity.getId());
@@ -101,7 +107,8 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void outStock(PlatformEntity platformEntity, MabangInOutStockDTO mabangInOutStock, TransferInfoEntity transferInfo, String sourceType) {
+    public void outStock(PlatformEntity platformEntity, MabangInOutStockDTO mabangInOutStock, TransferInfoEntity transferInfo,
+                         String sourceType, String approveType) {
         // 新增出入库数据
         DmpOutInStockEntity dmpOutInStockEntity = new DmpOutInStockEntity();
         dmpOutInStockEntity.setWarehouseCode(mabangInOutStock.getWarehouseCode());
@@ -115,7 +122,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         dmpOutInStockEntity.setPlatformSign(PlatformEnum.ERP.getDesc());
         // 未同步
         dmpOutInStockEntity.setSyncMbStatus("0");
-        dmpOutInStockEntity.setLastSyncMbTime(LocalDateTime.now());
+        dmpOutInStockEntity.setLastSyncMbTime(null);
         dmpOutInStockEntity.setTargetPlatformSign(PlatformEnum.MABANG.getDesc());
 
         dmpOutInStockEntity.setTargetOrderCode("");
@@ -137,6 +144,56 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
             dmpOutInStockDetailEntityList.add(dmpOutInStockDetailEntity);
         });
         dmpOutInStockDetailService.saveBatch(dmpOutInStockDetailEntityList);
+
+        // 发送MQ消息处理出入库信息然后发送到马帮
+        DmpMabangInOutStockMsgDTO dmpMabangInOutStockMsgDTO = new DmpMabangInOutStockMsgDTO();
+        dmpMabangInOutStockMsgDTO.setDmpOutInStockId(dmpOutInStockEntity.getId());
+        dmpMabangInOutStockMsgDTO.setMabangInOutStock(mabangInOutStock);
+        dmpMabangInOutStockMsgDTO.setApproveType(approveType);
+
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.SYNC_DMP_TO_MABANG_TOPIC, RocketMqTagEnum.DMP_MABANG_TRANSFER_INFO_TAG.getName(),
+                dmpMabangInOutStockMsgDTO, dmpOutInStockEntity.getId());
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+        }
+    }
+
+    @Override
+    public void sendToMabangInStock(DmpOutInStockEntity dmpOutInStockEntity, MabangInOutStockDTO mabangInOutStock, PlatformEntity platformEntity, Integer type, String approveType) {
+        // 调用马帮手工入库接口
+        String requestParam = "";
+        try {
+            Map<String,Object> resultMap = MabangApiUtils.inStorage(PlatformApiEnum.MABANG_IN_STORAGE.getTaskName(), mabangInOutStock);
+            requestParam = StrUtils.null2EmptyWithTrim(resultMap.get("request"));
+            JSONObject resultJson = (JSONObject)resultMap.get("result");
+            String mabangCode = resultJson.getString("storageCode");
+            // 更新出入库同步信息
+            dmpOutInStockService.updateSyncInfoSuccess(dmpOutInStockEntity.getId(), "1", mabangCode, requestParam, platformEntity, type, approveType);
+        } catch (Exception e) {
+            log.error("直接调拨单同步至马帮手工入库异常", e);
+            // 更新出入库同步信息
+            dmpOutInStockService.updateSyncInfoError(dmpOutInStockEntity.getId(), "-1", mabangInOutStock.getErpSourceCode(), requestParam, platformEntity, type, e.getMessage(), approveType);
+            throw new ServiceException("直接调拨单同步至马帮手工入库异常");
+        }
+    }
+
+    @Override
+    public void sendToMabangOutStock(DmpOutInStockEntity dmpOutInStockEntity, MabangInOutStockDTO mabangInOutStock, PlatformEntity platformEntity, Integer type, String approveType) {
+        // 调用马帮手工出库接口
+        String requestParam = "";
+        try {
+            Map<String,Object> resultMap = MabangApiUtils.outStorage(PlatformApiEnum.MABANG_OUT_STORAGE.getTaskName(), mabangInOutStock);
+            requestParam = StrUtils.null2EmptyWithTrim(resultMap.get("request"));
+            JSONObject resultJson = (JSONObject)resultMap.get("result");
+            String mabangCode = resultJson.getString("storageCode");
+            // 更新出入库同步信息
+            dmpOutInStockService.updateSyncInfoSuccess(dmpOutInStockEntity.getId(), "1", mabangCode, requestParam, platformEntity, type, approveType);
+        } catch (Exception e) {
+            log.error("直接调拨单同步至马帮手工出库异常", e);
+            // 更新出入库同步信息
+            dmpOutInStockService.updateSyncInfoError(dmpOutInStockEntity.getId(), "-1", mabangInOutStock.getErpSourceCode(), requestParam, platformEntity, type, e.getMessage(), approveType);
+            throw new ServiceException("直接调拨单同步至马帮手工出库异常");
+        }
     }
 
 }

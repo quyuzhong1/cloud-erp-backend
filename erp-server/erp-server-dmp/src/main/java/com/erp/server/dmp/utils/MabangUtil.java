@@ -23,6 +23,8 @@ import java.util.Objects;
 @Slf4j
 public class MabangUtil {
 
+    public static final String MABANG_EMPLOYEE_NAME = "API同步";
+
     /**
      * 验证直接调拨单同步马帮出入库是否在监控仓库
      * @param inWarehouseCode
@@ -70,15 +72,16 @@ public class MabangUtil {
      * @param transferDetailList
      * @return
      */
-    public static MabangInOutStockDTO fillMabangInOutStock(String warehouseCode, String warehouseName,
+    public static MabangInOutStockDTO fillMabangInOutStock(String warehouseCode, String warehouseName,String employeeName,
                                                            List<ProductDetailEntity> productDetailList,
                                                            TransferInfoEntity transferInfo, List<TransferInfoDetailEntity> transferDetailList) {
 
         List<MabangInOutStockDTO.SkuItem> data = Lists.newArrayList();
         MabangInOutStockDTO mabangInOutStockDTO = new MabangInOutStockDTO();
+        mabangInOutStockDTO.setErpSourceCode(transferInfo.getCode());
         mabangInOutStockDTO.setWarehouseCode(warehouseCode);
         mabangInOutStockDTO.setWarehouseName(warehouseName);
-        mabangInOutStockDTO.setEmployeeName(StrUtils.null2EmptyWithTrim(transferInfo.getCreateUserName()));
+        mabangInOutStockDTO.setEmployeeName(StrUtils.null2EmptyWithTrim(employeeName));
         mabangInOutStockDTO.setRemark(StrUtil.format("ERP同步：{}", StrUtils.null2EmptyWithTrim(transferInfo.getCode()) ));
 
         transferDetailList.stream().forEach(transferSku->{

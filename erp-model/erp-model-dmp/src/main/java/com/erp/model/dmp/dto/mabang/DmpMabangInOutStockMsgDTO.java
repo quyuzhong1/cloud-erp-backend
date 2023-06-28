@@ -21,6 +21,11 @@ public class DmpMabangInOutStockMsgDTO implements Serializable {
      */
     private MabangInOutStockDTO mabangInOutStock;
 
+    /**
+     * 审核类型
+     */
+    private String approveType;
+
 
 
 
