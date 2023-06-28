@@ -167,7 +167,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
             infoArrayList.addAll(entityList);
             pageIndex ++;
         }
-        return infoArrayList;
+        return infoArrayList.stream().distinct().collect(Collectors.toList());
     }
 
     /**
