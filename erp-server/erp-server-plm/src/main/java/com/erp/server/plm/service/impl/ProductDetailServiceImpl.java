@@ -351,10 +351,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //产品物流信息查询列表
         List<ProductLogisticsShowDTO> logisticsShowDTOList = productLogisticsService.list(productId);
         logisticsShowDTOList.forEach(req -> {
-            String[] split = req.getProductPropertyId().split(",");
-            List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
-            List<String> countryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
-            req.setProductProperty(StringUtils.join(countryNameList, ","));
+            if (StringUtils.isNotBlank(req.getProductPropertyId())) {
+                String[] split = req.getProductPropertyId().split(",");
+                List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
+                List<String> countryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                req.setProductProperty(StringUtils.join(countryNameList, ","));
+            }
         });
 
         productNoSpecDetailAllDTO.setProductLogisticsShowDTOList(logisticsShowDTOList);
@@ -396,10 +398,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //查询目的国海关编码
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(productId);
         productCustomsEntityList.forEach(req -> {
-            String[] split = req.getCountry().split(",");
-            List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
-            List<String> countryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
-            req.setCountryName(StringUtils.join(countryNameList, ","));
+            if (StringUtils.isNotBlank(req.getCountry())) {
+                String[] split = req.getCountry().split(",");
+                List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
+                List<String> countryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                req.setCountryName(StringUtils.join(countryNameList, ","));
+            }
         });
         productNoSpecDetailAllDTO.setProductCustomsList(productCustomsEntityList);
         return productNoSpecDetailAllDTO;
@@ -531,10 +535,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         });
 
         logisticsShowDTOList.forEach(req -> {
-            String[] split = req.getProductPropertyId().split(",");
-            List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
-            List<String> countryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
-            req.setProductProperty(StringUtils.join(countryNameList, ","));
+            if (StringUtils.isNotBlank(req.getProductPropertyId())) {
+                String[] split = req.getProductPropertyId().split(",");
+                List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
+                List<String> countryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                req.setProductProperty(StringUtils.join(countryNameList, ","));
+            }
         });
 
         productManyDetail.setProductLogisticsShowDTOList(logisticsShowDTOList);
@@ -587,10 +593,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //查询目的国海关编码
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(productId);
         productCustomsEntityList.forEach(req -> {
-            String[] split = req.getCountry().split(",");
-            List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
-            List<String> countryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
-            req.setCountryName(StringUtils.join(countryNameList, ","));
+            if (StringUtils.isNotBlank(req.getCountry())) {
+                String[] split = req.getCountry().split(",");
+                List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
+                List<String> countryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                req.setCountryName(StringUtils.join(countryNameList, ","));
+            }
         });
 
         productManyDetail.setProductCustomsList(productCustomsEntityList);
