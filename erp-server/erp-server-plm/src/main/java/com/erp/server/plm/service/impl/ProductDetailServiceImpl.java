@@ -530,6 +530,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             req.setDisableFieldList(logisticsDisableFields);
         });
 
+        logisticsShowDTOList.forEach(req -> {
+            String[] split = req.getProductPropertyId().split(",");
+            List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
+            List<String> countryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+            req.setProductProperty(StringUtils.join(countryNameList, ","));
+        });
+
         productManyDetail.setProductLogisticsShowDTOList(logisticsShowDTOList);
         //产品证书信息查询列表
         List<ProductCertificateShowDTO> certificateShowDTOList = productCertificateService.list(productId);
@@ -579,6 +586,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //查询目的国海关编码
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(productId);
+        productCustomsEntityList.forEach(req -> {
+            String[] split = req.getCountry().split(",");
+            List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
+            List<String> countryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+            req.setCountryName(StringUtils.join(countryNameList, ","));
+        });
+
         productManyDetail.setProductCustomsList(productCustomsEntityList);
         return productManyDetail;
     }
@@ -872,9 +886,40 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BeanMapper.copy(customsDTO, customsEntity);
                 customsEntityList.add(customsEntity);
             }
+            addProductCustomsLog(productCustomsDTO, id);
             productCustomsService.saveOrUpdateBatch(customsEntityList);
         }
         return true;
+    }
+
+
+    /**
+     * 添加海关编码日志
+     * @Author Luo_WG
+     * @Date 2023/6/28 17:58
+     * @param productCustomsList
+     * @param productId
+     * @return void
+     **/
+    private void addProductCustomsLog(List<ProductCustomsDTO> productCustomsList, String productId) {
+        if (CollectionUtils.isEmpty(productCustomsList)) {
+            return;
+        }
+        List<String> ids = productCustomsList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(ProductCustomsEntity::getId).collect(Collectors.toList());
+        List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByIds(ids);
+        productCustomsList.forEach(obj -> {
+            //SKU操作日志
+            ProductCustomsEntity oldEntity = productCustomsEntityList.stream().filter(e -> e.getId().equals(obj.getId())).findFirst().orElse(null);
+            ProductAccessoriesDTO oldDto = new ProductAccessoriesDTO();
+            if (ObjectUtils.isNotEmpty(oldEntity)) {
+                BeanMapperUtils.copy(oldEntity, oldDto);
+            }
+            ProductDetailEntity productDetailEntity = this.getById(obj.getSkuId());
+            if (ObjectUtils.isEmpty(productDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_95084);
+            }
+            sysLogService.addSysLogByUpdate(oldDto, obj, SKUCLASSPATH, obj.getSkuId(), productId, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
+        });
     }
 
 
@@ -1022,6 +1067,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BeanMapper.copy(customsDTO, customsEntity);
                 customsEntityList.add(customsEntity);
             }
+            addProductCustomsLog(productCustomsDTO, productInfoDTO.getId());
             productCustomsService.saveOrUpdateBatch(customsEntityList);
         }
         return true;
@@ -2723,6 +2769,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             for (ProductCustomsEntity customsDTO : productCustomsDTO) {
                 customsEntityList.add(customsDTO);
             }
+            List<ProductCustomsDTO> productCustomsDTOS = BeanMapper.copyList(productCustomsDTO, ProductCustomsDTO.class);
+            addProductCustomsLog(productCustomsDTOS, id);
             productCustomsService.saveOrUpdateBatch(customsEntityList);
         }
 

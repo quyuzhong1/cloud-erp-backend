@@ -29,6 +29,11 @@ public class ProductCustomsDTO {
     private String country;
 
     /**
+     * 国家
+     */
+    private String countryName;
+
+    /**
      * 海关编码
      */
     private String customsCode;
