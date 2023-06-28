@@ -16,13 +16,13 @@ import java.util.List;
 @Service
 @Slf4j
 @RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_TO_OMS_SALES_TOPIC, selectorExpression = "sync_kingdee_return_order_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_RETURN_ORDER_TO_OMS)
-public class SyncKingdeeReturnOrderCustomer implements RocketMQListener<List<KingdeeReturnOrderEntity>> {
+public class SyncKingdeeReturnOrderCustomer implements RocketMQListener<KingdeeReturnOrderEntity> {
 
     @Resource
     private SyncSoReturnService syncSoReturnService;
 
     @Override
-    public void onMessage(List<KingdeeReturnOrderEntity> list) {
+    public void onMessage(KingdeeReturnOrderEntity list) {
         log.info("监听到金蝶退货单需要同步：entity={}", JSONUtil.toJsonStr(list));
         syncSoReturnService.syncKingdeeReturnOrderToSoReturn(list);
     }
