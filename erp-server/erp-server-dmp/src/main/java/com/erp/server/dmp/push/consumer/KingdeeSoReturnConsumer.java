@@ -50,7 +50,8 @@ public class KingdeeSoReturnConsumer implements RocketMQListener<Map<String, Obj
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_RETURNSTOCK.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "XSTHD12485047"));
+//        queryFilters.add(String.format("FBillNo = '%s'", "XSTHD12485047"));
+        queryFilters.add(String.format("FDocumentStatus = '%s'", "C"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillTypeID.FNumber,FBillNo,FDate,FDocumentStatus,FSaleOrgId,FSaleOrgId.FName,FRetcustId," +
                 "FRetcustId.FName,FRetcustId.FNumber,FSalesManId,FSalesManId.FName,FCreateDate,FModifyDate,FCancelStatus,FReceiverCountry,FLinkMan,FExchangeRate," +

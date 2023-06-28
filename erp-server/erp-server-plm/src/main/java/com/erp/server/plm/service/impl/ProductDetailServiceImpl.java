@@ -665,6 +665,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public String saveOrUpdate(ProductSkuBaseInfoDTO productSkuBaseInfoDTO) {
+        //校验必填
+        checkRequiredField(Arrays.asList(productSkuBaseInfoDTO.getId()));
         ProductDetailEntity detailEntity = new ProductDetailEntity();
         BeanMapper.copy(productSkuBaseInfoDTO, detailEntity);
         detailEntity.setIsChange(IsConstant.NO);
@@ -687,6 +689,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public Boolean saveOrUpdateBatch(List<ProductDetailDTO> productDetailList) {
+        List<String> ids = productDetailList.stream().map(ProductDetailDTO::getId).collect(Collectors.toList());
+        //校验必填
+        checkRequiredField(ids);
         List<ProductDetailEntity> list = BeanMapper.copyList(productDetailList, ProductDetailEntity.class);
         list.forEach(req -> {
             req.setIsChange(IsConstant.NO);
@@ -711,6 +716,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional
     public Boolean saveOrUpdateNoSpec(ProductNoSpecDTO productNoSpecDTO) {
+        //校验必填
+        checkRequiredField(Arrays.asList(productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId()));
         //检查spu编号是否重复
         if (this.checkSpuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getSpuNo(), productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95017);
@@ -944,6 +951,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional
     public Boolean saveOrUpdateManySpec(ProductManySpecDTO productManySpecDTO) {
+        List<String> ids = productManySpecDTO.getProductDetailList().stream().map(ProductDetailDTO::getId).collect(Collectors.toList());
+        //校验必填
+        checkRequiredField(ids);
         //检查spu编号是否重复
         if (this.checkSpuNo(productManySpecDTO.getProductInfoDTO().getSpuNo(), productManySpecDTO.getProductInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95017);
@@ -1798,13 +1808,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     public Boolean approvalPass(ProductDetailOperateDTO dto) {
         ProductDetailEntity entity = this.getById(dto.getId());
-        ProductCostEntity costEntity = productCostService.getBySkuId(entity.getSkuNo());
-        if (costEntity.getActualTaxCost() == null) {
-            throw new ServiceException(ApiError.ERROR_95237);
-        }
-        if (costEntity.getActualNoTaxCost() == null) {
-            throw new ServiceException(ApiError.ERROR_95238);
-        }
 
         //验证是否设置审核人
        /* ProductDetailApproverEntity approverEntity = productDetailApproverService.getProductDetailApprover();
@@ -2104,6 +2107,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     public void checkRequiredField(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
         List<ProductDetailEntity> detailEntityList = this.listByIds(ids);
         for (ProductDetailEntity entity : detailEntityList) {
             ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
@@ -2242,6 +2248,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public Boolean commit(String id) {
         //校验必填
         checkRequiredField(Arrays.asList(id));
+        ProductCostEntity costEntity = productCostService.getBySkuId(id);
+        if (costEntity.getActualTaxCost() == null) {
+            throw new ServiceException(ApiError.ERROR_95237);
+        }
+        if (costEntity.getActualNoTaxCost() == null) {
+            throw new ServiceException(ApiError.ERROR_95238);
+        }
         ProductDetailEntity productDetailEntity = this.getById(id);
         if (ObjectUtils.isEmpty(productDetailEntity)) {
             throw new ServiceException(ApiError.ERROR_95084);
@@ -3164,6 +3177,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //校验必填
         checkRequiredField(ids);
+        for (String id : ids) {
+            ProductCostEntity costEntity = productCostService.getBySkuId(id);
+            if (costEntity.getActualTaxCost() == null) {
+                throw new ServiceException(ApiError.ERROR_95237);
+            }
+            if (costEntity.getActualNoTaxCost() == null) {
+                throw new ServiceException(ApiError.ERROR_95238);
+            }
+        }
+
         //待提交、审核不通过才可以提交
         long count = entityList.stream().filter(entity ->
                 entity.getStatus().equals(ProductDetailStatusEnum.WAIT_COMMIT.getCode())
