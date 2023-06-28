@@ -1191,14 +1191,6 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         //新增任务
         for (ProjectTaskDTO projectTaskDTO : projectTaskList) {
 
-            //无需新增数据
-            if (CollectionUtils.isNotEmpty(notAddList)) {
-                long count = notAddList.stream().filter(obj -> notAddList.contains(projectTaskDTO.getId())).count();
-                if (count > 0) {
-                    continue;
-                }
-            }
-
             ProjectImportDTO projectImportDTO = taskList.stream().filter(obj -> obj.getTaskName().equals(projectTaskDTO.getName())).findFirst().orElse(null);
             //前置任务
             String preTask = projectImportDTO.getPreTask();
@@ -1209,6 +1201,12 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                 projectTaskDTO.setPreTaskIdList(preTaskIdList);
             }
             projectTaskDTO.setType(MathUtil.ZERO);
+
+            //需要修改的数据
+            if (CollectionUtils.isNotEmpty(notAddList) && notAddList.contains(projectTaskDTO.getId())) {
+                projectTaskService.updateTask(projectTaskDTO);
+                continue;
+            }
             projectTaskService.save(projectTaskDTO);
         }
 
