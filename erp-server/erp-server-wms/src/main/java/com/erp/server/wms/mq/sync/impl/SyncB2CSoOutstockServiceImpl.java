@@ -1,9 +1,10 @@
-package com.erp.server.wms.rocketmq.sync.impl;
+package com.erp.server.wms.mq.sync.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.service.RedisService;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
@@ -14,20 +15,24 @@ import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
+import com.erp.server.wms.mq.sync.SyncB2CSoOutstockService;
 import com.erp.server.wms.service.InventoryTransCoreService;
 import com.erp.server.wms.service.SoOutstockDetailService;
 import com.erp.server.wms.service.SoOutstockService;
 import com.erp.server.wms.service.WarehouseService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -54,6 +59,9 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     @Resource
     private SoOutstockDetailService soOutstockDetailService;
 
+    @Resource
+    private RedisService redisService;
+
 
     /**
      * 同步金蝶的销售出库单
@@ -66,9 +74,12 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void syncKingdeeSoOutstock(KingdeeDeliveryDetailEntity entity) {
-
+        //根据单号检查能否同步 true 可以
+        Boolean checkSyncResult = checkIsSync(entity.getFBillNo());
+        if (!checkSyncResult) {
+            return;
+        }
         List<KingdeeDeliveryDetailItemEntity> kingdeeDetailList = entity.getKingdeeOutStockItemEntityList();
-
         if (CollectionUtils.isEmpty(kingdeeDetailList)) {
             return;
         }
@@ -86,6 +97,11 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         Map<String, List<KingdeeDeliveryDetailItemEntity>> map = kingdeeDetailList.stream().collect(Collectors.groupingBy(KingdeeDeliveryDetailItemEntity::getFStockNumber));
         String b2c = BillTypeEnum.B2C.getCode();
         ApproveStatusEnum statusEnum = ApproveStatusEnum.APPROVE;
+
+        //销售出库单
+        InventorySourceTypeEnum sourceTypeEnum = InventorySourceTypeEnum.SO_OUTSTOCK;
+        LocalDate now = LocalDate.now();
+
         String sourceType = SourceTypeEnum.KINGDEE.getCode();
         for (Map.Entry<String, List<KingdeeDeliveryDetailItemEntity>> item : map.entrySet()) {
             //金蝶的仓库编号
@@ -97,8 +113,10 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 //销售出库
                 SoOutstockEntity soOutstock = new SoOutstockEntity();
                 soOutstock.setOrderType(b2c);
+                String code = entity.getFBillNo();
+                String warehouseId = warehouse.getId();
                 //单据编号
-                soOutstock.setCode(entity.getFBillNo());
+                soOutstock.setCode(code);
                 //运输单号
                 soOutstock.setTrackNo(entity.getFCarriageNO());
                 //仓管员
@@ -116,7 +134,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
                 //这个是出入库 集合
                 List<InOutStockDTO> inOutStockList = new ArrayList<>();
-
 
                 for (KingdeeDeliveryDetailItemEntity detail : detailList) {
                     String skuNo = detail.getFMaterialNumber();
@@ -142,6 +159,14 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
                     inOutStock.setSourceId(id);
                     inOutStock.setSourceDetailId(detailId);
+                    inOutStock.setSourceType(sourceTypeEnum);
+                    inOutStock.setBillDate(now);
+                    inOutStock.setQty(actualQty);
+                    inOutStock.setSkuId(skuId);
+                    inOutStock.setSkuNo(skuNo);
+                    inOutStock.setSourceCode(code);
+                    inOutStock.setWarehouseId(warehouseId);
+                    inOutStockList.add(inOutStock);
 
                 }
                 //不为空的时候
@@ -150,7 +175,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                     soOutstockService.save(soOutstock);
                     //保存销售出库单详情
                     soOutstockDetailService.saveBatch(addDetailList);
-
+                    //扣库存
                     InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
                     inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
                     if (CollectionUtils.isNotEmpty(inOutStockList)) {
@@ -165,6 +190,42 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
 
         }
+
+    }
+
+    /**
+     * 检查能否同步
+     *
+     * @param fBillNo
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-06-28 9:57
+     */
+    private Boolean checkIsSync(String fBillNo) {
+        if (StringUtils.isBlank(fBillNo)) {
+            return Boolean.FALSE;
+        }
+        if (fBillNo.length() == 15) {
+            return Boolean.FALSE;
+        }
+        String baseKey = RedisKeyConstant.KINGDEE_XSCK;
+        String redisKey = fBillNo + baseKey;
+        String billNo = redisService.getCacheObject(redisKey);
+        //表示有
+        if (StringUtils.isNotBlank(billNo)) {
+            return Boolean.FALSE;
+        } else {
+            //如果没有 从数据库找
+            SoOutstockEntity soOutstock = soOutstockService.getByCode(fBillNo);
+            //表示有
+            if (soOutstock != null) {
+                return Boolean.FALSE;
+            } else {
+                redisService.setCacheObject(redisKey,fBillNo,7L, TimeUnit.DAYS);
+                return Boolean.TRUE;
+            }
+        }
+
 
     }
 }

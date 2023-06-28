@@ -142,9 +142,9 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                 List<ProductTaskVO> phaseTaskList = item.getValue();
                 List<ProductTaskVO> showList = new ArrayList<>(phaseTaskList.size());
                 //排序
-                List<ProductTaskVO> planEndTimeList = phaseTaskList.stream().filter(p -> p.getPlanEndTime() != null).sorted(Comparator.comparing(ProductTaskVO::getCreateTime).reversed()).collect(Collectors.toList());
+                List<ProductTaskVO> planEndTimeList = phaseTaskList.stream().filter(p -> p.getPlanEndTime() != null).sorted(Comparator.comparing(ProductTaskVO::getPlanEndTime)).collect(Collectors.toList());
                 showList.addAll(planEndTimeList);
-                List<ProductTaskVO> createTimeList = phaseTaskList.stream().filter(p -> p.getPlanEndTime() == null).sorted(Comparator.comparing(ProductTaskVO::getCreateTime).reversed()).collect(Collectors.toList());
+                List<ProductTaskVO> createTimeList = phaseTaskList.stream().filter(p -> p.getPlanEndTime() == null).sorted(Comparator.comparing(ProductTaskVO::getCreateTime)).collect(Collectors.toList());
                 showList.addAll(createTimeList);
                 //最小计划开始时间
                 String minStartTime = phaseTaskList.stream().filter(obj -> ObjectUtils.isNotNull(obj.getPlanStartTime())).sorted(Comparator.comparing(ProductTaskVO::getPlanStartTime)).map(ProductTaskVO::getPlanStartTime).findFirst().orElse(null);
@@ -228,7 +228,7 @@ public class ProjectPlanTaskServiceImpl extends ServiceImpl<ProjectPlanTaskMappe
                     parentId++;
                 }
                 resultList.add(parentVO);
-                resultList.addAll(phaseTaskList);
+                resultList.addAll(showList);
 
             }
         }

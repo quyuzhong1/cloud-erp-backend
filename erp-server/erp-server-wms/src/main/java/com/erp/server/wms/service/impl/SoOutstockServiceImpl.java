@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -1141,6 +1142,23 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 .set(StringUtils.isNotBlank(syncKingdeeId), SoOutstockEntity::getSyncKingdeeId, syncKingdeeId)
                 .set(StringUtils.isNotBlank(syncOperate), SoOutstockEntity::getSyncOperate, syncOperate)
                 .update();
+    }
+
+
+    /**
+     * 根据code 获取到销售出库单信息
+     *
+     * @param code
+     * @return com.erp.model.wms.entity.SoOutstockEntity
+     * @author yl
+     * @date 2023-06-28 10:17
+     */
+    @Override
+    public SoOutstockEntity getByCode(String code) {
+        LambdaQueryWrapper<SoOutstockEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SoOutstockEntity::getCode, code);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
     }
 
 }

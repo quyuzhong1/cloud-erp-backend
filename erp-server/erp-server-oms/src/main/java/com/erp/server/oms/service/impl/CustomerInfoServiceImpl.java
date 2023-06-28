@@ -241,11 +241,15 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
+
+
+
         List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(waitSubmitStatus)).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(rejectStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus), "");
         if (result) {
             //添加日志

@@ -1,4 +1,4 @@
-package com.erp.server.wms.rocketmq.sync;
+package com.erp.server.wms.mq.sync;
 
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 
