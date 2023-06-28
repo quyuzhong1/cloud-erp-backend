@@ -20,7 +20,7 @@ public enum ProductBatchFieldEnum implements EnumMessage  {
     DECLARE_ELEMENT("declare_element","申报要素", "product_logistics", "sku_id"),
     ENGLISH_MATERIAL("english_material","英文材质", "product_logistics", "sku_id"),
     ENGLISH_USAGE("english_usage","英文用途", "product_logistics", "sku_id"),
-    CHARGE_ID("charge_id,charge_name","产品经理", "product_info", "id"),
+    CHARGE_ID("charge_id","产品经理", "product_info", "id"),
     PURCHASE_USER_ID("purchase_user_id","采购员", "product_purchase", "sku_id"),
     ;
     /**

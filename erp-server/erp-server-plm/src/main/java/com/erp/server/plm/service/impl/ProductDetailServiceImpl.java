@@ -3138,6 +3138,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public Boolean updateBatchFiled(ProductDetailBatchUpdateDTO dto) {
+        dto.setUpdateFiledCode(StrUtil.toUnderlineCase(dto.getUpdateFiledCode()));
         List<ProductDetailEntity> entityList = this.listByIds(dto.getIds());
         if (CollectionUtils.isEmpty(entityList)) {
             throw new ServiceException(ApiError.ERROR_98004);
@@ -3182,7 +3183,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 dto.setValues(Integer.valueOf(dto.getValues().toString()));
             }
 
-            ProductBatchFieldEnum enumByCode = ProductBatchFieldEnum.getEnumByCode(StrUtil.toUnderlineCase(dto.getUpdateFiledCode()));
+            ProductBatchFieldEnum enumByCode = ProductBatchFieldEnum.getEnumByCode(dto.getUpdateFiledCode());
             if (enumByCode == null) {
                 throw new ServiceException(ApiError.ERROR_9046);
             }
