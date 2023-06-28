@@ -2536,6 +2536,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             addProductAccessoriesLog(productAccessoriesList, id);
             productAccessoriesService.saveOrUpdateBatchAccessories(productAccessoriesList);
         }
+
+        //11.修改/新增  目的国海关编码信息
+        List<ProductCustomsEntity> productCustomsDTO = skuDTO.getProductCustomsList();
+        if (CollectionUtils.isNotEmpty(productCustomsDTO)) {
+            List<ProductCustomsEntity> customsEntityList = new ArrayList<>();
+            for (ProductCustomsEntity customsDTO : productCustomsDTO) {
+                customsEntityList.add(customsDTO);
+            }
+            productCustomsService.saveOrUpdateBatch(customsEntityList);
+        }
+
         //编辑通过后发送金蝶
         syncKingdeeProductDetailService.syncDataToKingdee(detailEntity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
     }

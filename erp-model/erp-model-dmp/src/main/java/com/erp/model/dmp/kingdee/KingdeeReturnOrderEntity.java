@@ -37,6 +37,8 @@ public class KingdeeReturnOrderEntity extends CleanBaseDTO {
     private String fRetcustId;
     @Alias("FRetcustId.FName")
     private String fRetcustName;
+    @Alias("FRetcustId.FNumber")
+    private String FRetcustNumber;
     @Alias("FSalesManId")
     private String fSalesManId;
     @Alias("FSalesManId.FName")

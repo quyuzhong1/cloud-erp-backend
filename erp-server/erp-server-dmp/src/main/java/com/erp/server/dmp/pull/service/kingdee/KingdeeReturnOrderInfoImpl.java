@@ -171,7 +171,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         queryFilters.add(String.format("FDocumentStatus = '%s'", "C"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillTypeID.FNumber,FBillNo,FDate,FDocumentStatus,FSaleOrgId,FSaleOrgId.FName,FRetcustId," +
-                "FRetcustId.FName,FSalesManId,FSalesManId.FName,FCreateDate,FModifyDate,FCancelStatus,FReceiverCountry,FLinkMan,FExchangeRate," +
+                "FRetcustId.FName,FRetcustId.FNumber,FSalesManId,FSalesManId.FName,FCreateDate,FModifyDate,FCancelStatus,FReceiverCountry,FLinkMan,FExchangeRate," +
                 "FApproveDate,FBussinessType,FOwnerTypeIdHead,FSettleCurrId.FCode,FDelTime,FHeadNote,FReturnReason,FSaledeptid.FNumber,FSaledeptid.FName"
                 + "FOrderNo,FAmount,FMustqty,FUnitID.FName,FMaterialId,FMaterialId.FNumber,FMaterialName,FAuxpropId,FMaterialType,FPrice,FStockId," +
                 "FStocklocId,FStockstatusId,FNote,FSrcBillNo,FSrcBillTypeID,FIsFree,FMaterialModel,FRealQty,FSOBILLTYPEID,FSalUnitQty,FProjectNo,F_ulz_KHSKU,FAllAmount," +
