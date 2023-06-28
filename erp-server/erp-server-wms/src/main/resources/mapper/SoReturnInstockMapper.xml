@@ -33,6 +33,7 @@
         INNER JOIN so_return_instock sri ON sri.id = srid.main_id
         WHERE srid.is_deleted = FALSE
         AND sri.is_deleted = FALSE
+        AND sri.source_type NOT IN ('SAL_RETURNSTOCK')
         <if test="params.ids != null and params.ids.size != ''">
             and sri.id in
             <foreach collection="params.ids" item="item" open="(" close=")" separator=",">

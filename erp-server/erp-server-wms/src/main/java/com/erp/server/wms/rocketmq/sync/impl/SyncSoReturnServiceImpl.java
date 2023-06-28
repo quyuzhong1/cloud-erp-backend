@@ -1,11 +1,13 @@
 package com.erp.server.wms.rocketmq.sync.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeReturnOrderItemEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
@@ -13,12 +15,17 @@ import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.rocketmq.sync.SyncSoReturnService;
+import com.erp.server.wms.service.InventoryTransCoreService;
 import com.erp.server.wms.service.SoReturnInstockDetailService;
 import com.erp.server.wms.service.SoReturnInstockService;
 import com.erp.server.wms.service.WarehouseService;
@@ -27,6 +34,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -49,6 +57,9 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
     @Resource
     private SoReturnInstockDetailService soReturnInstockDetailService;
 
+    @Resource
+    private InventoryTransCoreService inventoryTransCoreService;
+
     @Override
     public void syncKingdeeReturnOrderToSoReturn(KingdeeReturnOrderEntity kingdeeReturnOrderEntity) {
         List<KingdeeReturnOrderItemEntity> itemEntityList = kingdeeReturnOrderEntity.getItemEntityList();
@@ -59,6 +70,9 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         //如果金蝶退货单明细有不一样的仓库，这里分开成多单存到OMS
         Map<String, List<KingdeeReturnOrderItemEntity>> stockNumberMap = itemEntityList.stream().collect(Collectors.groupingBy(KingdeeReturnOrderItemEntity::getFStockNumber));
         for (Map.Entry<String, List<KingdeeReturnOrderItemEntity>> stringListEntry : stockNumberMap.entrySet()) {
+            if (StrUtil.isEmpty(kingdeeReturnOrderEntity.getFSaleOrgId()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(kingdeeReturnOrderEntity.getFSaleOrgId()) || ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(kingdeeReturnOrderEntity.getFSaleOrgId())) {
+                continue;
+            }
             //获取退货单明细
             List<KingdeeReturnOrderItemEntity> orderItemEntityList = stringListEntry.getValue();
             //获取仓库信息
@@ -115,6 +129,43 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             }
             soReturnInstockService.save(instockEntity);
             soReturnInstockDetailService.saveBatch(detailEntityList);
+            //更新库存
+            inventoryTransCore(Arrays.asList(instockEntity));
+        }
+    }
+
+    /**
+     * 更新库存
+     * @Author Luo_WG
+     * @Date 2023/5/24 11:25
+     * @param entityList
+     * @return void
+     **/
+    private void inventoryTransCore(List<SoReturnInstockEntity> entityList) {
+        for (SoReturnInstockEntity entity : entityList) {
+            List<InOutStockDTO> inOutStockList = new ArrayList<>();
+            List<SoReturnInstockDetailEntity> returnInstockDetailEntities = soReturnInstockDetailService.listDetailByMainId(entity.getId());
+            for (SoReturnInstockDetailEntity detailEntity : returnInstockDetailEntities) {
+                InOutStockDTO inOutStockDTO = new InOutStockDTO();
+                inOutStockDTO.setSourceType(InventorySourceTypeEnum.SO_RETURN_INSTOCK);
+                inOutStockDTO.setSourceId(entity.getId());
+                inOutStockDTO.setSourceCode(entity.getCode());
+                inOutStockDTO.setSourceDetailId(detailEntity.getId());
+                inOutStockDTO.setBillDate(LocalDate.now());
+                inOutStockDTO.setSkuId(detailEntity.getSkuId());
+                inOutStockDTO.setSkuNo(detailEntity.getSkuNo());
+                inOutStockDTO.setQty(detailEntity.getRealQty());
+                inOutStockDTO.setWarehouseId(entity.getWarehouseId());
+                // TODO 金蝶目前没有填仓位
+//                inOutStockDTO.setWarehouseLocation(detailEntity.getWarehouseLocation());
+                inOutStockList.add(inOutStockDTO);
+            }
+            //添加冻结库存
+            InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+            inventoryInOutStockDTO.setMembers(inOutStockList);
+            inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_RETURN_INSTOCK.getCode());
+            //更新库存
+            inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
         }
     }
 }

@@ -914,6 +914,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return;
         }
         List<String> ids = productCustomsList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(ProductCustomsDTO::getId).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByIds(ids);
         productCustomsList.forEach(obj -> {
             //SKU操作日志
@@ -2104,7 +2107,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductDetailEntity> detailEntityList = this.listByIds(ids);
         for (ProductDetailEntity entity : detailEntityList) {
             ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
-
             if (StringUtils.isBlank(productInfoEntity.getSpuNo())) {
                 throw new ServiceException(ApiError.ERROR_95199);
             }
@@ -2160,6 +2162,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
 
             ProductCostEntity costEntity = productCostService.getBySkuId(entity.getId());
+            if (ObjectUtils.isEmpty(costEntity)) {
+                throw new ServiceException(ApiError.ERROR_95239);
+            }
             if (costEntity.getProjectApprovalCost() == null) {
                 throw new ServiceException(ApiError.ERROR_95216);
             }
@@ -2192,6 +2197,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
 
             ProductSaleEntity saleEntity = productSaleService.getBySkuId(entity.getId());
+            if (ObjectUtils.isEmpty(saleEntity)) {
+                throw new ServiceException(ApiError.ERROR_95240);
+            }
             if (saleEntity.getYearSaleQty() == null) {
                 throw new ServiceException(ApiError.ERROR_95226);
             }

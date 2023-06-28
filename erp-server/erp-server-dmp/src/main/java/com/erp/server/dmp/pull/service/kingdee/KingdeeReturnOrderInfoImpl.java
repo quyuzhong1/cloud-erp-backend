@@ -89,7 +89,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_RETURN_ORDER, KingdeeReturnOrderEntity.class);
         }
         //同步到OMS销售退货单
-        pushToMqList.forEach(req -> mqProducerService.asyncClassMsg(RocketMqTopic.SYNC_KINGDEE_TO_OMS_SALES_TOPIC, RocketMqTagEnum.SYNC_KINGDEE_RETURN_ORDER_TAG.getName(),Arrays.asList(req), req.getFBillNo()));
+        pushToMqList.forEach(req -> mqProducerService.asyncClassMsg(RocketMqTopic.SYNC_KINGDEE_TO_OMS_SALES_TOPIC, RocketMqTagEnum.SYNC_KINGDEE_RETURN_ORDER_TAG.getName(), req, req.getFBillNo()));
 
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_KINGDEE_RETURN_ORDER);
