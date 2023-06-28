@@ -3186,9 +3186,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (enumByCode == null) {
                 throw new ServiceException(ApiError.ERROR_9046);
             }
-            flag = baseMapper.updateFiledBatch(dto.getIds(), enumByCode.getTableName(), dto.getUpdateFiledCode(), dto.getValues(), enumByCode.getKeyName());
+            flag = baseMapper.updateFiledBatch(dto.getIds(), enumByCode.getTableName(), enumByCode.getCode(), dto.getValues(), enumByCode.getKeyName());
         }
-        List<ProductDetailEntity> list = lambdaQuery().in(ProductDetailEntity::getIsDeleted, dto.getIds()).list();
+        List<ProductDetailEntity> list = lambdaQuery().in(ProductDetailEntity::getId, dto.getIds()).list();
         //同步到SCM
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), list, IdUtil.simpleUUID());
         //同步到WMS
