@@ -13,6 +13,7 @@ import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.rocketmq.sync.oms.SyncSoReturnService;
 import org.ehcache.core.util.CollectionUtil;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,9 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
 
     @Override
     public void syncKingdeeReturnOrderToSoReturn(List<KingdeeReturnOrderEntity> list) {
@@ -67,6 +71,8 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
                     soReturnEntity.setSourceCode(kingdeeReturnOrderItemEntity.getFOrderNo());
                     soReturnEntity.setSourceId(kingdeeReturnOrderItemEntity.getFSOEntryId());
                 }
+                soReturnEntity.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
+//                soReturnEntity.setCustomerId()
                 returnEntityList.add(soReturnEntity);
             }
         }

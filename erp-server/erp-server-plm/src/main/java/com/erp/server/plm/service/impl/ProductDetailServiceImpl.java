@@ -3137,6 +3137,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateBatchFiled(ProductDetailBatchUpdateDTO dto) {
         dto.setUpdateFiledCode(StrUtil.toUnderlineCase(dto.getUpdateFiledCode()));
         List<ProductDetailEntity> entityList = this.listByIds(dto.getIds());
@@ -3166,8 +3167,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> productIds = detailEntityList.stream().map(ProductDetailEntity::getProductId).distinct().collect(Collectors.toList());
             String chargeName = commonService.getNameByIds(Arrays.asList(dto.getValues().toString().split(",")));
             flag = productInfoService.lambdaUpdate()
-                    .set(ProductInfoEntity::getCategoryId, dto.getValues())
-                    .set(ProductInfoEntity::getCategory, chargeName).in(ProductInfoEntity::getId, productIds)
+                    .set(ProductInfoEntity::getChargeId, dto.getValues())
+                    .set(ProductInfoEntity::getChargeName, chargeName).in(ProductInfoEntity::getId, productIds)
                     .update();
             List<ProductInfoEntity> productInfoEntities = productInfoService.listByIds(productIds);
             //同步到SCM
