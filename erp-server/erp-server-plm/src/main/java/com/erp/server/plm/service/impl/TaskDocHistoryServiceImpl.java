@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * <p>
@@ -62,13 +61,19 @@ public class TaskDocHistoryServiceImpl extends SuperServiceImpl<TaskDocHistoryMa
      * @param finishDocId
      * @return
      */
-    private Integer getMaxVersion(String finishDocId) {
+    public Integer getMaxVersion(String finishDocId) {
         QueryWrapper<TaskDocHistoryEntity> queryWrapper = new QueryWrapper<>();
         queryWrapper.select("MAX(change_version) as maxVersion");
         queryWrapper.lambda().eq(TaskDocHistoryEntity::getFinishDocId, finishDocId);
-        List<Map<String, Object>> list = baseMapper.selectMaps(queryWrapper);
+        List<Object>  list = baseMapper.selectObjs(queryWrapper);
         if (CollectionUtils.isNotEmpty(list)) {
-            return (Integer) list.get(0).get("maxVersion");
+            Object obj = list.get(0);
+            if (obj != null) {
+                return (Integer) obj + 1;
+            } else {
+                return 1;
+            }
+
         }
         return 1;
 

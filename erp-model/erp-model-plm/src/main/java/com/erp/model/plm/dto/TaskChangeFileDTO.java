@@ -1,10 +1,12 @@
 package com.erp.model.plm.dto;
 
+import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
@@ -27,6 +29,8 @@ public class TaskChangeFileDTO implements Serializable {
     /**
      * 上传类型 0 本地上传  1 飞书 上传 飞书链接
      */
+    @NotNull(message = "上传类型不能为空")
+    @StateEnumValue(intValues = {0,1}, message = "上传类型有误")
     private Integer uploadType;
 
     /**
