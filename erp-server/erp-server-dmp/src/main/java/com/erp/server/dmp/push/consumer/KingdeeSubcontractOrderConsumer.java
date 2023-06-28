@@ -129,12 +129,13 @@ public class KingdeeSubcontractOrderConsumer implements RocketMQListener<Map<Str
         }
         if (SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operate)) {
             //反审核
-            kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+            disApprove(platformEntity, map, apiUtils, id, documentStatus);
             return;
         }
         //审核中或已审核则要先反审
         if (KingdeeDocStatusEnum.APPROVING.getCode().equals(documentStatus) || KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
-            flag = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+            //反审核
+            flag = disApprove(platformEntity, map, apiUtils, id, documentStatus);
         }
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
@@ -153,6 +154,33 @@ public class KingdeeSubcontractOrderConsumer implements RocketMQListener<Map<Str
             }
         }
     }
+
+
+   /**
+    * 反审核
+    */
+    private Boolean disApprove (PlatformEntity platformEntity, Map<String, Object> map, KingdeeApiUtils apiUtils, String id,String documentStatus){
+        //模块类型
+        Integer type = ApiModuleTypeEnum.SUBCONTRACT_ORDER.getCode();
+        //业务编码
+        String code = (String) map.get("code");
+
+        if (KingdeeDocStatusEnum.APPROVED.getCode().equals(documentStatus)) {
+            //将业务状态反执行至计划确认
+            Boolean confirm = kingdeeCommonService.excuteOperation(apiUtils, platformEntity, map, type, code, SyncKingdeeOperateEnum.OPERATE_UNDO_TO_PLAN_CONFIRM.getCode());
+            if (!confirm) {
+                return Boolean.FALSE;
+            }
+
+        }
+        //反审核
+        Boolean unAudit = kingdeeCommonService.unAudit(platformEntity, map, apiUtils, id, type);
+        return unAudit;
+    }
+
+
+
+
     /**
      * @description: 给明细id赋值
      * @author Will
