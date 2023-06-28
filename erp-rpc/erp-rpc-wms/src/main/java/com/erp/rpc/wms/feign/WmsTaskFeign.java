@@ -5,6 +5,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -198,4 +199,13 @@ public interface WmsTaskFeign {
     @PostMapping("/feign/qcBill/getQcInfoByPurchaseOrder")
     QcInfoDTO.PurchaseQcInfoDTO getQcInfoByPurchaseOrder(@RequestBody QcInfoDTO.PurchaseQcParamDTO dto);
 
+    /**
+     * 根据金蝶仓库code 获取到对应仓库信息
+     * @Author Luo_WG
+     * @Date 2023/6/28 9:45
+     * @param kingdeeWarehouseCodeList kingdeeWarehouseCodeList
+     * @return java.util.List<com.erp.model.wms.entity.WarehouseEntity>
+     **/
+    @PostMapping("feign/warehouse/listByKingdeeCodeList")
+    List<WarehouseEntity> listByKingdeeCodeList(@RequestBody List<String> kingdeeWarehouseCodeList);
 }

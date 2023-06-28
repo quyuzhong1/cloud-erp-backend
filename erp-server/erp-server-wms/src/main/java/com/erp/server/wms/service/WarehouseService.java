@@ -192,7 +192,6 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      */
     WarehouseDTO.UpdateDTO detailWithCache(String id);
 
-
     /**
      * 根据金蝶仓库code 获取到对应仓库信息
      * @author yl

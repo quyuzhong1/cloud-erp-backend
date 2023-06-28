@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.server.wms.service.WarehouseService;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,4 +37,15 @@ public class WarehouseFeignController {
         return warehouseService.listApproveWarehouse();
     }
 
+    /**
+     * 根据金蝶仓库code 获取到对应仓库信息
+     * @Author Luo_WG
+     * @Date 2023/6/28 9:45
+     * @param kingdeeWarehouseCodeList kingdeeWarehouseCodeList
+     * @return java.util.List<com.erp.model.wms.entity.WarehouseEntity>
+     **/
+    @PostMapping("/listByKingdeeCodeList")
+    public List<WarehouseEntity> listByKingdeeCodeList(@RequestBody List<String> kingdeeWarehouseCodeList) {
+        return warehouseService.listByKingdeeCodeList(kingdeeWarehouseCodeList);
+    }
 }

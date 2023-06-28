@@ -1,4 +1,4 @@
-package com.erp.server.wms.mq.consumer;
+package com.erp.server.wms.rocketmq.customer;
 
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
@@ -28,8 +28,6 @@ public class ProductConsumer {
 
     @Resource
     private PurchaseOrderSupplierService purchaseOrderSupplierService;
-
-
 
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC,
