@@ -258,7 +258,7 @@ public class CustomerInfoController extends BaseController {
     @GetMapping("/listAll")
     public ApiResult<List<CustomerDTO.InfoDTO>> listAll() {
         List<CustomerInfoEntity> list = customerInfoService.list();
-        List<CustomerDTO.InfoDTO> resultList=  BeanMapper.copyList(list,CustomerDTO.InfoDTO.class);
+        List<CustomerDTO.InfoDTO> resultList = BeanMapper.copyList(list, CustomerDTO.InfoDTO.class);
         return success(resultList);
     }
 
@@ -302,15 +302,27 @@ public class CustomerInfoController extends BaseController {
 
     /**
      * 根据客户id 获取地址信息
-     * @Author Luo_WG
-     * @Date 2023/5/18 14:28
+     *
      * @param customerId customerId
      * @return java.util.List<com.erp.model.oms.dto.CustomerAddressDTO.ViewDTO>
+     * @Author Luo_WG
+     * @Date 2023/5/18 14:28
      **/
     @GetMapping("/listCustomerAddress")
     public ApiResult<List<CustomerAddressDTO.ViewDTO>> listCustomerAddress(@RequestParam("customerId") String customerId) {
         List<CustomerAddressDTO.ViewDTO> viewDTOS = customerAddressService.listByMainId(customerId);
         return success(viewDTOS);
+    }
+
+    /**
+     * 处理平台的历史数据
+     *
+     * @return
+     */
+    @GetMapping("/processData")
+    public ApiResult processData() {
+        Boolean result = customerInfoService.processData();
+        return result ? success() : failure();
     }
 
 

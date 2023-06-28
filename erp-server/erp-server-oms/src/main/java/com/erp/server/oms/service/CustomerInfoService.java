@@ -217,4 +217,13 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      **/
     Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
 
+    
+    /**
+     * 处理平台类型历史数据
+     * @author yl
+     * @date 2023-06-28 15:53
+     * @param
+     * @return java.lang.Boolean
+     */
+    Boolean processData();
 }

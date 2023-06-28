@@ -10,10 +10,7 @@ import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.*;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -27,7 +24,9 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.CustomerContactEntity;
 import com.erp.model.oms.entity.CustomerGroupEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -104,6 +103,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     private SyncKingdeeCustomerContactService syncKingdeeCustomerContactService;
     @Resource
     private WorkflowFeign workflowFeign;
+
+    @Resource
+    private DictBasicService dictBasicService;
 
     /**
      * 获取到分组的id 集合
@@ -872,7 +874,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 CustomerInfoEntity::getApproveStatus,
                 CustomerInfoEntity::getDisabled);
         queryWrapper.eq(CustomerInfoEntity::getDisabled, Boolean.FALSE);
-        if(StringUtils.isNotBlank(permissionSql)){
+        if (StringUtils.isNotBlank(permissionSql)) {
             queryWrapper.last(permissionSql);
         }
         List<CustomerInfoEntity> list = this.list(queryWrapper);
@@ -884,7 +886,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 item.setDisabled(true);
             }
         }
-        resultList=resultList.stream().sorted(Comparator.comparing(CustomerDTO.InfoDTO::getDisabled)).collect(Collectors.toList());
+        resultList = resultList.stream().sorted(Comparator.comparing(CustomerDTO.InfoDTO::getDisabled)).collect(Collectors.toList());
         return resultList;
     }
 
@@ -939,6 +941,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 .set(StringUtils.isNotBlank(syncOperate), CustomerInfoEntity::getSyncOperate, syncOperate)
                 .update();
     }
+
 
     /**
      * 引用客户
@@ -1000,4 +1003,27 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         operateLogService.addModuleOperateLog(content, code, businessId, operation);
     }
 
+
+    /**
+     * 处理平台类型历史数据
+     *
+     * @param
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-06-28 15:53
+     */
+    @Override
+    public Boolean processData() {
+        List<CustomerInfoEntity> list = this.list();
+        String type = DictBasicEnum.PLATFORM.getType();
+        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
+        for (CustomerInfoEntity item : list) {
+            String platformType = item.getPlatformType();
+            String platformTypeName = SalesPlatformEnum.getByCode(platformType).getName();
+            String newPlatformType = dictList.stream().filter(d -> d.getName().equals(platformTypeName)).
+                    findFirst().map(DictBasicDTO.ViewDTO::getValue).orElse("");
+            item.setPlatformType(newPlatformType);
+        }
+        return this.updateBatchById(list);
+    }
 }

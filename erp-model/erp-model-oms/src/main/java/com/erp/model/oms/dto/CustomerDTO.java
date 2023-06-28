@@ -2,7 +2,6 @@ package com.erp.model.oms.dto;
 
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.SalesPlatformEnum;
 import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -460,7 +459,7 @@ public class CustomerDTO implements Serializable {
          * http://172.16.100.11:3002/project/110/interface/api/13480
          * type=SalesPlatform
          */
-        private SalesPlatformEnum platformType;
+        private String platformType;
 
 
         /**

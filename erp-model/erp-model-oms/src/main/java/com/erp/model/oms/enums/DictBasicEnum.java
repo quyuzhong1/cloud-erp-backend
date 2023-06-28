@@ -11,6 +11,7 @@ public enum DictBasicEnum {
 
     SUPPLIER_PAY_MODE("supplierPayMode",  "供应商结算方式"),
     SUPPLIER_CATEGORY("supplierCategory" , "供应商分类"),
+    PLATFORM("platform" , "平台类型"),
     SUPPLIER_ACCOUNT_PAYMENT("supplierAccountPayment","供应商账户付款方式");
 
 
