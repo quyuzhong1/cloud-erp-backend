@@ -112,4 +112,9 @@ public class SkuVO implements Serializable {
      * 最小起订量
      */
     private Integer moq;
+
+    /**
+     * 供应商id
+     */
+    private String supplierId;
 }

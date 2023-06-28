@@ -760,4 +760,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
         }
     }
+
+    @Override
+    public List<SoReturnInstockEntity> listByCode(List<String> codeList) {
+        return lambdaQuery().in(SoReturnInstockEntity::getCode, codeList).list();
+    }
 }

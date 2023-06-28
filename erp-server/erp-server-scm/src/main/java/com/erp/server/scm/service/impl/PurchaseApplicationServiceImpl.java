@@ -681,12 +681,17 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             log.error("单据【{}】未审核完成，不支持下推",sourceCodes);
             throw new ServiceException(new ApiResult(ApiError.ERROR_1039.code, StrUtil.format(ApiError.ERROR_1039.msg,sourceCodes)));
         }
+
         //已下推信息
         List<String> sourceDetailIds = list.stream().map(PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO::getSourceDetailId).collect(Collectors.toList());
         List<SubcontractOrderDetailEntity> subcontractOrderDetailList = subcontractOrderDetailService.listBySourceDetailIds(sourceDetailIds);
         
         //查询bom信息填充子件信息
         List<String> skuIds = list.stream().map(PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO::getSkuId).collect(Collectors.toList());
+
+        //产品信息
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
         List<BomChildrenSkuDTO> bomChildList = plmTaskFeign.listBomChildBySkuIds(skuIds);
         if (CollectionUtils.isEmpty(bomChildList)) {
             throw new ServiceException(ApiError.ERROR_98093);
@@ -702,6 +707,10 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             if (MathUtil.compareTo(viewDTO.getQty(),pushdownQty) == MathUtil.ZERO) {
                 continue;
             }
+            //产品信息
+            String supplierId = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");
+            viewDTO.setSupplierId(supplierId);
+
             //可下推数量
             viewDTO.setToPushdownQty(viewDTO.getQty() - pushdownQty);
             viewDTO.setQty(viewDTO.getToPushdownQty());
@@ -718,6 +727,10 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             for (BomChildrenSkuDTO childrenSkuDTO : childList) {
                 PurchaseApplicationDTO.ViewChildGenerateSubcontractOrderDTO viewGenerateDTO = new PurchaseApplicationDTO.ViewChildGenerateSubcontractOrderDTO();
                 BeanMapperUtils.copy(viewDTO,viewGenerateDTO);
+
+                //产品信息
+                String childSupplierId = skuList.stream().filter(obj -> obj.getSkuId().equals(childrenSkuDTO.getSkuId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSupplierId())).orElse("");
+                viewGenerateDTO.setSupplierId(childSupplierId);
                 viewGenerateDTO.setSkuId(childrenSkuDTO.getSkuId());
                 viewGenerateDTO.setSkuNo(childrenSkuDTO.getSkuNo());
                 viewGenerateDTO.setProductName(childrenSkuDTO.getSkuName());
@@ -771,6 +784,14 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             throw new ServiceException(ApiError.ERROR_95084);
         }
 
+        //创建人
+        LoginUser userInfo = commonService.getUserInfo();
+
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userInfo.getUid());
+        if (ObjectUtils.isEmpty(findUserDTO)) {
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
+        }
+
         Map<String, List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getPurchaseOrgId()).concat(obj.getReceiveOrgId())));
         for (Map.Entry<String, List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO>> entry :  map.entrySet()) {
             List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> value = entry.getValue();
@@ -786,6 +807,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             addDTO.setBillDate(LocalDate.now());
             addDTO.setIsFirstMassProduct(purchaseApplicationEntity.getIsFirstMassProduct());
             addDTO.setSubcontractOrgId(subcontractOrderDTO.getPurchaseOrgId());
+            addDTO.setPurchaserId(userInfo.getUid());
+            addDTO.setDeptId(findUserDTO.getDepartmentId());
 
             //委外订单明细数据
             List<SubcontractOrderDetailDTO.AddDTO> detailList = new ArrayList<>();
