@@ -18,13 +18,11 @@ public class MabangInOutStockDTO {
     /**
      * erp单据编号
      */
-    @JsonIgnore
     private String erpSourceCode;
 
     /**
      * 仓库编码
      */
-    @JsonIgnore
     private String warehouseCode;
 
     /**
@@ -60,14 +58,12 @@ public class MabangInOutStockDTO {
 
         private String stockSku;
 
-        @JsonIgnore
         private String productName;
 
         private String quantity;
 
         private String gridCode;
 
-        @JsonIgnore
         private String sourceDetailId;
 
     }

@@ -99,7 +99,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         dmpMabangInOutStockMsgDTO.setApproveType(approveType);
 
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.SYNC_DMP_TO_MABANG_TOPIC, RocketMqTagEnum.DMP_MABANG_TRANSFER_INFO_TAG.getName(),
-                dmpMabangInOutStockMsgDTO, dmpOutInStockEntity.getId());
+                dmpMabangInOutStockMsgDTO, StrUtil.uuid().toLowerCase() + ":" + dmpOutInStockEntity.getId());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
@@ -154,7 +154,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         dmpMabangInOutStockMsgDTO.setApproveType(approveType);
 
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.SYNC_DMP_TO_MABANG_TOPIC, RocketMqTagEnum.DMP_MABANG_TRANSFER_INFO_TAG.getName(),
-                dmpMabangInOutStockMsgDTO, dmpOutInStockEntity.getId());
+                dmpMabangInOutStockMsgDTO, StrUtil.uuid().toLowerCase() + ":" + dmpOutInStockEntity.getId());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
