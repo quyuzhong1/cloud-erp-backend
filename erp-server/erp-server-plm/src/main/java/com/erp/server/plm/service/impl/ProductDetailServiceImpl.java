@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -3180,7 +3181,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ProductBatchFieldEnum.SALE_STATE.getCode().equals(dto.getUpdateFiledCode())) {
                 dto.setValues(Integer.valueOf(dto.getValues().toString()));
             }
-            ProductBatchFieldEnum enumByCode = ProductBatchFieldEnum.getEnumByCode(dto.getUpdateFiledCode());
+
+            ProductBatchFieldEnum enumByCode = ProductBatchFieldEnum.getEnumByCode(StrUtil.toUnderlineCase(dto.getUpdateFiledCode()));
+            if (enumByCode == null) {
+                throw new ServiceException(ApiError.ERROR_9046);
+            }
             flag = baseMapper.updateFiledBatch(dto.getIds(), enumByCode.getTableName(), dto.getUpdateFiledCode(), dto.getValues(), enumByCode.getKeyName());
         }
         List<ProductDetailEntity> list = lambdaQuery().in(ProductDetailEntity::getIsDeleted, dto.getIds()).list();
