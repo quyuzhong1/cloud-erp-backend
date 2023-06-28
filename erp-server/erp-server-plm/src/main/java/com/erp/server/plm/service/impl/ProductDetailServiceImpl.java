@@ -1363,12 +1363,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productCostService.removeCost(skuIds);
         //7.删除目的国海关编码
         productCustomsService.removeBySkuId(skuIds);
-        ProductDetailEntity entity = lambdaQuery().eq(ProductDetailEntity::getId, id).one();
-        entity.setIsDeleted(Boolean.TRUE);
+        List<ProductDetailEntity> entityList = lambdaQuery().in(ProductDetailEntity::getId, skuIds).list();
+        entityList.forEach(req -> req.setIsDeleted(Boolean.TRUE));
         //同步到SCM
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), entityList, IdUtil.simpleUUID());
         //同步到WMS
-        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), entityList, IdUtil.simpleUUID());
 
         return this.remove(queryWrapper);
     }
@@ -2023,6 +2023,43 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(), Arrays.asList(detailEntity), IdUtil.simpleUUID());
         //同步到WMS
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(detailEntity), IdUtil.simpleUUID());
+
+    }
+
+    public void checkRequiredFeile(String id) {
+        ProductDetailEntity productDetailEntity = this.getById(id);
+
+        ProductInfoEntity productInfoEntity = productInfoService.getById(productDetailEntity.getProductId());
+        if (StringUtils.isBlank(productInfoEntity.getSpuNo())) {
+            throw new ServiceException(ApiError.ERROR_95199);
+        }
+        if (StringUtils.isBlank(productInfoEntity.getChargeId())) {
+            throw new ServiceException(ApiError.ERROR_95200);
+        }
+        if (StringUtils.isBlank(productInfoEntity.getSaleMethod())) {
+            throw new ServiceException(ApiError.ERROR_95201);
+        }
+        if (StringUtils.isBlank(productInfoEntity.getCategoryId())) {
+            throw new ServiceException(ApiError.ERROR_95202);
+        }
+        if (StringUtils.isBlank(productInfoEntity.getBrandId())) {
+            throw new ServiceException(ApiError.ERROR_95203);
+        }
+        if (StringUtils.isBlank(productInfoEntity.getGradeId())) {
+            throw new ServiceException(ApiError.ERROR_95204);
+        }
+      
+
+
+
+
+        if (StringUtils.isBlank(productDetailEntity.getSkuNo())) {
+            throw new ServiceException(ApiError.ERROR_95198);
+        }
+        if (StringUtils.isBlank(productDetailEntity.getSkuNo())) {
+            throw new ServiceException(ApiError.ERROR_95198);
+        }
+
 
     }
 

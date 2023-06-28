@@ -111,7 +111,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
                 soReturnDetailEntity.setMainId(soReturnEntity.getId());
                 soReturnDetailEntity.setSkuNo(kingdeeReturnOrderItemEntity.getFMaterialNumber());
                 soReturnDetailEntity.setSkuId(skuVO.getSkuName());
-
+//                soReturnDetailEntity.setReturnQty(kingdeeReturnOrderItemEntity.getFMustQty())
                 detailEntityList.add(soReturnDetailEntity);
             }
             soReturnService.save(soReturnEntity);
