@@ -15,7 +15,7 @@ import com.common.core.controller.BaseController;
  * @since 2023-06-28
  */
 @RestController
-@RequestMapping("/shop-info-entity")
+@RequestMapping("/shop")
 public class ShopInfoController extends BaseController {
 
 }

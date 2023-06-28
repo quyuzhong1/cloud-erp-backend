@@ -10,7 +10,7 @@ import java.util.Objects;
 @NoArgsConstructor
 public enum SourceTypeEnum {
     SELF_ADD("selfAdd", "手动新增",""),
-    KINGDEE("kingdee", "金蝶",""),
+
 
     //SCM
     PURCHASE_ORDER("purchaseOrder", "采购订单","purchase_order"),
@@ -44,7 +44,7 @@ public enum SourceTypeEnum {
 
     //Kingdee
     SAL_RETURNSTOCK("SAL_RETURNSTOCK", "金蝶销售退货单",""),
-
+    SAL_OUTSTOCK("SAL_OUTSTOCK", "金蝶销售出库单",""),
     // PLM
     PRODUCT_BOM_INFO("productBomInfo", "BOM管理","product_bom_info"),
     PRODUCT_DETAIL("productDetail", "产品管理","product_detail"),

@@ -3,6 +3,8 @@ package com.erp.server.oms.service;
 import com.erp.model.oms.entity.SkuMapingEntity;
 import com.common.business.service.SuperService;
 
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * <p>
  * sku 对照表 服务类
@@ -13,4 +15,5 @@ import com.common.business.service.SuperService;
  */
 public interface SkuMapingService extends SuperService<SkuMapingEntity> {
 
+    void downloadTemplate(HttpServletResponse response);
 }

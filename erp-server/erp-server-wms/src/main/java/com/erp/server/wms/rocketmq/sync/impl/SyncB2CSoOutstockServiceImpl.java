@@ -102,7 +102,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         InventorySourceTypeEnum sourceTypeEnum = InventorySourceTypeEnum.SO_OUTSTOCK;
         LocalDate now = LocalDate.now();
 
-        String sourceType = SourceTypeEnum.KINGDEE.getCode();
+        String sourceType = SourceTypeEnum.SAL_OUTSTOCK.getCode();
         for (Map.Entry<String, List<KingdeeDeliveryDetailItemEntity>> item : map.entrySet()) {
             //金蝶的仓库编号
             String fStockNumber = item.getKey();
