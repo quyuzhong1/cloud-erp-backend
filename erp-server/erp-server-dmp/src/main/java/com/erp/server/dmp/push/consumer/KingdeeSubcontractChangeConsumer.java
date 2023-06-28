@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_subcontract_order_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SUBCONTRACT_CHANGE)
+@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_subcontract_change_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SUBCONTRACT_CHANGE)
 public class KingdeeSubcontractChangeConsumer implements RocketMQListener<Map<String, Object>> {
 
     @Resource
