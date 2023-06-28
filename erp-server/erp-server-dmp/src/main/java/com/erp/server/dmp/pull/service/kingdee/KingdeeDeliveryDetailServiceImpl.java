@@ -190,6 +190,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
 
         //每次最多获取100条
         Integer pageSize = 10000;
+        List<Map<String, Object>> resultAll = new ArrayList<>();
         while (dataSign) {
             KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(),1);
             List<Map<String, Object>> result = kingdeeApiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex, 0);
@@ -198,22 +199,22 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
                 dataSign = false;
             }
             if (CollectionUtil.isEmpty(result)) {
-                return Collections.emptyList();
+                break;
             }
-            // 金蝶发货单主数据
-            List<KingdeeDeliveryDetailEntity> entityList = result.stream().map(shopEntity ->
-                    BeanUtil.toBean(shopEntity, KingdeeDeliveryDetailEntity.class)).distinct().collect(Collectors.toList());
-            // 金蝶发货单明细数据拆单
-            Map<String, List<KingdeeDeliveryDetailItemEntity>> itemMap = result.stream().map(entity ->
-                            BeanUtil.toBean(entity, KingdeeDeliveryDetailItemEntity.class)).distinct()
-                    .collect(Collectors.groupingBy(m ->  m.getFBillNo()));
-            // 金蝶发货单主数据关联明细数据
-            entityList.stream().peek(m -> m.setKingdeeOutStockItemEntityList(itemMap.get(m.getFBillNo())))
-                    .collect(Collectors.toList());
-            infoArrayList.addAll(entityList);
+            resultAll.addAll(result);
             pageIndex ++;
         }
-        return infoArrayList.stream().distinct().collect(Collectors.toList());
+        // 金蝶发货单主数据
+        List<KingdeeDeliveryDetailEntity> entityList = resultAll.stream().map(shopEntity ->
+                BeanUtil.toBean(shopEntity, KingdeeDeliveryDetailEntity.class)).distinct().collect(Collectors.toList());
+        // 金蝶发货单明细数据拆单
+        Map<String, List<KingdeeDeliveryDetailItemEntity>> itemMap = resultAll.stream().map(entity ->
+                        BeanUtil.toBean(entity, KingdeeDeliveryDetailItemEntity.class)).distinct()
+                .collect(Collectors.groupingBy(m ->  m.getFBillNo()));
+        // 金蝶发货单主数据关联明细数据
+        entityList.stream().peek(m -> m.setKingdeeOutStockItemEntityList(itemMap.get(m.getFBillNo())))
+                .collect(Collectors.toList());
+        return entityList;
     }
 
     /**

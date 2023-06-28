@@ -151,7 +151,6 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
      * @return
      */
     public List<KingdeeTransferDirectEntity> pullDate(RequestDTO dto) {
-        List<KingdeeTransferDirectEntity> infoArrayList = new ArrayList<>();
         LocalDateTime lastTime = dto.getJobTaskDTO().getLastTime();
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
@@ -174,6 +173,7 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
         Integer pageIndex = 1;
         //每次最多获取100条
         Integer pageSize = 10000;
+        List<Map<String, Object>> resultAll = new ArrayList<>();
         while (dataSign) {
             //"StartRow\":0,"+// 分页取数开始行索引，从0开始，例如每页10行数据，第2页开始是10，第3页开始是20
             KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(), 1);
@@ -183,23 +183,22 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
                 dataSign = false;
             }
             if (CollectionUtil.isEmpty(result)) {
-                return Collections.emptyList();
+                break;
             }
-            List<KingdeeTransferDirectEntity> entityList = result.stream().map(entity ->
-                            BeanUtil.toBean(entity, KingdeeTransferDirectEntity.class)).distinct()
-                    .collect(Collectors.toList());
-
-            Map<String, List<KingdeeTransferDirectItemEntity>> itemMap = result.stream().map(entity ->
-                            BeanUtil.toBean(entity, KingdeeTransferDirectItemEntity.class))
-                    .collect(Collectors.groupingBy(KingdeeTransferDirectItemEntity::getFBillNo));
-            entityList.stream().peek(m -> m.setItemList(itemMap.get(m.getFBillNo())))
-                    .distinct()
-                    .collect(Collectors.toList());
-
-            infoArrayList.addAll(entityList);
+            resultAll.addAll(result);
             pageIndex++;
         }
-        return infoArrayList;
+        List<KingdeeTransferDirectEntity> entityList = resultAll.stream().map(entity ->
+                        BeanUtil.toBean(entity, KingdeeTransferDirectEntity.class)).distinct()
+                .collect(Collectors.toList());
+
+        Map<String, List<KingdeeTransferDirectItemEntity>> itemMap = resultAll.stream().map(entity ->
+                        BeanUtil.toBean(entity, KingdeeTransferDirectItemEntity.class))
+                .collect(Collectors.groupingBy(KingdeeTransferDirectItemEntity::getFBillNo));
+        entityList.stream().peek(m -> m.setItemList(itemMap.get(m.getFBillNo())))
+                .distinct()
+                .collect(Collectors.toList());
+        return entityList;
     }
 
     /**

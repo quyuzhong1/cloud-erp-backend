@@ -36,7 +36,7 @@ public class CommonServiceImpl implements CommonService {
      */
     @Override
     public LoginUser getUserInfo() {
-        String userId = "";
+        String userId = "1644178936063721473";
         String userName = "";
         LoginUser loginUser = CommonInterceptor.threadLocal.get();
         if (Objects.isNull(loginUser)) {

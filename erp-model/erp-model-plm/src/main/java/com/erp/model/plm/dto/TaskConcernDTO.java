@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * @author Lambda
@@ -36,5 +37,10 @@ public class TaskConcernDTO implements Serializable {
          * 关注次数
          */
         private Integer concernCount;
+
+        /**
+         * 关注人名
+         */
+        private List<String> userNameList;
     }
 }
