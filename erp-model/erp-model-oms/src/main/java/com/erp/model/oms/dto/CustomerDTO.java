@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -219,9 +218,8 @@ public class CustomerDTO implements Serializable {
          * http://172.16.100.11:3002/project/110/interface/api/13480
          * type=SalesPlatform
          */
-        @NotNull(message = "平台类型不能为空")
-        @StateEnumValue(clazz = SalesPlatformEnum.class, message = "平台类型有误")
-        private SalesPlatformEnum platformType;
+        @NotBlank(message = "平台类型不能为空")
+        private String platformType;
 
 
         /**
@@ -553,9 +551,8 @@ public class CustomerDTO implements Serializable {
          * http://172.16.100.11:3002/project/110/interface/api/13480
          * type=SalesPlatform
          */
-        @NotNull(message = "平台类型不能为空")
-        @StateEnumValue(clazz = SalesPlatformEnum.class, message = "平台类型有误")
-        private SalesPlatformEnum platformType;
+        @NotBlank(message = "平台类型不能为空")
+        private String platformType;
 
 
         /**
