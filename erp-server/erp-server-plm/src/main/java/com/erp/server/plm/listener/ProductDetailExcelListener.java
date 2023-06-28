@@ -25,6 +25,7 @@ import org.apache.commons.lang.StringUtils;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -138,7 +139,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         //存在侵权风险
         String pirateRisk = dto.getPirateRisk();
         if(StringUtils.isNotBlank(pirateRisk)){
-            if(pirateRisk.equals("有")){
+            if(pirateRisk.equals("是")){
                 productInfoDTO.setPirateRisk(1);
             } else {
                 productInfoDTO.setPirateRisk(2);
@@ -189,12 +190,18 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             purchaseState = PurchaseStateEnum.getCodeByName(dto.getArrivalState());
         }
 
-        BasicDictEntity declareProperty = new BasicDictEntity();
+        List<BasicDictEntity> declarePropertyList = new ArrayList<>();
         if (StringUtils.isNotBlank(dto.getProductProperty())) {
-            declareProperty = basicDictService.checkBasicDict(BasicDictTypeEnum.DECLARE_PROPERTY.getCode(), dto.getProductProperty());
-            if (ObjectUtils.isEmpty(declareProperty)) {
-                errorMsgList.add("报关产品属性在系统中未找到");
+            String[] productPropertyList = dto.getProductProperty().split(",");
+            for (String name : productPropertyList) {
+                BasicDictEntity declareProperty = basicDictService.checkBasicDict(BasicDictTypeEnum.DECLARE_PROPERTY.getCode(), name);
+                if (ObjectUtils.isEmpty(declareProperty)) {
+                    errorMsgList.add("报关产品属性在系统中未找到");
+                } else {
+                    declarePropertyList.add(declareProperty);
+                }
             }
+
         }
 
         //图片是否完成
@@ -238,8 +245,8 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                     errorMsgList.add("产品分类一级类目和二级类目的关系不匹配");
                 }
             }
-            productInfoDTO.setCategory(category);
-            productInfoDTO.setCategoryId(basicCategoryEntity.getId());
+            productInfoDTO.setCategory(secondaryCategory);
+            productInfoDTO.setCategoryId(secondaryCategoryEntity.getId());
         }
 
 
@@ -279,6 +286,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productInfoDTO.setUsageDesc(dto.getUsageDesc());
         productInfoDTO.setProperty(productProperty.getValue());
         productInfoDTO.setPropertyId(productProperty.getId());
+        productInfoDTO.setNameEn(dto.getNameEn());
         //sku信息
         BeanMapper.copy(dto, productSkuBaseInfoDTO);
         if (StringUtils.isNotBlank(dto.getPlanListingTimeStr())) {
@@ -367,8 +375,10 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         //产品物流信息
         ProductLogisticsDTO productLogisticsDTO = new ProductLogisticsDTO();
         BeanMapper.copy(dto, productLogisticsDTO);
-        productLogisticsDTO.setProductProperty(declareProperty.getValue());
-        productLogisticsDTO.setProductPropertyId(declareProperty.getId());
+        List<String> productPropertyIds = declarePropertyList.stream().map(BasicDictEntity::getId).collect(Collectors.toList());
+        List<String> productPropertyNames = declarePropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+        productLogisticsDTO.setProductProperty(StringUtils.join(productPropertyNames, ","));
+        productLogisticsDTO.setProductPropertyId(StringUtils.join(productPropertyIds, ","));
         productLogisticsDTO.setDeclarePrice(MathUtil.valueOf(dto.getDeclarePriceStr()));
         productNoSpecDTO.setProductLogisticsDTO(productLogisticsDTO);
 

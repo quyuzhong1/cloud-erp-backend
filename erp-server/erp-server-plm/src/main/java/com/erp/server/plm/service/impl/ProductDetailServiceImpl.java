@@ -1621,6 +1621,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<ProductDetailExcelDTO> list = productDetailMapper.getExportSkuExcel(productSkuExcelDTO);
+        List<String> mainSupplierIds = list.stream().map(ProductDetailExcelDTO::getMainSupplier).distinct().collect(Collectors.toList());
+        List<String> secondSupplierIds = list.stream().map(ProductDetailExcelDTO::getSecondSupplier).distinct().collect(Collectors.toList());
+        mainSupplierIds.addAll(secondSupplierIds);
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
+
+
         list.forEach(req -> {
             List<BasicCategoryEntity> categoryList = basicCategoryService.listParentEntity(req.getCategoryId());
             //一级品类
@@ -1632,6 +1638,26 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 if (ObjectUtils.isNotEmpty(secondEntity)) {
                     req.setSecondaryCategory(secondEntity.getName());
                 }
+            }
+
+            String[] chargeIds = req.getChargeId().split(",");
+            List<FindUserDTO> userListByUserIds = sysUserFeign.getUserListByUserIds(Arrays.asList(chargeIds));
+            List<String> chargeNames = userListByUserIds.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
+            req.setChargeName(StringUtils.join(chargeNames, ","));
+
+            String[] productPropertyIds = req.getProductPropertyId().split(",");
+            List<BasicDictEntity> productPropertyList = basicDictService.listByIds(Arrays.asList(productPropertyIds));
+            List<String> productProperty = productPropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+            req.setProductProperty(StringUtils.join(productProperty, ","));
+
+            // 一级供应商名称
+            if (StrUtils.isNotEmpty(req.getMainSupplier()) && supplierMap.containsKey(req.getMainSupplier())) {
+                req.setMainSupplier(supplierMap.get(req.getMainSupplier()).getName());
+            }
+
+            // 二级供应商名称
+            if (StrUtils.isNotEmpty(req.getSecondSupplier()) && supplierMap.containsKey(req.getSecondSupplier())) {
+                req.setSecondSupplier(supplierMap.get(req.getSecondSupplier()).getName());
             }
 
             //销售状态编码转换成中文

@@ -471,4 +471,15 @@ public class ProductDetailExcelDTO {
      */
     //@ExcelProperty( value = "产品分类", index = 2)
     private String categoryId;
+
+    /**
+     * 产品经理id
+     */
+    //@ExcelProperty(value = "产品经理", index = 15)
+    private String chargeId;
+
+    /**
+     * 报关产品属性
+     */
+    private String productPropertyId;
 }

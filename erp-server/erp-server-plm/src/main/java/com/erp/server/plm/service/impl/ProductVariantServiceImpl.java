@@ -57,6 +57,7 @@ public class ProductVariantServiceImpl extends ServiceImpl<ProductVariantMapper,
     @Override
     public List<ProductVariantDTO> listVariantAndProperty() {
         LambdaQueryWrapper<ProductVariantEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.orderByAsc(ProductVariantEntity::getCreateTime);
         List<ProductVariantEntity> variantEntityList = this.list(queryWrapper);
         List<ProductVariantDTO> list = BeanMapper.copyList(variantEntityList, ProductVariantDTO.class);
         for (ProductVariantDTO variantEntity : list) {
