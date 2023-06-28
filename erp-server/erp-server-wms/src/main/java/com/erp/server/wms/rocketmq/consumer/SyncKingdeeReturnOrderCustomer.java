@@ -1,17 +1,16 @@
-package com.erp.server.oms.rocketmq.customer;
+package com.erp.server.wms.rocketmq.consumer;
 
 import cn.hutool.json.JSONUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
-import com.erp.server.oms.rocketmq.sync.oms.SyncSoReturnService;
+import com.erp.server.wms.rocketmq.sync.SyncSoReturnService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 @Service
 @Slf4j

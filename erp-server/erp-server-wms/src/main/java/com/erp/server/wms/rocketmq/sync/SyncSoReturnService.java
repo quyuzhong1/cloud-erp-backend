@@ -1,9 +1,6 @@
-package com.erp.server.oms.rocketmq.sync.oms;
+package com.erp.server.wms.rocketmq.sync;
 
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
-
-import java.util.List;
 
 public interface SyncSoReturnService {
 

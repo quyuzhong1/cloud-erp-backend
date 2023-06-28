@@ -1,4 +1,4 @@
-package com.erp.server.oms.rocketmq.sync.oms.impl;
+package com.erp.server.wms.rocketmq.sync.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -6,27 +6,26 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.ObjectUtils;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeReturnOrderItemEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
-import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
+import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
-import com.erp.server.oms.rocketmq.sync.oms.SyncSoReturnService;
-import com.erp.server.oms.service.SoReturnDetailService;
-import com.erp.server.oms.service.SoReturnService;
+import com.erp.server.wms.rocketmq.sync.SyncSoReturnService;
+import com.erp.server.wms.service.SoReturnInstockDetailService;
+import com.erp.server.wms.service.SoReturnInstockService;
+import com.erp.server.wms.service.WarehouseService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,22 +38,22 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
     private SysUserFeign sysUserFeign;
 
     @Resource
-    private WmsTaskFeign wmsTaskFeign;
+    private WarehouseService warehouseService;
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
-    private SoReturnService soReturnService;
+    private SoReturnInstockService soReturnInstockService;
 
     @Resource
-    private SoReturnDetailService soReturnDetailService;
+    private SoReturnInstockDetailService soReturnInstockDetailService;
 
     @Override
     public void syncKingdeeReturnOrderToSoReturn(KingdeeReturnOrderEntity kingdeeReturnOrderEntity) {
         List<KingdeeReturnOrderItemEntity> itemEntityList = kingdeeReturnOrderEntity.getItemEntityList();
         List<String> stockNumberList = itemEntityList.stream().map(KingdeeReturnOrderItemEntity::getFStockNumber).collect(Collectors.toList());
-        List<WarehouseEntity> warehouseEntities = wmsTaskFeign.listByKingdeeCodeList(stockNumberList);
+        List<WarehouseEntity> warehouseEntities = warehouseService.listByKingdeeCodeList(stockNumberList);
         List<String> kingdeeSkuNoList = itemEntityList.stream().map(KingdeeReturnOrderItemEntity::getFMaterialNumber).collect(Collectors.toList());
         List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(kingdeeSkuNoList);
         //如果金蝶退货单明细有不一样的仓库，这里分开成多单存到OMS
@@ -76,47 +75,46 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             if (!kingdeeReturnOrderEntity.getFBillNo().contains("XSTHD")) {
                 continue;
             }
-            SoReturnEntity soReturnEntity = new SoReturnEntity();
-            soReturnEntity.setCode(kingdeeReturnOrderEntity.getFBillNo());
-            soReturnEntity.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
-            soReturnEntity.setType(BillTypeEnum.B2C.getCode());
-            soReturnEntity.setSourceType(SourceTypeEnum.SAL_RETURNSTOCK.getCode());
-            soReturnEntity.setSalesOrgName(kingdeeReturnOrderEntity.getFSaleOrgName());
+            SoReturnInstockEntity instockEntity = new SoReturnInstockEntity();
+            instockEntity.setCode(kingdeeReturnOrderEntity.getFBillNo());
+            instockEntity.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
+            instockEntity.setType(BillTypeEnum.B2C.getCode());
+            instockEntity.setSourceType(SourceTypeEnum.SAL_RETURNSTOCK.getCode());
+            instockEntity.setSalesOrgName(kingdeeReturnOrderEntity.getFSaleOrgName());
             SysDepartmentDTO userDeptByCode = sysUserFeign.getUserDeptByCode(kingdeeReturnOrderEntity.getFSaledeptNumber());
             if (ObjectUtil.isNotEmpty(userDeptByCode)) {
-                soReturnEntity.setSalesDeptId(userDeptByCode.getId());
+                instockEntity.setSalesDeptId(userDeptByCode.getId());
             }
-            soReturnEntity.setSalesDeptName(kingdeeReturnOrderEntity.getFSaledeptName());
-            soReturnEntity.setSellerName(kingdeeReturnOrderEntity.getFSalesManName());
-            soReturnEntity.setBillDate(LocalDate.parse(kingdeeReturnOrderEntity.getFDate()));
+            instockEntity.setSalesDeptName(kingdeeReturnOrderEntity.getFSaledeptName());
+            instockEntity.setSellerName(kingdeeReturnOrderEntity.getFSalesManName());
+            instockEntity.setBillDate(LocalDate.parse(kingdeeReturnOrderEntity.getFDate()));
 
-            soReturnEntity.setWarehouseId(warehouseEntity.getId());
-            soReturnEntity.setWarehouseName(warehouseEntity.getName());
+            instockEntity.setWarehouseId(warehouseEntity.getId());
+            instockEntity.setWarehouseName(warehouseEntity.getName());
             if (CollectionUtils.isNotEmpty(orderItemEntityList)) {
                 KingdeeReturnOrderItemEntity kingdeeReturnOrderItemEntity = orderItemEntityList.get(MathUtil.ZERO);
-                soReturnEntity.setSourceCode(kingdeeReturnOrderItemEntity.getFOrderNo());
-                soReturnEntity.setSourceId(kingdeeReturnOrderItemEntity.getFSOEntryId());
+                instockEntity.setSourceCode(kingdeeReturnOrderItemEntity.getFOrderNo());
+                instockEntity.setSourceId(kingdeeReturnOrderItemEntity.getFSOEntryId());
             }
-            soReturnEntity.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
-            soReturnEntity.setCustomerName(kingdeeReturnOrderEntity.getFRetcustName());
-            soReturnEntity.setId(IdWorker.getIdStr());
-            List<SoReturnDetailEntity> detailEntityList = new ArrayList<>();
+            instockEntity.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
+            instockEntity.setCustomerName(kingdeeReturnOrderEntity.getFRetcustName());
+            instockEntity.setId(IdWorker.getIdStr());
+            List<SoReturnInstockDetailEntity> detailEntityList = new ArrayList<>();
             for (KingdeeReturnOrderItemEntity kingdeeReturnOrderItemEntity : orderItemEntityList) {
-                SoReturnDetailEntity soReturnDetailEntity = new SoReturnDetailEntity();
+                SoReturnInstockDetailEntity instockDetailEntity = new SoReturnInstockDetailEntity();
                 SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuNo().equals(kingdeeReturnOrderItemEntity.getFMaterialNumber())).findFirst().orElse(null);
                 //金蝶sku和plm对应不上跳过
                 if (ObjectUtil.isEmpty(skuVO)) {
                     continue;
                 }
-                soReturnDetailEntity.setMainId(soReturnEntity.getId());
-                soReturnDetailEntity.setSkuNo(kingdeeReturnOrderItemEntity.getFMaterialNumber());
-                soReturnDetailEntity.setSkuId(skuVO.getSkuName());
-                soReturnDetailEntity.setReturnQty(Integer.valueOf(kingdeeReturnOrderItemEntity.getFRealQty()));
-                
-                detailEntityList.add(soReturnDetailEntity);
+                instockDetailEntity.setMainId(instockEntity.getId());
+                instockDetailEntity.setSkuNo(kingdeeReturnOrderItemEntity.getFMaterialNumber());
+                instockDetailEntity.setSkuId(skuVO.getSkuName());
+                instockDetailEntity.setRealQty(Integer.valueOf(kingdeeReturnOrderItemEntity.getFRealQty()));
+                detailEntityList.add(instockDetailEntity);
             }
-            soReturnService.save(soReturnEntity);
-            soReturnDetailService.saveBatch(detailEntityList);
+            soReturnInstockService.save(instockEntity);
+            soReturnInstockDetailService.saveBatch(detailEntityList);
         }
     }
 }
