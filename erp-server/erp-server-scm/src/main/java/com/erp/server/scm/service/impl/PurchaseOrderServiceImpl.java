@@ -941,7 +941,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             viewGenerateStockInDTO.setUnStockInQty(detailEntity.getPurchaseQty() - hasStockInQty + hasReturnQty);
             //入库数量
             viewGenerateStockInDTO.setStockInQty(viewGenerateStockInDTO.getUnStockInQty());
+            //如果未入库数量已全部下推则无需继续显示
+            if (MathUtil.compareTo(MathUtil.ZERO,viewGenerateStockInDTO.getUnStockInQty()) >= MathUtil.ZERO) {
+                continue;
+            }
             resultList.add(viewGenerateStockInDTO);
+        }
+        if (CollectionUtils.isEmpty(resultList)) {
+            throw new ServiceException(ApiError.ERROR_98092);
         }
         return resultList;
     }
