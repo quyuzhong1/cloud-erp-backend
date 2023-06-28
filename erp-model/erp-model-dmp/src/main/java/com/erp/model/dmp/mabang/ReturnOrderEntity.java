@@ -146,7 +146,7 @@ public class ReturnOrderEntity {
     @SerializedName("update_time")
     private String updateTime;
 
-    private JSONObject trackList;
+    private Object trackList;
 
     @SerializedName("item")
     private List<ReturnOrderItemEntity> item;
