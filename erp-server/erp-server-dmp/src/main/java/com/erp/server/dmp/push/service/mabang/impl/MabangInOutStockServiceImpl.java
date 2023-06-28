@@ -1,20 +1,25 @@
 package com.erp.server.dmp.push.service.mabang.impl;
 
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.core.utils.StrUtils;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.dto.mabang.DmpMabangInOutStockMsgDTO;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
 import com.erp.model.dmp.entity.DmpOutInStockDetailEntity;
 import com.erp.model.dmp.entity.DmpOutInStockEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.server.dmp.push.service.mabang.MabangInOutStockService;
 import com.erp.server.dmp.service.DmpOutInStockDetailService;
 import com.erp.server.dmp.service.DmpOutInStockService;
-import com.erp.server.dmp.utils.MabangApiUtils;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +43,9 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
 
     @Autowired
     private DmpOutInStockDetailService dmpOutInStockDetailService;
+
+    @Autowired
+    private MQProducerService mqProducerService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -77,7 +85,17 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
             dmpOutInStockDetailEntityList.add(dmpOutInStockDetailEntity);
         });
         dmpOutInStockDetailService.saveBatch(dmpOutInStockDetailEntityList);
+
         // 发送MQ消息处理出入库信息然后发送到马帮
+        DmpMabangInOutStockMsgDTO dmpMabangInOutStockMsgDTO = new DmpMabangInOutStockMsgDTO();
+        dmpMabangInOutStockMsgDTO.setDmpOutInStockId(dmpOutInStockEntity.getId());
+        dmpMabangInOutStockMsgDTO.setMabangInOutStock(mabangInOutStock);
+
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.SYNC_DMP_TO_MABANG_TOPIC, RocketMqTagEnum.DMP_MABANG_TRANSFER_INFO_TAG.getName(),
+                dmpMabangInOutStockMsgDTO, dmpOutInStockEntity.getId());
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+        }
 
     }
 
