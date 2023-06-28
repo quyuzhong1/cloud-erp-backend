@@ -19,6 +19,7 @@ public enum SyncKingdeeOperateEnum {
     OPERATE_DELETE("operateDelete", "","删除"),
     OPERATE_SUB_EFFECTIVE("operateSubEffective", "SubEffective","取消明细禁用"),
     OPERATE_SUB_UN_EFFECTIVE("operateSubUnEffective", "SubUnEffective","明细禁用"),
+    OPERATE_UNDO_TO_PLAN_CONFIRM("operateUndoToPlanConfirm", "UndoToPlanConfirm","反执行至计划确认"),
 
     ;
     private String code;
