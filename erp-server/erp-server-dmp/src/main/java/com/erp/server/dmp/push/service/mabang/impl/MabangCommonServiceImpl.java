@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
+import com.erp.model.dmp.entity.ApiPlmSyncLogEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -60,6 +61,16 @@ public class MabangCommonServiceImpl implements MabangCommonService {
         apiPlmSyncLogDTO.setMsg(msg);
         apiPlmSyncLogDTO.setRequestParamJson(jsonData);
         apiPlmSyncLogService.insert(apiPlmSyncLogDTO);
+    }
+
+    @Override
+    public ApiPlmSyncLogEntity findLog(PlatformEntity platformEntity, String businessId, Integer type) {
+        return apiPlmSyncLogService.find(platformEntity.getName(),type, businessId);
+    }
+
+    @Override
+    public void updateLog(String id, String requestParam, String msg) {
+        apiPlmSyncLogService.updateLog(id, requestParam, msg);
     }
 
 }

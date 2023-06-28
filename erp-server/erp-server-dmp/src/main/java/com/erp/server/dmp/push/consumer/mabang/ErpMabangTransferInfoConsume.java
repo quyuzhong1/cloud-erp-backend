@@ -119,12 +119,12 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
         if (Objects.equals(SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode(), operate)) {
             if(warehouseCodeList.contains(inWarehouseCode)) {
                 // 手工入库
-                MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(inWarehouseCode, inWarehouseName, employeeName, productDetailList, transferInfo, transferDetailList);
+                MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(inWarehouseCode, inWarehouseName, employeeName, productDetailList, transferInfo, transferDetailList, "in");
                 mabangInOutStockService.inStock(platformEntity, mabangInOutStockDTO, transferInfo, sourceType, operate);
             }
             if(warehouseCodeList.contains(outWarehouseCode)) {
                 // 手工出库
-                MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(outWarehouseCode, outWarehouseName, employeeName, productDetailList, transferInfo, transferDetailList);
+                MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(outWarehouseCode, outWarehouseName, employeeName, productDetailList, transferInfo, transferDetailList, "out");
                 mabangInOutStockService.outStock(platformEntity, mabangInOutStockDTO, transferInfo, sourceType, operate);
             }
         }
@@ -133,12 +133,12 @@ public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTran
             // 操作跟审核相反，审核的入库为出库，审核的出库为入库
             if(warehouseCodeList.contains(inWarehouseCode)) {
                 // 手工出库
-                MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(inWarehouseCode, inWarehouseName, employeeName, productDetailList, transferInfo, transferDetailList);
+                MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(inWarehouseCode, inWarehouseName, employeeName, productDetailList, transferInfo, transferDetailList, "in");
                 mabangInOutStockService.outStock(platformEntity, mabangInOutStockDTO, transferInfo, sourceType, operate);
             }
             if(warehouseCodeList.contains(outWarehouseCode)) {
                 // 手工入库
-                MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(outWarehouseCode, outWarehouseName, employeeName, productDetailList, transferInfo, transferDetailList);
+                MabangInOutStockDTO mabangInOutStockDTO = MabangUtil.fillMabangInOutStock(outWarehouseCode, outWarehouseName, employeeName, productDetailList, transferInfo, transferDetailList, "out");
                 mabangInOutStockService.inStock(platformEntity, mabangInOutStockDTO, transferInfo, sourceType, operate);
             }
         }

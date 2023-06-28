@@ -65,6 +65,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         dmpOutInStockEntity.setRemark(mabangInOutStock.getRemark());
         dmpOutInStockEntity.setSourceType(StrUtils.null2EmptyWithTrim(sourceType));
         dmpOutInStockEntity.setSourceId(StrUtils.null2EmptyWithTrim(transferInfo.getId()));
+        dmpOutInStockEntity.setSourceCode(transferInfo.getCode());
         dmpOutInStockEntity.setPlatformSign(PlatformEnum.ERP.getDesc());
         // 未同步
         dmpOutInStockEntity.setSyncMbStatus("0");
@@ -123,6 +124,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         // 未同步
         dmpOutInStockEntity.setSyncMbStatus("0");
         dmpOutInStockEntity.setLastSyncMbTime(null);
+        dmpOutInStockEntity.setSourceCode(transferInfo.getCode());
         dmpOutInStockEntity.setTargetPlatformSign(PlatformEnum.MABANG.getDesc());
 
         dmpOutInStockEntity.setTargetOrderCode("");
@@ -161,37 +163,37 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
     @Override
     public void sendToMabangInStock(DmpOutInStockEntity dmpOutInStockEntity, MabangInOutStockDTO mabangInOutStock, PlatformEntity platformEntity, Integer type, String approveType) {
         // 调用马帮手工入库接口
-        String requestParam = "";
-        try {
-            Map<String,Object> resultMap = MabangApiUtils.inStorage(PlatformApiEnum.MABANG_IN_STORAGE.getTaskName(), mabangInOutStock);
-            requestParam = StrUtils.null2EmptyWithTrim(resultMap.get("request"));
+        Map<String,Object> resultMap = MabangApiUtils.inStorage(PlatformApiEnum.MABANG_IN_STORAGE.getTaskName(), mabangInOutStock);
+        boolean isSuccess = (boolean)resultMap.get("success");
+        String requestParam = StrUtils.null2EmptyWithTrim(resultMap.get("request"));
+        if (isSuccess) {
             JSONObject resultJson = (JSONObject)resultMap.get("result");
             String mabangCode = resultJson.getString("storageCode");
             // 更新出入库同步信息
             dmpOutInStockService.updateSyncInfoSuccess(dmpOutInStockEntity.getId(), "1", mabangCode, requestParam, platformEntity, type, approveType);
-        } catch (Exception e) {
-            log.error("直接调拨单同步至马帮手工入库异常", e);
+        } else {
+            String msg = StrUtils.null2EmptyWithTrim(resultMap.get("msg"));
             // 更新出入库同步信息
-            dmpOutInStockService.updateSyncInfoError(dmpOutInStockEntity.getId(), "-1", mabangInOutStock.getErpSourceCode(), requestParam, platformEntity, type, e.getMessage(), approveType);
-            throw new ServiceException("直接调拨单同步至马帮手工入库异常");
+            dmpOutInStockService.updateSyncInfoError(dmpOutInStockEntity.getId(), "-1", mabangInOutStock.getErpSourceCode(), requestParam, platformEntity, type, msg, approveType);
+            throw new ServiceException(StrUtil.format("直接调拨单同步至马帮手工入库异常，失败原因：【{}】", msg));
         }
     }
 
     @Override
     public void sendToMabangOutStock(DmpOutInStockEntity dmpOutInStockEntity, MabangInOutStockDTO mabangInOutStock, PlatformEntity platformEntity, Integer type, String approveType) {
         // 调用马帮手工出库接口
-        String requestParam = "";
-        try {
-            Map<String,Object> resultMap = MabangApiUtils.outStorage(PlatformApiEnum.MABANG_OUT_STORAGE.getTaskName(), mabangInOutStock);
-            requestParam = StrUtils.null2EmptyWithTrim(resultMap.get("request"));
+        Map<String,Object> resultMap = MabangApiUtils.outStorage(PlatformApiEnum.MABANG_OUT_STORAGE.getTaskName(), mabangInOutStock);
+        boolean isSuccess = (boolean)resultMap.get("success");
+        String requestParam = StrUtils.null2EmptyWithTrim(resultMap.get("request"));
+        if(isSuccess) {
             JSONObject resultJson = (JSONObject)resultMap.get("result");
             String mabangCode = resultJson.getString("storageCode");
             // 更新出入库同步信息
             dmpOutInStockService.updateSyncInfoSuccess(dmpOutInStockEntity.getId(), "1", mabangCode, requestParam, platformEntity, type, approveType);
-        } catch (Exception e) {
-            log.error("直接调拨单同步至马帮手工出库异常", e);
+        } else {
+            String msg = StrUtils.null2EmptyWithTrim(resultMap.get("msg"));
             // 更新出入库同步信息
-            dmpOutInStockService.updateSyncInfoError(dmpOutInStockEntity.getId(), "-1", mabangInOutStock.getErpSourceCode(), requestParam, platformEntity, type, e.getMessage(), approveType);
+            dmpOutInStockService.updateSyncInfoError(dmpOutInStockEntity.getId(), "-1", mabangInOutStock.getErpSourceCode(), requestParam, platformEntity, type, msg, approveType);
             throw new ServiceException("直接调拨单同步至马帮手工出库异常");
         }
     }

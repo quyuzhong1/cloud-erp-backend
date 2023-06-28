@@ -6,6 +6,7 @@ import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.entity.BaseEntity;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.entity.ApiPlmSyncLogEntity;
 import com.erp.model.dmp.entity.DmpOutInStockEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * <p>
@@ -67,16 +69,24 @@ public class DmpOutInStockServiceImpl extends SuperServiceImpl<DmpOutInStockMapp
                 .set(DmpOutInStockEntity.SYNC_MB_STATUS, syncStatus);
         dmpOutInStockMapper.update(null, updateWrapper);
 
-        mabangCommonService.insertLogWriteBackSyncMabangStatus(platformEntity, id, requestParam, StrUtil.format("{}；ERP直接调拨单同步{}失败，失败原因：{}", SyncKingdeeOperateEnum.getDescByCode(approveType), PlatformEnum.MABANG.getDesc(), errMsg), type, ApiSendStatusEnum.FAILURE.getCode());
-
-        WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
-        warnMsgInfoDTO.setTitle("ERP直接调拨单推送马帮手工出入库异常");
-        warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
-        warnMsgInfoDTO.setBizName("ERP直接调拨单推送马帮手工出入库");
-        warnMsgInfoDTO.setTableName("dmp_out_in_stock");
-        warnMsgInfoDTO.setTableId(id);
-        warnMsgInfoDTO.setKeyInfo(StrUtil.format("ERP直接调拨单单据编号: {}", sourceCode));
-        mqProducerService.sendWarnMsg(warnMsgInfoDTO);
-
+        // 查询是否已经记录过错误日志
+        ApiPlmSyncLogEntity apiPlmSyncLogEntity = mabangCommonService.findLog(platformEntity, id, type);
+        if(Objects.isNull(apiPlmSyncLogEntity)) {
+            // 新增日志
+            mabangCommonService.insertLogWriteBackSyncMabangStatus(platformEntity, id, requestParam, StrUtil.format("{}；ERP直接调拨单同步{}失败，失败原因：{}", SyncKingdeeOperateEnum.getDescByCode(approveType), PlatformEnum.MABANG.getDesc(), errMsg), type, ApiSendStatusEnum.FAILURE.getCode());
+        } else {
+            // 更新日志
+            mabangCommonService.updateLog(apiPlmSyncLogEntity.getId(), requestParam, errMsg);
+        }
+        if(Objects.isNull(apiPlmSyncLogEntity)) {
+            WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
+            warnMsgInfoDTO.setTitle("ERP直接调拨单推送马帮手工出入库异常");
+            warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
+            warnMsgInfoDTO.setBizName("ERP直接调拨单推送马帮手工出入库");
+            warnMsgInfoDTO.setTableName("dmp_out_in_stock");
+            warnMsgInfoDTO.setTableId(id);
+            warnMsgInfoDTO.setKeyInfo(StrUtil.format("ERP直接调拨单单据编号: {}", sourceCode));
+            mqProducerService.sendWarnMsg(warnMsgInfoDTO);
+        }
     }
 }

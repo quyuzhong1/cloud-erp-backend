@@ -346,6 +346,7 @@ public class MabangApiUtils {
 
     public static Map<String,Object> inStorage(String method, MabangInOutStockDTO mabangInOutStockDTO) {
         Map<String,Object> resultMap = Maps.newHashMap();
+        resultMap.put("success", false);
 
         HashMap<String, Object> params = new HashMap<>(10);
         params.put("warehouseName", mabangInOutStockDTO.getWarehouseName());
@@ -362,7 +363,9 @@ public class MabangApiUtils {
         log.info("调用马帮手工入库响应内容【{}】", JSONObject.toJSONString(response));
         if (!Objects.equals(response.getInteger("code"), 200)) {
             log.error("调用url={} param={} {}，马帮手工入库失败 response={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(response));
-            throw new RuntimeException(JSONUtil.toJsonStr(response));
+            resultMap.put("msg", JSONUtil.toJsonStr(response));
+        } else {
+            resultMap.put("success", true);
         }
         resultMap.put("result", response.getJSONObject("data"));
         return resultMap;
@@ -370,6 +373,7 @@ public class MabangApiUtils {
 
     public static Map<String,Object> outStorage(String method, MabangInOutStockDTO mabangInOutStockDTO) {
         Map<String,Object> resultMap = Maps.newHashMap();
+        resultMap.put("success", false);
 
         HashMap<String, Object> params = new HashMap<>(10);
         params.put("warehouseName", mabangInOutStockDTO.getWarehouseName());
@@ -386,7 +390,9 @@ public class MabangApiUtils {
         log.info("调用马帮手工出库响应内容【{}】", JSONObject.toJSONString(response));
         if (!Objects.equals(response.getInteger("code"), 200)) {
             log.error("调用url={} param={} {}，马帮手工出库失败 response={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(response));
-            throw new RuntimeException(JSONUtil.toJsonStr(response));
+            resultMap.put("msg", JSONUtil.toJsonStr(response));
+        } else {
+            resultMap.put("success", true);
         }
         resultMap.put("result", response.getJSONObject("data"));
         return resultMap;

@@ -4,6 +4,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
+import com.erp.model.dmp.entity.DmpOutInStockDetailEntity;
+import com.erp.model.dmp.entity.DmpOutInStockEntity;
 import com.erp.model.dmp.entity.DmpWarehouseMappingEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.entity.TransferInfoDetailEntity;
@@ -70,11 +72,13 @@ public class MabangUtil {
      * @param productDetailList
      * @param transferInfo
      * @param transferDetailList
+     * @param inOutType
      * @return
      */
     public static MabangInOutStockDTO fillMabangInOutStock(String warehouseCode, String warehouseName,String employeeName,
                                                            List<ProductDetailEntity> productDetailList,
-                                                           TransferInfoEntity transferInfo, List<TransferInfoDetailEntity> transferDetailList) {
+                                                           TransferInfoEntity transferInfo, List<TransferInfoDetailEntity> transferDetailList,
+                                                           String inOutType) {
 
         List<MabangInOutStockDTO.SkuItem> data = Lists.newArrayList();
         MabangInOutStockDTO mabangInOutStockDTO = new MabangInOutStockDTO();
@@ -92,8 +96,36 @@ public class MabangUtil {
                 skuItem.setProductName(productName);
             }
             skuItem.setQuantity(StrUtils.null2EmptyWithTrim(transferSku.getQty()));
-            skuItem.setGridCode(StrUtils.null2EmptyWithTrim(transferSku.getInWarehouseLocation()));
+            skuItem.setGridCode(StrUtils.null2EmptyWithTrim(Objects.equals(inOutType, "in")? transferSku.getInWarehouseLocation() : transferSku.getOutWarehouseLocation()));
             skuItem.setSourceDetailId(transferSku.getId());
+            data.add(skuItem);
+        });
+        mabangInOutStockDTO.setData(data);
+        return mabangInOutStockDTO;
+    }
+
+    /**
+     * 填充马帮出入库实体
+     * @return
+     */
+    public static MabangInOutStockDTO fillMabangInOutStockByDmp(DmpOutInStockEntity dmpOutInStockEntity,
+                                                                List<DmpOutInStockDetailEntity> dmpOutInStockDetailList) {
+
+        List<MabangInOutStockDTO.SkuItem> data = Lists.newArrayList();
+        MabangInOutStockDTO mabangInOutStockDTO = new MabangInOutStockDTO();
+        mabangInOutStockDTO.setErpSourceCode(dmpOutInStockEntity.getSourceCode());
+        mabangInOutStockDTO.setWarehouseCode(dmpOutInStockEntity.getWarehouseCode());
+        mabangInOutStockDTO.setWarehouseName(dmpOutInStockEntity.getWarehouseName());
+        mabangInOutStockDTO.setEmployeeName(StrUtils.null2EmptyWithTrim(dmpOutInStockEntity.getChargeUserName()));
+        mabangInOutStockDTO.setRemark(dmpOutInStockEntity.getRemark());
+
+        dmpOutInStockDetailList.stream().forEach(dmpOutInStockDetailEntity->{
+            MabangInOutStockDTO.SkuItem skuItem = new MabangInOutStockDTO.SkuItem();
+            skuItem.setStockSku(dmpOutInStockDetailEntity.getSkuNo());
+            skuItem.setProductName(dmpOutInStockDetailEntity.getProductName());
+            skuItem.setQuantity(StrUtils.null2EmptyWithTrim(dmpOutInStockDetailEntity.getQty()));
+            skuItem.setGridCode(StrUtils.null2EmptyWithTrim(dmpOutInStockDetailEntity.getWarehouseLocation()));
+            skuItem.setSourceDetailId(dmpOutInStockDetailEntity.getId());
             data.add(skuItem);
         });
         mabangInOutStockDTO.setData(data);

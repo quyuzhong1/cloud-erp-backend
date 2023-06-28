@@ -1,5 +1,6 @@
 package com.erp.server.dmp.push.service.mabang;
 
+import com.erp.model.dmp.entity.ApiPlmSyncLogEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 
 import java.util.Map;
@@ -37,5 +38,21 @@ public interface MabangCommonService {
      * @param msg
      */
     void insertSyncLog(PlatformEntity platformEntity,String businessId,String jsonData,String msg,Integer type,Integer status);
+
+    /**
+     * 查询日志
+     * @param platformEntity
+     * @param businessId
+     * @param type
+     */
+    ApiPlmSyncLogEntity findLog(PlatformEntity platformEntity, String businessId, Integer type);
+
+    /**
+     * 更新日志
+     * @param id
+     * @param requestParam
+     * @param msg
+     */
+    void updateLog(String id, String requestParam, String msg);
 
 }

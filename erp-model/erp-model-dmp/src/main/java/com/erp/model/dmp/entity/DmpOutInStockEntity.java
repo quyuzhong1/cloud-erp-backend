@@ -103,6 +103,12 @@ public class DmpOutInStockEntity extends BaseEntity<DmpOutInStockEntity> {
     @TableField("target_order_code")
     private String targetOrderCode;
 
+    /**
+     * 来源单据编号
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
 
     public static final String WAREHOUSE_CODE = "warehouse_code";
 
@@ -129,6 +135,8 @@ public class DmpOutInStockEntity extends BaseEntity<DmpOutInStockEntity> {
     public static final String TARGET_PLATFORM_SIGN = "target_platform_sign";
 
     public static final String TARGET_ORDER_CODE = "target_order_code";
+
+    public static final String SOURCE_CODE = "source_code";
 
     @Override
     public Serializable pkVal() {

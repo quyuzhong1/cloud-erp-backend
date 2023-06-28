@@ -2,6 +2,8 @@ package com.erp.server.dmp.service;
 import com.erp.model.dmp.entity.DmpOutInStockDetailEntity;
 import com.common.business.service.SuperService;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -13,5 +15,11 @@ import com.common.business.service.SuperService;
  */
 public interface DmpOutInStockDetailService extends SuperService<DmpOutInStockDetailEntity> {
 
+    /**
+     * 根据主单id查询
+     * @param mainId
+     * @return
+     */
+    List<DmpOutInStockDetailEntity> findByMainId(String mainId);
 
 }

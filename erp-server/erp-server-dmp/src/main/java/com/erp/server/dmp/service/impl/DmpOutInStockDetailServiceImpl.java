@@ -9,6 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
+
 /**
  * <p>
  * 手工出入库详情表 服务实现类
@@ -22,5 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 public class DmpOutInStockDetailServiceImpl extends SuperServiceImpl<DmpOutInStockDetailMapper, DmpOutInStockDetailEntity> implements DmpOutInStockDetailService {
 
 
-
+    @Override
+    public List<DmpOutInStockDetailEntity> findByMainId(String mainId) {
+        return lambdaQuery().eq(DmpOutInStockDetailEntity::getMainId, mainId).list();
+    }
 }
