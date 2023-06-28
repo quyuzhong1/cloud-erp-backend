@@ -1,10 +1,10 @@
-package com.erp.server.wms.mq.consumer;
+package com.erp.server.wms.rocketmq.consumer;
 
 import cn.hutool.json.JSONUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
-import com.erp.server.wms.mq.sync.SyncB2CSoOutstockService;
+import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;

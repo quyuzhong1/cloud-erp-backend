@@ -1,4 +1,4 @@
-package com.erp.server.wms.mq.sync.impl;
+package com.erp.server.wms.rocketmq.sync.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.enums.ApproveStatusEnum;
@@ -17,7 +17,7 @@ import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.wms.mq.sync.SyncB2CSoOutstockService;
+import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
 import com.erp.server.wms.service.InventoryTransCoreService;
 import com.erp.server.wms.service.SoOutstockDetailService;
 import com.erp.server.wms.service.SoOutstockService;

@@ -1,4 +1,4 @@
-package com.erp.server.scm.mq.consumer;
+package com.erp.server.scm.rocketmq.consumer;
 
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.plm.entity.ProductDetailEntity;

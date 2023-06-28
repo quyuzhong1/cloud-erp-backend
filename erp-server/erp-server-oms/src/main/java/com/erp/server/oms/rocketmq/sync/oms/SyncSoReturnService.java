@@ -12,5 +12,5 @@ public interface SyncSoReturnService {
      * @Author Luo_WG
      * @Date 2023/4/19 14:03
      **/
-    void syncKingdeeReturnOrderToSoReturn(List<KingdeeReturnOrderEntity> list);
+    void syncKingdeeReturnOrderToSoReturn(KingdeeReturnOrderEntity list);
 }

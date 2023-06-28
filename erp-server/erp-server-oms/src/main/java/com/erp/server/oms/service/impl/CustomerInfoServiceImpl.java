@@ -999,4 +999,5 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     private void addModuleOperateLog(String content, String code, String businessId, String operation) {
         operateLogService.addModuleOperateLog(content, code, businessId, operation);
     }
+
 }

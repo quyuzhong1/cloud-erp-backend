@@ -216,4 +216,5 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @return java.lang.Boolean
      **/
     Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
+
 }

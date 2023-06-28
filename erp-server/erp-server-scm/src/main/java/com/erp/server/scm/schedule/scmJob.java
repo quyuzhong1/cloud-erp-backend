@@ -1,14 +1,6 @@
 package com.erp.server.scm.schedule;
 
-import cn.hutool.core.collection.ListUtil;
-import cn.hutool.core.util.IdUtil;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
-import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
-import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
-import com.erp.server.scm.mq.sync.wms.WmsSyncPurchaseService;
+import com.erp.server.scm.rocketmq.sync.wms.WmsSyncPurchaseService;
 import com.erp.server.scm.service.PurchaseOrderDetailService;
 import com.erp.server.scm.service.PurchaseOrderService;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
@@ -17,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 /**
  * scm定时器

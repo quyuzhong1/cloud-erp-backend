@@ -1,7 +1,5 @@
-package com.erp.server.scm.mq.sync.wms;
+package com.erp.server.scm.rocketmq.sync.wms;
 
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
