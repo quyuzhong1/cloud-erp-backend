@@ -78,7 +78,7 @@ public class TaskCommentServiceImpl extends ServiceImpl<TaskCommentMapper, TaskC
         Boolean flag = this.save(entity);
         //保存成功 发送评论提醒
         if (flag) {
-            List<String> refUserIdList = dto.getRefUserIdList();
+            List<String> refUserIdList = dto.getRefUserIdList().stream().distinct().collect(Collectors.toList());
             List<FindUserDTO> userList = new ArrayList<>();
             if (CollectionUtils.isNotEmpty(refUserIdList)) {
                 //添加评论信息
@@ -171,6 +171,8 @@ public class TaskCommentServiceImpl extends ServiceImpl<TaskCommentMapper, TaskC
 
             info.setAttachNameList(attachNameList);
             info.setAttachUrlList(attachUrlList);
+            info.setCreateUserName(item.getCreateUserName());
+            info.setCreateTime(item.getCreateTime());
             resultList.add(info);
 
         }
@@ -185,7 +187,7 @@ public class TaskCommentServiceImpl extends ServiceImpl<TaskCommentMapper, TaskC
      * @return
      */
     private List<TaskCommentEntity> listBaseByTaskId(String taskId) {
-        return this.lambdaQuery().eq(TaskCommentEntity::getTaskId, taskId).list();
+        return this.lambdaQuery().eq(TaskCommentEntity::getTaskId, taskId).orderByDesc(TaskCommentEntity::getCreateTime).list();
     }
 }
 

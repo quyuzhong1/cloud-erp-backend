@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -67,6 +68,18 @@ public class TaskCommentDTO implements Serializable {
          * 任务id
          */
         private String taskId;
+
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+
+        /**
+         * 创建人
+         */
+        private LocalDateTime createTime;
 
 
         /**

@@ -8,14 +8,21 @@ import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
+import com.erp.server.wms.service.InventoryTransCoreService;
+import com.erp.server.wms.service.SoOutstockDetailService;
+import com.erp.server.wms.service.SoOutstockService;
 import com.erp.server.wms.service.WarehouseService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -37,7 +44,15 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     private WarehouseService warehouseService;
 
     @Resource
+    private InventoryTransCoreService inventoryTransCoreService;
+
+    @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private SoOutstockService soOutstockService;
+    @Resource
+    private SoOutstockDetailService soOutstockDetailService;
 
 
     /**
@@ -49,6 +64,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
      * @date 2023-06-27 14:05
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void syncKingdeeSoOutstock(KingdeeDeliveryDetailEntity entity) {
 
         List<KingdeeDeliveryDetailItemEntity> kingdeeDetailList = entity.getKingdeeOutStockItemEntityList();
@@ -68,12 +84,9 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         List<WarehouseEntity> warehouseList = warehouseService.listByKingdeeCodeList(kingdeeWarehouseCodeList);
         //根据仓库分组
         Map<String, List<KingdeeDeliveryDetailItemEntity>> map = kingdeeDetailList.stream().collect(Collectors.groupingBy(KingdeeDeliveryDetailItemEntity::getFStockNumber));
-        List<SoOutstockEntity> addList = new ArrayList<>(map.size());
-        List<SoOutstockDetailEntity> addDetailList = new ArrayList<>(map.size() * 2);
         String b2c = BillTypeEnum.B2C.getCode();
         ApproveStatusEnum statusEnum = ApproveStatusEnum.APPROVE;
         String sourceType = SourceTypeEnum.KINGDEE.getCode();
-
         for (Map.Entry<String, List<KingdeeDeliveryDetailItemEntity>> item : map.entrySet()) {
             //金蝶的仓库编号
             String fStockNumber = item.getKey();
@@ -98,16 +111,25 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 soOutstock.setWarehouseOrgId(warehouse.getOrgId());
                 String id = IdWorker.getIdStr();
                 soOutstock.setId(id);
-                addList.add(soOutstock);
                 List<KingdeeDeliveryDetailItemEntity> detailList = item.getValue();
+                List<SoOutstockDetailEntity> addDetailList = new ArrayList<>(detailList.size());
+
+                //这个是出入库 集合
+                List<InOutStockDTO> inOutStockList = new ArrayList<>();
+
+
                 for (KingdeeDeliveryDetailItemEntity detail : detailList) {
                     String skuNo = detail.getFMaterialNumber();
                     String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).
                             findFirst().map(SkuVO::getSkuId).orElse("");
-                    if(StringUtils.isBlank(skuId)){
+                    if (StringUtils.isBlank(skuId)) {
                         continue;
                     }
+                    InOutStockDTO inOutStock = new InOutStockDTO();
+
                     SoOutstockDetailEntity detailEntity = new SoOutstockDetailEntity();
+                    String detailId = IdWorker.getIdStr();
+                    detailEntity.setId(detailId);
                     detailEntity.setMainId(id);
                     detailEntity.setSkuNo(skuNo);
                     detailEntity.setSkuId(skuId);
@@ -116,8 +138,26 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                     Integer actualQty = Integer.parseInt(realQty.split("\\.")[0]);
                     detailEntity.setActualQty(actualQty);
                     detailEntity.setPlanQty(actualQty);
-
                     addDetailList.add(detailEntity);
+
+                    inOutStock.setSourceId(id);
+                    inOutStock.setSourceDetailId(detailId);
+
+                }
+                //不为空的时候
+                if (CollectionUtils.isNotEmpty(addDetailList)) {
+                    //保存销售出库单
+                    soOutstockService.save(soOutstock);
+                    //保存销售出库单详情
+                    soOutstockDetailService.saveBatch(addDetailList);
+
+                    InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
+                    inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
+                    if (CollectionUtils.isNotEmpty(inOutStockList)) {
+                        inventoryInOutStockDTO.setMembers(inOutStockList);
+                        inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+                    }
+
                 }
 
 

@@ -1042,7 +1042,7 @@ ProductDetailController extends BaseController {
      * @param productId
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.plm.dto.SkuPurchaseDTO.PurchaseInfo>>
      */
-    @PostMapping("/listSkuByProductId")
+    @GetMapping("/listSkuByProductId")
     public ApiResult<List<ProductDetailEntity>> listSkuByProductId(@RequestParam("productId") String productId) {
         return success(productDetailService.queryByProductId(productId));
     }
