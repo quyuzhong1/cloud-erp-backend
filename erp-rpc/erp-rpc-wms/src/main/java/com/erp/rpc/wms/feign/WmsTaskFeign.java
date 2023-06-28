@@ -208,4 +208,14 @@ public interface WmsTaskFeign {
      **/
     @PostMapping("feign/warehouse/listByKingdeeCodeList")
     List<WarehouseEntity> listByKingdeeCodeList(@RequestBody List<String> kingdeeWarehouseCodeList);
+
+    /**
+     * @description: 根据编码查询有效直接调拨单
+     * @author Will
+     * @date: 2023/6/28 17:29
+     * @param code
+     * @return TransferInfoDTO.ViewDTO
+     */
+    @PostMapping("feign/transferInfo/ViewTransferInfoByCode")
+    TransferInfoDTO.ViewDTO ViewTransferInfoByCode(String code);
 }

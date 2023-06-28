@@ -150,4 +150,12 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @return Boolean
      */
     Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String operate);
+    /**
+     * @description: 根据编码查询有效直接直接调拨单
+     * @author Will
+     * @date: 2023/6/28 17:35
+     * @param code
+     * @return ViewDTO
+     */
+    TransferInfoDTO.ViewDTO ViewTransferInfoByCode(String code);
 }

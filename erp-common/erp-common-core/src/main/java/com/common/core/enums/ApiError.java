@@ -76,6 +76,8 @@ public enum ApiError implements Serializable {
     ERROR_1037(1037,"系统中未找到用户【{}】"),
     ERROR_1038(1038,"系统中未找到project导入{}级任务负责人"),
     ERROR_1039(1039,"单据【{}】未审核完成，不支持下推"),
+    ERROR_1040(1040,"未找到{}单据明细数据"),
+    ERROR_1041(1041,"{}明细数据不能为空"),
 
 
 

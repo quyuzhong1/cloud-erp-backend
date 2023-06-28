@@ -15,5 +15,5 @@ public class CommonConstants {
 
     public static final String ADMIN_ROLE_ID = "1";
 
-
+    public static final String SYSTEM = "UlanziERP";
 }

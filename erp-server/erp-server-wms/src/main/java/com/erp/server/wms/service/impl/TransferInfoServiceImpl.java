@@ -505,6 +505,39 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 .update();
     }
 
+    @Override
+    public TransferInfoDTO.ViewDTO ViewTransferInfoByCode(String code) {
+
+        TransferInfoDTO.ViewDTO viewDTO = new TransferInfoDTO.ViewDTO();
+        //主表信息
+        TransferInfoEntity entity = this.getTransferInfoByCode(code);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_99047);
+        }
+        BeanMapperUtils.copy(entity, viewDTO);
+        List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainId(entity.getId());
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_99048);
+        }
+        List<TransferInfoDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(TransferInfoDetailDTO.ViewDTO.class, detailList);
+        viewDTO.setDetailList(viewDetailList);
+        viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
+        return viewDTO;
+    }
+
+    /**
+     * @description: 根据编码查询
+     * @author Will
+     * @date: 2023/6/28 18:52
+     * @param code
+     * @return TransferInfoEntity
+     */
+    private TransferInfoEntity getTransferInfoByCode (String code) {
+        return lambdaQuery().eq(TransferInfoEntity::getCode, code)
+                .eq(TransferInfoEntity::getInvalidStatus, Boolean.FALSE)
+                .one();
+    }
+
     /**
      * @description:更新库存
      * @author Will

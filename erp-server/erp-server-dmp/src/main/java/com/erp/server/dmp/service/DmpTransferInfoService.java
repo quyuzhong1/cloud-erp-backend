@@ -1,13 +1,7 @@
 package com.erp.server.dmp.service;
-import com.erp.model.dmp.entity.DmpTransferInfoEntity;
+
 import com.common.business.service.SuperService;
-
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.erp.model.dmp.dto.DmpTransferInfoDTO;
-
- import javax.servlet.http.HttpServletResponse;
-import java.util.List;
+import com.erp.model.dmp.entity.DmpTransferInfoEntity;
 
 /**
  * <p>
@@ -18,6 +12,14 @@ import java.util.List;
  * @since 2023-06-19
  */
 public interface DmpTransferInfoService extends SuperService<DmpTransferInfoEntity> {
+    /**
+     * 新增
+     */
+    Boolean add(DmpTransferInfoEntity entity);
+    /**
+     * 修改
+     */
+    Boolean update(DmpTransferInfoEntity entity);
 
     /**
      * 检查订单存在则更新，不存在则新增

@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.constant.CommonConstants;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.common.message.constant.RocketMqTopic;
@@ -17,7 +18,10 @@ import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpTransferInfoDetailEntity;
 import com.erp.model.dmp.entity.DmpTransferInfoEntity;
-import com.erp.model.dmp.enums.*;
+import com.erp.model.dmp.enums.CleanStatusEnum;
+import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.kingdee.KingdeeTransferDirectEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeTransferDirectItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
@@ -35,7 +39,10 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -157,7 +164,8 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(StrUtil.format("FModifyDate >= {}", sdf.format(lastTime.minusMinutes(2))));
         queryFilters.add(StrUtil.format("FModifyDate < {}", sdf.format(nextTime)));
-        queryFilters.add(StrUtil.format("FDocumentStatus in '({})'", "C,D"));
+        queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "''A','B',C','D'"));
+        queryFilters.add(StrUtil.format("FThirdSystem != '{}'", CommonConstants.SYSTEM));
         String filterStr = String.join(" and ",  queryFilters );
         String fieldKeys = "FId,FBillNo,FBizType,FTransferDirect,FTransferBizType,FSaleOrgId,FSaleOrgId.FName," +
                 "FSettleOrgId,FSettleOrgId.FName,FStockOutOrgId,FStockOutOrgId.FName,FOwnerOutIdHead,FOwnerOutIdHead.FName," +
