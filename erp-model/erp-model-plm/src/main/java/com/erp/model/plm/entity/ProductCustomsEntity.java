@@ -50,6 +50,12 @@ public class ProductCustomsEntity extends BaseEntity<ProductCustomsEntity> {
     private String country;
 
     /**
+    * 国家
+    */
+    @TableField(exist = false)
+    private String countryName;
+
+    /**
     * 海关编码
     */
     @TableField("customs_code")
