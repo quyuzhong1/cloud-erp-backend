@@ -905,7 +905,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isEmpty(productCustomsList)) {
             return;
         }
-        List<String> ids = productCustomsList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(ProductCustomsEntity::getId).collect(Collectors.toList());
+        List<String> ids = productCustomsList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(ProductCustomsDTO::getId).collect(Collectors.toList());
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByIds(ids);
         productCustomsList.forEach(obj -> {
             //SKU操作日志
