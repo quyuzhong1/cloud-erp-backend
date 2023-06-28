@@ -148,7 +148,7 @@ public class ReturnOrderEntity extends CleanBaseDTO {
     @SerializedName("update_time")
     private String updateTime;
 
-    private JSONObject trackList;
+    private Object trackList;
 
     @SerializedName("item")
     private List<ReturnOrderItemEntity> item;
