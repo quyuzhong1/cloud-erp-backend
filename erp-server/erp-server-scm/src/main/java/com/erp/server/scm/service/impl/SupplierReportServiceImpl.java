@@ -114,7 +114,7 @@ public class SupplierReportServiceImpl implements SupplierReportService {
         }
 
         // 质检退货批次、质检退货量
-        List<String> sourceTypeList = Lists.newArrayList(SourceTypeEnum.QC_BILL.getCode());
+        List<String> sourceTypeList = Lists.newArrayList(SourceTypeEnum.QC_INFO.getCode());
         PurchaseReturnOrderDTO.SupplierReturnParamDTO returnParamDTO = new PurchaseReturnOrderDTO.SupplierReturnParamDTO(supplierIds, paramDTO.getDateList(), sourceTypeList);
         List<PurchaseReturnOrderDTO.SupplierReturnDTO> supplierReturnInfos = wmsTaskFeign.getReturnInfo(returnParamDTO);
         if(CollUtil.isNotEmpty(supplierReturnInfos)) {

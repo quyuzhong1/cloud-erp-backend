@@ -3,6 +3,7 @@ package com.erp.server.workflow.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -12,6 +13,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -25,15 +27,14 @@ import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.workflow.dto.CamundaDTO;
+import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.model.workflow.entity.ProcessBusinessEntity;
-import com.erp.model.workflow.entity.ProcessDefinitionEntity;
-import com.erp.model.workflow.entity.ProcessManagementEntity;
-import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
+import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.model.workflow.enums.ProcessStatusEnum;
 import com.erp.model.workflow.enums.TimeoutStatusEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.handle.BaseWorkflowService;
 import com.erp.server.workflow.mapper.ProcessManagementMapper;
 import com.erp.server.workflow.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -107,11 +108,19 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     private ProcessTaskCcService processTaskCcService;
     @Resource
     private MQProducerService mqProducerService;
+    @Resource
+    private WorkMenuService workMenuService;
 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.StartResultDTO startProcess(ProcessManagementDTO.StartDTO dto) {
+        // 查询业务数据和关联流程定义
+        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"");
+        if (null == processBusiness) {
+            // 业务未绑定流程定义
+            return new ProcessManagementDTO.StartResultDTO(dto);
+        }
         // 判断业务id是否已经存在
         ProcessManagementEntity managementEntity = lambdaQuery()
                 .eq(ProcessManagementEntity::getBusinessId, dto.getBusinessId())
@@ -121,12 +130,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if (null != managementEntity) {
             // 业务已经发起流程
             throw new ServiceException(ApiError.PROCESS_ALREADY_START);
-        }
-        // 查询业务数据和关联流程定义
-        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"");
-        if (null == processBusiness) {
-           // 业务未绑定流程定义
-           throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_BIND);
         }
         String processDefinitionId = processBusiness.getProcessDefinitionId();
         // 查询流程定义
@@ -724,6 +727,50 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     public List<ProcessManagementDTO.ManagementTaskDTO> listTaskById(List<String> ids) {
         return baseMapper.listProcessTaskByIds(ids);
+    }
+
+    @Override
+    public Boolean endExecutionHandle(DelegateExecution executionDelegate) {
+        // 根据流程实例id查询流程信息
+        String processInstanceId = executionDelegate.getProcessInstanceId();
+        ProcessManagementEntity entity = lambdaQuery()
+                .eq(ProcessManagementEntity::getProcessInstanceId, processInstanceId)
+                .oneOpt().orElseThrow(() -> new ServiceException(ApiError.ERROR_PROCESS_NOT_EXIST));
+        ProcessTaskManagementEntity taskEntity = processTaskManagementService.lastTask(processInstanceId);
+        // 流程信息传递给业务系统
+        EndProcessDTO dto = new EndProcessDTO(entity, taskEntity);
+        // 获取业务系统feign
+        WorkMenuEntity menuEntity = workMenuService.getByModuleCode(entity.getBusinessKey());
+        String feignBeanName = menuEntity.getFeignBeanName();
+        if (StrUtil.isBlank(feignBeanName)) {
+            throw new ServiceException(ApiError.ERROR_WORK_MENU_FEIGN);
+        }
+        BaseWorkflowService feignService = SpringUtil.getBean(feignBeanName);
+        return feignService.approveEnd(dto);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<ProcessManagementDTO.StartResultDTO> batchStartProcess(ValidList<ProcessManagementDTO.StartDTO> dtoList) {
+        List<ProcessManagementDTO.StartResultDTO> resultList = new ArrayList<>();
+        dtoList.stream().forEach(dto -> {
+            // 启动流程
+            ProcessManagementDTO.StartResultDTO resultDTO = startProcess(dto);
+            resultList.add(resultDTO);
+        });
+        return resultList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<ProcessManagementDTO.ApproveResultDTO> batchApproveProcess(ValidList<ProcessManagementDTO.ApproveDTO> dtoList) {
+        List<ProcessManagementDTO.ApproveResultDTO> resultList = new ArrayList<>();
+        dtoList.stream().forEach(approveDTO -> {
+            // 审批流程
+            ProcessManagementDTO.ApproveResultDTO resultDTO = approveProcess(approveDTO);
+            resultList.add(resultDTO);
+        });
+        return resultList;
     }
 
     @Override

@@ -105,6 +105,11 @@ public class ProcessManagementDTO {
             this.businessId = businessId;
             this.businessName = businessName;
         }
+
+        public StartResultDTO(StartDTO dto) {
+            this.businessId = dto.getBusinessId();
+            this.businessName = dto.getBusinessName();
+        }
     }
 
     @Data

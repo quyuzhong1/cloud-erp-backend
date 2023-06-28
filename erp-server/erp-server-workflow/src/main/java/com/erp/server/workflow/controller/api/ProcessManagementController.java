@@ -3,6 +3,7 @@ package com.erp.server.workflow.controller.api;
 
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -43,6 +44,11 @@ public class ProcessManagementController extends BaseController {
         ProcessManagementDTO.StartResultDTO result =  processManagementService.startProcess(dto);
         return success(result);
     }
+    @PostMapping("/batchStart")
+    public ApiResult<List<ProcessManagementDTO.StartResultDTO>> batchStartProcess(@RequestBody @Valid ValidList<ProcessManagementDTO.StartDTO> dto) {
+        List<ProcessManagementDTO.StartResultDTO> result =  processManagementService.batchStartProcess(dto);
+        return success(result);
+    }
 
     /**
      * 流程审核
@@ -54,6 +60,18 @@ public class ProcessManagementController extends BaseController {
         ProcessManagementDTO.ApproveResultDTO resultDTO = processManagementService.approveProcess(dto);
         return success(resultDTO);
     }
+
+    /**
+     * 批量审批
+     * @param dto
+     * @return
+     */
+    @PostMapping("/batchApprove")
+    public ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> batchApproveProcess(@RequestBody @Valid ValidList<ProcessManagementDTO.ApproveDTO> dto) {
+        List<ProcessManagementDTO.ApproveResultDTO> resultDTO = processManagementService.batchApproveProcess(dto);
+        return success(resultDTO);
+    }
+
 
     /**
      * 驳回流程

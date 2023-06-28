@@ -2,6 +2,7 @@ package com.erp.server.workflow.service;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
@@ -165,4 +166,24 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @return List<ProcessManagementDTO.ManagementTaskDTO>
      */
     List<ProcessManagementDTO.ManagementTaskDTO> listTaskById(List<String> ids);
+
+    /**
+     * 执行流程结束监听服务处理
+     * @param executionDelegate
+     */
+    Boolean endExecutionHandle(DelegateExecution executionDelegate);
+
+    /**
+     * 批量启动流程
+     * @param dto
+     * @return
+     */
+    List<ProcessManagementDTO.StartResultDTO> batchStartProcess(ValidList<ProcessManagementDTO.StartDTO> dto);
+
+    /**
+     * 批量审批流程
+     * @param dto
+     * @return
+     */
+    List<ProcessManagementDTO.ApproveResultDTO> batchApproveProcess(ValidList<ProcessManagementDTO.ApproveDTO> dto);
 }

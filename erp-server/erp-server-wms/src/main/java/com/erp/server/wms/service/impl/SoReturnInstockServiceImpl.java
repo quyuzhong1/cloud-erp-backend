@@ -22,7 +22,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.SOReturnChangeListTypeEnum;
@@ -224,7 +223,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String add(SoReturnInstockDTO.Add dto) {
-        if (StringUtils.isNotBlank(dto.getSourceType()) && dto.getSourceType().equals(SourceTypeEnum.QC_BILL.getCode())) {
+        if (StringUtils.isNotBlank(dto.getSourceType()) && dto.getSourceType().equals(SourceTypeEnum.QC_INFO.getCode())) {
             QcInfoEntity qcInfoEntity = qcInfoService.getById(dto.getSourceId());
             //质检单的来源-签收单id
             String sourceId = qcInfoEntity.getSourceId();
@@ -388,7 +387,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         //获取退货单id
         List<String> returnMainIds = returnEntityList.stream().map(SoReturnEntity::getId).distinct().collect(Collectors.toList());
         List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailBySourceIds(returnMainIds);
-        if (entity.getSourceType().equals(SourceTypeEnum.QC_BILL.getCode())) {
+        if (entity.getSourceType().equals(SourceTypeEnum.QC_INFO.getCode())) {
             QcInfoEntity qcInfoEntity = qcInfoService.getById(entity.getSourceId());
             //质检单的来源-签收单id
             String sourceId = qcInfoEntity.getSourceId();
@@ -705,7 +704,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             QcInfoEntity qcInfoEntity = qcInfoService.getById(id);
             SoReturnReceiveEntity receiveEntity = soReturnReceiveService.getById(qcInfoEntity.getSourceId());
             SoReturnInstockDTO.Add dto = new  SoReturnInstockDTO.Add();
-            dto.setSourceType(SourceTypeEnum.QC_BILL.getCode());
+            dto.setSourceType(SourceTypeEnum.QC_INFO.getCode());
             dto.setWarehouseId(qcInfoEntity.getWarehouseId());
             dto.setWarehouseKeeperId(receiveEntity.getWarehouseKeeperId());
             dto.setSourceId(id);

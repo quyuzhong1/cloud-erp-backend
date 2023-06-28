@@ -58,10 +58,10 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
     public void pullDataSave(RequestDTO dto) {
         List<KingdeeTransferDirectEntity> entityList = pullDate(dto);
         if (CollectionUtil.isEmpty(entityList)) {
-            log.info("拉取金蝶销售订单列表数据为空 entityList.size = 0 ");
+            log.info("拉取直接调拨订单列表数据为空 entityList.size = 0 ");
             return;
         }
-        log.info("拉取金蝶销售订单列表数据 entityList.size = {} ", entityList.size());
+        log.info("拉取直接调拨订单列表数据 entityList.size = {} ", entityList.size());
         List<KingdeeTransferDirectEntity> insertList = new ArrayList<>();
         List<KingdeeTransferDirectEntity> pushToMqList = new ArrayList<>();
         for (KingdeeTransferDirectEntity entity : entityList) {

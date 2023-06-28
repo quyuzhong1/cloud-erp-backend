@@ -1,5 +1,6 @@
 package com.erp.server.workflow.controller.feign;
 
+import com.common.business.validator.ValidList;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.*;
@@ -47,6 +48,7 @@ public class ProcessFeignController extends BaseController {
 
 
     //启动流程
+    @Deprecated
     @PostMapping("/startProcess")
     public ProcessNodeDTO startProcess(@RequestBody StartProcessDTO dto) {
         ProcessNodeDTO process = workflowService.startProcess(dto);
@@ -69,6 +71,7 @@ public class ProcessFeignController extends BaseController {
     }
 
     //审核通过任务
+    @Deprecated
     @PostMapping("/taskPass")
     public ProcessNodeDTO taskPass(@RequestBody @Validated ApproveProcessDTO dto) {
         ProcessNodeDTO node = processTaskService.taskPass(dto);
@@ -76,6 +79,7 @@ public class ProcessFeignController extends BaseController {
     }
 
     //审核不通过任务
+    @Deprecated
     @PostMapping("/taskNoPass")
     public ProcessNodeDTO taskNoPass(@RequestBody @Validated ApproveProcessDTO dto) {
         ProcessNodeDTO node = processTaskService.taskNoPass(dto);
@@ -83,12 +87,14 @@ public class ProcessFeignController extends BaseController {
     }
 
     //回退至初始状态
+    @Deprecated
     @PostMapping("/rejectOriginProcess")
     public void rejectOriginProcess(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.rejectOriginProcess(dto);
     }
 
     //撤销流程
+    @Deprecated
     @PostMapping("/withDraw")
     public void withDraw(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.withDrawProcess(dto);
@@ -98,12 +104,14 @@ public class ProcessFeignController extends BaseController {
      * 批量撤销流程 就是删除流程
      * @param processIdList
      */
+    @Deprecated
     @PostMapping("/batchCancelProcess")
     public Boolean batchCancelProcess(@RequestBody @Validated List<String> processIdList) {
        return workflowService.batchCancelProcess(processIdList);
     }
 
     //取回流程
+    @Deprecated
     @PostMapping("/fetchBack")
     public void fetchBack(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.fetchBackProcess(dto);
@@ -252,16 +260,37 @@ public class ProcessFeignController extends BaseController {
      * 流程启动 -new
      */
     @PostMapping("/start")
-    public ProcessManagementDTO.StartResultDTO start(@RequestBody ProcessManagementDTO.StartDTO dto) {
-        return processManagementService.startProcess(dto);
+    public ApiResult<ProcessManagementDTO.StartResultDTO> start(@RequestBody ProcessManagementDTO.StartDTO dto) {
+        try {
+            ProcessManagementDTO.StartResultDTO startResultDTO = processManagementService.startProcess(dto);
+            return success(startResultDTO);
+        }catch (Exception e){
+            return failure(e.getMessage());
+        }
+    }
+
+    /**
+     * 批量启动流程 -new
+     * @param dto
+     * @return
+     */
+    @PostMapping("/batchStart")
+    public ApiResult<List<ProcessManagementDTO.StartResultDTO>> batchStartProcess(@RequestBody @Valid ValidList<ProcessManagementDTO.StartDTO> dto) {
+        List<ProcessManagementDTO.StartResultDTO> result =  processManagementService.batchStartProcess(dto);
+        return success(result);
     }
 
     /**
      * 流程审批 -new
      */
     @PostMapping("/approve")
-    public ProcessManagementDTO.ApproveResultDTO approve(@RequestBody ProcessManagementDTO.ApproveDTO dto) {
-        return processManagementService.approveProcess(dto);
+    public ApiResult<ProcessManagementDTO.ApproveResultDTO> approve(@RequestBody ProcessManagementDTO.ApproveDTO dto) {
+        try {
+            return success(processManagementService.approveProcess(dto));
+        }catch (Exception e){
+            return failure(e.getMessage());
+        }
+
     }
 
     /**
@@ -269,8 +298,12 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/back")
     public ApiResult<ProcessManagementDTO.BackResultDTO> backProcess(@RequestBody @Valid ProcessManagementDTO.BackDTO dto) {
-        ProcessManagementDTO.BackResultDTO resultDTO = processManagementService.back(dto);
-        return success(resultDTO);
+        try {
+            ProcessManagementDTO.BackResultDTO resultDTO = processManagementService.back(dto);
+            return success(resultDTO);
+        }catch (Exception e){
+            return failure(e.getMessage());
+        }
     }
 
     /**
@@ -278,8 +311,13 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/revoke")
     public ApiResult<ProcessManagementDTO.RevokeResultDTO> revokeProcess(@RequestBody @Valid ProcessManagementDTO.RevokeDTO dto) {
-        ProcessManagementDTO.RevokeResultDTO revokeResult = processManagementService.revoke(dto);
-        return success(revokeResult);
+        try {
+            ProcessManagementDTO.RevokeResultDTO revokeResult = processManagementService.revoke(dto);
+            return success(revokeResult);
+        }catch (Exception e){
+            return failure(e.getMessage());
+        }
+
     }
 
     /**
@@ -287,7 +325,11 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/transfer")
     public ApiResult<Boolean> transferProcess(@RequestBody @Valid ProcessManagementDTO.TransferDTO dto) {
-        return success(processManagementService.transfer(dto));
+        try {
+            return success(processManagementService.transfer(dto));
+        } catch (Exception e) {
+            return failure(e.getMessage());
+        }
     }
 
     /**
@@ -295,8 +337,12 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/history/activity")
     public ApiResult<List<ProcessManagementDTO.HistoryActivityResultDTO>> historyActivity(@RequestBody @Valid ProcessManagementDTO.HistoryActivityDTO dto) {
-        List<ProcessManagementDTO.HistoryActivityResultDTO> resultList = processManagementService.historyActivity(dto);
-        return success(resultList);
+        try {
+            List<ProcessManagementDTO.HistoryActivityResultDTO> resultList = processManagementService.historyActivity(dto);
+            return success(resultList);
+        } catch (Exception e) {
+            return failure(e.getMessage());
+        }
     }
 
 }

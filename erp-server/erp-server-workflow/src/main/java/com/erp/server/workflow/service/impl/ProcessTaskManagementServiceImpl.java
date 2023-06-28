@@ -178,4 +178,15 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
             throw new RuntimeException("更新任务超时状态失败");
         }
     }
+
+    @Override
+    public ProcessTaskManagementEntity lastTask(String processInstanceId) {
+        ProcessTaskManagementEntity entity = lambdaQuery()
+                .eq(ProcessTaskManagementEntity::getProcessInstanceId, processInstanceId)
+                .in(ProcessTaskManagementEntity::getTaskStatus, ApproveStatusEnum.APPROVE, ApproveStatusEnum.REJECT)
+                .orderByDesc(ProcessTaskManagementEntity::getApproveTime, ProcessTaskManagementEntity::getTaskStatus)
+                .last("limit 1")
+                .oneOpt().orElseThrow(() -> new ServiceException(ApiError.ERROR_TASK_AUDIT_STATUS));
+        return entity;
+    }
 }

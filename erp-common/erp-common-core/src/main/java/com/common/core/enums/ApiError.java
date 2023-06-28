@@ -158,8 +158,9 @@ public enum ApiError implements Serializable {
 
     TASK_NOT_EXIST(94023,"任务已审核或不存在"),
     PROCESS_BUSINESS_KEY_EXIST(94024,"业务对应流程定义已存在"),
-
-
+    ERROR_PROCESS_NOT_EXIST(94025,"流程实例不存在"),
+    ERROR_WORK_MENU_NOT_EXIST(94026, "模块编码对应的菜单不存在"),
+    ERROR_WORK_MENU_FEIGN(94027, "工作流feign调用的类名不存在"),
 
 
     /**

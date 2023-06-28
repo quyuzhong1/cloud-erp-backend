@@ -1,6 +1,8 @@
 package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.workflow.dto.DictBasicDTO;
 import com.erp.model.workflow.entity.WorkMenuEntity;
 import com.erp.server.workflow.mapper.WorkMenuMapper;
@@ -35,5 +37,11 @@ public class WorkMenuServiceImpl extends SuperServiceImpl<WorkMenuMapper, WorkMe
         List<WorkMenuEntity> list = lambdaQuery().eq(WorkMenuEntity::getModuleCode, code).list();
         String result = list.stream().map(WorkMenuEntity::getSysClassify).distinct().findFirst().orElse("");
         return result;
+    }
+
+    @Override
+    public WorkMenuEntity getByModuleCode(String code) {
+        return lambdaQuery().eq(WorkMenuEntity::getModuleCode, code)
+                .last("limit 1").oneOpt().orElseThrow(() -> new ServiceException(ApiError.ERROR_WORK_MENU_NOT_EXIST));
     }
 }

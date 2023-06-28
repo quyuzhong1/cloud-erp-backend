@@ -183,7 +183,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
         // 增加库存数量验证（库存退货）
         String sourceType = dto.getSourceType();
-        if(!Objects.equals(sourceType, SourceTypeEnum.QC_BILL.getCode())) {
+        if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) {
             String returnMode = dto.getReturnMode();
             List<PurchaseReturnOrderDetailDTO.AddDTO> purchasePriceDetailList = dto.getPurchasePriceDetailList();
             purchasePriceDetailList.stream().forEach(detail->{
@@ -266,7 +266,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
         // 增加库存数量验证（库存退货）
         String sourceType = dto.getSourceType();
-        if(!Objects.equals(sourceType, SourceTypeEnum.QC_BILL.getCode())) {
+        if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) {
             String returnMode = dto.getReturnMode();
             List<PurchaseReturnOrderDetailDTO.UpdateDTO> purchasePriceDetailList = dto.getPurchasePriceDetailList();
             purchasePriceDetailList.stream().forEach(detail->{
@@ -348,7 +348,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             viewDTO.setPurchaseUserDeptName(purchaseOrderEntity.getPurchaseDeptName());
         }
 
-        if (SourceTypeEnum.QC_BILL.getCode().equals(purchaseReturnOrderEntity.getSourceType())) {
+        if (SourceTypeEnum.QC_INFO.getCode().equals(purchaseReturnOrderEntity.getSourceType())) {
             viewDTO.setSourceType(ReturnOrderSourceEnum.QC.getCode());
         } else {
             viewDTO.setSourceType(ReturnOrderSourceEnum.OTHER.getCode());
@@ -1054,7 +1054,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
 
         mainMap.forEach((mainId, purchaseReturnOrder)->{
             String sourceType = purchaseReturnOrder.getSourceType();
-            if(!Objects.equals(sourceType, SourceTypeEnum.QC_BILL.getCode())) { // 库存退货
+            if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) { // 库存退货
                 String returnMode = purchaseReturnOrder.getReturnMode(); // 退货方式
                 if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())) { // 退货补货
                     replenishmentInventoryMap.put(mainId, purchaseReturnOrder);
@@ -1175,7 +1175,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         List<String> unApproveIds = Lists.newArrayList();
         for (PurchaseReturnOrderEntity purchaseReturnOrder : purchaseReturnOrderEntityList) {
             String sourceType = purchaseReturnOrder.getSourceType();
-            if(!Objects.equals(sourceType, SourceTypeEnum.QC_BILL.getCode())) { // 库存退货
+            if(!Objects.equals(sourceType, SourceTypeEnum.QC_INFO.getCode())) { // 库存退货
                 unApproveIds.add(purchaseReturnOrder.getId());
             } else { // 质检退货
                 String returnMode = purchaseReturnOrder.getReturnMode(); // 退货方式

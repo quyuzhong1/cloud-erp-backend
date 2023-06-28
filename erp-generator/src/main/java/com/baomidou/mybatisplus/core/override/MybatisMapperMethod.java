@@ -108,7 +108,7 @@ public class MybatisMapperMethod {
     }
 
     /**
-     * TODO IPage 专用
+     *  IPage 专用
      */
     private <E> List<E> executeForIPage(SqlSession sqlSession, Object[] args) {
         Object param = method.convertArgsToSqlCommandParam(args);

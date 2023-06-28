@@ -557,7 +557,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //获取到sku 信息
         List<ProductVO.ProductPackVO> skuList = plmTaskFeign.getProductPackBySkuIds(skuIds);
         List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(purchaseOrderIds);
-        String sourceType = SourceTypeEnum.WAREHOUSE_RECEIVE.getCode();
+        String sourceType = SourceTypeEnum.PO_RECEIVE.getCode();
         for (QcInfoDTO.ReceiveToQcDTO item : qcList) {
             String skuId = item.getSkuId();
             String purchaseOrderId = item.getPurchaseOrderId();
@@ -920,7 +920,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             }
             PoInstockDTO.AddDTO addDTO = new PoInstockDTO.AddDTO();
             addDTO.setSourceId(id);
-            addDTO.setSourceType(SourceTypeEnum.WAREHOUSE_RECEIVE.getCode());
+            addDTO.setSourceType(SourceTypeEnum.PO_RECEIVE.getCode());
             WarehouseReceiveEntity warehouseReceiveEntity = this.getById(id);
 
             addDTO.setPurchaseOrderId(warehouseReceiveEntity.getPurchaseOrderId());

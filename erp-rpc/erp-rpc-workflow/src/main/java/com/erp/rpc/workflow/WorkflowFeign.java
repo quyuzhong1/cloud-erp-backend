@@ -1,5 +1,7 @@
 package com.erp.rpc.workflow;
 
+import com.common.business.validator.ValidList;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
@@ -9,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -22,6 +25,7 @@ public interface WorkflowFeign {
 
 
     //启动流程
+    @Deprecated
     @PostMapping("feign/process/startProcess")
     ProcessNodeDTO startProcess(@RequestBody StartProcessDTO startProcessDTO);
 
@@ -42,11 +46,13 @@ public interface WorkflowFeign {
 
 
     //审核任务通过
+    @Deprecated
     @PostMapping("feign/process/taskPass")
     ProcessNodeDTO taskPass(@RequestBody ApproveProcessDTO dto);
 
 
     //审核任务不通过
+    @Deprecated
     @PostMapping("feign/process/taskNoPass")
     ProcessNodeDTO taskNoPass(@RequestBody ApproveProcessDTO dto);
 
@@ -55,19 +61,23 @@ public interface WorkflowFeign {
     void withDraw(@RequestBody ApproveProcessDTO dto);
 
     //取回流程
+    @Deprecated
     @PostMapping("feign/process/fetchBack")
     void fetchBack(@RequestBody ApproveProcessDTO dto);
 
 
     //取回起始点
+    @Deprecated
     @PostMapping("feign/process/rejectOrigin")
     void rejectOrigin(@RequestBody ApproveProcessDTO dto);
 
     //终止流程
+    @Deprecated
     @PostMapping("feign/process/terminate")
     void terminate(@RequestBody ApproveProcessDTO dto);
 
     //取消流程
+    @Deprecated
     @PostMapping("feign/process/cancelProcess")
     void cancelProcess(@RequestBody List<String> ids);
 
@@ -149,4 +159,56 @@ public interface WorkflowFeign {
      */
     @PostMapping("feign/process/batchCancelProcess")
     Boolean batchCancelProcess(@RequestBody List<String> processIdList);
+
+    /**
+     * 流程启动 -new
+     */
+    @PostMapping("feign/process/start")
+    ApiResult<ProcessManagementDTO.StartResultDTO> start(@RequestBody ProcessManagementDTO.StartDTO dto);
+
+    /**
+     * 流程审批 -new
+     */
+    @PostMapping("feign/process/approve")
+    ApiResult<ProcessManagementDTO.ApproveResultDTO> approve(@RequestBody ProcessManagementDTO.ApproveDTO dto);
+
+    /**
+     * 流程驳回到指定节点 -new
+     */
+    @PostMapping("feign/process/back")
+    ApiResult<ProcessManagementDTO.BackResultDTO> backProcess(@RequestBody @Valid ProcessManagementDTO.BackDTO dto);
+
+    /**
+     * 流程取回 -new
+     */
+    @PostMapping("feign/process/revoke")
+    ApiResult<ProcessManagementDTO.RevokeResultDTO> revokeProcess(@RequestBody @Valid ProcessManagementDTO.RevokeDTO dto);
+
+    /**
+     * 转发任务 - new
+     */
+    @PostMapping("feign/process/transfer")
+    ApiResult<Boolean> transferProcess(@RequestBody @Valid ProcessManagementDTO.TransferDTO dto);
+
+    /**
+     * 历史流程节点 - 用于指定人驳回
+     */
+    @PostMapping("feign/process/history/activity")
+    ApiResult<List<ProcessManagementDTO.HistoryActivityResultDTO>> historyActivity(@RequestBody @Valid ProcessManagementDTO.HistoryActivityDTO dto);
+
+    /**
+     * 批量启动流程
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/process/batchStart")
+    ApiResult<List<ProcessManagementDTO.StartResultDTO>> batchStartProcess(@RequestBody @Valid ValidList<ProcessManagementDTO.StartDTO> dto);
+
+    /**
+     * 批量审批流程
+     * @param dto
+     * @return
+     */
+    @PostMapping("feign/process/batchApprove")
+    ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> batchApproveProcess(@RequestBody @Valid ValidList<ProcessManagementDTO.ApproveDTO> dto);
 }

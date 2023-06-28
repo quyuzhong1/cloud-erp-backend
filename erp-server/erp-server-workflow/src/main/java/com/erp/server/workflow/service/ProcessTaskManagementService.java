@@ -68,4 +68,11 @@ public interface ProcessTaskManagementService extends SuperService<ProcessTaskMa
      * @param timeoutStatusEnum
      */
     void updateTimeoutStatus(List<String> taskManagementIds, TimeoutStatusEnum timeoutStatusEnum);
+
+    /**
+     * 根据流程实例id查询最近一条任务
+     * @param processInstanceId
+     * @return
+     */
+    ProcessTaskManagementEntity lastTask(String processInstanceId);
 }
