@@ -16,6 +16,7 @@ import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
@@ -102,7 +103,6 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             instockEntity.setSalesDeptName(kingdeeReturnOrderEntity.getFSaledeptName());
             instockEntity.setSellerName(kingdeeReturnOrderEntity.getFSalesManName());
             instockEntity.setBillDate(LocalDate.parse(kingdeeReturnOrderEntity.getFDate()));
-
             instockEntity.setWarehouseId(warehouseEntity.getId());
             instockEntity.setWarehouseName(warehouseEntity.getName());
             if (CollectionUtils.isNotEmpty(orderItemEntityList)) {
@@ -129,8 +129,18 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             }
             soReturnInstockService.save(instockEntity);
             soReturnInstockDetailService.saveBatch(detailEntityList);
-            //更新库存
-            inventoryTransCore(Arrays.asList(instockEntity));
+            if (kingdeeReturnOrderEntity.getFDocumentStatus().equals("C")) {
+                //更新库存
+                inventoryTransCore(Arrays.asList(instockEntity));
+            } else {
+                List<SoReturnInstockEntity> soReturnInstockEntities = soReturnInstockService.listByCode(Arrays.asList(kingdeeReturnOrderEntity.getFBillNo()));
+                List<String> ids = soReturnInstockEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnInstockEntity::getId).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(ids)) {
+                    //回滚库存
+                    InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_RETURN_INSTOCK, ids);
+                    inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+                }
+            }
         }
     }
 

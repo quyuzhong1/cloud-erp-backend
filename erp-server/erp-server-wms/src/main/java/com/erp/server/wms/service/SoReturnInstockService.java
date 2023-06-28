@@ -157,4 +157,13 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @return java.lang.Boolean
      **/
     Boolean generateSoReturnInstockSave(List<SoReturnInstockDTO.GenerateSoReturnInstockView> list);
+
+    /**
+     * 根据单号查询
+     * @Author Luo_WG
+     * @Date 2023/6/28 19:53
+     * @param codeList codeList
+     * @return java.util.List<com.erp.model.wms.entity.SoReturnInstockEntity>
+     **/
+    List<SoReturnInstockEntity> listByCode(List<String> codeList);
 }
