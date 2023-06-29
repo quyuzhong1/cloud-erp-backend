@@ -85,7 +85,7 @@ public class TaskCommentServiceImpl extends ServiceImpl<TaskCommentMapper, TaskC
                 userList = userInfoFeign.listByUserIds(refUserIdList);
                 taskCommentRefService.addCommentRef(refUserIdList, taskId, entity.getId(), userList);
             }
-            noticeMessageService.remindRemarkNotice(entity.getId(), loginUser.getUserName(), taskEntity.getProductId(), taskId, dto.getComment(), dto.getRefUserIdList(), userList);
+            noticeMessageService.remindRemarkNotice(entity.getId(), loginUser.getUserName(), taskEntity.getProductId(), taskId, dto.getComment(), refUserIdList, userList);
             Class<TaskCommentEntity> customerClass = TaskCommentEntity.class;
             TableName tableName = customerClass.getDeclaredAnnotation(TableName.class);
             //获取到表名
