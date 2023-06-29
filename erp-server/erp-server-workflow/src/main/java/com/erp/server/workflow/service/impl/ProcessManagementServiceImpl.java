@@ -215,6 +215,12 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.ApproveResultDTO approveProcess(ProcessManagementDTO.ApproveDTO dto) {
+        // 查询业务数据和关联流程定义
+        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"");
+        if (null == processBusiness) {
+            // 业务未绑定流程定义
+            return new ProcessManagementDTO.ApproveResultDTO(dto);
+        }
         // 查询流程数据
         ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
         // 审核人校验
@@ -373,7 +379,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     public ProcessManagementDTO.ManagementTaskDTO getTaskByBusiness(String businessId, String businessKey, String userId) {
-        return baseMapper.getTaskByBusiness(businessId, businessKey, null);
+        return baseMapper.getTaskByBusiness(businessId, businessKey, userId);
     }
 
     private List<ProcessManagementDTO.ManagementTaskDTO> listTaskByBusiness(String businessId, String businessKey) {
@@ -544,7 +550,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     public void createTaskHandle(DelegateTask task) {
         // 保存流程任务数据 execution 中包含实例信息,
         // 审批任务填充审批信息
-        String processDefinitionId = task.getExecution().getProcessDefinitionId();
+        DelegateExecution execution = task.getExecution();
+        String processDefinitionId = execution.getProcessDefinitionId();
         String taskDefinitionKey = task.getTaskDefinitionKey();
         CamundaDTO.PropertiesDTO propertiesDTO = getProperties(taskDefinitionKey, processDefinitionId);
         if(null == propertiesDTO){
@@ -563,7 +570,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if(null == processDefinition) {
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
         }
-        List<String> candidateUsers = task.getCandidates().stream().map(IdentityLink::getUserId).collect(Collectors.toList());
+//        List<String> candidateUsers = task.getCandidates().stream().map(IdentityLink::getUserId).collect(Collectors.toList());
+        String startUserId = "" + execution.getVariable("creator");
+        List<String> candidateUsers = addApproveInfo(startUserId, propertiesDTO);
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(candidateUsers);
         if(CollectionUtil.isEmpty(userList)){
             throw new ServiceException(ApiError.USER_NOT_EXIST);
@@ -730,9 +739,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     }
 
     @Override
-    public Boolean endExecutionHandle(DelegateExecution executionDelegate) {
+    public Boolean endExecutionHandle(String processInstanceId) {
         // 根据流程实例id查询流程信息
-        String processInstanceId = executionDelegate.getProcessInstanceId();
         ProcessManagementEntity entity = lambdaQuery()
                 .eq(ProcessManagementEntity::getProcessInstanceId, processInstanceId)
                 .oneOpt().orElseThrow(() -> new ServiceException(ApiError.ERROR_PROCESS_NOT_EXIST));

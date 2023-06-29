@@ -55,13 +55,14 @@ public class ProcessBusinessServiceImpl extends SuperServiceImpl<ProcessBusiness
 
     @Override
     public void addOrUpdate(ProcessDefinitionDTO.AddOrUpdateDTO dto) {
-        ProcessBusinessEntity business = getProcessBusiness(dto.getBusinessKey(),"");
-        if(business != null) {
-            throw new ServiceException(ApiError.PROCESS_BUSINESS_KEY_EXIST);
-        }
-        ProcessBusinessEntity oldBusinessEntity = getByDefinitionId(dto.getId());
+//        ProcessBusinessEntity oldBusinessEntity = getByDefinitionId(dto.getId());
+        ProcessBusinessEntity oldBusinessEntity = getProcessBusiness(dto.getBusinessKey(),"");
+//        if(business != null) {
+//            throw new ServiceException(ApiError.PROCESS_BUSINESS_KEY_EXIST);
+//        }
         if(null != oldBusinessEntity){
             oldBusinessEntity.setBusinessKey(dto.getBusinessKey());
+            oldBusinessEntity.setProcessDefinitionId(dto.getId());
             if(!updateById(oldBusinessEntity)){
                 throw new ServiceException(ApiError.UPDATE_PROCESS_ERROR);
             }

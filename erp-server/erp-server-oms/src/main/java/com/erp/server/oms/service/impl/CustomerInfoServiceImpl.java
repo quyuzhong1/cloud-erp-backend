@@ -627,7 +627,20 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                     map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
         }
-
+        ValidList<ProcessManagementDTO.ApproveDTO> approveDTOS = new ValidList<>();
+        String uid = commonService.getUserInfo().getUid();
+        list.forEach(obj -> {
+            //发送消息
+            ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+            approveDTO.setApproveType(ApproveTypeEnum.getByApproveStatus(obj.getApproveStatus()));
+            approveDTO.setUserId(uid);
+            approveDTO.setBusinessId(obj.getId());
+            approveDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_INFO.getCode());
+            approveDTO.setComment(comment);
+            approveDTO.setVariablesMap(BeanUtil.beanToMap(obj));
+            approveDTOS.add(approveDTO);
+        });
+        ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> listApiResult = workflowFeign.batchApproveProcess(approveDTOS);
         return result;
     }
 

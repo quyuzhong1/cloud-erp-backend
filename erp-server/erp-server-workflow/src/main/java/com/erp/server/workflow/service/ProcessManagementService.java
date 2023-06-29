@@ -171,7 +171,7 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * 执行流程结束监听服务处理
      * @param executionDelegate
      */
-    Boolean endExecutionHandle(DelegateExecution executionDelegate);
+    Boolean endExecutionHandle(String processInstanceId);
 
     /**
      * 批量启动流程

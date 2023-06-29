@@ -6,13 +6,26 @@ import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.DelegateTask;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
 import org.camunda.bpm.engine.delegate.TaskListener;
+import org.camunda.bpm.engine.impl.core.model.PropertyMapKey;
 import org.camunda.bpm.engine.impl.history.event.HistoryEvent;
+import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
+import org.camunda.bpm.engine.impl.pvm.runtime.ActivityInstanceState;
+import org.camunda.bpm.engine.repository.ProcessDefinition;
+import org.camunda.bpm.engine.repository.ProcessDefinitionQuery;
+import org.camunda.bpm.engine.runtime.ActivityInstance;
+import org.camunda.bpm.engine.runtime.ProcessInstance;
+import org.camunda.bpm.engine.task.Task;
+import org.camunda.bpm.model.bpmn.instance.FlowElement;
 import org.camunda.bpm.spring.boot.starter.event.ExecutionEvent;
 import org.camunda.bpm.spring.boot.starter.event.TaskEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -72,14 +85,31 @@ public class CamundaGlobalListener {
   @EventListener
   public void onExecutionEvent(DelegateExecution executionDelegate) {
     log.info("Handle mutable execution event: {}",  executionDelegate.toString());
-    if (ExecutionListener.EVENTNAME_START.equals(executionDelegate.getEventName())) {
+    int activityInstanceState = ((ExecutionEntity) executionDelegate).getActivityInstanceState();
+    String type = (String) ((ExecutionEntity) executionDelegate).getEventSource().getProperties().toMap().get("type");
+    List<String> endTypeList = Arrays.asList("endEvent", "noneEndEvent");
+    if (ExecutionListener.EVENTNAME_START.equals(executionDelegate.getEventName()) && ActivityInstanceState.STARTING.getStateCode() == activityInstanceState) {
       // 任务创建时的逻辑处理
       log.info("CamundaGlobalListener onTaskEvent Task created: {}", executionDelegate.getCurrentActivityName());
       processManagementService.startExecutionHandle(executionDelegate);
-    }else if(ExecutionListener.EVENTNAME_END.equals(executionDelegate.getEventName())){
+    }else if(ExecutionListener.EVENTNAME_END.equals(executionDelegate.getEventName())&&  endTypeList.contains(type)){
+      if(ActivityInstanceState.ENDING.getStateCode() == activityInstanceState){
+        log.info("CamundaGlobalListener onTaskEvent Task completed: {}", executionDelegate.getCurrentActivityName());
+      }
         // 任务完成时的逻辑处理
-      processManagementService.endExecutionHandle(executionDelegate);
+      processManagementService.endExecutionHandle(executionDelegate.getProcessInstanceId());
     }
+  }
+
+  private boolean isLastTask(DelegateTask task, String processInstanceId) {
+    List<Task> tasks = task.getProcessEngineServices().getTaskService().createTaskQuery()
+            .processInstanceId(processInstanceId).list();
+    return tasks.size() == 1 && tasks.get(0).getId().equals(task.getId());
+  }
+  @EventListener
+  public void onProcessStart(DelegateExecution execution) {
+    String eventName = execution.getEventName();
+    String currentActivityId = execution.getCurrentActivityId();
   }
 
   /**
@@ -87,10 +117,13 @@ public class CamundaGlobalListener {
    * handle immutable execution event
    * @param executionEvent
    */
-  //@EventListener
+  @EventListener
   public void onExecutionEvent(ExecutionEvent executionEvent) {
-//    log.info("Handle immutable execution event: {}",  executionEvent.toString());
-
+    log.info("Handle immutable execution event: {}",  executionEvent.toString());
+    // 获取流程StartEvent开始事件
+    if (executionEvent.getEventName().equals(ExecutionListener.EVENTNAME_START)) {
+      log.info("Handle immutable execution event: {}",  executionEvent.toString());
+    }
   }
 
   /**
@@ -98,9 +131,9 @@ public class CamundaGlobalListener {
    * handle history event
    * @param historyEvent
    */
-  //@EventListener
+  @EventListener
   public void onHistoryEvent(HistoryEvent historyEvent) {
-    // 任务完成后，会触发该事件 eventType = complete
+//     任务完成后，会触发该事件 eventType = complete
 //    log.info("History event: {}",  JSONUtil.toJsonStr(historyEvent));
   }
  

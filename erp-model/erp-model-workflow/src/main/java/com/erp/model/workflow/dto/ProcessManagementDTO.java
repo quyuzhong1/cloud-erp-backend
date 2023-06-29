@@ -97,6 +97,8 @@ public class ProcessManagementDTO {
          */
         private String endTime;
 
+        private Boolean isExistProcess;
+
         public StartResultDTO(String processDefinitionId, String processInstanceId, String taskId, LocalDateTime processStartTime, String businessId, String businessName) {
             this.processDefinitionId = processDefinitionId;
             this.processInstanceId = processInstanceId;
@@ -104,11 +106,13 @@ public class ProcessManagementDTO {
             this.startTime = processStartTime.toString();
             this.businessId = businessId;
             this.businessName = businessName;
+            this.isExistProcess = true;
         }
 
         public StartResultDTO(StartDTO dto) {
             this.businessId = dto.getBusinessId();
             this.businessName = dto.getBusinessName();
+            this.isExistProcess = false;
         }
     }
 
@@ -189,6 +193,11 @@ public class ProcessManagementDTO {
          */
         private String activityId;
 
+        /**
+         * 流程是否存在
+         */
+        private Boolean isExistProcess;
+
         public ApproveResultDTO(String processDefinitionId, String processInstanceId, String businessId,
                                 String businessName, String taskId, String activityName, String activityId) {
             this.processDefinitionId = processDefinitionId;
@@ -198,6 +207,12 @@ public class ProcessManagementDTO {
             this.taskId = taskId;
             this.activityName = activityName;
             this.activityId = activityId;
+            this.isExistProcess = true;
+        }
+
+        public ApproveResultDTO(ApproveDTO dto) {
+            this.businessId = dto.getBusinessId();
+            this.isExistProcess = false;
         }
     }
 

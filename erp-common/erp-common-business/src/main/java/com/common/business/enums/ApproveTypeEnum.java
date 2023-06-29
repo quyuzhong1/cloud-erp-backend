@@ -17,7 +17,7 @@ public enum ApproveTypeEnum {
     PASS("pass", "审核通过"),
     REJECT("reject", "审核不通过"),
 
-    REJECT_PREVIOUS("reject_previous", "驳回上个节点"),
+//    REJECT_PREVIOUS("reject_previous", "驳回上个节点"),
     /**
      * 驳回指定节点
      */
@@ -55,6 +55,12 @@ public enum ApproveTypeEnum {
     public static ApproveTypeEnum getByCode(String code) {
         return Arrays.stream(ApproveTypeEnum.values())
                 .filter(e -> e.getStatus().equals(code))
+                .findFirst()
+                .orElse(null);
+    }
+    public static ApproveTypeEnum getByApproveStatus(ApproveStatusEnum approveStatus) {
+        return Arrays.stream(ApproveTypeEnum.values())
+                .filter(e -> e.getStatus().equals("approve".equals(approveStatus.getStatus()) ? "pass" : approveStatus.getStatus()))
                 .findFirst()
                 .orElse(null);
     }

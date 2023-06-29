@@ -144,7 +144,10 @@
         from sys_user_info sui
                  LEFT JOIN sys_role_user sru on sui.uid = sru.user_id
                  LEFT JOIN sys_role sr on sr."id" = sru.role_id
-        where sr.role_id in (role_id)
+        where sr.id in
+        <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+            #{roleId}
+        </foreach>
     </select>
 
 

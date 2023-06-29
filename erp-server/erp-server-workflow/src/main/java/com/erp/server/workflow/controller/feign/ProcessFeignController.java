@@ -345,4 +345,15 @@ public class ProcessFeignController extends BaseController {
         }
     }
 
+    /**
+     * 批量审批
+     * @param dto
+     * @return
+     */
+    @PostMapping("/batchApprove")
+    public ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> batchApproveProcess(@RequestBody @Valid ValidList<ProcessManagementDTO.ApproveDTO> dto) {
+        List<ProcessManagementDTO.ApproveResultDTO> resultDTO = processManagementService.batchApproveProcess(dto);
+        return success(resultDTO);
+    }
+
 }

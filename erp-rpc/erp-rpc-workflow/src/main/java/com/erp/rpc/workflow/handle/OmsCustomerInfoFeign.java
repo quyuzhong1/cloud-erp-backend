@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
  * @Author Cloud
  * @Date 2023/6/27 18:29
  **/
-@FeignClient(value = "erp-oms", contextId = "omsCustomerInfoFeign")
+@FeignClient(value = "erp-oms", contextId = "workflow")
 public interface OmsCustomerInfoFeign extends BaseWorkflowService{
 
     /**

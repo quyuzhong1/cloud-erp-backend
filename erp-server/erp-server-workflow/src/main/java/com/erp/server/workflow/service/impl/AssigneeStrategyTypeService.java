@@ -37,8 +37,8 @@ public class AssigneeStrategyTypeService {
         String assignee = dto.getAssignee();
         // 发起人
         String startUserId = dto.getStartUserId();
-        if(StrUtil.isNotBlank(assignee)){
-            return Arrays.asList(assignee.split(","));
+        if(StrUtil.isBlank(assignee)){
+            return Collections.EMPTY_LIST;
         }
         List<String> roleIds = StrUtil.isNotBlank(assignee) ? Arrays.asList(assignee.split(",")) : Collections.EMPTY_LIST;
         List<FindUserDTO> userList = sysUserFeign.getUserListByRoleIds(new SysFeignDTO.ListByRoleIdsDTO(roleIds, startUserId));
