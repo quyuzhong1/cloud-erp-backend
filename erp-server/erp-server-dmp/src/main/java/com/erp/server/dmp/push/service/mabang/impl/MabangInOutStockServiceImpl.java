@@ -64,8 +64,9 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
 
         dmpSyncTaskService.save(dmpSyncTaskEntity);
 
+        // 发送MQ消息处理直接调拨单发送到马帮
+
         DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), mqData);
-        // 发送MQ消息处理出入库信息然后发送到马帮
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.MABANG_INOUT_STOCK_TAG.getName(),
                 dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
