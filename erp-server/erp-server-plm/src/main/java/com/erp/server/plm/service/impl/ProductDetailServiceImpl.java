@@ -668,7 +668,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //校验sku必填项
         ProductDetailDTO detailDTO = new ProductDetailDTO();
         BeanMapper.copy(productSkuBaseInfoDTO, detailDTO);
-        checkProductDetailField(Arrays.asList(detailDTO));
         ProductDetailEntity detailEntity = new ProductDetailEntity();
         BeanMapper.copy(productSkuBaseInfoDTO, detailEntity);
         detailEntity.setIsChange(IsConstant.NO);
@@ -691,8 +690,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public Boolean saveOrUpdateBatch(List<ProductDetailDTO> productDetailList) {
-        //校验sku必填项
-        checkProductDetailField(productDetailList);
         List<ProductDetailEntity> list = BeanMapper.copyList(productDetailList, ProductDetailEntity.class);
         list.forEach(req -> {
             req.setIsChange(IsConstant.NO);
@@ -717,16 +714,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional
     public Boolean saveOrUpdateNoSpec(ProductNoSpecDTO productNoSpecDTO) {
-        //校验产品必填
-        checkProdductInfoField(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO());
-        //校验sku必填项
-        ProductDetailDTO detailDTO = new ProductDetailDTO();
-        BeanMapper.copy(productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO(), detailDTO);
-        checkProductDetailField(Arrays.asList(detailDTO));
-        //校验成本信息必填项
-        checkProductCostField(Arrays.asList(productNoSpecDTO.getProductCostDTO()));
-        //校验销售信息必填项
-        checkProductSaleField(Arrays.asList(productNoSpecDTO.getProductSaleDTO()));
         //检查spu编号是否重复
         if (this.checkSpuNo(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO().getSpuNo(), productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId())) {
             throw new ServiceException(ApiError.ERROR_95017);
@@ -934,18 +921,31 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return;
         }
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByIds(ids);
+
         productCustomsList.forEach(obj -> {
             //SKU操作日志
             ProductCustomsEntity oldEntity = productCustomsEntityList.stream().filter(e -> e.getId().equals(obj.getId())).findFirst().orElse(null);
-            ProductAccessoriesDTO oldDto = new ProductAccessoriesDTO();
+            ProductCustomsDTO oldDto = new ProductCustomsDTO();
             if (ObjectUtils.isNotEmpty(oldEntity)) {
                 BeanMapperUtils.copy(oldEntity, oldDto);
+                if (StringUtils.isNotBlank(obj.getCountry())) {
+                    String[] split = obj.getCountry().split(",");
+                    List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
+                    List<String> countryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                    obj.setCountryName(StringUtils.join(countryNameList, ","));
+
+                    String[] splitt = oldEntity.getCountry().split(",");
+                    List<BasicDictEntity> basicDictEntitiest = basicDictService.listByIds(Arrays.asList(splitt));
+                    List<String> countryNameListt = basicDictEntitiest.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                    oldDto.setCountryName(StringUtils.join(countryNameListt, ","));
+                }
+                ProductDetailEntity productDetailEntity = this.getById(obj.getSkuId());
+                if (ObjectUtils.isEmpty(productDetailEntity)) {
+                    throw new ServiceException(ApiError.ERROR_95084);
+                }
+                sysLogService.addSysLogByUpdate(oldDto, obj, SKUCLASSPATH, obj.getSkuId(), productId, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
             }
-            ProductDetailEntity productDetailEntity = this.getById(obj.getSkuId());
-            if (ObjectUtils.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95084);
-            }
-            sysLogService.addSysLogByUpdate(oldDto, obj, SKUCLASSPATH, obj.getSkuId(), productId, String.format("SKU[%s]", productDetailEntity.getSkuNo()));
+
         });
     }
 
@@ -960,14 +960,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional
     public Boolean saveOrUpdateManySpec(ProductManySpecDTO productManySpecDTO) {
-        //校验产品必填
-        checkProdductInfoField(productManySpecDTO.getProductInfoDTO());
-        //校验sku必填项
-        checkProductDetailField(productManySpecDTO.getProductDetailList());
-        //校验成本信息必填项
-        checkProductCostField(productManySpecDTO.getProductCostList());
-        //校验销售信息必填项
-        checkProductSaleField(productManySpecDTO.getProductSaleList());
 
         //检查spu编号是否重复
         if (this.checkSpuNo(productManySpecDTO.getProductInfoDTO().getSpuNo(), productManySpecDTO.getProductInfoDTO().getId())) {
@@ -1376,6 +1368,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional
     public Boolean delete(String skuId) {
+        ProductDetailEntity detailEntity = this.getById(skuId);
+        if (detailEntity.getStatus().equals(1) || detailEntity.getStatus().equals(2)) {
+            throw new ServiceException(ApiError.ERROR_95241);
+        }
+        if (detailEntity.getOccupyStatus()) {
+            throw new ServiceException(ApiError.ERROR_95242);
+        }
         List<String> idList = Arrays.asList(skuId);
         //1.删除证书信息
         productCertificateService.removeCertificate(idList);
@@ -1442,6 +1441,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductDetailEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.FALSE;
+        }
+        long count = list.stream().filter(req -> !req.getStatus().equals(1) && !req.getStatus().equals(2)).count();
+        if (list.size() != count) {
+            throw new ServiceException(ApiError.ERROR_95241);
+        }
+        long sign = list.stream().filter(req -> !req.getOccupyStatus()).count();
+        if (list.size() != sign) {
+            throw new ServiceException(ApiError.ERROR_95242);
         }
         List<String> skuIds = list.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
         //1.删除证书信息
@@ -2009,7 +2016,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //重新启动流程
         //TODO 2023-03-30 暂时取消审核流程 只改状态
 //        this.productDetailStartProcess(entity);
-        entity.setStatus(ProductDetailStatusEnum.APPROVAL_ING.getCode());
+        entity.setStatus(ProductDetailStatusEnum.WAIT_COMMIT.getCode());
         //反审核后更新是否申请变更
         entity.setIsChange(IsConstant.NO);
         //同步到SCM
@@ -2121,171 +2128,142 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_SKU_TAG.getName(), Arrays.asList(detailEntity), IdUtil.simpleUUID());
     }
 
-    /**
-     * 校验产品必填
-     * @Author Luo_WG
-     * @Date 2023/6/29 10:45
-     * @param infoDTO
-     * @return void
-     **/
-    public void checkProdductInfoField(ProductInfoDTO infoDTO) {
-        if (StringUtils.isBlank(infoDTO.getSpuNo())) {
-            throw new ServiceException(ApiError.ERROR_95199);
-        }
-        if (StringUtils.isBlank(infoDTO.getChargeId())) {
-            throw new ServiceException(ApiError.ERROR_95200);
-        }
-        if (StringUtils.isBlank(infoDTO.getSaleMethod())) {
-            throw new ServiceException(ApiError.ERROR_95201);
-        }
-        if (StringUtils.isBlank(infoDTO.getCategoryId())) {
-            throw new ServiceException(ApiError.ERROR_95202);
-        }
-        if (StringUtils.isBlank(infoDTO.getBrandId())) {
-            throw new ServiceException(ApiError.ERROR_95203);
-        }
-        if (StringUtils.isBlank(infoDTO.getGradeId())) {
-            throw new ServiceException(ApiError.ERROR_95204);
-        }
-        if (StringUtils.isBlank(infoDTO.getName())) {
-            throw new ServiceException(ApiError.ERROR_95206);
-        }
-        if (StringUtils.isBlank(infoDTO.getNameEn())) {
-            throw new ServiceException(ApiError.ERROR_95207);
-        }
-        if (StringUtils.isBlank(infoDTO.getPropertyId())) {
-            throw new ServiceException(ApiError.ERROR_95208);
-        }
-        if (StringUtils.isBlank(infoDTO.getSalesChannel())) {
-            throw new ServiceException(ApiError.ERROR_95209);
-        }
-        if (infoDTO.getMoldCost() == null) {
-            throw new ServiceException(ApiError.ERROR_95210);
-        }
-        if (infoDTO.getEntrustedDevelopCost() == null) {
-            throw new ServiceException(ApiError.ERROR_95211);
-        }
-    }
 
-    /**
-     * 校验sku必填项
-     * @Author Luo_WG
-     * @Date 2023/6/29 10:45
-     * @param detailDTOList
-     * @return void
-     **/
-    public void checkProductDetailField(List<ProductDetailDTO> detailDTOList) {
-        for (ProductDetailDTO detailDTO : detailDTOList) {
-            if (StringUtils.isBlank(detailDTO.getSkuNo())) {
+
+    public void checkRequiredField(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        List<ProductDetailEntity> detailEntityList = this.listByIds(ids);
+        for (ProductDetailEntity entity : detailEntityList) {
+            ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
+            if (StringUtils.isBlank(productInfoEntity.getSpuNo())) {
+                throw new ServiceException(ApiError.ERROR_95199);
+            }
+            if (StringUtils.isBlank(productInfoEntity.getChargeId())) {
+                throw new ServiceException(ApiError.ERROR_95200);
+            }
+            if (StringUtils.isBlank(productInfoEntity.getSaleMethod())) {
+                throw new ServiceException(ApiError.ERROR_95201);
+            }
+            if (StringUtils.isBlank(productInfoEntity.getCategoryId())) {
+                throw new ServiceException(ApiError.ERROR_95202);
+            }
+            if (StringUtils.isBlank(productInfoEntity.getBrandId())) {
+                throw new ServiceException(ApiError.ERROR_95203);
+            }
+            if (StringUtils.isBlank(productInfoEntity.getGradeId())) {
+                throw new ServiceException(ApiError.ERROR_95204);
+            }
+            if (StringUtils.isBlank(productInfoEntity.getName())) {
+                throw new ServiceException(ApiError.ERROR_95206);
+            }
+            if (StringUtils.isBlank(productInfoEntity.getNameEn())) {
+                throw new ServiceException(ApiError.ERROR_95207);
+            }
+            if (StringUtils.isBlank(productInfoEntity.getPropertyId())) {
+                throw new ServiceException(ApiError.ERROR_95208);
+            }
+            if (StringUtils.isBlank(productInfoEntity.getSalesChannel())) {
+                throw new ServiceException(ApiError.ERROR_95209);
+            }
+            if (productInfoEntity.getMoldCost() == null) {
+                throw new ServiceException(ApiError.ERROR_95210);
+            }
+            if (productInfoEntity.getEntrustedDevelopCost() == null) {
+                throw new ServiceException(ApiError.ERROR_95211);
+            }
+
+            if (StringUtils.isBlank(entity.getSkuNo())) {
                 throw new ServiceException(ApiError.ERROR_95198);
             }
-            if (StringUtils.isBlank(detailDTO.getName())) {
+            if (StringUtils.isBlank(entity.getName())) {
                 throw new ServiceException(ApiError.ERROR_95212);
             }
-            if (StringUtils.isBlank(detailDTO.getNameEn())) {
+            if (StringUtils.isBlank(entity.getNameEn())) {
                 throw new ServiceException(ApiError.ERROR_95213);
             }
-            if (StringUtils.isBlank(detailDTO.getChargeId())) {
+            if (StringUtils.isBlank(entity.getChargeId())) {
                 throw new ServiceException(ApiError.ERROR_95214);
             }
-            if (detailDTO.getProductState() == null) {
+            if (entity.getProductState() == null) {
                 throw new ServiceException(ApiError.ERROR_95215);
             }
-        }
-    }
 
-    /**
-     * 校验产品成本信息必填项
-     * @Author Luo_WG
-     * @Date 2023/6/29 10:45
-     * @param costDTOList
-     * @return void
-     **/
-    public void checkProductCostField(List<ProductCostDTO> costDTOList) {
-        for (ProductCostDTO productCostDTO : costDTOList) {
-            if (ObjectUtils.isEmpty(productCostDTO)) {
+
+            ProductCostEntity costEntity = productCostService.getBySkuId(entity.getId());
+            if (ObjectUtils.isEmpty(costEntity)) {
                 throw new ServiceException(ApiError.ERROR_95239);
             }
-            if (productCostDTO.getProjectApprovalCost() == null) {
+            if (costEntity.getProjectApprovalCost() == null) {
                 throw new ServiceException(ApiError.ERROR_95216);
             }
-            if (productCostDTO.getProjectCost() == null) {
+            if (costEntity.getProjectCost() == null) {
                 throw new ServiceException(ApiError.ERROR_95217);
             }
-            if (productCostDTO.getTargetTaxCost() == null) {
+            if (costEntity.getTargetTaxCost() == null) {
                 throw new ServiceException(ApiError.ERROR_95218);
             }
-            if (productCostDTO.getRetailPrice() == null) {
+            if (costEntity.getRetailPrice() == null) {
                 throw new ServiceException(ApiError.ERROR_95219);
             }
-            if (productCostDTO.getActualGpmCny() == null) {
+            if (costEntity.getActualGpmCny() == null) {
                 throw new ServiceException(ApiError.ERROR_95220);
             }
-            if (productCostDTO.getMassCost() == null) {
+            if (costEntity.getMassCost() == null) {
                 throw new ServiceException(ApiError.ERROR_95221);
             }
-            if (productCostDTO.getTaxRate() == null) {
+            if (costEntity.getTaxRate() == null) {
                 throw new ServiceException(ApiError.ERROR_95222);
             }
-            if (productCostDTO.getTargetNoTaxCost() == null) {
+            if (costEntity.getTargetNoTaxCost() == null) {
                 throw new ServiceException(ApiError.ERROR_95223);
             }
-            if (productCostDTO.getTargetGpm() == null) {
+            if (costEntity.getTargetGpm() == null) {
                 throw new ServiceException(ApiError.ERROR_95224);
             }
-            if (productCostDTO.getActualGpmUsd() == null) {
+            if (costEntity.getActualGpmUsd() == null) {
                 throw new ServiceException(ApiError.ERROR_95225);
             }
-        }
-    }
 
-    /**
-     * 校验产品销售信息必填项
-     * @Author Luo_WG
-     * @Date 2023/6/29 10:45
-     * @param productSaleList
-     * @return void
-     **/
-    public void checkProductSaleField(List<ProductSaleDTO> productSaleList) {
-        for (ProductSaleDTO productSaleDTO : productSaleList) {
-            if (ObjectUtils.isEmpty(productSaleDTO)) {
+            ProductSaleEntity saleEntity = productSaleService.getBySkuId(entity.getId());
+            if (ObjectUtils.isEmpty(saleEntity)) {
                 throw new ServiceException(ApiError.ERROR_95240);
             }
-            if (productSaleDTO.getYearSaleQty() == null) {
+            if (saleEntity.getYearSaleQty() == null) {
                 throw new ServiceException(ApiError.ERROR_95226);
             }
-            if (productSaleDTO.getMonthSaleQty() == null) {
+            if (saleEntity.getMonthSaleQty() == null) {
                 throw new ServiceException(ApiError.ERROR_95227);
             }
-            if (productSaleDTO.getTargetSalesQty() == null) {
+            if (saleEntity.getTargetSalesQty() == null) {
                 throw new ServiceException(ApiError.ERROR_95228);
             }
-            if (productSaleDTO.getIsFinishedImg() == null) {
+            if (saleEntity.getIsFinishedImg() == null) {
                 throw new ServiceException(ApiError.ERROR_95229);
             }
-            if (productSaleDTO.getSaleState() == null) {
+            if (saleEntity.getSaleState() == null) {
                 throw new ServiceException(ApiError.ERROR_95230);
             }
-            if (productSaleDTO.getIsMarketable() == null) {
+            if (saleEntity.getIsMarketable() == null) {
                 throw new ServiceException(ApiError.ERROR_95231);
             }
-            if (productSaleDTO.getYearSaleAmount() == null) {
+            if (saleEntity.getYearSaleAmount() == null) {
                 throw new ServiceException(ApiError.ERROR_95232);
             }
-            if (productSaleDTO.getMonthSaleAmount() == null) {
+            if (saleEntity.getMonthSaleAmount() == null) {
                 throw new ServiceException(ApiError.ERROR_95233);
             }
-            if (StringUtils.isBlank(productSaleDTO.getSaleCountry())) {
+            if (StringUtils.isBlank(saleEntity.getSaleCountry())) {
                 throw new ServiceException(ApiError.ERROR_95234);
             }
-            if (productSaleDTO.getIsFinishedImg() == null) {
+            if (saleEntity.getIsFinishedImg() == null) {
                 throw new ServiceException(ApiError.ERROR_95235);
             }
-            if (StringUtils.isBlank(productSaleDTO.getSalesPlatform())) {
+            if (StringUtils.isBlank(saleEntity.getSalesPlatform())) {
                 throw new ServiceException(ApiError.ERROR_95236);
             }
         }
-
     }
 
     @Override
@@ -2689,7 +2667,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         return result;
     }
-
 
     /**
      * 变更管理 审核通过后
@@ -3214,6 +3191,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean submit(List<String> ids) {
+        //校验必填项
+        checkRequiredField(ids);
         List<ProductDetailEntity> entityList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(entityList)) {
             throw new ServiceException(ApiError.ERROR_95084);
@@ -3358,7 +3337,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     .setBusinessId(obj.getId()).setOperation("状态变更").setContent("反审核SKU[" + obj.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(obj.getStatus()) + "]为[" + ProductDetailStatusEnum.APPROVAL_ING.getName() + "]"));
         });
         //修改状态为审核中
-        boolean flag = lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.APPROVAL_ING.getCode())
+        boolean flag = lambdaUpdate().set(ProductDetailEntity::getStatus, ProductDetailStatusEnum.WAIT_COMMIT.getCode())
                 .in(ProductDetailEntity::getIsChange, IsConstant.NO)
                 .in(ProductDetailEntity::getId, ids)
                 .update();
@@ -3405,6 +3384,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public Boolean deleteBatch(List<String> ids) {
+        List<ProductDetailEntity> entityListt = this.listByIds(ids);
+        long count = entityListt.stream().filter(req -> !req.getStatus().equals(1) && !req.getStatus().equals(2)).count();
+        if (entityListt.size() != count) {
+            throw new ServiceException(ApiError.ERROR_95241);
+        }
+        long sign = entityListt.stream().filter(req -> !req.getOccupyStatus()).count();
+        if (entityListt.size() != sign) {
+            throw new ServiceException(ApiError.ERROR_95242);
+        }
         //1.删除证书信息
         productCertificateService.removeCertificate(ids);
         //2.删除包装信息
