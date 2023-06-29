@@ -190,6 +190,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Autowired
     private SupplierFeign supplierFeign;
 
+    @Autowired
+    private BomSkuService bomSkuService;
+
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
     private String financial;
@@ -243,7 +246,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> mainSupplierIds = list.stream().map(ProductDetailShowDTO::getMainSupplier).distinct().collect(Collectors.toList());
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
 
+        List<String> skuIdList = list.stream().map(ProductDetailShowDTO::getSkuId).collect(Collectors.toList());
+        //获取子SKU集合
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomChildBySkuIds(skuIdList);
         for (ProductDetailShowDTO item : list) {
+            //查询sku是否存在子SKU
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                item.setIsCombination(Boolean.TRUE);
+            } else {
+                item.setIsCombination(Boolean.FALSE);
+            }
             item.setStatusName(ProductDetailStatusEnum.getName(item.getStatus()));
             Boolean isChangeIng = changeIngSourceIds.contains(item.getId());
             item.setIsChangeIng(isChangeIng);
@@ -2810,6 +2823,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 //产品操作日志
                 addProductInfoLog(productInfoDTO, productInfoEntity, baseDTO.getId(), baseDTO.getId());
             }
+            productInfoDTO.setNameEn(skuDTO.getProductManySkuDetail().getNameEn());
             productInfoService.updateSpecByChangeSku(productInfoDTO);
         }
 

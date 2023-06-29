@@ -365,4 +365,6 @@ public class TransferApplicationController extends BaseController {
         List<PickingDetailDTO.ListDTO> list = transferApplicationService.listPickingDetail(dto);
         return success(list);
     }
+
+
 }

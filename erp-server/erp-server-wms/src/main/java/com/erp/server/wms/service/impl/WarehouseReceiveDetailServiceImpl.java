@@ -94,10 +94,11 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             warehouseReceiveDetailEntity.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
             warehouseReceiveDetailEntity.setPlanDeliveryDate(purchaseOrderDetailEntity.getPlanDeliveryDate());
 
+            //退货补货数量
             Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-
+            //签收数量
             Integer receiveQty = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-
+            //采购数量
             Integer purchaseQty = purchaseOrderDetailEntity.getPurchaseQty();
             if (receiveQty > purchaseQty + returnQty) {
                 throw new ServiceException(ApiError.ERROR_99025.code, String.format(ApiError.ERROR_99025.msg, purchaseOrderDetailEntity.getSkuNo()));
@@ -178,17 +179,21 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             warehouseReceiveDetailEntity.setSkuId(purchaseOrderDetailEntity.getSkuId());
             warehouseReceiveDetailEntity.setSkuNo(purchaseOrderDetailEntity.getSkuNo());
             warehouseReceiveDetailEntity.setPlanDeliveryDate(purchaseOrderDetailEntity.getPlanDeliveryDate());
+            //退货补货数量
             Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            //签收数量
             Integer receiveQty = detailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            //采购数量
             Integer purchaseQty = purchaseOrderDetailEntity.getPurchaseQty();
-            if ((receiveQty - returnQty) > purchaseQty) {
-                throw new ServiceException(ApiError.ERROR_99025.code, String.format(ApiError.ERROR_99025.msg, purchaseOrderDetailEntity.getSkuNo()));
-            }
+
             if (StringUtils.isNotBlank(updateDTO.getId())) {
+                Integer receive = receiveDetailEntities.stream().filter(obj -> obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderDetailId().equals(warehouseReceiveDetailEntity.getPurchaseOrderDetailId()) && !obj.getId().equals(updateDTO.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                if (receive + updateDTO.getReceiveQty() > purchaseQty + returnQty) {
+                    throw new ServiceException(ApiError.ERROR_99025.code, String.format(ApiError.ERROR_99025.msg, purchaseOrderDetailEntity.getSkuNo()));
+                }
                 warehouseReceiveDetailEntity.setId(updateDTO.getId());
             } else {
-                Integer receive = receiveDetailEntities.stream().filter(obj -> obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderDetailId().equals(warehouseReceiveDetailEntity.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                if (purchaseOrderDetailEntity.getPurchaseQty() + returnQty - receive < updateDTO.getReceiveQty()) {
+                if (receiveQty + updateDTO.getReceiveQty() > purchaseQty + returnQty) {
                     throw new ServiceException(ApiError.ERROR_99054.code, String.format(ApiError.ERROR_99054.msg, purchaseOrderDetailEntity.getSkuNo()));
                 }
             }
