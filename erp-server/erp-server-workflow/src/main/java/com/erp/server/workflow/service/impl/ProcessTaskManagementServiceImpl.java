@@ -73,9 +73,6 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
                     .eq(ProcessTaskManagementEntity::getCurActivityId, entity.getCurActivityId())
                     .update();
         }
-        if (!update) {
-            throw new RuntimeException("更新任务审批状态失败");
-        }
         // 发送抄送消息
         NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
         noticeMsgInfoDTO.setReceiverUserIds(new ArrayList<>(Arrays.asList("1645710077245652993")));

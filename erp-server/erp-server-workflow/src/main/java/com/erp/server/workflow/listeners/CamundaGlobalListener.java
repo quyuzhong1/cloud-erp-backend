@@ -93,6 +93,7 @@ public class CamundaGlobalListener {
       log.info("CamundaGlobalListener onTaskEvent Task created: {}", executionDelegate.getCurrentActivityName());
       processManagementService.startExecutionHandle(executionDelegate);
     }else if(ExecutionListener.EVENTNAME_END.equals(executionDelegate.getEventName())&&  endTypeList.contains(type)){
+      log.info("CamundaGlobalListener onTaskEvent Task completed: {} {} {} {}", executionDelegate.getEventName(), type, activityInstanceState,executionDelegate.getCurrentActivityName());
       if(ActivityInstanceState.ENDING.getStateCode() == activityInstanceState){
         log.info("CamundaGlobalListener onTaskEvent Task completed: {}", executionDelegate.getCurrentActivityName());
       }
@@ -100,18 +101,6 @@ public class CamundaGlobalListener {
       processManagementService.endExecutionHandle(executionDelegate.getProcessInstanceId());
     }
   }
-
-  private boolean isLastTask(DelegateTask task, String processInstanceId) {
-    List<Task> tasks = task.getProcessEngineServices().getTaskService().createTaskQuery()
-            .processInstanceId(processInstanceId).list();
-    return tasks.size() == 1 && tasks.get(0).getId().equals(task.getId());
-  }
-  @EventListener
-  public void onProcessStart(DelegateExecution execution) {
-    String eventName = execution.getEventName();
-    String currentActivityId = execution.getCurrentActivityId();
-  }
-
   /**
    * This event is triggered when an execution is created, updated, or deleted. 1
    * handle immutable execution event

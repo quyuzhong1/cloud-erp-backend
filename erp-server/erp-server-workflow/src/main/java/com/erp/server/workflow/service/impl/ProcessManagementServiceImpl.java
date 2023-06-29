@@ -252,9 +252,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                     .cancelAllForActivity(currentTask.getTaskDefinitionKey())
                     .setAnnotation(dto.getComment())
                     .execute();
-            // 保存流程任务数据
-            updateApprove(managementTask.getTaskManagementId(), dto.getApproveType(), managementTask.getManagementId(), processInstanceId,dto.getComment());
         }
+        // 保存流程任务数据
+        updateApprove(managementTask.getTaskManagementId(), dto.getApproveType(), managementTask.getManagementId(), processInstanceId,dto.getComment());
         return new ProcessManagementDTO.ApproveResultDTO(currentTask.getProcessDefinitionId(), currentTask.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName(),currentTask.getId(),currentTask.getName(), currentTask.getTaskDefinitionKey());
     }
 
@@ -460,8 +460,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 if (executionEntity.isActive() && !executionEntity.isEnded() && !executionEntity.getActivityId().equals(initialActivityId)) {
                     runtimeService.deleteProcessInstance(execution.getProcessInstanceId(), "process revoke", true);
                     historyService.deleteHistoricProcessInstance(execution.getProcessInstanceId());
-                    // 在这里可以记录流程撤回日志
-                    break;
                 }
             }
         }
