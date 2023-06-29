@@ -13,6 +13,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.entity.DmpTransferInfoDetailEntity;
 import com.erp.model.dmp.entity.DmpTransferInfoEntity;
+import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.wms.dto.TransferInfoDTO;
@@ -62,46 +63,64 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
     @Transactional(rollbackFor = Exception.class)
     public void syncKingdeeTransferInfo(DmpTransferInfoEntity entity) {
 
-        TransferInfoDTO.ViewDTO viewDTO = transferInfoService.viewTransferInfoByCode(entity.getCode());
+        TransferInfoDTO.ViewDTO oldTransferInfo = transferInfoService.viewTransferInfoByCode(entity.getCode());
         //数据格式化
-        TransferInfoEntity transferInfoEntity = handleWmsTransferInfo(entity,viewDTO);
-        if (ObjectUtils.isEmpty(viewDTO)) {
+        TransferInfoEntity newTransferInfo = handleWmsTransferInfo(entity,oldTransferInfo);
+        if (ObjectUtils.isEmpty(oldTransferInfo)) {
             //非已审核数据无需新增
-            if (!ApproveStatusEnum.APPROVE.getStatus().equals(transferInfoEntity.getApproveStatus())) {
+            if (!ApproveStatusEnum.APPROVE.getStatus().equals(newTransferInfo.getApproveStatus())) {
                 return;
             }
             //不存在则新增
-            TransferInfoDTO.AddDTO addDTO = BeanMapperUtils.map(TransferInfoDTO.AddDTO.class, transferInfoEntity);
-            List<TransferInfoDetailDTO.AddDTO> addDetailList = BeanMapperUtils.copyList(TransferInfoDetailDTO.AddDTO.class, transferInfoEntity.getDetailList());
+            TransferInfoDTO.AddDTO addDTO = BeanMapperUtils.map(TransferInfoDTO.AddDTO.class, newTransferInfo);
+            List<TransferInfoDetailDTO.AddDTO> addDetailList = BeanMapperUtils.copyList(TransferInfoDetailDTO.AddDTO.class, newTransferInfo.getDetailList());
             addDTO.setDetailList(addDetailList);
             String id = transferInfoService.add(addDTO);
-            //提交
-            Boolean submit = transferInfoService.submit(Arrays.asList(id));
-            if (!submit) {
-                throw new ServiceException(ApiError.ERROR_1042);
-            }
-            //审核
-            BaseApproveParamDTO paramDTO = new BaseApproveParamDTO();
-            paramDTO.setIds(Arrays.asList(id));
-            paramDTO.setType(WmsConstant.PASS);
-            transferInfoService.approve(paramDTO);
+            //提交并审核
+            submitAndApprove(id);
         } else {
-            //判断现有状态
-
-
+            /**
+             * 判断现有状态
+             * 1、现有状态为已审核或审核中时需要反审核后更新数据
+             * 2、如果拉取数据非已审核数据则修改数据后无需提交审核
+             */
+            if (ApproveStatusEnum.APPROVE.getStatus().equals(oldTransferInfo.getApproveStatus())) {
+                transferInfoService.disApprove(Arrays.asList(oldTransferInfo.getId()));
+            }
+            if (ApproveStatusEnum.APPROVE_ING.getStatus().equals(oldTransferInfo.getApproveStatus())) {
+                transferInfoService.cancelProcess(Arrays.asList(oldTransferInfo.getId()));
+            }
             //存在则更新
-            TransferInfoDTO.UpdateDTO updateDTO = BeanMapperUtils.map(TransferInfoDTO.UpdateDTO.class, transferInfoEntity);
-            List<TransferInfoDetailDTO.UpdateDTO> updateDetailList = BeanMapperUtils.copyList(TransferInfoDetailDTO.UpdateDTO.class, transferInfoEntity.getDetailList());
+            TransferInfoDTO.UpdateDTO updateDTO = BeanMapperUtils.map(TransferInfoDTO.UpdateDTO.class, newTransferInfo);
+            List<TransferInfoDetailDTO.UpdateDTO> updateDetailList = BeanMapperUtils.copyList(TransferInfoDetailDTO.UpdateDTO.class, newTransferInfo.getDetailList());
             updateDTO.setDetailList(updateDetailList);
             transferInfoService.update(updateDTO);
+            //审核
+            if (ApproveStatusEnum.APPROVE.getStatus().equals(newTransferInfo.getApproveStatus())) {
+                //提交并审核
+                submitAndApprove(oldTransferInfo.getId());
+            }
         }
-
-
-
-
     }
 
-
+    /**
+     * @description: 提交并审核
+     * @author Will
+     * @date: 2023/6/29 16:19
+     * @param id
+     */
+    private void submitAndApprove(String id) {
+        //提交
+        Boolean submit = transferInfoService.submit(Arrays.asList(id));
+        if (!submit) {
+            throw new ServiceException(ApiError.ERROR_1042);
+        }
+        //审核
+        BaseApproveParamDTO paramDTO = new BaseApproveParamDTO();
+        paramDTO.setIds(Arrays.asList(id));
+        paramDTO.setType(WmsConstant.PASS);
+        transferInfoService.approve(paramDTO);
+    }
 
 
     /**
@@ -143,6 +162,15 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         } else {
             resultEntity.setThirdPartySystem(ThirdPartySystemEnum.ENUM_OTHER.getCode());
         }
+        //审核状态
+        if (KingdeeDocStatusEnum.APPROVED.getCode().equals(entity.getApproveStatus())) {
+            resultEntity.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
+        } else if (KingdeeDocStatusEnum.REAPPROVE.getCode().equals(entity.getApproveStatus())) {
+            resultEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        } else if (KingdeeDocStatusEnum.APPROVING.getCode().equals(entity.getApproveStatus())) {
+            resultEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING.getStatus());
+        }
+
 
         //调拨类型
         resultEntity.setType(TransferTypeEnum.getCodeByKingdeeCode(entity.getTransferTypeCode()));
