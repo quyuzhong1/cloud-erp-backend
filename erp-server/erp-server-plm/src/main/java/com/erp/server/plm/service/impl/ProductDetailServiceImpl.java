@@ -454,7 +454,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductPurchaseRemarkEntity> remarkEntityList = productPurchaseRemarkService.list(entity.getProductId());
         productNoSpecDetailAllDTO.setRemarkEntityList(remarkEntityList);
         //产品销售信息查询列表
-        List<ProductSaleShowDTO> saleShowDTOList = productSaleService.list(skuId);
+        List<ProductSaleShowDTO> saleShowDTOList = productSaleService.listBySkuId(skuId);
         productNoSpecDetailAllDTO.setProductSaleShowDTOList(saleShowDTOList);
         //产品包装信息查询列表
         List<ProductPackShowDTO> packShowDTOList = productPackService.listBySkuId(skuId);
