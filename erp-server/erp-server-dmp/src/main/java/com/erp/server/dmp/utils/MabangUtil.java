@@ -2,6 +2,7 @@ package com.erp.server.dmp.utils;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
 import com.erp.model.dmp.entity.DmpOutInStockDetailEntity;
@@ -78,13 +79,14 @@ public class MabangUtil {
     public static MabangInOutStockDTO fillMabangInOutStock(String warehouseCode, String warehouseName,String employeeName,
                                                            List<ProductDetailEntity> productDetailList,
                                                            TransferInfoEntity transferInfo, List<TransferInfoDetailEntity> transferDetailList,
-                                                           String inOutType) {
+                                                           String inOutType, String opType) {
 
         List<MabangInOutStockDTO.SkuItem> data = Lists.newArrayList();
         MabangInOutStockDTO mabangInOutStockDTO = new MabangInOutStockDTO();
         mabangInOutStockDTO.setErpSourceCode(transferInfo.getCode());
         mabangInOutStockDTO.setWarehouseCode(warehouseCode);
         mabangInOutStockDTO.setWarehouseName(warehouseName);
+        mabangInOutStockDTO.setType(inOutType);
         mabangInOutStockDTO.setEmployeeName(StrUtils.null2EmptyWithTrim(employeeName));
         mabangInOutStockDTO.setRemark(StrUtil.format("ERP同步：{}", StrUtils.null2EmptyWithTrim(transferInfo.getCode()) ));
 
@@ -96,7 +98,11 @@ public class MabangUtil {
                 skuItem.setProductName(productName);
             }
             skuItem.setQuantity(StrUtils.null2EmptyWithTrim(transferSku.getQty()));
-            skuItem.setGridCode(StrUtils.null2EmptyWithTrim(Objects.equals(inOutType, "in")? transferSku.getInWarehouseLocation() : transferSku.getOutWarehouseLocation()));
+            if(Objects.equals(SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode(), opType)) {
+                skuItem.setGridCode(StrUtils.null2EmptyWithTrim(Objects.equals(inOutType, "in")? transferSku.getInWarehouseLocation() : transferSku.getOutWarehouseLocation()));
+            } else if(Objects.equals(SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode(), opType)) {
+                skuItem.setGridCode(StrUtils.null2EmptyWithTrim(Objects.equals(inOutType, "in")? transferSku.getOutWarehouseLocation() : transferSku.getInWarehouseLocation()));
+            }
             skuItem.setSourceDetailId(transferSku.getId());
             data.add(skuItem);
         });
@@ -104,32 +110,5 @@ public class MabangUtil {
         return mabangInOutStockDTO;
     }
 
-    /**
-     * 填充马帮出入库实体
-     * @return
-     */
-    public static MabangInOutStockDTO fillMabangInOutStockByDmp(DmpOutInStockEntity dmpOutInStockEntity,
-                                                                List<DmpOutInStockDetailEntity> dmpOutInStockDetailList) {
-
-        List<MabangInOutStockDTO.SkuItem> data = Lists.newArrayList();
-        MabangInOutStockDTO mabangInOutStockDTO = new MabangInOutStockDTO();
-        mabangInOutStockDTO.setErpSourceCode(dmpOutInStockEntity.getSourceCode());
-        mabangInOutStockDTO.setWarehouseCode(dmpOutInStockEntity.getWarehouseCode());
-        mabangInOutStockDTO.setWarehouseName(dmpOutInStockEntity.getWarehouseName());
-        mabangInOutStockDTO.setEmployeeName(StrUtils.null2EmptyWithTrim(dmpOutInStockEntity.getChargeUserName()));
-        mabangInOutStockDTO.setRemark(dmpOutInStockEntity.getRemark());
-
-        dmpOutInStockDetailList.stream().forEach(dmpOutInStockDetailEntity->{
-            MabangInOutStockDTO.SkuItem skuItem = new MabangInOutStockDTO.SkuItem();
-            skuItem.setStockSku(dmpOutInStockDetailEntity.getSkuNo());
-            skuItem.setProductName(dmpOutInStockDetailEntity.getProductName());
-            skuItem.setQuantity(StrUtils.null2EmptyWithTrim(dmpOutInStockDetailEntity.getQty()));
-            skuItem.setGridCode(StrUtils.null2EmptyWithTrim(dmpOutInStockDetailEntity.getWarehouseLocation()));
-            skuItem.setSourceDetailId(dmpOutInStockDetailEntity.getId());
-            data.add(skuItem);
-        });
-        mabangInOutStockDTO.setData(data);
-        return mabangInOutStockDTO;
-    }
 
 }

@@ -1,4 +1,4 @@
-package com.erp.server.dmp.push.service.mabang;
+package com.erp.server.dmp.push.service.common;
 
 import com.erp.model.dmp.entity.ApiPlmSyncLogEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
@@ -11,7 +11,7 @@ import java.util.Map;
  * @CreateTime: 2023-06-27  17:31
  * @Author: zhangchunlin
  */
-public interface MabangCommonService {
+public interface DmpSyncCommonService {
 
     /**
      * @description: 查询平台

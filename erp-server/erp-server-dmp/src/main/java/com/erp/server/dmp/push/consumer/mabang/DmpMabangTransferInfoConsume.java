@@ -6,14 +6,15 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
-import com.erp.model.dmp.dto.mabang.DmpMabangInOutStockMsgDTO;
-import com.erp.model.dmp.entity.DmpOutInStockEntity;
+import com.erp.model.dmp.dto.DmpSyncMqDTO;
+import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
+import com.erp.model.dmp.entity.DmpSyncTaskEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.server.dmp.push.service.mabang.MabangCommonService;
+import com.erp.server.dmp.push.service.common.DmpSyncCommonService;
 import com.erp.server.dmp.push.service.mabang.MabangInOutStockService;
-import com.erp.server.dmp.service.DmpOutInStockService;
+import com.erp.server.dmp.service.DmpSyncTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
@@ -28,48 +29,51 @@ import java.util.Objects;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_DMP_TO_MABANG_TOPIC, selectorExpression = "dmp_mabang_transfer_info_tag", consumerGroup = RocketMqConsumerGroup.SYNC_DMP_TRANSFER_INFO_TO_MABANG)
-public class DmpMabangTransferInfoConsume implements RocketMQListener<DmpMabangInOutStockMsgDTO>  {
+@RocketMQMessageListener(topic = RocketMqTopic.DMP_SYNC_TASK_TOPIC, selectorExpression = "mabang_inout_stock_tag", consumerGroup = RocketMqConsumerGroup.SYNC_DMP_TRANSFER_INFO_TO_MABANG)
+public class DmpMabangTransferInfoConsume implements RocketMQListener<DmpSyncMqDTO>  {
 
     @Autowired
-    private DmpOutInStockService dmpOutInStockService;
+    private DmpSyncTaskService dmpSyncTaskService;
 
     @Autowired
-    private MabangCommonService mabangCommonService;
+    private DmpSyncCommonService dmpSyncCommonService;
 
     @Autowired
     private MabangInOutStockService mabangInOutStockService;
 
     @Override
-    public void onMessage(DmpMabangInOutStockMsgDTO dmpMabangInOutStockMsgDTO) {
-        log.info("监听到DMP直接调拨单信息->出入库，内容：{}", JSONObject.toJSONString(dmpMabangInOutStockMsgDTO));
+    public void onMessage(DmpSyncMqDTO dtoDmpSyncMqDTO) {
+        log.info("监听到DMP直接调拨单信息->出入库，内容：{}", JSONObject.toJSONString(dtoDmpSyncMqDTO));
 
-        // 出入库id
-        String outInId = dmpMabangInOutStockMsgDTO.getDmpOutInStockId();
+        MabangInOutStockDTO mabangInOutStockDTO = JSONObject.parseObject(dtoDmpSyncMqDTO.getMqData(), MabangInOutStockDTO.class);
+        // erp直接调拨单单号
+        String erpSourceCode = mabangInOutStockDTO.getErpSourceCode();
 
         //模块类型
         Integer type = ApiModuleTypeEnum.TRANSFER_INFO.getCode();
-        PlatformEntity platformEntity = mabangCommonService.getPlatformEntity(outInId, type);
+        PlatformEntity platformEntity = dmpSyncCommonService.getPlatformEntity(erpSourceCode, type);
         if (ObjectUtils.isEmpty(platformEntity)) {
             return;
         }
 
-        DmpOutInStockEntity dmpOutInStockEntity = dmpOutInStockService.getById(outInId);
-        if(Objects.isNull(dmpOutInStockEntity)) {
-            mabangCommonService.insertLogWriteBackSyncMabangStatus(platformEntity, outInId, "", StrUtil.format("ERP直接调拨单同步到{}未找到出入库数据", PlatformEnum.MABANG.getDesc()), type, ApiSendStatusEnum.FAILURE.getCode());
+        String syncTaskId = dtoDmpSyncMqDTO.getDmpSyncTaskId();
+        DmpSyncTaskEntity dmpSyncTaskEntity = dmpSyncTaskService.getById(syncTaskId);
+        if(Objects.isNull(dmpSyncTaskEntity)) {
+            log.info("未查询到同步数据，同步任务数据id:{}", syncTaskId);
+            dmpSyncCommonService.insertLogWriteBackSyncMabangStatus(platformEntity, syncTaskId, "", StrUtil.format("ERP直接调拨单同步到{}未找到同步任务数据", PlatformEnum.MABANG.getDesc()), type, ApiSendStatusEnum.FAILURE.getCode());
             return;
         }
-        log.info("ERP直接调拨单id：【{}】，同步马帮状态【{}】", dmpOutInStockEntity.getSourceId(), dmpOutInStockEntity.getSyncMbStatus());
+        log.info("ERP直接调拨单id：【{}】，同步马帮状态【{}】", dmpSyncTaskEntity.getSourceId(), dmpSyncTaskEntity.getStatus());
 
         // 同步成功的不处理
-        if(Objects.equals(dmpOutInStockEntity.getSyncMbStatus(), "1")) {
+        if(Objects.equals(dmpSyncTaskEntity.getStatus(), "1")) {
             log.info("ERP直接调拨单同步到马帮已经同步，不处理");
             return;
         }
-        if(Objects.equals(dmpOutInStockEntity.getType(), "in")) {
-            mabangInOutStockService.sendToMabangInStock(dmpOutInStockEntity, dmpMabangInOutStockMsgDTO.getMabangInOutStock(), platformEntity, type, dmpMabangInOutStockMsgDTO.getApproveType() );
-        } else if(Objects.equals(dmpOutInStockEntity.getType(), "out")) {
-            mabangInOutStockService.sendToMabangOutStock(dmpOutInStockEntity, dmpMabangInOutStockMsgDTO.getMabangInOutStock(), platformEntity, type, dmpMabangInOutStockMsgDTO.getApproveType() );
+        if(Objects.equals(mabangInOutStockDTO.getType(), "in")) {
+            mabangInOutStockService.sendToMabangInStock(dmpSyncTaskEntity, mabangInOutStockDTO );
+        } else if(Objects.equals(mabangInOutStockDTO.getType(), "out")) {
+            mabangInOutStockService.sendToMabangOutStock(dmpSyncTaskEntity, mabangInOutStockDTO );
         }
     }
 

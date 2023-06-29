@@ -395,8 +395,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             updateInventoryTransCore(list);
             //发送金蝶
             list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
-            //发送马帮
-            list.forEach(obj->syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            //发送马帮（非马帮平台的才需要推送）
+            list.forEach(obj->{
+                if(!obj.getCode().substring(0, 2).equals("MB")) {
+                    syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+                }
+            });
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("直接调拨单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
             //中止当前审核流程

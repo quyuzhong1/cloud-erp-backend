@@ -13,7 +13,7 @@ import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.server.dmp.mapper.DmpOutInStockMapper;
-import com.erp.server.dmp.push.service.mabang.MabangCommonService;
+import com.erp.server.dmp.push.service.common.DmpSyncCommonService;
 import com.erp.server.dmp.service.DmpOutInStockService;
 import com.common.business.service.SuperServiceImpl;
 import org.springframework.stereotype.Service;
@@ -45,7 +45,7 @@ public class DmpOutInStockServiceImpl extends SuperServiceImpl<DmpOutInStockMapp
     private MQProducerService mqProducerService;
 
     @Autowired
-    private MabangCommonService mabangCommonService;
+    private DmpSyncCommonService dmpSyncCommonService;
 
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
     @Override
@@ -56,7 +56,7 @@ public class DmpOutInStockServiceImpl extends SuperServiceImpl<DmpOutInStockMapp
                 .set(DmpOutInStockEntity.SYNC_MB_STATUS, syncStatus).set(DmpOutInStockEntity.TARGET_ORDER_CODE, targetOrderNo);
         dmpOutInStockMapper.update(null, updateWrapper);
 
-        mabangCommonService.insertLogWriteBackSyncMabangStatus(platformEntity, id, requestParam, StrUtil.format("{}；ERP直接调拨单同步{}成功", SyncKingdeeOperateEnum.getDescByCode(approveType), PlatformEnum.MABANG.getDesc()), type, ApiSendStatusEnum.SUCCESS.getCode());
+        dmpSyncCommonService.insertLogWriteBackSyncMabangStatus(platformEntity, id, requestParam, StrUtil.format("{}；ERP直接调拨单同步{}成功", SyncKingdeeOperateEnum.getDescByCode(approveType), PlatformEnum.MABANG.getDesc()), type, ApiSendStatusEnum.SUCCESS.getCode());
 
     }
 
@@ -70,13 +70,13 @@ public class DmpOutInStockServiceImpl extends SuperServiceImpl<DmpOutInStockMapp
         dmpOutInStockMapper.update(null, updateWrapper);
 
         // 查询是否已经记录过错误日志
-        ApiPlmSyncLogEntity apiPlmSyncLogEntity = mabangCommonService.findLog(platformEntity, id, type);
+        ApiPlmSyncLogEntity apiPlmSyncLogEntity = dmpSyncCommonService.findLog(platformEntity, id, type);
         if(Objects.isNull(apiPlmSyncLogEntity)) {
             // 新增日志
-            mabangCommonService.insertLogWriteBackSyncMabangStatus(platformEntity, id, requestParam, StrUtil.format("{}；ERP直接调拨单同步{}失败，失败原因：{}", SyncKingdeeOperateEnum.getDescByCode(approveType), PlatformEnum.MABANG.getDesc(), errMsg), type, ApiSendStatusEnum.FAILURE.getCode());
+            dmpSyncCommonService.insertLogWriteBackSyncMabangStatus(platformEntity, id, requestParam, StrUtil.format("{}；ERP直接调拨单同步{}失败，失败原因：{}", SyncKingdeeOperateEnum.getDescByCode(approveType), PlatformEnum.MABANG.getDesc(), errMsg), type, ApiSendStatusEnum.FAILURE.getCode());
         } else {
             // 更新日志
-            mabangCommonService.updateLog(apiPlmSyncLogEntity.getId(), requestParam, errMsg);
+            dmpSyncCommonService.updateLog(apiPlmSyncLogEntity.getId(), requestParam, errMsg);
         }
         if(Objects.isNull(apiPlmSyncLogEntity)) {
             WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();

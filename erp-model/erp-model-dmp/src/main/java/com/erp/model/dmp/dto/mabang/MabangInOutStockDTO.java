@@ -21,6 +21,11 @@ public class MabangInOutStockDTO {
     private String erpSourceCode;
 
     /**
+     * 审核类型
+     */
+    private String approveType;
+
+    /**
      * 仓库编码
      */
     private String warehouseCode;
@@ -34,6 +39,11 @@ public class MabangInOutStockDTO {
      * 员工名称
      */
     private String employeeName;
+
+    /**
+     * 出入库类型
+     */
+    private String type;
 
     /**
      * 入库类型

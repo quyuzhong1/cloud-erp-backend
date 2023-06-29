@@ -1,14 +1,13 @@
-package com.erp.server.dmp.push.service.mabang.impl;
+package com.erp.server.dmp.push.service.common.impl;
 
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
 import com.erp.model.dmp.entity.ApiPlmSyncLogEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.server.dmp.push.service.mabang.MabangCommonService;
+import com.erp.server.dmp.push.service.common.DmpSyncCommonService;
 import com.erp.server.dmp.service.ApiPlmSyncLogService;
 import com.erp.server.dmp.service.PlatformService;
 import lombok.extern.slf4j.Slf4j;
@@ -16,15 +15,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
-
 /**
  * @CreateTime: 2023-06-27  17:32
  * @Author: zhangchunlin
  */
 @Slf4j
 @Service
-public class MabangCommonServiceImpl implements MabangCommonService {
+public class DmpSyncCommonServiceImpl implements DmpSyncCommonService {
 
     @Autowired
     private PlatformService platformService;
