@@ -43,12 +43,17 @@ public enum PlatformApiEnum {
     /**
      * 马帮手工出库
      */
-    MABANG_OUT_STORAGE(30,"warehouse-do-add-storage-out", "", ""),
+    MABANG_OUT_STORAGE(31,"warehouse-do-add-storage-out", "", ""),
 
     /**
      * 马帮手工入库
      */
-    MABANG_IN_STORAGE(31,"warehouse-do-add-storage-in", "", ""),
+    MABANG_IN_STORAGE(32,"warehouse-do-add-storage-in", "", ""),
+
+    /**
+     * 马帮调拨发货列表
+     */
+    MABANG_SHIPMENT(33,"hwc-shippbatch-get-shipment-list", MongoTableNameContant.ORIGINAL_MABANG_SHIPMENT, TaskConstant.MABANG_PULL_DATA_TASK_24),
 
 
     /**

@@ -133,6 +133,11 @@ public interface MongoTableNameContant {
      */
     String ORIGINAL_IML_INBOUND_ORDER = "original_iml_inbound_order";
 
+    /**
+     * 马帮调拨发货列表
+     */
+    String ORIGINAL_MABANG_SHIPMENT = "original_mabang_shipment";
+
 
     /**
      * 根据任务 key 获取表名
