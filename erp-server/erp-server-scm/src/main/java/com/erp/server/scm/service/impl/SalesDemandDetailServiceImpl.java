@@ -65,7 +65,7 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
         }
         List<SalesDemandDetailEntity> list = BeanMapperUtils.copyList(SalesDemandDetailEntity.class, details);
         //更新sku为不可删除标识
-        List<String> skuIds = list.stream().map(SalesDemandDetailEntity::getSkuId).collect(Collectors.toList());
+        List<String> skuIds = list.stream().map(SalesDemandDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         plmTaskFeign.updateOccupyStatus(skuIds);
         //处理关联数据
         doOpHandleDataId(list,salesDemandId);
