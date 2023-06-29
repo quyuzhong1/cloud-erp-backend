@@ -8,7 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -73,16 +73,16 @@ public class SkuMapingEntity extends BaseEntity<SkuMapingEntity> {
     private Boolean matchResult;
 
     /**
-     * 生效日期
+     * 生效时间
      */
-    @TableField("effective_date")
-    private Date effectiveDate;
+    @TableField("effective_time")
+    private LocalDateTime effectiveTime;
 
     /**
-     * 失效日期
+     * 失效时间
      */
-    @TableField("expire_date")
-    private Date expireDate;
+    @TableField("expire_time")
+    private LocalDateTime expireTime;
 
 
     public static final String SHOP_ID = "shop_id";

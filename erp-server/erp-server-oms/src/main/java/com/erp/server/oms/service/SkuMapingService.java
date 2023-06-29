@@ -2,6 +2,7 @@ package com.erp.server.oms.service;
 
 import com.erp.model.oms.entity.SkuMapingEntity;
 import com.common.business.service.SuperService;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -16,4 +17,14 @@ import javax.servlet.http.HttpServletResponse;
 public interface SkuMapingService extends SuperService<SkuMapingEntity> {
 
     void downloadTemplate(HttpServletResponse response);
+
+    /**
+     * 导入sku对照信息
+     * @author yl
+     * @date 2023-06-29 11:01
+     * @param excelFile
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
 }

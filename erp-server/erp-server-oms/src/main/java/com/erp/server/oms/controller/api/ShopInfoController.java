@@ -1,10 +1,18 @@
 package com.erp.server.oms.controller.api;
 
 
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.ShopDTO;
+import com.erp.server.oms.service.ShopInfoService;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
 
 /**
  * <p>
@@ -17,5 +25,20 @@ import com.common.core.controller.BaseController;
 @RestController
 @RequestMapping("/shop")
 public class ShopInfoController extends BaseController {
+
+    @Resource
+    private ShopInfoService shopInfoService;
+
+
+    /**
+     * 添加店铺
+     *
+     * @return
+     */
+    @PostMapping("/add")
+    public ApiResult add(@RequestBody @Validated ShopDTO.AddDTO dto) {
+        String id = shopInfoService.add(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
+    }
 
 }
