@@ -18,5 +18,7 @@ public interface ProductAttestationMapper  extends BaseMapper<ProductAttestation
 
 
     List<ProductAttestationEntity> getByProductId(@Param("productId") String productId);
+
+    List<ProductAttestationEntity> getBySkuId(@Param("skuId") String skuId);
 }
 

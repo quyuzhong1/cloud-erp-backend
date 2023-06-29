@@ -339,6 +339,50 @@
         LIMIT 1
     </select>
 
+    <select id="getNoSpecDetailBySkuId" resultType="com.erp.model.plm.dto.ProductNoDetailDTO">
+        SELECT
+        pi."id",
+        pd.images_url,
+        pd.sku_no,
+        pd.product_state,
+        pd.name,
+        pd.name_en,
+        pi.name as spuName,
+        pi.name_en as spuNameEn,
+        pi.charge_name,
+        pi.charge_id,
+        pi.brand_name,
+        pi.brand_id,
+        pi.property,
+        pi.property_id,
+        pi.grade_id,
+        pi.grade,
+        pi.category,
+        pi.category_id,
+        pi.sale_method,
+        pi.sell_spot,
+        pi.function_desc,
+        pi.usage_desc,
+        pi.pirate_risk,
+        pi.materials,
+        pd.plan_listing_time,
+        pd.first_mass_product_date,
+        pd.unit_id,
+        unit.name AS unit_name,
+        pd.product_state,
+        pi.entrusted_develop_cost,
+        pi.mold_cost,
+        pi.sample_fee,
+        pi.is_customized,
+        pi.sales_channel,
+        pd.status
+        FROM product_info pi
+        LEFT JOIN product_detail pd on pi.id = pd.product_id AND pd.is_deleted = FALSE
+        LEFT JOIN product_unit unit ON pd.unit_id = unit.id AND unit.is_deleted = FALSE
+        WHERE  pi.is_deleted = FALSE
+        AND pd.id = #{skuId}
+        LIMIT 1
+    </select>
     <select id="getManySpecDetailById" resultType="com.erp.model.plm.dto.ProductManySpecBaseDTO">
         SELECT
         pi."id",

@@ -24,6 +24,15 @@ public interface ProductPurchaseService extends IService<ProductPurchaseEntity> 
     List<ProductPurchaseShowDTO> list(String productId);
 
     /**
+     * @Description 产品采购信息查询列表
+     * @Author Luo_WG
+     * @Date 2022/9/23 11:25
+     * @param skuId
+     * @return java.util.List<com.erp.model.plm.dto.ProductPurchaseShowDTO>
+     **/
+    List<ProductPurchaseShowDTO> listBySkuId(String skuId);
+
+    /**
      * @Description 保存/修改产品采购信息
      * @Author Luo_WG
      * @Date 2022/9/23 11:36

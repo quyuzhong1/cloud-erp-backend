@@ -53,6 +53,15 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
     ProductNoDetailDTO getNoSpecDetailById(@Param("productId") String productId);
 
     /**
+     * @Description 无规格产品信息明细根据SkuId查询
+     * @Author Luo_WG
+     * @Date 2022/9/22 14:09
+     * @param skuId:skuId
+     * @return java.util.List<com.erp.model.plm.dto.ProductNoDetailDTO>
+     **/
+    ProductNoDetailDTO getNoSpecDetailBySkuId(@Param("skuId") String skuId);
+
+    /**
      * @Description 多规格产品信息明细
      * @Author Luo_WG
      * @Date 2022/9/22 15:11

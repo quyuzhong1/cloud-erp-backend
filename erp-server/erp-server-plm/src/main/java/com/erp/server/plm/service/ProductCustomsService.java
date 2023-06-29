@@ -25,6 +25,15 @@ public interface ProductCustomsService extends SuperService<ProductCustomsEntity
      **/
     List<ProductCustomsEntity> listByProductId(String productId);
 
+    /**
+     * 根据产品id查询目的国海关编码
+     * @Author Luo_WG
+     * @Date 2023/6/15 16:51
+     * @param skuId
+     * @return java.util.List<com.erp.model.plm.entity.ProductCustomsEntity>
+     **/
+    List<ProductCustomsEntity> listBySkuId(String skuId);
+
 
     Boolean removeBySkuId(List<String> skuIds);
 

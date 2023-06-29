@@ -24,6 +24,15 @@ public interface ProductPackService extends IService<ProductPackEntity> {
     List<ProductPackShowDTO> list(String productId);
 
     /**
+     * @Description 产品包装信息查询列表
+     * @Author Luo_WG
+     * @Date 2022/9/22 10:28
+     * @param skuId
+     * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
+     **/
+    List<ProductPackShowDTO> listBySkuId(String skuId);
+
+    /**
      * @Description 保存/修改产品包装信息
      * @Author Luo_WG
      * @Date 2022/9/23 10:13

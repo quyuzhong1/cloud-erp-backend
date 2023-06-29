@@ -37,6 +37,11 @@ public class ProductCustomsServiceImpl extends SuperServiceImpl<ProductCustomsMa
     }
 
     @Override
+    public List<ProductCustomsEntity> listBySkuId(String skuId) {
+        return baseMapper.listBySkuId(skuId);
+    }
+
+    @Override
     public Boolean removeBySkuId(List<String> skuIds) {
         return lambdaUpdate().set(ProductCustomsEntity::getIsDeleted, Boolean.TRUE).in(ProductCustomsEntity::getSkuId, skuIds).update();
     }

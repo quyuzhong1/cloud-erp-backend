@@ -22,6 +22,15 @@ public interface ProductCertificateMapper extends BaseMapper<ProductCertificateE
      * @return java.util.List<com.erp.model.plm.dto.ProductCostShowDTO>
      **/
     List<ProductCertificateShowDTO> list(@Param("productId") String productId);
+
+    /**
+     * @Description 产品证书信息查询列表
+     * @Author Luo_WG
+     * @Date 2022/9/23 15:43
+     * @param skuId
+     * @return java.util.List<com.erp.model.plm.dto.ProductCostShowDTO>
+     **/
+    List<ProductCertificateShowDTO> listBySkuId(@Param("skuId") String skuId);
 }
 
 

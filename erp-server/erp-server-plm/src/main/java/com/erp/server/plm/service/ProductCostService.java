@@ -23,6 +23,15 @@ public interface ProductCostService extends IService<ProductCostEntity> {
     List<ProductCostShowDTO> list(String productId);
 
     /**
+     * @Description 根据skuId查询产品成本信息查询列表
+     * @Author Luo_WG
+     * @Date 2022/9/22 10:28
+     * @param skuId
+     * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
+     **/
+    List<ProductCostShowDTO> listBySkuId(String skuId);
+
+    /**
     * @Description 保存/修改产品成本信息
     * @Author Luo_WG
     * @Date 2022/9/23 10:13

@@ -22,6 +22,15 @@ public interface ProductPackMapper extends BaseMapper<ProductPackEntity> {
      * @return java.util.List<com.erp.model.plm.dto.ProductCostShowDTO>
      **/
     List<ProductPackShowDTO> list(@Param("productId") String productId);
+
+    /**
+     * @Description 产品包装信息查询列表
+     * @Author Luo_WG
+     * @Date 2022/9/23 15:43
+     * @param skuId
+     * @return java.util.List<com.erp.model.plm.dto.ProductCostShowDTO>
+     **/
+    List<ProductPackShowDTO> listBySkuId(@Param("skuId") String skuId);
 }
 
 

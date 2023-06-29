@@ -26,4 +26,17 @@
         WHERE pd.product_id = #{productId} AND pd.is_deleted = FALSE
         ORDER BY pd.id desc
     </select>
+
+    <select id="listBySkuId" resultType="com.erp.model.plm.dto.ProductCostShowDTO">
+        SELECT
+        pc.id,
+        pd.sku_no,
+        pd.id AS sku_id,
+        pd.images_url,
+        <include refid="Base_Column_List"/>
+        FROM product_detail pd
+        LEFT JOIN product_cost pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
+        WHERE pd.id = #{skuId} AND pd.is_deleted = FALSE
+        ORDER BY pd.id desc
+    </select>
 </mapper>

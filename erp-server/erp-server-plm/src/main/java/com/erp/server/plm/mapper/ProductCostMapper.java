@@ -17,4 +17,13 @@ public interface ProductCostMapper extends BaseMapper<ProductCostEntity> {
      * @return java.util.List<com.erp.model.plm.dto.ProductCostShowDTO>
      **/
     List<ProductCostShowDTO> list(@Param("productId") String productId);
+
+    /**
+     * @Description 产品成本信息查询列表
+     * @Author Luo_WG
+     * @Date 2022/9/22 10:28
+     * @param skuId
+     * @return java.util.List<com.erp.model.plm.dto.ProductCostShowDTO>
+     **/
+    List<ProductCostShowDTO> listBySkuId(@Param("skuId") String skuId);
 }

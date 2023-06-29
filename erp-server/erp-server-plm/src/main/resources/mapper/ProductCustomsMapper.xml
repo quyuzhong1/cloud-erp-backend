@@ -35,4 +35,20 @@
         ORDER BY pd.id desc
     </select>
 
+    <select id="listBySkuId" resultType="com.erp.model.plm.entity.ProductCustomsEntity">
+        SELECT
+        pc.id,
+        pd.id AS skuId,
+        pd.images_url,
+        pd.sku_no,
+        pc.country,
+        pc.customs_code,
+        pc.tax_rate,
+        pc.type
+        FROM product_detail pd
+        LEFT JOIN product_customs pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
+        WHERE pd.id = #{skuId} AND pd.is_deleted = FALSE
+        ORDER BY pd.id desc
+    </select>
+
 </mapper>

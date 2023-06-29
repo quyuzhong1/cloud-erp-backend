@@ -528,4 +528,13 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return java.lang.Boolean
      **/
     Boolean updateOccupyStatus(List<String> skuIds);
+
+    /**
+     * 根据skuId查询产品信息-无规格-产品详情-PLM-1.3
+     * @Author Luo_WG
+     * @Date 2023/6/29 14:21
+     * @param skuId
+     * @return com.erp.model.plm.dto.ProductNoSpecDetailAllDTO
+     **/
+    ProductNoSpecDetailAllDTO getNoSpecDetailBySkuId(String skuId);
 }

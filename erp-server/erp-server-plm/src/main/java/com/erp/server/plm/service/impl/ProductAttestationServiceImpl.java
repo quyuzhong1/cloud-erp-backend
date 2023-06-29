@@ -210,6 +210,46 @@ public class ProductAttestationServiceImpl extends ServiceImpl<ProductAttestatio
     }
 
     @Override
+    public List<ProductAttestationDTO> getBySkuId(String skuId) {
+        List<ProductAttestationDTO> resultList = new ArrayList<>(10);
+        List<ProductAttestationEntity> list = baseMapper.getBySkuId(skuId);
+        if (CollectionUtils.isNotEmpty(list)) {
+            //其它认证
+            String other = ProductManyDetailConstant.OTHER_ATTESTATION;
+            //产品认证
+            String product = ProductManyDetailConstant.PRODUCT_ATTESTATION;
+            //运输认证
+            String transport = ProductManyDetailConstant.TRANSPORT_ATTESTATION;
+
+            Map<String, List<ProductAttestationEntity>> map = list.parallelStream().
+                    collect(Collectors.groupingBy(ProductAttestationEntity::getSkuId));
+            for (Map.Entry<String, List<ProductAttestationEntity>> item : map.entrySet()) {
+                String skuIdSt = item.getKey();
+                List<ProductAttestationEntity> valueList = item.getValue();
+                ProductAttestationDTO attestation = new ProductAttestationDTO();
+                attestation.setSkuId(skuIdSt);
+                //产品
+                List<String> productList = valueList.stream().filter(v -> product.equals(v.getType())).
+                        map(ProductAttestationEntity::getDictValue).collect(Collectors.toList());
+                attestation.setProductList(productList);
+                //运输
+                List<String> transportList = valueList.stream().filter(v -> transport.equals(v.getType())).
+                        map(ProductAttestationEntity::getDictValue).collect(Collectors.toList());
+                attestation.setTransportList(transportList);
+
+                //其它
+                List<String> otherList = valueList.stream().filter(v -> other.equals(v.getType())).
+                        map(ProductAttestationEntity::getDictValue).collect(Collectors.toList());
+                attestation.setOtherList(otherList);
+                resultList.add(attestation);
+            }
+
+        }
+
+        return resultList;
+    }
+
+    @Override
     public List<ProductAttestationEntity> getListByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return new ArrayList<>();

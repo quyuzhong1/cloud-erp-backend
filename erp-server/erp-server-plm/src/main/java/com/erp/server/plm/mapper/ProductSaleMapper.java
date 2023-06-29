@@ -25,6 +25,15 @@ public interface ProductSaleMapper extends BaseMapper<ProductSaleEntity> {
     List<ProductSaleShowDTO> list(@Param("productId") String productId);
 
     /**
+     * @Description 产品销售信息查询列表
+     * @Author Luo_WG
+     * @Date 2022/9/22 10:28
+     * @param skuId
+     * @return java.util.List<com.erp.model.plm.dto.ProductCostShowDTO>
+     **/
+    List<ProductSaleShowDTO> listBySkuId(@Param("skuId") String skuId);
+
+    /**
      * 获取所有上市时间
      * @Author Luo_WG
      * @Date 2023/4/19 16:12

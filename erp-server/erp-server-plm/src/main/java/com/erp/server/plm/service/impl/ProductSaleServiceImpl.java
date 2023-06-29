@@ -70,6 +70,27 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
     }
 
     /**
+     * @Description 产品销售信息查询列表
+     * @Author Luo_WG
+     * @Date 2022/9/23 14:06
+     * @param skuId
+     * @return java.util.List<com.erp.model.plm.dto.ProductSaleShowDTO>
+     **/
+    @Override
+    public List<ProductSaleShowDTO> listBySkuId(String skuId){
+        List<ProductSaleShowDTO> list = productSaleMapper.listBySkuId(skuId);
+        for (ProductSaleShowDTO productSaleShowDTO : list) {
+            if (StringUtils.isNotBlank(productSaleShowDTO.getSaleCountry())) {
+                List<String> saleCountryList = Arrays.asList(productSaleShowDTO.getSaleCountry().split(","));
+                List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(saleCountryList);
+                List<String> saleCountryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                productSaleShowDTO.setSaleCountryName(StringUtils.join(saleCountryNameList, ","));
+            }
+        }
+        return list;
+    }
+
+    /**
      * @Description 保存/修改产品销售信息
      * @Author Luo_WG
      * @Date 2022/9/23 10:13

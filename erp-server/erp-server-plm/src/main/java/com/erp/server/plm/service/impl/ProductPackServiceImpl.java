@@ -56,6 +56,18 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
     }
 
     /**
+     * @param skuId
+     * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
+     * @Description 产品包装信息查询列表
+     * @Author Luo_WG
+     * @Date 2022/9/22 10:28
+     **/
+    @Override
+    public List<ProductPackShowDTO> listBySkuId(String skuId) {
+        return productPackMapper.listBySkuId(skuId);
+    }
+
+    /**
      * @param productPackDTO 产品包装信息表
      * @return java.lang.Boolean
      * @Description 保存/修改产品包装信息

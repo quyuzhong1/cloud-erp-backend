@@ -24,6 +24,15 @@ public interface ProductSaleService extends IService<ProductSaleEntity> {
     List<ProductSaleShowDTO> list(String productId);
 
     /**
+     * @Description 产品销售信息查询列表
+     * @Author Luo_WG
+     * @Date 2022/9/23 14:06
+     * @param skuId
+     * @return java.util.List<com.erp.model.plm.dto.ProductSaleShowDTO>
+     **/
+    List<ProductSaleShowDTO> listBySkuId(String skuId);
+
+    /**
      * @Description 保存/修改产品销售信息
      * @Author Luo_WG
      * @Date 2022/9/23 10:13

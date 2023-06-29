@@ -41,6 +41,18 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
     }
 
     /**
+     * @Description 根据skuId查询产品成本信息查询列表
+     * @Author Luo_WG
+     * @Date 2022/9/22 10:28
+     * @param skuId:产品信息表id
+     * @return java.util.List<com.erp.model.plm.dto.ProductCostShowDTO>
+     **/
+    @Override
+    public List<ProductCostShowDTO> listBySkuId(String skuId) {
+        return productCostMapper.listBySkuId(skuId);
+    }
+
+    /**
      * @Description 保存/修改产品成本信息
      * @Author Luo_WG
      * @Date 2022/9/23 10:13

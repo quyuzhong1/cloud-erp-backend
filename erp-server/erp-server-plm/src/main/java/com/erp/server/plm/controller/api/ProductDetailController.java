@@ -149,6 +149,21 @@ ProductDetailController extends BaseController {
     }
 
     /**
+     * 根据skuId查询产品信息-无规格-产品详情-PLM-1.3
+     *
+     * @param skuId 产品信息表id
+     * @return com.common.core.vo.ApiResult<com.erp.model.plm.dto.ProductNoSpecDetailAllDTO>
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:21
+     **/
+    @GetMapping("/getNoSpecDetailBySkuId")
+    //@RequestPermissions("plm:product:detail:getNoSpecDetailById")
+    public ApiResult<ProductNoSpecDetailAllDTO> getNoSpecDetailBySkuId(@RequestParam(value = "skuId") String skuId) {
+        ProductNoSpecDetailAllDTO list = productDetailService.getNoSpecDetailBySkuId(skuId);
+        return this.success(list);
+    }
+
+    /**
      * 产品信息-多规格-产品详情-PLM-1.3
      *
      * @param productId 产品信息表id

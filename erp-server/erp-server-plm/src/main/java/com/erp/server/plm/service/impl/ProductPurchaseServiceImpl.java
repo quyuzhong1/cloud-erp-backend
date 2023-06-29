@@ -63,6 +63,18 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
     }
 
     /**
+     * @Description 产品采购信息查询列表
+     * @Author Luo_WG
+     * @Date 2022/9/23 11:48
+     * @param skuId
+     * @return java.util.List<com.erp.model.plm.dto.ProductPurchaseShowDTO>
+     **/
+    @Override
+    public List<ProductPurchaseShowDTO> listBySkuId(String skuId) {
+        return productPurchaseMapper.listBySkuId(skuId);
+    }
+
+    /**
     * @Description 保存/修改产品采购信息
     * @Author Luo_WG
     * @Date 2022/9/23 11:48
