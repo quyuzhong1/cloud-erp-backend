@@ -225,5 +225,14 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         return resultList;
     }
 
+    @Override
+    public List<BaseIdDTO.CodeDTO> listByCodes(List<String> codes) {
+        if (CollectionUtils.isEmpty(codes)){
+            return Collections.EMPTY_LIST;
+        }
+        List<SysAccountingCompanyEntity> list = this.lambdaQuery().in(SysAccountingCompanyEntity::getCode, codes).list();
+        return BeanMapperUtils.copyList(BaseIdDTO.CodeDTO.class,list);
+    }
+
 
 }

@@ -510,7 +510,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     }
 
     @Override
-    public TransferInfoDTO.ViewDTO ViewTransferInfoByCode(String code) {
+    public TransferInfoDTO.ViewDTO viewTransferInfoByCode(String code) {
 
         TransferInfoDTO.ViewDTO viewDTO = new TransferInfoDTO.ViewDTO();
         //主表信息

@@ -78,6 +78,7 @@ public enum ApiError implements Serializable {
     ERROR_1039(1039,"单据【{}】未审核完成，不支持下推"),
     ERROR_1040(1040,"未找到{}单据明细数据"),
     ERROR_1041(1041,"{}明细数据不能为空"),
+    ERROR_1042(1042,"单据提交失败"),
 
 
 
@@ -329,8 +330,8 @@ public enum ApiError implements Serializable {
     ERROR_95155(95155, "文档不存在"),
     ERROR_95156(95156, "该文档已被引用状态不能关闭"),
     ERROR_95157(95157, "请选择模板"),
-    ERROR_MSG_IS_NOT_NULL(95157, "消息模板不能为空"),
-
+    ERROR_MSG_IS_NOT_NULL(95158, "消息模板不能为空"),
+    ERROR_NOT_FOUND_SKU(95159,"SKU{}不存在"),
 
 
 
@@ -652,6 +653,9 @@ public enum ApiError implements Serializable {
     ERROR_99073(99073,"质检量不能大于总数量"),
     ERROR_99074(99074,"采购订单【{}】SKU【{}】剩余入库数量不能超过【{}】"),
     ERROR_99075(99075,"采购订单【{}】SKU【{}】已入库完成"),
+    ERROR_99076(99076,"未找到仓库金蝶编号【{}】"),
+
+
 
     /**
      * OMS 错误

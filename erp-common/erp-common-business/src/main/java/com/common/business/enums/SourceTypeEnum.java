@@ -45,6 +45,9 @@ public enum SourceTypeEnum {
     //Kingdee
     SAL_RETURNSTOCK("SAL_RETURNSTOCK", "金蝶销售退货单",""),
     SAL_OUTSTOCK("SAL_OUTSTOCK", "金蝶销售出库单",""),
+    STK_TRANSFERDIRECT("STK_TransferDirect", "金蝶直接调拨单",""),
+
+
     // PLM
     PRODUCT_BOM_INFO("productBomInfo", "BOM管理","product_bom_info"),
     PRODUCT_DETAIL("productDetail", "产品管理","product_detail"),

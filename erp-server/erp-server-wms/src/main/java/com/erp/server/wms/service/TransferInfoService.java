@@ -157,5 +157,5 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @param code
      * @return ViewDTO
      */
-    TransferInfoDTO.ViewDTO ViewTransferInfoByCode(String code);
+    TransferInfoDTO.ViewDTO viewTransferInfoByCode(String code);
 }

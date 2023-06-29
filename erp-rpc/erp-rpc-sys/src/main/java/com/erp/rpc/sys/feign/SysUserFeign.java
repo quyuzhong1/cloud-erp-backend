@@ -222,6 +222,16 @@ public interface SysUserFeign {
       */
     @PostMapping("feign/accountingCompany/getByIds")
     List<BaseIdDTO.CodeDTO> getAccountingCompanyList(@RequestBody List<String> ids);
+    /**
+     * @description: 查询组织列表
+     * @author Will
+     * @date: 2023/6/29 12:27
+     * @param codes
+     * @return List<CodeDTO>
+     */
+    @PostMapping("feign/accountingCompany/listByCodes")
+    List<BaseIdDTO.CodeDTO> listAccountingCompanyByCodeList(@RequestBody List<String> codes);
+
 
     /**
      * @description: 查询所有已启用组织
@@ -377,4 +387,13 @@ public interface SysUserFeign {
     @GetMapping("feign/cfgUserRange/getByType")
     List<CfgUserRangeDTO.UserRangeDataDTO> getUserRangeByType(@RequestParam(value = "type")String type,
                                                               @RequestParam(value = "addLast", required = false, defaultValue = "true") Boolean addLast);
+    /**
+     * @description: 根据金蝶的对应岗位code获取信息
+     * @author Will
+     * @date: 2023/6/6 10:44
+     * @param kingdeePostCodes
+     * @return List<UserKingdeePostInfoDTO>
+     */
+    @PostMapping("feign/user/listUserKingdeePostByKingdeePostCodes")
+    List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByKingdeePostCodes(@RequestBody List<String> kingdeePostCodes);
 }

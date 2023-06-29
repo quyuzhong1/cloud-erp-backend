@@ -163,7 +163,10 @@ public class RocketMqConsumerGroup {
      */
     public static final String SYNC_KINGDEE_SO_OUTSTOCK_TO_WMS = "${spring.cloud.nacos.discovery.namespace}-SYNC_SO_OUTSTOCK_TO_WMS";
 
-
+    /**
+     * 直接调拨单金蝶同步至ERP
+     */
+    public static final String SYNC_KINGDEE_TRANSFER_INFO_TO_WMS = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_transfer_info_to_wms";
 
     /**
      * ERP直接调拨单->DMP

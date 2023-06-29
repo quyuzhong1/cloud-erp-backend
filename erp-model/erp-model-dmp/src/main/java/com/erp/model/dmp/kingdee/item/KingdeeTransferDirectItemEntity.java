@@ -101,4 +101,10 @@ public class KingdeeTransferDirectItemEntity {
      */
     @Alias("FDestMaterialId.FName")
     private String FDestMaterialIdFName;
+
+    /**
+     * (明细信息)调入库位
+     */
+    @Alias("F_ulz_KUWEI")
+    private String FUlzKuWei;
 }

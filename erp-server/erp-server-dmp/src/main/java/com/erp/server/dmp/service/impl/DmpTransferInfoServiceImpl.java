@@ -7,7 +7,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpTransferInfoDetailEntity;
 import com.erp.model.dmp.entity.DmpTransferInfoEntity;
-import com.erp.model.wms.dto.TransferInfoDTO;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.dmp.mapper.DmpTransferInfoMapper;
 import com.erp.server.dmp.service.DmpTransferInfoDetailService;
@@ -129,23 +128,6 @@ public class DmpTransferInfoServiceImpl extends SuperServiceImpl<DmpTransferInfo
      */
     private void addOrUpdateWmsTransferInfo (DmpTransferInfoEntity entity) {
 
-        TransferInfoDTO.ViewDTO viewDTO = wmsTaskFeign.ViewTransferInfoByCode(entity.getCode());
-        //数据格式化
-        TransferInfoDTO.ViewDTO resultDTO = handleWmsTransferInfo(entity);
-        if (ObjectUtils.isEmpty(viewDTO)) {
-            //不存在则新增
-            //wmsTaskFeign.addTransferInfo(resultDTO);
-        } else {
-            //存在则更新
-            resultDTO.setSourceId(resultDTO.getId());
-
-        }
-    }
-
-    private TransferInfoDTO.ViewDTO handleWmsTransferInfo (DmpTransferInfoEntity entity) {
-        TransferInfoDTO.ViewDTO resultDTO = new TransferInfoDTO.ViewDTO();
-
-        return resultDTO;
     }
 
 

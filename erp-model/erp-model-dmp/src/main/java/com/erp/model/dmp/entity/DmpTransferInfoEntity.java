@@ -1,15 +1,15 @@
 package com.erp.model.dmp.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-import java.util.List;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
 
 
 /**
@@ -58,6 +58,11 @@ public class DmpTransferInfoEntity extends BaseEntity<DmpTransferInfoEntity> {
     private String inOrgId;
 
     /**
+     * 调入组织编码
+     */
+    private String inOrgCode;
+
+    /**
     * 调入组织名称
     */
     @TableField("in_org_name")
@@ -68,6 +73,11 @@ public class DmpTransferInfoEntity extends BaseEntity<DmpTransferInfoEntity> {
     */
     @TableField("out_org_id")
     private String outOrgId;
+
+    /**
+     * 调出组织编码
+     */
+    private String outOrgCode;
 
     /**
     * 调出库存组织名称
@@ -110,6 +120,12 @@ public class DmpTransferInfoEntity extends BaseEntity<DmpTransferInfoEntity> {
     */
     @TableField("approve_user_name")
     private String approveUserName;
+
+
+    /**
+     * 仓管员
+     */
+    private String WarehouseKeeperCode;
 
     /**
     * 审核时间

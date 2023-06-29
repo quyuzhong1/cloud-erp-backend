@@ -133,6 +133,12 @@ public class KingdeeTransferDirectEntity extends CleanBaseDTO {
      */
     private LocalDateTime FApproveDate;
 
+    /**
+     * 仓管员
+     */
+    @Alias("FSTOCKERID.FNumber")
+    private String  FstockerCode;
+
     private String FApproverId;
     /**
      * 审核人

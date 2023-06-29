@@ -102,6 +102,18 @@ public class UserKingdeePostServiceImpl extends SuperServiceImpl<UserKingdeePost
         return resultList;
     }
 
+    @Override
+    public List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByKingdeePostCodes(List<String> codes) {
+        List<UserKingdeePostEntity> list = lambdaQuery()
+                .in(UserKingdeePostEntity::getKingdeePostCode, codes)
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<KingdeePostDTO.UserKingdeePostInfoDTO> resultList = BeanMapperUtils.copyList(KingdeePostDTO.UserKingdeePostInfoDTO.class, list);
+        return resultList;
+    }
+
     private UserKingdeePostEntity getByUserId(String userId) {
         LambdaQueryWrapper<UserKingdeePostEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(UserKingdeePostEntity::getUserId, userId);

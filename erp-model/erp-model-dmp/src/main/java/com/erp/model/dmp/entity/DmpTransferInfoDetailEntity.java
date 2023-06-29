@@ -1,13 +1,14 @@
 package com.erp.model.dmp.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 
 /**
@@ -60,6 +61,11 @@ public class DmpTransferInfoDetailEntity extends BaseEntity<DmpTransferInfoDetai
     */
     @TableField("source_detail_id")
     private String sourceDetailId;
+
+    /**
+     * 调入库位
+     */
+    private String warehouseLocation;
 
     /**
     * 入库时间
