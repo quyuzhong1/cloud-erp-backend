@@ -1042,6 +1042,10 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
         }
 
+        //根据SKU查询BOM判断是否是组合SKU
+        List<String> skuIds = records.stream().map(PurchaseApplicationDTO.ListDTO::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+
         for (PurchaseApplicationDTO.ListDTO obj : records){
             //采购数量
             if (CollectionUtils.isNotEmpty(refList)) {
@@ -1062,6 +1066,14 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 if (CollectionUtils.isNotEmpty(thisPodIds)) {
                     Integer receiveQty = receiveDetailList.stream().filter(e -> thisPodIds.contains(e.getPurchaseOrderDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                     obj.setReceiveQty(receiveQty);
+                }
+            }
+
+            //是否是组合SKU
+            if (CollectionUtils.isNotEmpty(bomChildrenList)) {
+                long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(obj.getSkuId())).count();
+                if (count > 0) {
+                    obj.setIsConstitute(Boolean.TRUE);
                 }
             }
 

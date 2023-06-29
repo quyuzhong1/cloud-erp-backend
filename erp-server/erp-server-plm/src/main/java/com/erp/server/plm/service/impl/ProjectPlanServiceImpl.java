@@ -1259,7 +1259,11 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             String docId = taskDocsNameList.stream().filter(obj -> obj.getName().equals(docName)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
             docsDTO.setId(docId);
             docsDTO.setName(docName);
+            docsDTO.setProductId(productId);
             docEntityList.add(docsDTO);
+        }
+        if (CollectionUtils.isEmpty(docEntityList)) {
+            return Collections.EMPTY_LIST;
         }
         boolean saveOrUpdate = taskDocsNameService.saveOrUpdateBatch(docEntityList);
         if (!saveOrUpdate) {

@@ -79,6 +79,11 @@ public class PurchaseApplicationDTO implements Serializable {
         private String createPoTypeName;
 
         /**
+         * skuid
+         */
+        private String skuId;
+
+        /**
          * sku编码
          */
         private String skuNo;
@@ -142,6 +147,11 @@ public class PurchaseApplicationDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 是否是组合SKU
+         */
+        private Boolean isConstitute;
     }
 
     @Data
