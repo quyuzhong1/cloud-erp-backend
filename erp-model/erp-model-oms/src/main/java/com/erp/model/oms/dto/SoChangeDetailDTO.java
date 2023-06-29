@@ -243,7 +243,7 @@ public class SoChangeDetailDTO implements Serializable {
         private String remark;
 
 
-        private String soDetailKingdeeId;
+        private String kingdeeDetailId;
 
     }
 

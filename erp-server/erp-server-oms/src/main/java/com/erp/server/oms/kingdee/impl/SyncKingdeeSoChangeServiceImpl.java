@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 /**
  * @author Lambda
  * @Classname SyncKingdeeSoServiceImpl
-
  * @Date 2023-05-30 11:46
  * @Created by yl
  */
@@ -91,7 +90,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             String soId = entity.getSoId();
             SoInfoDTO.CustomerDTO soInfo = soInfoService.getSoCustomer(soId);
             //填充数据
-            fillDb(entity, soInfo.getSyncKingdeeId(),soInfo.getCode());
+            fillDb(entity, soInfo.getSyncKingdeeId(), soInfo.getCode());
             Map<String, Object> resultMap = new HashMap<>();
             //金蝶id
             resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -103,8 +102,8 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             if (Objects.isNull(soInfo)) {
                 return;
             }
-            List<SoChangeDetailDTO.ViewDTO> details = soChangeDetailService.listDetailByMainId(id);
-            if (CollectionUtils.isEmpty(details)) {
+            List<SoChangeDetailDTO.ViewDTO> detailList = soChangeDetailService.listDetailByMainId(id);
+            if (CollectionUtils.isEmpty(detailList)) {
                 return;
             }
 
@@ -126,7 +125,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             //单据类型
             resultMap.put("orderType", "XSDDBGD01_SYS");
             //单据日期
-            resultMap.put("billDate", entity.getBillDate());
+            resultMap.put("billDate", soInfo.getCreateTime().toLocalDate());
             //客户
             if (StringUtils.isNotBlank(customerId)) {
                 CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
@@ -176,11 +175,11 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
 
             //要货日期
             LocalDate requireDate = soInfo.getRequireDate();
-            List<JSONObject> list = new ArrayList<>(details.size());
-            for (SoChangeDetailDTO.ViewDTO item : details) {
+            List<JSONObject> list = new ArrayList<>(detailList.size());
+            for (SoChangeDetailDTO.ViewDTO item : detailList) {
                 JSONObject jsonObject = new JSONObject();
                 //金蝶详情id
-                jsonObject.set("kingdeeDetailId", item.getSoDetailKingdeeId());
+                jsonObject.set("kingdeeDetailId", item.getKingdeeDetailId());
                 jsonObject.set("skuNo", item.getSkuNo());
                 jsonObject.set("changeType", item.getChangeType().getCode());
                 jsonObject.set("soDetailId", item.getSoDetailId());
@@ -233,7 +232,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
      * @author yl
      * @date 2023-06-07 14:08
      */
-    private SoChangeEntity fillDb(SoChangeEntity entity, String soKingdeeId,String soCode) {
+    private SoChangeEntity fillDb(SoChangeEntity entity, String soKingdeeId, String soCode) {
         List<SoChangeDetailEntity> details = soChangeDetailService.listDetailDbByMainId(entity.getId());
         //订单详情的ids
         List<String> soDetailIdList = details.stream().map(SoChangeDetailEntity::getSoDetailId).collect(Collectors.toList());
@@ -244,11 +243,10 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             Map<String, Object> map = new HashMap<>();
             map.put("SaleOrderBillId", soKingdeeId);
             map.put("SaleOrderBillNo", soCode);
-            map.put("BillNo", entity.getCode());
             map.put("SOEntryIds", soKingdeeDetailIds);
             //自动生成变更单
             String result = dmpTaskFeign.createkingdeeSoChange(map);
-            log.info("json======{}",result);
+            log.info("json======{}", result);
             JSONObject json = JSONUtil.parseObj(result);
             Boolean isSuccess = (Boolean) json.get("IsSuccess");
             List<SoChangeDetailEntity> updateList = new ArrayList<>(10);

@@ -24,9 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -45,15 +43,15 @@ public class KingdeeSoChangeConsumer implements RocketMQListener<Map<String, Obj
 
     public static void main(String[] args) {
 
-//        Map<String, Object> resultMap = new LinkedHashMap<>();
-//        //读取配置，初始化SDK
-//        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER_CHANGE.getCode());
-//        LinkedList<String> queryFilters = new LinkedList<>();
-//        queryFilters.add(String.format("FBillNo = '%s'", "XSD23060500001_V001"));
-//        String filterStr = String.join(" and ", queryFilters);
-//        String fieldKeys = "FDeliveryDate";
-//        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 1);
-//        System.out.println(queryList);
+        Map<String, Object> resultMap = new LinkedHashMap<>();
+        //读取配置，初始化SDK
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER_CHANGE.getCode());
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FBillNo = '%s'", "XSD23060900001_V001"));
+        String filterStr = String.join(" and ", queryFilters);
+        String fieldKeys = "FDate";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 1);
+        System.out.println(queryList);
 
 
 

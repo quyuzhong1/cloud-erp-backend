@@ -766,7 +766,6 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         LoginUser user = commonService.getUserInfo();
         ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
         if (dto.getType().equals(ApproveType.PASS)) {
-            soChangeDetailService.handleDb(list);
             //审核通过
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
             //审核通过发送金蝶
@@ -778,6 +777,10 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         }
         Boolean result = this.updateApproveInfo(list, approveStatus, user.getUid(), user.getUserName());
         if (result) {
+            if(dto.getType().equals(ApproveType.PASS)){
+                soChangeDetailService.handleDb(list);
+            }
+
             //添加日志
             List<Pair<String, String>> pairList = list.stream().
                     map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
