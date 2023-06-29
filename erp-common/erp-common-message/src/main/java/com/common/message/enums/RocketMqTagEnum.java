@@ -367,7 +367,7 @@ public enum RocketMqTagEnum {
     /**
      * DMP出入库同步到马帮
      */
-    DMP_MABANG_TRANSFER_INFO_TAG(7002, RocketMqTagEnum.SYNC_MABANG,"dmp_mabang_transfer_info_tag"),
+    MABANG_INOUT_STOCK_TAG(7002, RocketMqTagEnum.SYNC_MABANG,"mabang_inout_stock_tag"),
 
 
 

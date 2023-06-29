@@ -60,10 +60,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -395,8 +392,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             updateInventoryTransCore(list);
             //发送金蝶
             list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
-            //发送马帮
-            list.forEach(obj->syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            //发送马帮（非马帮平台的才需要推送）
+            list.forEach(obj->{
+                if(Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_OTHER.getCode())) {
+                    syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+                }
+            });
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("直接调拨单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
             //中止当前审核流程
@@ -506,7 +507,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     }
 
     @Override
-    public TransferInfoDTO.ViewDTO ViewTransferInfoByCode(String code) {
+    public TransferInfoDTO.ViewDTO viewTransferInfoByCode(String code) {
 
         TransferInfoDTO.ViewDTO viewDTO = new TransferInfoDTO.ViewDTO();
         //主表信息

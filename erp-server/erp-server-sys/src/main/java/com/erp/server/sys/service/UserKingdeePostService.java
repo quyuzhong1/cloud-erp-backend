@@ -44,4 +44,12 @@ public interface UserKingdeePostService extends SuperService<UserKingdeePostEnti
      * @return List<UserKingdeePostInfoDTO>
      */
     List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByUserIds(List<String> userIds);
+    /**
+     * @description: 根据金蝶的对应岗位code获取信息
+     * @author Will
+     * @date: 2023/6/29 14:29
+     * @param codes
+     * @return List<UserKingdeePostInfoDTO>
+     */
+    List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByKingdeePostCodes(List<String> codes);
 }

@@ -30,6 +30,13 @@ public class AccountingCompanyFeignController extends BaseController {
         return list;
     }
 
+    @PostMapping("/listByCodes")
+    public List<BaseIdDTO.CodeDTO> listByCodes(@RequestBody List<String> codes) {
+        List<BaseIdDTO.CodeDTO> list = sysAccountingCompanyService.listByCodes(codes);
+        return list;
+    }
+
+
     /**
      * @return List<BaseIdDTO>
      * @description: 查询所有已启用组织

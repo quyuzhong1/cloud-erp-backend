@@ -359,10 +359,24 @@ public class SysUserFeignController extends BaseController {
     public KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePostByUserId(@RequestBody String userId) {
         return userKingdeePostService.getUserKingdeePostByUserId(userId);
     }
-
+    /**
+     * 根据用戶ids 获取金蝶的对应岗位code
+     *
+     * @return
+     */
     @PostMapping("/listUserKingdeePostByUserIds")
     public List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByUserIds(@RequestBody List<String> userIds) {
         return userKingdeePostService.listUserKingdeePostByUserIds(userIds);
+    }
+
+    /**
+     * 根据金蝶的对应岗位code获取信息
+     *
+     * @return
+     */
+    @PostMapping("/listUserKingdeePostByKingdeePostCodes")
+    public List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByKingdeePostCodes(@RequestBody List<String> codes) {
+        return userKingdeePostService.listUserKingdeePostByKingdeePostCodes(codes);
     }
 
     /**

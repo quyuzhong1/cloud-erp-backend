@@ -74,4 +74,9 @@ public class RocketMqTopic {
      */
     public static final String SYNC_DMP_TO_MABANG_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_dmp_to_mabang_topic";
 
+    /**
+     * DMP同步任务
+     */
+    public static final String DMP_SYNC_TASK_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_sync_task_topic";
+
 }
