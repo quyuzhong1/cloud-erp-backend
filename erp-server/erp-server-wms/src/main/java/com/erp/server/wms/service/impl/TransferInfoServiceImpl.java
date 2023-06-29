@@ -60,10 +60,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -397,7 +394,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
             //发送马帮（非马帮平台的才需要推送）
             list.forEach(obj->{
-                if(!obj.getCode().substring(0, 2).equals("MB")) {
+                if(Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_OTHER.getCode())) {
                     syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
                 }
             });
