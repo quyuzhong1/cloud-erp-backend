@@ -1,8 +1,6 @@
 package com.erp.model.dmp.mabang;
 
 import com.erp.model.dmp.dto.CleanBaseDTO;
-import com.erp.model.dmp.mabang.item.ShipmentBoxEntity;
-import com.erp.model.dmp.mabang.item.ShipmentHeadCostDetailEntity;
 import com.erp.model.dmp.mabang.item.ShipmentItemEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,6 +14,8 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class ShipmentEntity extends CleanBaseDTO {
+
+    private String _id;
 
     /**
      * 申报id
@@ -85,12 +85,12 @@ public class ShipmentEntity extends CleanBaseDTO {
     /**
      * 箱子信息
      */
-    private ShipmentBoxEntity boxInfo;
+    private Object boxInfo;
 
     /**
      * 费用信息
      */
-    private List<ShipmentHeadCostDetailEntity> headingcostdetail;
+    private Object headingcostdetail;
 
     /**
      * 是否完结1是2否
@@ -121,7 +121,8 @@ public class ShipmentEntity extends CleanBaseDTO {
     @Override
     public String toString() {
         return "ShipmentEntity{" +
-                "shippNo='" + shippNo + '\'' +
+                "_id='" + _id + '\'' +
+                ", shippNo='" + shippNo + '\'' +
                 ", batchNo='" + batchNo + '\'' +
                 ", shippName='" + shippName + '\'' +
                 ", ShipmentStatus='" + ShipmentStatus + '\'' +

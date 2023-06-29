@@ -398,11 +398,96 @@ public class MabangApiUtils {
         return resultMap;
     }
 
+    /**
+     * 查询马帮调拨发货列表
+     * @param method
+     * @param startDate
+     * @param endDate
+     * @return
+     *
+     * @throws Exception
+     */
+    public static List<ShipmentEntity> queryShipmentList(String method, LocalDateTime startDate, LocalDateTime endDate) {
+        //每页显示的条数 最小10 最大2000
+        Integer pageSize = 1000;
+        Integer pageIndex = 1;
+        //总页数
+        Integer pageCount = 1;
+        List<ShipmentEntity> infoArrayList = new ArrayList<>();
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
+        while (pageIndex <= pageCount) {
+            HashMap<String, Object> params = new HashMap<>(6);
+            params.put("updateTimeStart", sdf.format(startDate));
+            params.put("updateTimeEnd", sdf.format(endDate));
+            params.put("pageSize", pageSize);
+            ParamHeaderVO paramVo = getParamMap(method, pageIndex, params);
+            JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
+            if (!Objects.equals(responseMap.getInteger("code"), 200)) {
+                log.error("调用url={} param={}马帮退款订单数据失败 responseMap={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap));
+                throw new RuntimeException(StrUtil.format("调用url={} param={}，马帮调拨发货数据失败 responseMap={}",
+                        UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap)));
+            }
+            JSONObject dataJson = JSONObject.parseObject(String.valueOf(responseMap.get("data")));
+            List<ShipmentEntity> dataList = JSONObject.parseArray(dataJson.getString("data"), ShipmentEntity.class);
+            Integer totalCount = dataJson.getInteger("total");
+            pageCount = (totalCount + pageSize - 1) / pageSize;
+            if(CollectionUtil.isNotEmpty(dataList)){
+                infoArrayList.addAll(dataList);
+            }
+            pageIndex ++;
+        }
+        return infoArrayList;
+    }
+
+    /**
+     * 查询马帮发货单列表
+     * @param method
+     * @param startDate
+     * @param endDate
+     * @return
+     *
+     * @throws Exception
+     */
+    public static List<DeliveryEntity> queryDeliveryList(String method, LocalDateTime startDate, LocalDateTime endDate) {
+        //每页显示的条数 最小10 最大2000
+        Integer pageSize = 1000;
+        Integer pageIndex = 1;
+        //总页数
+        Integer pageCount = 1;
+        List<DeliveryEntity> infoArrayList = new ArrayList<>();
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
+        while (pageIndex <= pageCount) {
+            HashMap<String, Object> params = new HashMap<>(6);
+            params.put("last_time_start", sdf.format(startDate));
+            params.put("last_time_end", sdf.format(endDate));
+            params.put("prePage", pageSize);
+            ParamHeaderVO paramVo = getParamMap(method, pageIndex, params);
+            JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
+            if (!Objects.equals(responseMap.getInteger("code"), 200)) {
+                log.error("调用url={} param={}马帮退款订单数据失败 responseMap={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap));
+                throw new RuntimeException(StrUtil.format("调用url={} param={}，马帮调拨发货数据失败 responseMap={}",
+                        UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap)));
+            }
+            JSONObject dataJson = JSONObject.parseObject(String.valueOf(responseMap.get("data")));
+            List<DeliveryEntity> dataList = JSONObject.parseArray(dataJson.getString("data"), DeliveryEntity.class);
+            Integer totalCount = dataJson.getInteger("total");
+            pageCount = (totalCount + pageSize - 1) / pageSize;
+            if(CollectionUtil.isNotEmpty(dataList)){
+                infoArrayList.addAll(dataList);
+            }
+            pageIndex ++;
+        }
+        return infoArrayList;
+    }
+
     public static void main(String[] args) {
-        LocalDateTime startDate = LocalDateTime.of(2021, 1, 1, 0, 0, 0);
-        LocalDateTime endDate = LocalDateTime.of(2023, 6, 7, 23, 59, 59);
+        LocalDateTime startDate = LocalDateTime.of(2023, 6, 28, 14, 0, 0);
+        LocalDateTime endDate = LocalDateTime.of(2023, 6, 28, 14, 59, 59);
+        /*
         List<ComboSkuInfoEntity> skuInfoEntities = queryComboSkuList(PlatformApiEnum.STOCK_DO_SEARCH_COMBO_SKU.getTaskName(), startDate, endDate);
         System.out.println(skuInfoEntities);
+         */
+        queryDeliveryList("hwc-get-batch-delivery-list", startDate, endDate);
     }
 
 }

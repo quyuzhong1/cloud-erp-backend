@@ -138,6 +138,11 @@ public interface MongoTableNameContant {
      */
     String ORIGINAL_MABANG_SHIPMENT = "original_mabang_shipment";
 
+    /**
+     * 马帮发货单列表
+     */
+    String ORIGINAL_MABANG_DELIVERY = "original_mabang_delivery";
+
 
     /**
      * 根据任务 key 获取表名

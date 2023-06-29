@@ -4,7 +4,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-import java.util.List;
 
 /**
  * @CreateTime: 2023-06-29  16:09
@@ -78,11 +77,11 @@ public class ShipmentItemEntity {
     /**
      * 本地信息
      */
-    private List<ShipmentItemLocalInfoEntity> localInfo;
+    private Object localInfo;
 
     /**
      * 费用信息
      */
-    private List<ShipmentCostDetailEntity> headingcostdetail;
+    private Object headingcostdetail;
 
 }
