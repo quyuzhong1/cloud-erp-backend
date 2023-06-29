@@ -1,10 +1,12 @@
 package com.erp.model.oms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -41,12 +43,22 @@ public class SkuMapingDTO implements Serializable {
          */
         private List<String> shopIdList;
 
+        /**
+         * 搜索类型
+         * alL 全部
+         * yes 已匹配
+         * no 未匹配
+         */
+        @StateEnumValue(strValues = {"all", "yes", "no"}, message = "搜索类型有误")
+        @NotBlank(message = "搜索类型不能为空")
+        private String  searchType;
+
 
 
         /**
          * 平台code 集合
          */
-        private String platformList;
+        private List<String> platformList;
 
 
 

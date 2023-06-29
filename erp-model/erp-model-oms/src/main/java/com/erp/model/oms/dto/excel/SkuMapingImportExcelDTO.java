@@ -36,7 +36,7 @@ public class SkuMapingImportExcelDTO {
 
 
     /**
-     * 平台sku
+     * sku
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "平台sku", index = 2)

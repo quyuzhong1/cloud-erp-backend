@@ -1,8 +1,14 @@
 package com.erp.server.oms.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.oms.dto.SkuMapingDTO;
 import com.erp.model.oms.entity.SkuMapingEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -15,4 +21,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface SkuMapingMapper extends BaseMapper<SkuMapingEntity> {
 
+    IPage<SkuMapingDTO.PagingViewDTO> paging(Page query, @Param("params") SkuMapingDTO.PagingParamDTO params, @Param("matchResult") Boolean matchResult, @Param("nowTime")LocalDateTime nowTime);
 }

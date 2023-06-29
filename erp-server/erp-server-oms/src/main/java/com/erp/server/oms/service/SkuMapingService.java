@@ -1,5 +1,8 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.SkuMapingDTO;
 import com.erp.model.oms.entity.SkuMapingEntity;
 import com.common.business.service.SuperService;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,4 +30,13 @@ public interface SkuMapingService extends SuperService<SkuMapingEntity> {
      * @return java.lang.Boolean
      */
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 分页查询
+     * @author yl
+     * @date 2023-06-29 18:07
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.SkuMapingDTO.PagingViewDTO>
+     */
+    PagingVO<SkuMapingDTO.PagingViewDTO> paging(PagingDTO<SkuMapingDTO.PagingParamDTO> dto);
 }

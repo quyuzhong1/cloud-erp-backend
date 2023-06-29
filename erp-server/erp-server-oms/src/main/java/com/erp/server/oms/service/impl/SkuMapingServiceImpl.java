@@ -1,10 +1,15 @@
 package com.erp.server.oms.service.impl;
 
 import com.alibaba.excel.EasyExcel;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
+import com.erp.model.oms.dto.SkuMapingDTO;
 import com.erp.model.oms.dto.excel.SkuMapingImportExcelDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMapingEntity;
@@ -18,6 +23,7 @@ import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.erp.server.oms.service.SkuMapingService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -30,6 +36,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -95,7 +102,7 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
         String key = DictBasicEnum.PLATFORM.getType();
         List<DictBasicDTO.ViewDTO> dictBasicList = dictBasicService.getByKey(key);
 
-        SkuMapingExcelListener excelListenerUtil = new SkuMapingExcelListener(this, skuList, shopInfoList, skuMapingList,dictBasicList);
+        SkuMapingExcelListener excelListenerUtil = new SkuMapingExcelListener(this, skuList, shopInfoList, skuMapingList, dictBasicList);
         try {
             EasyExcel.read(excelFile.getInputStream(), SkuMapingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
@@ -111,6 +118,57 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
 
         return Boolean.TRUE;
 
+    }
+
+    /**
+     * 分页查询
+     *
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.SkuMapingDTO.PagingViewDTO>
+     * @author yl
+     * @date 2023-06-29 18:07
+     */
+    @Override
+    public PagingVO<SkuMapingDTO.PagingViewDTO> paging(PagingDTO<SkuMapingDTO.PagingParamDTO> dto) {
+        SkuMapingDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        String searchType = params.getSearchType();
+        Boolean matchResult = null;
+        if ("yes".equals(searchType)) {
+            matchResult = Boolean.TRUE;
+        }
+        if ("no".equals(searchType)) {
+            matchResult = Boolean.FALSE;
+        }
+        IPage pageData = baseMapper.paging(query, params, matchResult, LocalDateTime.now());
+        List<SkuMapingDTO.PagingViewDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>(pageData);
+        }
+        fillDb(list);
+        return new PagingVO<>(pageData);
+
+
+    }
+
+    /**
+     * 填充数据
+     *
+     * @param list
+     * @return void
+     * @author yl
+     * @date 2023-06-29 19:15
+     */
+    private void fillDb(List<SkuMapingDTO.PagingViewDTO> list) {
+        List<String> skuIdList = list.stream().map(SkuMapingDTO.PagingViewDTO::getProductSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        for (SkuMapingDTO.PagingViewDTO item : list) {
+            String skuId = item.getProductSkuId();
+            String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                    findFirst().map(SkuVO::getSkuName).orElse("");
+            item.setPlatformSkuName(skuName);
+        }
     }
 
 
