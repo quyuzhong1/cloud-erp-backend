@@ -21,6 +21,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.dto.ProjectImportDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.ProjectImportUtil;
 import com.common.core.utils.date.DateUtil;
@@ -99,13 +100,19 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
     @Resource
     private PreTaskService preTaskService;
+
     @Resource
     private ProjectTaskService projectTaskService;
+
     @Resource
     private TaskChargeDistributionService taskChargeDistributionService;
 
     @Resource
     private ProjectPhaseService projectPhaseService;
+
+    @Resource
+    private TaskDocsNameService taskDocsNameService;
+
 
     private static final String CLASSPATH = String.valueOf(ProjectTaskEntity.class);
 
@@ -1080,6 +1087,8 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         Map<Integer, String> map = new LinkedHashMap<>();
         //约定任务负责人字段采用的文本10
         map.put(10, "taskCharge");
+        //约定交付物字段采用的文本11
+        map.put(11, "finishDoc");
         ProjectImportUtil.getChildrenTask(tasks.get(0), list, map);
 
         /**
@@ -1087,6 +1096,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
          * 2、第二级别数据任务名称为阶段，如果有则引用，无则需要新增产品阶段
          * 3、第三级别数据则属于任务，如果无任务则需要新增
          * 4、新增任务后需要新增排期
+         * 5、对应字段目标交付物-----若无交付物则新增
          */
         //阶段信息
         List<ProjectImportDTO> phaseList = list.stream().filter(obj -> MathUtil.TWO.equals(obj.getTaskOutlineLevel())).collect(Collectors.toList());
@@ -1121,6 +1131,8 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         if (chargeCount > 0) {
             throw new ServiceException(new ApiResult(ApiError.ERROR_1036.code, StrUtil.format(ApiError.ERROR_1036.msg, "二")));
         }
+        //任务交付物
+        List<DocsDTO> docsList = handleDocName(taskList, productId);
 
         //所有任务负责人
         List<String> taskChargeList = taskList.stream().map(obj -> ObjectUtils.isEmpty(obj.getCustomFieldValues()) ? "" : obj.getCustomFieldValues().get("taskCharge")).flatMap(s -> {
@@ -1158,6 +1170,14 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                     throw new ServiceException(new ApiResult(ApiError.ERROR_1037.code, StrUtil.format(ApiError.ERROR_1037.msg, taskChargeName)));
                 }
                 chargeIds.add(chargeId);
+            }
+
+            //交付物
+            String finishDoc = customFieldValues.get("finishDoc");
+            if (StringUtils.isNotBlank(finishDoc)) {
+                List<String> finishDocNameList = Arrays.stream(finishDoc.split("\\/")).collect(Collectors.toList());
+                List<DocsDTO> deliveryDocsList = docsList.stream().filter(obj -> finishDocNameList.contains(obj.getName())).collect(Collectors.toList());
+                projectTaskDTO.setDeliveryDocsList(deliveryDocsList);
             }
 
             //任务阶段
@@ -1211,6 +1231,42 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         }
 
         return Boolean.TRUE;
+    }
+
+    /**
+     * @description: 格式化交付物
+     * @author Will
+     * @date: 2023/6/29 16:56
+     * @param taskList
+     * @param productId
+     * @return List<DocsDTO>
+     */
+    private List<DocsDTO> handleDocName(List<ProjectImportDTO> taskList,String productId) {
+        //交付物
+        List<String> finishDocList = taskList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getCustomFieldValues()) && StringUtils.isNotBlank(obj.getCustomFieldValues().get("finishDoc"))).map(obj -> obj.getCustomFieldValues().get("finishDoc")).collect(Collectors.toList());
+        List<String> allFinishDocList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(finishDocList)) {
+            for (String finishDoc : finishDocList) {
+                List<String> finishDocNameList = Arrays.stream(finishDoc.split("\\/")).collect(Collectors.toList());
+                allFinishDocList.addAll(finishDocNameList);
+            }
+            allFinishDocList = allFinishDocList.stream().distinct().collect(Collectors.toList());
+        }
+        List<TaskDocsNameEntity> taskDocsNameList = taskDocsNameService.listByNames(productId, allFinishDocList);
+        List<TaskDocsNameEntity> docEntityList = new ArrayList<>();
+        for (String docName : allFinishDocList) {
+            TaskDocsNameEntity docsDTO = new TaskDocsNameEntity();
+            String docId = taskDocsNameList.stream().filter(obj -> obj.getName().equals(docName)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+            docsDTO.setId(docId);
+            docsDTO.setName(docName);
+            docEntityList.add(docsDTO);
+        }
+        boolean saveOrUpdate = taskDocsNameService.saveOrUpdateBatch(docEntityList);
+        if (!saveOrUpdate) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        List<DocsDTO> docList = BeanMapperUtils.copyList(DocsDTO.class, docEntityList);
+        return docList;
     }
 
 

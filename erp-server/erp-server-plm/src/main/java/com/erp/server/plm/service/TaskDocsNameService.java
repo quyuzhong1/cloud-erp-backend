@@ -31,4 +31,13 @@ public interface TaskDocsNameService  extends IService<TaskDocsNameEntity> {
      * @return java.lang.String
      **/
     String saveDocs(DocsNameDTO dto);
+    /**
+     * @description: 根据产品id和交付物名称查询
+     * @author Will
+     * @date: 2023/6/29 16:45
+     * @param productId
+     * @param docNames
+     * @return List<TaskDocsNameEntity>
+     */
+    List<TaskDocsNameEntity> listByNames(String productId, List<String> docNames);
 }

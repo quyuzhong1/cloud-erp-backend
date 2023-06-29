@@ -38,7 +38,7 @@ public class SubcontractOrderController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "scm:subcontractOrder:tabList",
+            menuCode = "scm:subcontractOrder:paging",
             tableAlias = "so"
     )
     public ApiResult<List<SubcontractOrderDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
