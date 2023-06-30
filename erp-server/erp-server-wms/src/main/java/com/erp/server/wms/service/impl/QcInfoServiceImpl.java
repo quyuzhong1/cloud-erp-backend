@@ -39,9 +39,7 @@ import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.QcBillExportExcelDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.QcBillStatusEnum;
-import com.erp.model.wms.enums.QcResultEnum;
-import com.erp.model.wms.enums.QcTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
@@ -1536,6 +1534,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //根据销售单获取出库单
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySoIds(soIds);
         for (SoReturnInstockDTO.GenerateSoReturnInstockView view : list) {
+            view.setReturnTypeDictName(ReturnTypeEnum.getName(view.getReturnTypeDict()));
+            view.setReturnReasonDictName(ReturnReasonEnum.getName(view.getReturnReasonDict()));
             //拿到签收单id
             SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveEntities.stream().filter(req -> req.getId().equals(view.getSourceId())).findFirst().orElse(new SoReturnReceiveEntity());
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(view.getSourceDetailId())).findFirst().orElse(new SoReturnReceiveDetailEntity());
