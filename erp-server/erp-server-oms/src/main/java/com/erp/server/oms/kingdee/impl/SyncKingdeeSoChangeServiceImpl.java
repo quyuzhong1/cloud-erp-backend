@@ -13,6 +13,7 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoChangeDetailEntity;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.enums.SoChangeTypeEnum;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -176,8 +177,13 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             //要货日期
             LocalDate requireDate = soInfo.getRequireDate();
             List<JSONObject> list = new ArrayList<>(detailList.size());
+            //表示删除
+            String deleteCode = SoChangeTypeEnum.DELETE.getCode();
             for (SoChangeDetailDTO.ViewDTO item : detailList) {
                 JSONObject jsonObject = new JSONObject();
+                String changeType = item.getChangeType().getCode();
+                //是否是删除
+                Boolean isDelete = deleteCode.equals(changeType);
                 //金蝶详情id
                 jsonObject.set("kingdeeDetailId", item.getKingdeeDetailId());
                 jsonObject.set("skuNo", item.getSkuNo());
@@ -185,16 +191,29 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
                 jsonObject.set("soDetailId", item.getSoDetailId());
                 jsonObject.set("requireDate", requireDate);
                 jsonObject.set("oldQty", item.getOldQty());
-                jsonObject.set("qty", item.getQty());
-                jsonObject.set("baseQty", item.getQty());
-                jsonObject.set("stockBaseQty", item.getQty());
-                jsonObject.set("currentInventoryQty", item.getQty());
-                jsonObject.set("curInventoryQty", item.getQty());
-                jsonObject.set("price", item.getPrice());
+                if (isDelete) {
+                    jsonObject.set("qty", item.getOldQty());
+                    jsonObject.set("baseQty", item.getOldQty());
+                    jsonObject.set("stockBaseQty", item.getOldQty());
+                    jsonObject.set("currentInventoryQty", item.getOldQty());
+                    jsonObject.set("curInventoryQty", item.getOldQty());
+                    jsonObject.set("price", item.getOldPrice());
+                    jsonObject.set("taxPrice", item.getOldPrice());
+                    jsonObject.set("taxRate", item.getOldTaxRate());
+
+                }else{
+                    jsonObject.set("qty", item.getQty());
+                    jsonObject.set("baseQty", item.getQty());
+                    jsonObject.set("stockBaseQty", item.getQty());
+                    jsonObject.set("currentInventoryQty", item.getQty());
+                    jsonObject.set("curInventoryQty", item.getQty());
+                    jsonObject.set("price", item.getPrice());
+                    jsonObject.set("taxPrice", item.getTaxPrice());
+                    jsonObject.set("taxRate", item.getTaxRate());
+                }
+
                 jsonObject.set("oldPrice", item.getOldPrice());
                 jsonObject.set("oldTaxPrice", item.getOldTaxPrice());
-                jsonObject.set("taxPrice", item.getTaxPrice());
-                jsonObject.set("taxRate", item.getTaxRate());
                 jsonObject.set("oldTaxRate", item.getOldTaxRate());
                 jsonObject.set("isGift", false);
                 jsonObject.set("unit", "Pcs");
