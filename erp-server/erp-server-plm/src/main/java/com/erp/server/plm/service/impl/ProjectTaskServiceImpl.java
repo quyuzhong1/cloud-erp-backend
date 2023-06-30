@@ -4032,7 +4032,10 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 List<ProjectTaskEntity> otherTaskList = taskList.stream().filter(t -> !t.getIsChangeDocs()).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(changeDocTaskList)) {
                     Integer finishStatus = TaskStateEnum.FINISH.getCode();
-                    changeDocTaskList.forEach(c -> c.setStatus(finishStatus));
+                    for(ProjectTaskEntity changeDoc: changeDocTaskList){
+                        changeDoc.setStatus(finishStatus);
+                        changeDoc.setProcessId("");
+                    }
                     this.updateBatchById(changeDocTaskList);
                 }
                 if (CollectionUtils.isNotEmpty(otherTaskList)) {
@@ -4045,6 +4048,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         }else{
                             task.setStatus(TaskStateEnum.ING.getCode());
                         }
+                        task.setProcessId("");
                     }
                     this.updateBatchById(otherTaskList);
                 }

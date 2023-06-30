@@ -4,20 +4,17 @@ package com.erp.server.oms.controller.api;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ShopDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.server.oms.service.ShopInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
- * <p>
- * 店铺表 前端控制器
- * </p>
+ * 店铺管理
  *
  * @author Lambda
  * @since 2023-06-28
@@ -39,6 +36,18 @@ public class ShopInfoController extends BaseController {
     public ApiResult add(@RequestBody @Validated ShopDTO.AddDTO dto) {
         String id = shopInfoService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
+    }
+
+
+    /**
+     * 获取店铺列表
+     *
+     * @return
+     */
+    @GetMapping("/list")
+    public ApiResult<List<ShopInfoEntity>> list() {
+        List<ShopInfoEntity> list = shopInfoService.list();
+        return success(list);
     }
 
 }
