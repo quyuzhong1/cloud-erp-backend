@@ -234,19 +234,19 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NODE_NOT_EXIST);
         }
         String processInstanceId = managementTask.getProcessInstanceId();
-        // 保存流程任务数据
-        updateApprove(managementTask.getTaskManagementId(), dto.getApproveType(), managementTask.getManagementId(), processInstanceId,dto.getComment());
+
         //添加审批意见
         identityService.setAuthenticatedUserId(dto.getUserId());
-        Map<String, Object> variablesMap = dto.getVariablesMap();
-        variablesMap.put("ApproveStatus", dto.getApproveType().getStatus());
+        Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
+        variables.put("approveType", dto.getApproveType().getStatus());
+        runtimeService.setVariables(processInstanceId, variables);
         if(ApproveTypeEnum.PASS.equals(dto.getApproveType())) {
             // 审核通过
             taskService.createComment(managementTask.getTaskId(), processInstanceId, dto.getComment());
-            updateApprove(managementTask.getTaskManagementId(), dto.getApproveType(), managementTask.getManagementId(), processInstanceId,dto.getComment());
+            Map<String, Object> variablesMap = dto.getVariablesMap();
+            variablesMap.put("approveType", dto.getApproveType().getStatus());
             taskService.complete(managementTask.getTaskId(), variablesMap);
         }
-
         if(ApproveTypeEnum.REJECT.equals(dto.getApproveType())) {
             // 审核不通过
             runtimeService.createProcessInstanceModification(processInstanceId)
@@ -255,6 +255,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                     .setAnnotation(dto.getComment())
                     .execute();
         }
+        // 保存流程任务数据
+        updateApprove(managementTask.getTaskManagementId(), dto.getApproveType(), managementTask.getManagementId(), processInstanceId,dto.getComment());
         return new ProcessManagementDTO.ApproveResultDTO(currentTask.getProcessDefinitionId(), currentTask.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName(),currentTask.getId(),currentTask.getName(), currentTask.getTaskDefinitionKey());
     }
 
@@ -360,8 +362,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         HistoricActivityInstance historicActivityInstance = historyActivityList.get(0);
         ActivityInstance activityInstance = runtimeService.getActivityInstance(processInstanceId);
         if(ApproveTypeEnum.REJECT_APPOINT.equals(dto.getApproveType())) {
-            // 保存流程任务数据
-            backUpdateApprove(managementTask.getTaskManagementId(), managementTask.getManagementId(), dto.getApproveType(),dto.getActivityId(), dto.getComment());
+            Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
+            variables.put("approveType", ApproveTypeEnum.REJECT_APPOINT.getStatus());
+            runtimeService.setVariables(processInstanceId, variables);
             // 驳回指定节点
             runtimeService
                     .createProcessInstanceModification(processInstanceId)
@@ -372,6 +375,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                     //流程的可变参数赋值
                     .setVariables(dto.getVariablesMap())
                     .execute();
+            // 保存流程任务数据
+            backUpdateApprove(managementTask.getTaskManagementId(), managementTask.getManagementId(), dto.getApproveType(),dto.getActivityId(), dto.getComment());
         }
         return new ProcessManagementDTO.BackResultDTO(activityInstance.getProcessDefinitionId(), activityInstance.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName(), historicActivityInstance.getActivityId(), historicActivityInstance.getActivityName());
     }
@@ -457,6 +462,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 ExecutionEntity executionEntity = (ExecutionEntity) execution;
                 // 根据节点状态进行撤回操作
                 if (executionEntity.isActive() && !executionEntity.isEnded() && !executionEntity.getActivityId().equals(initialActivityId)) {
+                    String processInstanceId = executionEntity.getProcessInstanceId();
+                    Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
+                    variables.put("approveType", ApproveTypeEnum.REVOKE.getStatus());
+                    runtimeService.setVariables(processInstanceId, variables);
                     runtimeService.deleteProcessInstance(execution.getProcessInstanceId(), "process revoke", true);
                     historyService.deleteHistoricProcessInstance(execution.getProcessInstanceId());
                     break;
@@ -743,8 +752,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .eq(ProcessManagementEntity::getProcessInstanceId, processInstanceId)
                 .oneOpt().orElseThrow(() -> new ServiceException(ApiError.ERROR_PROCESS_NOT_EXIST));
         ProcessTaskManagementEntity taskEntity = processTaskManagementService.lastTask(processInstanceId);
+        Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
+        String approveTypeCode = (String)variables.getOrDefault("approveType", "");
         // 流程信息传递给业务系统
-        EndProcessDTO dto = new EndProcessDTO(entity, taskEntity);
+        EndProcessDTO dto = new EndProcessDTO(entity, taskEntity, approveTypeCode);
         // 获取业务系统feign
         WorkMenuEntity menuEntity = workMenuService.getByModuleCode(entity.getBusinessKey());
         String feignBeanName = menuEntity.getFeignBeanName();

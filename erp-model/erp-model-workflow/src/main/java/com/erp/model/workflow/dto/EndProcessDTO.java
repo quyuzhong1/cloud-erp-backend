@@ -33,7 +33,7 @@ public class EndProcessDTO {
     /**
      * 审批结果
      */
-    private ApproveStatusEnum approveStatus;
+    private ApproveTypeEnum approveStatus;
 
     /**
      * 最近任务审批人
@@ -50,10 +50,10 @@ public class EndProcessDTO {
      */
     private String comment;
 
-    public EndProcessDTO(ProcessManagementEntity entity, ProcessTaskManagementEntity taskEntity) {
+    public EndProcessDTO(ProcessManagementEntity entity, ProcessTaskManagementEntity taskEntity, String approveTypeCode) {
         this.businessKey = entity.getBusinessKey();
         this.businessId = entity.getBusinessId();
-        this.approveStatus = entity.getApproveStatus();
+        this.approveStatus = ApproveTypeEnum.getByCode(approveTypeCode);
         this.approveUserId = taskEntity.getApproveId();
         this.approveTime = taskEntity.getApproveTime();
         this.comment = taskEntity.getRemark();

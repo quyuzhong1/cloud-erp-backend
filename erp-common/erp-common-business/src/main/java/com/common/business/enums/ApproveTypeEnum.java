@@ -22,6 +22,7 @@ public enum ApproveTypeEnum {
      * 驳回指定节点
      */
     REJECT_APPOINT("reject_appoint", "驳回指定节点"),
+    REVOKE("revoke", "撤回流程"),
     ;
     @JsonValue
     @EnumValue
@@ -55,12 +56,6 @@ public enum ApproveTypeEnum {
     public static ApproveTypeEnum getByCode(String code) {
         return Arrays.stream(ApproveTypeEnum.values())
                 .filter(e -> e.getStatus().equals(code))
-                .findFirst()
-                .orElse(null);
-    }
-    public static ApproveTypeEnum getByApproveStatus(ApproveStatusEnum approveStatus) {
-        return Arrays.stream(ApproveTypeEnum.values())
-                .filter(e -> e.getStatus().equals("approve".equals(approveStatus.getStatus()) ? "pass" : approveStatus.getStatus()))
                 .findFirst()
                 .orElse(null);
     }
