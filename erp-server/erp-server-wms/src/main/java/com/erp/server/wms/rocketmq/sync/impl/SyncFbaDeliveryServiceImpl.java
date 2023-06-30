@@ -73,6 +73,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
             addDTO.setWarehouseId(warehouseEntity.getId());
             addDTO.setSourceType(sourceType);
             addDTO.setSourceId(entity.getDeliveryId());
+            addDTO.setSourceCode(entity.getDeliveryNo());
 
             // 加工单明细信息
             List<MachineDetailDTO.AddDTO> detailList = Lists.newArrayList();

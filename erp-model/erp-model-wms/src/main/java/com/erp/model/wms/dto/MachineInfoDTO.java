@@ -244,6 +244,11 @@ public class MachineInfoDTO implements Serializable {
          */
         private String sourceType;
 
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
     }
 
     @Data
