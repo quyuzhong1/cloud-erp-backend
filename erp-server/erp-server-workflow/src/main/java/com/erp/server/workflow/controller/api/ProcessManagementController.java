@@ -74,7 +74,7 @@ public class ProcessManagementController extends BaseController {
 
 
     /**
-     * 驳回流程
+     * 流程驳回到指定节点
      * @param dto
      */
     @PostMapping("/back")

@@ -632,7 +632,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         list.forEach(obj -> {
             //发送消息
             ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
-            approveDTO.setApproveType(ApproveTypeEnum.getByApproveStatus(obj.getApproveStatus()));
+            approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
             approveDTO.setUserId(uid);
             approveDTO.setBusinessId(obj.getId());
             approveDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_INFO.getCode());
