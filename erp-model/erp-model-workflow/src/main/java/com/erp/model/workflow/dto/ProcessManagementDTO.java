@@ -249,6 +249,10 @@ public class ProcessManagementDTO {
          * 当前业务名称
          */
         private String businessName;
+        /**
+         * 当前业务key
+         */
+        private String businessKey;
 
         /**
          * 当前节点id
@@ -259,15 +263,28 @@ public class ProcessManagementDTO {
          * 当前节点名称
          */
         private String activityName;
+        /**
+         * 流程是否存在
+         */
+        private Boolean isExistProcess;
 
-        public BackResultDTO(String processDefinitionId, String processInstanceId, String businessId, String businessName, String activityId, String activityName) {
-            this.processDefinitionId = processDefinitionId;
-            this.processInstanceId = processInstanceId;
-            this.businessId = businessId;
-            this.businessName = businessName;
+        public BackResultDTO( String activityId, String activityName,  ManagementTaskDTO managementTask) {
+            this.processDefinitionId = managementTask.getProcessDefinitionId();
+            this.processInstanceId = managementTask.getProcessInstanceId();
+            this.businessId = managementTask.getBusinessId();
+            this.businessName = managementTask.getBusinessName();
             this.activityId = activityId;
             this.activityName = activityName;
+            this.isExistProcess = true;
+            this.businessKey = managementTask.getBusinessKey();
         }
+
+        public BackResultDTO(BackDTO dto) {
+            this.businessId = dto.getBusinessId();
+            this.businessName = dto.getBusinessKey();
+            this.isExistProcess = false;
+        }
+
     }
 
 
@@ -598,11 +615,20 @@ public class ProcessManagementDTO {
          */
         private String businessName;
 
+        private Boolean isExistProcess;
+
         public RevokeResultDTO(String processDefinitionId, String processInstanceId, String businessId, String businessName) {
             this.processDefinitionId = processDefinitionId;
             this.processInstanceId = processInstanceId;
             this.businessId = businessId;
             this.businessName = businessName;
+            this.isExistProcess = true;
+        }
+
+        public RevokeResultDTO(RevokeDTO dto) {
+            this.businessId = dto.getBusinessId();
+            this.businessName = dto.getBusinessKey();
+            this.isExistProcess = false;
         }
     }
 

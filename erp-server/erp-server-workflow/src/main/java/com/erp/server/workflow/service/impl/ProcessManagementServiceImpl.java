@@ -331,6 +331,12 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.BackResultDTO back(ProcessManagementDTO.BackDTO dto) {
+        // 查询业务数据和关联流程定义
+        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"");
+        if (null == processBusiness) {
+            // 业务未绑定流程定义
+            return new ProcessManagementDTO.BackResultDTO(dto);
+        }
         // 查询流程数据
         ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
         // 审核人校验
@@ -378,7 +384,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 保存流程任务数据
             backUpdateApprove(managementTask.getTaskManagementId(), managementTask.getManagementId(), dto.getApproveType(),dto.getActivityId(), dto.getComment());
         }
-        return new ProcessManagementDTO.BackResultDTO(activityInstance.getProcessDefinitionId(), activityInstance.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName(), historicActivityInstance.getActivityId(), historicActivityInstance.getActivityName());
+        return new ProcessManagementDTO.BackResultDTO(historicActivityInstance.getActivityId(), historicActivityInstance.getActivityName(),managementTask);
     }
 
     @Override
@@ -434,6 +440,12 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.RevokeResultDTO revoke(ProcessManagementDTO.RevokeDTO dto) {
+        // 查询业务数据和关联流程定义
+        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"");
+        if (null == processBusiness) {
+            // 业务未绑定流程定义
+            return new ProcessManagementDTO.RevokeResultDTO(dto);
+        }
         // 查询流程实例
         ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
         if (null == managementTask) {
