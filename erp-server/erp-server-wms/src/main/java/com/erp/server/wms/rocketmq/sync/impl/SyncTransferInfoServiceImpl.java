@@ -3,6 +3,7 @@ package com.erp.server.wms.rocketmq.sync.impl;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -15,7 +16,6 @@ import com.erp.model.dmp.entity.DmpTransferInfoDetailEntity;
 import com.erp.model.dmp.entity.DmpTransferInfoEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.wms.dto.TransferInfoDTO;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
 import com.erp.model.wms.entity.TransferInfoDetailEntity;
@@ -147,7 +147,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         List<BaseIdDTO.CodeDTO> companyList = sysUserFeign.listAccountingCompanyByCodeList(Arrays.asList(entity.getInOrgCode(), entity.getOutOrgCode()));
 
         //仓管员信息
-        List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoList = sysUserFeign.listUserKingdeePostByKingdeePostCodes(Arrays.asList(entity.getWarehouseKeeperCode()));
+        List<FindUserDTO> userList = sysUserFeign.listUserByCodeList(Arrays.asList(entity.getWarehouseKeeperCode()));
 
         //主表id赋值
         if (ObjectUtils.isNotEmpty(viewDTO)) {
@@ -204,8 +204,8 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
             resultEntity.setOutWarehouseCode(outWarehouseCode);
         }
         //仓管员
-        if (CollectionUtils.isNotEmpty(userKingdeePostInfoList)) {
-            String warehousekeeperId = userKingdeePostInfoList.stream().filter(obj -> obj.getKingdeePostCode().equals(entity.getWarehouseKeeperCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getUserId())).orElse("");
+        if (CollectionUtils.isNotEmpty(userList)) {
+            String warehousekeeperId = userList.stream().filter(obj -> obj.getCode().equals(entity.getWarehouseKeeperCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getUserId())).orElse("");
             resultEntity.setWarehouseKeeperId(warehousekeeperId);
         }
         //产品信息

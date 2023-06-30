@@ -331,7 +331,7 @@ public enum ApiError implements Serializable {
     ERROR_95156(95156, "该文档已被引用状态不能关闭"),
     ERROR_95157(95157, "请选择模板"),
     ERROR_MSG_IS_NOT_NULL(95158, "消息模板不能为空"),
-    ERROR_NOT_FOUND_SKU(95159,"SKU{}不存在"),
+    ERROR_NOT_FOUND_SKU(95159,"SKU【{}】不存在"),
     ERROR_95160(95160,"文件不可超过{}m"),
 
 

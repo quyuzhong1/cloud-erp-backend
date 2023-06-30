@@ -197,6 +197,16 @@ public class SysUserFeignController extends BaseController {
     }
 
     /**
+     * 根据用户code集合获取用户list
+     * return
+     */
+    @PostMapping("/listUserByCodeList")
+    public List<FindUserDTO> listUserByCodeList(@RequestBody List<String> codeList) {
+        List<FindUserDTO> list = sysUserInfoService.listUserByKingdeeCode(codeList);
+        return list;
+    }
+
+    /**
      * 根据用户id获取用户
      *
      * @return

@@ -25,6 +25,13 @@ public class KingdeeTransferDirectItemEntity {
      * (明细信息)调出仓库#编码
      */
     private String FSrcStockId;
+
+    /**
+     * (明细信息)调出仓库#编码
+     */
+    @Alias("FSrcStockId.FNumber")
+    private String FSrcStockIdFNumber;
+
     /**
      * (明细信息)调出仓库#名称
      */
@@ -34,6 +41,13 @@ public class KingdeeTransferDirectItemEntity {
      * (明细信息)调入仓库#编码
      */
     private String FDestStockId;
+
+    /**
+     * (明细信息)调入仓库#编码
+     */
+    @Alias("FDestStockId.FNumber")
+    private String FDestStockIdFNumber;
+
     /**
      * (明细信息)调入仓库#名称
      */

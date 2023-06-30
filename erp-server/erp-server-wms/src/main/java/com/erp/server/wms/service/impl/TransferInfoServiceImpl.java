@@ -513,7 +513,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //主表信息
         TransferInfoEntity entity = this.getTransferInfoByCode(code);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_99047);
+            return viewDTO;
         }
         BeanMapperUtils.copy(entity, viewDTO);
         List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainId(entity.getId());

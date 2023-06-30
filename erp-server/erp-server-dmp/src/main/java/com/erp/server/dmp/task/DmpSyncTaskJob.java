@@ -3,7 +3,7 @@ package com.erp.server.dmp.task;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
+import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.entity.DmpSyncTaskEntity;
@@ -47,7 +47,7 @@ public class DmpSyncTaskJob {
         XxlJobHelper.log("DmpSyncTaskJob start");
         // 查询DMP同步数据
         List<DmpSyncTaskEntity> recordEntityList = dmpSyncTaskService.lambdaQuery()
-                .in(DmpSyncTaskEntity::getStatus, Arrays.asList( "-1"))
+                .in(DmpSyncTaskEntity::getStatus, Arrays.asList(SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
                 .le(DmpSyncTaskEntity::getUpdateTime, LocalDateTime.now().minusHours(1))
                 .list();
 

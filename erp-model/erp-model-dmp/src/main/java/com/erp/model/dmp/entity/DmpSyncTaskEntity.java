@@ -1,13 +1,14 @@
 package com.erp.model.dmp.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 
 /**
@@ -50,7 +51,7 @@ public class DmpSyncTaskEntity extends BaseEntity<DmpSyncTaskEntity> {
     private String mqData;
 
     /**
-    * 同步状态-1同步失败，0未同步，1同步成功
+    * 同步状态SyncKingdeeStatusEnum
     */
     @TableField("status")
     private String status;

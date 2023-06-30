@@ -164,17 +164,17 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
         LocalDateTime nextTime = dto.getJobTaskDTO().getNextTime();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(StrUtil.format("FModifyDate >= {}", sdf.format(lastTime.minusMinutes(2))));
-        queryFilters.add(StrUtil.format("FModifyDate < {}", sdf.format(nextTime)));
+        queryFilters.add(StrUtil.format("FModifyDate >= '{}'", sdf.format(lastTime.minusMinutes(2))));
+        queryFilters.add(StrUtil.format("FModifyDate < '{}'", sdf.format(nextTime)));
         queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'B','C','D'"));
         queryFilters.add(StrUtil.format("FThirdSystem != '{}'", CommonConstants.SYSTEM));
         String filterStr = String.join(" and ",  queryFilters );
         String fieldKeys = "FId,FBillNo,FBizType,FTransferDirect,FTransferBizType,FSaleOrgId,FSaleOrgId.FName," +
                 "FSettleOrgId,FSettleOrgId.FName,FStockOutOrgId,FStockOutOrgId.FName,FOwnerOutIdHead,FOwnerOutIdHead.FName," +
                 "FStockOrgId,FStockOrgId.FName,FSettleCurrId,FSettleCurrId.FName,FExchangeTypeId,FExchangeTypeId.FName,FExchangeRate," +
-                "FDate,FNote,FBaseCurrId,FBaseCurrId.FName,FDocumentStatus,FDocumentStatus.FCaption,FApproverId,FApproverId.FName,FApproveDate," +
+                "FDate,FNote,FBaseCurrId,FBaseCurrId.FName,FDocumentStatus,FDocumentStatus.FCaption,FApproverId,FApproverId.FName,FApproveDate,FSTOCKERID.FNumber," +
                 "FCancellerId,FCancellerId.FName,FCreateDate,FCreatorId,FCreatorId.FName,FModifierId,FModifierId.FName,FModifyDate,FCancelStatus,FCancelStatus.FCaption,FCancelDate," +
-                "FBillEntry_FEntryID,FSrcStockId,FSrcStockId.FName,FDestStockId,FDestStockId.FName," +
+                "FBillEntry_FEntryID,FSrcStockId,FSrcStockId.FNumber,FSrcStockId.FName,FDestStockId,FDestStockId.FNumber,FDestStockId.FName," +
                 "FRowType,FMaterialId,FMaterialId.FName,FUnitID,FUnitID.FName,FQty," +
                 "FSrcStockStatusId,FSrcStockStatusId.FName,FDestStockStatusId,FDestStockStatusId.FName,FBusinessDate,FIsFree,FDestMaterialId,FDestMaterialId.FName";;
 
@@ -199,11 +199,11 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
             pageIndex++;
         }
         List<KingdeeTransferDirectEntity> entityList = resultAll.stream().map(entity ->
-                        BeanUtil.toBean(entity, KingdeeTransferDirectEntity.class)).distinct()
+                        BeanUtil.toBeanIgnoreError(entity, KingdeeTransferDirectEntity.class)).distinct()
                 .collect(Collectors.toList());
 
         Map<String, List<KingdeeTransferDirectItemEntity>> itemMap = resultAll.stream().map(entity ->
-                        BeanUtil.toBean(entity, KingdeeTransferDirectItemEntity.class))
+                        BeanUtil.toBeanIgnoreError(entity, KingdeeTransferDirectItemEntity.class))
                 .collect(Collectors.groupingBy(KingdeeTransferDirectItemEntity::getFBillNo));
         entityList.stream().peek(m -> m.setItemList(itemMap.get(m.getFBillNo())))
                 .distinct()
@@ -242,9 +242,9 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
         resultEntity.setPlatformSign(PlatformEnum.KINGDEE.getDesc());
         if(CollectionUtil.isNotEmpty(entity.getItemList())){
             KingdeeTransferDirectItemEntity itemEntity = entity.getItemList().get(0);
-            resultEntity.setInWarehouseCode(itemEntity.getFDestStockId());
+            resultEntity.setInWarehouseCode(itemEntity.getFDestStockIdFNumber());
             resultEntity.setInWarehouseName(itemEntity.getFDestStockIdFName());
-            resultEntity.setOutWarehouseCode(itemEntity.getFSrcStockId());
+            resultEntity.setOutWarehouseCode(itemEntity.getFSrcStockIdFNumber());
             resultEntity.setOutWarehouseName(itemEntity.getFSrcStockIdFName());
         }
         resultEntity.setDetailList(initOrderItem(entity));

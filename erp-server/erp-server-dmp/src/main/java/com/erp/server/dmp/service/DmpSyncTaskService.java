@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service;
-import com.erp.model.dmp.entity.DmpSyncTaskEntity;
+
 import com.common.business.service.SuperService;
+import com.erp.model.dmp.entity.DmpSyncTaskEntity;
 
 /**
  * <p>
@@ -21,5 +22,11 @@ public interface DmpSyncTaskService extends SuperService<DmpSyncTaskEntity> {
      */
     void updateSyncInfo(String id, String syncStatus, String responseMsg);
 
-
+    /**
+     * @description: 新增或修改任务数据
+     * @author Will
+     * @date: 2023/6/30 15:40
+     * @param dmpSyncTaskEntity
+     */
+    void saveOrUpdateDmpSyncTask(DmpSyncTaskEntity dmpSyncTaskEntity);
 }

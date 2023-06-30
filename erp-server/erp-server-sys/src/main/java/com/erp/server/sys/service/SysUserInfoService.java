@@ -202,5 +202,6 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @return java.util.List<com.common.business.dto.FindUserDTO>
      */
     List<FindUserDTO> listUserByKingdeeCode(List<String> kingdeeCodeList);
+
 }
 

@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -340,12 +341,12 @@ public class MQConsumerService {
             dmpSyncTaskEntity.setSouceType(SourceTypeEnum.STK_TRANSFERDIRECT.getCode());
             dmpSyncTaskEntity.setSourceId(ext.getSourceId());
             dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
-            dmpSyncTaskEntity.setStatus("0");
+            dmpSyncTaskEntity.setStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
             dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
-            dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.MABANG_INOUT_STOCK_TAG.getName());
+            dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.SYNC_KINGDEE_TRANSFER_INFO_TO_WMS_TAG.getName());
             String mqData = JSONObject.toJSONString(ext);
             dmpSyncTaskEntity.setMqData(mqData);
-            dmpSyncTaskService.save(dmpSyncTaskEntity);
+            dmpSyncTaskService.saveOrUpdateDmpSyncTask(dmpSyncTaskEntity);
             MapUtil mapUtil = getMapParam();
             if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
                 OrderMongoDTO updateDto = new OrderMongoDTO(ext.getSourceId());

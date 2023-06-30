@@ -124,6 +124,13 @@ public interface SysUserFeign {
     List<FindUserDTO> getUserListByUserIds(@RequestBody List<String> userIds);
 
     /**
+     * 根据编码集合查询
+     */
+    @GetMapping("feign/user/listUserByCodeList")
+    List<FindUserDTO> listUserByCodeList(List<String> codeList);
+
+
+    /**
      * 查询sku编码
      */
     @PostMapping("feign/code/getSkuNo")
@@ -396,4 +403,5 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/user/listUserKingdeePostByKingdeePostCodes")
     List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByKingdeePostCodes(@RequestBody List<String> kingdeePostCodes);
+
 }
