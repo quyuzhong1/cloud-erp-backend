@@ -85,6 +85,10 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
              * 1、现有状态为已审核或审核中时需要反审核后更新数据
              * 2、如果拉取数据非已审核数据则修改数据后无需提交审核
              */
+            if (!oldTransferInfo.getSourceType().equals(newTransferInfo.getSourceType())) {
+                throw new ServiceException(ApiError.ERROR_99077,oldTransferInfo.getCode());
+            }
+
             if (ApproveStatusEnum.APPROVE.getStatus().equals(oldTransferInfo.getApproveStatus())) {
                 transferInfoService.disApprove(Arrays.asList(oldTransferInfo.getId()));
             }
@@ -181,6 +185,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         resultEntity.setSourceId(entity.getSourceId());
         resultEntity.setSourceCode(entity.getCode());
         resultEntity.setSourceType(SourceTypeEnum.STK_TRANSFERDIRECT.getCode());
+        resultEntity.setBillDate(entity.getBillDate().toLocalDate());
 
         //调入仓库
         String inWarehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(entity.getInWarehouseCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
@@ -193,15 +198,15 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         if (StringUtils.isBlank(outWarehouseId)) {
             throw new ServiceException(ApiError.ERROR_99076,entity.getOutWarehouseCode());
         }
-        resultEntity.setOutWarehouseCode(outWarehouseId);
+        resultEntity.setOutWarehouseId(outWarehouseId);
 
         if (CollectionUtils.isNotEmpty(companyList)) {
             //入库组织
-            String inWarehouseCode = companyList.stream().filter(obj -> obj.getCode().equals(entity.getInOrgCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
-            resultEntity.setInWarehouseCode(inWarehouseCode);
+            String inOrgId = companyList.stream().filter(obj -> obj.getCode().equals(entity.getInOrgCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+            resultEntity.setInOrgId(inOrgId);
             //出库组织
-            String outWarehouseCode = companyList.stream().filter(obj -> obj.getCode().equals(entity.getInOrgCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
-            resultEntity.setOutWarehouseCode(outWarehouseCode);
+            String outOrgId = companyList.stream().filter(obj -> obj.getCode().equals(entity.getInOrgCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+            resultEntity.setOutOrgId(outOrgId);
         }
         //仓管员
         if (CollectionUtils.isNotEmpty(userList)) {

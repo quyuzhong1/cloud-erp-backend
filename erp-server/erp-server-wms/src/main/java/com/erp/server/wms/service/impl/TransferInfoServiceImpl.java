@@ -180,14 +180,16 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //处理数据id
         doOpHandleDataId(dto.getInWarehouseId(), dto.getOutWarehouseId(), dto.getWarehouseKeeperId(), entity);
         log.info("直接调拨单新增");
-        //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.ZJDB, BusinessNoTypeEnum.CODE_ZJDB.getCode()));
-        entity.setCode(code);
+        if (StringUtils.isBlank(dto.getCode())) {
+            //生成单号
+            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.ZJDB, BusinessNoTypeEnum.CODE_ZJDB.getCode()));
+            entity.setCode(code);
+        }
         //新增主表数据
         boolean save = this.save(entity);
         if (save) {
             //操作日志
-            operateLogService.addModuleOperateLog(String.format("新增了一个直接调拨单【%s】", code), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "新增操作");
+            operateLogService.addModuleOperateLog(String.format("新增了一个直接调拨单【%s】", entity.getCode()), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "新增操作");
             //新增明细
             transferInfoDetailService.add(dto.getDetailList(), entity.getId());
         }
@@ -513,7 +515,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //主表信息
         TransferInfoEntity entity = this.getTransferInfoByCode(code);
         if (ObjectUtils.isEmpty(entity)) {
-            return viewDTO;
+            return null;
         }
         BeanMapperUtils.copy(entity, viewDTO);
         List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainId(entity.getId());

@@ -285,6 +285,11 @@ public class TransferInfoDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
         /**
+         * 编码（拉取金蝶数据时需要）
+         */
+        private String code;
+
+        /**
          * 明细
          */
         @NotEmpty(message = "明细不能为空")

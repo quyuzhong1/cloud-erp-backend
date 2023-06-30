@@ -175,7 +175,7 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
                 "FDate,FNote,FBaseCurrId,FBaseCurrId.FName,FDocumentStatus,FDocumentStatus.FCaption,FApproverId,FApproverId.FName,FApproveDate,FSTOCKERID.FNumber," +
                 "FCancellerId,FCancellerId.FName,FCreateDate,FCreatorId,FCreatorId.FName,FModifierId,FModifierId.FName,FModifyDate,FCancelStatus,FCancelStatus.FCaption,FCancelDate," +
                 "FBillEntry_FEntryID,FSrcStockId,FSrcStockId.FNumber,FSrcStockId.FName,FDestStockId,FDestStockId.FNumber,FDestStockId.FName," +
-                "FRowType,FMaterialId,FMaterialId.FName,FUnitID,FUnitID.FName,FQty," +
+                "FRowType,FMaterialId,FMaterialId.FNumber,FMaterialId.FName,FUnitID,FUnitID.FName,FQty," +
                 "FSrcStockStatusId,FSrcStockStatusId.FName,FDestStockStatusId,FDestStockStatusId.FName,FBusinessDate,FIsFree,FDestMaterialId,FDestMaterialId.FName";;
 
         boolean dataSign = true;
@@ -259,7 +259,7 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
         List<DmpTransferInfoDetailEntity> orderItemList = new ArrayList<>();
         for (KingdeeTransferDirectItemEntity item : itemList) {
             DmpTransferInfoDetailEntity itemEntity = new DmpTransferInfoDetailEntity();
-            itemEntity.setSkuNo(item.getFDestMaterialId());
+            itemEntity.setSkuNo(item.getFMaterialIdFNumber());
             itemEntity.setProductName(item.getFDestMaterialIdFName());
             itemEntity.setUnit(item.getFUnitIDFName());
             itemEntity.setQty(item.getFQty());

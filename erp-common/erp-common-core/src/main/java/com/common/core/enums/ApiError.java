@@ -655,6 +655,7 @@ public enum ApiError implements Serializable {
     ERROR_99074(99074,"采购订单【{}】SKU【{}】剩余入库数量不能超过【{}】"),
     ERROR_99075(99075,"采购订单【{}】SKU【{}】已入库完成"),
     ERROR_99076(99076,"未找到仓库金蝶编号【{}】"),
+    ERROR_99077(99077,"ERP已存在直接调拨单【{}】"),
 
 
 

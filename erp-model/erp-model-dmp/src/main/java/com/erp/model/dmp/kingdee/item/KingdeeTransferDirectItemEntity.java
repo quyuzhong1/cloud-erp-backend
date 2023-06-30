@@ -58,13 +58,19 @@ public class KingdeeTransferDirectItemEntity {
      */
     private String FRowType;
     /**
-     * (明细信息)物料编码#编码
+     * (明细信息)物料编码id
      */
     private String FMaterialId;
-    @Alias("FMaterialId.FName")
+
+    /**
+     * (明细信息)物料编码#编码
+     */
+    @Alias("FMaterialId.FNumber")
+    private String FMaterialIdFNumber;
     /**
      * (明细信息)物料编码#名称
      */
+    @Alias("FMaterialId.FName")
     private String FMaterialIdFName;
     /**
      * (明细信息)单位#编码
