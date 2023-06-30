@@ -72,7 +72,7 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
     @Override
     public void downloadTemplate(HttpServletResponse response) {
 
-        String path = "classpath:excel/skuMaping.xlsx";
+        String path = "classpath:excel/skuMapingTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
