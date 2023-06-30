@@ -55,13 +55,13 @@ public class ServiceException extends RuntimeException {
      * 从枚举中获取参数
      *
      * @param apiError
-     * @param objects
+     * @param args
      */
-    public ServiceException(ApiError apiError,Object... objects) {
+    public ServiceException(ApiError apiError,Object... args) {
         // 加上super，否则会显示null
-        super(apiError.msg);
+        super(StrUtil.format(apiError.msg,args) );
         this.code = apiError.code;
-        this.msg = StrUtil.format(apiError.msg,objects) ;
+        this.msg = StrUtil.format(apiError.msg,args) ;
     }
 
     /**

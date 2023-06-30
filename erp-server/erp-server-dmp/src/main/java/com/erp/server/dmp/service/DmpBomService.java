@@ -3,6 +3,8 @@ import com.erp.model.dmp.entity.DmpBomEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.dmp.mabang.ComboSkuInfoEntity;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -28,5 +30,5 @@ public interface DmpBomService extends SuperService<DmpBomEntity> {
      * @param relationType
      * @return
      */
-    Boolean checkIsBom(String sku, String platformSign, String relationType);
+    List<DmpBomEntity> findBom(String sku, String platformSign, String relationType);
 }

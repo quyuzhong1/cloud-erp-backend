@@ -67,13 +67,13 @@ public class DmpBomServiceImpl extends SuperServiceImpl<DmpBomMapper, DmpBomEnti
     }
 
     @Override
-    public Boolean checkIsBom(String sku, String platformSign, String relationType) {
+    public List<DmpBomEntity> findBom(String sku, String platformSign, String relationType) {
         List<DmpBomEntity> bomList = lambdaQuery()
                 .eq(DmpBomEntity::getParentSku, sku)
                 .eq(DmpBomEntity::getPlatformSign, platformSign)
                 .eq(DmpBomEntity::getRelationType, relationType)
                 .list();
-        return CollUtil.isNotEmpty(bomList) ? true : false;
+        return bomList;
     }
 
     private static WarnMsgInfoDTO getWarnMsgInfoDTO(ComboSkuInfoEntity ext, List<DmpBomEntity> bomList) {

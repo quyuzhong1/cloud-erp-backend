@@ -47,7 +47,7 @@ public class SyncTransferInfoConsumer implements RocketMQListener<DmpSyncMqDTO> 
             log.error("金蝶直接调拨单同步失败，msg = {}",e.getMessage());
             //同步失败
             paramDTO.setSyncStatus(SyncKingdeeStatusEnum.FAILED_SYNC.getCode());
-            paramDTO.setResponseMsg(((ServiceException) e).getMsg());
+            paramDTO.setResponseMsg(e.getMessage());
             dmpTaskFeign.updateSyncInfo(paramDTO);
             return;
         }

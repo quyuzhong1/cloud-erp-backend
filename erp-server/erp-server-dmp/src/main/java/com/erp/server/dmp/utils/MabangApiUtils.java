@@ -463,9 +463,10 @@ public class MabangApiUtils {
             params.put("prePage", pageSize);
             ParamHeaderVO paramVo = getParamMap(method, pageIndex, params);
             JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
+            log.info("FBA发货单响应信息：{}", JSONObject.toJSONString(responseMap));
             if (!Objects.equals(responseMap.getInteger("code"), 200)) {
-                log.error("调用url={} param={}马帮退款订单数据失败 responseMap={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap));
-                throw new RuntimeException(StrUtil.format("调用url={} param={}，马帮调拨发货数据失败 responseMap={}",
+                log.error("调用url={} param={}马帮FBA发货单数据失败 responseMap={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap));
+                throw new RuntimeException(StrUtil.format("调用url={} param={}，马帮FBA发货单数据失败 responseMap={}",
                         UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap)));
             }
             JSONObject dataJson = JSONObject.parseObject(String.valueOf(responseMap.get("data")));

@@ -16,6 +16,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
+import com.erp.model.dmp.entity.DmpBomEntity;
 import com.erp.model.dmp.entity.DmpFbaDeliveryDetailEntity;
 import com.erp.model.dmp.entity.DmpFbaDeliveryEntity;
 import com.erp.model.dmp.entity.DmpWarehouseMappingEntity;
@@ -244,8 +245,9 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
             String skuNo = deliveryItemEntity.getSku();
             dmpFbaDeliveryDetailEntity.setSkuNo(skuNo);
             // 只取组合品的（因为马帮那边的sku不能修改，所以不用判断sku的变化）
-            Boolean isBom = dmpBomService.checkIsBom(skuNo, PlatformEnum.MABANG.getDesc(), "machining");
-            if(isBom) {
+            List<DmpBomEntity> bomList = dmpBomService.findBom(skuNo, PlatformEnum.MABANG.getDesc(), "machining");
+            if(CollUtil.isNotEmpty(bomList)) {
+                dmpFbaDeliveryDetailEntity.setBomList(bomList);
                 items.add(dmpFbaDeliveryDetailEntity);
             }
         }

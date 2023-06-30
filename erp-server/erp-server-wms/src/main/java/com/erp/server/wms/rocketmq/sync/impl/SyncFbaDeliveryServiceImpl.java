@@ -7,6 +7,8 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
+import com.erp.model.dmp.entity.DmpBomEntity;
 import com.erp.model.dmp.entity.DmpFbaDeliveryDetailEntity;
 import com.erp.model.dmp.entity.DmpFbaDeliveryEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -64,6 +66,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
             addDTO.setType(MachineTypeEnum.ORDINARY.getCode());
             List<WarehouseEntity> warehouseEntityList = warehouseService.listByKingdeeCodeList(Arrays.asList(entity.getWarehouseCode()));
             if(CollUtil.isEmpty(warehouseEntityList)) {
+                // TODO 后续加异常通知
                 throw new ServiceException(ApiError.ERROR_99076, entity.getWarehouseCode());
             }
             WarehouseEntity warehouseEntity = warehouseEntityList.get(0);
@@ -87,6 +90,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
                 String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(dmpFbaDeliveryDetailEntity.getSkuNo())).
                         findFirst().map(SkuVO::getSkuId).orElse("");
                 if (StringUtils.isBlank(skuId)) {
+                    // TODO 后续加异常通知
                     throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU,dmpFbaDeliveryDetailEntity.getSkuNo());
                 }
                 member.setSkuId(skuId);
@@ -96,18 +100,23 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
                 member.setReferenceVersion(version);
 
                 // 子件明细
-                List<BomChildrenSkuDTO> bomChildrenSkuDTOList = plmTaskFeign.listBomChildBySkuIds(Arrays.asList(skuId));
-                if(CollUtil.isEmpty(bomChildrenSkuDTOList)) {
-                    throw new ServiceException(StrUtil.format("SKU【{}】不是组合品", skuNo));
-                }
+                List<DmpBomEntity> bomList = dmpFbaDeliveryDetailEntity.getBomList();
+                List<String> subSkuNos = bomList.stream().map(DmpBomEntity::getSkuNo).distinct().collect(Collectors.toList());
+                List<SkuVO> subSkuList = plmTaskFeign.listBySkuNoList(subSkuNos);
 
-                List<MachineSubComponentsDTO.AddDTO> subComponentsList = Lists.newArrayListWithExpectedSize(bomChildrenSkuDTOList.size());
+                List<MachineSubComponentsDTO.AddDTO> subComponentsList = Lists.newArrayListWithExpectedSize(bomList.size());
 
-                for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOList) {
+                for (DmpBomEntity dmpBomEntity : bomList) {
                     MachineSubComponentsDTO.AddDTO subDTO = new MachineSubComponentsDTO.AddDTO();
-                    subDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
-                    subDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
-                    subDTO.setQty(bomChildrenSkuDTO.getQuantity());
+
+                    String subSkuId = subSkuList.stream().filter(s -> s.getSkuNo().equals(dmpBomEntity.getSkuNo())).findFirst().map(SkuVO::getSkuId).orElse("");
+                    if(StrUtils.isEmpty(subSkuId)) {
+                        // TODO 后续加异常通知
+                        throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU,dmpBomEntity.getSkuNo());
+                    }
+                    subDTO.setSkuId(subSkuId);
+                    subDTO.setSkuNo(dmpBomEntity.getSkuNo());
+                    subDTO.setQty(dmpBomEntity.getQty() * member.getQty());
                     subDTO.setWarehouseId(warehouseEntity.getId());
                     subDTO.setRemark("同步ERP：FBA发货单");
                     subComponentsList.add(subDTO);

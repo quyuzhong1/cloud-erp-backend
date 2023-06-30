@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.util.List;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -265,6 +267,11 @@ public class DmpFbaDeliveryDetailEntity extends BaseEntity<DmpFbaDeliveryDetailE
     @TableField("delivery_detail_id")
     private String deliveryDetailId;
 
+    /**
+     * BOM子件信息
+     */
+    @TableField(exist = false)
+    private List<DmpBomEntity> bomList;
 
     public static final String FBASTOCK_ID = "fbastock_id";
 
