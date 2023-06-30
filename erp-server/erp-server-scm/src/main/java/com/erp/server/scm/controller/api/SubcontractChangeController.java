@@ -70,11 +70,6 @@ public class SubcontractChangeController extends BaseController {
    * @return ApiResult<Void>
    */
    @PostMapping("/add")
-   @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-           tableField = "create_user_id",
-           menuCode = "scm:subcontractChangeOrder:add",
-           serviceClass = SubcontractChangeService.class,
-           keyIdName = "id")
    public ApiResult<Void> add(@RequestBody @Validated SubcontractChangeDTO.AddDTO dto) {
       subcontractChangeService.add(dto);
       return success();
