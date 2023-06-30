@@ -160,6 +160,7 @@
                 </foreach>
             </if>
         </where>
+        order by pbi.id desc
     </select>
 
     <select id="listBomSkuByBomIds" resultType="com.erp.model.plm.dto.BomSkuPageDTO$ChildDTO">
