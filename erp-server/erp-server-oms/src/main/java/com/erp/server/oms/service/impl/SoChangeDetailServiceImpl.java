@@ -201,6 +201,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             item.setTaxPrice(taxPrice);
+
             BigDecimal oldPrice = item.getOldPrice();
             BigDecimal oldTaxRate = item.getOldTaxRate();
             BigDecimal oldFlagTaxRate = MathUtil.divide(oldTaxRate, MathUtil.BigDecimal_100);
@@ -208,7 +209,8 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             //含税单价=销售单价*（税率+1）
             BigDecimal oldMultiplyTax = MathUtil.add(oldFlagTaxRate, MathUtil.BigDecimal_1);
             BigDecimal oldTaxPrice = MathUtil.multiply(oldPrice, oldMultiplyTax);
-            item.setOldPrice(oldTaxPrice);
+            item.setOldPrice(oldPrice);
+            item.setOldTaxPrice(oldTaxPrice);
         }
         return viewList;
     }

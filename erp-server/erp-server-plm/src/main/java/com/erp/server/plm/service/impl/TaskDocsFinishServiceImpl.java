@@ -55,7 +55,6 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
     private DocsChangeRecordService docsChangeRecordService;
 
 
-
     @Autowired
     private BusinessProcessService businessProcessService;
 
@@ -76,8 +75,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
     private TaskChargeDistributionService taskChargeDistributionService;
 
     @Autowired
-    private   TaskDocHistoryService taskDocHistoryService;
-
+    private TaskDocHistoryService taskDocHistoryService;
 
 
     /**
@@ -147,6 +145,9 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                     double size = multipartFile.getSize();
                     fileSize = size / (1024 * 1024);
                     fileSize = (double) Math.round(fileSize * 100) / 100;
+                    if (fileSize > 300) {
+                        throw new ServiceException(ApiError.ERROR_95160, 300);
+                    }
                     fileName = multipartFile.getOriginalFilename().toLowerCase();
                     fileSuffix = FilenameUtils.getExtension(fileName).toLowerCase();
                     File file = FileUtil.multiToFile(multipartFile);
@@ -344,7 +345,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             double fileSize = size / (1024 * 1024);
             fileSize = (double) Math.round(fileSize * 100) / 100;
             if (fileSize > 300) {
-                throw new ServiceException();
+                throw new ServiceException(ApiError.ERROR_95160, 300);
             }
             fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
         } else {
