@@ -47,4 +47,17 @@ public class BomSkuFeignController {
     public List<BomInfoEntity> listBomByParentSkuIds(@RequestBody List<String> skuIds) {
         return bomSkuService.listBomByParentSkuIds(skuIds);
     }
+
+    /**
+     * @description: 根据父级skuNos查询BOM
+     * @author Will
+     * @date: 2023/5/31 10:59
+     * @param skuNos
+     * @return List<BomInfoEntity>
+     */
+    @PostMapping("/listBomByParentSkuNos")
+    public List<BomInfoEntity> listBomByParentSkuNos(@RequestBody List<String> skuNos) {
+        return bomSkuService.listBomByParentSkuNos(skuNos);
+    }
+
 }

@@ -12,6 +12,7 @@ import com.erp.model.dmp.entity.DmpBomEntity;
 import com.erp.model.dmp.entity.DmpFbaDeliveryDetailEntity;
 import com.erp.model.dmp.entity.DmpFbaDeliveryEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.MachineDetailDTO;
 import com.erp.model.wms.dto.MachineInfoDTO;
@@ -62,11 +63,10 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
             MachineInfoDTO.AddDTO addDTO = new  MachineInfoDTO.AddDTO();
             addDTO.setBillDate(LocalDate.now());
             addDTO.setWorkType(WorkTypeEnum.ASSEMBLE.getCode());
-            // TODO 仓管员 取不到马帮的员工信息
+            // 仓管员 取不到马帮的员工信息
             addDTO.setType(MachineTypeEnum.ORDINARY.getCode());
             List<WarehouseEntity> warehouseEntityList = warehouseService.listByKingdeeCodeList(Arrays.asList(entity.getWarehouseCode()));
             if(CollUtil.isEmpty(warehouseEntityList)) {
-                // TODO 后续加异常通知
                 throw new ServiceException(ApiError.ERROR_99076, entity.getWarehouseCode());
             }
             WarehouseEntity warehouseEntity = warehouseEntityList.get(0);
@@ -79,7 +79,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
 
             List<String> parentSkuNos = entity.getItemList().stream().map(DmpFbaDeliveryDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
 
-            List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(parentSkuNos);
+            List<BomInfoEntity> skuList = plmTaskFeign.listBomByParentSkuNos(parentSkuNos);
 
             for(DmpFbaDeliveryDetailEntity dmpFbaDeliveryDetailEntity : entity.getItemList()) {
                 MachineDetailDTO.AddDTO member = new MachineDetailDTO.AddDTO();
@@ -87,16 +87,16 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
                 member.setQty(dmpFbaDeliveryDetailEntity.getDeliveryNum());
                 member.setSkuNo(skuNo);
 
-                String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(dmpFbaDeliveryDetailEntity.getSkuNo())).
-                        findFirst().map(SkuVO::getSkuId).orElse("");
-                if (StringUtils.isBlank(skuId)) {
+                String parentSkuId = skuList.stream().filter(s -> s.getParentSkuNo().equals(dmpFbaDeliveryDetailEntity.getSkuNo())).
+                        findFirst().map(BomInfoEntity::getParentSkuId).orElse("");
+                if (StringUtils.isBlank(parentSkuId)) {
                     // TODO 后续加异常通知
                     throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU,dmpFbaDeliveryDetailEntity.getSkuNo());
                 }
-                member.setSkuId(skuId);
+                member.setSkuId(parentSkuId);
 
                 //版本
-                Integer version = skuList.stream().filter(obj -> obj.getSkuId().equals(member.getSkuId())).map(SkuVO::getVersion).findFirst().orElse(MathUtil.ZERO);
+                Integer version = skuList.stream().filter(obj -> obj.getParentSkuNo().equals(member.getSkuId())).map(BomInfoEntity::getBomVersion).findFirst().orElse(MathUtil.ZERO);
                 member.setReferenceVersion(version);
 
                 // 子件明细
@@ -128,9 +128,9 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
             addDTO.setDetailList(detailList);
             machineInfoService.add(addDTO);
         } else {
+            // 已经存在判断现有
 
         }
-        // 已经存在判断现有
 
         // 以前是待配货，变成了已作废，ERP这边的加工单需要先反审核，再作废
 

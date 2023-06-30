@@ -251,4 +251,14 @@ public interface PlmTaskFeign {
      **/
     @PostMapping("/feign/product/updateOccupyStatus")
     Boolean updateOccupyStatus(@RequestBody @Validated List<String> skuIds);
+
+    /**
+     * @description: 根据父级skuNos查询BOM信息
+     * @author Will
+     * @date: 2023/5/31 10:57
+     * @param skuNos
+     * @return List<BomInfoEntity>
+     */
+    @PostMapping("feign/bom/listBomByParentSkuNos")
+    List<BomInfoEntity> listBomByParentSkuNos(List<String> skuNos);
 }

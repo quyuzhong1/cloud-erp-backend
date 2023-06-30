@@ -34,5 +34,14 @@ public interface BomRefSkuMapper extends BaseMapper<BomSkuEntity> {
      * @return List<BomInfoEntity>
      */
     List<BomInfoEntity> listBomByParentSkuIds(@Param("parentSkuIds") List<String> parentSkuIds);
+
+    /**
+     * @description: 根据父级SKU NO查询BOM
+     * @author zhangchunlin
+     * @date: 2023/6/30 11:05
+     * @param parentSkuNos
+     * @return List<BomInfoEntity>
+     */
+    List<BomInfoEntity> listBomByParentSkuNos(@Param("parentSkuNos") List<String> parentSkuNos);
 }
 
