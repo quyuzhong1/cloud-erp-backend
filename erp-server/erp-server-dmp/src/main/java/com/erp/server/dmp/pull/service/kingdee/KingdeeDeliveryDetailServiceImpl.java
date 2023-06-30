@@ -58,6 +58,8 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
     private MQProducerService mqProducerService;
     @Resource
     private CfgSettingService cfgSettingService;
+    @Resource
+    private CfgSettingService settingService;
 
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
@@ -253,15 +255,20 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
      * 解析出库订单数据
      **/
     private DmpDeliveryDetailInfoEntity initOrderInfoEntity(KingdeeDeliveryDetailEntity kingdeeOutStockEntity) {
-        // 标准销售出库单
-        String fBillTypeID = "ad0779a4685a43a08f08d2e42d7bf3e9";
-        //020 B2B线下国内 021 B2B线下国外 3003 官网线上
         List<String> list = Arrays.asList("020", "021", "3003");
+        Map<SettingEnum, String> map = settingService.getMap(SettingEnum.KD_TO_ERP_FILTER);
+        // 标准销售出库单
+        String fBillTypeID = map.get(SettingEnum.KD_TO_ERP_DELIVERY_FILTER_BILL_TYPE);
+        //020 B2B线下国内 021 B2B线下国外 3003 官网线上
+        String platformTypeCode = map.get(SettingEnum.KD_TO_ERP_DELIVERY_FILTER_PLATFORM_TYPE_CODE);
+        if (StrUtil.isNotBlank(platformTypeCode)) {
+            list = Arrays.asList(platformTypeCode.split(","));
+        }
         // 跳过非唯迹订单
         if (StrUtil.isEmpty(kingdeeOutStockEntity.getFSaleOrgId()) ||
                 ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(kingdeeOutStockEntity.getFSaleOrgId()) ||
                 ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(kingdeeOutStockEntity.getFSaleOrgId()) ||
-                fBillTypeID.equals(kingdeeOutStockEntity.getFBillTypeID()) ||
+                ObjectUtil.equals(fBillTypeID, kingdeeOutStockEntity.getFBillTypeID())||
                 !list.contains(kingdeeOutStockEntity.getF_ulz_BaseProperty2Code())
         ) {
             return null;

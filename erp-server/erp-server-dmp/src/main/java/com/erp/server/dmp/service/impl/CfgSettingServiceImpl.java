@@ -30,19 +30,29 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
 
     @Override
     public Map<SettingEnum, String> getMap(List<SettingEnum> keys) {
-        List<CfgSettingEntity> list = lambdaQuery().in(CfgSettingEntity::getKey, keys).list();
+        List<CfgSettingEntity> list = lambdaQuery()
+                .in(CfgSettingEntity::getKey, keys)
+                .eq(CfgSettingEntity::getStatus, Boolean.TRUE)
+                .list();
         return list.stream().collect(Collectors.toMap(CfgSettingEntity::getKey, CfgSettingEntity::getValue));
     }
 
     @Override
     public Map<SettingEnum, String> getMap(String type) {
-        List<CfgSettingEntity> list = lambdaQuery().eq(CfgSettingEntity::getType, type).list();
+        List<CfgSettingEntity> list = lambdaQuery()
+                .eq(CfgSettingEntity::getType, type)
+                .eq(CfgSettingEntity::getStatus, Boolean.TRUE)
+                .list();
         return list.stream().collect(Collectors.toMap(CfgSettingEntity::getKey, CfgSettingEntity::getValue));
     }
 
     @Override
     public String getValue(SettingEnum key) {
-        CfgSettingEntity entity = lambdaQuery().eq(CfgSettingEntity::getKey, key).last("LIMIT 1").one();
+        CfgSettingEntity entity = lambdaQuery()
+                .eq(CfgSettingEntity::getKey, key)
+                .eq(CfgSettingEntity::getStatus, Boolean.TRUE)
+                .last("LIMIT 1")
+                .one();
         if (null == entity) {
             return null;
         }
