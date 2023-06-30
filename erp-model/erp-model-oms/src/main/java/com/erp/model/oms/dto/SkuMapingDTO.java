@@ -71,12 +71,17 @@ public class SkuMapingDTO implements Serializable {
         private List<String> shopIdList;
 
         /**
+         * 店铺id集合
+         */
+        private List<String> skuNoList;
+
+        /**
          * 搜索类型
          * alL 全部
          * already 已匹配
          * not 未匹配
          */
-        @StateEnumValue(strValues = {"all", "already ", "not"}, message = "搜索类型有误")
+        @StateEnumValue(strValues = {"all", "already", "not"}, message = "搜索类型有误")
         @NotBlank(message = "搜索类型不能为空")
         private String searchType;
 

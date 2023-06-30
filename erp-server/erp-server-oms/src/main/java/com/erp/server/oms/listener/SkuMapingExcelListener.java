@@ -139,6 +139,7 @@ public class SkuMapingExcelListener extends AnalysisEventListener<SkuMapingImpor
         add.setProductSkuId(sku.getSkuId());
         add.setProductSkuNo(sku.getSkuNo());
         add.setShopId(shop.getId());
+        add.setMatchResult(Boolean.TRUE);
         //生效时间
         add.setEffectiveTime(now);
         add.setExpireTime(now.plusYears(MathUtil.NUMBER_100));

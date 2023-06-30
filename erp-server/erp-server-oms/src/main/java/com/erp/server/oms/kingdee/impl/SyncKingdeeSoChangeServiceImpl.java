@@ -199,7 +199,6 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
                 jsonObject.set("isGift", false);
                 jsonObject.set("unit", "Pcs");
                 jsonObject.set("remark", item.getRemark());
-
                 jsonObject.set("warehouseOrgCode", warehouseOrgCode);
                 jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
                 list.add(jsonObject);
@@ -218,7 +217,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
                 return Boolean.TRUE;
             });
         } catch (Exception e) {
-            log.error("同步金蝶出错==={}", e);
+            log.error("同步金蝶出错>>>>>>{}", e);
         }
 
     }
