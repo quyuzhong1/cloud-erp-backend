@@ -193,8 +193,12 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
         }
 
         DmpFbaDeliveryEntity dmpDeliveryEntity = new DmpFbaDeliveryEntity();
+        // 下划线转驼峰复制
         BeanMapUtil.getInstance().copyAndParse(deliveryMongo, dmpDeliveryEntity);
+        dmpDeliveryEntity.setTotalApplyQuantity(deliveryMongo.getTotalApplyQuantity());
+        dmpDeliveryEntity.setStockSum(deliveryMongo.getStockSum());
 
+        dmpDeliveryEntity.setDeliveryId(deliveryMongo.getDelivery_id());
         dmpDeliveryEntity.setPlatformSign(PlatformEnum.MABANG.getDesc());
         dmpDeliveryEntity.setCreateTime(LocalDateTime.now());
         dmpDeliveryEntity.setItemList(initItem(deliveryMongo));
@@ -214,8 +218,11 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
         for (int i = 0; i < mongoItems.size(); i++) {
             DeliveryItemEntity deliveryItemEntity = mongoItems.get(i);
             DmpFbaDeliveryDetailEntity dmpFbaDeliveryDetailEntity = new DmpFbaDeliveryDetailEntity();
-            BeanUtil.copyProperties(deliveryItemEntity, dmpFbaDeliveryDetailEntity);
-            dmpFbaDeliveryDetailEntity.setDeliveryDetailId(deliveryItemEntity.getId());
+            BeanMapUtil.getInstance().copyAndParse(deliveryItemEntity, dmpFbaDeliveryDetailEntity);
+            dmpFbaDeliveryDetailEntity.setDeliveryDetailId(deliveryItemEntity.getDelivery_detail_id());
+            dmpFbaDeliveryDetailEntity.setApplyQuantity(deliveryItemEntity.getApplyQuantity());
+            dmpFbaDeliveryDetailEntity.setShipmentStatus(deliveryItemEntity.getShipmentStatus());
+            dmpFbaDeliveryDetailEntity.setPictururl(deliveryItemEntity.getPicturUrl());
             //sku
             String skuNo = deliveryItemEntity.getSku();
             dmpFbaDeliveryDetailEntity.setSkuNo(skuNo);

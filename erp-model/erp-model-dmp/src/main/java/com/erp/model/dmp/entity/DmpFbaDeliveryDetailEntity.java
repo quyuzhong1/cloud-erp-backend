@@ -122,12 +122,6 @@ public class DmpFbaDeliveryDetailEntity extends BaseEntity<DmpFbaDeliveryDetailE
     private BigDecimal customComputeCost;
 
     /**
-    * 已经与入库队列表关联的数量
-    */
-    @TableField("shared_quantity")
-    private Integer sharedQuantity;
-
-    /**
     * 销售员id 多个销售员逗号隔开
     */
     @TableField("sale_id")
@@ -378,7 +372,6 @@ public class DmpFbaDeliveryDetailEntity extends BaseEntity<DmpFbaDeliveryDetailE
                 ", volume=" + volume +
                 ", logicComputeCost=" + logicComputeCost +
                 ", customComputeCost=" + customComputeCost +
-                ", sharedQuantity=" + sharedQuantity +
                 ", saleId='" + saleId + '\'' +
                 ", packageCost=" + packageCost +
                 ", lockState=" + lockState +

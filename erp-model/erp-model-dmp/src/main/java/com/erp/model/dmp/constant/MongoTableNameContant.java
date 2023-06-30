@@ -141,7 +141,7 @@ public interface MongoTableNameContant {
     /**
      * 马帮发货单列表
      */
-    String ORIGINAL_MABANG_DELIVERY = "original_mabang_delivery";
+    String ORIGINAL_MABANG_DELIVERY = "original_mabang_fba_delivery";
 
 
     /**

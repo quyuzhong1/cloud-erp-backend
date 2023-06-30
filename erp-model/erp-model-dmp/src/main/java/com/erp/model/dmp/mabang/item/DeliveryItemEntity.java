@@ -1,5 +1,7 @@
 package com.erp.model.dmp.mabang.item;
 
+import com.alibaba.fastjson.annotation.JSONField;
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -19,7 +21,9 @@ public class DeliveryItemEntity implements Serializable {
     /**
      * 发货单详情id
      */
-    private String id;
+    @SerializedName("id")
+    @JSONField(name = "id")
+    private String delivery_detail_id;
 
     /**
      * 发货单id

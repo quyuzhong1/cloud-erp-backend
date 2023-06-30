@@ -20,10 +20,7 @@ import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.pull.service.gyy.GyyDeliveryDetailServiceImpl;
 import com.erp.server.dmp.pull.service.gyy.GyyOrderInfoServiceImpl;
 import com.erp.server.dmp.pull.service.kingdee.KingdeeEccShopServiceImpl;
-import com.erp.server.dmp.pull.service.mabang.MabangHistoryOrderInfoServiceImpl;
-import com.erp.server.dmp.pull.service.mabang.MabangOrderInfoServiceImpl;
-import com.erp.server.dmp.pull.service.mabang.MabangRefundServiceImpl;
-import com.erp.server.dmp.pull.service.mabang.MabangReturnOrderInfoServiceImpl;
+import com.erp.server.dmp.pull.service.mabang.*;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.kingdee.impl.KingdeeCommonServiceImpl;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
@@ -33,6 +30,7 @@ import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -56,6 +54,9 @@ import java.util.*;
 public class MabangPullServiceTest {
     @Resource
     private KingdeeCommonService kingdeeCommonService;
+
+    @Autowired
+    private MabangDeliveryServiceImpl deliveryService;
 
     @Test
     public void testtt() {
@@ -236,6 +237,29 @@ public class MabangPullServiceTest {
             log.info("MB获取仓库列表成功，返回结果：{}", responseMap.getString("data"));
         }
 
+    }
+
+    @Test
+    public void pullFbaDeliveryTest(){
+        JobTaskDTO jobTaskDTO = new JobTaskDTO();
+        PlatformApiEnum apiEnum = PlatformApiEnum.MABANG_DELIVERY;
+        jobTaskDTO.setApiCode(apiEnum.getTaskName());
+        jobTaskDTO.setApiId(5);
+        jobTaskDTO.setApiName("获取FBA发货单列表");
+        jobTaskDTO.setId(30L);
+        jobTaskDTO.setIntervalTime(1800);
+        jobTaskDTO.setLastTime(LocalDateTime.parse("2023-06-29 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setNextTime(LocalDateTime.parse("2023-06-29 23:59:59", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setPlatformId(4);
+        jobTaskDTO.setState(1);
+        RequestDTO requestDTO = new RequestDTO();
+        requestDTO.setPlatformApiEnum(apiEnum);
+        requestDTO.setJobTaskDTO(jobTaskDTO);
+        try {
+            deliveryService.pullDataSave(requestDTO);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 

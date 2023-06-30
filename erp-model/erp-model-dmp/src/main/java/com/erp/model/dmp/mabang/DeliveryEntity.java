@@ -1,7 +1,9 @@
 package com.erp.model.dmp.mabang;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import com.erp.model.dmp.dto.CleanBaseDTO;
 import com.erp.model.dmp.mabang.item.DeliveryItemEntity;
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -78,7 +80,7 @@ public class DeliveryEntity extends CleanBaseDTO {
     private Integer logic_id;
 
     /**
-     *
+     * 是否付款单
      */
     private Integer has_pay_order;
 
@@ -87,7 +89,9 @@ public class DeliveryEntity extends CleanBaseDTO {
     /**
      * 发货单id
      */
-    private Integer id;
+    @SerializedName("id")
+    @JSONField(name = "id")
+    private String delivery_id;
 
     /**
      * weight
@@ -192,4 +196,49 @@ public class DeliveryEntity extends CleanBaseDTO {
      */
     private List<DeliveryItemEntity> stockList;
 
+
+    @Override
+    public String toString() {
+        return "DeliveryEntity{" +
+                "logic_name='" + logic_name + '\'' +
+                ", customs_clearance_time='" + customs_clearance_time + '\'' +
+                ", totalApplyQuantity=" + totalApplyQuantity +
+                ", remark='" + remark + '\'' +
+                ", delivery_time='" + delivery_time + '\'' +
+                ", is_over=" + is_over +
+                ", head_journey_time='" + head_journey_time + '\'' +
+                ", tail_distance_time='" + tail_distance_time + '\'' +
+                ", logic_price=" + logic_price +
+                ", enclosure='" + enclosure + '\'' +
+                ", estimate_time='" + estimate_time + '\'' +
+                ", delivery_type=" + delivery_type +
+                ", logic_id=" + logic_id +
+                ", has_pay_order=" + has_pay_order +
+                ", merge_id='" + merge_id + '\'' +
+                ", delivery_id=" + delivery_id +
+                ", compute_type='" + compute_type + '\'' +
+                ", merge_flag_name='" + merge_flag_name + '\'' +
+                ", stockSum=" + stockSum +
+                ", total_weights=" + total_weights +
+                ", channel_name='" + channel_name + '\'' +
+                ", sail_time='" + sail_time + '\'' +
+                ", arrival_time='" + arrival_time + '\'' +
+                ", merge_flag=" + merge_flag +
+                ", company_id=" + company_id +
+                ", create_time='" + create_time + '\'' +
+                ", total_volumes=" + total_volumes +
+                ", employee_name='" + employee_name + '\'' +
+                ", logistics_code='" + logistics_code + '\'' +
+                ", delivery_no='" + delivery_no + '\'' +
+                ", actual_time='" + actual_time + '\'' +
+                ", create_opear=" + create_opear +
+                ", extend_fee=" + extend_fee +
+                ", warehouse_name='" + warehouse_name + '\'' +
+                ", logic_price_currency='" + logic_price_currency + '\'' +
+                ", channel_id=" + channel_id +
+                ", delivery_status=" + delivery_status +
+                ", warehouse_id=" + warehouse_id +
+                ", stockList=" + stockList +
+                '}';
+    }
 }

@@ -72,8 +72,8 @@ public class  OrderMongoDTO {
     @Panno(findType=PannoEnum.EQ,  field = "shipmentId")
     private String shipmentId;
 
-    @Panno(findType=PannoEnum.EQ,  field = "deliveryNo")
-    private String deliveryNo;
+    @Panno(findType=PannoEnum.EQ,  field = "delivery_no")
+    private String delivery_no;
 
     public static OrderMongoDTO getByFBillNo(String fBillNo) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
@@ -180,7 +180,7 @@ public class  OrderMongoDTO {
 
     public static OrderMongoDTO getByDeliveryNo(String deliveryNo) {
         OrderMongoDTO orderMongoDTO = new OrderMongoDTO();
-        orderMongoDTO.setDeliveryNo(deliveryNo);
+        orderMongoDTO.setDelivery_no(deliveryNo);
         return orderMongoDTO;
     }
 
