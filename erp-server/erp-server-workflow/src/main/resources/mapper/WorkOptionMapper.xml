@@ -87,9 +87,9 @@
         count(*) AS quantity,
         wm.sys_classify
         FROM process_management pm
-        LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
-        LEFT JOIN work_menu wm ON pm.business_key = wm.module_code
-        WHERE 1 = 1
+        LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = FALSE
+        INNER JOIN work_menu wm ON pm.business_key = wm.module_code
+        WHERE 1 = 1 AND pm.is_deleted = FALSE
         AND pm.approve_status = #{approveStatus}
         AND ptm.cur_approve_id = #{userId}
         GROUP BY wm.sys_classify
