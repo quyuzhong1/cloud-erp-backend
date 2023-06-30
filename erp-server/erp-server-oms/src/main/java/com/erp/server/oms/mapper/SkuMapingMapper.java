@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -22,4 +23,8 @@ import java.time.LocalDateTime;
 public interface SkuMapingMapper extends BaseMapper<SkuMapingEntity> {
 
     IPage<SkuMapingDTO.PagingViewDTO> paging(Page query, @Param("params") SkuMapingDTO.PagingParamDTO params, @Param("matchResult") Boolean matchResult, @Param("nowTime")LocalDateTime nowTime);
+
+    List<SkuMapingDTO.PagingViewDTO> listExport( @Param("params") SkuMapingDTO.ExportDTO params, @Param("matchResult")Boolean matchResult);
+
+    List<SkuMapingDTO.MatchCountDTO> listMatchCount(@Param("permissionSql") String permissionSql);
 }

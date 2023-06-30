@@ -126,7 +126,10 @@ public class SkuMapingExcelListener extends AnalysisEventListener<SkuMapingImpor
         List<SkuMapingEntity> alreadyList = skuMapingList.stream().filter(s -> s.getPlatformSkuNo().equals(platformSkuNo) && platformDict.equals(s.getPlatformDict())).
                 collect(Collectors.toList());
         //设置失效时间为现在
-        alreadyList.stream().forEach(a -> a.setExpireTime(now));
+        for (SkuMapingEntity already : alreadyList) {
+            already.setExpireTime(now);
+            already.setIsExpire(Boolean.TRUE);
+        }
         updateSkuMapingList.addAll(alreadyList);
         SkuMapingEntity add = new SkuMapingEntity();
         add.setPlatformDict(platformDict);
@@ -136,7 +139,6 @@ public class SkuMapingExcelListener extends AnalysisEventListener<SkuMapingImpor
         add.setProductSkuId(sku.getSkuId());
         add.setProductSkuNo(sku.getSkuNo());
         add.setShopId(shop.getId());
-
         //生效时间
         add.setEffectiveTime(now);
         add.setExpireTime(now.plusYears(MathUtil.NUMBER_100));

@@ -24,6 +24,33 @@ import java.util.List;
 public class SkuMapingDTO implements Serializable {
 
 
+    /**
+     * tab
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TabListDTO {
+
+        private String searchType;
+
+        private Integer count;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class MatchCountDTO {
+        /**
+         * 匹配结果
+         */
+        private Boolean matchResult;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
+
 
     /**
      * 分页参数
@@ -46,20 +73,18 @@ public class SkuMapingDTO implements Serializable {
         /**
          * 搜索类型
          * alL 全部
-         * yes 已匹配
-         * no 未匹配
+         * already 已匹配
+         * not 未匹配
          */
-        @StateEnumValue(strValues = {"all", "yes", "no"}, message = "搜索类型有误")
+        @StateEnumValue(strValues = {"all", "already ", "not"}, message = "搜索类型有误")
         @NotBlank(message = "搜索类型不能为空")
-        private String  searchType;
-
+        private String searchType;
 
 
         /**
          * 平台code 集合
          */
         private List<String> platformList;
-
 
 
         /**
@@ -73,6 +98,62 @@ public class SkuMapingDTO implements Serializable {
         private List<LocalDate> createTimeList;
 
 
+    }
+
+
+    /**
+     * 导出仓库
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO {
+
+        /**
+         * id
+         */
+        @NotBlank(message = "sku对照不存在")
+        private String id;
+
+
+        /**
+         * 平台
+         */
+        @NotBlank(message = "平台不能为空")
+        private String platformDict;
+
+        /**
+         * 店铺
+         */
+        private String shopId;
+
+        /**
+         * 产品sku
+         */
+        @NotBlank(message = "产品sku不能为空")
+        private String productSkuId;
+
+        /**
+         * 平台sku no
+         */
+        @NotBlank(message = "平台sku不能为空")
+        private String platformSkuNo;
+
+        /**
+         * 平台sku 名
+         */
+        private String platformSkuName;
+
+
+
+    }
+
+    /**
+     * 导出sku 对照表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO {
+        private List<String> ids;
     }
 
     /**
@@ -96,7 +177,6 @@ public class SkuMapingDTO implements Serializable {
          * 平台名称
          */
         private String platformName;
-
 
 
         /**

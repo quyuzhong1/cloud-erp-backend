@@ -375,9 +375,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 item.setStatusName(TaskStateEnum.getName(state));
                 Boolean isChangeDocs = item.getIsChangeDocs();
                 String scheduleType = item.getScheduleType();
-                if(isChangeDocs||ProjectPlanConstant.PROJECT_PLAN_CHANGE.equals(scheduleType)){
+                if (isChangeDocs || ProjectPlanConstant.PROJECT_PLAN_CHANGE.equals(scheduleType)) {
                     item.setIsChange(Boolean.TRUE);
-                }else{
+                } else {
                     item.setIsChange(Boolean.FALSE);
                 }
                 String chargeId = item.getChargeId();
@@ -2242,7 +2242,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         //这个是变更
         ProductTaskCategoryCountDTO taskDTO4 = new ProductTaskCategoryCountDTO();
-        Integer count4 = baseMapper.changeCount(productId, param,ProjectPlanConstant.PROJECT_PLAN_CHANGE);
+        Integer count4 = baseMapper.changeCount(productId, param, ProjectPlanConstant.PROJECT_PLAN_CHANGE);
         taskDTO4.setCount(count4);
         taskDTO4.setType(TaskConstant.CHANGE_TASK);
         list.add(taskDTO4);
@@ -4036,8 +4036,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                     this.updateBatchById(changeDocTaskList);
                 }
                 if (CollectionUtils.isNotEmpty(otherTaskList)) {
-                    Integer ingStatus = TaskStateEnum.ING.getCode();
-                    otherTaskList.forEach(c -> c.setStatus(ingStatus));
+                    for (ProjectTaskEntity task : otherTaskList) {
+                        //任务类型
+                        Integer taskType = task.getType();
+                        //评审任务 变待发布
+                        if(TaskConstant.REVIEW_TASK.equals(taskType)){
+                            task.setStatus(TaskStateEnum.TO_BE_RELEASED.getCode());
+                        }else{
+                            task.setStatus(TaskStateEnum.ING.getCode());
+                        }
+                    }
                     this.updateBatchById(otherTaskList);
                 }
             }

@@ -421,10 +421,14 @@ public class WorkflowServiceImpl implements WorkflowService {
     @Override
     public Boolean batchCancelProcess(List<String> processIdList) {
         try {
-            runtimeService.deleteProcessInstancesAsync(processIdList, "驳回删除流程");
+            if (CollectionUtils.isNotEmpty(processIdList)) {
+                for (String processId : processIdList) {
+                    runtimeService.deleteProcessInstance(processId, "驳回删除流程");
+                }
+            }
             return Boolean.TRUE;
         } catch (Exception e) {
-            log.error("plm 批量撤销流程出错 >>>>>{}",e);
+            log.error("plm 批量撤销流程出错 >>>>>{}", e);
             return Boolean.FALSE;
         }
 

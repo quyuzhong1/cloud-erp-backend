@@ -85,6 +85,14 @@ public class SkuMapingEntity extends BaseEntity<SkuMapingEntity> {
     private LocalDateTime expireTime;
 
 
+    /**
+     * 是否失效
+     * true 失效
+     * false 未失效
+     */
+    @TableField("is_expire")
+    private Boolean isExpire;
+
     public static final String SHOP_ID = "shop_id";
 
     public static final String PLATFORM_DICT = "platform_dict";
