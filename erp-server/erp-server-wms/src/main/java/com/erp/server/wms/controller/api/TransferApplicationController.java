@@ -2,18 +2,19 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.MathUtil;
+import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.wms.dto.PickingDetailDTO;
+import com.erp.model.wms.dto.SingleApproveParamDTO;
 import com.erp.model.wms.dto.TransferApplicationDTO;
 import com.erp.server.wms.service.TransferApplicationService;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -237,6 +238,24 @@ public class TransferApplicationController extends BaseController {
     }
 
     /**
+     * 单个审核审核
+     * @Author Luo_WG
+     * @Date 2023/6/30 10:22
+     * @param singleApproveParamDTO
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/singleApprove")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "apply_user_id",
+            menuCode = "wms:transferApplication:approve",
+            serviceClass = TransferApplicationService.class,
+            keyIdName = "ids")
+    public ApiResult singleApprove(@RequestBody @Validated SingleApproveParamDTO singleApproveParamDTO) {
+        transferApplicationService.singleApprove(singleApproveParamDTO);
+        return success();
+    }
+
+    /**
      * 批量反审核
      * @author Will
      * @date: 2023/5/10 20:12
@@ -366,5 +385,29 @@ public class TransferApplicationController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 下推加工单-列表查询
+     * @Author Luo_WG
+     * @Date 2023/6/29 16:49
+     * @param dto dto
+     * @return java.util.List<com.erp.model.wms.dto.TransferApplicationDTO.generateMachineInfoView>
+     **/
+    @PostMapping("/viewGenerateMachineInfo")
+    public ApiResult<List<TransferApplicationDTO.ViewGenerateMachineInfo>> viewGenerateMachineInfo(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<TransferApplicationDTO.ViewGenerateMachineInfo> viewGenerateMachineInfoList = transferApplicationService.viewGenerateMachineInfo(dto.getIds(), Boolean.FALSE, MathUtil.ZERO);
+        return success(viewGenerateMachineInfoList);
+    }
 
+    /**
+     * 下推加工单-保存
+     * @Author Luo_WG
+     * @Date 2023/6/29 19:18
+     * @param validList
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.PickingDetailDTO.ListDTO>>
+     **/
+    @PostMapping("/saveGenerateMachineInfo")
+    public ApiResult<List<PickingDetailDTO.ListDTO>> saveGenerateMachineInfo(@RequestBody ValidList<TransferApplicationDTO.ViewGenerateMachineInfo> validList) {
+        Boolean flag = transferApplicationService.saveGenerateMachineInfo(validList.getList());
+        return flag == true ? success() : failure();
+    }
 }

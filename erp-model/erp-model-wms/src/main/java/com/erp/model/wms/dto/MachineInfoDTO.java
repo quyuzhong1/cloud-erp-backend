@@ -235,12 +235,22 @@ public class MachineInfoDTO implements Serializable {
         @NotBlank(message = "单据类型不能为空")
         @StateEnumValue(clazz = MachineTypeEnum.class, message = "单据类型有误", groups = {AddGroup.class})
         private String type;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
 
     }
 
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
+
+
 
         /**
          * 明细

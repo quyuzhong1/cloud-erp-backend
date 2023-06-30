@@ -57,6 +57,12 @@ public class TransferApplicationDetailEntity extends BaseEntity<TransferApplicat
     @TableField("remark")
     private String remark;
 
+    /**
+     * 是否自动生成加工单
+     */
+    @TableField("is_auto_machine")
+    private String isAutoMachine;
+
 
     public static final String MAIN_ID = "main_id";
 

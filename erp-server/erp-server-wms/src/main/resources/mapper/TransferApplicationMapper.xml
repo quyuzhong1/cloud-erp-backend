@@ -55,9 +55,11 @@
             ta.apply_user_name as applyUserName,
             ta.approve_user_name as approveUserName,
             ta.create_user_name as createUserName,
-            ta.create_time as createTime
+            ta.create_time as createTime,
+            mi.code AS machineCode
         from transfer_application ta
         inner join transfer_application_detail tad on ta.id = tad.main_id and tad.is_deleted = false
+        LEFT JOIN machine_info mi ON ta.id = mi.source_id
         <where>
             ta.is_deleted = false
             <if test="params.searchType != null and params.searchType != ''">
@@ -256,6 +258,29 @@
             <foreach collection="ids" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
+        </where>
+    </select>
+
+    <select id="viewGenerateMachineInfo" resultType="com.erp.model.wms.dto.TransferApplicationDTO$ViewGenerateMachineInfo">
+         select
+            ta.code as sourceCode,
+            ta.id as sourceId,
+            pade.id as sourceDetailId,
+            pade.sku_id as skuId,
+            pade.sku_no as skuNo,
+            pade.qty as qty,
+            ta.out_warehouse_id as warehouseId,
+            ta.out_warehouse_name as warehouseName
+        from transfer_application ta
+        inner join transfer_application_detail pade on ta.id = pade.main_id and pade.is_deleted = false
+        <where>
+            ta.is_deleted = false and ta.id in
+            <foreach collection="ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+            <if test="isAutoMachine == true">
+                AND pade.is_auto_machine = true
+            </if>
         </where>
     </select>
 

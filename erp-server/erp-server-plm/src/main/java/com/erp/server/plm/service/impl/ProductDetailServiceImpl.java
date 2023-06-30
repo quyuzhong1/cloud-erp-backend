@@ -2742,6 +2742,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductLogisticsShowDTO logisticsShowDTO = logisticsShowDTOList.stream().
                 filter(l -> l.getSkuId().equals(skuId)).findFirst().orElse(null);
         if (logisticsShowDTO != null) {
+            logisticsShowDTOList.forEach(req -> {
+                if (StringUtils.isNotBlank(req.getProductPropertyId())) {
+                    String[] split = req.getProductPropertyId().split(",");
+                    List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
+                    List<String> countryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                    req.setProductProperty(StringUtils.join(countryNameList, ","));
+                }
+            });
             logisticsShowDTO.setDisableFieldList(disableFields);
             result.setProductLogisticsShowDTO(logisticsShowDTO);
         }
@@ -2767,6 +2775,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //查询目的国海关编码
         List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(productId);
+        productCustomsEntityList.forEach(req -> {
+            if (StringUtils.isNotBlank(req.getCountry())) {
+                String[] split = req.getCountry().split(",");
+                List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
+                List<String> countryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                req.setCountryName(StringUtils.join(countryNameList, ","));
+            }
+        });
         result.setProductCustomsList(productCustomsEntityList);
 
         //产品包装辅料

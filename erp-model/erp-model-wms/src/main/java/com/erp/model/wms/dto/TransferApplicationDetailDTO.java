@@ -43,6 +43,11 @@ public class TransferApplicationDetailDTO implements Serializable {
          */
         @Size(max = 255,message = "备注不能大于255字符")
         private String remark;
+
+        /**
+         * 是否自动生成加工单
+         */
+        private Boolean isAutoMachine;
     }
 
     @Data
