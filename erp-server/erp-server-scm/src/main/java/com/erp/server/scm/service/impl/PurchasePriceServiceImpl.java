@@ -418,6 +418,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus));
             content = String.format("状态由[%s]变更为[%s],意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
+
+            //同步价格到产品sku
+
         } else {
             //审核不通过
             String rejectStatus = ApproveStatusEnum.REJECT.getStatus();

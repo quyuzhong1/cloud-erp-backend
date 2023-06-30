@@ -358,6 +358,11 @@ public class QcInfoDTO implements Serializable {
          */
         private String qcDeptName;
 
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
 
         /**
          * 产品信息
