@@ -9,7 +9,10 @@ import java.util.List;
 public enum SysClassifyEnum {
     PLM("plm", "PLM系统"),
     SCM("scm", "SCM系统"),
-    WMS("wms", "WMS系统");
+    WMS("wms", "WMS系统"),
+    OMS("oms", "OMS系统"),
+
+    ;
 
     @EnumValue
     @JsonValue
