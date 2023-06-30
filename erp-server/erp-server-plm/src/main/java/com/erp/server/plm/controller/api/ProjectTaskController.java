@@ -736,7 +736,7 @@ public class ProjectTaskController extends BaseController {
     @PostMapping("/removeBatch")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "charge_id",
-            menuCode = "plm:task:removeBatch",
+            menuCode = "plm:task:removeTask",
             serviceClass = ProjectTaskService.class,
             keyIdName = "ids"
     )
