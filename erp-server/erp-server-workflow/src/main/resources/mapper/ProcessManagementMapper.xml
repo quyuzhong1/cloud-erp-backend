@@ -56,6 +56,7 @@
         ptm.cur_activity_name
         FROM process_management pm , process_task_management ptm
         where pm.process_instance_id = ptm.process_instance_id
+        and pm.is_deleted = false and ptm.is_deleted = false
     </sql>
 
     <sql id="List_Process_Management">
@@ -79,10 +80,10 @@
             concat(wm.detail_url,pm.business_id) as detail_url,
             pm.create_time as create_time
         FROM process_task_management AS ptm
-                 LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id
-                 LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code
-                 LEFT JOIN process_definition pd on pd.id = pm.process_definition_id
-        where ptm.task_status = 'approveIng'
+                 LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id AND pm.is_deleted = false
+                 LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code AND wm.is_deleted = false
+                 LEFT JOIN process_definition pd on pd.id = pm.process_definition_id and pd.is_deleted = false
+        where ptm.task_status = 'approveIng'  and ptm.is_deleted = false
           <if test="null != param.processName and param.processName != ''">
               and pd.process_name ilike concat('%', #{param.processName},'%')
           </if>
