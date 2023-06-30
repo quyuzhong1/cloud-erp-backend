@@ -107,6 +107,7 @@ public class TaskCommentServiceImpl extends ServiceImpl<TaskCommentMapper, TaskC
      * @date 2022-10-25 18:11
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void batchSaveTaskComment(List<TaskCommentDTO.AddDTO> taskCommentList) {
         if (CollectionUtils.isNotEmpty(taskCommentList)) {
             Class<TaskCommentEntity> customerClass = TaskCommentEntity.class;
@@ -136,10 +137,15 @@ public class TaskCommentServiceImpl extends ServiceImpl<TaskCommentMapper, TaskC
                         batchAttachmentList.add(attachment);
                     }
                 }
+                addList.add(addEntity);
             }
 
-            this.saveBatch(addList);
-            plmAttachmentService.saveBatch(batchAttachmentList);
+            if(CollectionUtils.isNotEmpty(addList)){
+                this.saveBatch(addList);
+            }
+            if(CollectionUtils.isNotEmpty(batchAttachmentList)){
+                plmAttachmentService.saveBatch(batchAttachmentList);
+            }
 
         }
     }

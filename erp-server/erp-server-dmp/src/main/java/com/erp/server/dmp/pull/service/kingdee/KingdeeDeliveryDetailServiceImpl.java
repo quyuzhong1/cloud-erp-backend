@@ -133,26 +133,21 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
      * @date 2023-06-28 16:52
      */
     private List<KingdeeDeliveryDetailEntity> listWantToMqSoOutstock(List<KingdeeDeliveryDetailEntity> pushToMqList) {
-        //020 B2B线下国内 021 B2B线下国外 3003 官网线上
-        List<String> list = Arrays.asList("020", "021", "3003");
         List<KingdeeDeliveryDetailEntity> wantList = new ArrayList<>(pushToMqList.size());
-        // 标准销售出库单
-        String fBillTypeID = "ad0779a4685a43a08f08d2e42d7bf3e9";
+        // B2C 销售出库单
+        String fBillTypeID = "5580d51e423ec9";
         for (KingdeeDeliveryDetailEntity item : pushToMqList) {
             // 跳过非唯迹订单
             if (StrUtil.isEmpty(item.getFSaleOrgId()) ||
                     ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(item.getFSaleOrgId()) ||
                     ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(item.getFSaleOrgId()) ||
-                    fBillTypeID.equals(item.getFBillTypeID()) ||
-                    !list.contains(item.getF_ulz_BaseProperty2Code())
+                    !fBillTypeID.equals(item.getFBillTypeID())
             ) {
                 continue;
             }
 
             wantList.add(item);
-
         }
-
         return wantList;
     }
 
