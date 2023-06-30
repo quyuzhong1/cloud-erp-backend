@@ -6,6 +6,7 @@ import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -55,7 +56,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         }
         //调拨申请单
         if (ApiModuleTypeEnum.TRANSFER_INFO.getCode().toString().equals(code)) {
-            transferInfoService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
+            transferInfoService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId,null);
         }
         //其他入库单
         if (ApiModuleTypeEnum.OTHER_INSTOCK.getCode().toString().equals(code)) {

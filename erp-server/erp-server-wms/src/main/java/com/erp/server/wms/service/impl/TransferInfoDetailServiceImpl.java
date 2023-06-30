@@ -129,7 +129,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
             throw new ServiceException(ApiError.ERROR_99047);
         }
 
-        if (SourceTypeEnum.SELF_ADD.getCode().equals(transferInfoEntity.getSourceType())) {
+        if (!SourceTypeEnum.TRANSFER_APPLICATION.getCode().equals(transferInfoEntity.getSourceType())) {
             return;
         }
 

@@ -277,17 +277,26 @@ public class TransferInfoDTO implements Serializable {
         @StateEnumValue(clazz = SourceTypeEnum.class, message = "来源类型输入值有误")
         private String sourceType;
 
+        /**
+         * 编码（拉取金蝶数据时需要）
+         */
+        private String code;
+
+        /**
+         * 第三方系统（拉取金蝶数据时需要）
+         */
+        private String thirdPartySystem;
+
+        /**
+         * 金蝶同步状态
+         */
+        private String syncKingdeeStatus;
 
     }
 
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
-        /**
-         * 编码（拉取金蝶数据时需要）
-         */
-        private String code;
 
         /**
          * 明细

@@ -8,6 +8,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.business.enums.ThirdPartySystemEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -186,6 +187,9 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         resultEntity.setSourceCode(entity.getCode());
         resultEntity.setSourceType(SourceTypeEnum.STK_TRANSFERDIRECT.getCode());
         resultEntity.setBillDate(entity.getBillDate().toLocalDate());
+
+        //金蝶同步状态（无需同步）
+        resultEntity.setSyncKingdeeStatus(SyncKingdeeStatusEnum.NO_NEED_SYNC.getCode());
 
         //调入仓库
         String inWarehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(entity.getInWarehouseCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
