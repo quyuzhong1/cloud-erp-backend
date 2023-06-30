@@ -364,6 +364,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 myWorkOptionDTO.setPath(myWorkOptionDTO.getModuleUrl());
                 BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
                 pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
+                pendingViewDetailDTO.setCount(myWorkOptionDTO.getTableNumber());
                 switch (SysClassifyEnum.getEnumByCode(myWorkOptionDTO.getSysClassify())) {
                     case PLM:
                         pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT + myWorkOptionDTO.getModuleUrl());
