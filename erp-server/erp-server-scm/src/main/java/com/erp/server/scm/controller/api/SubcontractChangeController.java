@@ -108,7 +108,7 @@ public class SubcontractChangeController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:subcontractChangeOrder:addAndSubmit",
+            menuCode = "scm:subcontractChangeOrder:submit",
             serviceClass = SubcontractChangeService.class,
             keyIdName = "id")
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated SubcontractChangeDTO.AddDTO dto) {
@@ -126,7 +126,7 @@ public class SubcontractChangeController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:subcontractChangeOrder:updateAndSubmit",
+            menuCode = "scm:subcontractChangeOrder:submit",
             serviceClass = SubcontractChangeService.class,
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SubcontractChangeDTO.UpdateDTO dto) {
@@ -198,7 +198,7 @@ public class SubcontractChangeController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:subcontractChangeOrder:cancel",
+            menuCode = "scm:subcontractChangeOrder:cancelProcess",
             serviceClass = SubcontractChangeService.class,
             keyIdName = "ids")
     public ApiResult<Void> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
