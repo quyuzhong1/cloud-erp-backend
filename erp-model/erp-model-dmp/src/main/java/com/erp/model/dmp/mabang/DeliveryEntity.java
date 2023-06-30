@@ -5,6 +5,7 @@ import com.erp.model.dmp.mabang.item.DeliveryItemEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -54,7 +55,7 @@ public class DeliveryEntity extends CleanBaseDTO {
 
     private String tail_distance_time;
 
-    private String logic_price;
+    private BigDecimal logic_price;
 
     /**
      * 附件
@@ -106,7 +107,7 @@ public class DeliveryEntity extends CleanBaseDTO {
     /**
      * 总重量
      */
-    private String total_weights;
+    private BigDecimal total_weights;
 
     private String channel_name;
 
@@ -138,7 +139,7 @@ public class DeliveryEntity extends CleanBaseDTO {
     /**
      * 总体积
      */
-    private String total_volumes;
+    private BigDecimal total_volumes;
 
     /**
      * 用户名称

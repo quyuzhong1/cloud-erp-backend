@@ -20,4 +20,13 @@ public interface DmpBomService extends SuperService<DmpBomEntity> {
      * @param ext
      */
     void checkOrder(ComboSkuInfoEntity ext);
+
+    /**
+     * 判断是否加工的bom
+     * @param sku
+     * @param platformSign
+     * @param relationType
+     * @return
+     */
+    Boolean checkIsBom(String sku, String platformSign, String relationType);
 }

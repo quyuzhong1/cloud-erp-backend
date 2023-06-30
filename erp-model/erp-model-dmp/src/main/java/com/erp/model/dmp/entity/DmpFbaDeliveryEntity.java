@@ -171,6 +171,12 @@ public class DmpFbaDeliveryEntity extends BaseEntity<DmpFbaDeliveryEntity> {
     @TableField("warehouse_id")
     private String warehouseId;
 
+    /**
+     * 平台标识
+     */
+    @TableField(value = "platform_sign")
+    private String platformSign;
+
     @TableField(exist = false)
     private List<DmpFbaDeliveryDetailEntity> itemList;
 
@@ -223,9 +229,42 @@ public class DmpFbaDeliveryEntity extends BaseEntity<DmpFbaDeliveryEntity> {
 
     public static final String WAREHOUSE_ID = "warehouse_id";
 
+    public static final String PLATFORM_SIGN = "platform_sign";
+
     @Override
     public Serializable pkVal() {
         return null;
     }
 
+    @Override
+    public String toString() {
+        return "DmpFbaDeliveryEntity{" +
+                "logicName='" + logicName + '\'' +
+                ", customsClearanceTime='" + customsClearanceTime + '\'' +
+                ", totalApplyQuantity=" + totalApplyQuantity +
+                ", remark='" + remark + '\'' +
+                ", deliveryTime='" + deliveryTime + '\'' +
+                ", isOver=" + isOver +
+                ", logicPrice=" + logicPrice +
+                ", estimateTime='" + estimateTime + '\'' +
+                ", deliveryType=" + deliveryType +
+                ", deliveryId='" + deliveryId + '\'' +
+                ", stockSum=" + stockSum +
+                ", totalWeights=" + totalWeights +
+                ", channelName='" + channelName + '\'' +
+                ", sailTime='" + sailTime + '\'' +
+                ", arrivalTime='" + arrivalTime + '\'' +
+                ", totalVolumes=" + totalVolumes +
+                ", employeeName='" + employeeName + '\'' +
+                ", logisticsCode='" + logisticsCode + '\'' +
+                ", deliveryNo='" + deliveryNo + '\'' +
+                ", extendFee=" + extendFee +
+                ", warehouseName='" + warehouseName + '\'' +
+                ", channelId='" + channelId + '\'' +
+                ", deliveryStatus=" + deliveryStatus +
+                ", warehouseId='" + warehouseId + '\'' +
+                ", platformSign='" + platformSign + '\'' +
+                ", itemList=" + itemList +
+                '}';
+    }
 }

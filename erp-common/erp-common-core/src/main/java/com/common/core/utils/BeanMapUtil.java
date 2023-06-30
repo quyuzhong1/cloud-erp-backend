@@ -1,10 +1,14 @@
 package com.common.core.utils;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.bean.copier.CopyOptions;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
+import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
@@ -18,6 +22,25 @@ import java.util.Set;
  * @date 2022/12/1 19:52
  */
 public class BeanMapUtil {
+
+    // 为保证可见性和有序性，防止出现半初始化
+    private static volatile BeanMapUtil INSTANCE;
+
+    /**
+     * 获取单例
+     * @return
+     */
+    public static BeanMapUtil getInstance() {
+        if (INSTANCE == null) {
+            synchronized (BeanMapUtil.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new BeanMapUtil();
+                    return INSTANCE;
+                }
+            }
+        }
+        return INSTANCE;
+    }
 
 
     /**
@@ -114,6 +137,56 @@ public class BeanMapUtil {
         } else {
             return null;
         }
+    }
+
+    /**
+     * 驼峰转换
+     * @param source
+     * @param target
+     * @param <K>
+     * @param <T>
+     * @return
+     */
+    public <K, T> T copyAndParse(K source, T target) {
+        // 下划线转驼峰
+        BeanUtil.copyProperties(source, target, getCopyOptions(source.getClass()));
+        return target;
+    }
+
+    // 缓存CopyOptions（注意这个是HuTool的类，不是Cglib的）
+
+    private Map<Class, CopyOptions> cacheMap = new HashMap<>();
+
+
+    private CopyOptions getCopyOptions(Class source) {
+        CopyOptions options = cacheMap.get(source);
+        if (options == null) {
+            // 不加锁，我们认为重复执行不会比并发加锁带来的开销大
+            options = CopyOptions.create().setFieldMapping(buildFieldMapper(source));
+            cacheMap.put(source, options);
+        }
+        return options;
+    }
+
+    /**
+     * @param source
+     * @return
+     */
+    private Map<String, String> buildFieldMapper(Class source) {
+        PropertyDescriptor[] properties = org.springframework.cglib.core.ReflectUtils.getBeanProperties(source);
+        Map<String, String> map = new HashMap<>();
+        for (PropertyDescriptor target : properties) {
+            String name = target.getName();
+            String camel = StrUtil.toCamelCase(name);
+            if (!name.equalsIgnoreCase(camel)) {
+                map.put(name, camel);
+            }
+            String under = StrUtil.toUnderlineCase(name);
+            if (!name.equalsIgnoreCase(under)) {
+                map.put(name, under);
+            }
+        }
+        return map;
     }
 
 }

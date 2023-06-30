@@ -29,6 +29,7 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
@@ -74,6 +75,9 @@ public class MQConsumerService {
 
     @Resource
     private MQProducerService mqProducerService;
+
+    @Autowired
+    private DmpFbaDeliveryService dmpFbaDeliveryService;
 
 
 
@@ -352,6 +356,27 @@ public class MQConsumerService {
                     dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            }
+        }
+    }
+
+
+    /**
+     * rocketmq 监听马帮FBA发货单相关数据
+     */
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
+            selectorExpression = "mabang_fba_delivery_tag",
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-fba_delivery_consumer")
+    public class ConsumerFbaDelivery implements RocketMQListener<DmpFbaDeliveryEntity> {
+        @Override
+        public void onMessage(DmpFbaDeliveryEntity ext) {
+            log.info("监听FBA发货单信息消息：entity={}", JSONUtil.toJsonStr(ext));
+            dmpFbaDeliveryService.checkDelivery(ext);
+            MapUtil mapUtil = getMapParam();
+            if(PlatformEnum.MABANG.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = OrderMongoDTO.getByDeliveryNo(ext.getDeliveryNo());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_DELIVERY, DeliveryEntity.class);
             }
         }
     }

@@ -265,6 +265,12 @@ public class DmpFbaDeliveryDetailEntity extends BaseEntity<DmpFbaDeliveryDetailE
     @TableField("main_id")
     private String mainId;
 
+    /**
+     * 发货单详情id
+     */
+    @TableField("delivery_detail_id")
+    private String deliveryDetailId;
+
 
     public static final String FBASTOCK_ID = "fbastock_id";
 
@@ -346,9 +352,57 @@ public class DmpFbaDeliveryDetailEntity extends BaseEntity<DmpFbaDeliveryDetailE
 
     public static final String MAIN_ID = "main_id";
 
+    public static final String DELIVERY_DETAIL_ID = "delivery_detail_id";
+
     @Override
     public Serializable pkVal() {
         return null;
     }
 
+    @Override
+    public String toString() {
+        return "DmpFbaDeliveryDetailEntity{" +
+                "fbastockId='" + fbastockId + '\'' +
+                ", shippBatchnewId='" + shippBatchnewId + '\'' +
+                ", platformSku='" + platformSku + '\'' +
+                ", stockId='" + stockId + '\'' +
+                ", shippNo='" + shippNo + '\'' +
+                ", weight=" + weight +
+                ", deliveryNum=" + deliveryNum +
+                ", useDeliveryNum=" + useDeliveryNum +
+                ", remark='" + remark + '\'' +
+                ", cost=" + cost +
+                ", companyId='" + companyId + '\'' +
+                ", fbaWarehouseId='" + fbaWarehouseId + '\'' +
+                ", amazonsite='" + amazonsite + '\'' +
+                ", volume=" + volume +
+                ", logicComputeCost=" + logicComputeCost +
+                ", customComputeCost=" + customComputeCost +
+                ", sharedQuantity=" + sharedQuantity +
+                ", saleId='" + saleId + '\'' +
+                ", packageCost=" + packageCost +
+                ", lockState=" + lockState +
+                ", lockQty=" + lockQty +
+                ", lockTime='" + lockTime + '\'' +
+                ", lockRemark='" + lockRemark + '\'' +
+                ", lockVersion=" + lockVersion +
+                ", salename='" + salename + '\'' +
+                ", packtype='" + packtype + '\'' +
+                ", asin='" + asin + '\'' +
+                ", msku='" + msku + '\'' +
+                ", correlationNum=" + correlationNum +
+                ", applyQuantity=" + applyQuantity +
+                ", shipmentStatus='" + shipmentStatus + '\'' +
+                ", logisticsCode='" + logisticsCode + '\'' +
+                ", stockName='" + stockName + '\'' +
+                ", pictururl='" + pictururl + '\'' +
+                ", fnsku='" + fnsku + '\'' +
+                ", skuNo='" + skuNo + '\'' +
+                ", state='" + state + '\'' +
+                ", shopName='" + shopName + '\'' +
+                ", shopId='" + shopId + '\'' +
+                ", mainId='" + mainId + '\'' +
+                ", deliveryDetailId='" + deliveryDetailId + '\'' +
+                '}';
+    }
 }

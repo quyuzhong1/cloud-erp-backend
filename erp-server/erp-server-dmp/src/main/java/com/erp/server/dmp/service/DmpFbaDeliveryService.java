@@ -14,4 +14,17 @@ import com.common.business.service.SuperService;
 public interface DmpFbaDeliveryService extends SuperService<DmpFbaDeliveryEntity> {
 
 
+    /**
+     * 校验FBA发货单在中台是否存在，存在就修改不存在则新增
+     * @param dmpFbaDeliveryEntity
+     * @return
+     */
+    void checkDelivery(DmpFbaDeliveryEntity dmpFbaDeliveryEntity);
+
+    /**
+     * 新增
+     */
+    Boolean add(DmpFbaDeliveryEntity entity);
+
+
 }

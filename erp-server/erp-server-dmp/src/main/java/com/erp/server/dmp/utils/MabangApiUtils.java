@@ -481,13 +481,14 @@ public class MabangApiUtils {
     }
 
     public static void main(String[] args) {
-        LocalDateTime startDate = LocalDateTime.of(2023, 6, 28, 14, 0, 0);
-        LocalDateTime endDate = LocalDateTime.of(2023, 6, 28, 14, 59, 59);
+        LocalDateTime startDate = LocalDateTime.of(2023, 6, 29, 0, 0, 0);
+        LocalDateTime endDate = LocalDateTime.of(2023, 6, 29, 23, 59, 59);
         /*
         List<ComboSkuInfoEntity> skuInfoEntities = queryComboSkuList(PlatformApiEnum.STOCK_DO_SEARCH_COMBO_SKU.getTaskName(), startDate, endDate);
         System.out.println(skuInfoEntities);
          */
-        queryDeliveryList("hwc-get-batch-delivery-list", startDate, endDate);
+        List<DeliveryEntity> deliveryList = queryDeliveryList("hwc-get-batch-delivery-list", startDate, endDate);
+        System.out.println(deliveryList);
     }
 
 }

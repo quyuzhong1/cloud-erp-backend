@@ -127,6 +127,13 @@ public enum RocketMqTagEnum {
      */
     MABANG_SHIPMENT_TAG(23,RocketMqTagEnum.SHIPMENT,"mabang_shipment_tag"),
 
+    /**
+     * 马帮发货单tag
+     */
+    MABANG_FBA_DELIVERY_TAG(24,RocketMqTagEnum.FBA_DELIVERY,"mabang_fba_delivery_tag"),
+
+
+
     //---------------------------------金蝶数据同步code从1001开始------------------------------------------------------------------------------------------
 
     /**
@@ -423,6 +430,8 @@ public enum RocketMqTagEnum {
     public static final String SYNC_MABANG = "sync_mabang";
 
     public static final String SHIPMENT = "shipment";
+
+    public static final String FBA_DELIVERY = "fba_delivery";
 
     private Integer code;
 

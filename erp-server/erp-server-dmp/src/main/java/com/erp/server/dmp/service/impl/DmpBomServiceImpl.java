@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
@@ -63,6 +64,16 @@ public class DmpBomServiceImpl extends SuperServiceImpl<DmpBomMapper, DmpBomEnti
             WarnMsgInfoDTO warnMsgInfo = getWarnMsgInfoDTO(ext, bomList);
             mqProducerService.sendWarnMsg(warnMsgInfo);
         }
+    }
+
+    @Override
+    public Boolean checkIsBom(String sku, String platformSign, String relationType) {
+        List<DmpBomEntity> bomList = lambdaQuery()
+                .eq(DmpBomEntity::getParentSku, sku)
+                .eq(DmpBomEntity::getPlatformSign, platformSign)
+                .eq(DmpBomEntity::getRelationType, relationType)
+                .list();
+        return CollUtil.isNotEmpty(bomList) ? true : false;
     }
 
     private static WarnMsgInfoDTO getWarnMsgInfoDTO(ComboSkuInfoEntity ext, List<DmpBomEntity> bomList) {

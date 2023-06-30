@@ -8,6 +8,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.utils.BeanMapUtil;
 import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -17,21 +18,22 @@ import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpFbaDeliveryDetailEntity;
 import com.erp.model.dmp.entity.DmpFbaDeliveryEntity;
-import com.erp.model.dmp.entity.DmpShipmentDetailEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.dmp.mabang.DeliveryEntity;
 import com.erp.model.dmp.mabang.item.DeliveryItemEntity;
-import com.erp.model.dmp.mabang.item.ShipmentItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.service.DmpBomService;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,6 +61,9 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
 
     @Resource
     private MQProducerService mqProducerService;
+
+    @Autowired
+    private DmpBomService dmpBomService;
 
     /**
      * 拉去数据
@@ -113,13 +118,13 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
 
         // 构造dmp调拨发货数据
         List<DmpFbaDeliveryEntity> entityToMqlist = pushToMqList.stream()
-                .map(MabangDeliveryServiceImpl::initDeliveryEntity)
+                .map(this::initDeliveryEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
         entityToMqlist.stream().peek(msg ->{
-            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_SHIPMENT_TAG.getName(),
+            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_FBA_DELIVERY_TAG.getName(),
                     msg, StrUtil.uuid().toLowerCase());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
@@ -158,7 +163,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
         }
         MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);
         mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_DELIVERY, DeliveryEntity.class);
-        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_SHIPMENT_TAG.getName(),
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_FBA_DELIVERY_TAG.getName(),
                 dmpDeliveryEntity, StrUtil.uuid().toLowerCase());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
             throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
@@ -181,10 +186,16 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
      * 解析调拨发货数据
      **/
 
-    public static DmpFbaDeliveryEntity initDeliveryEntity(DeliveryEntity deliveryMongo){
-        DmpFbaDeliveryEntity dmpDeliveryEntity = new DmpFbaDeliveryEntity();
-        BeanUtil.copyProperties(deliveryMongo, dmpDeliveryEntity);
+    public  DmpFbaDeliveryEntity initDeliveryEntity(DeliveryEntity deliveryMongo){
+        // 只取待配货和作废的单据
+        if(deliveryMongo.getDelivery_status().intValue() != 1 && deliveryMongo.getDelivery_status().intValue() != 4) {
+            return null;
+        }
 
+        DmpFbaDeliveryEntity dmpDeliveryEntity = new DmpFbaDeliveryEntity();
+        BeanMapUtil.getInstance().copyAndParse(deliveryMongo, dmpDeliveryEntity);
+
+        dmpDeliveryEntity.setPlatformSign(PlatformEnum.MABANG.getDesc());
         dmpDeliveryEntity.setCreateTime(LocalDateTime.now());
         dmpDeliveryEntity.setItemList(initItem(deliveryMongo));
         return dmpDeliveryEntity;
@@ -193,7 +204,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
     /**
      * 解调拨发货商品数据
      **/
-    public static List<DmpFbaDeliveryDetailEntity> initItem(DeliveryEntity deliveryMongo) {
+    public List<DmpFbaDeliveryDetailEntity> initItem(DeliveryEntity deliveryMongo) {
         List<DeliveryItemEntity> mongoItems = deliveryMongo.getStockList();
         if(CollectionUtil.isEmpty(mongoItems)){
             log.warn("调拨发货单详情列表为空 {}", JSONUtil.toJsonStr(mongoItems));
@@ -204,10 +215,15 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
             DeliveryItemEntity deliveryItemEntity = mongoItems.get(i);
             DmpFbaDeliveryDetailEntity dmpFbaDeliveryDetailEntity = new DmpFbaDeliveryDetailEntity();
             BeanUtil.copyProperties(deliveryItemEntity, dmpFbaDeliveryDetailEntity);
+            dmpFbaDeliveryDetailEntity.setDeliveryDetailId(deliveryItemEntity.getId());
             //sku
             String skuNo = deliveryItemEntity.getSku();
             dmpFbaDeliveryDetailEntity.setSkuNo(skuNo);
-            items.add(dmpFbaDeliveryDetailEntity);
+            // 只取组合品的（因为马帮那边的sku不能修改，所以不用判断sku的变化）
+            Boolean isBom = dmpBomService.checkIsBom(skuNo, PlatformEnum.MABANG.getDesc(), "machining");
+            if(isBom) {
+                items.add(dmpFbaDeliveryDetailEntity);
+            }
         }
         return items;
     }

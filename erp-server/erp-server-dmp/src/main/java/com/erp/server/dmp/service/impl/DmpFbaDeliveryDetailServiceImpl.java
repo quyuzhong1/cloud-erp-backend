@@ -1,14 +1,23 @@
 package com.erp.server.dmp.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.erp.model.dmp.entity.DmpFbaDeliveryDetailEntity;
 import com.erp.server.dmp.mapper.DmpFbaDeliveryDetailMapper;
 import com.erp.server.dmp.service.DmpFbaDeliveryDetailService;
 import com.common.business.service.SuperServiceImpl;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  *  服务实现类
@@ -22,5 +31,44 @@ import lombok.extern.slf4j.Slf4j;
 public class DmpFbaDeliveryDetailServiceImpl extends SuperServiceImpl<DmpFbaDeliveryDetailMapper, DmpFbaDeliveryDetailEntity> implements DmpFbaDeliveryDetailService {
 
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean add(List<DmpFbaDeliveryDetailEntity> detailList, String mainId) {
+        detailList.forEach(obj -> obj.setMainId(mainId));
+        //批量新增
+        return this.saveBatch(detailList);
+    }
+
+    @Override
+    public List<DmpFbaDeliveryDetailEntity> listByMainId(String mainId) {
+        return lambdaQuery().eq(DmpFbaDeliveryDetailEntity::getMainId,mainId).list();
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void update(List<DmpFbaDeliveryDetailEntity> detailList, String mainId) {
+        List<DmpFbaDeliveryDetailEntity> insertList = new ArrayList<>();
+        for (DmpFbaDeliveryDetailEntity detail : detailList) {
+            Optional<DmpFbaDeliveryDetailEntity> dmpFbaDeliveryDetailEntityOptional = lambdaQuery()
+                    .eq(DmpFbaDeliveryDetailEntity::getDeliveryDetailId, detail.getDeliveryDetailId())
+                    .oneOpt();
+            if (dmpFbaDeliveryDetailEntityOptional.isPresent()) {
+                //如果数据有变动需要更新数据库订单商品信息
+                if (!dmpFbaDeliveryDetailEntityOptional.get().toString().equals(detail.toString())) {
+                    detail.setId(dmpFbaDeliveryDetailEntityOptional.get().getId());
+                    updateById(detail);
+                }
+            } else {
+                if (detail.getIsDeleted()){
+                    continue;
+                }
+                detail.setMainId(mainId);
+                insertList.add(detail);
+            }
+        }
+        if(CollUtil.isNotEmpty(insertList)){
+            saveBatch(insertList, 500);
+        }
+    }
 
 }

@@ -54,7 +54,7 @@ public class DeliveryItemEntity implements Serializable {
     /**
      * 重量
      */
-    private String weight;
+    private BigDecimal weight;
 
     /**
      * 发货数量
@@ -74,7 +74,7 @@ public class DeliveryItemEntity implements Serializable {
     /**
      * 成本
      */
-    private String cost;
+    private BigDecimal cost;
 
     /**
      * 企业编号
@@ -94,7 +94,7 @@ public class DeliveryItemEntity implements Serializable {
     /**
      * 体积
      */
-    private String volume;
+    private BigDecimal volume;
 
     /**
      * 打印次数
