@@ -32,7 +32,6 @@ import com.erp.server.dmp.utils.KingdeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,10 +54,12 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
     @Resource
     private MongoService mongoService;
 
-    @Autowired
+    @Resource
     private MQProducerService<DmpTransferInfoEntity> mqProducerService;
+
     @Resource
     private CfgSettingService cfgSettingService;
+
 
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
@@ -103,6 +104,7 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
+
 
         // 异步推送到MQ
         entityToMqlist.stream().peek(msg ->{
@@ -164,7 +166,7 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(StrUtil.format("FModifyDate >= {}", sdf.format(lastTime.minusMinutes(2))));
         queryFilters.add(StrUtil.format("FModifyDate < {}", sdf.format(nextTime)));
-        queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "''A','B',C','D'"));
+        queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'B','C','D'"));
         queryFilters.add(StrUtil.format("FThirdSystem != '{}'", CommonConstants.SYSTEM));
         String filterStr = String.join(" and ",  queryFilters );
         String fieldKeys = "FId,FBillNo,FBizType,FTransferDirect,FTransferBizType,FSaleOrgId,FSaleOrgId.FName," +

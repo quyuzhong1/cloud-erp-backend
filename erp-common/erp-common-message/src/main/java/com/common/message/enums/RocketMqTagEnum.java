@@ -361,6 +361,11 @@ public enum RocketMqTagEnum {
      */
     SYNC_KINGDEE_SO_OUTSTOCK_TAG(6001,RocketMqTagEnum.SYNC_WMS,"sync_kingdee_so_outatock_tag"),
 
+    /**
+     * 金蝶同步直接调拨单到WMS
+     */
+    SYNC_KINGDEE_TRANSFER_INFO_TO_WMS_TAG(6002,RocketMqTagEnum.SYNC_WMS,"sync_kingdee_transfer_info_to_wms_tag"),
+
 
     //---------------------------------马帮数据同步code从7001开始------------------------------------------------------------------------------------------
 

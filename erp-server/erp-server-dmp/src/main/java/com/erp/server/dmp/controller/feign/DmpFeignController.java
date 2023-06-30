@@ -3,9 +3,11 @@ package com.erp.server.dmp.controller.feign;
 import cn.hutool.json.JSONObject;
 import com.common.core.controller.BaseController;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
+import com.erp.model.dmp.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.KingdeeDTO;
-import com.erp.server.dmp.service.DmpShopInfoService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
+import com.erp.server.dmp.service.DmpShopInfoService;
+import com.erp.server.dmp.service.DmpSyncTaskService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,6 +31,9 @@ public class DmpFeignController extends BaseController {
 
     @Resource
     private KingdeeCommonService kingdeeCommonService;
+
+    @Resource
+    private DmpSyncTaskService dmpSyncTaskService;
 
     @PostMapping("/getShopById")
     public DmpShopInfoDTO getShopById(@RequestBody String shopId) {
@@ -54,6 +59,17 @@ public class DmpFeignController extends BaseController {
     @PostMapping("/createkingdeeSoChange")
     public String createkingdeeSoChange(@RequestBody Map<String, Object> paramMap) {
         return kingdeeCommonService.createkingdeeSoChange(paramMap);
+    }
+
+    /**
+     * 更新任务状态
+     * @author Will
+     * @date: 2023/6/30 10:00
+     * @param paramDTO
+     */
+    @PostMapping("/updateSyncInfo")
+    public void updateSyncInfo(@RequestBody DmpSyncMqDTO.ParamDTO paramDTO) {
+         dmpSyncTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
     }
 
 }

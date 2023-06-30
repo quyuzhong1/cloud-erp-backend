@@ -25,4 +25,25 @@ public class DmpSyncMqDTO implements Serializable {
      */
     private String mqData;
 
+
+    @Data
+    @NoArgsConstructor
+    public static class ParamDTO {
+
+        /**
+         * 任务id
+         */
+        private String dmpSyncTaskId;
+
+        /**
+         * 同步状态
+         */
+        private String syncStatus;
+
+        /**
+         * 响应消息
+         */
+        private String responseMsg;
+    }
+
 }

@@ -59,6 +59,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void syncKingdeeTransferInfo(DmpTransferInfoEntity entity) {

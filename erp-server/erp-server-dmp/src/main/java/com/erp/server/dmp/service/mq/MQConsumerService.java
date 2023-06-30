@@ -1,12 +1,17 @@
 package com.erp.server.dmp.service.mq;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.CleanBaseDTO;
+import com.erp.model.dmp.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.CleanStatusEnum;
@@ -20,6 +25,8 @@ import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Component;
@@ -61,8 +68,14 @@ public class MQConsumerService {
     private DmpBomService dmpBomService;
     @Resource
     private MongoService mongoService;
+
     @Resource
-    private DmpTransferInfoService dmpTransferInfoService;
+    private DmpSyncTaskService dmpSyncTaskService;
+
+    @Resource
+    private MQProducerService mqProducerService;
+
+
 
     // topic需要和生产者的topic一致，consumerGroup属性是必须指定的，内容可以随意
     // selectorExpression的意思指的就是tag，默认为“*”，不设置的话会监听所有消息
@@ -317,12 +330,28 @@ public class MQConsumerService {
         @Override
         public void onMessage(DmpTransferInfoEntity ext) {
             log.info("监听直接调拨单信息消息：entity={}", JSONUtil.toJsonStr(ext));
-            // 调用订单写入与更新
-            dmpTransferInfoService.checkOrder(ext);
+            //新增发送任务
+            DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
+            dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
+            dmpSyncTaskEntity.setSouceType(SourceTypeEnum.STK_TRANSFERDIRECT.getCode());
+            dmpSyncTaskEntity.setSourceId(ext.getSourceId());
+            dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
+            dmpSyncTaskEntity.setStatus("0");
+            dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
+            dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.MABANG_INOUT_STOCK_TAG.getName());
+            String mqData = JSONObject.toJSONString(ext);
+            dmpSyncTaskEntity.setMqData(mqData);
+            dmpSyncTaskService.save(dmpSyncTaskEntity);
             MapUtil mapUtil = getMapParam();
             if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
                 OrderMongoDTO updateDto = new OrderMongoDTO(ext.getSourceId());
                 finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_DIRECT_TRANSFER, KingdeeTransferDirectEntity.class);
+            }
+            DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), mqData);
+            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.SYNC_KINGDEE_TRANSFER_INFO_TO_WMS_TAG.getName(),
+                    dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }
     }

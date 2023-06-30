@@ -1,13 +1,8 @@
 package com.erp.model.dmp.entity;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.common.core.entity.BaseEntity;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
 
@@ -20,46 +15,38 @@ import java.time.LocalDateTime;
  * @since 2023-06-19
 */
 @Data
-@EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("dmp_transfer_info_detail")
-public class DmpTransferInfoDetailEntity extends BaseEntity<DmpTransferInfoDetailEntity> {
+public class DmpTransferInfoDetailEntity {
 
 
     /**
     * 主表id
     */
-    @TableField("main_id")
     private String mainId;
 
     /**
     * 物料编码
     */
-    @TableField("sku_no")
     private String skuNo;
 
     /**
     * 物料名称
     */
-    @TableField("product_name")
     private String productName;
 
     /**
     * 单位
     */
-    @TableField("unit")
     private String unit;
 
     /**
     * 调拨数量
     */
-    @TableField("qty")
     private Integer qty;
 
     /**
     * 来源明细id
     */
-    @TableField("source_detail_id")
     private String sourceDetailId;
 
     /**
@@ -70,60 +57,26 @@ public class DmpTransferInfoDetailEntity extends BaseEntity<DmpTransferInfoDetai
     /**
     * 入库时间
     */
-    @TableField("receive_time")
     private LocalDateTime receiveTime;
 
     /**
     * 入库库存状态编码
     */
-    @TableField("in_stock_status_code")
     private String inStockStatusCode;
 
     /**
     * 入库库存状态名称
     */
-    @TableField("in_stock_status_name")
     private String inStockStatusName;
 
     /**
     * 出库库存状态编码
     */
-    @TableField("out_stock_status_code")
     private String outStockStatusCode;
 
     /**
     * 出库库存状态名称
     */
-    @TableField("out_stock_status_name")
     private String outStockStatusName;
-
-
-    public static final String MAIN_ID = "main_id";
-
-    public static final String UNIT = "unit";
-
-    public static final String QTY = "qty";
-
-    public static final String SOURCE_DETAIL_ID = "source_detail_id";
-
-    public static final String RECEIVE_TIME = "receive_time";
-
-    public static final String IN_STOCK_STATUS_CODE = "in_stock_status_code";
-
-    public static final String IN_STOCK_STATUS_NAME = "in_stock_status_name";
-
-    public static final String OUT_STOCK_STATUS_CODE = "out_stock_status_code";
-
-    public static final String OUT_STOCK_STATUS_NAME = "out_stock_status_name";
-
-    public static final String SKU_NO = "sku_no";
-
-    public static final String PRODUCT_NAME = "product_name";
-
-
-    @Override
-    public Serializable pkVal() {
-        return null;
-    }
 
 }
