@@ -464,10 +464,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 ExecutionEntity executionEntity = (ExecutionEntity) execution;
                 // 根据节点状态进行撤回操作
                 if (executionEntity.isActive() && !executionEntity.isEnded() && !executionEntity.getActivityId().equals(initialActivityId)) {
-                    String processInstanceId = executionEntity.getProcessInstanceId();
-                    Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
-                    variables.put("approveType", ApproveTypeEnum.REVOKE.getStatus());
-                    runtimeService.setVariables(processInstanceId, variables);
                     runtimeService.deleteProcessInstance(execution.getProcessInstanceId(), "process revoke", true);
                     historyService.deleteHistoricProcessInstance(execution.getProcessInstanceId());
                     break;
