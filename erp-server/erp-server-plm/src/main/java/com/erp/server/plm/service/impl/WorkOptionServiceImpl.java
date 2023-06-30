@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.TaskPagingShowDTO;
@@ -55,6 +56,7 @@ public class WorkOptionServiceImpl implements WorkOptionService {
     @Override
     public List<WorkOptionDTO.MyWorkOptionDTO> getTableNum(List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList) {
         for (WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO : myWorkOptionDTOList) {
+            myWorkOptionDTO.setModuleCode(SourceTypeEnum.of(myWorkOptionDTO.getModuleCode()).getTableName());
             if (myWorkOptionDTO.getModuleCode().equals("project_task")) {
                 PagingDTO pagingDTO = JSONObject.parseObject(myWorkOptionDTO.getModuleParam(), PagingDTO.class);
                 TaskSearchParamDTO params = JSONObject.parseObject(JSONObject.toJSONString(pagingDTO.getParams()), TaskSearchParamDTO.class);

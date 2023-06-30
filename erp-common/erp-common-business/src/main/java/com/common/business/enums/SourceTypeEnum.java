@@ -16,12 +16,10 @@ public enum SourceTypeEnum {
     PURCHASE_ORDER("purchaseOrder", "采购订单","purchase_order"),
     PURCHASE_APPLICATION("purchaseApplication", "采购申请单","purchase_application"),
     SUBCONTRACT_ORDER("subcontractOrder", "委外订单","subcontract_order"),
-    PURCHASE_PRICE_CHANGE("subcontractOrder", "采购价变更","purchase_price_change"),
+    PURCHASE_PRICE_CHANGE("purchasePriceChange", "采购价变更","purchase_price_change"),
     SALES_DEMAND("salesDemand", "备货申请","sales_demand"),
     PURCHASE_CHANGE("purchaseChange", "采购变更","purchase_change"),
     PURCHASE_PRICE("purchasePrice", "采购价目表","purchase_price"),
-
-
 
     //WMS
     PO_INSTOCK("poInstock", "采购入库单","po_instock"),

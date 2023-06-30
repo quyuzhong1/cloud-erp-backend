@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.wms.mapper.WorkOptionMapper;
 import com.erp.server.wms.service.WorkOptionService;
@@ -26,6 +27,7 @@ public class WorkOptionServiceImpl implements WorkOptionService {
      **/
     public List<WorkOptionDTO.MyWorkOptionDTO> getTableNum(List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList) {
         for (WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO : myWorkOptionDTOList) {
+            myWorkOptionDTO.setModuleCode(SourceTypeEnum.of(myWorkOptionDTO.getModuleCode()).getTableName());
             myWorkOptionDTO.setTableNumber(workOptionMapper.getTableNum(myWorkOptionDTO));
         }
         return myWorkOptionDTOList;
