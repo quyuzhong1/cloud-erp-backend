@@ -83,11 +83,6 @@ public class SubcontractOrderController extends BaseController {
    * @return ApiResult<Void>
    */
    @PostMapping("/add")
-   @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-           tableField = "create_user_id",
-           menuCode = "scm:subcontractOrder:add",
-           serviceClass = SubcontractOrderService.class,
-           keyIdName = "id")
    public ApiResult<Void> add(@RequestBody @Validated SubcontractOrderDTO.AddDTO dto) {
       subcontractOrderService.add(dto);
       return success();
@@ -121,7 +116,7 @@ public class SubcontractOrderController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:subcontractOrder:addAndSubmit",
+            menuCode = "scm:subcontractOrder:submit",
             serviceClass = SubcontractOrderService.class,
             keyIdName = "id")
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated SubcontractOrderDTO.AddDTO dto) {
@@ -139,7 +134,7 @@ public class SubcontractOrderController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:subcontractOrder:updateAndSubmit",
+            menuCode = "scm:subcontractOrder:submit",
             serviceClass = SubcontractOrderService.class,
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SubcontractOrderDTO.UpdateDTO dto) {
@@ -248,7 +243,7 @@ public class SubcontractOrderController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:subcontractOrder:cancel",
+            menuCode = "scm:subcontractOrder:cancelProcess",
             serviceClass = SubcontractOrderService.class,
             keyIdName = "ids")
     public ApiResult<Void> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
