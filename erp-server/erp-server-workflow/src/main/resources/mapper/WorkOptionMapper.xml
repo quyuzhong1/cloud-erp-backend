@@ -101,7 +101,7 @@
         wm.sys_classify
         FROM process_management pm
         LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
-        LEFT JOIN work_menu wm ON pm.business_key = wm.module_code
+        INNER JOIN work_menu wm ON pm.business_key = wm.module_code
         WHERE 1 = 1
         AND (pm.approve_status = #{approveStatus} OR pm.approve_status = 'reject')
         AND ptm.cur_approve_id = #{userId}
@@ -114,7 +114,7 @@
         wm.sys_classify
         FROM process_management pm
         LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
-        LEFT JOIN work_menu wm ON pm.business_key = wm.module_code
+        INNER JOIN work_menu wm ON pm.business_key = wm.module_code
         WHERE 1 = 1
         AND ptm.create_user_id = #{userId}
         GROUP BY wm.sys_classify
