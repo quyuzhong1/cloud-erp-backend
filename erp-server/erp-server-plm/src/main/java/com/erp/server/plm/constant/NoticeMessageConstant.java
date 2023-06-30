@@ -51,6 +51,7 @@ public interface NoticeMessageConstant {
     String FINISH_WAIT_CONFIRM = "【%s】有一条任务待您审核，请及时审核";
 
     String FINISH_WAIT_CONFIRM_PRESS = "【%s催办】您有一条任务待审核，请及时审核";
+    String TASK_CHARGE_PRESS = "【%s催办】您有一条任务待处理，请及时处理";
 
     /**
      *   部分完成任务

@@ -99,7 +99,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                     throw new ServiceException(ApiError.ERROR_95010);
                 }
                 processId = task.getProcessId();
-                titleContent = String.format(NoticeMessageConstant.FINISH_WAIT_CONFIRM_PRESS, "加急");
+                titleContent = String.format(NoticeMessageConstant.TASK_CHARGE_PRESS, "加急");
                 textContent = String.format(NoticeMessageConstant.TASK_PROJECT_CONTENT, task.getName(), productInfo.getName(), LocalDateTimeUtil.format(task.getPlanEndTime(), DateUtil.fmt_day), taskCharge, task.getChargeName());
                 //当没有流程就要给任务负责人发消息
                 if (StringUtils.isEmpty(processId)) {
@@ -118,7 +118,22 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                         }
                         pressUserList.add(sendUserInfo);
                     }
+                }else{
+                    titleContent = String.format(NoticeMessageConstant.FINISH_WAIT_CONFIRM_PRESS, "加急");
+                    // 根据流程id查询下级审核人
+                    if (StringUtils.isNotBlank(processId)) {
+                        List<AuditorHandleDTO> approveRecordShowList = workflowFeign.getHistoryTaskByProcessId(processId);
+                        List<AuditorHandleDTO> auditorHandleList = approveRecordShowList.stream()
+                                .filter(obj -> BaseStatusEnum.WAIT_AUDIT.getName().equals(obj.getHandContent()))
+                                .collect(Collectors.toList());
+                        for (AuditorHandleDTO item : auditorHandleList) {
+                            LarkPressMessageDTO.SendUserInfo sendUserInfo = new LarkPressMessageDTO.SendUserInfo();
+                            sendUserInfo.setUserId(item.getHandleUserId());
+                            sendUserInfo.setUserName(item.getHandleUserName());
+                            pressUserList.add(sendUserInfo);
+                        }
 
+                    }
                 }
 
                 break;
@@ -126,20 +141,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                 throw new ServiceException(ApiError.ERROR_BUSINESS_NOT_EXIT);
 
         }
-        // 根据流程id查询下级审核人
-        if (StringUtils.isNotBlank(processId)) {
-            List<AuditorHandleDTO> approveRecordShowList = workflowFeign.getHistoryTaskByProcessId(processId);
-            List<AuditorHandleDTO> auditorHandleList = approveRecordShowList.stream()
-                    .filter(obj -> BaseStatusEnum.WAIT_AUDIT.getName().equals(obj.getHandContent()))
-                    .collect(Collectors.toList());
-            for (AuditorHandleDTO item : auditorHandleList) {
-                LarkPressMessageDTO.SendUserInfo sendUserInfo = new LarkPressMessageDTO.SendUserInfo();
-                sendUserInfo.setUserId(item.getHandleUserId());
-                sendUserInfo.setUserName(item.getHandleUserName());
-                pressUserList.add(sendUserInfo);
-            }
 
-        }
 
 
         // 发送飞书加急消息
