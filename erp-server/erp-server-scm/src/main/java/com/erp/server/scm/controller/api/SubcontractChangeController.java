@@ -39,7 +39,7 @@ public class SubcontractChangeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "scm:subcontractChangeOrder:paging",
-            tableAlias = ""
+            tableAlias = "sc"
     )
     public ApiResult<List<SubcontractChangeDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(subcontractChangeService.tabList(dto));
