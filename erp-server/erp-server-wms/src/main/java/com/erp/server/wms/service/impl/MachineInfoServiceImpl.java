@@ -341,6 +341,11 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     }
 
     @Override
+    public List<MachineInfoEntity> findBySourceTypeAndSourceCode(String sourceType, String sourceCode) {
+        return lambdaQuery().eq(MachineInfoEntity::getSourceType, sourceType).eq(MachineInfoEntity::getSourceCode, sourceCode).list();
+    }
+
+    @Override
     public List<MachineSubComponentsDTO.ViewDTO> viewSubComponents(String detailId) {
         List<MachineSubComponentsEntity> machineSubComponentsList = machineSubComponentsService.listByDetailId(detailId);
         if (CollectionUtils.isEmpty(machineSubComponentsList)) {

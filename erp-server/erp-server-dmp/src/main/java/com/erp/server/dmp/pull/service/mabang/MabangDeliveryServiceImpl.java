@@ -1,6 +1,5 @@
 package com.erp.server.dmp.pull.service.mabang;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.NumberUtil;
@@ -10,6 +9,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.BeanMapUtil;
 import com.common.core.utils.MapUtil;
+import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -18,6 +18,7 @@ import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpFbaDeliveryDetailEntity;
 import com.erp.model.dmp.entity.DmpFbaDeliveryEntity;
+import com.erp.model.dmp.entity.DmpWarehouseMappingEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -29,6 +30,7 @@ import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpBomService;
+import com.erp.server.dmp.service.DmpWarehouseMappingService;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -64,6 +66,9 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
 
     @Autowired
     private DmpBomService dmpBomService;
+
+    @Autowired
+    private DmpWarehouseMappingService dmpWarehouseMappingService;
 
     /**
      * 拉去数据
@@ -189,6 +194,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
     public  DmpFbaDeliveryEntity initDeliveryEntity(DeliveryEntity deliveryMongo){
         // 只取待配货和作废的单据
         if(deliveryMongo.getDelivery_status().intValue() != 1 && deliveryMongo.getDelivery_status().intValue() != 4) {
+            log.info("马帮FBA发货单产品信息状态不为待配货，作废状态，不需要推送，FBA发货单信息：{}", JSONObject.toJSONString(deliveryMongo));
             return null;
         }
 
@@ -201,7 +207,18 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
         dmpDeliveryEntity.setDeliveryId(deliveryMongo.getDelivery_id());
         dmpDeliveryEntity.setPlatformSign(PlatformEnum.MABANG.getDesc());
         dmpDeliveryEntity.setCreateTime(LocalDateTime.now());
+
+        // 填充仓库编码
+        DmpWarehouseMappingEntity dmpWarehouseMappingEntity = dmpWarehouseMappingService.getSourceWarehouseId(StrUtils.null2EmptyWithTrim(deliveryMongo.getWarehouse_id()), PlatformEnum.MABANG.getDesc());
+        dmpDeliveryEntity.setWarehouseCode(dmpWarehouseMappingEntity.getWarehouseCode());
+
         dmpDeliveryEntity.setItemList(initItem(deliveryMongo));
+
+        // 没有BOM的明细，则不添加
+        if(CollUtil.isEmpty(dmpDeliveryEntity.getItemList())) {
+            log.info("马帮FBA发货单产品信息没有组合品，不需要推送，FBA发货单信息：{}", JSONObject.toJSONString(deliveryMongo));
+            return null;
+        }
         return dmpDeliveryEntity;
     }
 

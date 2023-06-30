@@ -177,6 +177,12 @@ public class DmpFbaDeliveryEntity extends BaseEntity<DmpFbaDeliveryEntity> {
     @TableField(value = "platform_sign")
     private String platformSign;
 
+    /**
+     * 仓库编码
+     */
+    @TableField("warehouse_code")
+    private String warehouseCode;
+
     @TableField(exist = false)
     private List<DmpFbaDeliveryDetailEntity> itemList;
 
@@ -231,6 +237,8 @@ public class DmpFbaDeliveryEntity extends BaseEntity<DmpFbaDeliveryEntity> {
 
     public static final String PLATFORM_SIGN = "platform_sign";
 
+    public static final String WAREHOUSE_CODE = "warehouse_code";
+
     @Override
     public Serializable pkVal() {
         return null;
@@ -264,6 +272,7 @@ public class DmpFbaDeliveryEntity extends BaseEntity<DmpFbaDeliveryEntity> {
                 ", deliveryStatus=" + deliveryStatus +
                 ", warehouseId='" + warehouseId + '\'' +
                 ", platformSign='" + platformSign + '\'' +
+                ", warehouseCode='" + warehouseCode + '\'' +
                 ", itemList=" + itemList +
                 '}';
     }

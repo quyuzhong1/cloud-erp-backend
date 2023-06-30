@@ -52,6 +52,9 @@ public enum SourceTypeEnum {
     PROJECT_TASK("projectTask", "任务列表","project_task"),
     PRODUCT_CHANGE("productChange", "变更管理","product_change"),
 
+    //Mabang
+    MABANG_FBA_DELIVERY("MB_FBA_DELIVERY", "马帮FBA发货单",""),
+
     ;
 
     /**

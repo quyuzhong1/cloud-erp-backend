@@ -45,4 +45,12 @@ public class DmpWarehouseMappingServiceImpl extends SuperServiceImpl<DmpWarehous
         return Maps.newHashMap();
     }
 
+    @Override
+    public DmpWarehouseMappingEntity getSourceWarehouseId(String sourceId, String platform) {
+        LambdaQueryWrapper<DmpWarehouseMappingEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DmpWarehouseMappingEntity::getSourceId, sourceId)
+                .eq(DmpWarehouseMappingEntity::getPlatformSign, platform).last("limit 1");
+        return this.baseMapper.selectOne(queryWrapper);
+    }
+
 }

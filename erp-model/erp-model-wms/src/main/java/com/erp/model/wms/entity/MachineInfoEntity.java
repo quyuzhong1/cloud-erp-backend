@@ -181,6 +181,12 @@ public class MachineInfoEntity extends BaseEntity<MachineInfoEntity> {
     @TableField("source_type")
     private String sourceType;
 
+    /**
+     * 来源单据编号
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
 
     public static final String CODE = "code";
 
@@ -229,6 +235,8 @@ public class MachineInfoEntity extends BaseEntity<MachineInfoEntity> {
     public static final String SYNC_KINGDEE_ID = "sync_kingdee_id";
 
     public static final String SYNC_OPERATE = "sync_operate";
+
+    public static final String SOURCE_CODE = "source_code";
 
     @Override
     public Serializable pkVal() {

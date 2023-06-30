@@ -31,4 +31,13 @@ public interface DmpWarehouseMappingService extends SuperService<DmpWarehouseMap
     Map<String, DmpWarehouseMappingEntity> getByWarehouseCodes(List<String> warehouseCodes);
 
 
+    /**
+     * 根据平台仓库id和平台类型获取仓库映射信息
+     * @param sourceId
+     * @param platform
+     * @return
+     */
+    DmpWarehouseMappingEntity getSourceWarehouseId(String sourceId, String platform);
+
+
 }

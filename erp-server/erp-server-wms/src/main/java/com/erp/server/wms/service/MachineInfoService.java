@@ -160,4 +160,10 @@ public interface MachineInfoService extends SuperService<MachineInfoEntity> {
      * @return Boolean
      */
     Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus,String syncKingdeeId,String operate);
+
+    /**
+     * 根据来源类型和来源id查找
+     * @return
+     */
+    List<MachineInfoEntity> findBySourceTypeAndSourceCode(String sourceType, String sourceCode);
 }

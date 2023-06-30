@@ -373,6 +373,12 @@ public enum RocketMqTagEnum {
      */
     SYNC_KINGDEE_TRANSFER_INFO_TO_WMS_TAG(6002,RocketMqTagEnum.SYNC_WMS,"sync_kingdee_transfer_info_to_wms_tag"),
 
+    /**
+     * 马帮同步FBA发货单到到WMS加工单
+     */
+    SYNC_MABANG_FBA_DELIVERY_TO_WMS_TAG(6003,RocketMqTagEnum.SYNC_WMS,"sync_mabang_fba_delivery_to_wms_tag"),
+
+
 
     //---------------------------------马帮数据同步code从7001开始------------------------------------------------------------------------------------------
 

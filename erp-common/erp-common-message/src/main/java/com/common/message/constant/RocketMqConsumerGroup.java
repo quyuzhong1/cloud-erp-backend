@@ -178,4 +178,9 @@ public class RocketMqConsumerGroup {
      */
     public static final String SYNC_DMP_TRANSFER_INFO_TO_MABANG = "${spring.cloud.nacos.discovery.namespace}-sync_dmp_transfer_info_to_mabang";
 
+    /**
+     * 马帮FBA发货单同步到WMS
+     */
+    public static final String SYNC_MABANG_FBA_DELIVERY_TO_WMS = "${spring.cloud.nacos.discovery.namespace}-sync_mabang_fba_delivery_to_wms";
+
 }
