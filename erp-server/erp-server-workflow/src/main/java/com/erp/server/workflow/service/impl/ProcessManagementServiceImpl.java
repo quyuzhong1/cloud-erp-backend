@@ -37,6 +37,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.handle.BaseWorkflowService;
 import com.erp.server.workflow.mapper.ProcessManagementMapper;
 import com.erp.server.workflow.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -52,7 +53,6 @@ import org.camunda.bpm.engine.impl.pvm.process.ActivityImpl;
 import org.camunda.bpm.engine.runtime.ActivityInstance;
 import org.camunda.bpm.engine.runtime.Execution;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
-import org.camunda.bpm.engine.task.IdentityLink;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.model.bpmn.Bpmn;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
@@ -331,6 +331,12 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.BackResultDTO back(ProcessManagementDTO.BackDTO dto) {
+        // 查询业务数据和关联流程定义
+        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"");
+        if (null == processBusiness) {
+            // 业务未绑定流程定义
+            return new ProcessManagementDTO.BackResultDTO(dto);
+        }
         // 查询流程数据
         ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
         // 审核人校验
@@ -378,7 +384,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 保存流程任务数据
             backUpdateApprove(managementTask.getTaskManagementId(), managementTask.getManagementId(), dto.getApproveType(),dto.getActivityId(), dto.getComment());
         }
-        return new ProcessManagementDTO.BackResultDTO(activityInstance.getProcessDefinitionId(), activityInstance.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName(), historicActivityInstance.getActivityId(), historicActivityInstance.getActivityName());
+        return new ProcessManagementDTO.BackResultDTO(historicActivityInstance.getActivityId(), historicActivityInstance.getActivityName(),managementTask);
     }
 
     @Override
@@ -430,9 +436,16 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return Boolean.TRUE;
     }
 
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.RevokeResultDTO revoke(ProcessManagementDTO.RevokeDTO dto) {
+        // 查询业务数据和关联流程定义
+        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"");
+        if (null == processBusiness) {
+            // 业务未绑定流程定义
+            return new ProcessManagementDTO.RevokeResultDTO(dto);
+        }
         // 查询流程实例
         ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
         if (null == managementTask) {
@@ -457,23 +470,22 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
         // 查询所有执行中的节点
         List<Execution> executions = runtimeService.createExecutionQuery().processInstanceId(processInstance.getId()).list();
+        // 任务完成时的逻辑处理
         for (Execution execution : executions) {
             if (execution instanceof ExecutionEntity) {
                 ExecutionEntity executionEntity = (ExecutionEntity) execution;
                 // 根据节点状态进行撤回操作
                 if (executionEntity.isActive() && !executionEntity.isEnded() && !executionEntity.getActivityId().equals(initialActivityId)) {
-                    String processInstanceId = executionEntity.getProcessInstanceId();
-                    Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
-                    variables.put("approveType", ApproveTypeEnum.REVOKE.getStatus());
-                    runtimeService.setVariables(processInstanceId, variables);
                     runtimeService.deleteProcessInstance(execution.getProcessInstanceId(), "process revoke", true);
                     historyService.deleteHistoricProcessInstance(execution.getProcessInstanceId());
                     break;
                 }
             }
         }
-        // 更新流程任务数据
+        // 删除本地流程任务数据
         removeByProcessInstanceId(processInstance.getProcessInstanceId());
+        // 回调feign接口
+        callFeign(dto.getBusinessKey(), new EndProcessDTO(dto));
         return new ProcessManagementDTO.RevokeResultDTO(processInstance.getProcessDefinitionId(), processInstance.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName());
     }
 
@@ -757,7 +769,11 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 流程信息传递给业务系统
         EndProcessDTO dto = new EndProcessDTO(entity, taskEntity, approveTypeCode);
         // 获取业务系统feign
-        WorkMenuEntity menuEntity = workMenuService.getByModuleCode(entity.getBusinessKey());
+        return callFeign(entity.getBusinessKey(), dto);
+    }
+
+    private Boolean callFeign(String businessKey, EndProcessDTO dto) {
+        WorkMenuEntity menuEntity = workMenuService.getByModuleCode(businessKey);
         String feignBeanName = menuEntity.getFeignBeanName();
         if (StrUtil.isBlank(feignBeanName)) {
             throw new ServiceException(ApiError.ERROR_WORK_MENU_FEIGN);

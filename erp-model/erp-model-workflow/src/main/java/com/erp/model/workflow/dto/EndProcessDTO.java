@@ -58,4 +58,13 @@ public class EndProcessDTO {
         this.approveTime = taskEntity.getApproveTime();
         this.comment = taskEntity.getRemark();
     }
+
+    public EndProcessDTO(ProcessManagementDTO.RevokeDTO dto) {
+        this.businessKey = dto.getBusinessKey();
+        this.businessId = dto.getBusinessId();
+        this.approveStatus = ApproveTypeEnum.REVOKE;
+        this.approveUserId = dto.getUserId();
+        this.approveTime = LocalDateTime.now();
+        this.comment = dto.getRemark();
+    }
 }
