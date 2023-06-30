@@ -1,5 +1,6 @@
 package com.erp.rpc.sys.feign.aspect;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.annotation.DataPermission;
@@ -68,20 +69,11 @@ public class DataPermissionAspect {
         if (controllerDataScope == null) {
             return;
         }
-        String userId = "";
-        String userName = "";
         LoginUser userInfo = CommonInterceptor.threadLocal.get();
-        if (Objects.isNull(userInfo)) {
-            userInfo = new LoginUser();
-            userInfo.setUid(userId);
-            userInfo.setUserName(userName);
-        }
-        //当用户id 不为空的时候
-        if (StringUtils.isNotBlank(userInfo.getUid())) {
-            dataScopeFilter(joinPoint, userInfo, controllerDataScope);
-        } else {
+        if(ObjectUtil.isEmpty(userInfo) || StringUtils.isBlank(userInfo.getUid())){
             throw new ServiceException(ApiError.ERROR_403);
         }
+        dataScopeFilter(joinPoint, userInfo, controllerDataScope);
     }
 
     /**
@@ -112,10 +104,11 @@ public class DataPermissionAspect {
             userRequestPermissions.setPermissionsCode(controllerDataScope.menuCode());
             userRequestPermissions.setDataScope(DATA_SCOPE_ALL);
         } else {
-            userRequestPermissions = requestPermissionsList.stream().filter(p -> p.getPermissionsCode().equals(controllerDataScope.menuCode())).findFirst().orElse(null);
-            if (Objects.isNull(userRequestPermissions)) {
-                throw new ServiceException(ApiError.ERROR_1013);
-            }
+            userRequestPermissions = requestPermissionsList
+                    .stream()
+                    .filter(p -> p.getPermissionsCode().equals(controllerDataScope.menuCode()))
+                    .findFirst()
+                    .orElseThrow(() -> new ServiceException(ApiError.NO_PERMISSION));
         }
 
         List<String> userList = sysUserFeign.getDepUserList(user.getUid());
@@ -279,11 +272,11 @@ public class DataPermissionAspect {
             return;
         } else if (DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
             if (!userList.containsAll(users)) {
-                throw new ServiceException(ApiError.ERROR_1013);
+                throw new ServiceException(ApiError.NO_PERMISSION);
             }
         } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
             if (!users.contains(user.getUid())) {
-                throw new ServiceException(ApiError.ERROR_1013);
+                throw new ServiceException(ApiError.NO_PERMISSION);
             }
 
         }
@@ -383,11 +376,11 @@ public class DataPermissionAspect {
             return;
         } else if (DATA_SCOPE_DEPT.equals(userRequestPermissions.getDataScope())) {
             if (!userList.containsAll(users)) {
-                throw new ServiceException(ApiError.ERROR_1013);
+                throw new ServiceException(ApiError.NO_PERMISSION);
             }
         } else if (DATA_SCOPE_SELF.equals(userRequestPermissions.getDataScope())) {
             if (!users.contains(user.getUid())) {
-                throw new ServiceException(ApiError.ERROR_1013);
+                throw new ServiceException(ApiError.NO_PERMISSION);
             }
         }
     }

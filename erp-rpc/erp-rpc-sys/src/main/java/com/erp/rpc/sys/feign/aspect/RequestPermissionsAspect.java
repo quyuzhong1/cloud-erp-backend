@@ -59,7 +59,7 @@ public class RequestPermissionsAspect {
                 UserRequestPermissionsDTO permissions = permissionsList.stream().
                         filter(r -> permissionsCode.equals(r.getPermissionsCode())).findFirst().orElse(null);
                 if (Objects.isNull(permissions)) {
-                    throw new ServiceException(ApiError.ERROR_1013);
+                    throw new ServiceException(ApiError.NO_PERMISSION);
                 } else {
                     if(params.length > 0){
                         ObjectUtils.setFieldValue(params[inject.index()],inject.dataScope(),permissions.getDataScope());
