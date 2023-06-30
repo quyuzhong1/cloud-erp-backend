@@ -340,6 +340,7 @@ public class MQConsumerService {
             dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
             dmpSyncTaskEntity.setSouceType(SourceTypeEnum.STK_TRANSFERDIRECT.getCode());
             dmpSyncTaskEntity.setSourceId(ext.getSourceId());
+            dmpSyncTaskEntity.setSourceCode("");
             dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
             dmpSyncTaskEntity.setStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
             dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
@@ -380,6 +381,7 @@ public class MQConsumerService {
             dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.MABANG.getDesc());
             dmpSyncTaskEntity.setSouceType(SourceTypeEnum.MABANG_FBA_DELIVERY.getCode());
             dmpSyncTaskEntity.setSourceId(ext.getDeliveryId());
+            dmpSyncTaskEntity.setSourceCode(ext.getDeliveryNo());
             dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
             dmpSyncTaskEntity.setStatus("0");
             dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);

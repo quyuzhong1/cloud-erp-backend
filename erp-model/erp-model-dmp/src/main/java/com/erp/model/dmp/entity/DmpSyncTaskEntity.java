@@ -86,6 +86,12 @@ public class DmpSyncTaskEntity extends BaseEntity<DmpSyncTaskEntity> {
     @TableField("source_id")
     private String sourceId;
 
+    /**
+     * 来源单据编号
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
 
     public static final String TARGET_PLATFORM_NAME = "target_platform_name";
 
@@ -106,6 +112,8 @@ public class DmpSyncTaskEntity extends BaseEntity<DmpSyncTaskEntity> {
     public static final String SOUCE_TYPE = "souce_type";
 
     public static final String SOURCE_ID = "source_id";
+
+    public static final String SOURCE_CODE = "source_code";
 
     @Override
     public Serializable pkVal() {

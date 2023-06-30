@@ -96,7 +96,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
                 member.setSkuId(parentSkuId);
 
                 //版本
-                Integer version = skuList.stream().filter(obj -> obj.getParentSkuNo().equals(member.getSkuId())).map(BomInfoEntity::getBomVersion).findFirst().orElse(MathUtil.ZERO);
+                Integer version = skuList.stream().filter(obj -> obj.getParentSkuId().equals(member.getSkuId())).map(BomInfoEntity::getBomVersion).findFirst().orElse(MathUtil.ZERO);
                 member.setReferenceVersion(version);
 
                 // 子件明细

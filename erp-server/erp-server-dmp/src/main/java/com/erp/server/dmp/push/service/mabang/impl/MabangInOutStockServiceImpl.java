@@ -55,6 +55,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskEntity.setSouceType(sourceType);
         dmpSyncTaskEntity.setSourceId(transferInfo.getId());
+        dmpSyncTaskEntity.setSourceCode(transferInfo.getCode());
         dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.MABANG.getDesc());
         dmpSyncTaskEntity.setStatus("0");
         dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
