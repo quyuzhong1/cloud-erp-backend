@@ -86,6 +86,12 @@ public class CamundaGlobalListener {
   @EventListener
   public void onExecutionEvent(DelegateExecution executionDelegate) {
     log.info("Handle mutable execution event: {}",  executionDelegate.toString());
+    String businessKey = executionDelegate.getBusinessKey();
+    String key = ((ExecutionEntity) executionDelegate).getProcessDefinition().getKey();
+    if(key.startsWith("Process_")){
+      log.warn("旧流程不需要走监听器 key = {}", key);
+      return;
+    }
     int activityInstanceState = ((ExecutionEntity) executionDelegate).getActivityInstanceState();
     String type = (String) ((ExecutionEntity) executionDelegate).getEventSource().getProperties().toMap().get("type");
     List<String> endTypeList = Arrays.asList("endEvent", "noneEndEvent");
