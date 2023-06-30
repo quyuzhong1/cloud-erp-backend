@@ -1,5 +1,6 @@
 package com.erp.server.workflow.listeners;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.erp.server.workflow.service.ProcessManagementService;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
@@ -92,13 +93,15 @@ public class CamundaGlobalListener {
       // 任务创建时的逻辑处理
       log.info("CamundaGlobalListener onTaskEvent Task created: {}", executionDelegate.getCurrentActivityName());
       processManagementService.startExecutionHandle(executionDelegate);
-    }else if(ExecutionListener.EVENTNAME_END.equals(executionDelegate.getEventName())&&  endTypeList.contains(type)){
-      log.info("CamundaGlobalListener onTaskEvent Task completed: {} {} {} {}", executionDelegate.getEventName(), type, activityInstanceState,executionDelegate.getCurrentActivityName());
-      if(ActivityInstanceState.ENDING.getStateCode() == activityInstanceState){
-        log.info("CamundaGlobalListener onTaskEvent Task completed: {}", executionDelegate.getCurrentActivityName());
-      }
+    }else if(ExecutionListener.EVENTNAME_END.equals(executionDelegate.getEventName())){
+      if (((ActivityInstanceState.CANCELED.getStateCode() == activityInstanceState && ObjectUtil.isEmpty(type)) || endTypeList.contains(type))){
+        log.info("CamundaGlobalListener onTaskEvent Task completed: {} {} {} {}", executionDelegate.getEventName(), type, activityInstanceState,executionDelegate.getCurrentActivityName());
+        if(ActivityInstanceState.ENDING.getStateCode() == activityInstanceState){
+          log.info("CamundaGlobalListener onTaskEvent Task completed: {}", executionDelegate.getCurrentActivityName());
+        }
         // 任务完成时的逻辑处理
-      processManagementService.endExecutionHandle(executionDelegate.getProcessInstanceId());
+        processManagementService.endExecutionHandle(executionDelegate.getProcessInstanceId());
+      }
     }
   }
   /**
