@@ -161,7 +161,7 @@ public class RocketMqConsumerGroup {
     /**
      * 金蝶B2C 销售出库单同步
      */
-    public static final String SYNC_KINGDEE_SO_OUTSTOCK_TO_WMS = "${spring.cloud.nacos.discovery.namespace}-SYNC_SO_OUTSTOCK_TO_WMS";
+    public static final String SYNC_KINGDEE_SO_OUTSTOCK_TO_WMS = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_outatock_to_wms";
 
     /**
      * 直接调拨单金蝶同步至ERP

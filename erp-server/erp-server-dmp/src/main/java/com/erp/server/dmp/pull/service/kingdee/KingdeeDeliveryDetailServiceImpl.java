@@ -136,8 +136,10 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
      */
     private List<KingdeeDeliveryDetailEntity> listWantToMqSoOutstock(List<KingdeeDeliveryDetailEntity> pushToMqList) {
         List<KingdeeDeliveryDetailEntity> wantList = new ArrayList<>(pushToMqList.size());
+
+        Map<SettingEnum, String> map = settingService.getMap(SettingEnum.KD_TO_ERP_FILTER);
         // B2C 销售出库单
-        String fBillTypeID = "5580d51e423ec9";
+        String fBillTypeID = map.get(SettingEnum.KD_TO_ERP_B2C_SO_OUTSTOCK_BILL_TYPE);
         for (KingdeeDeliveryDetailEntity item : pushToMqList) {
             // 跳过非唯迹订单
             if (StrUtil.isEmpty(item.getFSaleOrgId()) ||

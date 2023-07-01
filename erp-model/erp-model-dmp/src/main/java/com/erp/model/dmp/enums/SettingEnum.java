@@ -19,7 +19,7 @@ public enum SettingEnum {
     ERP_TO_MB_EMPLOYEE_NAME("erp_to_mb_employee_name", SettingEnum.ERP_TO_MB_DIRECT_TRANSFER,"ERP直接调拨单推送马帮仓库，员工名称"),
     KD_TO_ERP_DELIVERY_FILTER_PLATFORM_TYPE_CODE("kd_to_erp_delivery_bill_type",SettingEnum.KD_TO_ERP_FILTER,"金蝶发货单同步到ERP过滤的平台类型编码"),
     KD_TO_ERP_DELIVERY_FILTER_BILL_TYPE("kd_to_erp_delivery_bill_type",SettingEnum.KD_TO_ERP_FILTER,"金蝶发货单同步到ERP过滤的单据类型"),
-
+    KD_TO_ERP_B2C_SO_OUTSTOCK_BILL_TYPE("kd_to_erp_b2c_so_outstock_bill_type",SettingEnum.KD_TO_ERP_FILTER,"金蝶B2C销售出库单同步到ERP过滤的平台类型编码"),
     ;
 
     @EnumValue

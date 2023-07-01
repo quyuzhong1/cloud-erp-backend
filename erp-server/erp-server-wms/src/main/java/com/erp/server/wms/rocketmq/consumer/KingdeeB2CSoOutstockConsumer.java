@@ -1,9 +1,13 @@
 package com.erp.server.wms.rocketmq.consumer;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
+import com.erp.model.dmp.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -23,15 +27,34 @@ import javax.annotation.Resource;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_TO_WMS_TOPIC, selectorExpression = "sync_kingdee_so_outatock_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SO_OUTSTOCK_TO_WMS)
-public class KingdeeB2CSoOutstockConsumer implements RocketMQListener<KingdeeDeliveryDetailEntity> {
+@RocketMQMessageListener(topic = RocketMqTopic.DMP_SYNC_TASK_TOPIC, selectorExpression = "sync_kingdee_so_outatock_to_wms_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SO_OUTSTOCK_TO_WMS)
+public class KingdeeB2CSoOutstockConsumer implements RocketMQListener<DmpSyncMqDTO> {
 
     @Resource
     private SyncB2CSoOutstockService syncB2CSoOutstockService;
 
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
+
     @Override
-    public void onMessage(KingdeeDeliveryDetailEntity entity) {
-        log.info("监听到金蝶销售出库单要同步：entity={}", JSONUtil.toJsonStr(entity));
-        syncB2CSoOutstockService.syncKingdeeSoOutstock(entity);
+    public void onMessage(DmpSyncMqDTO dmpSyncMqDTO) {
+        DmpSyncMqDTO.ParamDTO paramDTO = new DmpSyncMqDTO.ParamDTO();
+        paramDTO.setDmpSyncTaskId(dmpSyncMqDTO.getDmpSyncTaskId());
+        try {
+            String dataJson = dmpSyncMqDTO.getMqData();
+            log.info("监听到金蝶B2C销售出库单要同步：entity>>>>>{}", dataJson);
+            KingdeeDeliveryDetailEntity entity= BeanUtil.toBean(JSONUtil.parseObj(dataJson), KingdeeDeliveryDetailEntity.class);
+            syncB2CSoOutstockService.syncKingdeeSoOutstock(entity);
+        }catch (Exception e){
+            log.error("金蝶B2C销售出库单同步失败，msg = {}",e.getMessage());
+            //同步失败
+            paramDTO.setSyncStatus(SyncKingdeeStatusEnum.FAILED_SYNC.getCode());
+            paramDTO.setResponseMsg(e.getMessage());
+            dmpTaskFeign.updateSyncInfo(paramDTO);
+        }
+        //同步成功
+        paramDTO.setSyncStatus(SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode());
+        paramDTO.setResponseMsg("同步成功");
+        dmpTaskFeign.updateSyncInfo(paramDTO);
     }
 }
