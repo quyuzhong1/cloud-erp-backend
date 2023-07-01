@@ -53,7 +53,7 @@ public class DmpFbaDeliveryDetailServiceImpl extends SuperServiceImpl<DmpFbaDeli
                     .eq(DmpFbaDeliveryDetailEntity::getDeliveryDetailId, detail.getDeliveryDetailId())
                     .oneOpt();
             if (dmpFbaDeliveryDetailEntityOptional.isPresent()) {
-                //如果数据有变动需要更新数据库订单商品信息
+                //如果数据有变动需要更新数据库明细信息
                 if (!dmpFbaDeliveryDetailEntityOptional.get().toString().equals(detail.toString())) {
                     detail.setId(dmpFbaDeliveryDetailEntityOptional.get().getId());
                     updateById(detail);

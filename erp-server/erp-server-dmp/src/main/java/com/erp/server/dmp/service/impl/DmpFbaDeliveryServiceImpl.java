@@ -38,7 +38,7 @@ public class DmpFbaDeliveryServiceImpl extends SuperServiceImpl<DmpFbaDeliveryMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void checkDelivery(DmpFbaDeliveryEntity fbaDeliveryEntity) {
-        DmpFbaDeliveryEntity dmpFbaDeliveryEntity =  lambdaQuery().eq(DmpFbaDeliveryEntity::getDeliveryNo, fbaDeliveryEntity.getDeliveryNo())
+        DmpFbaDeliveryEntity dmpFbaDeliveryEntity =  lambdaQuery().eq(DmpFbaDeliveryEntity::getPlatformSign, fbaDeliveryEntity.getPlatformSign()).eq(DmpFbaDeliveryEntity::getDeliveryNo, fbaDeliveryEntity.getDeliveryNo())
                 .one();
 
         if(null != dmpFbaDeliveryEntity && dmpFbaDeliveryEntity.getIsDeleted()){

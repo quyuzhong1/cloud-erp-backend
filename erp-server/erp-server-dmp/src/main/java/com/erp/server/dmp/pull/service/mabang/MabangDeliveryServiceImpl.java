@@ -20,10 +20,7 @@ import com.erp.model.dmp.entity.DmpBomEntity;
 import com.erp.model.dmp.entity.DmpFbaDeliveryDetailEntity;
 import com.erp.model.dmp.entity.DmpFbaDeliveryEntity;
 import com.erp.model.dmp.entity.DmpWarehouseMappingEntity;
-import com.erp.model.dmp.enums.CleanStatusEnum;
-import com.erp.model.dmp.enums.PlatformApiEnum;
-import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.dmp.enums.*;
 import com.erp.model.dmp.mabang.DeliveryEntity;
 import com.erp.model.dmp.mabang.item.DeliveryItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
@@ -194,7 +191,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
 
     public  DmpFbaDeliveryEntity initDeliveryEntity(DeliveryEntity deliveryMongo){
         // 只取待配货和作废的单据
-        if(deliveryMongo.getDelivery_status().intValue() != 1 && deliveryMongo.getDelivery_status().intValue() != 4) {
+        if(deliveryMongo.getDelivery_status().intValue() != FbaDeliveryStatusEnum.WAIT_DELIVERY.getCode() && deliveryMongo.getDelivery_status().intValue() != FbaDeliveryStatusEnum.INVALID.getCode()) {
             log.info("马帮FBA发货单产品信息状态不为待配货，作废状态，不需要推送，FBA发货单信息：{}", JSONObject.toJSONString(deliveryMongo));
             return null;
         }
