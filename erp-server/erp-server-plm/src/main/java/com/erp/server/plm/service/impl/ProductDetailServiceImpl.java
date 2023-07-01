@@ -63,6 +63,7 @@ import org.thymeleaf.util.ListUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -854,6 +855,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_95007);
         }*/
         ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
+        ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
         productSpuBaseInfoDTO.setSpecType(1);
         //产品等级
         if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getGradeId())) {
@@ -869,13 +871,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //产品信息修改操作日志
             addProductInfoLog(productSpuBaseInfoDTO, productInfoEntity, productSpuBaseInfoDTO.getId(), productSpuBaseInfoDTO.getId());
         }
+        productSpuBaseInfoDTO.setNameEn(productSkuBaseInfoDTO.getNameEn());
         //1.修改产品表 主表信息
         productSpuBaseInfoDTO.setIsNoSpecAdd(MathUtil.ONE);
 
         String id = productInfoService.updateSpec(productSpuBaseInfoDTO);
 
         //2.修改/新增 sku信息
-        ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
+
 
         productSkuBaseInfoDTO.setProductId(id);
         //如果是修改sku图片 还需要修改图片表
@@ -1016,11 +1019,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //11.修改/新增  目的国海关编码信息
         List<ProductCustomsDTO> productCustomsDTO = productNoSpecDTO.getProductCustomsList();
+        List<ProductCustomsEntity> productCustomsDTOEntityList = BeanMapper.copyList(productCustomsDTO, ProductCustomsEntity.class);
+        List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(id);
+        List<String> deleteIds = getDeleteIds(productCustomsDTOEntityList, productCustomsEntityList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            productCustomsService.removeByIds(deleteIds);
+        }
         if (CollectionUtils.isNotEmpty(productCustomsDTO)) {
             List<ProductCustomsEntity> customsEntityList = new ArrayList<>();
             for (ProductCustomsDTO customsDTO : productCustomsDTO) {
                 ProductCustomsEntity customsEntity = new ProductCustomsEntity();
                 BeanMapper.copy(customsDTO, customsEntity);
+                customsEntity.setSkuId(skuId);
                 customsEntityList.add(customsEntity);
             }
             addProductCustomsLog(productCustomsDTO, id);
@@ -1214,6 +1224,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //11.修改/新增  目的国海关编码信息
         List<ProductCustomsDTO> productCustomsDTO = productManySpecDTO.getProductCustomsList();
+        List<ProductCustomsEntity> productCustomsDTOEntityList = BeanMapper.copyList(productCustomsDTO, ProductCustomsEntity.class);
+        List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(productInfoDTO.getId());
+        List<String> deleteIds = getDeleteIds(productCustomsDTOEntityList, productCustomsEntityList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            productCustomsService.removeByIds(deleteIds);
+        }
         if (CollectionUtils.isNotEmpty(productCustomsDTO)) {
             List<ProductCustomsEntity> customsEntityList = new ArrayList<>();
             for (ProductCustomsDTO customsDTO : productCustomsDTO) {
@@ -1749,12 +1765,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional
     public Boolean inportExcel(ProductNoSpecDTO productNoSpecDTO) {
-
+        ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
+        ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
+        productSpuBaseInfoDTO.setNameEn(productSkuBaseInfoDTO.getNameEn());
         //1.新增产品表 主表信息
-        String id = productInfoService.updateSpec(productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO());
+        String id = productInfoService.updateSpec(productSpuBaseInfoDTO);
 
         //2.修改/新增 sku信息
-        ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
+
         productSkuBaseInfoDTO.setProductId(id);
         //如果是修改sku图片 还需要修改图片表
         if (StringUtils.isNotBlank(productSkuBaseInfoDTO.getImagesUrl())) {
@@ -1904,7 +1922,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     req.setPurchaseUser(findUserDTO.getUserName());
                 }
             }
-            if (StringUtils.isNotBlank(req.getPurchaseUser())) {
+            if (StringUtils.isNotBlank(req.getSaleCountry())) {
                 String[] split = req.getSaleCountry().split(",");
                 List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
                 List<String> nameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
@@ -2263,9 +2281,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductDetailEntity> detailEntityList = this.listByIds(ids);
         for (ProductDetailEntity entity : detailEntityList) {
             ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
-            if (StringUtils.isBlank(productInfoEntity.getSpuNo())) {
+            /*if (StringUtils.isBlank(productInfoEntity.getSpuNo())) {
                 throw new ServiceException(ApiError.ERROR_95199);
-            }
+            }*/
             if (StringUtils.isBlank(productInfoEntity.getChargeId())) {
                 throw new ServiceException(ApiError.ERROR_95200);
             }
@@ -2958,6 +2976,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //11.修改/新增  目的国海关编码信息
         List<ProductCustomsEntity> productCustomsDTO = skuDTO.getProductCustomsList();
+        List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(id);
+        List<String> deleteIds = getDeleteIds(productCustomsDTO, productCustomsEntityList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            productCustomsService.removeByIds(deleteIds);
+        }
         if (CollectionUtils.isNotEmpty(productCustomsDTO)) {
             List<ProductCustomsEntity> customsEntityList = new ArrayList<>();
             for (ProductCustomsEntity customsDTO : productCustomsDTO) {
@@ -2970,6 +2993,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //编辑通过后发送金蝶
         syncKingdeeProductDetailService.syncDataToKingdee(detailEntity, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+    }
+
+
+    private List<String> getDeleteIds(List<ProductCustomsEntity> customsEntityList, List<ProductCustomsEntity> dbList) {
+        List<String> ids = customsEntityList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(ProductCustomsEntity::getId).collect(Collectors.toList());
+        List<String> dbIds = dbList.stream().map(ProductCustomsEntity::getId).collect(Collectors.toList());
+        return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());
     }
 
 

@@ -7,7 +7,8 @@
     <sql id="Base_Column_List">
         tax_rate,
         target_tax_cost,
-        target_no_tax_cost,actual_tax_cost,actual_no_tax_cost,
+        target_no_tax_cost,
+<!--        actual_tax_cost,actual_no_tax_cost,-->
         retail_price,target_gpm,actual_gpm_cny,
         actual_gpm_usd,pd.create_time,pd.create_user_id,
         pd.create_user_name,pd.update_time,pd.update_user_id,
