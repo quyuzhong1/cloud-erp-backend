@@ -1016,11 +1016,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             addProductAttestationLog(productAttestationList, id);
             productAttestationService.saveOrUpdateBatchAttestation(productAttestationList);
         }
-
+        List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(id);
         //11.修改/新增  目的国海关编码信息
         List<ProductCustomsDTO> productCustomsDTO = productNoSpecDTO.getProductCustomsList();
         List<ProductCustomsEntity> productCustomsDTOEntityList = BeanMapper.copyList(productCustomsDTO, ProductCustomsEntity.class);
-        List<ProductCustomsEntity> productCustomsEntityList = productCustomsService.listByProductId(id);
+
         List<String> deleteIds = getDeleteIds(productCustomsDTOEntityList, productCustomsEntityList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             productCustomsService.removeByIds(deleteIds);
