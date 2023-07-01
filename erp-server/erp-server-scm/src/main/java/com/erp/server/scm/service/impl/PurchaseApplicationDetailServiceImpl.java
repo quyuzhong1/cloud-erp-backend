@@ -8,9 +8,11 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
+import com.erp.model.scm.entity.SalesDemandDetailEntity;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseApplicationDetailMapper;
@@ -47,6 +49,9 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
     @Resource
     private ModuleOperateLogService moduleOperateLogService;
 
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
     @Override
     public void add(List<PurchaseApplicationDetailDTO.AddDTO> details, String purchaseApplicationId) {
         if (CollectionUtils.isEmpty(details)) {
@@ -55,6 +60,9 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
         List<PurchaseApplicationDetailEntity> list = BeanMapperUtils.copyList(PurchaseApplicationDetailEntity.class, details);
         doOpHandleDataId(list,purchaseApplicationId);
         this.saveBatch(list);
+        //更新sku为不可删除标识
+        List<String> skuIds = list.stream().map(PurchaseApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        plmTaskFeign.updateOccupyStatus(skuIds);
     }
 
     @Override
@@ -77,6 +85,9 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
         List<PurchaseApplicationDetailEntity> newList = BeanMapperUtils.copyList(PurchaseApplicationDetailEntity.class, details);
         doOpHandleDataId(newList,purchaseApplicationId);
         this.saveOrUpdateBatch(newList);
+        //更新sku为不可删除标识
+        List<String> skuIds = newList.stream().map(PurchaseApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        plmTaskFeign.updateOccupyStatus(skuIds);
     }
 
     @Override
