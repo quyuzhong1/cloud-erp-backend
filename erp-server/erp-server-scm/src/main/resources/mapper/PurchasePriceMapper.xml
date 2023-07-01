@@ -176,4 +176,31 @@
             ${params.permissionSql}
         </if>
     </select>
+
+    <select id="listSupplierSkuPrice" resultType="com.erp.model.scm.dto.PurchasePriceDTO$SupplierSkuPrice">
+        SELECT
+            p.supplier_id,
+            p.sku_id,
+            p.sku_no,
+            p.tax_price,
+            p.tax_rate
+        from(
+            SELECT
+                pp.supplier_id,
+                ppd.sku_id,
+                ppd.sku_no,
+                ppd.tax_price,
+                ppd.tax_rate,
+                row_number() over(partition by pp.supplier_id,
+                ppd.sku_id,
+                ppd.sku_no order by ppd.update_time desc) as rank
+            FROM purchase_price pp
+            LEFT JOIN purchase_price_detail ppd ON pp.id = ppd.purchase_price_id
+            WHERE pp.supplier_id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        ) p
+        WHERE p.rank=1
+    </select>
 </mapper>

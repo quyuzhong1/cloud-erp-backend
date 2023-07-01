@@ -35,12 +35,14 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.mapper.ProductDetailMapper;
@@ -2392,14 +2394,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public Boolean commit(String id) {
-        //校验必填
+/*        //校验必填
         ProductCostEntity costEntity = productCostService.getBySkuId(id);
         if (costEntity.getActualTaxCost() == null) {
             throw new ServiceException(ApiError.ERROR_95237);
         }
         if (costEntity.getActualNoTaxCost() == null) {
             throw new ServiceException(ApiError.ERROR_95238);
-        }
+        }*/
+        //校验必填项
+        checkRequiredField(Arrays.asList(id));
         ProductDetailEntity productDetailEntity = this.getById(id);
         if (ObjectUtils.isEmpty(productDetailEntity)) {
             throw new ServiceException(ApiError.ERROR_95084);
@@ -3338,7 +3342,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isEmpty(entityList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
-        for (String id : ids) {
+/*        for (String id : ids) {
             ProductCostEntity costEntity = productCostService.getBySkuId(id);
             if (costEntity.getActualTaxCost() == null) {
                 throw new ServiceException(ApiError.ERROR_95237);
@@ -3346,7 +3350,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (costEntity.getActualNoTaxCost() == null) {
                 throw new ServiceException(ApiError.ERROR_95238);
             }
-        }
+        }*/
 
         //待提交、审核不通过才可以提交
         long count = entityList.stream().filter(entity ->
@@ -3665,4 +3669,5 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public Boolean updateOccupyStatus(List<String> skuIds) {
         return lambdaUpdate().set(ProductDetailEntity::getOccupyStatus, Boolean.TRUE).in(ProductDetailEntity::getId, skuIds).update();
     }
+
 }

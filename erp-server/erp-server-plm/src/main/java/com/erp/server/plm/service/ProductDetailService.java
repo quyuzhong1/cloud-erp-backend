@@ -10,6 +10,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -537,4 +538,5 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return com.erp.model.plm.dto.ProductNoSpecDetailAllDTO
      **/
     ProductNoSpecDetailAllDTO getNoSpecDetailBySkuId(String skuId);
+
 }

@@ -407,6 +407,35 @@ public class PurchasePriceDTO implements Serializable {
 
     }
 
+    /**
+     * 导出采购价目
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SupplierSkuPrice {
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+    }
+
+
 
     /**
      * 导出采购价目

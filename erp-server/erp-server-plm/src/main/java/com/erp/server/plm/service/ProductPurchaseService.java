@@ -5,6 +5,7 @@ import com.erp.model.plm.dto.ProductPurchaseDTO;
 import com.erp.model.plm.dto.ProductPurchaseShowDTO;
 import com.erp.model.plm.dto.SkuPurchaseDTO;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 
 import java.util.List;
 /**
@@ -66,6 +67,14 @@ public interface ProductPurchaseService extends IService<ProductPurchaseEntity> 
      * @return ProductPurchaseEntity
      */
     ProductPurchaseEntity getBySkuId(String skuId);
+    /**
+     * 根据skuIds查询
+     * @Author Luo_WG
+     * @Date 2023/6/30 16:47
+     * @param skuIds
+     * @return com.erp.model.plm.entity.ProductPurchaseEntity
+     **/
+    List<ProductPurchaseEntity> listBySkuIds(List<String> skuIds);
     /**
      * @description: 采购信息数据验证
      * @author Will

@@ -138,4 +138,13 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * 更新金蝶同步状态
      */
     Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
+
+    /**
+     * 修改状态
+     * @Author Luo_WG
+     * @Date 2023/6/30 19:47
+     * @param ids
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDTO.SupplierSkuPrice>
+     **/
+    List<PurchasePriceDTO.SupplierSkuPrice> listSupplierSkuPrice(List<String> ids);
 }

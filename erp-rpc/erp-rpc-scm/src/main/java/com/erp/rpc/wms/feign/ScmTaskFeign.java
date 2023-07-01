@@ -3,6 +3,7 @@ package com.erp.rpc.wms.feign;
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -276,4 +277,14 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/subcontractOrder/listSubcontractDetailByIds")
     List<SubcontractOrderDetailEntity> listSubcontractDetailByIds(@RequestBody List<String> sourceDetailIds);
+
+    /**
+     * 根据供应商Ids查询最新的sku价格信息
+     * @param ids ids
+     * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
+     * @Author Luo_WG
+     * @Date 2023/4/13 11:20
+     **/
+    @PostMapping("feign/purchasePrice/listSupplierSkuPrice")
+    List<PurchasePriceDTO.SupplierSkuPrice> listSupplierSkuPrice(@RequestBody List<String> ids);
 }

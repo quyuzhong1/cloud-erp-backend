@@ -16,8 +16,10 @@ import com.erp.model.plm.dto.ProductPurchaseDTO;
 import com.erp.model.plm.dto.ProductPurchaseShowDTO;
 import com.erp.model.plm.dto.SkuPurchaseDTO;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.plm.mapper.ProductPurchaseMapper;
 import com.erp.server.plm.service.ProductPurchaseService;
@@ -26,8 +28,10 @@ import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -41,14 +45,14 @@ import java.util.stream.Collectors;
 @Service
 public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMapper, ProductPurchaseEntity> implements ProductPurchaseService {
 
-    @Resource
-    private ProductPurchaseMapper productPurchaseMapper;
-
     @Autowired
     private SysUserFeign sysUserFeign;
 
     @Autowired
     private SupplierFeign supplierFeign;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
 
     /**
      * @Description 产品采购信息查询列表
@@ -59,7 +63,7 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
      **/
     @Override
     public List<ProductPurchaseShowDTO> list(String productId) {
-        return productPurchaseMapper.list(productId);
+        return baseMapper.list(productId);
     }
 
     /**
@@ -71,7 +75,8 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
      **/
     @Override
     public List<ProductPurchaseShowDTO> listBySkuId(String skuId) {
-        return productPurchaseMapper.listBySkuId(skuId);
+        List<ProductPurchaseShowDTO> purchaseShowDTOList = baseMapper.listBySkuId(skuId);
+        return purchaseShowDTOList;
     }
 
     /**
@@ -137,6 +142,11 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
         return this.getOne(queryWrapper);
     }
 
+    @Override
+    public List<ProductPurchaseEntity> listBySkuIds(List<String> skuIds) {
+        return lambdaQuery().in(ProductPurchaseEntity::getSkuId, skuIds).list();
+    }
+
     /**
      * @description: 数据验证
      * @author Will
@@ -200,7 +210,6 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
         }
         return resultList;
     }
-
 }
 
 

@@ -418,9 +418,6 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(approveStatus));
             content = String.format("状态由[%s]变更为[%s],意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
-
-            //同步价格到产品sku
-
         } else {
             //审核不通过
             String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
@@ -649,6 +646,18 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             return this.updateBatchById(list);
         }
         return false;
+    }
+
+    /**
+     * 修改状态
+     * @Author Luo_WG
+     * @Date 2023/6/30 19:47
+     * @param ids
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDTO.SupplierSkuPrice>
+     **/
+    @Override
+    public List<PurchasePriceDTO.SupplierSkuPrice> listSupplierSkuPrice(List<String> ids) {
+        return baseMapper.listSupplierSkuPrice(ids);
     }
 
 }

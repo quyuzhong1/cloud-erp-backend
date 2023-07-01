@@ -130,6 +130,11 @@ public class ProductCostShowDTO implements Serializable {
     private BigDecimal projectCost;
 
     /**
+     * 一级供应商
+     */
+    private String mainSupplier;
+
+    /**
      *禁止修改的字段
      */
     private List<String> disableFieldList;
