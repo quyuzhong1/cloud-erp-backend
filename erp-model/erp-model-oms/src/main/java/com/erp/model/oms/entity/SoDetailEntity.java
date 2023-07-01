@@ -42,7 +42,13 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField("sku_no")
     private String skuNo;
 
+
     /**
+     * 平台sku no
+     */
+    @TableField("platform_sku_no")
+    private String platformSkuNo;
+ /**
      * 销售数量
      */
     @TableField("qty")

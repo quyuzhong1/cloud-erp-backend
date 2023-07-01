@@ -27,4 +27,6 @@ public interface SkuMapingMapper extends BaseMapper<SkuMapingEntity> {
     List<SkuMapingDTO.PagingViewDTO> listExport( @Param("params") SkuMapingDTO.ExportDTO params, @Param("matchResult")Boolean matchResult);
 
     List<SkuMapingDTO.MatchCountDTO> listMatchCount(@Param("permissionSql") String permissionSql);
+
+    IPage<SkuMapingDTO.ProductSkuInfoDTO> listPaging(Page query, @Param("params")SkuMapingDTO.ListParamDTO params);
 }

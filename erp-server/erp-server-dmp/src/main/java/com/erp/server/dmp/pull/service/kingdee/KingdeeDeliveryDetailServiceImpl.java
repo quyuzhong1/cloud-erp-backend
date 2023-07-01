@@ -105,8 +105,8 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
          * 获取到想要同步的销售出库单列表
          */
         List<KingdeeDeliveryDetailEntity> wantToMqList = listWantToMqSoOutstock(pushToMqList);
-        // 异步推送到 销售出库单 到MQ
-        wantToMqList.forEach(p -> mqProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_TO_WMS_TOPIC, RocketMqTagEnum.SYNC_KINGDEE_SO_OUTSTOCK_TAG.getName(), p, p.getFBillNo()));
+        // 异步推送B2C销售出库单到MQ
+        wantToMqList.forEach(p -> mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.KINGDEE_B2C_SO_OUTSTOCK_TAG.getName(), p, p.getFBillNo()));
 
 
         // 构造订单结构

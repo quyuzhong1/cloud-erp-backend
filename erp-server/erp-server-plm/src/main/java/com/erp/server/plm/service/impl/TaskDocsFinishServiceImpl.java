@@ -358,9 +358,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         finishEntity.setOldFileName(oldDocs.getFileName());
         finishEntity.setOldUploadType(oldDocs.getUploadType());
         finishEntity.setOldFileUrl(oldDocs.getFileUrl());
-
         Boolean result = this.updateById(finishEntity);
-
         //当更新成功后 保存记录
         if (result) {
             noticeMessageService.docChangesNotice(loginUser.getUserName(), taskEntity.getProductId(), taskId, String.join(",", fileName));
@@ -374,8 +372,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                     .setOperation("文档操作")
                     .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
             sysLogService.addSysLogByOther(sysLogEntity);
-            //启动流程
-            startChangeDocsProcess(loginUser.getUid(), taskEntity);
+
             //添加历史
             taskDocHistoryService.addHistory(oldDocs);
         }

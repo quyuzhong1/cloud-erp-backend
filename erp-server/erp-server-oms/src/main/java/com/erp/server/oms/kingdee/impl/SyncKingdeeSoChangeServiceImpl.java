@@ -197,25 +197,24 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
                     jsonObject.set("stockBaseQty", item.getOldQty());
                     jsonObject.set("currentInventoryQty", item.getOldQty());
                     jsonObject.set("curInventoryQty", item.getOldQty());
-                    jsonObject.set("price", item.getOldPrice());
                     jsonObject.set("taxPrice", item.getOldPrice());
                     jsonObject.set("taxRate", item.getOldTaxRate());
 
-                }else{
+                } else {
                     jsonObject.set("qty", item.getQty());
                     jsonObject.set("baseQty", item.getQty());
                     jsonObject.set("stockBaseQty", item.getQty());
                     jsonObject.set("currentInventoryQty", item.getQty());
                     jsonObject.set("curInventoryQty", item.getQty());
-                    jsonObject.set("price", item.getPrice());
                     jsonObject.set("taxPrice", item.getTaxPrice());
                     jsonObject.set("taxRate", item.getTaxRate());
                 }
 
-                jsonObject.set("oldPrice", item.getOldPrice());
                 jsonObject.set("oldTaxPrice", item.getOldTaxPrice());
                 jsonObject.set("oldTaxRate", item.getOldTaxRate());
-                jsonObject.set("isGift", false);
+                jsonObject.set("isGift", item.getIsGift());
+                //是否补发
+                jsonObject.set("isReissue", item.getIsReissue());
                 jsonObject.set("unit", "Pcs");
                 jsonObject.set("remark", item.getRemark());
                 jsonObject.set("warehouseOrgCode", warehouseOrgCode);

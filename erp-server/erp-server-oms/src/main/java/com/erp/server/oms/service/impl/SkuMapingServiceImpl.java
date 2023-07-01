@@ -282,6 +282,35 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
         return addSkuMaping.getId();
     }
 
+
+    /**
+     * 销售订单添加客户sku
+     * @author yl
+     * @date 2023-07-01 9:19
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.SkuMapingDTO.ProductSkuInfoDTO>
+     */
+    @Override
+    public PagingVO<SkuMapingDTO.ProductSkuInfoDTO> listPaging(PagingDTO<SkuMapingDTO.ListParamDTO> dto) {
+        SkuMapingDTO.ListParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.listPaging(query, params);
+        List<SkuMapingDTO.ProductSkuInfoDTO> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>(pageData);
+        }
+        List<String> skuIdList = list.stream().map(SkuMapingDTO.ProductSkuInfoDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        for (SkuMapingDTO.ProductSkuInfoDTO item : list) {
+            String skuId = item.getSkuId();
+            String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                    findFirst().map(SkuVO::getSkuName).orElse("");
+            item.setSkuName(skuName);
+        }
+        return new PagingVO<>(pageData);
+    }
+
     private void checkExist(String id, String platformDict, String platformSkuNo) {
         LambdaQueryWrapper<SkuMapingEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SkuMapingEntity::getPlatformDict, platformDict);
@@ -314,7 +343,7 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
             String skuId = item.getProductSkuId();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().map(SkuVO::getSkuName).orElse("");
-            item.setPlatformSkuName(skuName);
+            item.setProductSkuName(skuName);
         }
     }
 

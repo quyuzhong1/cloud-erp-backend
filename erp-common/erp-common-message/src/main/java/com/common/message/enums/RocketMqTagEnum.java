@@ -132,7 +132,10 @@ public enum RocketMqTagEnum {
      */
     MABANG_FBA_DELIVERY_TAG(24,RocketMqTagEnum.FBA_DELIVERY,"mabang_fba_delivery_tag"),
 
-
+    /**
+     * B2C销售出库单到TAG
+     */
+    KINGDEE_B2C_SO_OUTSTOCK_TAG(25,RocketMqTagEnum.SYNC_WMS,"kingdee_b2c_so_outatock_tag"),
 
     //---------------------------------金蝶数据同步code从1001开始------------------------------------------------------------------------------------------
 
@@ -293,6 +296,8 @@ public enum RocketMqTagEnum {
      * 汇率更新
      */
     CHANGE_CURRENCY_TAG(2009, RocketMqTagEnum.SYNC_DMP,"change_currency_tag"),
+
+
     //-----------------------------plm数据更新编码从3001开始---------------------------------------------------------------
     /**
      * 修改上市时间

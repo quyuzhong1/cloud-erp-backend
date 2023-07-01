@@ -244,4 +244,59 @@ public class SkuMapingDTO implements Serializable {
 
 
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ProductSkuInfoDTO{
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku no
+         */
+        private String skuNo;
+
+        private String skuName;
+
+        /**
+         * 图片地址
+         */
+        private String imagesUrl;
+
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+
+        /**
+         * 平台sku
+         */
+        private String platformSkuName;
+
+
+    }
+
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListParamDTO extends SortDTO {
+
+
+        /**
+         * sku编号
+         */
+        private String no;
+
+
+        @NotBlank(message = "客户不能为空")
+        private String customerId;
+
+
+    }
 }

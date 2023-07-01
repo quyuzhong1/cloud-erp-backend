@@ -33,7 +33,6 @@ public class SkuMapingController extends BaseController {
     private SkuMapingService skuMapingService;
 
 
-
     /**
      * 获取 tab列表
      *
@@ -89,7 +88,7 @@ public class SkuMapingController extends BaseController {
      */
     @PostMapping("/export")
     public ApiResult exportSkuMaping(@RequestBody @Valid SkuMapingDTO.ExportDTO dto, HttpServletResponse response) {
-        Boolean result = skuMapingService.exportSkuMaping(dto,response);
+        Boolean result = skuMapingService.exportSkuMaping(dto, response);
         return result ? success() : failure();
     }
 
@@ -102,6 +101,19 @@ public class SkuMapingController extends BaseController {
     public ApiResult updateSkuMaping(@RequestBody @Valid SkuMapingDTO.UpdateDTO dto) {
         String id = skuMapingService.updateSkuMaping(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
+    }
+ 
+   /**
+    * 对应销售订单 添加客户sku
+    * @author yl
+    * @date 2023-07-01 9:13
+    * @param dto
+    * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<com.erp.model.oms.dto.SkuMapingDTO.ProductSkuInfoDTO>>
+    */
+    @PostMapping("/list")
+    public ApiResult<PagingVO<SkuMapingDTO.ProductSkuInfoDTO>> list(@RequestBody @Validated PagingDTO<SkuMapingDTO.ListParamDTO> dto) {
+        PagingVO<SkuMapingDTO.ProductSkuInfoDTO> pagingVO = skuMapingService.listPaging(dto);
+        return success(pagingVO);
     }
 
 

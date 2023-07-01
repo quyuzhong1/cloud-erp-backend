@@ -420,12 +420,6 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/cancelProcess")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "charge_id",
-//            menuCode = "plm:task:tasks:cancelProcess",
-//            serviceClass = ProjectTaskService.class,
-//            keyIdName = "taskIdList"
-//    )
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = projectTaskService.cancelProcess(dto.getIds());
         return result ? success() : failure();

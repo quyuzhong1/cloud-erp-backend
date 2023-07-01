@@ -69,4 +69,13 @@ public interface SkuMapingService extends SuperService<SkuMapingEntity> {
      * @return java.lang.String
      */
     String updateSkuMaping(SkuMapingDTO.UpdateDTO dto);
+
+    /**
+     * 销售订单添加客户sku
+     * @author yl
+     * @date 2023-07-01 9:19
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.SkuMapingDTO.ProductSkuInfoDTO>
+     */
+    PagingVO<SkuMapingDTO.ProductSkuInfoDTO> listPaging(PagingDTO<SkuMapingDTO.ListParamDTO> dto);
 }

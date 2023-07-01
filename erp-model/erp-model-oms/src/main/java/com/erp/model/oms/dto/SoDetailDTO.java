@@ -81,6 +81,11 @@ public class SoDetailDTO implements Serializable {
 
 
         /**
+         * 平台sku no
+         */
+        private String platformSkuNo;
+
+        /**
          * 备注
          */
         @Size(max = 200, message = "备注最大200字符")
@@ -119,6 +124,11 @@ public class SoDetailDTO implements Serializable {
          * sku no
          */
         private String skuNo;
+
+        /**
+         * 平台sku no
+         */
+        private String platformSkuNo;
 
         /**
          * 产品名称
