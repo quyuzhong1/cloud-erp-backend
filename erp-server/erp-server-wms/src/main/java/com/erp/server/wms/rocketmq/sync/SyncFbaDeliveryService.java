@@ -13,7 +13,9 @@ public interface SyncFbaDeliveryService {
     /**
      * @description: 同步FBA发货单生成加工单
      * @param entity
+     * @param sourceType
+     * @param syncTaskId
      */
-    void syncFbaDelivery(DmpFbaDeliveryEntity entity, String sourceType);
+    void syncFbaDelivery(DmpFbaDeliveryEntity entity, String sourceType, String syncTaskId);
 
 }

@@ -411,6 +411,11 @@ public enum RocketMqTagEnum {
      */
     MSG_WARN_TAG(9002,RocketMqTagEnum.MSG_WARN,"msg_warn_tag"),
 
+    /**
+     * DMP同步任务消同步状态信息回调
+     */
+    DMP_SYNC_TASK_CALLBACK_TAG(9003,RocketMqTagEnum.SYNC_DMP,"dmp_sync_task_callback_tag"),
+
     ;
     public static final String SALES_ORDER = "sales";
     public static final String DELIVERY_ORDER = "delivery";

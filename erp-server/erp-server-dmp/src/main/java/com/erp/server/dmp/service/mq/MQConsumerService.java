@@ -407,6 +407,22 @@ public class MQConsumerService {
         }
     }
 
+    /**
+     * DMP同步任务同步状态更新
+     */
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_SYNC_TASK_TOPIC,
+            selectorExpression = "dmp_sync_task_callback_tag",
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-dmp_sync_task_callback")
+    public class ConsumerSyncTaskCallback implements RocketMQListener<DmpSyncMqDTO.ParamDTO> {
+        @Override
+        public void onMessage(DmpSyncMqDTO.ParamDTO paramDTO) {
+            log.info("监听到DMP同步任务回调：entity={}", JSONUtil.toJsonStr(paramDTO));
+            dmpSyncTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
+        }
+    }
+
+
     private <T extends CleanBaseDTO> void finishClean(MapUtil mapUtil, OrderMongoDTO updateDto,String tableName, Class<T> clazz) {
         List<T> mongoData = mongoService.findMongoData(updateDto, 0, 0, tableName, clazz);
         if(CollectionUtil.isEmpty(mongoData)){
