@@ -437,6 +437,30 @@ public class MQConsumerService {
         }
     }
 
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
+            selectorExpression = "kingdee_refund_order_to_task_tag",
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-kingdee_so_return_order_consumer")
+    public class ConsumerErpSoReturnInstock implements RocketMQListener<KingdeeReturnOrderEntity> {
+        @Override
+        public void onMessage(KingdeeReturnOrderEntity ext) {
+            log.info("监听金蝶B2C销售出库单信息消息：entity={}", JSONUtil.toJsonStr(ext));
+            //新增发送任务
+            DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
+            dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
+            dmpSyncTaskEntity.setSouceType(SourceTypeEnum.SAL_RETURNSTOCK.getCode());
+            dmpSyncTaskEntity.setSourceId("");
+            dmpSyncTaskEntity.setSourceCode(ext.getFBillNo());
+            dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
+            dmpSyncTaskEntity.setStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
+            dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
+            dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.SYNC_KINGDEE_RETURN_ORDER_TO_WMS_TAG.getName());
+            String mqData = JSONObject.toJSONString(ext);
+            dmpSyncTaskEntity.setMqData(mqData);
+            dmpSyncTaskService.saveOrUpdateDmpSyncTask(dmpSyncTaskEntity);
+        }
+    }
+
     /**
      * DMP同步任务同步状态更新
      */

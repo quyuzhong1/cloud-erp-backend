@@ -137,6 +137,11 @@ public enum RocketMqTagEnum {
      */
     KINGDEE_B2C_SO_OUTSTOCK_TAG(25,RocketMqTagEnum.SYNC_WMS,"kingdee_b2c_so_outatock_tag"),
 
+    /**
+     * 金蝶退货单保存到dmp_sync_task同步任务表
+     */
+    KINGDEE_REFUND_ORDER_TO_TASK_TAG(26,RocketMqTagEnum.SYNC_WMS,"kingdee_refund_order_to_task_tag"),
+
     //---------------------------------金蝶数据同步code从1001开始------------------------------------------------------------------------------------------
 
     /**
@@ -356,16 +361,6 @@ public enum RocketMqTagEnum {
     SYNC_WMS_PURCHASE_ORDER_SUPPLIER_TAG(4003,RocketMqTagEnum.SYNC_SCM,"sync_wms_purchase_order_supplier_tag"),
 
 
-
-
-    //-----------------------------0MS数据更新从5001开始------------------------------------------------------------------
-    /**
-     * 金蝶退货单同步到OMS
-     */
-    SYNC_KINGDEE_RETURN_ORDER_TAG(5001,RocketMqTagEnum.SYNC_OMS,"sync_kingdee_return_order_tag"),
-
-
-
     //---------------------------------WMS 数据更新从6001开始---------------------------------------------------------------------------------
 
     /**
@@ -383,7 +378,10 @@ public enum RocketMqTagEnum {
      */
     SYNC_MABANG_FBA_DELIVERY_TO_WMS_TAG(6003,RocketMqTagEnum.SYNC_WMS,"sync_mabang_fba_delivery_to_wms_tag"),
 
-
+    /**
+     * 金蝶退货订单同步到WMS退货入库单
+     */
+    SYNC_KINGDEE_RETURN_ORDER_TO_WMS_TAG(6004,RocketMqTagEnum.SYNC_WMS,"sync_kingdee_return_order_to_wms_tag"),
 
     //---------------------------------马帮数据同步code从7001开始------------------------------------------------------------------------------------------
 

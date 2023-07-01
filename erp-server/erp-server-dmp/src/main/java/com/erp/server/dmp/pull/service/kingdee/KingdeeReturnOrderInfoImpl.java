@@ -32,6 +32,7 @@ import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -89,7 +90,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_RETURN_ORDER, KingdeeReturnOrderEntity.class);
         }
         //同步到OMS销售退货单
-        pushToMqList.forEach(req -> mqProducerService.asyncClassMsg(RocketMqTopic.SYNC_KINGDEE_TO_OMS_SALES_TOPIC, RocketMqTagEnum.SYNC_KINGDEE_RETURN_ORDER_TAG.getName(), req, req.getFBillNo()));
+        pushToMqList.forEach(req -> mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_REFUND_ORDER_TO_TASK_TAG.getName(), req, req.getFBillNo()));
 
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_KINGDEE_RETURN_ORDER);

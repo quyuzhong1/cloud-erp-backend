@@ -4,8 +4,11 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
@@ -63,6 +66,19 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
 
     @Override
     public void syncKingdeeReturnOrderToSoReturn(KingdeeReturnOrderEntity kingdeeReturnOrderEntity) {
+        //跳过优质胜和小隼科技的单
+        if (StrUtil.isEmpty(kingdeeReturnOrderEntity.getFSaleOrgId()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(kingdeeReturnOrderEntity.getFSaleOrgId()) || ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(kingdeeReturnOrderEntity.getFSaleOrgId())) {
+            return;
+        }
+        //如果不是B2C类型的单跳过
+        if (!kingdeeReturnOrderEntity.getFBillTypeID().equals("559351ce1d0252")) {
+            return;
+        }
+        //不同步MWS同步到金蝶的数据
+        if (kingdeeReturnOrderEntity.getFBillNo().contains(BusinessNoConstant.XSTH) && kingdeeReturnOrderEntity.getFBillNo().length() == 15) {
+            return;
+        }
+
         List<KingdeeReturnOrderItemEntity> itemEntityList = kingdeeReturnOrderEntity.getItemEntityList();
         List<String> stockNumberList = itemEntityList.stream().map(KingdeeReturnOrderItemEntity::getFStockNumber).collect(Collectors.toList());
         List<WarehouseEntity> warehouseEntities = warehouseService.listByKingdeeCodeList(stockNumberList);
@@ -71,24 +87,14 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         //如果金蝶退货单明细有不一样的仓库，这里分开成多单存到OMS
         Map<String, List<KingdeeReturnOrderItemEntity>> stockNumberMap = itemEntityList.stream().collect(Collectors.groupingBy(KingdeeReturnOrderItemEntity::getFStockNumber));
         for (Map.Entry<String, List<KingdeeReturnOrderItemEntity>> stringListEntry : stockNumberMap.entrySet()) {
-            if (StrUtil.isEmpty(kingdeeReturnOrderEntity.getFSaleOrgId()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(kingdeeReturnOrderEntity.getFSaleOrgId()) || ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(kingdeeReturnOrderEntity.getFSaleOrgId())) {
-                continue;
-            }
+
             //获取退货单明细
             List<KingdeeReturnOrderItemEntity> orderItemEntityList = stringListEntry.getValue();
             //获取仓库信息
             WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getKingdeeWarehouseCode().equals(stringListEntry.getKey())).findFirst().orElse(null);
-            //如果仓库不存在跳过
+            //如果仓库不存在抛出异常
             if (ObjectUtil.isNotEmpty(warehouseEntity)) {
-                continue;
-            }
-            //如果不是B2C类型的单跳过
-            if (!kingdeeReturnOrderEntity.getFBillTypeID().equals("559351ce1d0252")) {
-                continue;
-            }
-            //如果退货单号不是XSTHD开头的跳过，避免接收到OMS同步到金蝶的单
-            if (!kingdeeReturnOrderEntity.getFBillNo().contains("XSTHD")) {
-                continue;
+                throw new ServiceException(ApiError.ERROR_92056, stringListEntry.getKey());
             }
             SoReturnInstockEntity instockEntity = new SoReturnInstockEntity();
             instockEntity.setCode(kingdeeReturnOrderEntity.getFBillNo());
@@ -119,7 +125,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
                 SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuNo().equals(kingdeeReturnOrderItemEntity.getFMaterialNumber())).findFirst().orElse(null);
                 //金蝶sku和plm对应不上跳过
                 if (ObjectUtil.isEmpty(skuVO)) {
-                    continue;
+                    throw new ServiceException(ApiError.ERROR_92057, stringListEntry.getKey());
                 }
                 instockDetailEntity.setMainId(instockEntity.getId());
                 instockDetailEntity.setSkuNo(kingdeeReturnOrderItemEntity.getFMaterialNumber());
@@ -139,6 +145,8 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
                     //回滚库存
                     InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_RETURN_INSTOCK, ids);
                     inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+                    soReturnInstockService.removeByIds(ids);
+                    soReturnInstockDetailService.delete(ids);
                 }
             }
         }
