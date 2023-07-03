@@ -54,6 +54,12 @@ public class SoDeliveryNoticeDetailEntity extends BaseEntity<SoDeliveryNoticeDet
     private Boolean isClose;
 
     /**
+     * 是否关闭
+     */
+    @TableField("is_change_close")
+    private Boolean isChangeClose;
+
+    /**
      * 备注
      */
     @TableField("remark")

@@ -239,6 +239,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
     public void closeBySoDetailIds(List<String> soDetailIds) {
         if (CollectionUtils.isNotEmpty(soDetailIds)) {
             this.lambdaUpdate().set(SoDeliveryNoticeDetailEntity::getIsClose, Boolean.TRUE).
+                    set(SoDeliveryNoticeDetailEntity::getIsChangeClose, Boolean.TRUE).
                     in(SoDeliveryNoticeDetailEntity::getSourceDetailId, soDetailIds).update();
 
             soOutstockDetailService.closeBySoDetailIds(soDetailIds);
