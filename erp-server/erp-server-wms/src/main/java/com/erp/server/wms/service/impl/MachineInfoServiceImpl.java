@@ -509,7 +509,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         list.forEach(obj->{
             // TODO 此处可能存在一个加工单有些是从FBA发货单同步过来的父子级，需要判断过滤
             if(Objects.equals(obj.getSourceType(), SourceTypeEnum.MABANG_FBA_DELIVERY.getCode())) {
-                // syncMabangMachineService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode());
+                syncMabangMachineService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode());
             }
         });
         //操作日志
