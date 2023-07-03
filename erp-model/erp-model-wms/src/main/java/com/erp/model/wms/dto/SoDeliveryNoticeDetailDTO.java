@@ -150,6 +150,10 @@ public class SoDeliveryNoticeDetailDTO {
          */
         private Boolean isClose;
         /**
+         * 是否是变更关闭
+         */
+        private Boolean isChangeClose;
+        /**
          * 备注
          */
         private String remark;
