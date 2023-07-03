@@ -45,6 +45,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeMachineInfoService;
+import com.erp.server.wms.mabang.SyncMabangMachineService;
 import com.erp.server.wms.mapper.MachineInfoMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Maps;
@@ -52,6 +53,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -105,6 +107,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
     @Resource
     private SyncKingdeeMachineInfoService syncKingdeeMachineInfoService;
+
+    @Autowired
+    private SyncMabangMachineService syncMabangMachineService;
 
 
     @Override
@@ -459,6 +464,13 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             updateInventoryTransCore(list);
             //金蝶推送
             list.forEach(obj -> syncKingdeeMachineInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            // 发送马帮
+            list.forEach(obj->{
+                // TODO 此处可能存在一个加工单有些是从FBA发货单同步过来的父子级，需要判断过滤
+                if(Objects.equals(obj.getSourceType(), SourceTypeEnum.MABANG_FBA_DELIVERY.getCode())) {
+                    syncMabangMachineService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+                }
+            });
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("加工单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
             //中止当前审核流程
@@ -493,6 +505,13 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
         //金蝶推送
         list.forEach(obj -> syncKingdeeMachineInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        // 发送马帮
+        list.forEach(obj->{
+            // TODO 此处可能存在一个加工单有些是从FBA发货单同步过来的父子级，需要判断过滤
+            if(Objects.equals(obj.getSourceType(), SourceTypeEnum.MABANG_FBA_DELIVERY.getCode())) {
+                // syncMabangMachineService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode());
+            }
+        });
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("反审核了一个加工单【%s】", ModuleTypeEnum.MACHINE_INFO.getCode(), pairList, "反审核操作");

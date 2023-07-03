@@ -83,6 +83,9 @@ public class MachineSubComponentsEntity extends BaseEntity<MachineSubComponentsE
     @TableField("is_child")
     private Boolean isChild;
 
+    @TableField(exist = false)
+    private String warehouseCode;
+
 
 
     public static final String DETAIL_ID = "detail_id";

@@ -181,4 +181,9 @@ public class RocketMqConsumerGroup {
      * 金蝶退货单同步
      */
     public static final String SYNC_KINGDEE_RETURN_ORDER_TO_WMS = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_return_order_to_wms";
+
+    /**
+     * ERP加工单单->DMP
+     */
+    public static final String SYNC_ERP_MACHINE_INFO_TO_DMP = "${spring.cloud.nacos.discovery.namespace}-sync_ermachine_info_to_dmp";
 }

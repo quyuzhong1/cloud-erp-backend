@@ -35,6 +35,7 @@ public enum SourceTypeEnum {
     TRANSFER_OUT("transferOut", "分布式调出单","transfer_out"),
     TRANSFER_INFO("transferInfo", "直接调拨单","transfer_info"),
     SUPPLIER("supplier", "供应商列表","supplier"),
+    MACHINE_INFO("machineInfo", "加工单","machine_info"),
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),
@@ -92,7 +93,7 @@ public enum SourceTypeEnum {
     public static String getName(String type) {
         for (SourceTypeEnum sourceTypeEnum : SourceTypeEnum.values()) {
             if (type.equals(sourceTypeEnum.getCode())) {
-                return sourceTypeEnum.name();
+                return sourceTypeEnum.getName();
             }
         }
         return "";

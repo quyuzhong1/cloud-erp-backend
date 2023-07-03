@@ -395,6 +395,11 @@ public enum RocketMqTagEnum {
      */
     MABANG_INOUT_STOCK_TAG(7002, RocketMqTagEnum.SYNC_MABANG,"mabang_inout_stock_tag"),
 
+    /**
+     * ERP加工单同步DMP出入库
+     */
+    ERP_DMP_MACHINE_INFO_TAG(7003, RocketMqTagEnum.SYNC_DMP,"erp_dmp_machine_info_tag"),
+
 
 
     //-----------------------------公共信息编码从9001开始------------------------------------------------------------------

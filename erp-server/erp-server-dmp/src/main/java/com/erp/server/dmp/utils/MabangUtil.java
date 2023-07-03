@@ -5,12 +5,9 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
-import com.erp.model.dmp.entity.DmpOutInStockDetailEntity;
-import com.erp.model.dmp.entity.DmpOutInStockEntity;
 import com.erp.model.dmp.entity.DmpWarehouseMappingEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.wms.entity.TransferInfoDetailEntity;
-import com.erp.model.wms.entity.TransferInfoEntity;
+import com.erp.model.wms.entity.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
@@ -67,7 +64,7 @@ public class MabangUtil {
 
 
     /**
-     * 填充马帮出入库实体
+     * 填充马帮出入库实体(直接调拨单)
      * @param warehouseCode
      * @param warehouseName
      * @param productDetailList
@@ -110,5 +107,84 @@ public class MabangUtil {
         return mabangInOutStockDTO;
     }
 
+    /**
+     * 填充马帮出入库实体(加工单父级sku)
+     * @param warehouseCode
+     * @param warehouseName
+     * @param productDetailList
+     * @param machineInfoEntity
+     * @param machineDetailList
+     * @param inOutType
+     * @return
+     */
+    public static MabangInOutStockDTO fillMabangInOutStock(String warehouseCode, String warehouseName, String employeeName,
+                                                           List<ProductDetailEntity> productDetailList,
+                                                           MachineInfoEntity machineInfoEntity, List<MachineDetailEntity> machineDetailList,
+                                                           String inOutType) {
+
+        List<MabangInOutStockDTO.SkuItem> data = Lists.newArrayList();
+        MabangInOutStockDTO mabangInOutStockDTO = new MabangInOutStockDTO();
+        mabangInOutStockDTO.setErpSourceCode(machineInfoEntity.getCode());
+        mabangInOutStockDTO.setWarehouseCode(warehouseCode);
+        mabangInOutStockDTO.setWarehouseName(warehouseName);
+        mabangInOutStockDTO.setType(inOutType);
+        mabangInOutStockDTO.setEmployeeName(StrUtils.null2EmptyWithTrim(employeeName));
+        mabangInOutStockDTO.setRemark(StrUtil.format("ERP同步：{}", StrUtils.null2EmptyWithTrim(machineInfoEntity.getCode()) ));
+
+        machineDetailList.stream().forEach(parentMachine->{
+            MabangInOutStockDTO.SkuItem skuItem = new MabangInOutStockDTO.SkuItem();
+            skuItem.setStockSku(parentMachine.getSkuNo());
+            if (CollUtil.isNotEmpty(productDetailList)) {
+                String productName = productDetailList.stream().filter(e -> Objects.equals(e.getId(), parentMachine.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
+                skuItem.setProductName(productName);
+            }
+            skuItem.setQuantity(StrUtils.null2EmptyWithTrim(parentMachine.getQty()));
+            skuItem.setGridCode(StrUtils.null2EmptyWithTrim(parentMachine.getWarehouseLocation() ));
+            skuItem.setSourceDetailId(parentMachine.getId());
+            data.add(skuItem);
+        });
+        mabangInOutStockDTO.setData(data);
+        return mabangInOutStockDTO;
+    }
+
+    /**
+     * 填充马帮出入库实体(加工单子级sku)
+     * @param warehouseCode
+     * @param warehouseName
+     * @param productDetailList
+     * @param machineInfoEntity
+     * @param machineSubList
+     * @param inOutType
+     * @return
+     */
+    public static MabangInOutStockDTO fillMabangInOutStockSub(String warehouseCode, String warehouseName, String employeeName,
+                                                           List<ProductDetailEntity> productDetailList,
+                                                           MachineInfoEntity machineInfoEntity, List<MachineSubComponentsEntity> machineSubList,
+                                                           String inOutType) {
+
+        List<MabangInOutStockDTO.SkuItem> data = Lists.newArrayList();
+        MabangInOutStockDTO mabangInOutStockDTO = new MabangInOutStockDTO();
+        mabangInOutStockDTO.setErpSourceCode(machineInfoEntity.getCode());
+        mabangInOutStockDTO.setWarehouseCode(warehouseCode);
+        mabangInOutStockDTO.setWarehouseName(warehouseName);
+        mabangInOutStockDTO.setType(inOutType);
+        mabangInOutStockDTO.setEmployeeName(StrUtils.null2EmptyWithTrim(employeeName));
+        mabangInOutStockDTO.setRemark(StrUtil.format("ERP同步：{}", StrUtils.null2EmptyWithTrim(machineInfoEntity.getCode()) ));
+
+        machineSubList.stream().forEach(subMachine->{
+            MabangInOutStockDTO.SkuItem skuItem = new MabangInOutStockDTO.SkuItem();
+            skuItem.setStockSku(subMachine.getSkuNo());
+            if (CollUtil.isNotEmpty(productDetailList)) {
+                String productName = productDetailList.stream().filter(e -> Objects.equals(e.getId(), subMachine.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
+                skuItem.setProductName(productName);
+            }
+            skuItem.setQuantity(StrUtils.null2EmptyWithTrim(subMachine.getQty()));
+            skuItem.setGridCode(StrUtils.null2EmptyWithTrim(subMachine.getWarehouseLocation() ));
+            skuItem.setSourceDetailId(subMachine.getId());
+            data.add(skuItem);
+        });
+        mabangInOutStockDTO.setData(data);
+        return mabangInOutStockDTO;
+    }
 
 }

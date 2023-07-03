@@ -5,6 +5,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 
 import com.common.business.enums.ErpServerModuleEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -15,7 +16,6 @@ import com.erp.model.dmp.entity.DmpSyncTaskEntity;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
-import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.server.dmp.push.service.mabang.MabangInOutStockService;
 import com.erp.server.dmp.service.DmpSyncTaskService;
 import com.erp.server.dmp.utils.MabangApiUtils;
@@ -46,16 +46,16 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void inOutStock(MabangInOutStockDTO mabangInOutStock, TransferInfoEntity transferInfo,
+    public void inOutStock(MabangInOutStockDTO mabangInOutStock, String sourceId, String sourceCode,
                         String sourceType, String approveType) {
-        // 新增出入库数据
         mabangInOutStock.setApproveType(approveType);
 
+        // 保存任务数据
         DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
         dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.ERP.getDesc());
         dmpSyncTaskEntity.setSouceType(sourceType);
-        dmpSyncTaskEntity.setSourceId(transferInfo.getId());
-        dmpSyncTaskEntity.setSourceCode(transferInfo.getCode());
+        dmpSyncTaskEntity.setSourceId(sourceId);
+        dmpSyncTaskEntity.setSourceCode(sourceCode);
         dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.MABANG.getDesc());
         dmpSyncTaskEntity.setStatus("0");
         dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
@@ -65,8 +65,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
 
         dmpSyncTaskService.save(dmpSyncTaskEntity);
 
-        // 发送MQ消息处理直接调拨单发送到马帮
-
+        // 发送MQ消息处理发送到马帮
         DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), mqData);
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.MABANG_INOUT_STOCK_TAG.getName(),
                 dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
@@ -90,13 +89,16 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
             // 更新出入库同步信息
             dmpSyncTaskService.updateSyncInfo(dmpSyncTaskEntity.getId(), "-1", msg);
 
+            String sourceType = dmpSyncTaskEntity.getSouceType();
+            String sourceTypeName = StrUtils.null2EmptyWithTrim(SourceTypeEnum.getName(sourceType));
+
             WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
-            warnMsgInfoDTO.setTitle("ERP直接调拨单推送马帮手工入库异常");
+            warnMsgInfoDTO.setTitle(StrUtil.format("ERP{}推送马帮手工入库异常", sourceTypeName));
             warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
-            warnMsgInfoDTO.setBizName("ERP直接调拨单推送马帮手工入库");
+            warnMsgInfoDTO.setBizName(StrUtil.format("ERP{}推送马帮手工入库", sourceTypeName));
             warnMsgInfoDTO.setTableName("dmp_sync_task");
             warnMsgInfoDTO.setTableId(dmpSyncTaskEntity.getId());
-            warnMsgInfoDTO.setKeyInfo(StrUtil.format("ERP直接调拨单单据编号: {}", mabangInOutStock.getErpSourceCode()));
+            warnMsgInfoDTO.setKeyInfo(StrUtil.format("ERP{}单据编号: {}",sourceTypeName, mabangInOutStock.getErpSourceCode()));
             mqProducerService.sendWarnMsg(warnMsgInfoDTO);
         }
     }
@@ -115,13 +117,16 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
             // 更新出入库同步信息
             dmpSyncTaskService.updateSyncInfo(dmpSyncTaskEntity.getId(), "-1", msg);
 
+            String sourceType = dmpSyncTaskEntity.getSouceType();
+            String sourceTypeName = StrUtils.null2EmptyWithTrim(SourceTypeEnum.getName(sourceType));
+
             WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
-            warnMsgInfoDTO.setTitle("ERP直接调拨单推送马帮手工出库异常");
+            warnMsgInfoDTO.setTitle(StrUtil.format("ERP{}推送马帮手工出库异常", sourceTypeName));
             warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
-            warnMsgInfoDTO.setBizName("ERP直接调拨单推送马帮手工出库");
+            warnMsgInfoDTO.setBizName(StrUtil.format("ERP{}推送马帮手工出库", sourceTypeName));
             warnMsgInfoDTO.setTableName("dmp_sync_task");
             warnMsgInfoDTO.setTableId(dmpSyncTaskEntity.getId());
-            warnMsgInfoDTO.setKeyInfo(StrUtil.format("ERP直接调拨单单据编号: {}", mabangInOutStock.getErpSourceCode()));
+            warnMsgInfoDTO.setKeyInfo(StrUtil.format("ERP{}单据编号: {}",sourceTypeName, mabangInOutStock.getErpSourceCode()));
             mqProducerService.sendWarnMsg(warnMsgInfoDTO);
         }
     }

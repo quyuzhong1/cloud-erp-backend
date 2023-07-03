@@ -79,4 +79,5 @@ public class RocketMqTopic {
      */
     public static final String DMP_SYNC_TASK_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_sync_task_topic";
 
+
 }

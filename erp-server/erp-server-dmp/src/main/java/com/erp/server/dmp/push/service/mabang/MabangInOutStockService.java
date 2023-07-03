@@ -19,11 +19,12 @@ public interface MabangInOutStockService {
     /**
      * 记录出入库
      * @param mabangInOutStock
-     * @param transferInfo
+     * @param sourceId
+     * @param sourceCode
      * @param sourceType
      * @param approveType
      */
-    void inOutStock(MabangInOutStockDTO mabangInOutStock, TransferInfoEntity transferInfo,
+    void inOutStock(MabangInOutStockDTO mabangInOutStock, String sourceId, String sourceCode,
                  String sourceType, String approveType);
 
 

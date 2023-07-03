@@ -1,10 +1,10 @@
 package com.erp.server.wms.mabang.impl;
 
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -17,7 +17,6 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mabang.SyncMabangTransferService;
 import com.erp.server.wms.service.TransferInfoDetailService;
 import com.erp.server.wms.service.WarehouseService;
-import com.google.common.collect.Maps;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,8 +84,8 @@ public class SyncMabangTransferServiceImpl implements SyncMabangTransferService 
         // 异步推送MQ
         CompletableFuture.supplyAsync(() -> {
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_WMS_TO_DMP_TOPIC, RocketMqTagEnum.ERP_DMP_TRANSFER_INFO_TAG.getName(), mabangTransferInfoDTO, entity.getId());
-            if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-
+            if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
+                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
             return Boolean.TRUE;
         });

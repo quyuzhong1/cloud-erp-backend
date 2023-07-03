@@ -187,6 +187,12 @@ public class MachineInfoEntity extends BaseEntity<MachineInfoEntity> {
     @TableField("source_code")
     private String sourceCode;
 
+    /**
+     * 仓库编码
+     */
+    @TableField(exist= false)
+    private String warehouseCode;
+
 
     public static final String CODE = "code";
 
