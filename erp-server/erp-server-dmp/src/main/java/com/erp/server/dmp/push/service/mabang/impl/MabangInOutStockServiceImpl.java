@@ -83,8 +83,6 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         boolean isSuccess = (boolean)resultMap.get("success");
         if (isSuccess) {
             JSONObject resultJson = (JSONObject)resultMap.get("result");
-            // 新增出入库记录
-
             // 更新出入库同步信息
             dmpSyncTaskService.updateSyncInfo(dmpSyncTaskEntity.getId(), SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode(), resultJson.toJSONString());
         } else {
