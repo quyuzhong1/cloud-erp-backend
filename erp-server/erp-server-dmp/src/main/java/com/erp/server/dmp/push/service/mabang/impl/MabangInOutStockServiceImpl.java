@@ -26,6 +26,8 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Map;
 
@@ -66,16 +68,22 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
 
         dmpSyncTaskService.save(dmpSyncTaskEntity);
 
-        // 发送MQ消息处理发送到马帮
-        DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), mqData);
-        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.MABANG_INOUT_STOCK_TAG.getName(),
-                dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
-        if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-        }
-
+        // 此处防止数据库还未保存成功，MQ先消费
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                // 发送MQ消息处理发送到马帮
+                DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), mqData);
+                SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.MABANG_INOUT_STOCK_TAG.getName(),
+                        dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
+                if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                    throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                }
+            }
+        });
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void sendToMabangInStock(DmpSyncTaskEntity dmpSyncTaskEntity, MabangInOutStockDTO mabangInOutStock) {
         // 调用马帮手工入库接口

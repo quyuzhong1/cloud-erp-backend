@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.service.mq.MQProducerService;
@@ -58,7 +59,7 @@ public class DmpMabangInOutStockConsume implements RocketMQListener<DmpSyncMqDTO
         log.info("ERP【{}】id：【{}】，同步马帮状态【{}】", sourceTypeName, dmpSyncTaskEntity.getSourceId(), dmpSyncTaskEntity.getStatus());
 
         // 同步成功的不处理
-        if(Objects.equals(dmpSyncTaskEntity.getStatus(), "1")) {
+        if(Objects.equals(dmpSyncTaskEntity.getStatus(), SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode())) {
             log.info("ERP【{}】同步到马帮已经同步，不处理", sourceTypeName);
             return;
         }
