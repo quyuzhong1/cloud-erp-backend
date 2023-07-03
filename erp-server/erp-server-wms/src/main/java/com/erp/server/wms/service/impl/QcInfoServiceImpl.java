@@ -1597,6 +1597,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     }
 
     @Override
+    public List<QcInfoEntity> listQCBySourceDetailIds(List<String> sourceDetailIds) {
+        return lambdaQuery().in(QcInfoEntity::getSourceDetailId, sourceDetailIds).list();
+    }
+
+    @Override
     public QcInfoDTO.PurchaseQcInfoDTO getQcInfoByPurchaseOrder(QcInfoDTO.PurchaseQcParamDTO dto) {
         return this.baseMapper.getQcInfoByPurchaseOrder(dto);
     }
