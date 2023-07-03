@@ -221,12 +221,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 业务未绑定流程定义
             return new ProcessManagementDTO.ApproveResultDTO(dto);
         }
-        // 查询流程数据
-        ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
-        // 审核人校验
-        if (null == managementTask) {
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NODE_NOT_EXIST);
-        }
+        // 查询流程数据 , dto.getUserId()
+        ProcessManagementDTO.ManagementTaskDTO managementTask = getCurApproveTask(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
         // 审核操作
         // 获取当前任务
         Task currentTask = taskService.createTaskQuery().taskId(managementTask.getTaskId()).singleResult();
@@ -258,6 +254,26 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 保存流程任务数据
         updateApprove(managementTask.getTaskManagementId(), dto.getApproveType(), managementTask.getManagementId(), processInstanceId,dto.getComment());
         return new ProcessManagementDTO.ApproveResultDTO(currentTask.getProcessDefinitionId(), currentTask.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName(),currentTask.getId(),currentTask.getName(), currentTask.getTaskDefinitionKey());
+    }
+
+    /**
+     * 查询当前审批任务
+     * @param businessId
+     * @param businessKey
+     * @param userId
+     * @return
+     */
+    private ProcessManagementDTO.ManagementTaskDTO getCurApproveTask(String businessId, String businessKey, String userId) {
+        List<ProcessManagementDTO.ManagementTaskDTO> managementTaskDTOS = listTaskByBusiness(businessId, businessKey);
+        if (CollectionUtil.isEmpty(managementTaskDTOS)) {
+            throw new ServiceException(ApiError.PROCESS_ALREADY_END);
+        }
+        // 审核人校验
+        ProcessManagementDTO.ManagementTaskDTO managementTask = managementTaskDTOS.stream()
+                .filter(managementTaskDTO -> managementTaskDTO.getCurApproveId().equals(userId))
+                .findFirst()
+                .orElseThrow(() -> new ServiceException(ApiError.ERROR_95049));
+        return managementTask;
     }
 
     @Override
@@ -338,11 +354,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             return new ProcessManagementDTO.BackResultDTO(dto);
         }
         // 查询流程数据
-        ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
-        // 审核人校验
-        if (null == managementTask) {
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NODE_NOT_EXIST);
-        }
+        ProcessManagementDTO.ManagementTaskDTO managementTask = getCurApproveTask(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
         // 审核操作
         String processInstanceId = managementTask.getProcessInstanceId();
 
@@ -392,6 +404,12 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return baseMapper.getTaskByBusiness(businessId, businessKey, userId);
     }
 
+    /**
+     * 查询当前审批任务列表
+     * @param businessId
+     * @param businessKey
+     * @return
+     */
     private List<ProcessManagementDTO.ManagementTaskDTO> listTaskByBusiness(String businessId, String businessKey) {
         return baseMapper.listTaskByBusiness(businessId, businessKey);
     }
@@ -414,10 +432,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Transactional(rollbackFor = Exception.class)
     public Boolean transfer(ProcessManagementDTO.TransferDTO dto) {
         // 查询当前执行任务
-        ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getSourceUserId());
-        if (null == managementTask) {
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NODE_NOT_EXIST);
-        }
+        ProcessManagementDTO.ManagementTaskDTO managementTask = getCurApproveTask(dto.getBusinessId(), dto.getBusinessKey(), dto.getSourceUserId());
         String taskId = managementTask.getTaskId();
         // 查询当前任务
         Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
@@ -447,10 +462,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             return new ProcessManagementDTO.RevokeResultDTO(dto);
         }
         // 查询流程实例
-        ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
-        if (null == managementTask) {
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NODE_NOT_EXIST);
-        }
+        ProcessManagementDTO.ManagementTaskDTO managementTask = getCurApproveTask(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
         // 查询当前实例
         ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(managementTask.getProcessInstanceId()).singleResult();
         if(null == processInstance || processInstance.isEnded()){
