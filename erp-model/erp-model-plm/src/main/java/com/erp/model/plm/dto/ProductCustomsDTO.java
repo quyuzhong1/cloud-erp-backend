@@ -3,6 +3,8 @@ package com.erp.model.plm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 
 @Data
@@ -36,11 +38,13 @@ public class ProductCustomsDTO {
     /**
      * 海关编码
      */
+    @Size(max = 255, message = "海关编码最大255字符")
     private String customsCode;
 
     /**
      * 税率
      */
+    @Digits(integer = 16,fraction = 2,message = "税率最大16字符，小数位不能大于2个字符")
     private BigDecimal taxRate;
 
     /**
