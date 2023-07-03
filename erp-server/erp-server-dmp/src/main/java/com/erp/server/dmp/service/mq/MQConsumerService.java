@@ -438,7 +438,7 @@ public class MQConsumerService {
     }
 
     @Service
-    @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_SYNC_TASK_TOPIC,
             selectorExpression = "kingdee_refund_order_to_task_tag",
             consumerGroup = "${spring.cloud.nacos.discovery.namespace}-kingdee_so_return_order_consumer")
     public class ConsumerErpSoReturnInstock implements RocketMQListener<KingdeeReturnOrderEntity> {
