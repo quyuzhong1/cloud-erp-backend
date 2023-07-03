@@ -191,10 +191,10 @@ public class InventoryHelper {
             transactionRulesEntities.stream().forEach(r->{
                 TransactionRuleDTO transactionRuleDTO = new TransactionRuleDTO();
                 transactionRuleDTO.setId(r.getId());
-                transactionRuleDTO.setDictBizType(InventoryBusinessTypeEnum.of(r.getDictBizType()));
-                transactionRuleDTO.setWarehouseOption(InventoryWarehouseOptionEnum.of(r.getWarehouseOption()));
-                transactionRuleDTO.setInventoryStatus(InventoryStatusEnum.of(r.getInventoryStatus()));
-                transactionRuleDTO.setTransactionMode(InventoryModeEnum.of(r.getTransactionMode()));
+                transactionRuleDTO.setDictBizType(InventoryBusinessTypeEnum.getByCode(r.getDictBizType()));
+                transactionRuleDTO.setWarehouseOption(InventoryWarehouseOptionEnum.getByCode(r.getWarehouseOption()));
+                transactionRuleDTO.setInventoryStatus(InventoryStatusEnum.getByCode(r.getInventoryStatus()));
+                transactionRuleDTO.setTransactionMode(InventoryModeEnum.getByCode(r.getTransactionMode()));
                 transactionRuleDTOS.add(transactionRuleDTO);
             });
             return transactionRuleDTOS;

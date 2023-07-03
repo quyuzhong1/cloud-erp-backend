@@ -60,7 +60,7 @@ public enum TransferTypeEnum implements EnumMessage {
      * @param code
      * @return
      */
-    public static TransferTypeEnum of(String code) {
+    public static TransferTypeEnum getByCode(String code) {
         return Arrays.stream(TransferTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 
@@ -79,7 +79,7 @@ public enum TransferTypeEnum implements EnumMessage {
      * @return
      */
     public static String getNameByCode(String code) {
-        TransferTypeEnum transferTypeEnum =  of(code);
+        TransferTypeEnum transferTypeEnum =  getByCode(code);
         return Optional.ofNullable(transferTypeEnum).map(TransferTypeEnum::getName).orElse("");
     }
 

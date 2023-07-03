@@ -33,7 +33,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     public void approveByType(InventoryInOutStockDTO dto) {
         ValidatorUtil.validateEntity(dto);
         AbstractInventoryServiceImpl abstractInventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK);
-        abstractInventoryService.approve(dto.getMembers(), null, InventoryBusinessTypeEnum.of(dto.getBusinessType()), true);
+        abstractInventoryService.approve(dto.getMembers(), null, InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), true);
     }
 
     /**
@@ -45,7 +45,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     public void approveByType(InventoryTransferDTO dto) {
         ValidatorUtil.validateEntity(dto);
         AbstractInventoryServiceImpl abstractInventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.TRANSFER_STOCK);
-        abstractInventoryService.approve(dto.getMembers(), null, InventoryBusinessTypeEnum.of(dto.getBusinessType()), true);
+        abstractInventoryService.approve(dto.getMembers(), null, InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), true);
     }
 
     /**
@@ -57,7 +57,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     public void approveByRule(InventoryTransferRuleDTO dto) {
         ValidatorUtil.validateEntity(dto);
         AbstractInventoryServiceImpl abstractInventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.TRANSFER_STOCK);
-        abstractInventoryService.approve(dto.getMembers(), dto.getRules(), InventoryBusinessTypeEnum.of(dto.getBusinessType()), false);
+        abstractInventoryService.approve(dto.getMembers(), dto.getRules(), InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), false);
     }
 
     /**
@@ -69,7 +69,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
     public void approveByRule(InventoryInOutStockRuleDTO dto) {
         ValidatorUtil.validateEntity(dto);
         AbstractInventoryServiceImpl abstractInventoryService = inventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK);
-        abstractInventoryService.approve(dto.getMembers(), dto.getRules(), InventoryBusinessTypeEnum.of(dto.getBusinessType()), false);
+        abstractInventoryService.approve(dto.getMembers(), dto.getRules(), InventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), false);
     }
 
     /**

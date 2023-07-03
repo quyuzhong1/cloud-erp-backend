@@ -46,7 +46,7 @@ public enum InventoryWarehouseOptionEnum {
      * @param code
      * @return
      */
-    public static InventoryWarehouseOptionEnum of(String code) {
+    public static InventoryWarehouseOptionEnum getByCode(String code) {
         return Arrays.stream(InventoryWarehouseOptionEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 

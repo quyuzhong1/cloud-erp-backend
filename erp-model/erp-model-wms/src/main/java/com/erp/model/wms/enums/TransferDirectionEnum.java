@@ -73,7 +73,7 @@ public enum TransferDirectionEnum implements EnumMessage {
      * @param code
      * @return
      */
-    public static TransferDirectionEnum of(String code) {
+    public static TransferDirectionEnum getByCode(String code) {
         return Arrays.stream(TransferDirectionEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 

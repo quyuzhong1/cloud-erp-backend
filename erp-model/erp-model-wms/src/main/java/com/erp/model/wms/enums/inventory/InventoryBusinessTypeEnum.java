@@ -96,7 +96,7 @@ public enum InventoryBusinessTypeEnum {
      * @param code
      * @return
      */
-    public static InventoryBusinessTypeEnum of(String code) {
+    public static InventoryBusinessTypeEnum getByCode(String code) {
         return Arrays.stream(InventoryBusinessTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 
@@ -105,7 +105,7 @@ public enum InventoryBusinessTypeEnum {
      * @param type
      * @return
      */
-    public static InventoryBusinessTypeEnum ofType(String type) {
+    public static InventoryBusinessTypeEnum getByType(String type) {
         return Arrays.stream(InventoryBusinessTypeEnum.values()).filter(r -> Objects.equals(r.getType(), type)).findFirst().orElse(null);
     }
 

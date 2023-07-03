@@ -40,7 +40,7 @@ public enum  InventoryAgeTitleEnum {
      * @param code
      * @return
      */
-    public static InventoryAgeTitleEnum of(String code) {
+    public static InventoryAgeTitleEnum getByCode(String code) {
         return Arrays.stream(InventoryAgeTitleEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 
@@ -50,7 +50,7 @@ public enum  InventoryAgeTitleEnum {
      * @return
      */
     public static String getNameByCode(String code) {
-        InventoryAgeTitleEnum inventoryAgeTitleEnum = of(code);
+        InventoryAgeTitleEnum inventoryAgeTitleEnum = getByCode(code);
         return Optional.ofNullable(inventoryAgeTitleEnum).map(InventoryAgeTitleEnum::getName).orElse("");
     }
 

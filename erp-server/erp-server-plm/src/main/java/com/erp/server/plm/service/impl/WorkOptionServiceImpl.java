@@ -56,7 +56,7 @@ public class WorkOptionServiceImpl implements WorkOptionService {
     @Override
     public List<WorkOptionDTO.MyWorkOptionDTO> getTableNum(List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList) {
         for (WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO : myWorkOptionDTOList) {
-            myWorkOptionDTO.setModuleCode(SourceTypeEnum.of(myWorkOptionDTO.getModuleCode()).getTableName());
+            myWorkOptionDTO.setModuleCode(SourceTypeEnum.getByCode(myWorkOptionDTO.getModuleCode()).getTableName());
             if (myWorkOptionDTO.getModuleCode().equals("project_task")) {
                 PagingDTO pagingDTO = JSONObject.parseObject(myWorkOptionDTO.getModuleParam(), PagingDTO.class);
                 TaskSearchParamDTO params = JSONObject.parseObject(JSONObject.toJSONString(pagingDTO.getParams()), TaskSearchParamDTO.class);

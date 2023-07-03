@@ -99,7 +99,7 @@ public enum SourceTypeEnum {
         return "";
     }
 
-    public static SourceTypeEnum of(String code) {
+    public static SourceTypeEnum getByCode(String code) {
         return Arrays.stream(SourceTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 }

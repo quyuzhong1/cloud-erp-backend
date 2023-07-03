@@ -40,7 +40,7 @@ public enum FeishuMessageTypeEnum {
         this.name = name;
     }
 
-    public static FeishuMessageTypeEnum of(String code) {
+    public static FeishuMessageTypeEnum getByCode(String code) {
         return Arrays.stream(FeishuMessageTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 

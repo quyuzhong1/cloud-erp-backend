@@ -60,7 +60,7 @@ public enum InventorySourceTypeEnum {
     }
 
 
-    public static InventorySourceTypeEnum of(String code) {
+    public static InventorySourceTypeEnum getByCode(String code) {
         return Arrays.stream(InventorySourceTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 

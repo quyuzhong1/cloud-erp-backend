@@ -51,7 +51,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
             data.setCode(warehouseLocation.getCode());
             data.setName(warehouseLocation.getName());
             data.setStatus(warehouseLocation.getStatus());
-            WarehouseLocationStatusEnum warehouseLocationStatus = WarehouseLocationStatusEnum.of(data.getStatus());
+            WarehouseLocationStatusEnum warehouseLocationStatus = WarehouseLocationStatusEnum.getByCode(data.getStatus());
             data.setStatusName(WarehouseLocationStatusEnum.getName(data.getStatus()));
             data.setCanCheck(Boolean.TRUE);
             if(Objects.equals(warehouseLocation.getDisabled(), Boolean.TRUE) || Objects.equals(warehouseLocationStatus, WarehouseLocationStatusEnum.STOP)) {
@@ -76,7 +76,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         WarehouseLocationEntity warehouseLocation = super.getById(id);
         Optional.ofNullable(warehouseLocation).orElseThrow(()->new ServiceException("仓位信息不存在"));
 
-        WarehouseLocationTypeEnum warehouseLocationType = WarehouseLocationTypeEnum.of(warehouseLocation.getType());
+        WarehouseLocationTypeEnum warehouseLocationType = WarehouseLocationTypeEnum.getByCode(warehouseLocation.getType());
 
         WarehouseLocationDTO.LocationDetailDTO detailDTO = new WarehouseLocationDTO.LocationDetailDTO();
         detailDTO.setType(warehouseLocation.getType());

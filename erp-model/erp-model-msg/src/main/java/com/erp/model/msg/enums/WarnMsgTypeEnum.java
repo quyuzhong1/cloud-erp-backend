@@ -35,7 +35,7 @@ public enum WarnMsgTypeEnum {
      */
     private String name;
 
-    public static WarnMsgTypeEnum of(String code) {
+    public static WarnMsgTypeEnum getByCode(String code) {
         return Arrays.stream(WarnMsgTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 

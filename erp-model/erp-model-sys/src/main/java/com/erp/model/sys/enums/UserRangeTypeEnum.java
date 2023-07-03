@@ -50,7 +50,7 @@ public enum UserRangeTypeEnum {
      * @param code
      * @return
      */
-    public static UserRangeTypeEnum of(String code) {
+    public static UserRangeTypeEnum getByCode(String code) {
         return Arrays.stream(UserRangeTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 
@@ -60,7 +60,7 @@ public enum UserRangeTypeEnum {
      * @return
      */
     public static String getNameByCode(String code) {
-        UserRangeTypeEnum userRangeTypeEnum = of(code);
+        UserRangeTypeEnum userRangeTypeEnum = getByCode(code);
         return Optional.ofNullable(userRangeTypeEnum).map(UserRangeTypeEnum::getName).orElse("");
     }
 
