@@ -305,6 +305,11 @@ public class WarehouseReceiveDTO {
         private String id;
 
         /**
+         * 明细Id
+         */
+        private String detailId;
+
+        /**
          * 收货单号
          */
         private String code;
