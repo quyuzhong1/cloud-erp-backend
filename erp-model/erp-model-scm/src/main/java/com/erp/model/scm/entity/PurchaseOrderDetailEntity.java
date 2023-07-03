@@ -94,18 +94,6 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private LocalDate planDeliveryDate;
 
     /**
-     * 收料组织id
-     */
-    @TableField("receive_org_id")
-    private String receiveOrgId;
-
-    /**
-     * 收料组织名称
-     */
-    @TableField("receive_org_name")
-    private String receiveOrgName;
-
-    /**
      * 是否是赠品（false否，true是）
      */
     @TableField("is_gift")
@@ -138,26 +126,8 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     /**
      * 签收数量
      */
-    @TableField("receive_qty")
+    @TableField(exist = false)
     private Integer receiveQty;
-
-    /**
-     * 入库数量
-     */
-    @TableField("stock_in_qty")
-    private Integer stockInQty;
-
-    /**
-     * 交货数量
-     */
-    @TableField("delivery_qty")
-    private Integer deliveryQty;
-
-    /**
-     * 退货数量
-     */
-    @TableField("return_qty")
-    private Integer returnQty;
 
     /**
      * 是否加急（false否，true是）

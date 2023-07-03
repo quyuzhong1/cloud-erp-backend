@@ -1534,12 +1534,19 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //根据销售单获取出库单
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySoIds(soIds);
         for (SoReturnInstockDTO.GenerateSoReturnInstockView view : list) {
-            view.setReturnTypeDictName(ReturnTypeEnum.getName(view.getReturnTypeDict()));
-            view.setReturnReasonDictName(ReturnReasonEnum.getName(view.getReturnReasonDict()));
+
             //拿到签收单id
             SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveEntities.stream().filter(req -> req.getId().equals(view.getSourceId())).findFirst().orElse(new SoReturnReceiveEntity());
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(view.getSourceDetailId())).findFirst().orElse(new SoReturnReceiveDetailEntity());
             SoReturnEntity soReturnEntity = returnEntityList.stream().filter(req -> req.getId().equals(soReturnReceiveEntity.getSourceId())).findFirst().orElse(new SoReturnEntity());
+            if (StringUtils.isNotBlank(soReturnReceiveDetailEntity.getReturnTypeDict())) {
+                view.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnReceiveDetailEntity.getReturnTypeDict()));
+            }
+            if (StringUtils.isNotBlank(soReturnReceiveDetailEntity.getReturnTypeDict())) {
+                view.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnReceiveDetailEntity.getReturnReasonDict()));
+            }
+
+
             view.setId(view.getId());
             view.setMainId(view.getId());
             view.setSourceId(soReturnReceiveEntity.getSourceId());
