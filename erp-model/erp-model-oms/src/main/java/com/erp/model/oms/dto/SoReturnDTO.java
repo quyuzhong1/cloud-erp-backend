@@ -491,7 +491,7 @@ public class SoReturnDTO {
         /**
          * 销售类型名称
          */
-        private String returnTypeName;
+        private String returnTypeDictName;
         /**
          * 退货原因 调用字典接口 类型=ReturnReason
          */
