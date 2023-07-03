@@ -3,6 +3,7 @@ package com.erp.server.dmp.task;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DmpSyncMqDTO;
@@ -64,7 +65,8 @@ public class DmpSyncTaskJob {
                         throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
                     }
                 }catch (Exception e){
-                    log.error("从{}推送{}到{}发送消息异常", recordEntity.getSourcePlatformName(), recordEntity.getSourceType(), recordEntity.getTargetPlatformName(), e);
+                    String sourceTypeName = SourceTypeEnum.getName(recordEntity.getSourceType());
+                    log.error("从{}推送{}到{}发送消息异常", recordEntity.getSourcePlatformName(), sourceTypeName, recordEntity.getTargetPlatformName(), e);
                     XxlJobHelper.log("从{}推送{}到{}发送消息异常", recordEntity.getSourcePlatformName(), recordEntity.getSourceType(), recordEntity.getTargetPlatformName(),  e);
                 }
             }

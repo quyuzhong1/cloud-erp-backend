@@ -416,7 +416,7 @@ public class MQConsumerService {
             dmpSyncTaskEntity.setSourceId(ext.getDeliveryId());
             dmpSyncTaskEntity.setSourceCode(ext.getDeliveryNo());
             dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
-            dmpSyncTaskEntity.setStatus("0");
+            dmpSyncTaskEntity.setStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
             dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
             dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.SYNC_MABANG_FBA_DELIVERY_TO_WMS_TAG.getName());
             String mqData = JSONObject.toJSONString(ext);
@@ -427,14 +427,14 @@ public class MQConsumerService {
             if(PlatformEnum.MABANG.getDesc().equals(ext.getPlatformSign())){
                 OrderMongoDTO updateDto = OrderMongoDTO.getByDeliveryNo(ext.getDeliveryNo());
                 finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_DELIVERY, DeliveryEntity.class);
-            }
 
-            // 发送到ERP WMS系统，生成加工单
-            DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), mqData);
-            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.SYNC_MABANG_FBA_DELIVERY_TO_WMS_TAG.getName(),
-                    dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
-            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                // 发送到ERP WMS系统，生成加工单
+                DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), mqData);
+                SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.SYNC_MABANG_FBA_DELIVERY_TO_WMS_TAG.getName(),
+                        dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
+                if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                    throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                }
             }
 
         }
