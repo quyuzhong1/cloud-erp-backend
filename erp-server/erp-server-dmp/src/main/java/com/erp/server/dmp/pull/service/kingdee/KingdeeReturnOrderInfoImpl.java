@@ -82,9 +82,9 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
             }
             KingdeeReturnOrderEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-        /*    if (mongoDatum.toString().equals(entity.toString())) {
+            if (mongoDatum.toString().equals(entity.toString())) {
                 continue;
-            }*/
+            }
             pushToMqList.add(entity);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
             OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
