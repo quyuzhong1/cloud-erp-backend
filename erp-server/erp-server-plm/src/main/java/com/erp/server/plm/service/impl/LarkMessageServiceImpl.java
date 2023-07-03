@@ -209,20 +209,20 @@ public class LarkMessageServiceImpl implements LarkMessageService {
      */
     @Override
     public Boolean batchPress(LarkPressMessageDTO.BatchLarkPressMessageDTO dto) {
-        List<LarkPressMessageDTO.BusinessInfoDTO> businessList = dto.getBusinessIdList();
+        List<String> businessIdList = dto.getBusinessIdList();
         String businessType = dto.getBusinessType();
         String redisBaseKey = RedisKeyConstant.PRESS;
         List<String> alreadyPress = new ArrayList<>(5);
-        if (CollectionUtils.isNotEmpty(businessList)) {
-            for (LarkPressMessageDTO.BusinessInfoDTO item : businessList) {
-                String redisKey = dto.getBusinessType() + "_" + item.getBusinessId() + redisBaseKey;
+        if (CollectionUtils.isNotEmpty(businessIdList)) {
+            for (String businessId : businessIdList) {
+                String redisKey = dto.getBusinessType() + "_" + businessId + redisBaseKey;
                 //是否存在
                 String redisValue = redisService.getCacheObject(redisKey);
                 if (StringUtils.isNotBlank(redisValue)) {
-                    alreadyPress.add(item.getBusinessName());
+                    alreadyPress.add(businessId);
                 } else {
                     LarkPressMessageDTO pressMessage = new LarkPressMessageDTO();
-                    pressMessage.setBusinessId(item.getBusinessName());
+                    pressMessage.setBusinessId(businessId);
                     pressMessage.setBusinessType(businessType);
                     this.press(pressMessage);
                 }

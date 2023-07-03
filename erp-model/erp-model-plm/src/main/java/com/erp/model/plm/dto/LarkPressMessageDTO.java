@@ -39,7 +39,7 @@ public class LarkPressMessageDTO {
          * 如 taskId
          */
         @NotNull(message = "业务ID集合不能为空")
-        private List<BusinessInfoDTO> businessIdList;
+        private List<String> businessIdList;
 
 
 

@@ -40,6 +40,18 @@ public class ShopInfoController extends BaseController {
 
 
     /**
+     * 修改店铺
+     *
+     * @return
+     */
+    @PostMapping("/update")
+    public ApiResult update(@RequestBody @Validated ShopDTO.UpdateDTO dto) {
+        String id = shopInfoService.updateShop(dto);
+        return StringUtils.isNotBlank(id) ? success() : failure();
+    }
+
+
+    /**
      * 获取店铺列表
      *
      * @return

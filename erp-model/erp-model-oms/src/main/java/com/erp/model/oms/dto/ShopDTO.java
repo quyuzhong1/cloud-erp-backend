@@ -3,6 +3,7 @@ package com.erp.model.oms.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
@@ -41,6 +42,16 @@ public class ShopDTO implements Serializable {
          * 客户的code
          */
         private String customerCode;
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO extends AddDTO{
+
+         @NotBlank(message = "店铺表不能为空")
+         private String id;
 
     }
 }

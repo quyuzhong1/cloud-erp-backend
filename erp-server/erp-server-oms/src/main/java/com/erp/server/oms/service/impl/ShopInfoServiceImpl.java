@@ -1,12 +1,16 @@
 package com.erp.server.oms.service.impl;
 
 import com.common.business.service.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.server.oms.mapper.ShopInfoMapper;
 import com.erp.server.oms.service.ShopInfoService;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
 
 /**
  * <p>
@@ -39,4 +43,30 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         return "";
 
     }
+
+    /**
+     * 修改店铺
+     *
+     * @param dto
+     * @return java.lang.String
+     * @author yl
+     * @date 2023-07-03 9:05
+     */
+    @Override
+    public String updateShop(ShopDTO.UpdateDTO dto) {
+        ShopInfoEntity shopInfo = this.getById(dto.getId());
+        if (Objects.isNull(shopInfo)) {
+            throw new ServiceException(ApiError.ERROR_92058);
+        }
+        shopInfo.setCustomerCode(dto.getCustomerCode());
+        shopInfo.setShopCode(dto.getShopCode());
+        shopInfo.setPlatformDict(dto.getPlatformDict());
+        shopInfo.setName(dto.getName());
+        Boolean result = this.updateById(shopInfo);
+        if (result) {
+            return shopInfo.getId();
+        }
+        return "";
+    }
+
 }

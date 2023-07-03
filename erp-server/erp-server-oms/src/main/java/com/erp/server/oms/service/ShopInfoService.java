@@ -23,4 +23,13 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return java.lang.String
      */
     String add(ShopDTO.AddDTO dto);
+
+    /**
+     * 修改店铺
+     * @author yl
+     * @date 2023-07-03 9:05
+     * @param dto
+     * @return java.lang.String
+     */
+    String updateShop(ShopDTO.UpdateDTO dto);
 }
