@@ -416,7 +416,7 @@ public class MQConsumerService {
             dmpSyncTaskEntity.setSourceId(ext.getDeliveryId());
             dmpSyncTaskEntity.setSourceCode(ext.getDeliveryNo());
             dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
-            dmpSyncTaskEntity.setStatus("0");
+            dmpSyncTaskEntity.setStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
             dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
             dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.SYNC_MABANG_FBA_DELIVERY_TO_WMS_TAG.getName());
             String mqData = JSONObject.toJSONString(ext);
