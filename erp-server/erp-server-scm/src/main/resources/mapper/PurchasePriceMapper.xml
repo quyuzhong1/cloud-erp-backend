@@ -191,9 +191,10 @@
                 ppd.sku_no,
                 ppd.tax_price,
                 ppd.tax_rate,
+                ppd.min_qty,
                 row_number() over(partition by pp.supplier_id,
                 ppd.sku_id,
-                ppd.sku_no order by ppd.update_time desc) as rank
+                ppd.sku_no order by ppd.min_qty ASC,ppd.update_time desc) as rank
             FROM purchase_price pp
             LEFT JOIN purchase_price_detail ppd ON pp.id = ppd.purchase_price_id
             WHERE pp.supplier_id IN
