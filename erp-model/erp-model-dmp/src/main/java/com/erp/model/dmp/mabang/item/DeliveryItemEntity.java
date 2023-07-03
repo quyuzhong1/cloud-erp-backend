@@ -113,7 +113,7 @@ public class DeliveryItemEntity implements Serializable {
     /**
      * 分摊自定义费用
      */
-    private BigDecimal custom_compute_cost;
+    private String custom_compute_cost;
 
     /**
      * 已经与入库队列表关联的数量

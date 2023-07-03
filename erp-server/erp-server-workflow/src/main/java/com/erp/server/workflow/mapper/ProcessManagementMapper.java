@@ -2,6 +2,7 @@ package com.erp.server.workflow.mapper;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.validator.ValidList;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -41,7 +42,7 @@ public interface ProcessManagementMapper extends BaseMapper<ProcessManagementEnt
     /**
      * 分页查询
      * @param page
-     * @param params
+     * @param param
      * @return IPage<ProcessManagementDTO.PagingResultDTO>
      */
     IPage<ProcessManagementDTO.PagingResultDTO> paging(Page page, @Param("param") ProcessManagementDTO.SearchDTO param);
@@ -64,4 +65,11 @@ public interface ProcessManagementMapper extends BaseMapper<ProcessManagementEnt
      * @return List<ProcessManagementDTO.ManagementTaskDTO>
      */
     List<ProcessManagementDTO.ManagementTaskDTO> listProcessTaskByIds(@Param("ids") List<String> ids);
+
+    /**
+     * 根据业务id和业务类型获取流程当前审批人
+     * @param dtoList
+     * @return
+     */
+    List<ProcessManagementDTO.CurApproveInfoDTO> listApproverByBusiness(@Param("list") ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList);
 }

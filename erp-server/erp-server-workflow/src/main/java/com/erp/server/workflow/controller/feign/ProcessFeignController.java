@@ -45,6 +45,8 @@ public class ProcessFeignController extends BaseController {
     private WorkflowBusinessProcessService businessProcessService;
     @Resource
     private ProcessManagementService processManagementService;
+    @Resource
+    private ProcessTaskManagementService processManagementTaskService;
 
 
     //启动流程
@@ -354,6 +356,15 @@ public class ProcessFeignController extends BaseController {
     public ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> batchApproveProcess(@RequestBody @Valid ValidList<ProcessManagementDTO.ApproveDTO> dto) {
         List<ProcessManagementDTO.ApproveResultDTO> resultDTO = processManagementService.batchApproveProcess(dto);
         return success(resultDTO);
+    }
+
+    /**
+     * 批量查询流程当前审批人
+     */
+    @PostMapping("/batchCurApprover")
+    public ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> batchCurApprover(@RequestBody @Valid ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList) {
+        List<ProcessManagementDTO.CurApproveInfoDTO> resultList = processManagementService.batchCurApprover(dtoList);
+        return success(resultList);
     }
 
 }

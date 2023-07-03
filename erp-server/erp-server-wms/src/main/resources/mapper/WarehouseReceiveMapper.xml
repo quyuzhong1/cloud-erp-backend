@@ -5,6 +5,7 @@
     <select id="paging" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$PagingViewDTO">
         SELECT
             wr.id,
+            wrd.id AS detailId,
             wr.code,
             wr.purchase_order_id,
             wr.purchase_order_code,

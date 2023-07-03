@@ -164,6 +164,7 @@ public enum ApiError implements Serializable {
     ERROR_PROCESS_NOT_EXIST(94025,"流程实例不存在"),
     ERROR_WORK_MENU_NOT_EXIST(94026, "模块编码对应的菜单不存在"),
     ERROR_WORK_MENU_FEIGN(94027, "工作流feign调用的类名不存在,请检查"),
+    PROCESS_ALREADY_END(94028,"审核流程已经结束"),
 
 
     /**
@@ -220,7 +221,7 @@ public enum ApiError implements Serializable {
     ERROR_95046(95046, "只有审核中和完成待审核的任务,才可操作审核不通过"),
     ERROR_95047(95047, "存在输出物尚未完成,请完成后在操作"),
     ERROR_95048(95048, "该阶段下已有任务不能删除"),
-    ERROR_95049(95049, "您无权操作，不是您审核的任务"),
+    ERROR_95049(95049, "不是您审核的任务，您无法审核"),
     ERROR_95050(95050, "操作失败，有未完成的任务"),
     ERROR_95051(95051, "模板不存在"),
     ERROR_95052(95052, "文档不存在"),

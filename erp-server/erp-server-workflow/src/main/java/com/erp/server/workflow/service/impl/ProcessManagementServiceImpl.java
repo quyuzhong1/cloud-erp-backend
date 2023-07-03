@@ -221,12 +221,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 业务未绑定流程定义
             return new ProcessManagementDTO.ApproveResultDTO(dto);
         }
-        // 查询流程数据
-        ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
-        // 审核人校验
-        if (null == managementTask) {
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NODE_NOT_EXIST);
-        }
+        // 查询流程数据 , dto.getUserId()
+        ProcessManagementDTO.ManagementTaskDTO managementTask = getCurApproveTask(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
         // 审核操作
         // 获取当前任务
         Task currentTask = taskService.createTaskQuery().taskId(managementTask.getTaskId()).singleResult();
@@ -258,6 +254,26 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 保存流程任务数据
         updateApprove(managementTask.getTaskManagementId(), dto.getApproveType(), managementTask.getManagementId(), processInstanceId,dto.getComment());
         return new ProcessManagementDTO.ApproveResultDTO(currentTask.getProcessDefinitionId(), currentTask.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName(),currentTask.getId(),currentTask.getName(), currentTask.getTaskDefinitionKey());
+    }
+
+    /**
+     * 查询当前审批任务
+     * @param businessId
+     * @param businessKey
+     * @param userId
+     * @return
+     */
+    private ProcessManagementDTO.ManagementTaskDTO getCurApproveTask(String businessId, String businessKey, String userId) {
+        List<ProcessManagementDTO.ManagementTaskDTO> managementTaskDTOS = listTaskByBusiness(businessId, businessKey);
+        if (CollectionUtil.isEmpty(managementTaskDTOS)) {
+            throw new ServiceException(ApiError.PROCESS_ALREADY_END);
+        }
+        // 审核人校验
+        ProcessManagementDTO.ManagementTaskDTO managementTask = managementTaskDTOS.stream()
+                .filter(managementTaskDTO -> managementTaskDTO.getCurApproveId().equals(userId))
+                .findFirst()
+                .orElseThrow(() -> new ServiceException(ApiError.ERROR_95049));
+        return managementTask;
     }
 
     @Override
@@ -338,11 +354,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             return new ProcessManagementDTO.BackResultDTO(dto);
         }
         // 查询流程数据
-        ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
-        // 审核人校验
-        if (null == managementTask) {
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NODE_NOT_EXIST);
-        }
+        ProcessManagementDTO.ManagementTaskDTO managementTask = getCurApproveTask(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
         // 审核操作
         String processInstanceId = managementTask.getProcessInstanceId();
 
@@ -392,6 +404,12 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return baseMapper.getTaskByBusiness(businessId, businessKey, userId);
     }
 
+    /**
+     * 查询当前审批任务列表
+     * @param businessId
+     * @param businessKey
+     * @return
+     */
     private List<ProcessManagementDTO.ManagementTaskDTO> listTaskByBusiness(String businessId, String businessKey) {
         return baseMapper.listTaskByBusiness(businessId, businessKey);
     }
@@ -414,10 +432,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Transactional(rollbackFor = Exception.class)
     public Boolean transfer(ProcessManagementDTO.TransferDTO dto) {
         // 查询当前执行任务
-        ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getSourceUserId());
-        if (null == managementTask) {
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NODE_NOT_EXIST);
-        }
+        ProcessManagementDTO.ManagementTaskDTO managementTask = getCurApproveTask(dto.getBusinessId(), dto.getBusinessKey(), dto.getSourceUserId());
         String taskId = managementTask.getTaskId();
         // 查询当前任务
         Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
@@ -447,10 +462,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             return new ProcessManagementDTO.RevokeResultDTO(dto);
         }
         // 查询流程实例
-        ProcessManagementDTO.ManagementTaskDTO managementTask  = getTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
-        if (null == managementTask) {
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NODE_NOT_EXIST);
-        }
+        ProcessManagementDTO.ManagementTaskDTO managementTask = getCurApproveTask(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
         // 查询当前实例
         ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(managementTask.getProcessInstanceId()).singleResult();
         if(null == processInstance || processInstance.isEnded()){
@@ -620,18 +632,22 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 // 相邻节点去重
                 // 查询当前节点的上一个节点
                 LinkedHashMap<String, List<ProcessTaskManagementEntity>> processTaskManagementList = processTaskManagementService.listHisByProcessInstanceId(processInstanceId, MathUtil.ONE);
-                processTaskManagement = processTaskManagementList.entrySet().stream()
-                        .findFirst()
-                        .get()
-                        .getValue().stream().filter(item -> item.getCurApproveId().equals(userId))
-                        .findFirst();
+                if(CollectionUtil.isNotEmpty(processTaskManagementList)){
+                    processTaskManagement = processTaskManagementList.entrySet().stream()
+                            .findFirst()
+                            .get()
+                            .getValue().stream().filter(item -> item.getCurApproveId().equals(userId))
+                            .findFirst();
+                }
             }else if(DictBasicEnum.GLOBAL_DEDUPE.equals(reviewSetting)) {
                 // 全局去重
                 // 查询已完成审核节点
                 LinkedHashMap<String, List<ProcessTaskManagementEntity>> processTaskManagementList = processTaskManagementService.listHisByProcessInstanceId(processInstanceId, null);
-                processTaskManagement = processTaskManagementList.values().stream().flatMap(List::stream)
-                        .filter(item -> item.getCurApproveId().equals(userId))
-                        .findFirst();
+                if(CollectionUtil.isNotEmpty(processTaskManagementList)){
+                    processTaskManagement = processTaskManagementList.values().stream().flatMap(List::stream)
+                            .filter(item -> item.getCurApproveId().equals(userId))
+                            .findFirst();
+                }
             }
             if (processTaskManagement.isPresent()) {
                 // 审核人已存在，自动审核通过
@@ -802,6 +818,25 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 审批流程
             ProcessManagementDTO.ApproveResultDTO resultDTO = approveProcess(approveDTO);
             resultList.add(resultDTO);
+        });
+        return resultList;
+    }
+
+    @Override
+    public List<ProcessManagementDTO.CurApproveInfoDTO> batchCurApprover(ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList) {
+        Map<String, ProcessManagementDTO.HistoryActivityDTO> paramMap = dtoList
+                .stream()
+                .distinct()
+                .collect(Collectors.toMap(k -> StrUtil.format("{}_{}", k.getBusinessId(), k.getBusinessKey()), e -> e));
+        // 查询当前任务
+        List<ProcessManagementDTO.CurApproveInfoDTO> resultList = baseMapper.listApproverByBusiness(dtoList);
+        paramMap.keySet().forEach(paramKey -> {
+            List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = resultList.stream()
+                    .filter(item -> paramKey.equals(StrUtil.format("{}_{}", item.getBusinessId(), item.getBusinessKey())))
+                    .collect(Collectors.toList());
+            if(CollectionUtil.isEmpty(curApproveList)){
+                resultList.add(new ProcessManagementDTO.CurApproveInfoDTO(paramMap.get(paramKey)));
+            }
         });
         return resultList;
     }

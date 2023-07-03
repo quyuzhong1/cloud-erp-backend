@@ -170,5 +170,25 @@
         </if>
         ORDER BY ptm.create_time ASC
     </select>
+    <select id="listApproverByBusiness" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$CurApproveInfoDTO">
+        SELECT
+            pm.process_instance_id,
+            pm.business_id,
+            pm.business_code,
+            pm.business_key,
+            pm.business_name,
+            string_agg(ptm.cur_activity_id,',') AS activityId,
+            string_agg(ptm.cur_activity_name,',') AS activityName,
+            string_agg(ptm.cur_approve_id,',') AS approveId,
+            string_agg(ptm.cur_approve_name,',') AS approveName
+        FROM process_management pm
+        LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = false AND ptm.task_status = 'approveIng'
+        WHERE pm.is_deleted = false AND
+            (pm.business_id, pm.business_key) in
+            <foreach collection="list" item="item" open="(" separator="," close=")">
+                (#{item.businessId}, #{item.businessKey})
+            </foreach>
+        GROUP BY pm.business_id, pm.business_code, pm.business_key,pm.process_instance_id, pm.business_name
+    </select>
 
 </mapper>

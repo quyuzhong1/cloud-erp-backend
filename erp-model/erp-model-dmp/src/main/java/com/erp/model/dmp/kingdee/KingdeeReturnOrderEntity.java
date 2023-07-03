@@ -75,6 +75,7 @@ public class KingdeeReturnOrderEntity extends CleanBaseDTO {
     private String fSaledeptNumber;
     @Alias("FSaledeptid.FName")
     private String fSaledeptName;
+
     private List<KingdeeReturnOrderItemEntity> itemEntityList;
     @Override
     public String toString() {
@@ -107,3 +108,4 @@ public class KingdeeReturnOrderEntity extends CleanBaseDTO {
                 '}';
     }
 }
+
