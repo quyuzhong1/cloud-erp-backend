@@ -991,6 +991,9 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         if (CollectionUtils.isEmpty(transferDirectionList)) {
             throw new ServiceException(ApiError.ERROR_99049);
         }
+        List<String> skuIds = records.stream().map(TransferApplicationDTO.ListDTO::getSkuNo).collect(Collectors.toList());
+        //根据sku查询拥有的子sku
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
         for (TransferApplicationDTO.ListDTO obj : records) {
             //产品名称
@@ -1009,7 +1012,12 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
-
+            //获取sku的子sku
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(obj.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                //设置组合品sku标识
+                obj.setIsCombination(Boolean.TRUE);
+            }
         }
     }
 
