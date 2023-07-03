@@ -135,7 +135,7 @@ public enum RocketMqTagEnum {
     /**
      * B2C销售出库单到TAG
      */
-    KINGDEE_B2C_SO_OUTSTOCK_TAG(25,RocketMqTagEnum.SYNC_WMS,"kingdee_b2c_so_outatock_tag"),
+    KINGDEE_B2C_SO_OUTSTOCK_TAG(25,RocketMqTagEnum.SYNC_WMS,"kingdee_b2c_so_outatock_to_task_tag"),
 
     /**
      * 金蝶退货单保存到dmp_sync_task同步任务表

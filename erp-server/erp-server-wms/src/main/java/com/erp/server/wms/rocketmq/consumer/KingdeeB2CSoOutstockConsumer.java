@@ -1,7 +1,6 @@
 package com.erp.server.wms.rocketmq.consumer;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson2.JSONObject;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
@@ -27,7 +26,7 @@ import javax.annotation.Resource;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.DMP_SYNC_TASK_TOPIC, selectorExpression = "sync_kingdee_so_outatock_to_wms_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SO_OUTSTOCK_TO_WMS)
+@RocketMQMessageListener(topic = RocketMqTopic.DMP_SYNC_TASK_TOPIC, selectorExpression = "sync_kingdee_so_outatock_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_SO_OUTSTOCK_TO_WMS)
 public class KingdeeB2CSoOutstockConsumer implements RocketMQListener<DmpSyncMqDTO> {
 
     @Resource
@@ -43,8 +42,13 @@ public class KingdeeB2CSoOutstockConsumer implements RocketMQListener<DmpSyncMqD
         try {
             String dataJson = dmpSyncMqDTO.getMqData();
             log.info("监听到金蝶B2C销售出库单要同步：entity>>>>>{}", dataJson);
-            KingdeeDeliveryDetailEntity entity= BeanUtil.toBean(JSONUtil.parseObj(dataJson), KingdeeDeliveryDetailEntity.class);
+            KingdeeDeliveryDetailEntity entity= JSONObject.parseObject(dataJson,KingdeeDeliveryDetailEntity.class);
             syncB2CSoOutstockService.syncKingdeeSoOutstock(entity);
+
+            //同步成功
+            paramDTO.setSyncStatus(SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode());
+            paramDTO.setResponseMsg("同步成功");
+            dmpTaskFeign.updateSyncInfo(paramDTO);
         }catch (Exception e){
             log.error("金蝶B2C销售出库单同步失败，msg = {}",e.getMessage());
             //同步失败
@@ -52,9 +56,6 @@ public class KingdeeB2CSoOutstockConsumer implements RocketMQListener<DmpSyncMqD
             paramDTO.setResponseMsg(e.getMessage());
             dmpTaskFeign.updateSyncInfo(paramDTO);
         }
-        //同步成功
-        paramDTO.setSyncStatus(SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode());
-        paramDTO.setResponseMsg("同步成功");
-        dmpTaskFeign.updateSyncInfo(paramDTO);
+
     }
 }

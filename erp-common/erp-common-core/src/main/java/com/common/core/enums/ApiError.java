@@ -723,6 +723,7 @@ public enum ApiError implements Serializable {
     ERROR_92056(92056,"同步金蝶B2C销售退货单未找到对应的仓库【{}】"),
     ERROR_92057(92057,"同步金蝶B2C销售退货单未找到对应的sku【{}】"),
     ERROR_92058(92058,"店铺不存在"),
+    ERROR_KINGDEE_CODE_NOT_EXIST(92059,"金蝶单号不存在"),
 
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),

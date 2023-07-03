@@ -6,7 +6,6 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.RedisService;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
@@ -36,7 +35,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -99,7 +97,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 //保存销售出库单详情
                 soOutstockDetailService.saveBatch(detailList);
                 InventoryInOutStockDTO inventoryInOutStockDTO = info.getInventoryInOutStock();
-                if(CollectionUtils.isNotEmpty(inventoryInOutStockDTO.getMembers())){
+                if (CollectionUtils.isNotEmpty(inventoryInOutStockDTO.getMembers())) {
                     inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
                 }
 
@@ -220,28 +218,30 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
      */
     private Boolean checkIsSync(String fBillNo) {
         if (StringUtils.isBlank(fBillNo)) {
-            return Boolean.FALSE;
+            throw new ServiceException(ApiError.ERROR_KINGDEE_CODE_NOT_EXIST);
         }
         if (fBillNo.length() == 15) {
             return Boolean.FALSE;
         }
-        String baseKey = RedisKeyConstant.KINGDEE_XSCK;
-        String redisKey = fBillNo + baseKey;
-        String billNo = redisService.getCacheObject(redisKey);
-        //表示有
-        if (StringUtils.isNotBlank(billNo)) {
-            return Boolean.FALSE;
-        } else {
-            //如果没有 从数据库找
-            SoOutstockEntity soOutstock = soOutstockService.getByCode(fBillNo);
-            //表示有
-            if (soOutstock != null) {
-                return Boolean.FALSE;
-            } else {
-                redisService.setCacheObject(redisKey, fBillNo, 7L, TimeUnit.DAYS);
-                return Boolean.TRUE;
-            }
-        }
+        return Boolean.TRUE;
+
+//        String baseKey = RedisKeyConstant.KINGDEE_XSCK;
+//        String redisKey = fBillNo + baseKey;
+//        String billNo = redisService.getCacheObject(redisKey);
+//        //表示有
+//        if (StringUtils.isNotBlank(billNo)) {
+//            return Boolean.FALSE;
+//        } else {
+//            //如果没有 从数据库找
+//            SoOutstockEntity soOutstock = soOutstockService.getByCode(fBillNo);
+//            //表示有
+//            if (soOutstock != null) {
+//                return Boolean.FALSE;
+//            } else {
+//                redisService.setCacheObject(redisKey, fBillNo, 7L, TimeUnit.DAYS);
+//                return Boolean.TRUE;
+//            }
+//        }
 
 
     }

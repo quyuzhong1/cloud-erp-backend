@@ -363,10 +363,12 @@ public class MQConsumerService {
         }
     }
 
-
+    /**
+     * 金蝶同步b2c销售出库单保存任务
+     */
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
-            selectorExpression = "kingdee_b2c_so_outatock_tag",
+            selectorExpression = "kingdee_b2c_so_outatock_to_task_tag",
             consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_outatock_to_wms")
     public class ConsumerErpSoOutstockInfo implements RocketMQListener<KingdeeDeliveryDetailEntity> {
         @Override
@@ -376,7 +378,7 @@ public class MQConsumerService {
             DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
             dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
             dmpSyncTaskEntity.setSouceType(SourceTypeEnum.SAL_OUTSTOCK.getCode());
-            dmpSyncTaskEntity.setSourceId("");
+            dmpSyncTaskEntity.setSourceId(ext.getFId());
             dmpSyncTaskEntity.setSourceCode(ext.getFBillNo());
             dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
             dmpSyncTaskEntity.setStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());

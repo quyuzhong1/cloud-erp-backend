@@ -1,9 +1,8 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.service.SuperServiceImpl;
-import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpSyncTaskEntity;
 import com.erp.server.dmp.mapper.DmpSyncTaskMapper;
 import com.erp.server.dmp.service.DmpSyncTaskService;
@@ -33,10 +32,13 @@ public class DmpSyncTaskServiceImpl extends SuperServiceImpl<DmpSyncTaskMapper, 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateSyncInfo(String id, String syncStatus, String responseMsg) {
-        UpdateWrapper<DmpSyncTaskEntity> updateWrapper = new UpdateWrapper<>();
-        updateWrapper.eq(BaseEntity.ID,id).set(DmpSyncTaskEntity.LAST_SYNC_TIME, LocalDateTime.now())
-                .set(DmpSyncTaskEntity.STATUS, syncStatus).set(DmpSyncTaskEntity.RETURN_MSG, responseMsg);
-        dmpSyncTaskMapper.update(null, updateWrapper);
+        LambdaUpdateWrapper<DmpSyncTaskEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(DmpSyncTaskEntity::getId, id);
+        updateWrapper.set(DmpSyncTaskEntity::getLastSyncTime, LocalDateTime.now());
+        updateWrapper.set(DmpSyncTaskEntity::getStatus, syncStatus);
+        updateWrapper.set(DmpSyncTaskEntity::getReturnMsg, responseMsg);
+        updateWrapper.set(DmpSyncTaskEntity::getUpdateTime, LocalDateTime.now());
+        this.update(updateWrapper);
     }
 
     @Override
@@ -48,6 +50,7 @@ public class DmpSyncTaskServiceImpl extends SuperServiceImpl<DmpSyncTaskMapper, 
                 .eq(DmpSyncTaskEntity::getTargetPlatformName, dmpSyncTaskEntity.getTargetPlatformName())
                 .eq(DmpSyncTaskEntity::getMqTopic, dmpSyncTaskEntity.getMqTopic())
                 .eq(DmpSyncTaskEntity::getMqTag, dmpSyncTaskEntity.getMqTag())
+                .last("LIMIT 1")
                 .one();
         //存在则修改
         if (ObjectUtil.isNotEmpty(found)) {
