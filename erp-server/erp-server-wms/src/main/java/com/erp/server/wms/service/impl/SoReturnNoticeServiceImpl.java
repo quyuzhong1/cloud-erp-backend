@@ -707,8 +707,6 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(skuIdList);
         List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailBySourceIds(returnIds);
         for (SoReturnNoticeDTO.GenerateSoReturnReceiveView view : list) {
-            view.setReturnTypeDictName(ReturnTypeEnum.getName(view.getReturnTypeDict()));
-            view.setReturnReasonDictName(ReturnReasonEnum.getName(view.getReturnReasonDict()));
             Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(detail -> view.getSourceDetailId().equals(detail.getSourceDetailId()) && detail.getSkuId().equals(view.getSkuId())).map(SoReturnReceiveDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             //销售退货单
             SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(view.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
@@ -719,6 +717,12 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             //产品sku信息
             ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             view.setProductName(productDetailEntity.getName());
+            if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
+                view.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnTypeDict()));
+            }
+            if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
+                view.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnDetailEntity.getReturnReasonDict()));
+            }
         }
         return list;
     }
