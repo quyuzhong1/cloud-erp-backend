@@ -241,7 +241,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
             //sku
             String skuNo = deliveryItemEntity.getSku();
             dmpFbaDeliveryDetailEntity.setSkuNo(skuNo);
-            // 只取组合品的（因为马帮那边的sku不能修改，所以不用判断sku的变化）
+            // 只取组合品的（因为马帮那边的sku不能修改，所以不用判断sku种类的变化）
             List<DmpBomEntity> bomList = dmpBomService.findBom(skuNo, PlatformEnum.MABANG.getDesc(), "machining");
             if(CollUtil.isNotEmpty(bomList)) {
                 dmpFbaDeliveryDetailEntity.setBomList(bomList);

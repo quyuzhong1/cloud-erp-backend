@@ -1,10 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.entity.DmpFbaDeliveryDetailEntity;
 import com.erp.model.dmp.entity.DmpFbaDeliveryEntity;
 import com.erp.server.dmp.mapper.DmpFbaDeliveryMapper;
 import com.erp.server.dmp.service.DmpFbaDeliveryDetailService;
@@ -16,9 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 /**
  * <p>

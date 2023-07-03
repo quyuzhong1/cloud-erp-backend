@@ -56,7 +56,7 @@ public class SyncMabangMachineServiceImpl implements SyncMabangMachineService {
 
     @Override
     public void syncDataToMabang(MachineInfoEntity entity, String operate) {
-        // TODO 此处还有问题，加工单需要是马帮同步过来的发货单SKU
+        // TODO 此处还有问题，加工单需要是马帮同步过来的发货单SKU，产品反馈后期会做限制
         // 直接加工单明细信息
         List<MachineDetailEntity> detailList = machineDetailService.listByMainId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
@@ -97,7 +97,6 @@ public class SyncMabangMachineServiceImpl implements SyncMabangMachineService {
                 sub.setWarehouseCode(warehouseMap.get(sub.getWarehouseId()).getKingdeeWarehouseCode());
             }
         });
-
 
         MabangMachineInfoDTO mabangMachineInfoDTO = new MabangMachineInfoDTO();
         mabangMachineInfoDTO.setMachineInfoEntity(entity);

@@ -5,7 +5,6 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ErpServerModuleEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -25,6 +24,7 @@ import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.entity.MachineDetailEntity;
 import com.erp.model.wms.entity.MachineInfoEntity;
+import com.erp.model.wms.entity.MachineSubComponentsEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.MachineTypeEnum;
 import com.erp.model.wms.enums.WorkTypeEnum;
@@ -32,6 +32,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.rocketmq.sync.SyncFbaDeliveryService;
 import com.erp.server.wms.service.MachineDetailService;
 import com.erp.server.wms.service.MachineInfoService;
+import com.erp.server.wms.service.MachineSubComponentsService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +40,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
@@ -70,6 +72,9 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
     @Autowired
     private MachineDetailService machineDetailService;
 
+    @Resource
+    private MachineSubComponentsService machineSubComponentsService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void syncFbaDelivery(DmpFbaDeliveryEntity entity, String sourceType,  String syncTaskId) {
@@ -91,11 +96,18 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
             // 判断发生改变的FBA发货单和ERP加工单是否发生仓库和数量的该百年
             boolean isKeyUpdate = this.checkFbaDeliveryMachineUpdate(entity, machineInfoEntity, warehouseEntity);
             if(isKeyUpdate) {
-                if(Objects.equals(approveStatusEnum, ApproveStatusEnum.WAIT_SUBMIT) || Objects.equals(approveStatusEnum, ApproveStatusEnum.APPROVE_ING)  ) {
-                    this.updateMachineFromFbaDelivery(entity, machineInfoEntity, warehouseEntity, sourceType, syncTaskId);
-                } else if (Objects.equals(approveStatusEnum, ApproveStatusEnum.APPROVE) || Objects.equals(approveStatusEnum, ApproveStatusEnum.REJECT) || Objects.equals(machineInfoEntity.getInvalidStatus(), Boolean.TRUE)) {
-                    log.info("FBA发货单【{}】发生了改变，ERP加工单【{}】状态已经为【{}】，不修改ERP加工单信息", entity.getDeliveryNo(), machineInfoEntity.getCode(), approveStatusEnum.getName() );
-                    this.sendNotice(syncTaskId, StrUtil.format("FBA发货单【{}】发生了仓库或数量改变，ERP加工单【{}】状态已经为【{}】", entity.getDeliveryNo(), machineInfoEntity.getCode(), approveStatusEnum.getName() ));
+                // WMS加工单已作废，暂不重新生成，仅作消息提醒
+                if(Objects.equals(machineInfoEntity.getInvalidStatus(), Boolean.TRUE)) {
+                    log.info("FBA发货单【{}】发生了改变，ERP加工单【{}】已作废，不修改ERP加工单信息", entity.getDeliveryNo(), machineInfoEntity.getCode());
+                    this.sendNotice(syncTaskId, StrUtil.format("FBA发货单【{}】发生了仓库或数量改变，ERP加工单【{}】已作废，ERP不同步FBA发货单数据", entity.getDeliveryNo(), machineInfoEntity.getCode() ));
+                } else {
+                    // 暂时改成只处理待提交的修改
+                    if(Objects.equals(approveStatusEnum, ApproveStatusEnum.WAIT_SUBMIT) ) {
+                        this.updateMachineFromFbaDelivery(entity, machineInfoEntity, warehouseEntity, sourceType, syncTaskId);
+                    } else if (Objects.equals(approveStatusEnum, ApproveStatusEnum.APPROVE) || Objects.equals(approveStatusEnum, ApproveStatusEnum.APPROVE_ING) || Objects.equals(approveStatusEnum, ApproveStatusEnum.REJECT) ) {
+                        log.info("FBA发货单【{}】发生了改变，ERP加工单【{}】状态已经为【{}】，不修改ERP加工单信息", entity.getDeliveryNo(), machineInfoEntity.getCode(), approveStatusEnum.getName() );
+                        this.sendNotice(syncTaskId, StrUtil.format("FBA发货单【{}】发生了仓库或数量改变，ERP加工单【{}】状态已经为【{}】,请人工核实调整数据", entity.getDeliveryNo(), machineInfoEntity.getCode(), approveStatusEnum.getName() ));
+                    }
                 }
             }
         } else if (entity.getDeliveryStatus().intValue() == FbaDeliveryStatusEnum.INVALID.getCode()) {
@@ -166,8 +178,9 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
         MachineInfoDTO.UpdateDTO updateDTO = BeanMapperUtils.map(MachineInfoDTO.UpdateDTO.class, machineInfoEntity);
         updateDTO.setId(machineInfoEntity.getId());
         updateDTO.setWarehouseId(warehouseEntity.getId());
-        updateDTO.setWorkType(WorkTypeEnum.ASSEMBLE.getCode());
-        updateDTO.setType(MachineTypeEnum.ORDINARY.getCode());
+        // 事务类型和单据类型不同步
+        updateDTO.setWorkType(machineInfoEntity.getWorkType());
+        updateDTO.setType(machineInfoEntity.getType());
         updateDTO.setWarehouseId(warehouseEntity.getId());
         updateDTO.setSourceType(sourceType);
         updateDTO.setSourceId(entity.getDeliveryId());
@@ -181,6 +194,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
         // 查询BOM信息
         List<BomInfoEntity> skuList = plmTaskFeign.listBomByParentSkuNos(parentSkuNos);
 
+        // TODO 后续会增加限制，同步到WMS中的加工单不允许新增其他BOM或移除现有的BOM
         for(DmpFbaDeliveryDetailEntity dmpFbaDeliveryDetailEntity : entity.getItemList()) {
             MachineDetailDTO.UpdateDTO member = new MachineDetailDTO.UpdateDTO();
             String parentSkuNo = dmpFbaDeliveryDetailEntity.getSkuNo();
