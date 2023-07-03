@@ -54,7 +54,7 @@ public class DmpMabangInOutStockConsume implements RocketMQListener<DmpSyncMqDTO
             this.sendNotice(syncTaskId, erpSourceCode);
             return;
         }
-        String sourceType = dmpSyncTaskEntity.getSouceType();
+        String sourceType = dmpSyncTaskEntity.getSourceType();
         String sourceTypeName = SourceTypeEnum.getName(sourceType);
         log.info("ERP【{}】id：【{}】，同步马帮状态【{}】", sourceTypeName, dmpSyncTaskEntity.getSourceId(), dmpSyncTaskEntity.getStatus());
 

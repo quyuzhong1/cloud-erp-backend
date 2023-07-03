@@ -44,7 +44,7 @@ public class DmpSyncTaskServiceImpl extends SuperServiceImpl<DmpSyncTaskMapper, 
     @Override
     public void saveOrUpdateDmpSyncTask(DmpSyncTaskEntity dmpSyncTaskEntity) {
         DmpSyncTaskEntity found = lambdaQuery()
-                .eq(DmpSyncTaskEntity::getSouceType, dmpSyncTaskEntity.getSouceType())
+                .eq(DmpSyncTaskEntity::getSourceType, dmpSyncTaskEntity.getSourceType())
                 .eq(DmpSyncTaskEntity::getSourceId, dmpSyncTaskEntity.getSourceId())
                 .eq(DmpSyncTaskEntity::getSourcePlatformName, dmpSyncTaskEntity.getSourcePlatformName())
                 .eq(DmpSyncTaskEntity::getTargetPlatformName, dmpSyncTaskEntity.getTargetPlatformName())

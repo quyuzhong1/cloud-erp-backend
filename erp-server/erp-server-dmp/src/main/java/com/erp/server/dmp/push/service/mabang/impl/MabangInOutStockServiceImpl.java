@@ -56,7 +56,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         // 保存任务数据
         DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
         dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-        dmpSyncTaskEntity.setSouceType(sourceType);
+        dmpSyncTaskEntity.setSourceType(sourceType);
         dmpSyncTaskEntity.setSourceId(sourceId);
         dmpSyncTaskEntity.setSourceCode(sourceCode);
         dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.MABANG.getDesc());
@@ -99,7 +99,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
             // 更新出入库同步信息
             dmpSyncTaskService.updateSyncInfo(dmpSyncTaskEntity.getId(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode(), msg);
 
-            String sourceType = dmpSyncTaskEntity.getSouceType();
+            String sourceType = dmpSyncTaskEntity.getSourceType();
             String sourceTypeName = StrUtils.null2EmptyWithTrim(SourceTypeEnum.getName(sourceType));
 
             WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
@@ -127,7 +127,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
             // 更新出入库同步信息
             dmpSyncTaskService.updateSyncInfo(dmpSyncTaskEntity.getId(), SyncKingdeeStatusEnum.FAILED_SYNC.getCode(), msg);
 
-            String sourceType = dmpSyncTaskEntity.getSouceType();
+            String sourceType = dmpSyncTaskEntity.getSourceType();
             String sourceTypeName = StrUtils.null2EmptyWithTrim(SourceTypeEnum.getName(sourceType));
 
             WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();

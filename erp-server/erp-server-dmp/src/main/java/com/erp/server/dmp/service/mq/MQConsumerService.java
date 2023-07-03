@@ -339,7 +339,7 @@ public class MQConsumerService {
             //新增发送任务
             DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
             dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
-            dmpSyncTaskEntity.setSouceType(SourceTypeEnum.STK_TRANSFERDIRECT.getCode());
+            dmpSyncTaskEntity.setSourceType(SourceTypeEnum.STK_TRANSFERDIRECT.getCode());
             dmpSyncTaskEntity.setSourceId(ext.getSourceId());
             dmpSyncTaskEntity.setSourceCode("");
             dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
@@ -377,7 +377,7 @@ public class MQConsumerService {
             //新增发送任务
             DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
             dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
-            dmpSyncTaskEntity.setSouceType(SourceTypeEnum.SAL_OUTSTOCK.getCode());
+            dmpSyncTaskEntity.setSourceType(SourceTypeEnum.SAL_OUTSTOCK.getCode());
             dmpSyncTaskEntity.setSourceId(ext.getFId());
             dmpSyncTaskEntity.setSourceCode(ext.getFBillNo());
             dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
@@ -412,7 +412,7 @@ public class MQConsumerService {
             //新增发送任务
             DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
             dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.MABANG.getDesc());
-            dmpSyncTaskEntity.setSouceType(SourceTypeEnum.MABANG_FBA_DELIVERY.getCode());
+            dmpSyncTaskEntity.setSourceType(SourceTypeEnum.MABANG_FBA_DELIVERY.getCode());
             dmpSyncTaskEntity.setSourceId(ext.getDeliveryId());
             dmpSyncTaskEntity.setSourceCode(ext.getDeliveryNo());
             dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
@@ -451,7 +451,7 @@ public class MQConsumerService {
             //新增发送任务
             DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
             dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
-            dmpSyncTaskEntity.setSouceType(SourceTypeEnum.SAL_RETURNSTOCK.getCode());
+            dmpSyncTaskEntity.setSourceType(SourceTypeEnum.SAL_RETURNSTOCK.getCode());
             dmpSyncTaskEntity.setSourceId(ext.getFId());
             dmpSyncTaskEntity.setSourceCode(ext.getFBillNo());
             dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());

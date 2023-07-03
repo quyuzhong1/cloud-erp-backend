@@ -64,8 +64,8 @@ public class DmpSyncTaskJob {
                         throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
                     }
                 }catch (Exception e){
-                    log.error("从{}推送{}到{}发送消息异常", recordEntity.getSourcePlatformName(), recordEntity.getSouceType(), recordEntity.getTargetPlatformName(), e);
-                    XxlJobHelper.log("从{}推送{}到{}发送消息异常", recordEntity.getSourcePlatformName(), recordEntity.getSouceType(), recordEntity.getTargetPlatformName(),  e);
+                    log.error("从{}推送{}到{}发送消息异常", recordEntity.getSourcePlatformName(), recordEntity.getSourceType(), recordEntity.getTargetPlatformName(), e);
+                    XxlJobHelper.log("从{}推送{}到{}发送消息异常", recordEntity.getSourcePlatformName(), recordEntity.getSourceType(), recordEntity.getTargetPlatformName(),  e);
                 }
             }
         }

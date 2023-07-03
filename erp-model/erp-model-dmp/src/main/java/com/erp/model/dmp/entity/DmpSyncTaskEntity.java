@@ -77,8 +77,8 @@ public class DmpSyncTaskEntity extends BaseEntity<DmpSyncTaskEntity> {
     /**
     * 来源单据类型
     */
-    @TableField("souce_type")
-    private String souceType;
+    @TableField("source_type")
+    private String sourceType;
 
     /**
     * 来源单据id
