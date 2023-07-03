@@ -13,8 +13,8 @@ import com.common.business.enums.ThirdPartySystemEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.dmp.entity.DmpTransferInfoDetailEntity;
-import com.erp.model.dmp.entity.DmpTransferInfoEntity;
+import com.erp.model.dmp.dto.DmpTransferInfoDTO;
+import com.erp.model.dmp.dto.DmpTransferInfoDetailDTO;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.TransferInfoDTO;
@@ -63,7 +63,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void syncKingdeeTransferInfo(DmpTransferInfoEntity entity) {
+    public void syncKingdeeTransferInfo(DmpTransferInfoDTO entity) {
 
         TransferInfoDTO.ViewDTO oldTransferInfo = transferInfoService.viewTransferInfoByCode(entity.getCode());
         //数据格式化
@@ -136,10 +136,10 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
      * @param entity
      * @return TransferInfoEntity
      */
-    private TransferInfoEntity handleWmsTransferInfo (DmpTransferInfoEntity entity,TransferInfoDTO.ViewDTO viewDTO) {
+    private TransferInfoEntity handleWmsTransferInfo (DmpTransferInfoDTO entity, TransferInfoDTO.ViewDTO viewDTO) {
         TransferInfoEntity resultEntity = new TransferInfoEntity();
 
-        List<DmpTransferInfoDetailEntity> dmpDetailList = entity.getDetailList();
+        List<DmpTransferInfoDetailDTO> dmpDetailList = entity.getDetailList();
         if (CollectionUtils.isEmpty(dmpDetailList)) {
             throw new ServiceException(ApiError.ERROR_99048);
         }
@@ -218,12 +218,12 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
             resultEntity.setWarehouseKeeperId(warehousekeeperId);
         }
         //产品信息
-        List<String> skuNoList = dmpDetailList.stream().map(DmpTransferInfoDetailEntity::getSkuNo).collect(Collectors.toList());
+        List<String> skuNoList = dmpDetailList.stream().map(DmpTransferInfoDetailDTO::getSkuNo).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
 
 
         List<TransferInfoDetailEntity> detailList = new ArrayList<>();
-        for (DmpTransferInfoDetailEntity dmpDetailEntity : dmpDetailList) {
+        for (DmpTransferInfoDetailDTO dmpDetailEntity : dmpDetailList) {
             TransferInfoDetailEntity detailEntity = new TransferInfoDetailEntity();
             String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(dmpDetailEntity.getSkuNo())).
                     findFirst().map(SkuVO::getSkuId).orElse("");

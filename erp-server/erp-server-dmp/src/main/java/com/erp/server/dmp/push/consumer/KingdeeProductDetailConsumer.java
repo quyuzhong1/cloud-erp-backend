@@ -83,7 +83,7 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
         JSONObject model;
         SaveParam param = new SaveParam(json);
         try {
-            model = kingdeeCommonService.view(apiUtils,(String)map.get("syncKingdeeId"),(String)map.get("skuNo"));
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),(String)map.get("syncKingdeeId"),(String)map.get("skuNo"));
         } catch (Exception e) {
             //未查找到数据，新增数据
             SaveResult save;

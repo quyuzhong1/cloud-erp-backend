@@ -130,7 +130,7 @@ public class KingdeeReturnOrderConsumer implements RocketMQListener<Map<String, 
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils,(String)map.get("syncKingdeeId"),(String)map.get("code"));
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),(String)map.get("syncKingdeeId"),(String)map.get("code"));
         } catch (Exception e) {
             Map<String, Object> pushMap = new HashMap<>();
 //            pushMap.put("ids", Arrays.asList(map.get("soSyncKingdeeId")));

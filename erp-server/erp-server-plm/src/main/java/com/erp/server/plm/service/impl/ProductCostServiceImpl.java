@@ -88,9 +88,8 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
                 //不含税价=含税价÷（1+税率）
                 BigDecimal actualNotTaxCost = supplierSkuPrice.getTaxPrice().divide(MathUtil.BigDecimal_1.add(supplierSkuPrice.getTaxRate()));
                 showDTO.setActualNoTaxCost(actualNotTaxCost);
-                //含税价=不含税价×（1+税率），
-                BigDecimal actualTaxCost = actualNotTaxCost.multiply(MathUtil.BigDecimal_1.add(supplierSkuPrice.getTaxRate()));
-                showDTO.setActualTaxCost(actualTaxCost);
+                //含税价
+                showDTO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
             }
         }
         return productCostShowDTOList;

@@ -37,6 +37,7 @@ import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnReasonEnum;
+import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
@@ -656,6 +657,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(generateSoReturnNoticeView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             generateSoReturnNoticeView.setProductName(productDetailEntity.getName());
             generateSoReturnNoticeView.setSourceDetailId(generateSoReturnNoticeView.getSourceDetailId());
+            generateSoReturnNoticeView.setReturnTypeName(ReturnTypeEnum.getName(generateSoReturnNoticeView.getReturnTypeDict()));
+            generateSoReturnNoticeView.setReturnReasonDictName(ReturnReasonEnum.getName(generateSoReturnNoticeView.getReturnReasonDict()));
         }
         return list;
     }

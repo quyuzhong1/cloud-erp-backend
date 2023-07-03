@@ -497,6 +497,10 @@ public class SoReturnDTO {
          */
         private String returnReasonDict;
         /**
+         * 退货原因名称
+         */
+        private String returnReasonDictName;
+        /**
          * 备注
          */
         private String remark;
