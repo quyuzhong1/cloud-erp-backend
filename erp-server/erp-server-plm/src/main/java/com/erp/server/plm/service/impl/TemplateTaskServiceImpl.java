@@ -382,7 +382,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             return new ArrayList<>();
         }
         List<TemplateTaskEntity> list = this.getByTemplateId(templateId, taskIdList);
-        List<TemplateTaskConcernEntity> templateTaskConcernList = templateTaskConcernService.listTemplateConcern(templateId, taskIdList);
+        List<String> templateTaskIds = list.stream().map(TemplateTaskEntity::getId).collect(Collectors.toList());
+        List<TemplateTaskConcernEntity> templateTaskConcernList = templateTaskConcernService.listTemplateConcern(templateId, templateTaskIds);
         List<ProjectTaskEntity> byProductId = projectTaskService.getByProductId(productId);
 
         LoginUser loginUser = commonService.getUserInfo();
