@@ -41,6 +41,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -207,7 +208,12 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
         dmpDeliveryEntity.setCreateTime(LocalDateTime.now());
 
         // 填充仓库编码
-        DmpWarehouseMappingEntity dmpWarehouseMappingEntity = dmpWarehouseMappingService.getSourceWarehouseId(StrUtils.null2EmptyWithTrim(deliveryMongo.getWarehouse_id()), PlatformEnum.MABANG.getDesc());
+        String warehouseId = StrUtils.null2EmptyWithTrim(deliveryMongo.getWarehouse_id());
+        DmpWarehouseMappingEntity dmpWarehouseMappingEntity = dmpWarehouseMappingService.getSourceWarehouseId(warehouseId, PlatformEnum.MABANG.getDesc());
+        if(Objects.isNull(dmpWarehouseMappingEntity)) {
+            log.info("马帮FBA发货单在表中未找到仓库信息，不推送，仓库id：{}", JSONObject.toJSONString(deliveryMongo));
+            return null;
+        }
         dmpDeliveryEntity.setWarehouseCode(dmpWarehouseMappingEntity.getWarehouseCode());
 
         dmpDeliveryEntity.setItemList(initItem(deliveryMongo));

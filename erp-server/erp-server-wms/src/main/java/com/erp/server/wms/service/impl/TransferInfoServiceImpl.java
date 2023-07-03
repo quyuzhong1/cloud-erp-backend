@@ -402,6 +402,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
             //发送马帮（非马帮平台的才需要推送）
             list.forEach(obj->{
+                // 直接调拨单发送马帮出入库
                 if(Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_OTHER.getCode())) {
                     syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
                 }
@@ -442,8 +443,13 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //发送金蝶
         list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
 
-        //发送马帮
-        list.forEach(obj->syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        //发送马帮（非马帮平台的才需要推送）
+        list.forEach(obj->{
+            // 直接调拨单发送马帮出入库
+            if(Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_OTHER.getCode())) {
+                syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode());
+            }
+        });
 
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
