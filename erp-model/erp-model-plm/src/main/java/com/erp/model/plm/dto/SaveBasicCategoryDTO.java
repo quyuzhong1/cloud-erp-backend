@@ -28,7 +28,7 @@ public class SaveBasicCategoryDTO  {
     /**
      * 分类代码
      */
-    @Size(min = 0, max = 1, message = "分类代码长度只能有一个字符")
+    @Size(min = 0, max = 10, message = "分类代码长度只能有一个字符")
     private String code;
 
     /**
