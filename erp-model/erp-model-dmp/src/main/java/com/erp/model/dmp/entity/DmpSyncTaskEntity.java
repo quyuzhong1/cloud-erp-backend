@@ -109,7 +109,7 @@ public class DmpSyncTaskEntity extends BaseEntity<DmpSyncTaskEntity> {
 
     public static final String SOURCE_PLATFORM_NAME = "source_platform_name";
 
-    public static final String SOUCE_TYPE = "souce_type";
+    public static final String SOURCE_TYPE = "source_type";
 
     public static final String SOURCE_ID = "source_id";
 
