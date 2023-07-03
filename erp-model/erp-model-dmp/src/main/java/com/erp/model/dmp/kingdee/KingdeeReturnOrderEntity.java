@@ -17,6 +17,8 @@ import java.util.List;
 public class KingdeeReturnOrderEntity extends CleanBaseDTO {
 
     private String _id;
+    @Alias("FID")
+    private String fId;
     @Alias("FBillTypeID")
     private String fBillTypeID;
     @Alias("FBillTypeID.FName")
