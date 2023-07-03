@@ -37,10 +37,10 @@ public class ProjectReportFormsController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO.PagingViewDTO>>
      **/
     @PostMapping(value = "/purchaseBusinessGatherTable")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
+/*    @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "scm:ProjectReportForms:purchaseBusinessGatherTable",
-            tableAlias = "pod")
+            tableAlias = "pod")*/
     public ApiResult<PagingVO<List<ProjectReportFormsDTO.PagingView>>> projectReportFormsPaging(@RequestBody PagingDTO<ProjectReportFormsDTO.PagingParam> dto) {
         PagingVO<List<ProjectReportFormsDTO.PagingView>> listPagingVO = projectReportFormsService.projectReportFormsPaging(dto);
         return success(listPagingVO);
@@ -54,11 +54,11 @@ public class ProjectReportFormsController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO.PagingViewDTO>>
      **/
     @PostMapping(value = "/taskDetailView")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+/*    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
             menuCode = "scm:ProjectReportForms:taskDetailView",
             serviceClass = ProductInfoService.class,
-            keyIdName = "id")
+            keyIdName = "id")*/
     public ApiResult<List<ProjectReportFormsDTO.TaskDetail>> taskDetailView(@RequestBody ProjectReportFormsDTO.TaskDetailParam dto) {
         List<ProjectReportFormsDTO.TaskDetail> list = projectReportFormsService.taskDetailView(dto);
         return success(list);
@@ -73,10 +73,10 @@ public class ProjectReportFormsController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/exportExcelPurchaseBusiness")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
+/*    @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "scm:ProjectReportForms:exportExcelProjectReportForms",
-            tableAlias = "pod")
+            tableAlias = "pod")*/
     public ApiResult exportExcelProjectReportForms(@RequestBody ProjectReportFormsDTO.PagingParam dto, HttpServletResponse response) {
         Boolean flag = projectReportFormsService.exportExcelProjectReportForms(dto, response);
         return flag == true ? success() : failure();
@@ -91,10 +91,10 @@ public class ProjectReportFormsController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/exportExcelTaskDetail")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
+/*    @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "scm:ProjectReportForms:exportExcelProjectReportForms",
-            tableAlias = "pod")
+            tableAlias = "pod")*/
     public ApiResult exportExcelTaskDetail(@RequestBody ProjectReportFormsDTO.TaskDetailParam dto, HttpServletResponse response) {
         Boolean flag = projectReportFormsService.exportExcelTaskDetail(dto, response);
         return flag == true ? success() : failure();
