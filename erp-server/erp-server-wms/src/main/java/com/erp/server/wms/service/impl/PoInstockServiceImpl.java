@@ -457,20 +457,12 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             throw new ServiceException(ApiError.ERROR_98006);
         }
 
-        List<String> poIds = list.stream().map(PoInstockEntity::getPurchaseOrderId).distinct().collect(Collectors.toList());
-
-        //质检单未质检完成则不允许提交
-        List<QcInfoEntity> qcList =  qcInfoService.listByPoIds(poIds);
-        if (CollectionUtils.isNotEmpty(qcList)) {
-            List<QcInfoEntity> resultList = qcList.stream().filter(obj -> QcBillStatusEnum.DRAFT.equals(obj.getQcStatus()) || QcBillStatusEnum.WAIT_QC.equals(obj.getQcStatus())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(resultList)) {
-                String qcCodes = resultList.stream().map(QcInfoEntity::getPurchaseOrderCode).distinct().collect(Collectors.joining());
-                throw new ServiceException(new ApiResult(1,String.format("采购订单【%s】未质检完成不支持审核",qcCodes)));
-            }
-        }
         //本次下推入库明细信息
         List<PoInstockDetailEntity> thisDetailList = poInstockDetailService.listByMainIds(ids);
         List<String> podIds = thisDetailList.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+
+        //存在收货单,且收货单下面的质检单未质检完成则不允许提交
+        checkQcInfo(podIds);
         //已下推入库明细信息
         List<PoInstockDetailEntity> hasDetailList = poInstockDetailService.listDetailByPodIds(podIds);
 
@@ -1371,6 +1363,31 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             });
             noReceiveInventoryInOutStockDTO.setMembers(noReceiveMembers);
             inventoryTransCoreService.approveByType(noReceiveInventoryInOutStockDTO);
+        }
+    }
+
+    /**
+     * @description: 质检信息校验
+     * @author Will
+     * @date: 2023/7/3 11:33
+     * @param podIds
+     */
+    private void checkQcInfo (List<String> podIds) {
+        //收货信息
+        List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
+        if (CollectionUtils.isEmpty(receiveDetailList)) {
+            return;
+        }
+        List<String> receiveDetailIds = receiveDetailList.stream().map(WarehouseReceiveDetailEntity::getId).collect(Collectors.toList());
+        //质检信息
+        List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceIds(receiveDetailIds);
+        if (CollectionUtils.isEmpty(qcInfoList)) {
+            return;
+        }
+        List<QcInfoEntity> resultList = qcInfoList.stream().filter(obj -> QcBillStatusEnum.DRAFT.equals(obj.getQcStatus()) || QcBillStatusEnum.WAIT_QC.equals(obj.getQcStatus())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(resultList)) {
+            String qcCodes = resultList.stream().map(QcInfoEntity::getPurchaseOrderCode).distinct().collect(Collectors.joining());
+            throw new ServiceException(new ApiResult(1,String.format("采购订单【%s】未质检完成不支持审核",qcCodes)));
         }
     }
 
