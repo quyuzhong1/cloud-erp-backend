@@ -30,6 +30,7 @@ import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -179,7 +180,6 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
                 "FDocumentStatus," +
                 "FSaleOrgId," +
                 "FSaleOrgId.FName," +
-                "FRecustId," +
                 "FRetcustId.FName," +
                 "FRetcustId.FNumber," +
                 "FSalesManId," +
@@ -198,8 +198,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
                 "FHeadNote," +
                 "FReturnReason," +
                 "FSaledeptid.FNumber," +
-                "edeptid.FName," +
-                "FBillNo," +
+                "FSaledeptid.FName," +
                 "FOrderNo," +
                 "FAmount," +
                 "FMustqty," +
@@ -366,8 +365,10 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
             dmpReturnOrderItemEntity.setSkuNo(skuNo);
             //商品名称
             dmpReturnOrderItemEntity.setItemName(orderItemBean.getFMaterialName());
-            //买家购买数量
-            dmpReturnOrderItemEntity.setQuantity(Double.valueOf(orderItemBean.getFSalUnitQty()).intValue());
+            if (StringUtils.isNotBlank(orderItemBean.getFSalUnitQty())) {
+                //买家购买数量
+                dmpReturnOrderItemEntity.setQuantity(Double.valueOf(orderItemBean.getFSalUnitQty()).intValue());
+            }
             //商品单位
             dmpReturnOrderItemEntity.setProductUnit(orderItemBean.getFUnitName());
             //商品图片地址

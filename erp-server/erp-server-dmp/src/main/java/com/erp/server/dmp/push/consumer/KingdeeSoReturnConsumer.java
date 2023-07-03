@@ -55,12 +55,62 @@ public class KingdeeSoReturnConsumer implements RocketMQListener<Map<String, Obj
         queryFilters.add(String.format("FBillNo = '%s'", "XSTHD12485503"));
         queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'B','C','D'"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillTypeID.FNumber,FBillNo,FDate,FDocumentStatus,FSaleOrgId,FSaleOrgId.FName,FRetcustId," +
-                "FRetcustId.FName,FRetcustId.FNumber,FSalesManId,FSalesManId.FName,FCreateDate,FModifyDate,FCancelStatus,FReceiverCountry,FLinkMan,FExchangeRate," +
-                "FApproveDate,FBussinessType,FOwnerTypeIdHead,FSettleCurrId.FCode,FDelTime,FHeadNote,FReturnReason,FSaledeptid.FNumber,FSaledeptid.FName,"
-                + "FOrderNo,FAmount,FMustqty,FUnitID.FName,FMaterialId,FMaterialId.FNumber,FMaterialName,FAuxpropId,FMaterialType,FPrice,FStockId," +
-                "FStocklocId,FStockstatusId,FNote,FSrcBillNo,FSrcBillTypeID,FIsFree,FMaterialModel,FRealQty,FSOBILLTYPEID,FSalUnitQty,FProjectNo,F_ulz_KHSKU,FAllAmount," +
-                "FReturnType,FSOEntryId";
+        String fieldKeys = "FID," +
+                "FBillTypeID," +
+                "FBillTypeID.FName," +
+                "FBillTypeID.FNumber," +
+                "FBillNo," +
+                "FDate," +
+                "FDocumentStatus," +
+                "FSaleOrgId," +
+                "FSaleOrgId.FName," +
+                "FRetcustId.FName," +
+                "FRetcustId.FNumber," +
+                "FSalesManId," +
+                "FSalesManId.FName," +
+                "FCreateDate," +
+                "FModifyDate," +
+                "FCancelStatus," +
+                "FReceiverCountry," +
+                "FLinkMan," +
+                "FExchangeRate," +
+                "FApproveDate," +
+                "FBussinessType," +
+                "FOwnerTypeIdHead," +
+                "FSettleCurrId.FCode," +
+                "FDelTime," +
+                "FHeadNote," +
+                "FReturnReason," +
+                "FSaledeptid.FNumber," +
+                "FSaledeptid.FName," +
+                "FOrderNo," +
+                "FAmount," +
+                "FMustqty," +
+                "FUnitID.FName," +
+                "FMaterialId," +
+                "FMaterialId.FNumber," +
+                "FMaterialName," +
+                "FAuxpropId," +
+                "FMaterialType," +
+                "FPrice," +
+                "FStockId," +
+                "FStockId.FNumber," +
+                "FStockId.FName," +
+                "FStocklocId," +
+                "FStockstatusId," +
+                "FNote," +
+                "FSrcBillNo," +
+                "FSrcBillTypeID," +
+                "FIsFree," +
+                "FMaterialModel," +
+                "FRealQty," +
+                "FSOBILLTYPEID," +
+                "FSalUnitQty," +
+                "FProjectNo," +
+                "F_ulz_KHSKU," +
+                "FAllAmount," +
+                "FReturnType," +
+                "FSOEntryId";
 
         System.out.println(filterStr);
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);

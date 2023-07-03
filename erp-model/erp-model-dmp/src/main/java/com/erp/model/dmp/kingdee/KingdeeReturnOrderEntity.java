@@ -35,8 +35,6 @@ public class KingdeeReturnOrderEntity extends CleanBaseDTO {
     private String fSaleOrgId;
     @Alias("FSaleOrgId.FName")
     private String fSaleOrgName;
-    @Alias("FRecustId")
-    private String fRetcustId;
     @Alias("FRetcustId.FName")
     private String fRetcustName;
     @Alias("FRetcustId.FNumber")
@@ -88,7 +86,6 @@ public class KingdeeReturnOrderEntity extends CleanBaseDTO {
                 ", fDocumentStatus='" + fDocumentStatus + '\'' +
                 ", fSaleOrgId='" + fSaleOrgId + '\'' +
                 ", fSaleOrgName='" + fSaleOrgName + '\'' +
-                ", fRetcustId='" + fRetcustId + '\'' +
                 ", fRetcustName='" + fRetcustName + '\'' +
                 ", fSalesManId='" + fSalesManId + '\'' +
                 ", fSalesManName='" + fSalesManName + '\'' +
@@ -108,4 +105,5 @@ public class KingdeeReturnOrderEntity extends CleanBaseDTO {
                 '}';
     }
 }
+
 

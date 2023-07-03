@@ -74,3 +74,4 @@ public class KingdeeReturnOrderItemEntity {
     private String fSOEntryId;
 
 }
+

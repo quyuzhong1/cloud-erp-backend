@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -33,6 +34,7 @@ import com.erp.server.wms.service.InventoryTransCoreService;
 import com.erp.server.wms.service.SoReturnInstockDetailService;
 import com.erp.server.wms.service.SoReturnInstockService;
 import com.erp.server.wms.service.WarehouseService;
+import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -82,10 +84,15 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         }
 
         List<KingdeeReturnOrderItemEntity> itemEntityList = kingdeeReturnOrderEntity.getItemEntityList();
-        List<String> stockNumberList = itemEntityList.stream().map(KingdeeReturnOrderItemEntity::getFStockNumber).collect(Collectors.toList());
+        List<String> stockNumberList = itemEntityList.stream().map(KingdeeReturnOrderItemEntity::getFStockNumber).distinct().collect(Collectors.toList());
         List<WarehouseEntity> warehouseEntities = warehouseService.listByKingdeeCodeList(stockNumberList);
         List<String> kingdeeSkuNoList = itemEntityList.stream().map(KingdeeReturnOrderItemEntity::getFMaterialNumber).collect(Collectors.toList());
         List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(kingdeeSkuNoList);
+        //金蝶sku和plm对应不上跳过
+        if (CollectionUtils.isEmpty(skuNoList)) {
+            throw new ServiceException(ApiError.ERROR_92057, StringUtil.join(skuNoList, ","));
+        }
+
         //如果金蝶退货单明细有不一样的仓库，这里分开成多单存到OMS
         Map<String, List<KingdeeReturnOrderItemEntity>> stockNumberMap = itemEntityList.stream().collect(Collectors.groupingBy(KingdeeReturnOrderItemEntity::getFStockNumber));
         for (Map.Entry<String, List<KingdeeReturnOrderItemEntity>> stringListEntry : stockNumberMap.entrySet()) {
@@ -95,7 +102,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             //获取仓库信息
             WarehouseEntity warehouseEntity = warehouseEntities.stream().filter(req -> req.getKingdeeWarehouseCode().equals(stringListEntry.getKey())).findFirst().orElse(null);
             //如果仓库不存在抛出异常
-            if (ObjectUtil.isNotEmpty(warehouseEntity)) {
+            if (ObjectUtil.isEmpty(warehouseEntity)) {
                 throw new ServiceException(ApiError.ERROR_92056, stringListEntry.getKey());
             }
             SoReturnInstockEntity instockEntity = new SoReturnInstockEntity();
@@ -110,7 +117,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             }
             instockEntity.setSalesDeptName(kingdeeReturnOrderEntity.getFSaledeptName());
             instockEntity.setSellerName(kingdeeReturnOrderEntity.getFSalesManName());
-            instockEntity.setBillDate(LocalDate.parse(kingdeeReturnOrderEntity.getFDate()));
+            instockEntity.setBillDate(LocalDate.parse(kingdeeReturnOrderEntity.getFDate().split("T")[0]));
             instockEntity.setWarehouseId(warehouseEntity.getId());
             instockEntity.setWarehouseName(warehouseEntity.getName());
             if (CollectionUtils.isNotEmpty(orderItemEntityList)) {
@@ -125,25 +132,34 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             for (KingdeeReturnOrderItemEntity kingdeeReturnOrderItemEntity : orderItemEntityList) {
                 SoReturnInstockDetailEntity instockDetailEntity = new SoReturnInstockDetailEntity();
                 SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuNo().equals(kingdeeReturnOrderItemEntity.getFMaterialNumber())).findFirst().orElse(null);
-                //金蝶sku和plm对应不上跳过
-                if (ObjectUtil.isEmpty(skuVO)) {
-                    throw new ServiceException(ApiError.ERROR_92057, stringListEntry.getKey());
-                }
+
                 instockDetailEntity.setMainId(instockEntity.getId());
                 instockDetailEntity.setSkuNo(kingdeeReturnOrderItemEntity.getFMaterialNumber());
                 instockDetailEntity.setSkuId(skuVO.getSkuName());
-                instockDetailEntity.setRealQty(Integer.valueOf(kingdeeReturnOrderItemEntity.getFRealQty()));
+                instockDetailEntity.setRealQty(Double.valueOf(kingdeeReturnOrderItemEntity.getFRealQty()).intValue());
                 detailEntityList.add(instockDetailEntity);
             }
+
+            List<SoReturnInstockEntity> soReturnInstockEntities = soReturnInstockService.listByCode(Arrays.asList(kingdeeReturnOrderEntity.getFBillNo()));
+            List<String> ids = soReturnInstockEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnInstockEntity::getId).collect(Collectors.toList());
             soReturnInstockService.save(instockEntity);
             soReturnInstockDetailService.saveBatch(detailEntityList);
             if (kingdeeReturnOrderEntity.getFDocumentStatus().equals("C")) {
-                //更新库存
-                inventoryTransCore(Arrays.asList(instockEntity));
-            } else {
-                List<SoReturnInstockEntity> soReturnInstockEntities = soReturnInstockService.listByCode(Arrays.asList(kingdeeReturnOrderEntity.getFBillNo()));
-                List<String> ids = soReturnInstockEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnInstockEntity::getId).collect(Collectors.toList());
+                //如果存在已审核的数据先回滚再审核
                 if (CollectionUtils.isNotEmpty(ids)) {
+                    //回滚库存
+                    InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_RETURN_INSTOCK, ids);
+                    inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
+                    soReturnInstockService.removeByIds(ids);
+                    soReturnInstockDetailService.delete(ids);
+                    //更新库存
+                    inventoryTransCore(Arrays.asList(instockEntity));
+                } else {
+                    //更新库存
+                    inventoryTransCore(Arrays.asList(instockEntity));
+                }
+            } else {
+                 if (CollectionUtils.isNotEmpty(ids)) {
                     //回滚库存
                     InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_RETURN_INSTOCK, ids);
                     inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
