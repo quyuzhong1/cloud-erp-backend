@@ -341,7 +341,7 @@ public class MQConsumerService {
             dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
             dmpSyncTaskEntity.setSourceType(SourceTypeEnum.STK_TRANSFERDIRECT.getCode());
             dmpSyncTaskEntity.setSourceId(ext.getSourceId());
-            dmpSyncTaskEntity.setSourceCode("");
+            dmpSyncTaskEntity.setSourceCode(ext.getCode());
             dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
             dmpSyncTaskEntity.setStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
             dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
