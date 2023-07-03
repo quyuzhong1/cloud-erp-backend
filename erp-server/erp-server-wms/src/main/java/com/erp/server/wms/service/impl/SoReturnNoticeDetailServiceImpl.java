@@ -79,8 +79,6 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
             detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
             detailEntity.setReturnQty(detailDto.getReturnQty());
             detailEntity.setRemark(detailDto.getRemark());
-            detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
-            detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
             list.add(detailEntity);
@@ -129,8 +127,6 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
             detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
             detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
             detailEntity.setReturnQty(detailDto.getReturnQty());
-            detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
-            detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
             list.add(detailEntity);
