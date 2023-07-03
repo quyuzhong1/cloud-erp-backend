@@ -2,6 +2,7 @@ package com.erp.server.wms.rocketmq.consumer;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson2.JSONObject;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
@@ -35,9 +36,9 @@ public class SyncKingdeeReturnOrderCustomer implements RocketMQListener<DmpSyncM
         try {
             String dataJson = dmpSyncMqDTO.getMqData();
             log.info("监听到金蝶销售退货单要同步：entity>>>>>{}", dataJson);
-            KingdeeReturnOrderEntity entity= BeanUtil.toBean(JSONUtil.parseObj(dataJson), KingdeeReturnOrderEntity.class);
+            KingdeeReturnOrderEntity entity= JSONObject.parseObject(dataJson, KingdeeReturnOrderEntity.class);
             syncSoReturnService.syncKingdeeReturnOrderToSoReturn(entity);
-        }catch (Exception e){
+        } catch (Exception e){
             log.error("金蝶销售退货单同步失败，msg = {}",e.getMessage());
             //同步失败
             paramDTO.setSyncStatus(SyncKingdeeStatusEnum.FAILED_SYNC.getCode());
