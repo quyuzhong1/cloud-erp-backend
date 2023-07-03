@@ -97,6 +97,16 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
     Boolean approve(BaseApproveParamDTO dto);
 
     /**
+     * @description: 结束审核
+     * @author Will
+     * @date: 2023/7/3 16:18
+     * @param dto
+     * @param list
+     * @return Boolean
+     */
+    Boolean approveEnd (BaseApproveParamDTO dto,List<PurchasePriceEntity> list);
+
+    /**
      * 取消流程
      * @author yl
      * @date 2023-03-27 14:04

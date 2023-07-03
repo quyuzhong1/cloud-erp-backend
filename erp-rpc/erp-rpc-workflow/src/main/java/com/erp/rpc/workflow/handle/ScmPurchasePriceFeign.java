@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
  * @author Will
  * @date: 2023/7/3 15:27
  */
-@FeignClient(value = "erp-scm", contextId = "scm-workflow")
+@FeignClient(value = "erp-scm", contextId = "purchasePrice")
 public interface ScmPurchasePriceFeign extends BaseWorkflowService{
 
     /**

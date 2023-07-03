@@ -1,8 +1,16 @@
 package com.erp.server.scm.service.impl;
 
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.enums.SourceTypeEnum;
+import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.workflow.dto.EndProcessDTO;
+import com.erp.server.scm.service.PurchasePriceService;
 import com.erp.server.scm.service.WorkflowProcessService;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Will
@@ -13,9 +21,22 @@ import org.springframework.stereotype.Service;
 @Service
 public class WorkflowProcessServiceImpl implements WorkflowProcessService {
 
+    @Resource
+    private PurchasePriceService purchasePriceService;
 
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
-        return null;
+        String businessKey = dto.getBusinessKey();
+
+        if (SourceTypeEnum.PURCHASE_PRICE.getCode().equals(businessKey)) {
+            //采购价目信息
+            List<PurchasePriceEntity> list = purchasePriceService.listByIds(Arrays.asList(dto.getBusinessId()));
+
+            BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+            baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
+            baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
+            purchasePriceService.approveEnd(baseApproveParamDTO,list);
+        }
+        return Boolean.TRUE;
     }
 }
