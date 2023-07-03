@@ -549,6 +549,16 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
+        //撤销现有流程
+        LoginUser userInfo = commonService.getUserInfo();
+        ids.forEach(obj ->{
+            ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setBusinessId(revokeDTO.getBusinessId());
+            revokeDTO.setBusinessKey(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode());
+            revokeDTO.setUserId(userInfo.getUid());
+            workflowFeign.revokeProcess(revokeDTO);
+        });
+
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
@@ -760,7 +770,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         list.forEach(obj -> {
             ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
             approveDTO.setBusinessId(obj.getId());
-            approveDTO.setBusinessKey(SourceTypeEnum.PURCHASE_PRICE.getCode());
+            approveDTO.setBusinessKey(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode());
             approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
             approveDTO.setComment(dto.getComment());
             approveDTO.setUserId(userInfo.getUid());
