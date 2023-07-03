@@ -170,7 +170,7 @@ public class DeliveryEntity extends CleanBaseDTO {
     /**
      * 总费用
      */
-    private Integer extend_fee;
+    private String extend_fee;
 
     /**
      * 仓库名称

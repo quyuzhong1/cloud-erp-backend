@@ -620,18 +620,22 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 // 相邻节点去重
                 // 查询当前节点的上一个节点
                 LinkedHashMap<String, List<ProcessTaskManagementEntity>> processTaskManagementList = processTaskManagementService.listHisByProcessInstanceId(processInstanceId, MathUtil.ONE);
-                processTaskManagement = processTaskManagementList.entrySet().stream()
-                        .findFirst()
-                        .get()
-                        .getValue().stream().filter(item -> item.getCurApproveId().equals(userId))
-                        .findFirst();
+                if(CollectionUtil.isNotEmpty(processTaskManagementList)){
+                    processTaskManagement = processTaskManagementList.entrySet().stream()
+                            .findFirst()
+                            .get()
+                            .getValue().stream().filter(item -> item.getCurApproveId().equals(userId))
+                            .findFirst();
+                }
             }else if(DictBasicEnum.GLOBAL_DEDUPE.equals(reviewSetting)) {
                 // 全局去重
                 // 查询已完成审核节点
                 LinkedHashMap<String, List<ProcessTaskManagementEntity>> processTaskManagementList = processTaskManagementService.listHisByProcessInstanceId(processInstanceId, null);
-                processTaskManagement = processTaskManagementList.values().stream().flatMap(List::stream)
-                        .filter(item -> item.getCurApproveId().equals(userId))
-                        .findFirst();
+                if(CollectionUtil.isNotEmpty(processTaskManagementList)){
+                    processTaskManagement = processTaskManagementList.values().stream().flatMap(List::stream)
+                            .filter(item -> item.getCurApproveId().equals(userId))
+                            .findFirst();
+                }
             }
             if (processTaskManagement.isPresent()) {
                 // 审核人已存在，自动审核通过
@@ -802,6 +806,25 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 审批流程
             ProcessManagementDTO.ApproveResultDTO resultDTO = approveProcess(approveDTO);
             resultList.add(resultDTO);
+        });
+        return resultList;
+    }
+
+    @Override
+    public List<ProcessManagementDTO.CurApproveInfoDTO> batchCurApprover(ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList) {
+        Map<String, ProcessManagementDTO.HistoryActivityDTO> paramMap = dtoList
+                .stream()
+                .distinct()
+                .collect(Collectors.toMap(k -> StrUtil.format("{}_{}", k.getBusinessId(), k.getBusinessKey()), e -> e));
+        // 查询当前任务
+        List<ProcessManagementDTO.CurApproveInfoDTO> resultList = baseMapper.listApproverByBusiness(dtoList);
+        paramMap.keySet().forEach(paramKey -> {
+            List<ProcessManagementDTO.CurApproveInfoDTO> curApproveList = resultList.stream()
+                    .filter(item -> paramKey.equals(StrUtil.format("{}_{}", item.getBusinessId(), item.getBusinessKey())))
+                    .collect(Collectors.toList());
+            if(CollectionUtil.isEmpty(curApproveList)){
+                resultList.add(new ProcessManagementDTO.CurApproveInfoDTO(paramMap.get(paramKey)));
+            }
         });
         return resultList;
     }

@@ -38,5 +38,9 @@ public interface ProcessBusinessService extends SuperService<ProcessBusinessEnti
      */
     ProcessBusinessEntity getProcessBusiness(String businessKey, String condition);
 
+    /**
+     * 保存流程业务绑定关系
+     * @param dto
+     */
     void addOrUpdate(ProcessDefinitionDTO.AddOrUpdateDTO dto);
 }

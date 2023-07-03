@@ -884,4 +884,54 @@ public class ProcessManagementDTO {
             this.taskDefinitionKey = taskDefinitionKey;
         }
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class CurApproveInfoDTO{
+
+        /**
+         * 流程实例ID
+         */
+        private String processInstanceId;
+
+        /**
+         * 流程业务ID
+         */
+        private String businessId;
+
+        /**
+         * 流程业务KEY
+         */
+        private String businessKey;
+
+        /**
+         * 流程定义ID
+         */
+        private String businessName;
+
+        /**
+         * 当前节点id
+         */
+        private String activityId;
+
+        /**
+         * 当前节点名称
+         */
+        private String activityName;
+
+        /**
+         * 当前审批人id
+         */
+        private String curApproveId;
+
+        /**
+         * 当前审批人名称
+         */
+        private String curApproveName;
+
+        public CurApproveInfoDTO(HistoryActivityDTO historyActivityDTO) {
+            this.businessId = historyActivityDTO.getBusinessId();
+            this.businessKey = historyActivityDTO.getBusinessKey();
+        }
+    }
 }
