@@ -206,7 +206,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         queryFilters.add(StrUtil.format("FModifyDate >= '{}'", sdf.format(lastTime.minusMinutes(2))));
         queryFilters.add(StrUtil.format("FModifyDate <= '{}'", sdf.format(nextTime)));
         // 审核通过
-        queryFilters.add(StrUtil.format("FDocumentStatus = '{}'", "C"));
+        queryFilters.add(StrUtil.format("FDocumentStatus = '{}'", "B,C,D"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillNo,FSoOrDerNo,FDate,FSaleOrgId,FSaleOrgId.FName,FCarriageNO,FStockerID.FNumber,FStockerID.FName," +
                 "FCustomerID,FCustomerID.FName,FCustomerID.FNumber,FSaleDeptID.FName,FSalesManID,FSalesManID.FName,FSalesManID.FNumber,FReceiverID.FName," +
@@ -224,10 +224,12 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         Integer pageIndex = 0;
 
         //每次最多获取100条
-        Integer pageSize = 10000;
+        Integer pageSize = 100;
         List<Map<String, Object>> resultAll = new ArrayList<>();
         while (dataSign) {
-            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(), 1);
+          //  KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(), 1);
+
+            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName());
             List<Map<String, Object>> result = kingdeeApiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex, 0);
             XxlJobHelper.log("获取金蝶发货数据第[{}]页 有{}条记录", pageIndex, pageSize);
             if (result.size() < pageSize) {

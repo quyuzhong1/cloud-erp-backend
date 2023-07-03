@@ -143,6 +143,12 @@
         <if test="params.no!=null and params.no!=''">
             AND sm.product_sku_no ILIKE concat('%', #{params.no} ,'%')
         </if>
+        <if test="params.skuList !=null and params.skuList.size>0">
+            AND sm.product_sku_no IN
+            <foreach collection="params.skuList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
     </select>
 
 </mapper>

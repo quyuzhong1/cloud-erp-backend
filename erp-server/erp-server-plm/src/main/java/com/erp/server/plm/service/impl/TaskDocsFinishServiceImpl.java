@@ -347,6 +347,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             if (fileSize > 300) {
                 throw new ServiceException(ApiError.ERROR_95160, 300);
             }
+            finishEntity.setFileSize(fileSize);
             fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
         } else {
             fileUrl = dto.getFileUrl();
@@ -355,6 +356,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             throw new ServiceException(ApiError.ERROR_95186);
         }
         finishEntity.setUploadType(dto.getUploadType());
+        finishEntity.setFileUrl(fileUrl);
         finishEntity.setOldFileName(oldDocs.getFileName());
         finishEntity.setOldUploadType(oldDocs.getUploadType());
         finishEntity.setOldFileUrl(oldDocs.getFileUrl());

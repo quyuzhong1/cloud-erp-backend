@@ -71,7 +71,7 @@ public class SkuMapingDTO implements Serializable {
         private List<String> shopIdList;
 
         /**
-         * 店铺id集合
+         * sku集合
          */
         private List<String> skuNoList;
 
@@ -296,6 +296,9 @@ public class SkuMapingDTO implements Serializable {
 
         @NotBlank(message = "客户不能为空")
         private String customerId;
+
+
+        private List<String> skuList;
 
 
     }

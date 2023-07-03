@@ -20,6 +20,7 @@ import com.erp.model.plm.entity.ProjectTaskVO;
 import com.erp.model.plm.enums.TaskPriorityEnum;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.PreTaskListVO;
+import com.erp.model.workflow.dto.AuditorHandleDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProjectTaskExcelListener;
 import com.erp.server.plm.service.*;
@@ -453,6 +454,17 @@ public class ProjectTaskController extends BaseController {
     @GetMapping("/findTaskProcess")
     public ApiResult<List<TaskProcessNodeDTO>> findTaskProcess(String taskId) {
         List<TaskProcessNodeDTO> taskProcess = projectTaskService.findTaskProcess(taskId);
+        return success(taskProcess);
+    }
+
+    /**
+     * 项目任务-查看任务审核情况【PLM1.3】
+     *
+     * @return
+     */
+    @GetMapping("/listTaskAudit")
+    public ApiResult<List<AuditorHandleDTO>> listTaskAudit(String taskId) {
+        List<AuditorHandleDTO> taskProcess = projectTaskService.listTaskAudit(taskId);
         return success(taskProcess);
     }
 

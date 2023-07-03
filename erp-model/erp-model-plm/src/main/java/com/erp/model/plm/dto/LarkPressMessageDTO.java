@@ -29,6 +29,8 @@ public class LarkPressMessageDTO {
     @NotBlank(message = "业务类型不能为空")
     private String businessType;
 
+    private String businessName;
+
 
     @Data
     @NoArgsConstructor

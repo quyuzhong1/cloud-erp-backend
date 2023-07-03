@@ -3876,7 +3876,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         //附件名
         List<String> attachNameList = dto.getAttachNameList();
         //附件url
-        List<String> attachUrlList = dto.getAttachNameList();
+        List<String> attachUrlList = dto.getAttachUrlList();
         for (String taskId : taskIds) {
             //添加评论
             TaskCommentDTO.AddDTO comment = new TaskCommentDTO.AddDTO();
@@ -4032,7 +4032,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 List<ProjectTaskEntity> otherTaskList = taskList.stream().filter(t -> !t.getIsChangeDocs()).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(changeDocTaskList)) {
                     Integer finishStatus = TaskStateEnum.FINISH.getCode();
-                    for(ProjectTaskEntity changeDoc: changeDocTaskList){
+                    for (ProjectTaskEntity changeDoc : changeDocTaskList) {
                         changeDoc.setStatus(finishStatus);
                         changeDoc.setProcessId("");
                     }
@@ -4043,9 +4043,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                         //任务类型
                         Integer taskType = task.getType();
                         //评审任务 变待发布
-                        if(TaskConstant.REVIEW_TASK.equals(taskType)){
+                        if (TaskConstant.REVIEW_TASK.equals(taskType)) {
                             task.setStatus(TaskStateEnum.TO_BE_RELEASED.getCode());
-                        }else{
+                        } else {
                             task.setStatus(TaskStateEnum.ING.getCode());
                         }
                         task.setProcessId("");
@@ -4058,6 +4058,38 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
 
         return Boolean.FALSE;
+    }
+
+
+    /**
+     * 获取任务审核情况
+     *
+     * @param taskId
+     * @return java.util.List<com.erp.model.plm.dto.TaskProcessNodeDTO>
+     * @author yl
+     * @date 2023-07-03 14:29
+     */
+    @Override
+    public List<AuditorHandleDTO> listTaskAudit(String taskId) {
+        ProjectTaskEntity taskEntity = this.getById(taskId);
+        if (Objects.isNull(taskEntity)) {
+            throw new ServiceException(ApiError.ERROR_95027);
+        }
+        Integer status = taskEntity.getStatus();
+        //所有人员
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        // 根据流程id查询所有审核信息
+        List<AuditorHandleDTO> approveRecordShowList = new ArrayList<>();
+        if (StringUtils.isNotBlank(taskEntity.getProcessId())) {
+            approveRecordShowList = workflowFeign.getHistoryTaskByProcessId(taskEntity.getProcessId());
+        }
+        //当状态为待审核、审核中、审核通过、审核不通过时添加详情
+        if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(status) || TaskStateEnum.APPROVAL_ING.getCode().equals(status)
+                || TaskStateEnum.FINISH.getCode().equals(status) || TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(status)) {
+
+            return approveRecordShowList;
+        }
+        return approveRecordShowList;
     }
 
 
@@ -4142,7 +4174,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2022-10-21 10:01
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void approvalTaskPass(String processId) {
         LoginUser loginUser = commonService.getUserInfo();
         LambdaQueryWrapper<ProjectTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
@@ -4285,7 +4316,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @author yl
      * @date 2022-12-06 15:24
      */
-    private ProjectTaskEntity startReviewTaskProcess(ProjectTaskEntity taskEntity, String userId, String businessKey) {
+    private ProjectTaskEntity startReviewTaskProcess(ProjectTaskEntity taskEntity, String userId, String
+            businessKey) {
         //这里需要启动一个变更流程
         BusinessProcessEntity businessProcess = businessProcessService.getProcessByBusinessKey(businessKey);
         StartProcessDTO startProcess = new StartProcessDTO();
@@ -4441,7 +4473,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
 
     //
-    public TaskProcessNodeDTO getProcessNode(TaskOperatorRecordEntity entity, Integer state, List<FindUserDTO> userList, List<AuditorHandleDTO> approveRecordShowList, List<TaskChargeDistributionEntity> taskChargeDistributionList) {
+    public TaskProcessNodeDTO getProcessNode(TaskOperatorRecordEntity entity, Integer
+            state, List<FindUserDTO> userList, List<AuditorHandleDTO> approveRecordShowList, List<TaskChargeDistributionEntity> taskChargeDistributionList) {
         boolean flag = !Objects.isNull(entity);
         String operatorName = "";
         LocalDateTime operatorTime = null;
@@ -4739,7 +4772,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @author Will
      * @date: 2023/2/28 15:34
      */
-    private void setTaskChargeDistributionEntity(ProjectTaskDTO dto, ProjectTaskEntity taskEntity, boolean ifUpdateProcess) {
+    private void setTaskChargeDistributionEntity(ProjectTaskDTO dto, ProjectTaskEntity taskEntity,
+                                                 boolean ifUpdateProcess) {
         List<TaskChargeDistributionEntity> taskChargeDistributionList = new ArrayList<>();
         List<TaskChargeDistributionDTO> approvalList = dto.getApprovalList();
         if (CollectionUtils.isNotEmpty(approvalList)) {

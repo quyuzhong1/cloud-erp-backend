@@ -124,10 +124,6 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         queryWrapper.eq(PreTaskEntity::getTaskId, dto.getTaskId());
         queryWrapper.eq(PreTaskEntity::getPreTaskId, dto.getPreTaskId());
         Boolean flag = remove(queryWrapper);
-        if (flag) {
-            taskDeliveryService.removeByTaskId(dto.getTaskId());
-            taskDocsFinishService.removeByTaskId(dto.getTaskId());
-        }
         return flag;
     }
 

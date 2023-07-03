@@ -78,12 +78,12 @@
                 AND pt.create_time &lt;= #{params.taskSearchDTO.endTime}
             </if>
             <if test="params.taskSearchDTO.skuIdList !=null and params.taskSearchDTO.skuIdList.size>0">
-                AND pt.id IN (SELECT task_id FROM project_task_ref_sku WHERE
+                AND (pt.id IN (SELECT task_id FROM project_task_ref_sku WHERE
                         sku_id IN
                         <foreach collection="params.taskSearchDTO.skuIdList" item="skuId" open="(" separator="," close=")">
                             #{skuId}
                         </foreach>
-                )
+                ) OR pt.related_sku_type='1')
             </if>
         </if>
         ORDER BY
@@ -179,12 +179,12 @@
                         AND pt.create_time &lt;= #{params.taskSearchDTO.endTime}
                     </if>
                     <if test="params.taskSearchDTO.skuIdList !=null and params.taskSearchDTO.skuIdList.size>0">
-                        AND pt.id IN (SELECT task_id FROM project_task_ref_sku WHERE
+                        AND (pt.id IN (SELECT task_id FROM project_task_ref_sku WHERE
                         sku_id IN
                         <foreach collection="params.taskSearchDTO.skuIdList" item="skuId" open="(" separator="," close=")">
                             #{skuId}
                         </foreach>
-                        )
+                        ) OR pt.related_sku_type='1')
                     </if>
                 </if>
             </otherwise>
@@ -290,12 +290,12 @@
                 AND pt.create_time &lt;= #{params.taskSearchDTO.endTime}
             </if>
             <if test="params.taskSearchDTO.skuIdList !=null and params.taskSearchDTO.skuIdList.size>0">
-                AND pt.id IN (SELECT task_id FROM project_task_ref_sku WHERE
+                AND (pt.id IN (SELECT task_id FROM project_task_ref_sku WHERE
                 sku_id IN
                 <foreach collection="params.taskSearchDTO.skuIdList" item="skuId" open="(" separator="," close=")">
                     #{skuId}
                 </foreach>
-                )
+                ) OR pt.related_sku_type='1')
             </if>
         </if>
         <if test="params.permissionSql != null and params.permissionSql != ''">
@@ -394,12 +394,12 @@
                         AND pt.create_time &lt;= #{params.taskSearchDTO.endTime}
                     </if>
                     <if test="params.taskSearchDTO.skuIdList !=null and params.taskSearchDTO.skuIdList.size>0">
-                        AND pt.id IN (SELECT task_id FROM project_task_ref_sku WHERE
+                        AND (pt.id IN (SELECT task_id FROM project_task_ref_sku WHERE
                         sku_id IN
                         <foreach collection="params.taskSearchDTO.skuIdList" item="skuId" open="(" separator="," close=")">
                             #{skuId}
                         </foreach>
-                        )
+                        ) OR pt.related_sku_type='1')
                     </if>
                 </if>
             </otherwise>
@@ -598,12 +598,12 @@
                         AND pt.create_time &lt;= #{params.taskSearchDTO.endTime}
                     </if>
                     <if test="params.taskSearchDTO.skuIdList !=null and params.taskSearchDTO.skuIdList.size>0">
-                        AND pt.id IN (SELECT task_id FROM project_task_ref_sku WHERE
+                        AND (pt.id IN (SELECT task_id FROM project_task_ref_sku WHERE
                         sku_id IN
                         <foreach collection="params.taskSearchDTO.skuIdList" item="skuId" open="(" separator="," close=")">
                             #{skuId}
                         </foreach>
-                        )
+                        ) OR pt.related_sku_type='1')
                     </if>
                 </if>
             </otherwise>
@@ -796,12 +796,12 @@
                 AND pt.create_time &gt;= #{params.taskSearchDTO.endTime}
             </if>
             <if test="params.taskSearchDTO.skuIdList !=null and params.taskSearchDTO.skuIdList.size>0">
-                AND pt.id IN (SELECT task_id FROM project_task_ref_sku WHERE
+                AND (pt.id IN (SELECT task_id FROM project_task_ref_sku WHERE
                 sku_id IN
                 <foreach collection="params.taskSearchDTO.skuIdList" item="skuId" open="(" separator="," close=")">
                     #{skuId}
                 </foreach>
-                )
+                ) OR pt.related_sku_type='1')
             </if>
         </if>
         ORDER BY
@@ -896,12 +896,12 @@
                         AND pt.create_time &gt;= #{params.taskSearchDTO.endTime}
                     </if>
                     <if test="params.taskSearchDTO.skuIdList !=null and params.taskSearchDTO.skuIdList.size>0">
-                        AND pt.id IN (SELECT task_id FROM project_task_ref_sku WHERE
+                        AND (pt.id IN (SELECT task_id FROM project_task_ref_sku WHERE
                         sku_id IN
                         <foreach collection="params.taskSearchDTO.skuIdList" item="skuId" open="(" separator="," close=")">
                             #{skuId}
                         </foreach>
-                        )
+                        ) OR pt.related_sku_type='1')
                     </if>
                 </if>
             </otherwise>

@@ -98,6 +98,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                 if (null == productInfo) {
                     throw new ServiceException(ApiError.ERROR_95010);
                 }
+                dto.setBusinessName(task.getName());
                 processId = task.getProcessId();
                 titleContent = String.format(NoticeMessageConstant.TASK_CHARGE_PRESS, "加急");
                 textContent = String.format(NoticeMessageConstant.TASK_PROJECT_CONTENT, task.getName(), productInfo.getName(), LocalDateTimeUtil.format(task.getPlanEndTime(), DateUtil.fmt_day), taskCharge, task.getChargeName());
@@ -147,7 +148,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
         // 发送飞书加急消息
         sendMessage(pressUserList, titleContent, textContent, noticeFlag, ThirdConstants.FS_MESSAGE_INTERACTIVE, Boolean.TRUE);
 
-        redisService.setCacheObject(redisKey, dto.getBusinessId(), 30L, TimeUnit.MINUTES);
+        redisService.setCacheObject(redisKey, dto.getBusinessName(), 30L, TimeUnit.MINUTES);
 
 
         return Boolean.TRUE;
@@ -219,7 +220,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                 //是否存在
                 String redisValue = redisService.getCacheObject(redisKey);
                 if (StringUtils.isNotBlank(redisValue)) {
-                    alreadyPress.add(businessId);
+                    alreadyPress.add(redisValue);
                 } else {
                     LarkPressMessageDTO pressMessage = new LarkPressMessageDTO();
                     pressMessage.setBusinessId(businessId);

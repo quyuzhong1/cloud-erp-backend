@@ -1,16 +1,15 @@
 package com.erp.server.plm.controller.api;
 
 
-import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.TaskChangeFileDTO;
 import com.erp.model.plm.dto.TaskUploadFileDTO;
 import com.erp.server.plm.service.TaskDocsFinishService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import com.common.core.controller.BaseController;
 
 /**
  * 产品开发管理
@@ -35,8 +34,14 @@ public class TaskDocsFinishController extends BaseController {
      */
     @PostMapping("/importFile")
     public ApiResult uploadFile(@ModelAttribute @Validated TaskUploadFileDTO dto) {
-        Boolean flag = taskDocsFinishService.uploadFile(dto);
-        return flag == true ? success() : failure();
+        try {
+            Boolean flag = taskDocsFinishService.uploadFile(dto);
+            return flag == true ? success() : failure();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+        return failure();
+
     }
 
 

@@ -104,9 +104,9 @@ public class TaskDocHistoryServiceImpl extends SuperServiceImpl<TaskDocHistoryMa
      */
     @Override
     public void updateChangeResult(String taskId) {
-        this.lambdaUpdate().set(TaskDocHistoryEntity::getChangeVersion, Boolean.TRUE).
+        this.lambdaUpdate().set(TaskDocHistoryEntity::getIsChangeSuccess, Boolean.TRUE).
                 eq(TaskDocHistoryEntity::getTaskId, taskId).
-                eq(TaskDocHistoryEntity::getChangeVersion, Boolean.FALSE).update();
+                eq(TaskDocHistoryEntity::getIsChangeSuccess, Boolean.FALSE).update();
     }
 
 

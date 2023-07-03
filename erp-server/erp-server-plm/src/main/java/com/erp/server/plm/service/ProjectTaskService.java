@@ -11,6 +11,7 @@ import com.erp.model.plm.entity.ProjectTaskVO;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
 import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
+import com.erp.model.workflow.dto.AuditorHandleDTO;
 import org.apache.commons.math3.util.Pair;
 
 import java.time.LocalDateTime;
@@ -321,4 +322,13 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @return java.lang.Boolean
      */
     Boolean cancelProcess(List<String> taaskIdList);
+
+    /**
+     * 获取任务审核情况
+     * @author yl
+     * @date 2023-07-03 14:29
+     * @param taskId
+     * @return java.util.List<com.erp.model.plm.dto.TaskProcessNodeDTO>
+     */
+    List<AuditorHandleDTO> listTaskAudit(String taskId);
 }
