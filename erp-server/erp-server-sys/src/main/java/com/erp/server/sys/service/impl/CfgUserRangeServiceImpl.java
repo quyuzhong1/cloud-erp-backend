@@ -51,7 +51,7 @@ public class CfgUserRangeServiceImpl extends SuperServiceImpl<CfgUserRangeMapper
             return;
         }
 
-        UserRangeTypeEnum userRangeTypeEnum = UserRangeTypeEnum.of(userRangeDTO.getType());
+        UserRangeTypeEnum userRangeTypeEnum = UserRangeTypeEnum.getByCode(userRangeDTO.getType());
         List<CfgUserRangeDTO.UserRangeDTO> rangeList = userRangeDTO.getRangeList();
         if(CollUtil.isEmpty(rangeList)) {
             log.info("用户【{}】没有输入区间【{}】", userId, userRangeTypeEnum.getName());
@@ -107,7 +107,7 @@ public class CfgUserRangeServiceImpl extends SuperServiceImpl<CfgUserRangeMapper
             return;
         }
 
-        UserRangeTypeEnum userRangeTypeEnum = UserRangeTypeEnum.of(userRangeDTO.getType());
+        UserRangeTypeEnum userRangeTypeEnum = UserRangeTypeEnum.getByCode(userRangeDTO.getType());
         // 判断是否有设置过用户区间
         List<CfgUserRangeEntity> cfgUserRangeList = lambdaQuery().eq(CfgUserRangeEntity::getType, userRangeDTO.getType())
                 .eq(CfgUserRangeEntity::getUserId, userId).list();
@@ -129,7 +129,7 @@ public class CfgUserRangeServiceImpl extends SuperServiceImpl<CfgUserRangeMapper
             return null;
         }
 
-        UserRangeTypeEnum userRangeTypeEnum = UserRangeTypeEnum.of(type);
+        UserRangeTypeEnum userRangeTypeEnum = UserRangeTypeEnum.getByCode(type);
         Optional.ofNullable(userRangeTypeEnum).orElseThrow(()->new ServiceException("区间类型错误"));
 
         List<CfgUserRangeEntity> cfgUserRangeList = lambdaQuery().eq(CfgUserRangeEntity::getType, type)
@@ -151,7 +151,7 @@ public class CfgUserRangeServiceImpl extends SuperServiceImpl<CfgUserRangeMapper
 
     @Override
     public List<CfgUserRangeDTO.UserRangeDataDTO> getUserRanges(String type, Boolean addLast) {
-        UserRangeTypeEnum userRangeTypeEnum = UserRangeTypeEnum.of(type);
+        UserRangeTypeEnum userRangeTypeEnum = UserRangeTypeEnum.getByCode(type);
         String formatName = userRangeTypeEnum.getLabel();
         List<CfgUserRangeDTO.UserRangeDataDTO> rangeList = this.detail(type);
         if(CollUtil.isEmpty(rangeList)) {

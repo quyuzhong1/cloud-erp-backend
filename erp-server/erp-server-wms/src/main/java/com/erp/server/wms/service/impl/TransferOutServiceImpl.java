@@ -759,13 +759,13 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     private TransferInDTO.ViewGenerateTransferInDTO wrapTransferIn(String transferType, String transferDirection,
                                                                    TransferOutDTO.GenerateTransferInDTO pushData,TransferOutDetailEntity transferOutDetailEntity) {
         TransferInDTO.ViewGenerateTransferInDTO transferInDTO = new TransferInDTO.ViewGenerateTransferInDTO();
-        transferInDTO.setTransferType(TransferTypeEnum.of(transferType));
+        transferInDTO.setTransferType(TransferTypeEnum.getByCode(transferType));
         transferInDTO.setSourceCode(pushData.getSourceCode());
         transferInDTO.setSourceId(pushData.getSourceId());
         transferInDTO.setSourceDetailId(pushData.getSourceDetailId());
         transferInDTO.setBillDate(LocalDate.now());
         transferInDTO.setOutDate(pushData.getBillDate());
-        transferInDTO.setTransferDirection(TransferDirectionEnum.of(transferDirection));
+        transferInDTO.setTransferDirection(TransferDirectionEnum.getByCode(transferDirection));
         transferInDTO.setOutWarehouseId(pushData.getOutWarehouseId());
         transferInDTO.setOutWarehouseLocation(pushData.getOutWarehouseLocation());
         transferInDTO.setInWarehouseId(pushData.getInWarehouseId());

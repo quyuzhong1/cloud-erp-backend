@@ -178,7 +178,7 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             put("Content-Type", FeishuConstant.CONTENT_TYPE);
         }};
         Map<String, Object> bodyMap = new HashMap<>();
-        FeishuMessageTypeEnum feishuMessageTypeEnum = ChannelSendMsgTypeEnum.of(msgTypeEnum.getCode()).getFeishuMsgType();
+        FeishuMessageTypeEnum feishuMessageTypeEnum = ChannelSendMsgTypeEnum.getByCode(msgTypeEnum.getCode()).getFeishuMsgType();
         bodyMap.put("msg_type", feishuMessageTypeEnum.getCode());
         //用户的unionIds
         bodyMap.put("receive_id", unionId);
@@ -273,7 +273,7 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         headerMap.put("Content-Type", FeishuConstant.CONTENT_TYPE);
 
         Map<String, Object> bodyMap = new HashMap<>();
-        FeishuMessageTypeEnum feishuMessageTypeEnum = ChannelSendMsgTypeEnum.of(msgTypeEnum.getCode()).getFeishuMsgType();
+        FeishuMessageTypeEnum feishuMessageTypeEnum = ChannelSendMsgTypeEnum.getByCode(msgTypeEnum.getCode()).getFeishuMsgType();
         bodyMap.put("msg_type", feishuMessageTypeEnum.getCode());
         //用户的unionIds
         bodyMap.put("union_ids", unionIds);

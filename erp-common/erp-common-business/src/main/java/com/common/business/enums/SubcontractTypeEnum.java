@@ -53,7 +53,7 @@ public enum SubcontractTypeEnum {
         return "";
     }
 
-    public static SubcontractTypeEnum of(String code) {
+    public static SubcontractTypeEnum getByCode(String code) {
         return Arrays.stream(SubcontractTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 }

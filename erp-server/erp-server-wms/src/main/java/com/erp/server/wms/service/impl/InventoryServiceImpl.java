@@ -99,7 +99,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Override
     public InventoryEntity findInventory(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
         // 组织+仓库+库位+SKU+状态 确定唯一一条记录
-        InventoryStatusEnum inventoryStatus = InventoryStatusEnum.of(status);
+        InventoryStatusEnum inventoryStatus = InventoryStatusEnum.getByCode(status);
         String qWarehouseLocationId = StrUtils.null2EmptyWithTrim(warehouseLocationId);
         LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(InventoryEntity::getWarehouseId, warehouseId).eq(InventoryEntity::getOrgId, orgId)
@@ -121,7 +121,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public InventoryEntity findInventoryLock(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
         // 组织+仓库+库位+SKU+状态 确定唯一一条记录
         // 此处使用读写锁，避免并发情况下读取的数据不一致，读跟读之间不冲突，读写或写写冲突，暂不考虑库位
-        InventoryStatusEnum inventoryStatus = InventoryStatusEnum.of(status);
+        InventoryStatusEnum inventoryStatus = InventoryStatusEnum.getByCode(status);
         String lockKey = StrUtil.format("{}:{}:{}:{}", DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), warehouseId, StrUtils.null2EmptyWithTrim(warehouseLocationId), skuId);
         RReadWriteLock rwLock = redisson.getReadWriteLock(lockKey);
         RLock rlock = rwLock.readLock();
@@ -278,7 +278,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
      */
     @Override
     public List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventory(List<String> skuIds, String warehouseId, String warehouseLocationId, String status) {
-        InventoryStatusEnum inventoryStatusEnum = InventoryStatusEnum.of(status);
+        InventoryStatusEnum inventoryStatusEnum = InventoryStatusEnum.getByCode(status);
         ValidatorUtil.isTrue(Objects.nonNull(inventoryStatusEnum), () -> new ServiceException("库存状态错误"));
         WarehouseDTO.UpdateDTO warehouse = warehouseService.detailWithCache(warehouseId);
         ValidatorUtil.isTrue(Objects.nonNull(warehouse) && StrUtils.isNotEmpty(warehouse.getId()), () -> new ServiceException(ApiError.ERROR_99002));
@@ -321,7 +321,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Override
     public List<InventoryQtyDTO.SkuInventoryTotalDTO> listSkuInventory(InventoryQtyDTO.SkuInventoryParamDTO dto) {
         String status = dto.getInventoryStatus();
-        InventoryStatusEnum inventoryStatusEnum = InventoryStatusEnum.of(status);
+        InventoryStatusEnum inventoryStatusEnum = InventoryStatusEnum.getByCode(status);
         ValidatorUtil.isTrue(Objects.nonNull(inventoryStatusEnum), () -> new ServiceException("库存状态错误"));
         List<String> skuIds = dto.getSkuIdList();
         // sku id去重

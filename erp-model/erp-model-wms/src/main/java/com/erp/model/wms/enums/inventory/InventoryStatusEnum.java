@@ -64,7 +64,7 @@ public enum InventoryStatusEnum {
      * @param code
      * @return
      */
-    public static InventoryStatusEnum of(String code) {
+    public static InventoryStatusEnum getByCode(String code) {
         return Arrays.stream(InventoryStatusEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 

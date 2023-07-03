@@ -26,7 +26,7 @@ public enum DistributedLockEnum {
         this.name = name;
     }
 
-    public static DistributedLockEnum of(String code) {
+    public static DistributedLockEnum getByCode(String code) {
         return Arrays.stream(DistributedLockEnum.values()).filter(r -> Objects.equals(code,r.getCode())).findFirst().orElse(null);
     }
 

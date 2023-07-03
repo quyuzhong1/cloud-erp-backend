@@ -95,7 +95,7 @@ public class MsgContext {
         if(Objects.nonNull(noticeTypeEnum)) {
             if(Objects.isNull(msgConfigDTO) || StrUtils.isEmpty(msgConfigDTO.getId())) {
                 log.warn("系统未配置消息来源：{}，取平台配置的发送渠道",msgInfo.getNoticeTypeEnum().getCode());
-                MessageChannelEnum messageChannelEnum = MessageChannelEnum.of(defaultSendChannel);
+                MessageChannelEnum messageChannelEnum = MessageChannelEnum.getByCode(defaultSendChannel);
                 sendChannels.add(messageChannelEnum);
                 return sendChannels;
             }
@@ -105,13 +105,13 @@ public class MsgContext {
             }
             String[] channelCodes = StrUtils.null2EmptyWithTrim(msgConfigDTO.getChannel()).split(",");
             for(String channelCode : channelCodes) {
-                MessageChannelEnum messageChannelEnum = MessageChannelEnum.of(channelCode);
+                MessageChannelEnum messageChannelEnum = MessageChannelEnum.getByCode(channelCode);
                 if(Objects.nonNull(messageChannelEnum)) {
                     sendChannels.add(messageChannelEnum);
                 }
             }
         } else {
-            MessageChannelEnum messageChannelEnum = MessageChannelEnum.of(defaultSendChannel);
+            MessageChannelEnum messageChannelEnum = MessageChannelEnum.getByCode(defaultSendChannel);
             log.warn("调用方没有传递消息来源信息，无法定位通过什么渠道发送消息，默认从配置中心取：{}",messageChannelEnum);
             if(Objects.isNull(messageChannelEnum)) {
                 log.warn("调用方没有传递消息来源信息，无法定位通过什么渠道发送消息，从配置中心配置的渠道不存在：{}，本次将不发送消息",defaultSendChannel);
@@ -123,7 +123,7 @@ public class MsgContext {
             return sendChannels;
         } else {
             log.warn("系统配置的发送渠道错误，从配置中心取默认的配置渠道");
-            sendChannels.add(MessageChannelEnum.of(defaultSendChannel));
+            sendChannels.add(MessageChannelEnum.getByCode(defaultSendChannel));
             return sendChannels;
         }
     }
@@ -144,7 +144,7 @@ public class MsgContext {
             noticeMessageTypeEnum = DEFAULT_MESSAGE_TYPE;
             log.warn("请求的消息来源未找到消息配置信息或未传请求来源参数，消息来源类型：{}，消息类型默认取：{}",msgInfo.getNoticeTypeEnum(),noticeMessageTypeEnum);
         } else {
-            noticeMessageTypeEnum = NoticeMessageTypeEnum.of(msgConfigDTO.getMsgType());
+            noticeMessageTypeEnum = NoticeMessageTypeEnum.getByCode(msgConfigDTO.getMsgType());
         }
         List<MsgChannelConfigDTO> msgChannelConfigDTOS;
         Boolean fallBack = Boolean.FALSE;
@@ -165,7 +165,7 @@ public class MsgContext {
                             List<MsgChannelConfigDTO> channelConfigs = msgChannelConfigMap.get(channelCode);
                             channelConfigs.stream().forEach(channelConfig->{
                                 if(Objects.equals(channelConfig.getSendFlag(), Boolean.TRUE)) {
-                                    MessageChannelAppEnum messageChannelAppEnum = MessageChannelAppEnum.of(channelConfig.getChannelAppCode());
+                                    MessageChannelAppEnum messageChannelAppEnum = MessageChannelAppEnum.getByCode(channelConfig.getChannelAppCode());
                                     MsgSendChannelWrapParam msgSendChannelWrapParam = MsgConvertUtil.wrapMsgBody(messageChannelEnum, messageChannelAppEnum, noticeMessageTypeEnum, msgInfo);
                                     sendChannelApps.add(msgSendChannelWrapParam);
                                 } else {

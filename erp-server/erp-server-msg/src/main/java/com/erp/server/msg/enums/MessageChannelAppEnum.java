@@ -35,7 +35,7 @@ public enum MessageChannelAppEnum {
         this.name = name;
     }
 
-    public static MessageChannelAppEnum of(String code) {
+    public static MessageChannelAppEnum getByCode(String code) {
         return Arrays.stream(MessageChannelAppEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 

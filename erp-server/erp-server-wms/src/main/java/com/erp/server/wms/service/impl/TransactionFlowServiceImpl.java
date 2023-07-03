@@ -120,7 +120,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         transactionFlowEntity.setWarehouseId(param.getWarehouseId());
         transactionFlowEntity.setWarehouseName(warehouse.getName());
         // 此处修复BUG，部分库存状态不需要控制库位
-        InventoryStatusEnum inventoryStatus = InventoryStatusEnum.of(param.getDictInventoryStatus());
+        InventoryStatusEnum inventoryStatus = InventoryStatusEnum.getByCode(param.getDictInventoryStatus());
         if (Objects.equals(Boolean.FALSE, inventoryStatus.getControlLocation())) {
             transactionFlowEntity.setWarehouseLocation("");
         } else {
@@ -281,11 +281,11 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
                 data.setProductName(skuVO.getSkuName());
                 data.setSpuNo(skuVO.getSpuNo());
             }
-            InventorySourceTypeEnum inventorySourceType = InventorySourceTypeEnum.of(data.getSourceType());
+            InventorySourceTypeEnum inventorySourceType = InventorySourceTypeEnum.getByCode(data.getSourceType());
             data.setSourceTypeName(Optional.ofNullable(inventorySourceType).map(InventorySourceTypeEnum::getName).orElse(""));
-            InventoryOperationModeEnum inventoryOperationMode = InventoryOperationModeEnum.of(data.getOperationMode());
+            InventoryOperationModeEnum inventoryOperationMode = InventoryOperationModeEnum.getByCode(data.getOperationMode());
             data.setOperationModeName(Optional.ofNullable(inventoryOperationMode).map(InventoryOperationModeEnum::getName).orElse(""));
-            InventoryStatusEnum inventoryStatus = InventoryStatusEnum.of(data.getInventoryStatus());
+            InventoryStatusEnum inventoryStatus = InventoryStatusEnum.getByCode(data.getInventoryStatus());
             data.setInventoryStatusName(Optional.ofNullable(inventoryStatus).map(InventoryStatusEnum::getName).orElse(""));
         });
     }
@@ -308,11 +308,11 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             if(Objects.nonNull(sysAccountingCompanyEntity)) {
                 data.setOrgName(sysAccountingCompanyEntity.getCompanyName());
             }
-            InventorySourceTypeEnum inventorySourceType = InventorySourceTypeEnum.of(data.getSourceType());
+            InventorySourceTypeEnum inventorySourceType = InventorySourceTypeEnum.getByCode(data.getSourceType());
             data.setSourceTypeName(Optional.ofNullable(inventorySourceType).map(InventorySourceTypeEnum::getName).orElse(""));
-            InventoryOperationModeEnum inventoryOperationMode = InventoryOperationModeEnum.of(data.getOperationMode());
+            InventoryOperationModeEnum inventoryOperationMode = InventoryOperationModeEnum.getByCode(data.getOperationMode());
             data.setOperationModeName(Optional.ofNullable(inventoryOperationMode).map(InventoryOperationModeEnum::getName).orElse(""));
-            InventoryStatusEnum inventoryStatus = InventoryStatusEnum.of(data.getInventoryStatus());
+            InventoryStatusEnum inventoryStatus = InventoryStatusEnum.getByCode(data.getInventoryStatus());
             data.setInventoryStatusName(Optional.ofNullable(inventoryStatus).map(InventoryStatusEnum::getName).orElse(""));
         });
     }

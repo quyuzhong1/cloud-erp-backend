@@ -43,7 +43,7 @@ public enum TransitOwnerEnum {
      * @param code
      * @return
      */
-    public static TransitOwnerEnum of(String code) {
+    public static TransitOwnerEnum getByCode(String code) {
         return Arrays.stream(TransitOwnerEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 
@@ -53,7 +53,7 @@ public enum TransitOwnerEnum {
      * @return
      */
     public static String getNameByCode(String code) {
-        TransitOwnerEnum transitOwnerEnum =  of(code);
+        TransitOwnerEnum transitOwnerEnum =  getByCode(code);
         return Optional.ofNullable(transitOwnerEnum).map(TransitOwnerEnum::getName).orElse("");
     }
 

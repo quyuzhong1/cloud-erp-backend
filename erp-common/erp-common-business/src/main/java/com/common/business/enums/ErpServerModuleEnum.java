@@ -49,7 +49,7 @@ public enum ErpServerModuleEnum {
      * @param code
      * @return
      */
-    public static ErpServerModuleEnum of(String code) {
+    public static ErpServerModuleEnum getByCode(String code) {
         return Arrays.stream(ErpServerModuleEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 
@@ -59,7 +59,7 @@ public enum ErpServerModuleEnum {
      * @return
      */
     public static String getNameByCode(String code) {
-        ErpServerModuleEnum erpServerModuleEnum = of(code);
+        ErpServerModuleEnum erpServerModuleEnum = getByCode(code);
         return Optional.ofNullable(erpServerModuleEnum).map(ErpServerModuleEnum::getName).orElse("");
     }
 

@@ -1288,7 +1288,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         // 此处注意，需区分有无收货单
         mainMap.forEach((mainId, poInstockEntity)->{
             String sourceType = poInstockEntity.getSourceType();
-            SourceTypeEnum sourceTypeEnum = SourceTypeEnum.of(sourceType);
+            SourceTypeEnum sourceTypeEnum = SourceTypeEnum.getByCode(sourceType);
             List<PoInstockDetailEntity> details = detailMap.get(mainId);
             if(Objects.equals(SourceTypeEnum.PO_RECEIVE, sourceTypeEnum)) { // 有收货单
                 receiveMap.put(mainId, poInstockEntity);

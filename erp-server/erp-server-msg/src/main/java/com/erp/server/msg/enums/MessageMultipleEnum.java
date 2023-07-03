@@ -34,7 +34,7 @@ public enum MessageMultipleEnum {
         this.name = name;
     }
 
-    public static MessageMultipleEnum of(String code) {
+    public static MessageMultipleEnum getByCode(String code) {
         return Arrays.stream(MessageMultipleEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 
