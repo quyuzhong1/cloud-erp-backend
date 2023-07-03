@@ -657,6 +657,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      **/
     @Override
     public List<PurchasePriceDTO.SupplierSkuPrice> listSupplierSkuPrice(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return new ArrayList<>();
+        }
         return baseMapper.listSupplierSkuPrice(ids);
     }
 
