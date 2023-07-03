@@ -13,6 +13,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.CleanBaseDTO;
 import com.erp.model.dmp.dto.DmpSyncMqDTO;
+import com.erp.model.dmp.dto.DmpTransferInfoDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.CleanStatusEnum;
@@ -331,9 +332,9 @@ public class MQConsumerService {
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
             selectorExpression = "kingdee_transfer_direct_tag",
             consumerGroup = "${spring.cloud.nacos.discovery.namespace}-erp_transfer_direct_consumer")
-    public class ConsumerErpTransferDirectInfo implements RocketMQListener<DmpTransferInfoEntity> {
+    public class ConsumerErpTransferDirectInfo implements RocketMQListener<DmpTransferInfoDTO> {
         @Override
-        public void onMessage(DmpTransferInfoEntity ext) {
+        public void onMessage(DmpTransferInfoDTO ext) {
             log.info("监听直接调拨单信息消息：entity={}", JSONUtil.toJsonStr(ext));
             //新增发送任务
             DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();

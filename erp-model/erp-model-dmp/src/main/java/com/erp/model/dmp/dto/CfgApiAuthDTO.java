@@ -15,31 +15,54 @@ import javax.validation.constraints.NotBlank;
 @NoArgsConstructor
 public class CfgApiAuthDTO {
 
-    /**
-     * 主键id
-     */
-    private String id;
+    @Data
+    @NoArgsConstructor
+    public static class ParamDTO {
+        /**
+         * 主键id
+         */
+        private String id;
 
-    /**
-     * 平台id
-     */
-    @NotBlank(message = "平台不能为空")
-    private String apiPlatformId;
+        /**
+         * 平台id
+         */
+        @NotBlank(message = "平台不能为空")
+        private String apiPlatformId;
 
-    /**
-     * 组别,默认default
-     */
-    private String group;
+        /**
+         * 组别,默认default
+         */
+        private String apiGroup;
 
-    /**
-     * 键 (英文描述)
-     */
-    @NotBlank(message = "英文描述不能为空")
-    private String key;
+        /**
+         * 键 (英文描述)
+         */
+        @NotBlank(message = "英文描述不能为空")
+        private String key;
 
-    /**
-     * 授权信息（存json字符串）
-     */
-    @NotBlank(message = "授权信息不能为空")
-    private String value;
+        /**
+         * 授权信息（存json字符串）
+         */
+        @NotBlank(message = "授权信息不能为空")
+        private String value;
+    }
+
+
+
+
+    @Data
+    @NoArgsConstructor
+    public static class KingDeeCreateOrgDTO {
+
+        /**
+         * 第一级创建组织id
+         */
+        private Integer  firstOrgId;
+
+        /**
+         * 第二级创建组织id
+         */
+        private Integer secondOrgId;
+
+    }
 }

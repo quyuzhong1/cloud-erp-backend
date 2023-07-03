@@ -3,11 +3,10 @@ package com.erp.server.wms.rocketmq.consumer;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.SyncKingdeeStatusEnum;
-import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.dto.DmpSyncMqDTO;
-import com.erp.model.dmp.entity.DmpTransferInfoEntity;
+import com.erp.model.dmp.dto.DmpTransferInfoDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.wms.rocketmq.sync.SyncTransferInfoService;
 import lombok.extern.slf4j.Slf4j;
@@ -40,9 +39,9 @@ public class SyncTransferInfoConsumer implements RocketMQListener<DmpSyncMqDTO> 
         paramDTO.setDmpSyncTaskId(dmpSyncMqDTO.getDmpSyncTaskId());
         String dataJson = dmpSyncMqDTO.getMqData();
         log.info("监听到金蝶直接调拨单需要同步：entity={}", dataJson);
-        DmpTransferInfoEntity dmpTransferInfoEntity = BeanUtil.toBean(JSONUtil.parseObj(dataJson), DmpTransferInfoEntity.class);
+        DmpTransferInfoDTO dmpTransferInfoDTO = BeanUtil.toBean(JSONUtil.parseObj(dataJson), DmpTransferInfoDTO.class);
         try {
-            syncTransferInfoService.syncKingdeeTransferInfo(dmpTransferInfoEntity);
+            syncTransferInfoService.syncKingdeeTransferInfo(dmpTransferInfoDTO);
         } catch (Exception e) {
             log.error("金蝶直接调拨单同步失败，msg = {}",e.getMessage());
             //同步失败

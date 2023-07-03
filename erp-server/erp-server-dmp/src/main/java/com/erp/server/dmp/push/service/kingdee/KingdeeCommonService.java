@@ -120,11 +120,12 @@ public interface KingdeeCommonService {
      * @author Will
      * @date: 2023/4/7 11:29
      * @param apiUtils
+     * @param apiPlatformId
      * @param id
      * @param number
      * @return JSONObject
      */
-    JSONObject view (KingdeeApiUtils apiUtils,String id,String number);
+    JSONObject view (KingdeeApiUtils apiUtils,String apiPlatformId,String id,String number);
 
     /**
      * 查询客户分组

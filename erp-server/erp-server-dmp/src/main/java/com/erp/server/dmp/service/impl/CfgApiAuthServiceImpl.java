@@ -1,11 +1,10 @@
 package com.erp.server.dmp.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.CfgApiAuthDTO;
 import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.dmp.gyy.GyyDeliveryDetailEntity;
@@ -32,7 +31,7 @@ public class CfgApiAuthServiceImpl extends ServiceImpl<CfgApiAuthMapper, CfgApiA
     private MongoService mongoService;
 
     @Override
-    public Boolean insert(CfgApiAuthDTO dto) {
+    public Boolean insert(CfgApiAuthDTO.ParamDTO dto) {
         //验证数据是否重复
         checkCfgApiAuth(dto);
         CfgApiAuthEntity entity = new CfgApiAuthEntity();
@@ -41,12 +40,20 @@ public class CfgApiAuthServiceImpl extends ServiceImpl<CfgApiAuthMapper, CfgApiA
     }
 
     @Override
-    public void update(CfgApiAuthDTO dto) {
+    public void update(CfgApiAuthDTO.ParamDTO dto) {
         //验证数据是否重复
         checkCfgApiAuth(dto);
         CfgApiAuthEntity entity = new CfgApiAuthEntity();
         BeanMapperUtils.copy(dto,entity);
         this.updateById(entity);
+    }
+
+    @Override
+    public CfgApiAuthEntity getByKey (String key ,String apiPlatformId) {
+      return   lambdaQuery()
+              .eq(CfgApiAuthEntity::getApiPlatformId,apiPlatformId)
+              .eq(CfgApiAuthEntity::getKey,key)
+              .one();
     }
 
     @Override
@@ -115,19 +122,10 @@ public class CfgApiAuthServiceImpl extends ServiceImpl<CfgApiAuthMapper, CfgApiA
     /**
      * 验证数据是否重复
      */
-    private void checkCfgApiAuth(CfgApiAuthDTO dto) {
-        CfgApiAuthEntity entity = getByCfgApiAuth(dto);
+    private void checkCfgApiAuth(CfgApiAuthDTO.ParamDTO dto) {
+        CfgApiAuthEntity entity = getByKey(dto.getKey(),dto.getApiPlatformId());
         if (ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(dto.getId())) {
             throw new ServiceException(ApiError.ERROR_97024);
         }
     };
-
-    private CfgApiAuthEntity getByCfgApiAuth(CfgApiAuthDTO dto){
-        LambdaQueryWrapper<CfgApiAuthEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(CfgApiAuthEntity::getApiPlatformId,dto.getApiPlatformId());
-        queryWrapper.eq(CfgApiAuthEntity::getKey,dto.getKey());
-        queryWrapper.last("limit 1");
-        return this.getOne(queryWrapper);
-    }
-
 }

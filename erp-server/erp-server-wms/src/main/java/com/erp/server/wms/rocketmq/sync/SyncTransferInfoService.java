@@ -1,6 +1,6 @@
 package com.erp.server.wms.rocketmq.sync;
 
-import com.erp.model.dmp.entity.DmpTransferInfoEntity;
+import com.erp.model.dmp.dto.DmpTransferInfoDTO;
 
 /**
  * @author Will
@@ -15,5 +15,5 @@ public interface SyncTransferInfoService {
      * @date: 2023/6/29 11:08
      * @param entity
      */
-    void syncKingdeeTransferInfo(DmpTransferInfoEntity entity);
+    void syncKingdeeTransferInfo(DmpTransferInfoDTO entity);
 }

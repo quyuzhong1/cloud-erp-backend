@@ -14,10 +14,10 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.MongoTableNameContant;
+import com.erp.model.dmp.dto.DmpTransferInfoDTO;
+import com.erp.model.dmp.dto.DmpTransferInfoDetailDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
-import com.erp.model.dmp.entity.DmpTransferInfoDetailEntity;
-import com.erp.model.dmp.entity.DmpTransferInfoEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
@@ -55,7 +55,7 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
     private MongoService mongoService;
 
     @Resource
-    private MQProducerService<DmpTransferInfoEntity> mqProducerService;
+    private MQProducerService<DmpTransferInfoDTO> mqProducerService;
 
     @Resource
     private CfgSettingService cfgSettingService;
@@ -100,7 +100,7 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
             return;
         }
         // 构造订单结构
-        List<DmpTransferInfoEntity> entityToMqlist = pushToMqList.stream()
+        List<DmpTransferInfoDTO> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toList());
@@ -137,7 +137,7 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
     public void updateAndSaveDb(KingdeeTransferDirectEntity mongoDatum) {
-        DmpTransferInfoEntity orderInfo = initOrderInfoEntity(mongoDatum);
+        DmpTransferInfoDTO orderInfo = initOrderInfoEntity(mongoDatum);
         OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.getId());
         if(null == orderInfo){
             mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
@@ -214,9 +214,9 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
     /**
      * 解析订单数据
      **/
-    public DmpTransferInfoEntity initOrderInfoEntity(KingdeeTransferDirectEntity entity) {
+    public DmpTransferInfoDTO initOrderInfoEntity(KingdeeTransferDirectEntity entity) {
         //此处不跳过订单，避免订单修改仓库编码后，数据无法同步
-        DmpTransferInfoEntity resultEntity = new DmpTransferInfoEntity();
+        DmpTransferInfoDTO resultEntity = new DmpTransferInfoDTO();
         resultEntity.setCode(entity.getFBillNo());
         resultEntity.setType(entity.getFBizType());
         resultEntity.setTransferType(entity.getFTransferBizType());
@@ -254,11 +254,11 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
     /**
      * 解析订单商品数据
      **/
-    public List<DmpTransferInfoDetailEntity> initOrderItem(KingdeeTransferDirectEntity entity) {
+    public List<DmpTransferInfoDetailDTO> initOrderItem(KingdeeTransferDirectEntity entity) {
         List<KingdeeTransferDirectItemEntity> itemList = entity.getItemList();
-        List<DmpTransferInfoDetailEntity> orderItemList = new ArrayList<>();
+        List<DmpTransferInfoDetailDTO> orderItemList = new ArrayList<>();
         for (KingdeeTransferDirectItemEntity item : itemList) {
-            DmpTransferInfoDetailEntity itemEntity = new DmpTransferInfoDetailEntity();
+            DmpTransferInfoDetailDTO itemEntity = new DmpTransferInfoDetailDTO();
             itemEntity.setSkuNo(item.getFMaterialIdFNumber());
             itemEntity.setProductName(item.getFDestMaterialIdFName());
             itemEntity.setUnit(item.getFUnitIDFName());

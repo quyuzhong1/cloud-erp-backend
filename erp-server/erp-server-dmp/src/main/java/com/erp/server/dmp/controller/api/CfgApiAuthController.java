@@ -1,12 +1,15 @@
 package com.erp.server.dmp.controller.api;
 
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.dmp.dto.CfgApiAuthDTO;
 import com.erp.server.dmp.service.CfgApiAuthService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 
@@ -31,7 +34,7 @@ public class CfgApiAuthController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/add")
-    public ApiResult add(@ModelAttribute @Validated CfgApiAuthDTO dto) {
+    public ApiResult add(@RequestBody @Validated CfgApiAuthDTO.ParamDTO dto) {
         Boolean flag = this.cfgApiAuthService.insert(dto);
         return flag == true ? success() : failure();
     }
@@ -44,7 +47,7 @@ public class CfgApiAuthController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/update")
-    public ApiResult update(@ModelAttribute @Validated CfgApiAuthDTO dto) {
+    public ApiResult update(@RequestBody @Validated CfgApiAuthDTO.ParamDTO dto) {
         this.cfgApiAuthService.update(dto);
         return success();
     }
