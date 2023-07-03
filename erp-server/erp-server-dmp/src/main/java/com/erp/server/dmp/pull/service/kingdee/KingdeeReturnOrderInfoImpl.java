@@ -168,11 +168,11 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         // 标准退货单
         queryFilters.add(StrUtil.format("FBillTypeID in ('{}','{}')", "73383412199a402bb58439509e089077","559351ce1d0252"));
 //        queryFilters.add(String.format("FOrderNo <> '%s'", ""));
-        queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "''A','B',C','D'"));
+        queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'A','B','C','D'"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillTypeID.FNumber,FBillNo,FDate,FDocumentStatus,FSaleOrgId,FSaleOrgId.FName,FRetcustId," +
                 "FRetcustId.FName,FRetcustId.FNumber,FSalesManId,FSalesManId.FName,FCreateDate,FModifyDate,FCancelStatus,FReceiverCountry,FLinkMan,FExchangeRate," +
-                "FApproveDate,FBussinessType,FOwnerTypeIdHead,FSettleCurrId.FCode,FDelTime,FHeadNote,FReturnReason,FSaledeptid.FNumber,FSaledeptid.FName"
+                "FApproveDate,FBussinessType,FOwnerTypeIdHead,FSettleCurrId.FCode,FDelTime,FHeadNote,FReturnReason,FSaledeptid.FNumber,FSaledeptid.FName,"
                 + "FOrderNo,FAmount,FMustqty,FUnitID.FName,FMaterialId,FMaterialId.FNumber,FMaterialName,FAuxpropId,FMaterialType,FPrice,FStockId," +
                 "FStocklocId,FStockstatusId,FNote,FSrcBillNo,FSrcBillTypeID,FIsFree,FMaterialModel,FRealQty,FSOBILLTYPEID,FSalUnitQty,FProjectNo,F_ulz_KHSKU,FAllAmount," +
                 "FReturnType,FSOEntryId";
