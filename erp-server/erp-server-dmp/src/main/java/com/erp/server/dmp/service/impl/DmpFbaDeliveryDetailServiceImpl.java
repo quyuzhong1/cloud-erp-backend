@@ -51,6 +51,7 @@ public class DmpFbaDeliveryDetailServiceImpl extends SuperServiceImpl<DmpFbaDeli
         for (DmpFbaDeliveryDetailEntity detail : detailList) {
             Optional<DmpFbaDeliveryDetailEntity> dmpFbaDeliveryDetailEntityOptional = lambdaQuery()
                     .eq(DmpFbaDeliveryDetailEntity::getDeliveryDetailId, detail.getDeliveryDetailId())
+                    .eq(DmpFbaDeliveryDetailEntity::getMainId, mainId)
                     .oneOpt();
             if (dmpFbaDeliveryDetailEntityOptional.isPresent()) {
                 //如果数据有变动需要更新数据库明细信息
