@@ -173,15 +173,15 @@ public class ErpMabangMachineInfoConsume implements RocketMQListener<MabangMachi
      * @param warehouseCode
      */
     private void sendWarehouseNotice(String sourceTypeName, String machineId, String machineCode, String warehouseCode) {
-        String errMsg = StrUtil.format("ERP{}推送马帮手工入库仓库{}在马帮中不存在", sourceTypeName, warehouseCode);
+        String errMsg = StrUtil.format("ERP{}，单据编号: {}，推送马帮手工入库仓库{}在马帮中不存在", sourceTypeName, machineCode, warehouseCode);
         log.info(errMsg);
         WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
-        warnMsgInfoDTO.setTitle(errMsg);
+        warnMsgInfoDTO.setTitle(StrUtil.format("ERP{}推送马帮手工入库异常",sourceTypeName));
         warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
         warnMsgInfoDTO.setBizName(StrUtil.format("ERP{}推送马帮手工入库", sourceTypeName));
         warnMsgInfoDTO.setTableName("machine_info");
         warnMsgInfoDTO.setTableId(machineId);
-        warnMsgInfoDTO.setKeyInfo(StrUtil.format("ERP{}单据编号: {}",sourceTypeName, machineCode));
+        warnMsgInfoDTO.setKeyInfo(errMsg);
         mqProducerService.sendWarnMsg(warnMsgInfoDTO);
     }
 

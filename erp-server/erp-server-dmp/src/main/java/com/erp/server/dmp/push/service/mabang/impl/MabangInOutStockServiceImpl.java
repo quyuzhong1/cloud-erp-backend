@@ -108,7 +108,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
             warnMsgInfoDTO.setBizName(StrUtil.format("ERP{}推送马帮手工入库", sourceTypeName));
             warnMsgInfoDTO.setTableName("dmp_sync_task");
             warnMsgInfoDTO.setTableId(dmpSyncTaskEntity.getId());
-            warnMsgInfoDTO.setKeyInfo(StrUtil.format("ERP{}单据编号: {}",sourceTypeName, mabangInOutStock.getErpSourceCode()));
+            warnMsgInfoDTO.setKeyInfo(StrUtil.format("ERP{}单据编号: {}，失败原因：{}",sourceTypeName, mabangInOutStock.getErpSourceCode(), msg));
             mqProducerService.sendWarnMsg(warnMsgInfoDTO);
         }
     }
@@ -136,7 +136,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
             warnMsgInfoDTO.setBizName(StrUtil.format("ERP{}推送马帮手工出库", sourceTypeName));
             warnMsgInfoDTO.setTableName("dmp_sync_task");
             warnMsgInfoDTO.setTableId(dmpSyncTaskEntity.getId());
-            warnMsgInfoDTO.setKeyInfo(StrUtil.format("ERP{}单据编号: {}",sourceTypeName, mabangInOutStock.getErpSourceCode()));
+            warnMsgInfoDTO.setKeyInfo(StrUtil.format("ERP{}单据编号: {}，失败原因：{}",sourceTypeName, mabangInOutStock.getErpSourceCode(), msg));
             mqProducerService.sendWarnMsg(warnMsgInfoDTO);
         }
     }

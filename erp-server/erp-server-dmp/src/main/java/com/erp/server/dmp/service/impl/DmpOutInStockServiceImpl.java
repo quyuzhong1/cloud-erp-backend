@@ -85,7 +85,7 @@ public class DmpOutInStockServiceImpl extends SuperServiceImpl<DmpOutInStockMapp
             warnMsgInfoDTO.setBizName("ERP直接调拨单推送马帮手工出入库");
             warnMsgInfoDTO.setTableName("dmp_out_in_stock");
             warnMsgInfoDTO.setTableId(id);
-            warnMsgInfoDTO.setKeyInfo(StrUtil.format("ERP直接调拨单单据编号: {}", sourceCode));
+            warnMsgInfoDTO.setKeyInfo(StrUtil.format("ERP直接调拨单单据编号: {}，失败原因：{}", sourceCode, errMsg));
             mqProducerService.sendWarnMsg(warnMsgInfoDTO);
         }
     }
