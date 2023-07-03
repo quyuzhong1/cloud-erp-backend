@@ -340,10 +340,12 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
         List<String> skuIdList = list.stream().map(SkuMapingDTO.PagingViewDTO::getProductSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         for (SkuMapingDTO.PagingViewDTO item : list) {
+            Boolean matchResult=item.getMatchResult();
             String skuId = item.getProductSkuId();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().map(SkuVO::getSkuName).orElse("");
             item.setProductSkuName(skuName);
+            item.setMatchResultStr(matchResult?"已匹配":"未匹配");
         }
     }
 

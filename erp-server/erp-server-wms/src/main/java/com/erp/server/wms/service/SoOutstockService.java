@@ -232,5 +232,5 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param code
      * @return com.erp.model.wms.entity.SoOutstockEntity
      */
-    SoOutstockEntity  getByCode(String code);
+    String  getByCode(String code);
 }

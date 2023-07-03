@@ -30,6 +30,18 @@ public class SyncKingdeeDTO implements Serializable {
         private SoOutstockEntity soOutstockEntity;
 
         /**
+         * 是否首次
+         * true 是 false 不是
+         */
+        private Boolean isFirst;
+
+        /**
+         * flagId 标识id 当不为空就要删除
+         *
+         */
+        private String flagId;
+
+        /**
          * 出入库
          */
         private InventoryInOutStockDTO inventoryInOutStock;

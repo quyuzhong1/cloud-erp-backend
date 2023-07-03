@@ -44,7 +44,6 @@ public class KingdeeB2CSoOutstockConsumer implements RocketMQListener<DmpSyncMqD
             log.info("监听到金蝶B2C销售出库单要同步：entity>>>>>{}", dataJson);
             KingdeeDeliveryDetailEntity entity= JSONObject.parseObject(dataJson,KingdeeDeliveryDetailEntity.class);
             syncB2CSoOutstockService.syncKingdeeSoOutstock(entity);
-
             //同步成功
             paramDTO.setSyncStatus(SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode());
             paramDTO.setResponseMsg("同步成功");

@@ -79,7 +79,8 @@ public class KingdeeDeliveryDetailItemEntity {
     private String fStockStatusName;
 
 
-
+    @Alias("FDocumentStatus")
+    private String fDocumentStatus;
 
     @Alias("FStockID.FName")
     private String fStockName;

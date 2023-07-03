@@ -1,5 +1,6 @@
 package com.erp.server.dmp.push.consumer;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -7,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
+import com.common.core.utils.date.EnumTimePattern;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -15,7 +17,6 @@ import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.erp.server.dmp.push.service.kingdee.impl.KingdeeCommonServiceImpl;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
@@ -25,6 +26,7 @@ import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -43,18 +45,41 @@ public class KingdeeSoOutstockConsumer implements RocketMQListener<Map<String, O
 
     public static void main(String[] args) {
         //模块类型
-        Integer type = ApiModuleTypeEnum.SO_OUTSTOCK.getCode();
-        KingdeeCommonService kingdeeCommonService = new KingdeeCommonServiceImpl();
-        Map<String, Object> map = new LinkedHashMap<>();
-        //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
+//        Integer type = ApiModuleTypeEnum.SO_OUTSTOCK.getCode();
+//        KingdeeCommonService kingdeeCommonService = new KingdeeCommonServiceImpl();
+//        Map<String, Object> map = new LinkedHashMap<>();
+//        //读取配置，初始化SDK
+//        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
+//        LinkedList<String> queryFilters = new LinkedList<>();
+//        queryFilters.add(String.format("FBillNo = '%s'", "XSCKD4064949"));
+//        String filterStr = String.join(" and ", queryFilters);//5814757
+//        String fieldKeys = "FDocumentStatus";
+//        map.put("FCustMatID.FNumber", "XSCKD01_SYS，XSCKD07_SYS");
+ //       List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);
+  //      System.out.println(queryList);
+
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "XSCKD4064949"));
-        String filterStr = String.join(" and ", queryFilters);//5814757
-        String fieldKeys = "FModifyDate";
-        map.put("FCustMatID.FNumber", "XSCKD01_SYS，XSCKD07_SYS");
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);
-        System.out.println(queryList);
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
+        queryFilters.add(StrUtil.format("FModifyDate >= '{}'", "2023-06-30 23:59:59"));
+        queryFilters.add(StrUtil.format("FModifyDate <= '{}'", "2023-07-03 18:00:00"));
+        // 审核通过
+        queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'A','B','C','D'"));
+
+        String filterStr = String.join(" and ", queryFilters);
+
+        String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillNo,FSoOrDerNo,FDate,FSaleOrgId,FSaleOrgId.FName,FCarriageNO,FStockerID.FNumber,FStockerID.FName," +
+                "FCustomerID,FCustomerID.FName,FCustomerID.FNumber,FSaleDeptID.FName,FSalesManID,FSalesManID.FName,FSalesManID.FNumber,FReceiverID.FName," +
+                "FTransferBizType.FName,F_ulz_BaseProperty2,F_ulz_BaseProperty2.FNumber,FLinkPhone,FLinkMan,FBussinessType,FDocumentStatus," +
+                "FNote,FReceiveAddress,FCreatorId.FName,FCreateDate,FModifierId.FName,FModifyDate,FApproverID.FName," +
+                "FApproveDate,FCancelStatus,FGYDATE,FLogisticsNos,F_ulz_Text3,FSettleCurrID.FCode,FExchangeRate,FISGENFORIOS," +
+                "FEntity_FENTRYID,FBillAllAmount,FBillAllAmount_LC,FAllAmount,FAllAmount_LC,FAmount_LC,FTaxAmount,FTaxAmount_LC,FBillTaxAmount,FEntryTaxAmount," +
+                "FSrcBillNo,FCustMatName,F_ulz_BaseProperty1,FMaterialID,FMaterialID.FNumber,FMaterialID.FName,FStockLocID," +
+                "FBarcode,FMateriaModel,FMateriaType,FRealQty,FUnitID.FName,FPrice,FIsFree,FArrivalStatus,FArrivalDate," +
+                "FAmount,FStockStatusID,FStockStatusID.FName,FStockID.FName,FStockID.FNumber,F_ulz_Text1,FEntryCostAmount,FEntrynote,FSrcBillNo,FSrcType,FTaxPrice," +
+                "FCostPrice,FCostAmount_LC,FSalCostPrice";
+        KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils("SAL_OUTSTOCK");
+        List<Map<String, Object>> result = kingdeeApiUtils.queryList(filterStr, fieldKeys, 100, 0, 0);
+        System.out.println(result);
     }
 //[{FID=5814813, FSrcType=SAL_SaleOrder, FMtoNo= , FSALUNITQTY=2.0, FSALBASEQTY=2.0, FProjectNo= , FSNUnitID=0, FSalBaseARJoinQty=0.0, FSOEntryId=279993, FRowId=e897dacb-3d81-80f4-11ee-05a091df2ca9, FParentRowId= , FETHIRDBILLID= , FBOMEntryId=0, FInStockBillno= , FInStockEntryId=0}, {FID=5814813, FSrcType=SAL_SaleOrder, FMtoNo= , FSALUNITQTY=10.0, FSALBASEQTY=10.0, FProjectNo= , FSNUnitID=0, FSalBaseARJoinQty=0.0, FSOEntryId=279994, FRowId=e897dacb-3d81-80f4-11ee-05a091df2caa, FParentRowId= , FETHIRDBILLID= , FBOMEntryId=0, FInStockBillno= , FInStockEntryId=0}]
 //[{FID=5814813, FSrcType=, FMtoNo= , FSALUNITQTY=0.0, FSALBASEQTY=0.0, FProjectNo= , FSNUnitID=0, FSalBaseARJoinQty=0.0, FSOEntryId=279993, FRowId=e897dacb-3d81-80f4-11ee-05c32c5b56db, FParentRowId= , FETHIRDBILLID= , FBOMEntryId=0, FInStockBillno= , FInStockEntryId=0}, {FID=5814813, FSrcType=SAL_OUTSTOCK, FMtoNo= , FSALUNITQTY=0.0, FSALBASEQTY=0.0, FProjectNo= , FSNUnitID=0, FSalBaseARJoinQty=0.0, FSOEntryId=279994, FRowId=e897dacb-3d81-80f4-11ee-05c32c5b56dc, FParentRowId= , FETHIRDBILLID= , FBOMEntryId=0, FInStockBillno= , FInStockEntryId=0}]
