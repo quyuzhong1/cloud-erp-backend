@@ -69,6 +69,10 @@ public class TransferApplicationDTO implements Serializable {
          */
         private String  skuNo;
         /**
+         * 是否是组合品
+         */
+        private Boolean IsCombination;
+        /**
          * 产品名称
          */
         private String  productName;
