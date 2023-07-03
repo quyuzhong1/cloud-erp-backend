@@ -72,6 +72,7 @@ public class MabangInOutStockServiceImpl implements MabangInOutStockService {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
+                log.info("保存同步任务成功，待同步的内容为：{}", JSONObject.toJSONString(dmpSyncTaskEntity));
                 // 发送MQ消息处理发送到马帮
                 DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), mqData);
                 SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.MABANG_INOUT_STOCK_TAG.getName(),
