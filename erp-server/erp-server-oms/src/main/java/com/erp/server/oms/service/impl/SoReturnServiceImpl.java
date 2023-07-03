@@ -657,7 +657,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(generateSoReturnNoticeView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             generateSoReturnNoticeView.setProductName(productDetailEntity.getName());
             generateSoReturnNoticeView.setSourceDetailId(generateSoReturnNoticeView.getSourceDetailId());
-            generateSoReturnNoticeView.setReturnTypeName(ReturnTypeEnum.getName(generateSoReturnNoticeView.getReturnTypeDict()));
+            generateSoReturnNoticeView.setReturnTypeDictName(ReturnTypeEnum.getName(generateSoReturnNoticeView.getReturnTypeDict()));
             generateSoReturnNoticeView.setReturnReasonDictName(ReturnReasonEnum.getName(generateSoReturnNoticeView.getReturnReasonDict()));
         }
         return list;

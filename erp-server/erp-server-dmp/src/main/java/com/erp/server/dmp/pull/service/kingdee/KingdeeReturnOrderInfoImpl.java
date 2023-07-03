@@ -81,9 +81,9 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
             }
             KingdeeReturnOrderEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同
-            if (mongoDatum.toString().equals(entity.toString())) {
+        /*    if (mongoDatum.toString().equals(entity.toString())) {
                 continue;
-            }
+            }*/
             pushToMqList.add(entity);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
             OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
@@ -170,12 +170,64 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
 //        queryFilters.add(String.format("FOrderNo <> '%s'", ""));
         queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'A','B','C','D'"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillTypeID.FNumber,FBillNo,FDate,FDocumentStatus,FSaleOrgId,FSaleOrgId.FName,FRetcustId," +
-                "FRetcustId.FName,FRetcustId.FNumber,FSalesManId,FSalesManId.FName,FCreateDate,FModifyDate,FCancelStatus,FReceiverCountry,FLinkMan,FExchangeRate," +
-                "FApproveDate,FBussinessType,FOwnerTypeIdHead,FSettleCurrId.FCode,FDelTime,FHeadNote,FReturnReason,FSaledeptid.FNumber,FSaledeptid.FName,"
-                + "FOrderNo,FAmount,FMustqty,FUnitID.FName,FMaterialId,FMaterialId.FNumber,FMaterialName,FAuxpropId,FMaterialType,FPrice,FStockId," +
-                "FStocklocId,FStockstatusId,FNote,FSrcBillNo,FSrcBillTypeID,FIsFree,FMaterialModel,FRealQty,FSOBILLTYPEID,FSalUnitQty,FProjectNo,F_ulz_KHSKU,FAllAmount," +
-                "FReturnType,FSOEntryId";
+        String fieldKeys = "FID," +
+                "FBillTypeID," +
+                "FBillTypeID.FName," +
+                "FBillTypeID.FNumber," +
+                "FBillNo," +
+                "FDate," +
+                "FDocumentStatus," +
+                "FSaleOrgId," +
+                "FSaleOrgId.FName," +
+                "FRecustId," +
+                "FRetcustId.FName," +
+                "FRetcustId.FNumber," +
+                "FSalesManId," +
+                "FSalesManId.FName," +
+                "FCreateDate," +
+                "FModifyDate," +
+                "FCancelStatus," +
+                "FReceiverCountry," +
+                "FLinkMan," +
+                "FExchangeRate," +
+                "FApproveDate," +
+                "FBussinessType," +
+                "FOwnerTypeIdHead," +
+                "FSettleCurrId.FCode," +
+                "FDelTime," +
+                "FHeadNote," +
+                "FReturnReason," +
+                "FSaledeptid.FNumber," +
+                "edeptid.FName," +
+                "FBillNo," +
+                "FOrderNo," +
+                "FAmount," +
+                "FMustqty," +
+                "FUnitID.FName," +
+                "FMaterialId," +
+                "FMaterialId.FNumber," +
+                "FMaterialName," +
+                "FAuxpropId," +
+                "FMaterialType," +
+                "FPrice," +
+                "FStockId," +
+                "FStockId.FNumber," +
+                "FStockId.FName," +
+                "FStocklocId," +
+                "FStockstatusId," +
+                "FNote," +
+                "FSrcBillNo," +
+                "FSrcBillTypeID," +
+                "FIsFree," +
+                "FMaterialModel," +
+                "FRealQty," +
+                "FSOBILLTYPEID," +
+                "FSalUnitQty," +
+                "FProjectNo," +
+                "F_ulz_KHSKU," +
+                "FAllAmount," +
+                "FReturnType," +
+                "FSOEntryId";
 
         Boolean dataSign = true;
         //当前页数
