@@ -57,6 +57,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.mapper.SoInfoMapper;
 import com.erp.server.oms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -713,31 +714,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
-        String ingStatusName = ApproveStatusEnum.APPROVE_ING.getName();
-        //意见
-        String comment = dto.getComment();
-        String content = "";
-        String userName = commonService.getUserInfo().getUserName();
-        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-        if (dto.getType().equals(ApproveType.PASS)) {
-            //审核通过
-            content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
-            //审核通过发送金蝶
-            list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
-        } else {
-            //审核不通过
-            approveStatus = ApproveStatusEnum.REJECT.getStatus();
-            content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
-        }
-        Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(approveStatus), userName);
-        if (result) {
-            //添加日志
-            List<Pair<String, String>> pairList = list.stream().
-                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "状态变更");
-        }
-
-        return result;
+        //审核流程
+        Boolean flag = approveProcess(list, dto);
+        return flag;
     }
 
     /**
@@ -748,7 +727,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * @param dto
      * @return void
      **/
-    private void approveProcess(List<SoInfoEntity> list, BaseApproveParamDTO dto) {
+    private Boolean approveProcess(List<SoInfoEntity> list, BaseApproveParamDTO dto) {
         ValidList<ProcessManagementDTO.ApproveDTO> resultList = new ValidList<>();
         LoginUser userInfo = commonService.getUserInfo();
         list.forEach(obj -> {
@@ -774,8 +753,51 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         if (CollectionUtils.isNotEmpty(businessIdList)) {
             List<SoInfoEntity> businessSoInfoList = list.stream().filter(obj -> businessIdList.contains(obj.getId())).collect(Collectors.toList());
-
+            Boolean flag = approveEnd(dto, businessSoInfoList);
+            return flag;
         }
+        return Boolean.FALSE;
+    }
+
+    /**
+     * 结束审核
+     * @Author Luo_WG
+     * @Date 2023/7/4 10:55
+     * @param dto
+     * @param list
+     * @return java.lang.Boolean
+     **/
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean approveEnd(BaseApproveParamDTO dto,List<SoInfoEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.TRUE;
+        }
+        //意见
+        String comment = dto.getComment();
+        String content = "";
+        String userName = commonService.getUserInfo().getUserName();
+        String approveStatus = "";
+        if (dto.getType().equals(ApproveType.PASS)) {
+            //审核通过
+            approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+            content = String.format("状态由[%s]变更为[%s] , 意见:%s", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.APPROVE.getName(), comment);
+            //审核通过发送金蝶
+            list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+        } else {
+            //审核不通过
+            approveStatus = ApproveStatusEnum.REJECT.getStatus();
+            content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.REJECT.getName(), comment);
+        }
+        Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(approveStatus), userName);
+        if (result) {
+            //添加日志
+            List<Pair<String, String>> pairList = list.stream().
+                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "状态变更");
+        }
+        return result;
     }
 
     /**
@@ -882,7 +904,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        //TODO 撤销流程
+        //撤销流程
+        LoginUser userInfo = commonService.getUserInfo();
+        ids.forEach(obj ->{
+            ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setBusinessId(revokeDTO.getBusinessId());
+            revokeDTO.setBusinessKey(SourceTypeEnum.SO_INFO.getCode());
+            revokeDTO.setUserId(userInfo.getUid());
+            workflowFeign.revokeProcess(revokeDTO);
+        });
+
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(waitSubmitStatus), "");
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
