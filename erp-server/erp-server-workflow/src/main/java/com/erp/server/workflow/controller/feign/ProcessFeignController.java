@@ -264,12 +264,8 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/start")
     public ApiResult<ProcessManagementDTO.StartResultDTO> start(@RequestBody ProcessManagementDTO.StartDTO dto) {
-        try {
-            ProcessManagementDTO.StartResultDTO startResultDTO = processManagementService.startProcess(dto);
-            return success(startResultDTO);
-        } catch (Exception e) {
-            return failure(e.getMessage());
-        }
+        ProcessManagementDTO.StartResultDTO startResultDTO = processManagementService.startProcess(dto);
+        return success(startResultDTO);
     }
 
     /**
@@ -289,12 +285,7 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/approve")
     public ApiResult<ProcessManagementDTO.ApproveResultDTO> approve(@RequestBody ProcessManagementDTO.ApproveDTO dto) {
-        try {
-            return success(processManagementService.approveProcess(dto));
-        } catch (Exception e) {
-            return failure(e.getMessage());
-        }
-
+        return success(processManagementService.approveProcess(dto));
     }
 
     /**
@@ -302,12 +293,8 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/back")
     public ApiResult<ProcessManagementDTO.BackResultDTO> backProcess(@RequestBody @Valid ProcessManagementDTO.BackDTO dto) {
-        try {
-            ProcessManagementDTO.BackResultDTO resultDTO = processManagementService.back(dto);
-            return success(resultDTO);
-        } catch (Exception e) {
-            return failure(e.getMessage());
-        }
+        ProcessManagementDTO.BackResultDTO resultDTO = processManagementService.back(dto);
+        return success(resultDTO);
     }
 
     /**
@@ -315,13 +302,8 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/revoke")
     public ApiResult<ProcessManagementDTO.RevokeResultDTO> revokeProcess(@RequestBody @Valid ProcessManagementDTO.RevokeDTO dto) {
-        try {
-            ProcessManagementDTO.RevokeResultDTO revokeResult = processManagementService.revoke(dto);
-            return success(revokeResult);
-        } catch (Exception e) {
-            return failure(e.getMessage());
-        }
-
+        ProcessManagementDTO.RevokeResultDTO revokeResult = processManagementService.revoke(dto);
+        return success(revokeResult);
     }
 
     /**
@@ -329,11 +311,7 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/transfer")
     public ApiResult<Boolean> transferProcess(@RequestBody @Valid ProcessManagementDTO.TransferDTO dto) {
-        try {
-            return success(processManagementService.transfer(dto));
-        } catch (Exception e) {
-            return failure(e.getMessage());
-        }
+        return success(processManagementService.transfer(dto));
     }
 
     /**
@@ -341,12 +319,8 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/history/activity")
     public ApiResult<List<ProcessManagementDTO.HistoryActivityResultDTO>> historyActivity(@RequestBody @Valid ProcessManagementDTO.HistoryActivityDTO dto) {
-        try {
-            List<ProcessManagementDTO.HistoryActivityResultDTO> resultList = processManagementService.historyActivity(dto);
-            return success(resultList);
-        } catch (Exception e) {
-            return failure(e.getMessage());
-        }
+        List<ProcessManagementDTO.HistoryActivityResultDTO> resultList = processManagementService.historyActivity(dto);
+        return success(resultList);
     }
 
     /**
