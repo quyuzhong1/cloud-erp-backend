@@ -21,6 +21,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.CustomerContactEntity;
@@ -957,6 +958,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (CollectionUtils.isNotEmpty(sellerList)) {
             SellerDTO.ViewDTO seller = sellerList.get(0);
             base.setSellerId(seller.getSellerId());
+        }
+        if(StrUtils.isNotEmpty(customer.getConditionDict())) {
+            base.setReceiveCondition(customer.getConditionDict());
+            List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicEnum.COLLECTION_TERMS.getType());
+            DictBasicDTO.ViewDTO viewDTO = dictList.stream().filter(req -> Objects.equals(req.getValue(), customer.getCompanyCategoryDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
+            base.setReceiveConditionName(viewDTO.getName());
         }
         return base;
     }

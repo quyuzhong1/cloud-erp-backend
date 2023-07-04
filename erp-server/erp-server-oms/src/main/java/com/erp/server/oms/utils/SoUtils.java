@@ -23,7 +23,7 @@ public class SoUtils {
                                      SkuCostProfitDTO.SkuCostProfitResult skuCostProfitResult) {
         skuCostProfitResult.setPurchasePrice(taxPrice);
         skuCostProfitResult.setSaleCost(skuCostProfitResult.getPurchasePrice().multiply(new BigDecimal(costParam.getQty())).setScale(4, BigDecimal.ROUND_HALF_UP));
-        if(Objects.isNull(costParam.getTaxRate()) || costParam.getTaxRate().compareTo(BigDecimal.ZERO) == - 1) {
+        if(Objects.isNull(costParam.getTaxRate())) {
             costParam.setTaxRate(BigDecimal.ZERO);
         }
 
@@ -32,7 +32,9 @@ public class SoUtils {
         // 销售毛利
         skuCostProfitResult.setSaleProfit(noTaxAmount.subtract(skuCostProfitResult.getSaleCost()).setScale(4, BigDecimal.ROUND_HALF_UP));
         // 销售毛利率
-        skuCostProfitResult.setSaleProfitRate(skuCostProfitResult.getSaleProfit().divide(noTaxAmount, 4, BigDecimal.ROUND_HALF_UP));
+        if(costParam.getSaleAmount().compareTo(BigDecimal.ZERO) > 0) {
+            skuCostProfitResult.setSaleProfitRate(skuCostProfitResult.getSaleProfit().divide(noTaxAmount, 4, BigDecimal.ROUND_HALF_UP));
+        }
     }
 
 }
