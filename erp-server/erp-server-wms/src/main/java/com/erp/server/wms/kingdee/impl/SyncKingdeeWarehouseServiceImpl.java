@@ -1,7 +1,9 @@
 package com.erp.server.wms.kingdee.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
@@ -20,8 +22,7 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -63,8 +64,14 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         resultMap.put("name",entity.getName());
         //金蝶编号
         resultMap.put("code",entity.getKingdeeWarehouseCode());
-        //仓库组织
-        resultMap.put("orgId",entity.getOrgId());
+
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getOrgId()));
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            String orgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
+            //仓库组织
+            resultMap.put("orgCode",orgCode);
+        }
+
         //仓库地址
         resultMap.put("address",entity.getAddress());
         //仓库电话
