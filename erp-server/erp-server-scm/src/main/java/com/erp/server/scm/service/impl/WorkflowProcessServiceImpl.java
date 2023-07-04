@@ -32,25 +32,50 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
-
-        if (SourceTypeEnum.PURCHASE_PRICE.getCode().equals(businessKey)) {
-            //采购价目信息
-            List<PurchasePriceEntity> list = purchasePriceService.listByIds(Arrays.asList(dto.getBusinessId()));
-
-            BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-            baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
-            baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
-            purchasePriceService.approveEnd(baseApproveParamDTO,list);
-        }
-        if (SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode().equals(businessKey)) {
-            //采购价目调价信息
-            List<PurchasePriceChangeEntity> list = purchasePriceChangeService.listByIds(Arrays.asList(dto.getBusinessId()));
-
-            BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-            baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
-            baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
-            purchasePriceChangeService.approveEnd(baseApproveParamDTO,list);
+        switch (SourceTypeEnum.getByCode(businessKey)) {
+            case PURCHASE_PRICE:
+                //采购价目
+                purchasePriceApproveEnd(dto);
+                break;
+            case PURCHASE_PRICE_CHANGE:
+                //采购调价
+                purchasePriceChangeApproveEnd(dto);
+                break;
+            default:
+                break;
         }
         return Boolean.TRUE;
+    }
+
+    /**
+     * 采购价目审核结束
+     * @Author Will
+     * @Date 2023/7/4 11:26
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    private Boolean purchasePriceApproveEnd(EndProcessDTO dto) {
+        //销售变更单
+        List<PurchasePriceEntity> list = purchasePriceService.listByIds(Arrays.asList(dto.getBusinessId()));
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
+        baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
+        return purchasePriceService.approveEnd(baseApproveParamDTO,list);
+    }
+
+    /**
+     * 采购调价审核结束
+     * @Author Will
+     * @Date 2023/7/4 11:26
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    private Boolean purchasePriceChangeApproveEnd(EndProcessDTO dto) {
+        //销售变更单
+        List<PurchasePriceChangeEntity> list = purchasePriceChangeService.listByIds(Arrays.asList(dto.getBusinessId()));
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
+        baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
+        return purchasePriceChangeService.approveEnd(baseApproveParamDTO,list);
     }
 }
