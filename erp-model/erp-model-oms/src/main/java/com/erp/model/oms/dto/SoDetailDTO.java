@@ -91,6 +91,27 @@ public class SoDetailDTO implements Serializable {
         @Size(max = 200, message = "备注最大200字符")
         private String remark;
 
+        /**
+         * 采购单价
+         */
+        private BigDecimal purchasePrice;
+
+        /**
+         * 销售总成本
+         */
+        private BigDecimal saleCost;
+
+        /**
+         * 销售毛利
+         */
+        private BigDecimal saleProfit;
+
+        /**
+         * 销售毛利率
+         */
+        private BigDecimal saleProfitRate;
+
+
 
     }
 
@@ -242,6 +263,26 @@ public class SoDetailDTO implements Serializable {
          */
         private String remark;
 
+        /**
+         * 采购单价
+         */
+        private BigDecimal purchasePrice;
+
+        /**
+         * 销售总成本
+         */
+        private BigDecimal saleCost;
+
+        /**
+         * 销售毛利
+         */
+        private BigDecimal saleProfit;
+
+        /**
+         * 销售毛利率
+         */
+        private BigDecimal saleProfitRate;
+
 
     }
 
@@ -339,6 +380,25 @@ public class SoDetailDTO implements Serializable {
          */
         private Boolean isClose;
 
+        /**
+         * 采购单价
+         */
+        private BigDecimal purchasePrice;
+
+        /**
+         * 销售总成本
+         */
+        private BigDecimal saleCost;
+
+        /**
+         * 销售毛利
+         */
+        private BigDecimal saleProfit;
+
+        /**
+         * 销售毛利率
+         */
+        private BigDecimal saleProfitRate;
 
         /**
          * 备注

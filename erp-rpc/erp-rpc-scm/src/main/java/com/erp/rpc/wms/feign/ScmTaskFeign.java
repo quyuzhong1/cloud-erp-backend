@@ -10,6 +10,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.Map;
@@ -287,4 +288,14 @@ public interface ScmTaskFeign {
      **/
     @PostMapping("feign/purchasePrice/listSupplierSkuPrice")
     List<PurchasePriceDTO.SupplierSkuPrice> listSupplierSkuPrice(@RequestBody List<String> ids);
+
+    /**
+     * @description: 根据sku id获取审核通过的最新的采购订单
+     * @author zhangchunlin
+     * @date: 2023/6/26 10:20
+     * @param skuIds
+     * @return List<PurchaseOrderDetailEntity>
+     */
+    @PostMapping("/feign/purchaseOrder/getLatest")
+    List<PurchaseOrderDetailEntity> getLatest(@RequestBody List<String> skuIds);
 }

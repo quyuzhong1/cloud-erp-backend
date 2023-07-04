@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -39,6 +40,8 @@ import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.SkuCostProfitDTO;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -59,6 +62,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.mapper.SoInfoMapper;
 import com.erp.server.oms.service.*;
+import com.erp.server.oms.utils.SoUtils;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -1682,5 +1686,24 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public Boolean exportSoPI(String id, HttpServletResponse response) {
         SoInfoDTO.SoPIDTO so = new SoInfoDTO.SoPIDTO();
         return null;
+    }
+
+    @Override
+    public SkuCostProfitDTO.SkuCostProfitResult getSkuCostProfit(SkuCostProfitDTO.SkuCostProfitParam costParam) {
+        SkuCostProfitDTO.SkuCostProfitResult  skuCostProfitResult = new SkuCostProfitDTO.SkuCostProfitResult();
+        skuCostProfitResult.setSkuId(costParam.getSkuId());
+        skuCostProfitResult.setPurchasePrice(BigDecimal.ZERO);
+        skuCostProfitResult.setSaleCost(BigDecimal.ZERO);
+        skuCostProfitResult.setSaleProfit(BigDecimal.ZERO);
+        skuCostProfitResult.setSaleProfitRate(BigDecimal.ZERO);
+        // 获取采购单价
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.getLatest(Arrays.asList(costParam.getSkuId()));
+        if(CollUtil.isEmpty(purchaseOrderDetailEntityList)) {
+            // 没有找到采购单价信息
+            return skuCostProfitResult;
+        }
+        // 计算成本毛利信息
+        SoUtils.calCostProfit(purchaseOrderDetailEntityList.get(0).getTaxPrice(), costParam, skuCostProfitResult);
+        return skuCostProfitResult;
     }
 }

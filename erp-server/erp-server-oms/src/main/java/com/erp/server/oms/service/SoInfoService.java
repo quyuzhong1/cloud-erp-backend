@@ -8,6 +8,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.scm.dto.SkuCostProfitDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -284,4 +285,11 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return java.lang.Boolean
      */
     Boolean exportSoPI(String id, HttpServletResponse response);
+
+    /**
+     * 根据sku id和数量计算成本毛利
+     * @param costParam
+     * @return
+     */
+    SkuCostProfitDTO.SkuCostProfitResult getSkuCostProfit(SkuCostProfitDTO.SkuCostProfitParam costParam);
 }

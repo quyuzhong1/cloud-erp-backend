@@ -5,10 +5,7 @@ import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.Collections;
@@ -264,4 +261,17 @@ public class PurchaseOrderFeignController {
     public List<PurchaseOrderDetailEntity> listPodBySourceDetailIds(@RequestBody List<String> sourceDetailIds) {
         return purchaseOrderDetailService.listBySourceDetailIds(sourceDetailIds);
     }
+
+    /**
+     * @description: 根据sku id集合获取审核通过的最新的采购订单明细信息
+     * @author zhangchunlin
+     * @date: 2023/6/26 10:20
+     * @param skuIds
+     * @return List<PurchaseOrderDetailEntity>
+     */
+    @PostMapping("/getLatest")
+    public List<PurchaseOrderDetailEntity> getLatest(@RequestBody List<String> skuIds) {
+        return purchaseOrderDetailService.getLatest(skuIds);
+    }
+
 }
