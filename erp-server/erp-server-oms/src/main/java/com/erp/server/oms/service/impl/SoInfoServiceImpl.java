@@ -310,10 +310,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     /**
      * 启动流程
-     * @Author Luo_WG
-     * @Date 2023/7/4 10:07
+     *
      * @param list list
      * @return void
+     * @Author Luo_WG
+     * @Date 2023/7/4 10:07
      **/
     private void startProcess(List<SoInfoEntity> list) {
         LoginUser userInfo = commonService.getUserInfo();
@@ -773,11 +774,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     /**
      * 流程审核
-     * @Author Luo_WG
-     * @Date 2023/7/4 10:18
+     *
      * @param list
      * @param dto
      * @return void
+     * @Author Luo_WG
+     * @Date 2023/7/4 10:18
      **/
     private Boolean approveProcess(List<SoInfoEntity> list, BaseApproveParamDTO dto) {
         ValidList<ProcessManagementDTO.ApproveDTO> resultList = new ValidList<>();
@@ -813,16 +815,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     /**
      * 结束审核
-     * @Author Luo_WG
-     * @Date 2023/7/4 10:55
+     *
      * @param dto
      * @param list
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/7/4 10:55
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(BaseApproveParamDTO dto,List<SoInfoEntity> list) {
+    public Boolean approveEnd(BaseApproveParamDTO dto, List<SoInfoEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
         }
@@ -967,7 +970,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         //撤销流程
         LoginUser userInfo = commonService.getUserInfo();
-        ids.forEach(obj ->{
+        ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.SO_INFO.getCode());
@@ -1663,5 +1666,21 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             return 0;
         }
         return this.lambdaQuery().in(SoInfoEntity::getReceiveAddressId).count();
+    }
+
+
+    /**
+     * 导出销售订单发票信息
+     *
+     * @param id
+     * @param response
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-07-04 14:48
+     */
+    @Override
+    public Boolean exportSoPI(String id, HttpServletResponse response) {
+        SoInfoDTO.SoPIDTO so = new SoInfoDTO.SoPIDTO();
+        return null;
     }
 }

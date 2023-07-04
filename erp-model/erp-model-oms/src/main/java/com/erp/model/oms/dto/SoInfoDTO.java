@@ -705,6 +705,64 @@ public class SoInfoDTO implements Serializable {
 
 
     /**
+     * 导出的spi 信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SoPIDTO {
+
+
+
+        /**
+         * code
+         */
+        private String code;
+
+
+
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+
+
+        /**
+         * 客户地址
+         */
+        private String address;
+
+
+        /**
+         * 客户邮箱
+         */
+        private String email;
+
+        /**
+         * 客户电话
+         */
+        private String telNumber;
+
+
+        /**
+         * 运费
+         */
+        private BigDecimal shippingFee;
+
+        /**
+         * 运费
+         */
+        private BigDecimal shippingFeeStr;
+
+
+
+        /**
+         * 订单产品详情
+         */
+        private List<SoDetailDTO.ViewDTO> detailList;
+    }
+
+
+    /**
      * 修改
      */
     @Data

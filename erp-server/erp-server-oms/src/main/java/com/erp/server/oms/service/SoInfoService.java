@@ -274,4 +274,14 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return int
      */
     int getCountByAddressIds(List<String> addressIds);
+
+    /**
+     * 导出销售订单发票信息
+     * @author yl
+     * @date 2023-07-04 14:48
+     * @param id
+     * @param response
+     * @return java.lang.Boolean
+     */
+    Boolean exportSoPI(String id, HttpServletResponse response);
 }

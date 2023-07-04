@@ -48,7 +48,7 @@ public class DmpSyncTaskJob {
         XxlJobHelper.log("DmpSyncTaskJob start");
         // 查询DMP同步数据
         List<DmpSyncTaskEntity> recordEntityList = dmpSyncTaskService.lambdaQuery()
-                .in(DmpSyncTaskEntity::getStatus, Arrays.asList(SyncKingdeeStatusEnum.FAILED_SYNC.getCode()))
+                .in(DmpSyncTaskEntity::getStatus, Arrays.asList(SyncKingdeeStatusEnum.FAILED_SYNC.getCode(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode()))
                 .le(DmpSyncTaskEntity::getUpdateTime, LocalDateTime.now().minusHours(1))
                 .list();
 
