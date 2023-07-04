@@ -70,7 +70,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         if (ApiModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode().toString().equals(code)) {
             purchaseReturnOrderService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
         }
-        //采购退货单
+        //采购入库单
         if (ApiModuleTypeEnum.PURCHASE_STOCK_IN.getCode().toString().equals(code)) {
             poInstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
         }
@@ -78,5 +78,6 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         if (ApiModuleTypeEnum.SO_OUTSTOCK.getCode().toString().equals(code)) {
             soOutstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
         }
+
     }
 }

@@ -861,7 +861,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchaseReturnOrderEntity::getSyncKingdeeStatus, syncKingdeeStatus)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchaseReturnOrderEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId), PurchaseReturnOrderEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncKingdeeId), PurchaseReturnOrderEntity::getSyncOperate, syncOperate)
+                .set(StringUtils.isNotBlank(syncOperate), PurchaseReturnOrderEntity::getSyncOperate, syncOperate)
                 .update();
     }
 

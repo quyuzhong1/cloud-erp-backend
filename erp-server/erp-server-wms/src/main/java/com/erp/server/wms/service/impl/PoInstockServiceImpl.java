@@ -774,7 +774,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), PoInstockEntity::getSyncKingdeeStatus, syncKingdeeStatus)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), PoInstockEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId), PoInstockEntity::getSyncKingdeeId, syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncKingdeeId), PoInstockEntity::getSyncOperate, syncOperate)
+                .set(StringUtils.isNotBlank(syncOperate), PoInstockEntity::getSyncOperate, syncOperate)
                 .update();
     }
 
