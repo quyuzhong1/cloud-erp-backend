@@ -824,8 +824,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             resultList.add(approveDTO);
         });
         ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> listApiResult = workflowFeign.batchApproveProcess(resultList);
-        Integer code = listApiResult.getCode();
-        if (200 != code) {
+        if (!listApiResult.isSuccess()) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
         List<ProcessManagementDTO.ApproveResultDTO> data = listApiResult.getData();
@@ -868,6 +867,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.APPROVE.getName(), comment);
             //审核通过发送金蝶
+            // TODO 收款字段需补
             list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
         } else {
             //审核不通过
@@ -934,6 +934,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), rejectPairList, "状态变更");
+            // TODO 收款字段需补
             list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         return result;

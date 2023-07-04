@@ -962,7 +962,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if(StrUtils.isNotEmpty(customer.getConditionDict())) {
             base.setReceiveCondition(customer.getConditionDict());
             List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicEnum.COLLECTION_TERMS.getType());
-            DictBasicDTO.ViewDTO viewDTO = dictList.stream().filter(req -> Objects.equals(req.getValue(), customer.getCompanyCategoryDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
+            DictBasicDTO.ViewDTO viewDTO = dictList.stream().filter(req -> Objects.equals(req.getValue(), customer.getConditionDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
             base.setReceiveConditionName(viewDTO.getName());
         }
         return base;
