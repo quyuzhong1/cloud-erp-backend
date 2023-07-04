@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -15,7 +16,10 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.*;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.validator.ValidList;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -32,6 +36,7 @@ import com.erp.model.oms.enums.CustomerAddressTypeEnum;
 import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
@@ -43,10 +48,12 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.mapper.SoInfoMapper;
 import com.erp.server.oms.service.*;
@@ -135,6 +142,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Value("${so.contract.companyAddress}")
     private String companyAddress;
+
+    private WorkflowFeign workflowFeign;
 
 
     @Resource
@@ -256,6 +265,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
+
+        //启动审核流程
+        startProcess(list);
+
         List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(waitSubmitStatus)).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
@@ -275,6 +288,32 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     }
 
+
+    /**
+     * 启动流程
+     * @Author Luo_WG
+     * @Date 2023/7/4 10:07
+     * @param list list
+     * @return void
+     **/
+    private void startProcess(List<SoInfoEntity> list) {
+        LoginUser userInfo = commonService.getUserInfo();
+        ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
+        list.forEach(obj -> {
+            ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+            startDTO.setBusinessId(obj.getId());
+            startDTO.setBusinessCode(obj.getCode());
+            startDTO.setBusinessKey(SourceTypeEnum.SO_INFO.getCode());
+            startDTO.setBusinessName(obj.getCode());
+            startDTO.setUserId(userInfo.getUid());
+            startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
+            resultList.add(startDTO);
+        });
+        ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
+        if (!listApiResult.isSuccess()) {
+            throw new ServiceException(listApiResult.getMsg());
+        }
+    }
 
     /**
      * 新增并提交
@@ -699,6 +738,44 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
 
         return result;
+    }
+
+    /**
+     * 流程审核
+     * @Author Luo_WG
+     * @Date 2023/7/4 10:18
+     * @param list
+     * @param dto
+     * @return void
+     **/
+    private void approveProcess(List<SoInfoEntity> list, BaseApproveParamDTO dto) {
+        ValidList<ProcessManagementDTO.ApproveDTO> resultList = new ValidList<>();
+        LoginUser userInfo = commonService.getUserInfo();
+        list.forEach(obj -> {
+            ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+            approveDTO.setBusinessId(obj.getId());
+            approveDTO.setBusinessKey(SourceTypeEnum.SO_INFO.getCode());
+            approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
+            approveDTO.setComment(dto.getComment());
+            approveDTO.setUserId(userInfo.getUid());
+            approveDTO.setVariablesMap(BeanUtil.beanToMap(obj));
+            resultList.add(approveDTO);
+        });
+        ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> listApiResult = workflowFeign.batchApproveProcess(resultList);
+        Integer code = listApiResult.getCode();
+        if (200 != code) {
+            throw new ServiceException(ApiError.ERROR_94006);
+        }
+        List<ProcessManagementDTO.ApproveResultDTO> data = listApiResult.getData();
+        List<String> businessIdList = data.stream()
+                .filter(obj -> ObjectUtils.isEmpty(obj.getIsExistProcess()) || !obj.getIsExistProcess())
+                .map(ProcessManagementDTO.ApproveResultDTO::getBusinessId)
+                .collect(Collectors.toList());
+
+        if (CollectionUtils.isNotEmpty(businessIdList)) {
+            List<SoInfoEntity> businessSoInfoList = list.stream().filter(obj -> businessIdList.contains(obj.getId())).collect(Collectors.toList());
+
+        }
     }
 
     /**

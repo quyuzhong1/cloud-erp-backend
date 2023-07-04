@@ -13,6 +13,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.validator.ValidList;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -25,6 +26,7 @@ import com.erp.model.oms.entity.CustomerContactEntity;
 import com.erp.model.oms.entity.CustomerGroupEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.enums.DictBasicEnum;
+import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
@@ -278,11 +280,14 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.CUSTOMER.getCode(), pairList, "状态变更");
+
+            //审核不通过
+            String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+            operateLogService.batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), rejectPairList, "状态变更");
         }
         return result;
 
     }
-
 
     /**
      * 获取tab list
