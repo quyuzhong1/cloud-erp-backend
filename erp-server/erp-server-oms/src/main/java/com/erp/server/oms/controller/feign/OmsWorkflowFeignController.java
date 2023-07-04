@@ -1,8 +1,13 @@
 package com.erp.server.oms.controller.feign;
 
-import cn.hutool.json.JSONUtil;
 import com.erp.model.workflow.dto.EndProcessDTO;
-import org.springframework.web.bind.annotation.*;
+import com.erp.server.oms.service.WorkflowProcessService;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
 
 /**
  * oms工作流feign
@@ -14,8 +19,17 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("feign/omsWorkflow")
 public class OmsWorkflowFeignController {
 
+    @Resource
+    private WorkflowProcessService workflowProcessService;
+
+    /**
+     * @description: 结束审核回调
+     * @author Will
+     * @date: 2023/7/4 10:20
+     * @param dto
+     */
     @PostMapping("/approveEnd")
     public void approveEnd(@RequestBody EndProcessDTO dto) {
-        System.out.println("dto = " + JSONUtil.toJsonStr(dto));
+        workflowProcessService.approveEnd(dto);
     }
 }

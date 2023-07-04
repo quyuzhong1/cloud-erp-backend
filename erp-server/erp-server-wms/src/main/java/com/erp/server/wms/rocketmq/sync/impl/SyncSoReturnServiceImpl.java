@@ -74,10 +74,10 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         if (StrUtil.isEmpty(kingdeeReturnOrderEntity.getFSaleOrgId()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(kingdeeReturnOrderEntity.getFSaleOrgId()) || ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(kingdeeReturnOrderEntity.getFSaleOrgId())) {
             return;
         }
-        //如果不是B2C类型的单跳过
+/*        //如果不是B2C类型的单跳过
         if (!kingdeeReturnOrderEntity.getFBillTypeID().equals("559351ce1d0252")) {
             return;
-        }
+        }*/
         //不同步MWS同步到金蝶的数据
         if (kingdeeReturnOrderEntity.getFBillNo().contains(BusinessNoConstant.XSTH) && kingdeeReturnOrderEntity.getFBillNo().length() == 15) {
             return;

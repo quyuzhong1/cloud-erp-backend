@@ -3,8 +3,10 @@ package com.erp.server.wms.rocketmq.sync.impl;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.service.RedisService;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
@@ -32,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -58,6 +61,9 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     @Resource
     private SoOutstockDetailService soOutstockDetailService;
 
+    @Resource
+    private RedisService redisService;
+
 
     /**
      * 同步金蝶的销售出库单
@@ -79,6 +85,11 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         if (CollectionUtils.isEmpty(kingdeeDetailList)) {
             return;
         }
+
+        String code = entity.getFBillNo();
+        String baseKey = RedisKeyConstant.KINGDEE_XSCK;
+        String redisKey = code + baseKey;
+
         //根据仓库分组
         Map<String, List<KingdeeDeliveryDetailItemEntity>> map = kingdeeDetailList.stream().collect(Collectors.groupingBy(KingdeeDeliveryDetailItemEntity::getFStockNumber));
         for (Map.Entry<String, List<KingdeeDeliveryDetailItemEntity>> item : map.entrySet()) {
@@ -87,17 +98,17 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             List<SoOutstockDetailEntity> detailList = soOutstock.getDetailList();
             if (CollectionUtils.isNotEmpty(detailList)) {
                 String flagId = info.getFlagId();
-                //是否首次
-                Boolean isFirst = info.getIsFirst();
+
                 //当是审核通过的时候
-                if(entity.getFDocumentStatus().equals("C")){
+                if (entity.getFDocumentStatus().equals("C")) {
                     //当已存在 就删除以前的  并回滚库存
-                    if(StringUtils.isNotBlank(flagId)&&!isFirst){
+                    if (StringUtils.isNotBlank(flagId)) {
                         //回滚库存
                         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_OUTSTOCK, Arrays.asList(flagId));
                         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
                         soOutstockService.removeById(flagId);
                         soOutstockDetailService.removeByMainIdList(Arrays.asList(flagId));
+                        redisService.deleteObject(redisKey);
                     }
 
                     //保存销售出库单
@@ -108,14 +119,18 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                     if (CollectionUtils.isNotEmpty(inventoryInOutStockDTO.getMembers())) {
                         inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
                     }
-                }else{
+
+                    redisService.setCacheObject(redisKey, soOutstock.getId(), 7L, TimeUnit.DAYS);
+
+                } else {
                     //当有的情况下
-                    if(StringUtils.isNotBlank(flagId)&&!isFirst){
+                    if (StringUtils.isNotBlank(flagId)) {
                         //回滚库存
                         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_OUTSTOCK, Arrays.asList(flagId));
                         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
                         soOutstockService.removeById(flagId);
                         soOutstockDetailService.removeByMainIdList(Arrays.asList(flagId));
+                        redisService.deleteObject(redisKey);
                     }
                 }
 
@@ -161,15 +176,14 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         //销售出库单
         InventorySourceTypeEnum sourceTypeEnum = InventorySourceTypeEnum.SO_OUTSTOCK;
         String code = entity.getFBillNo();
-        //销售出库
-        String flagId = soOutstockService.getByCode(code);
-        if (StringUtils.isEmpty(flagId)) {
-            result.setIsFirst(Boolean.TRUE);
-        } else {
-            result.setIsFirst(Boolean.FALSE);
+        String baseKey = RedisKeyConstant.KINGDEE_XSCK;
+        String redisKey = code + baseKey;
+        String flagId = redisService.getCacheObject(redisKey);
+        if (StringUtils.isBlank(flagId)) {
+            flagId = soOutstockService.getByCode(code);
         }
-        result.setFlagId(flagId);
 
+        result.setFlagId(flagId);
         SoOutstockEntity soOutstock = new SoOutstockEntity();
         soOutstock.setOrderType(b2c);
         String warehouseId = warehouse.getId();

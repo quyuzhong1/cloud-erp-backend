@@ -25,7 +25,6 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
-import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
@@ -65,7 +64,6 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -1161,19 +1159,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     public String getByCode(String code) {
-        String baseKey = RedisKeyConstant.KINGDEE_XSCK;
-        String redisKey = code + baseKey;
-        String resultJson = redisService.getCacheObject(redisKey);
-        if (StringUtils.isNotBlank(resultJson)) {
-            return resultJson;
-        }
         LambdaQueryWrapper<SoOutstockEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SoOutstockEntity::getCode, code);
         queryWrapper.last("LIMIT 1");
         SoOutstockEntity entity = this.getOne(queryWrapper);
         if (!Objects.isNull(entity)) {
             String id = entity.getId();
-            redisService.setCacheObject(redisKey, id, 7L, TimeUnit.DAYS);
             return id;
         }
         return "";

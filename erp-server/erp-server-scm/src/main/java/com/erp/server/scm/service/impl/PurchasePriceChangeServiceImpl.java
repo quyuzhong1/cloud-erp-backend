@@ -248,6 +248,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-28 14:08
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean addAndSubmit(PurchasePriceChangeDTO.AddDTO dto) {
         String id = this.add(dto);
         if (StringUtils.isBlank(id)) {
@@ -296,6 +298,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-28 16:40
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String updatePurchasePriceChange(PurchasePriceChangeDTO.UpdateDTO dto) {
         String id = dto.getId();
         PurchasePriceChangeEntity priceChangeEntity = this.getById(id);
@@ -392,6 +395,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-28 16:42
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean deleteByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return false;
@@ -425,6 +429,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-28 16:47
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean submitApprove(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return false;
@@ -479,6 +485,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approve(BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
         List<PurchasePriceChangeEntity> list = this.listByIds(ids);
@@ -542,6 +549,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-28 16:56
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean cancelProcess(List<String> ids) {
         List<PurchasePriceChangeEntity> list = this.listByIds(ids);
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
@@ -642,6 +651,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-29 9:42
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean updateAndSubmit(PurchasePriceChangeDTO.UpdateDTO dto) {
         String id = this.updatePurchasePriceChange(dto);
         if (StringUtils.isBlank(id)) {
