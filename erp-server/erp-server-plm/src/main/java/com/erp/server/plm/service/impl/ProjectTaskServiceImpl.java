@@ -37,6 +37,7 @@ import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.sys.vo.SysCalendarListVO;
 import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.ProjectPlanConstant;
@@ -4070,18 +4071,17 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
      * @date 2023-07-03 14:29
      */
     @Override
-    public List<AuditorHandleDTO> listTaskAudit(String taskId) {
+    public List<ApproveNodeRecordVO> listTaskAudit(String taskId) {
         ProjectTaskEntity taskEntity = this.getById(taskId);
         if (Objects.isNull(taskEntity)) {
             throw new ServiceException(ApiError.ERROR_95027);
         }
         Integer status = taskEntity.getStatus();
-        //所有人员
-        List<FindUserDTO> userList = sysUserFeign.getUserList();
+
         // 根据流程id查询所有审核信息
-        List<AuditorHandleDTO> approveRecordShowList = new ArrayList<>();
+        List<ApproveNodeRecordVO> approveRecordShowList = new ArrayList<>();
         if (StringUtils.isNotBlank(taskEntity.getProcessId())) {
-            approveRecordShowList = workflowFeign.getHistoryTaskByProcessId(taskEntity.getProcessId());
+            approveRecordShowList = workflowFeign.listHistoryTaskByProcessId(taskEntity.getProcessId());
         }
         //当状态为待审核、审核中、审核通过、审核不通过时添加详情
         if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(status) || TaskStateEnum.APPROVAL_ING.getCode().equals(status)

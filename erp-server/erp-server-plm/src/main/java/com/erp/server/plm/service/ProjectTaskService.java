@@ -11,7 +11,7 @@ import com.erp.model.plm.entity.ProjectTaskVO;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
 import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
-import com.erp.model.workflow.dto.AuditorHandleDTO;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import org.apache.commons.math3.util.Pair;
 
 import java.time.LocalDateTime;
@@ -330,5 +330,5 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @param taskId
      * @return java.util.List<com.erp.model.plm.dto.TaskProcessNodeDTO>
      */
-    List<AuditorHandleDTO> listTaskAudit(String taskId);
+    List<ApproveNodeRecordVO> listTaskAudit(String taskId);
 }

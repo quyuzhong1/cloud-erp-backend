@@ -219,4 +219,13 @@ public interface WorkflowFeign {
      */
     @PostMapping("/feign/process/batchCurApprover")
     ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> curApprover(@RequestBody @Valid ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList);
+
+
+    /**
+     * 根据流程id 获取审核情况
+     * @param processId
+     * @return
+     */
+    @PostMapping("/feign/process/listHistoryTaskByProcessId")
+    List<ApproveNodeRecordVO> listHistoryTaskByProcessId(String processId);
 }

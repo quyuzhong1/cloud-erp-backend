@@ -22,7 +22,6 @@ import java.util.List;
 
 /**
  * @Classname ProcessFeignController
-
  * @Date 2022-10-17 10:34
  * @Created by yl
  */
@@ -34,6 +33,7 @@ public class ProcessFeignController extends BaseController {
 
     @Autowired
     public WorkflowService workflowService;
+
 
     @Autowired
     private ProcessTaskService processTaskService;
@@ -104,12 +104,13 @@ public class ProcessFeignController extends BaseController {
 
     /**
      * 批量撤销流程 就是删除流程
+     *
      * @param processIdList
      */
     @Deprecated
     @PostMapping("/batchCancelProcess")
     public Boolean batchCancelProcess(@RequestBody @Validated List<String> processIdList) {
-       return workflowService.batchCancelProcess(processIdList);
+        return workflowService.batchCancelProcess(processIdList);
     }
 
     //取回流程
@@ -266,19 +267,20 @@ public class ProcessFeignController extends BaseController {
         try {
             ProcessManagementDTO.StartResultDTO startResultDTO = processManagementService.startProcess(dto);
             return success(startResultDTO);
-        }catch (Exception e){
+        } catch (Exception e) {
             return failure(e.getMessage());
         }
     }
 
     /**
      * 批量启动流程 -new
+     *
      * @param dto
      * @return
      */
     @PostMapping("/batchStart")
     public ApiResult<List<ProcessManagementDTO.StartResultDTO>> batchStartProcess(@RequestBody @Valid ValidList<ProcessManagementDTO.StartDTO> dto) {
-        List<ProcessManagementDTO.StartResultDTO> result =  processManagementService.batchStartProcess(dto);
+        List<ProcessManagementDTO.StartResultDTO> result = processManagementService.batchStartProcess(dto);
         return success(result);
     }
 
@@ -289,7 +291,7 @@ public class ProcessFeignController extends BaseController {
     public ApiResult<ProcessManagementDTO.ApproveResultDTO> approve(@RequestBody ProcessManagementDTO.ApproveDTO dto) {
         try {
             return success(processManagementService.approveProcess(dto));
-        }catch (Exception e){
+        } catch (Exception e) {
             return failure(e.getMessage());
         }
 
@@ -303,7 +305,7 @@ public class ProcessFeignController extends BaseController {
         try {
             ProcessManagementDTO.BackResultDTO resultDTO = processManagementService.back(dto);
             return success(resultDTO);
-        }catch (Exception e){
+        } catch (Exception e) {
             return failure(e.getMessage());
         }
     }
@@ -316,7 +318,7 @@ public class ProcessFeignController extends BaseController {
         try {
             ProcessManagementDTO.RevokeResultDTO revokeResult = processManagementService.revoke(dto);
             return success(revokeResult);
-        }catch (Exception e){
+        } catch (Exception e) {
             return failure(e.getMessage());
         }
 
@@ -349,6 +351,7 @@ public class ProcessFeignController extends BaseController {
 
     /**
      * 批量审批
+     *
      * @param dto
      * @return
      */
@@ -365,6 +368,16 @@ public class ProcessFeignController extends BaseController {
     public ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> batchCurApprover(@RequestBody @Valid ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList) {
         List<ProcessManagementDTO.CurApproveInfoDTO> resultList = processManagementService.batchCurApprover(dtoList);
         return success(resultList);
+    }
+
+
+    /**
+     * 根据流程id 获取到流程审核情况
+     */
+    @PostMapping("/listHistoryTaskByProcessId")
+    public List<ApproveNodeRecordVO> listHistoryTaskByProcessId(@RequestBody @Valid String processId) {
+        List<ApproveNodeRecordVO> resultList = businessService.auditInfo(processId);
+        return resultList;
     }
 
 }

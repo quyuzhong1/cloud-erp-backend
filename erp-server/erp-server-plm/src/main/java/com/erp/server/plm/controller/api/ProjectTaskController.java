@@ -20,7 +20,7 @@ import com.erp.model.plm.entity.ProjectTaskVO;
 import com.erp.model.plm.enums.TaskPriorityEnum;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.plm.vo.PreTaskListVO;
-import com.erp.model.workflow.dto.AuditorHandleDTO;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProjectTaskExcelListener;
 import com.erp.server.plm.service.*;
@@ -469,8 +469,8 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @GetMapping("/listTaskAudit")
-    public ApiResult<List<AuditorHandleDTO>> listTaskAudit(String taskId) {
-        List<AuditorHandleDTO> taskProcess = projectTaskService.listTaskAudit(taskId);
+    public ApiResult<List<ApproveNodeRecordVO>> listTaskAudit(String taskId) {
+        List<ApproveNodeRecordVO> taskProcess = projectTaskService.listTaskAudit(taskId);
         return success(taskProcess);
     }
 
