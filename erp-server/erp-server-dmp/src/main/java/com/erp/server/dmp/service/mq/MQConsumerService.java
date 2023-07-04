@@ -1,14 +1,10 @@
 package com.erp.server.dmp.service.mq;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.CleanBaseDTO;
@@ -27,8 +23,6 @@ import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -377,34 +371,11 @@ public class MQConsumerService {
             log.info("监听FBA发货单信息消息：entity={}", JSONUtil.toJsonStr(ext));
             dmpFbaDeliveryService.checkDelivery(ext);
 
-            //新增发送任务
-            DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
-            dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.MABANG.getDesc());
-            dmpSyncTaskEntity.setSourceType(SourceTypeEnum.MABANG_FBA_DELIVERY.getCode());
-            dmpSyncTaskEntity.setSourceId(ext.getDeliveryId());
-            dmpSyncTaskEntity.setSourceCode(ext.getDeliveryNo());
-            dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
-            dmpSyncTaskEntity.setStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
-            dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
-            dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.SYNC_MABANG_FBA_DELIVERY_TO_WMS_TAG.getName());
-            String mqData = JSONObject.toJSONString(ext);
-            dmpSyncTaskEntity.setMqData(mqData);
-            dmpSyncTaskService.save(dmpSyncTaskEntity);
-
             MapUtil mapUtil = getMapParam();
             if(PlatformEnum.MABANG.getDesc().equals(ext.getPlatformSign())){
                 OrderMongoDTO updateDto = OrderMongoDTO.getByDeliveryNo(ext.getDeliveryNo());
                 finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_DELIVERY, DeliveryEntity.class);
-
-                // 发送到ERP WMS系统，生成加工单
-                DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), mqData);
-                SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.SYNC_MABANG_FBA_DELIVERY_TO_WMS_TAG.getName(),
-                        dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
-                if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                    throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-                }
             }
-
         }
     }
 
