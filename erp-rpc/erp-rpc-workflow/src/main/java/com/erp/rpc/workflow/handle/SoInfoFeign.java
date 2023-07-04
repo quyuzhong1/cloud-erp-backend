@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
  * @Author Luo_WG
  * @Date 2023/7/4 11:18
  **/
-@FeignClient(value = "erp-oms", contextId = "soInfo")
+@FeignClient(value = "erp-oms", contextId = "so")
 public interface SoInfoFeign extends BaseWorkflowService {
     /**
      * purchase_price 采购价目
