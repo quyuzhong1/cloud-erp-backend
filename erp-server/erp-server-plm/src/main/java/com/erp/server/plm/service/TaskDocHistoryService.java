@@ -44,4 +44,12 @@ public interface TaskDocHistoryService extends SuperService<TaskDocHistoryEntity
      * @return void
      */
     void updateChangeResult(String taskId);
+    /**
+     * 根据任务ids 更改文档历史
+     * @author yl
+     * @date 2023-07-04 16:58
+     * @param isChangeDocsTaskIdList
+     * @return void
+     */
+    void updateChangeResultByTaskIds(List<String> isChangeDocsTaskIdList);
 }

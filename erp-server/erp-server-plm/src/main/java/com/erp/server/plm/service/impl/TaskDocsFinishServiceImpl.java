@@ -363,6 +363,8 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         Boolean result = this.updateById(finishEntity);
         //当更新成功后 保存记录
         if (result) {
+            taskEntity.setIsChangeDocs(Boolean.TRUE);
+            projectTaskService.updateById(taskEntity);
             noticeMessageService.docChangesNotice(loginUser.getUserName(), taskEntity.getProductId(), taskId, String.join(",", fileName));
             StringBuffer sb = new StringBuffer();
             sb.append("文档").append(oldDocs.getFileName());

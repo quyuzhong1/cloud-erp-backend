@@ -103,7 +103,7 @@ public class PurchasePriceChangeController extends BaseController {
      * @param dto
      * @return
      */
-    @PostMapping("/addAndSubmit")
+    @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",
             menuCode = "scm:purchase:price:change:addAndSubmit",
@@ -156,7 +156,7 @@ public class PurchasePriceChangeController extends BaseController {
      * @param dto
      * @return
      */
-    @PostMapping("/updateAndSubmit")
+    @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",
             menuCode = "scm:purchase:price:change:updateAndSubmit",
