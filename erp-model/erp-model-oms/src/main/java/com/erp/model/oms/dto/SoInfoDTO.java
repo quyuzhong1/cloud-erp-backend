@@ -10,10 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.PositiveOrZero;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -456,6 +453,42 @@ public class SoInfoDTO implements Serializable {
         @StateEnumValue(strValues = {"forwarder", "receive", "company"}, message = "地址类型有误", groups = {AddGroup.class})
         private String addressType;
 
+        /**
+         * 收款账号 http://172.16.100.11:3002/project/110/interface/api/13435?key=receiveAccount
+         */
+        @NotBlank(message = "收款账号不能为空", groups = {AddGroup.class})
+        private String receiveAccount;
+
+        /**
+         * 收款方式  http://172.16.100.11:3002/project/110/interface/api/13435?key=receiveMethod
+         */
+        @NotBlank(message = "收款方式不能为空", groups = {AddGroup.class})
+        private String receiveMethod;
+
+        /**
+         * 收款日期
+         */
+        @NotNull(message = "收款日期不能为空", groups = {AddGroup.class})
+        private LocalDate receiveDate;
+
+        /**
+         * 收款金额
+         */
+        @NotNull(message = "收款金额不能为空", groups = {AddGroup.class})
+        @Digits(integer = 16,fraction = 4,message = "收款金额整数位最大12位，小数位不能大于4位", groups = {AddGroup.class})
+        private BigDecimal receiveAmount;
+
+        /**
+         * 收款条件 http://172.16.100.11:3002/project/110/interface/api/13435?key=collectionTerms
+         */
+        @NotBlank(message = "收款条件不能为空", groups = {AddGroup.class})
+        private String receiveCondition;
+
+        /**
+         * 备注
+         */
+        @Size(max = 255, message = "备注最大长度不能超过255", groups = {AddGroup.class})
+        private String remark;
 
         @Valid
         @Size(min = 1, message = "销售订单详情不能为空", groups = {AddGroup.class})
@@ -608,6 +641,52 @@ public class SoInfoDTO implements Serializable {
          */
         private String addressType;
 
+
+        /**
+         * 收款账号
+         */
+        private String receiveAccount;
+
+        /**
+         * 收款账号描述
+         */
+        private String receiveAccountName;
+
+        /**
+         * 收款方式
+         */
+        private String receiveMethod;
+
+        /**
+         * 收款方式描述
+         */
+        private String receiveMethodName;
+
+        /**
+         * 收款日期
+         */
+        private LocalDate receiveDate;
+
+        /**
+         * 收款金额
+         */
+        private BigDecimal receiveAmount;
+
+        /**
+         * 收款条件
+         */
+        private String receiveCondition;
+
+        /**
+         * 收款条件描述
+         */
+        private String receiveConditionName;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
         /**
          * 订单产品详情
          */
@@ -736,6 +815,44 @@ public class SoInfoDTO implements Serializable {
          */
         @StateEnumValue(strValues = {"forwarder", "receive", "company"}, message = "地址类型有误", groups = {AddGroup.class})
         private String addressType;
+
+
+        /**
+         * 收款账号 http://172.16.100.11:3002/project/110/interface/api/13435?key=receiveAccount
+         */
+        @NotBlank(message = "收款账号不能为空")
+        private String receiveAccount;
+
+        /**
+         * 收款方式  http://172.16.100.11:3002/project/110/interface/api/13435?key=receiveMethod
+         */
+        @NotBlank(message = "收款方式不能为空")
+        private String receiveMethod;
+
+        /**
+         * 收款日期
+         */
+        @NotNull(message = "收款日期不能为空")
+        private LocalDate receiveDate;
+
+        /**
+         * 收款金额
+         */
+        @NotNull(message = "收款金额不能为空")
+        @Digits(integer = 16,fraction = 4,message = "收款金额整数位最大12位，小数位不能大于4位")
+        private BigDecimal receiveAmount;
+
+        /**
+         * 收款条件 http://172.16.100.11:3002/project/110/interface/api/13435?key=collectionTerms
+         */
+        @NotBlank(message = "收款条件不能为空")
+        private String receiveCondition;
+
+        /**
+         * 备注
+         */
+        @Size(max = 255, message = "备注最大长度不能超过255")
+        private String remark;
 
         @Valid
         @Size(min = 1, message = "销售订单详情不能为空", groups = {AddGroup.class})
