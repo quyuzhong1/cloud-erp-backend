@@ -394,6 +394,11 @@ public class PurchasePriceChangeDTO implements Serializable {
          */
         private String productName;
 
+        /**
+         * 编号
+         */
+        private String code;
+
 
         /**
          * sku id 集合
