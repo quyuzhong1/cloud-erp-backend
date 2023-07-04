@@ -28,9 +28,11 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
+import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.oms.dto.OmsAttachmentDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
@@ -237,6 +239,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String symbol = currencyViewList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
         addEntity.setCurrencySymbol(symbol);
+
+        // 字典值获取
+        List<String> dictKeys = Lists.newArrayList(DictBasicEnum.RECEIVE_METHOD.getType(), DictBasicEnum.COLLECTION_TERMS.getType());
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
+        Map<String,List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+
+        // 验证字典值
+        checkDict(addEntity);
+
         //保存成功
         Boolean addResult = this.saveOrUpdate(addEntity);
         if (addResult) {
@@ -385,6 +396,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String warehouseId = view.getWarehouseId();
         BillApproveStatusEnum approveStatus = view.getApproveStatus();
         view.setApproveStatusName(approveStatus.getName());
+
+        List<OmsAttachmentDTO.UpdateDTO> attachmentList = omsAttachmentService.getByBusinessIds(Arrays.asList(id));
+        List<String> attachmentUrlList = attachmentList.stream().map(OmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+        List<String> attachmentNameList = attachmentList.stream().map(OmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
+        view.setAttachUrlList(attachmentUrlList);
+        view.setAttachNameList(attachmentNameList);
 
         // 字典值获取
         List<String> dictKeys = Lists.newArrayList(DictBasicEnum.RECEIVE_METHOD.getType(), DictBasicEnum.COLLECTION_TERMS.getType());
@@ -635,6 +652,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         draftEntity.setWarehouseOrgName(warehouseOrgName);
         String draftStatus = BillApproveStatusEnum.DRAFT.getStatus();
         draftEntity.setApproveStatus(BillApproveStatusEnum.getByStatus(draftStatus));
+
+        // 验证字典值
+        checkDict(draftEntity);
+
         //保存成功
         Boolean draftResult = this.saveOrUpdate(draftEntity);
         if (draftResult) {
@@ -716,6 +737,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String symbol = currencyViewList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
         soInfo.setCurrencySymbol(symbol);
+
+        // 验证字典值
+        checkDict(soInfo);
+
         Boolean updateResult = this.updateById(soInfo);
         if (updateResult) {
 
@@ -1705,5 +1730,30 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         // 计算成本毛利信息
         SoUtils.calCostProfit(purchaseOrderDetailEntityList.get(0).getTaxPrice(), costParam, skuCostProfitResult);
         return skuCostProfitResult;
+    }
+
+    private void checkDict(SoInfoEntity soInfoEntity) {
+        // 字典值获取
+        List<String> dictKeys = Lists.newArrayList(DictBasicEnum.RECEIVE_METHOD.getType(), DictBasicEnum.COLLECTION_TERMS.getType());
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
+        Map<String,List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+
+        // 收款方式
+        List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicEnum.RECEIVE_METHOD.getType());
+        if (CollectionUtils.isNotEmpty(receiveMethodList) && StrUtils.isNotEmpty(soInfoEntity.getReceiveMethod())) {
+            DictBasicEntity dictBasicEntity = receiveMethodList.stream().filter(obj -> Objects.equals(obj.getValue(), soInfoEntity.getReceiveMethod())).findFirst().orElse(null);
+            ValidatorUtil.isTrue(Objects.nonNull(dictBasicEntity),()->new ServiceException("收款方式错误"));
+        }
+        // 收款条件
+        List<DictBasicEntity> receiveConditionList = dictBasicMap.get(DictBasicEnum.COLLECTION_TERMS.getType());
+        if (CollectionUtils.isNotEmpty(receiveConditionList)  && StrUtils.isNotEmpty(soInfoEntity.getReceiveCondition()) ) {
+            DictBasicEntity dictBasicEntity = receiveConditionList.stream().filter(obj -> Objects.equals(obj.getValue(), soInfoEntity.getReceiveCondition())).findFirst().orElse(null);
+            ValidatorUtil.isTrue(Objects.nonNull(dictBasicEntity),()->new ServiceException("收款条件错误"));
+        }
+        // 收款账号
+        if(StrUtils.isNotEmpty(soInfoEntity.getReceiveAccount())) {
+            BankAccountEntity bankAccountEntity =  bankAccountService.findByAccountNo(soInfoEntity.getReceiveAccount());
+            ValidatorUtil.isTrue(Objects.nonNull(bankAccountEntity),()->new ServiceException("收款账号错误"));
+        }
     }
 }

@@ -698,6 +698,17 @@ public class SoInfoDTO implements Serializable {
         private String remark;
 
         /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
+
+
+        /**
          * 订单产品详情
          */
         private List<SoDetailDTO.ViewDTO> detailList;
