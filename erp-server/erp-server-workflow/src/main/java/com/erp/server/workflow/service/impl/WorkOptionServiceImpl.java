@@ -522,7 +522,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     }
 
     private Boolean plmApprove(ApproveParamDTO dto, ProcessManagementEntity entity) {
-        switch (TableNameEnum.getByCode(entity.getBusinessKey())) {
+        switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
             case PRODUCT_BOM_INFO:
                 AuditParamDTO auditParamDTO = new AuditParamDTO();
                 auditParamDTO.setId(dto.getId());
@@ -611,7 +611,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         baseApproveParamDTO.setIds(Arrays.asList(dto.getId()));
         baseApproveParamDTO.setType(dto.getType());
         baseApproveParamDTO.setComment(dto.getComment());
-        switch (TableNameEnum.getByCode(entity.getBusinessKey())) {
+        switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
             case QC_INFO:
                 break;
             case PO_RECEIVE:
