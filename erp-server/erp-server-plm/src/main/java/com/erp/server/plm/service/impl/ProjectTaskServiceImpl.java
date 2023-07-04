@@ -3677,7 +3677,13 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         noticeMessageService.portionFinishTaskNotice(loginUser.getUserName(), portionFinishList, dto.getProductId());
 
         List<String> finishSkuTaskIdList = noProcessTaskIds.stream().filter(t -> !noFinishSkuTaskIdList.contains(t)).collect(Collectors.toList());
+        //更改完成状态
         this.updateTaskState(finishSkuTaskIdList, TaskStateEnum.FINISH.getCode(), null, nowDate);
+        List<String> isChangeDocsTaskIdList=list.stream().filter(l->finishSkuTaskIdList.contains(l.getId())&&l.getIsChangeDocs()).map(ProjectTaskEntity::getId).collect(Collectors.toList());
+        //更改文档历史的
+        taskDocHistoryService.updateChangeResultByTaskIds(isChangeDocsTaskIdList);
+
+
 
         taskOperatorRecordService.batchSaveRecord(noProcessTaskIds, ingCode, TaskStateEnum.FINISH.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
         //操作日志
@@ -3763,6 +3769,8 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         return true;
     }
+
+
 
     /**
      * 获取到流程所需要的参数

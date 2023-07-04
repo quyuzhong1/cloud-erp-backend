@@ -110,4 +110,23 @@ public class TaskDocHistoryServiceImpl extends SuperServiceImpl<TaskDocHistoryMa
     }
 
 
+    /**
+     * 根据任务ids 更改文档历史
+     * @author yl
+     * @date 2023-07-04 16:58
+     * @param isChangeDocsTaskIdList
+     * @return void
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateChangeResultByTaskIds(List<String> isChangeDocsTaskIdList) {
+        if(CollectionUtils.isNotEmpty(isChangeDocsTaskIdList)){
+            this.lambdaUpdate().set(TaskDocHistoryEntity::getIsChangeSuccess, Boolean.TRUE).
+                    in(TaskDocHistoryEntity::getTaskId, isChangeDocsTaskIdList).
+                    eq(TaskDocHistoryEntity::getIsChangeSuccess, Boolean.FALSE).update();
+        }
+
+    }
+
+
 }
