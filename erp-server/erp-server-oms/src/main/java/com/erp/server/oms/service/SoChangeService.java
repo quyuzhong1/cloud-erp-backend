@@ -100,6 +100,16 @@ public interface SoChangeService extends SuperService<SoChangeEntity> {
     Boolean approve(BaseApproveParamDTO dto);
 
     /**
+     * @description: 结束审核
+     * @author Will
+     * @date: 2023/7/4 10:13
+     * @param dto
+     * @param list
+     * @return Boolean
+     */
+    Boolean approveEnd (BaseApproveParamDTO dto,List<SoChangeEntity> list);
+
+    /**
      * 撤销流程
      * @author yl
      * @date 2023-05-25 11:01

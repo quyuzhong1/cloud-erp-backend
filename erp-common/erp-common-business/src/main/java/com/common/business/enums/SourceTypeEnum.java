@@ -40,6 +40,7 @@ public enum SourceTypeEnum {
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),
     SO_INFO("soInfo", "销售订单","so_info"),
+    SO_CHANGE("soChange", "销售变更单","so_change"),
     CUSTOMER_INFO( "customerInfo", "客户表","customer_info"),
 
     //Kingdee
