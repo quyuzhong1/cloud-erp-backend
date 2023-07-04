@@ -14,12 +14,12 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.SyncKingdeeDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
-import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockRuleDTO;
+import com.erp.model.wms.dto.inventory.TransactionRuleDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
-import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
 import com.erp.server.wms.service.InventoryTransCoreService;
@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -85,9 +86,9 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             return;
         }
 
-//        String code = entity.getFBillNo();
-//        String baseKey = RedisKeyConstant.KINGDEE_XSCK;
-//        String redisKey = code + baseKey;
+        String code = entity.getFBillNo();
+        String baseKey = RedisKeyConstant.KINGDEE_XSCK;
+        String redisKey = code + baseKey;
 
         //根据仓库分组
         Map<String, List<KingdeeDeliveryDetailItemEntity>> map = kingdeeDetailList.stream().collect(Collectors.groupingBy(KingdeeDeliveryDetailItemEntity::getFStockNumber));
@@ -107,19 +108,19 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
                         soOutstockService.removeById(flagId);
                         soOutstockDetailService.removeByMainIdList(Arrays.asList(flagId));
-
+                        redisService.deleteObject(redisKey);
                     }
 
                     //保存销售出库单
                     soOutstockService.save(soOutstock);
                     //保存销售出库单详情
                     soOutstockDetailService.saveBatch(detailList);
-                    InventoryInOutStockDTO inventoryInOutStockDTO = info.getInventoryInOutStock();
+                    InventoryInOutStockRuleDTO inventoryInOutStockDTO = info.getInventoryInOutStockRuleDTO();
                     if (CollectionUtils.isNotEmpty(inventoryInOutStockDTO.getMembers())) {
-                        inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
+                        inventoryTransCoreService.approveByRule(inventoryInOutStockDTO);
                     }
 
-                   // redisService.setCacheObject(redisKey, soOutstock.getId(), 7L, TimeUnit.DAYS);
+                    redisService.setCacheObject(redisKey, soOutstock.getId(), 7L, TimeUnit.DAYS);
 
                 } else {
                     //当有的情况下
@@ -129,7 +130,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
                         soOutstockService.removeById(flagId);
                         soOutstockDetailService.removeByMainIdList(Arrays.asList(flagId));
-                      //  redisService.deleteObject(redisKey);
+                        redisService.deleteObject(redisKey);
                     }
                 }
 
@@ -177,11 +178,10 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         String code = entity.getFBillNo();
         String baseKey = RedisKeyConstant.KINGDEE_XSCK;
         String redisKey = code + baseKey;
-       // String flagId = redisService.getCacheObject(redisKey);
-//        if (StringUtils.isBlank(flagId)) {
-//            flagId = soOutstockService.getByCode(code);
-//        }
-        String flagId = soOutstockService.getByCode(code);
+        String flagId = redisService.getCacheObject(redisKey);
+        if (StringUtils.isBlank(flagId)) {
+            flagId = soOutstockService.getByCode(code);
+        }
 
         result.setFlagId(flagId);
         SoOutstockEntity soOutstock = new SoOutstockEntity();
@@ -242,10 +242,18 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         result.setSoOutstockEntity(soOutstock);
 
         //扣库存
-        InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
-        inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
-        inventoryInOutStockDTO.setMembers(inOutStockList);
-        result.setInventoryInOutStock(inventoryInOutStockDTO);
+        InventoryInOutStockRuleDTO inventoryInOutStockRuleDTO = new InventoryInOutStockRuleDTO();
+        inventoryInOutStockRuleDTO.setBusinessType(InventoryBusinessTypeEnum.SO_OUTSTOCK.getCode());
+        inventoryInOutStockRuleDTO.setMembers(inOutStockList);
+
+        List<TransactionRuleDTO> ruleList = new ArrayList<>(1);
+        TransactionRuleDTO transactionRule = new TransactionRuleDTO();
+        transactionRule.setInventoryStatus(InventoryStatusEnum.USABLE);
+        transactionRule.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT);
+        transactionRule.setTransactionMode(InventoryModeEnum.OUT_STOCK);
+        inventoryInOutStockRuleDTO.setRules(ruleList);
+
+        result.setInventoryInOutStockRuleDTO(inventoryInOutStockRuleDTO);
         return result;
     }
 
