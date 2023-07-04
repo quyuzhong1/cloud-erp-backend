@@ -118,7 +118,7 @@ public class PurchaseOrderController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @PostMapping("/submit")
+    @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
             menuCode = "scm:purchaseOrder:add",
@@ -136,7 +136,7 @@ public class PurchaseOrderController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @PostMapping("/submit")
+    @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
             menuCode = "scm:purchaseOrder:update",
