@@ -669,16 +669,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             throw new ServiceException(ApiError.ERROR_98014);
         }
 
-        //撤销现有流程
-        LoginUser userInfo = commonService.getUserInfo();
-        ids.forEach(obj ->{
-            ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
-            revokeDTO.setBusinessId(obj);
-            revokeDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_INFO.getCode());
-            revokeDTO.setUserId(userInfo.getUid());
-            workflowFeign.revokeProcess(revokeDTO);
-        });
-
         List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveIngStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
