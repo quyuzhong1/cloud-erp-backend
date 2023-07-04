@@ -490,6 +490,16 @@ public class SoInfoDTO implements Serializable {
         @Size(max = 255, message = "备注最大长度不能超过255", groups = {AddGroup.class})
         private String remark;
 
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
+
         @Valid
         @Size(min = 1, message = "销售订单详情不能为空", groups = {AddGroup.class})
         private List<SoDetailDTO.AddDTO> detailList;
@@ -853,6 +863,16 @@ public class SoInfoDTO implements Serializable {
          */
         @Size(max = 255, message = "备注最大长度不能超过255")
         private String remark;
+
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
 
         @Valid
         @Size(min = 1, message = "销售订单详情不能为空", groups = {AddGroup.class})

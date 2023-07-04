@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.json.JSONObject;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -159,6 +160,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Autowired
     private BankAccountService bankAccountService;
 
+    @Autowired
+    private OmsAttachmentService omsAttachmentService;
+
     /**
      * 添加销售订单
      *
@@ -234,6 +238,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (addResult) {
             //添加明细
             soDetailService.addSoDetail(id, dto.getDetailList());
+
+            // 保存附件
+            TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
+            omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), tableName.value(), id);
+
             //添加日志
             String content = String.format("新增了一个{%s}-销售单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), id, "新增操作");
@@ -626,6 +635,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (draftResult) {
             //添加明细
             soDetailService.addSoDetail(id, dto.getDetailList());
+
+            // 保存附件
+            TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
+            omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), tableName.value(), id);
+
             if (isFirst) {
                 //添加日志
                 String content = String.format("新增了一个{%s}-销售单", BillApproveStatusEnum.DRAFT.getName());
@@ -699,6 +713,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         soInfo.setCurrencySymbol(symbol);
         Boolean updateResult = this.updateById(soInfo);
         if (updateResult) {
+
+            // 保存附件
+            TableName tableName = SoInfoEntity.class.getDeclaredAnnotation(TableName.class);
+            omsAttachmentService.batchSave(dto.getAttachUrlList(), dto.getAttachNameList(), tableName.value(), id);
+
             /**
              * 添加修改日志
              */
