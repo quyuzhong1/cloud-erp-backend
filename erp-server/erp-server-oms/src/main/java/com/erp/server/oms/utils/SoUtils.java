@@ -1,8 +1,11 @@
 package com.erp.server.oms.utils;
 
+import cn.hutool.core.collection.CollUtil;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -14,14 +17,16 @@ public class SoUtils {
 
     /**
      * 计算成本毛利
-     * @param taxPrice
+     * @param purchaseOrderDetailEntityList
      * @param costParam
      * @param skuCostProfitResult
      */
-    public static void calCostProfit(BigDecimal taxPrice,
+    public static void calCostProfit(List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList,
                                      SkuCostProfitDTO.SkuCostProfitParam costParam,
                                      SkuCostProfitDTO.SkuCostProfitResult skuCostProfitResult) {
-        skuCostProfitResult.setPurchasePrice(taxPrice);
+        if(CollUtil.isNotEmpty(purchaseOrderDetailEntityList)) {
+            skuCostProfitResult.setPurchasePrice(purchaseOrderDetailEntityList.get(0).getTaxPrice());
+        }
         skuCostProfitResult.setSaleCost(skuCostProfitResult.getPurchasePrice().multiply(new BigDecimal(costParam.getQty())).setScale(4, BigDecimal.ROUND_HALF_UP));
         if(Objects.isNull(costParam.getTaxRate())) {
             costParam.setTaxRate(BigDecimal.ZERO);

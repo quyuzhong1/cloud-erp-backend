@@ -1724,12 +1724,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         skuCostProfitResult.setSaleProfitRate(BigDecimal.ZERO);
         // 获取采购单价
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.getLatest(Arrays.asList(costParam.getSkuId()));
-        if(CollUtil.isEmpty(purchaseOrderDetailEntityList)) {
-            // 没有找到采购单价信息
-            return skuCostProfitResult;
-        }
         // 计算成本毛利信息
-        SoUtils.calCostProfit(purchaseOrderDetailEntityList.get(0).getTaxPrice(), costParam, skuCostProfitResult);
+        SoUtils.calCostProfit(purchaseOrderDetailEntityList, costParam, skuCostProfitResult);
         return skuCostProfitResult;
     }
 
