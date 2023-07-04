@@ -171,7 +171,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
             if (isPass) {
                 //提交
-                Boolean isSubmit = this.submitApprove(Arrays.asList(changeEntity.getId()),Boolean.FALSE);
+                Boolean isSubmit = this.submitApprove(Arrays.asList(changeEntity.getId()), Boolean.FALSE);
                 if (isSubmit) {
                     //审核
                     BaseApproveParamDTO paramDTO = new BaseApproveParamDTO();
@@ -255,7 +255,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        Boolean result = this.submitApprove(Arrays.asList(id),Boolean.TRUE);
+        Boolean result = this.submitApprove(Arrays.asList(id), Boolean.TRUE);
         return result;
     }
 
@@ -431,11 +431,18 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean submitApprove(List<String> ids,Boolean isStartProcess) {
+    public Boolean submitApprove(List<String> ids, Boolean isStartProcess) {
         if (CollectionUtils.isEmpty(ids)) {
             return false;
         }
+        //要去掉已审核通过的
         List<PurchasePriceChangeEntity> priceChangeList = this.listByIds(ids);
+        priceChangeList = priceChangeList.stream().filter(p -> !ApproveStatusEnum.APPROVE.equals(p.getApproveStatus())).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(priceChangeList)){
+            return Boolean.TRUE;
+        }
+
+
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         //审核不通过
@@ -497,7 +504,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             throw new ServiceException(ApiError.ERROR_98006);
         }
         //调用审核流程
-        approveProcess(list,dto);
+        approveProcess(list, dto);
 
         //添加日志
         List<Pair<String, String>> pairList = list.stream().
@@ -507,16 +514,16 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     }
 
     /**
+     * @param dto
+     * @param list
      * @description: 结束审核
      * @author Will
      * @date: 2023/7/3 15:25
-     * @param dto
-     * @param list
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean approveEnd (BaseApproveParamDTO dto,List<PurchasePriceChangeEntity> list) {
+    public Boolean approveEnd(BaseApproveParamDTO dto, List<PurchasePriceChangeEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
         }
@@ -562,7 +569,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         }
         //撤销现有流程
         LoginUser userInfo = commonService.getUserInfo();
-        ids.forEach(obj ->{
+        ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode());
@@ -660,7 +667,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submitApprove(Arrays.asList(id),Boolean.TRUE);
+        return this.submitApprove(Arrays.asList(id), Boolean.TRUE);
     }
 
 
@@ -678,13 +685,13 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId,String syncOperate) {
-        return  this.lambdaUpdate()
-                .in(PurchasePriceChangeEntity::getId,ids)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),PurchasePriceChangeEntity::getSyncKingdeeStatus,syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),PurchasePriceChangeEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId),PurchasePriceChangeEntity::getSyncKingdeeId,syncKingdeeId)
-                .set(StringUtils.isNotBlank(syncOperate), PurchasePriceChangeEntity::getSyncOperate,syncOperate)
+    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+        return this.lambdaUpdate()
+                .in(PurchasePriceChangeEntity::getId, ids)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchasePriceChangeEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), PurchasePriceChangeEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), PurchasePriceChangeEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncOperate), PurchasePriceChangeEntity::getSyncOperate, syncOperate)
                 .update();
     }
 
@@ -746,12 +753,12 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     }
 
     /**
+     * @param list
      * @description: 提交流程
      * @author Will
      * @date: 2023/7/3 14:39
-     * @param list
      */
-    private void startProcess (List<PurchasePriceChangeEntity> list) {
+    private void startProcess(List<PurchasePriceChangeEntity> list) {
         LoginUser userInfo = commonService.getUserInfo();
         ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
         list.forEach(obj -> {
@@ -771,13 +778,13 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     }
 
     /**
+     * @param list
+     * @param dto
      * @description: 流程审核
      * @author Will
      * @date: 2023/7/3 15:24
-     * @param list
-     * @param dto
      */
-    private void approveProcess (List<PurchasePriceChangeEntity> list,BaseApproveParamDTO dto) {
+    private void approveProcess(List<PurchasePriceChangeEntity> list, BaseApproveParamDTO dto) {
         ValidList<ProcessManagementDTO.ApproveDTO> resultList = new ValidList<>();
         LoginUser userInfo = commonService.getUserInfo();
         list.forEach(obj -> {
@@ -803,7 +810,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
         if (CollectionUtils.isNotEmpty(updateIdList)) {
             List<PurchasePriceChangeEntity> updateList = list.stream().filter(obj -> updateIdList.contains(obj.getId())).collect(Collectors.toList());
-            approveEnd(dto,updateList);
+            approveEnd(dto, updateList);
         }
     }
 }

@@ -1,6 +1,6 @@
 package com.erp.model.wms.dto;
 
-import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockRuleDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -44,7 +44,7 @@ public class SyncKingdeeDTO implements Serializable {
         /**
          * 出入库
          */
-        private InventoryInOutStockDTO inventoryInOutStock;
+        private InventoryInOutStockRuleDTO inventoryInOutStockRuleDTO;
 
     }
 }
