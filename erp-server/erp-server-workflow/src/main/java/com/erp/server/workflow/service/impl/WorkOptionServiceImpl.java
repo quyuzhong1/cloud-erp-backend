@@ -28,6 +28,7 @@ import com.erp.model.workflow.dto.ApproveParamDTO;
 import com.erp.model.workflow.dto.TaskShowDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.entity.WorkOptionEntity;
 import com.erp.model.workflow.enums.ApproveSearchOptionEnum;
 import com.erp.model.workflow.enums.SysClassifyEnum;
@@ -98,6 +99,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     @Resource
     private ProcessManagementService processManagementService;
+
+    @Resource
+    private ProcessTaskManagementService processTaskManagementService;
 
     /**
      * 待办模块-模块分类下拉
@@ -500,7 +504,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             }
 
             req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus()));
-            FindUserDTO findUserDTO = userList.stream().filter(obj -> obj.getUserId().equals(req.getCreateUserName())).findFirst().orElse(new FindUserDTO());
+            FindUserDTO findUserDTO = userList.stream().filter(obj -> obj.getUserId().equals(req.getCreateUserId())).findFirst().orElse(new FindUserDTO());
             req.setCreateUserName(findUserDTO.getUserName());
         });
         return new PagingVO(pageData);
@@ -511,7 +515,8 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         BaseApproveParamDTO paramDTO = new BaseApproveParamDTO();
         BeanMapperUtils.copy(dto, paramDTO);
         paramDTO.setIds(Arrays.asList(dto.getId()));
-        ProcessManagementEntity entity = processManagementService.getById(dto.getId());
+        ProcessTaskManagementEntity taskManagementEntity = processTaskManagementService.getById(dto.getId());
+        ProcessManagementEntity entity = processManagementService.getByProcessInstanceId(taskManagementEntity.getProcessInstanceId());
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_94000);
         }

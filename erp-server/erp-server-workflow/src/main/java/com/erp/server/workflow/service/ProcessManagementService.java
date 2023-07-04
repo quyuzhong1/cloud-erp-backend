@@ -200,4 +200,13 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @return
      */
     List<ProcessManagementDTO.CurApproveInfoDTO> batchCurApproverByApprove(ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList);
+
+    /**
+     * 根据流程实例ID查询
+     * @Author Luo_WG
+     * @Date 2023/7/4 19:37
+     * @param processInstanceId
+     * @return com.erp.model.workflow.entity.ProcessManagementEntity
+     **/
+    ProcessManagementEntity getByProcessInstanceId(String processInstanceId);
 }

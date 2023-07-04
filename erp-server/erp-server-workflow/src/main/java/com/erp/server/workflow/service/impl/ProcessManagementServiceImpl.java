@@ -905,4 +905,15 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .list();
         return list;
     }
+    /**
+     * 根据流程实例ID查询
+     * @Author Luo_WG
+     * @Date 2023/7/4 19:37
+     * @param processInstanceId
+     * @return com.erp.model.workflow.entity.ProcessManagementEntity
+     **/
+    @Override
+    public ProcessManagementEntity getByProcessInstanceId(String processInstanceId) {
+        return lambdaQuery().eq(ProcessManagementEntity::getProcessInstanceId, processInstanceId).last("LIMIT 1").one();
+    }
 }
