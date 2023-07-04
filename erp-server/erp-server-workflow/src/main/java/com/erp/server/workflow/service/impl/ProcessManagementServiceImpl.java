@@ -208,7 +208,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             return null;
         }
         Map<String, String> propertiesMap = camundaProperties.stream()
-                .collect(Collectors.toMap(CamundaProperty::getCamundaName, CamundaProperty::getCamundaValue));
+                .collect(Collectors.toMap(CamundaProperty::getCamundaName, value -> StrUtil.isNotBlank(value.getCamundaValue()) ? value.getCamundaValue() : ""));
         return BeanUtil.toBean(propertiesMap, CamundaDTO.PropertiesDTO.class);
     }
 
@@ -330,7 +330,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
         Collection<CamundaProperty> camundaProperties = camundaPropertiesQuery.singleResult().getCamundaProperties();
         Map<String, String> propertiesMap = camundaProperties.stream()
-                .collect(Collectors.toMap(CamundaProperty::getCamundaName, value -> null != value.getCamundaValue() ? value.getCamundaValue() : ""));
+                .collect(Collectors.toMap(CamundaProperty::getCamundaName, value -> StrUtil.isNotBlank(value.getCamundaValue()) ? value.getCamundaValue() : ""));
         CamundaDTO.PropertiesDTO propertiesDTO = BeanUtil.toBean(propertiesMap, CamundaDTO.PropertiesDTO.class);
         String startUserId = (String) executionDelegate.getVariable("creator");
         // 获取当前节点的候选人
