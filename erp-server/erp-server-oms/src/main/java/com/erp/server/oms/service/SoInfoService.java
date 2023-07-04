@@ -111,6 +111,16 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     Boolean approve(BaseApproveParamDTO dto);
 
     /**
+     * 结束审核
+     * @Author Luo_WG
+     * @Date 2023/7/4 10:55
+     * @param dto
+     * @param list
+     * @return java.lang.Boolean
+     **/
+    Boolean approveEnd(BaseApproveParamDTO dto,List<SoInfoEntity> list);
+
+    /**
      * 反审核
      *
      * @param dto
