@@ -1686,7 +1686,7 @@
         FROM project_task pt
         left join project_phase pp on pt.phase_id = pp.id AND pp.is_deleted = FALSE
         LEFT JOIN product_info pi ON pt.product_id = pi.id AND pi.is_deleted = FALSE
-        WHERE pt.product_id = #{params.productId} AND pt.is_deleted = FALSE
+        WHERE pt.product_id = #{dto.productId} AND pt.is_deleted = FALSE
         <choose>
             <when test="dto.taskIdList!=null and dto.taskIdList.size>0">
                 AND pt.id IN

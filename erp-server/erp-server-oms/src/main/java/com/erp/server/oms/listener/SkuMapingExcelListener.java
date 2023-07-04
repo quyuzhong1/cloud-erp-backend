@@ -106,15 +106,14 @@ public class SkuMapingExcelListener extends AnalysisEventListener<SkuMapingImpor
         if (Objects.isNull(platform)) {
             errorMsgList.add("平台 不存在");
         }
-        //平台标识
-        String platformDict = platform.getValue();
-
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             skuMapingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(skuMapingImportExcelDTO);
             return;
         }
+        //平台标识
+        String platformDict = platform.getValue();
         //平台skuno
         String platformSkuNo = skuMapingImportExcelDTO.getPlatformSkuNo();
 

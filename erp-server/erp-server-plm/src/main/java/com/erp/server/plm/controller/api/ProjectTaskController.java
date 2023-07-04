@@ -178,6 +178,12 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/removeTask")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "charge_id",
+            menuCode = "plm:task:removeTask",
+            serviceClass = ProjectTaskService.class,
+            keyIdName = "id"
+    )
     public ApiResult remove(@RequestBody @Validated BaseIdDTO dto) {
         Boolean flag = projectTaskService.removeTask(dto.getId());
         return flag == true ? success() : failure();
