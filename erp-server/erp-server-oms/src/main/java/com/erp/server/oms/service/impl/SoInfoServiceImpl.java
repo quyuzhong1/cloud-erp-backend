@@ -1716,6 +1716,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Override
     public SkuCostProfitDTO.SkuCostProfitResult getSkuCostProfit(SkuCostProfitDTO.SkuCostProfitParam costParam) {
+        if(Objects.isNull(costParam.getQty()) || costParam.getQty() < 0) {
+            costParam.setQty(0);
+        }
         SkuCostProfitDTO.SkuCostProfitResult  skuCostProfitResult = new SkuCostProfitDTO.SkuCostProfitResult();
         skuCostProfitResult.setSkuId(costParam.getSkuId());
         skuCostProfitResult.setPurchasePrice(BigDecimal.ZERO);

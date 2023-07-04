@@ -32,8 +32,6 @@ public class SkuCostProfitDTO implements Serializable {
         /**
          * 数量
          */
-        @NotNull(message = "数量不能为空")
-        @Min(value = 1, message = "数量不能小于0")
         private Integer qty;
 
         /**
