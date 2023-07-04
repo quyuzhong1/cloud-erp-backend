@@ -100,6 +100,15 @@ public enum SourceTypeEnum {
         return "";
     }
 
+    public static SourceTypeEnum getEnum(String type) {
+        for (SourceTypeEnum sourceTypeEnum : SourceTypeEnum.values()) {
+            if (type.equals(sourceTypeEnum.getCode())) {
+                return sourceTypeEnum;
+            }
+        }
+        return null;
+    }
+
     public static SourceTypeEnum getByCode(String code) {
         return Arrays.stream(SourceTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }

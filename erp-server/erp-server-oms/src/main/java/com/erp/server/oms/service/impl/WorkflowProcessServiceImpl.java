@@ -3,8 +3,10 @@ package com.erp.server.oms.service.impl;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.oms.entity.SoChangeEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.server.oms.service.SoChangeService;
+import com.erp.server.oms.service.SoInfoService;
 import com.erp.server.oms.service.WorkflowProcessService;
 import org.springframework.stereotype.Service;
 
@@ -24,18 +26,55 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     @Resource
     private SoChangeService soChangeService;
 
+    @Resource
+    private SoInfoService soInfoService;
+
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
-
-        if (SourceTypeEnum.SO_CHANGE.getCode().equals(businessKey)) {
-            //销售变更单
-            List<SoChangeEntity> list = soChangeService.listByIds(Arrays.asList(dto.getBusinessId()));
-            BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-            baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
-            baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
-            soChangeService.approveEnd(baseApproveParamDTO,list);
+        switch (SourceTypeEnum.getByCode(businessKey)) {
+            case SO_CHANGE:
+                //销售变更
+                soChangeApproveEnd(dto);
+                break;
+            case SO_INFO:
+                //销售订单
+                soInfoApproveEnd(dto);
+                break;
+            default:
+                break;
         }
         return Boolean.TRUE;
+    }
+
+    /**
+     * 销售变更单审核结束
+     * @Author Luo_WG
+     * @Date 2023/7/4 11:26
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    private Boolean soChangeApproveEnd(EndProcessDTO dto) {
+        //销售变更单
+        List<SoChangeEntity> list = soChangeService.listByIds(Arrays.asList(dto.getBusinessId()));
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
+        baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
+        return soChangeService.approveEnd(baseApproveParamDTO,list);
+    }
+
+    /**
+     * 销售订单审核结束
+     * @Author Luo_WG
+     * @Date 2023/7/4 11:29
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    private Boolean soInfoApproveEnd(EndProcessDTO dto) {
+        List<SoInfoEntity> list = soInfoService.listByIds(Arrays.asList(dto.getBusinessId()));
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
+        baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
+        return soInfoService.approveEnd(baseApproveParamDTO,list);
     }
 }
