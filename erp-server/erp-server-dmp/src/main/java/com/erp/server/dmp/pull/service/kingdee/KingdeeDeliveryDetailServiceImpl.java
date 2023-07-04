@@ -28,6 +28,7 @@ import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.xxl.job.core.context.XxlJobHelper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -105,6 +106,10 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
          * 获取到想要同步的销售出库单列表
          */
         List<KingdeeDeliveryDetailEntity> wantToMqList = listWantToMqSoOutstock(pushToMqList);
+        if(CollectionUtils.isEmpty(wantToMqList)){
+            log.warn("金蝶发货订单,推送消息的没有数据 dto>>>>>>{}", JSONUtil.toJsonStr(dto));
+        }
+
         // 异步推送B2C销售出库单到MQ
         wantToMqList.forEach(p -> mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_B2C_SO_OUTSTOCK_TAG.getName(), p, p.getFBillNo()));
 
