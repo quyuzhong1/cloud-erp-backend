@@ -454,7 +454,7 @@ public class SoInfoDTO implements Serializable {
         private String addressType;
 
         /**
-         * 收款账号 http://172.16.100.11:3002/project/110/interface/api/13435?key=receiveAccount
+         * 收款账号 接口地址：/oms/bankAccount/select
          */
         @NotBlank(message = "收款账号不能为空", groups = {AddGroup.class})
         private String receiveAccount;
@@ -828,7 +828,7 @@ public class SoInfoDTO implements Serializable {
 
 
         /**
-         * 收款账号 http://172.16.100.11:3002/project/110/interface/api/13435?key=receiveAccount
+         * 收款账号 接口地址：/oms/bankAccount/select
          */
         @NotBlank(message = "收款账号不能为空")
         private String receiveAccount;
