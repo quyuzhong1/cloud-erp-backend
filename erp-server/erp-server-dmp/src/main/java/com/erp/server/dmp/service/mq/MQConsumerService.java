@@ -369,30 +369,12 @@ public class MQConsumerService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
             selectorExpression = "kingdee_b2c_so_outatock_to_task_tag",
-            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_outatock_to_wms")
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_outstock_consumer")
     public class ConsumerErpSoOutstockInfo implements RocketMQListener<KingdeeDeliveryDetailEntity> {
         @Override
         public void onMessage(KingdeeDeliveryDetailEntity ext) {
             log.info("监听金蝶B2C销售出库单信息消息：entity={}", JSONUtil.toJsonStr(ext));
-            //新增发送任务
-            DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
-            dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
-            dmpSyncTaskEntity.setSourceType(SourceTypeEnum.SAL_OUTSTOCK.getCode());
-            dmpSyncTaskEntity.setSourceId(ext.getFId());
-            dmpSyncTaskEntity.setSourceCode(ext.getFBillNo());
-            dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
-            dmpSyncTaskEntity.setStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
-            dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
-            dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.SYNC_KINGDEE_SO_OUTSTOCK_TAG.getName());
-            String mqData = JSONObject.toJSONString(ext);
-            dmpSyncTaskEntity.setMqData(mqData);
-            dmpSyncTaskService.saveOrUpdateDmpSyncTask(dmpSyncTaskEntity);
-            DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), mqData);
-            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.SYNC_KINGDEE_SO_OUTSTOCK_TAG.getName(),
-                    dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
-            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-            }
+            deliveryDetailInfoService.syncTask(ext);
         }
     }
 
