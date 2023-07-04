@@ -562,7 +562,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         LoginUser userInfo = commonService.getUserInfo();
         ids.forEach(obj ->{
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
-            revokeDTO.setBusinessId(revokeDTO.getBusinessId());
+            revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode());
             revokeDTO.setUserId(userInfo.getUid());
             workflowFeign.revokeProcess(revokeDTO);

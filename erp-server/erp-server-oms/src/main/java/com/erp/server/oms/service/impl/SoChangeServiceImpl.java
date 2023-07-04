@@ -845,7 +845,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         LoginUser userInfo = commonService.getUserInfo();
         ids.forEach(obj ->{
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
-            revokeDTO.setBusinessId(revokeDTO.getBusinessId());
+            revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode());
             revokeDTO.setUserId(userInfo.getUid());
             workflowFeign.revokeProcess(revokeDTO);
@@ -991,6 +991,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 .collect(Collectors.toList());
 
         if (CollectionUtils.isNotEmpty(updateIdList)) {
+            //无需走流程的数据则直接更新状态
             List<SoChangeEntity> updateList = list.stream().filter(obj -> updateIdList.contains(obj.getId())).collect(Collectors.toList());
             approveEnd(dto,updateList);
         }

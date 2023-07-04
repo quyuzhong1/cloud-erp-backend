@@ -116,6 +116,16 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      */
     Boolean approve(BaseApproveParamDTO dto);
 
+    /**
+     * @description: 结束审核
+     * @author Will
+     * @date: 2023/7/4 11:31
+     * @param dto
+     * @param list
+     * @return Boolean
+     */
+    Boolean approveEnd (BaseApproveParamDTO dto,List<CustomerInfoEntity> list);
+
     
     /**
      * 反审核

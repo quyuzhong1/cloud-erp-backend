@@ -2,9 +2,11 @@ package com.erp.server.oms.service.impl;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.workflow.dto.EndProcessDTO;
+import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.SoChangeService;
 import com.erp.server.oms.service.SoInfoService;
 import com.erp.server.oms.service.WorkflowProcessService;
@@ -29,6 +31,9 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     @Resource
     private SoInfoService soInfoService;
 
+    @Resource
+    private CustomerInfoService customerInfoService;
+
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
@@ -40,6 +45,10 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
             case SO_INFO:
                 //销售订单
                 soInfoApproveEnd(dto);
+                break;
+            case CUSTOMER_INFO:
+                //客户信息
+                customerInfoApproveEnd(dto);
                 break;
             default:
                 break;
@@ -61,6 +70,22 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
         baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
         return soChangeService.approveEnd(baseApproveParamDTO,list);
+    }
+
+    /**
+     * 客户信息审核结束
+     * @Author Will
+     * @Date 2023/7/4 11:26
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    private Boolean customerInfoApproveEnd(EndProcessDTO dto) {
+        //销售变更单
+        List<CustomerInfoEntity> list = customerInfoService.listByIds(Arrays.asList(dto.getBusinessId()));
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
+        baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
+        return customerInfoService.approveEnd(baseApproveParamDTO,list);
     }
 
     /**
