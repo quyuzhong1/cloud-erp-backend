@@ -2,7 +2,7 @@ package com.erp.server.dmp.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
-import com.erp.model.dmp.entity.DmpOrderInfoEntity;
+import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 
 /**
  * 出库详情
@@ -58,4 +58,13 @@ public interface DmpDeliveryDetailInfoService extends IService<DmpDeliveryDetail
      * @return
      */
     DmpDeliveryDetailInfoEntity getByPlatformOrderId(String platformOrderId);
+
+    /**
+     * 同步金蝶销售出库单
+     * @author yl
+     * @date 2023-07-04 18:58
+     * @param ext
+     * @return void
+     */
+    void syncTask(KingdeeDeliveryDetailEntity ext);
 }
