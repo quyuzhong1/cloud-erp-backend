@@ -165,6 +165,7 @@ public enum ApiError implements Serializable {
     ERROR_WORK_MENU_NOT_EXIST(94026, "模块编码对应的菜单不存在"),
     ERROR_WORK_MENU_FEIGN(94027, "工作流feign调用的类名不存在,请检查"),
     PROCESS_ALREADY_END(94028,"审核流程已经结束"),
+    PROCESS_LIST_APPROVER_ERROR(94029,"流程审核人查询失败"),
 
 
     /**

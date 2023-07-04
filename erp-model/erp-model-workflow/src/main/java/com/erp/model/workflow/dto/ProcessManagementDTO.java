@@ -508,6 +508,24 @@ public class ProcessManagementDTO {
 
     @Data
     @NoArgsConstructor
+    public static class ApproveActivityDTO {
+        /**
+         * 业务类型key
+         */
+        @NotBlank(message = "业务类型不能为空")
+        private String businessKey;
+
+        /**
+         * 最新审核人id
+         */
+        @NotBlank(message = "最新审核人id不能为空")
+        private String curApproveId;
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
     public static class HistoryActivityResultDTO {
         /**
          * 流程定义id

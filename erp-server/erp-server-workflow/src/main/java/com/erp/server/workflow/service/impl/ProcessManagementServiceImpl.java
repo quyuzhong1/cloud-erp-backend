@@ -121,6 +121,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 业务未绑定流程定义
             return new ProcessManagementDTO.StartResultDTO(dto);
         }
+
         // 判断业务id是否已经存在
         ProcessManagementEntity managementEntity = lambdaQuery()
                 .eq(ProcessManagementEntity::getBusinessId, dto.getBusinessId())
@@ -221,6 +222,12 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 业务未绑定流程定义
             return new ProcessManagementDTO.ApproveResultDTO(dto);
         }
+        List<ProcessManagementEntity> processManagementList = listByBusiness(dto.getBusinessKey(), dto.getBusinessId());
+        if (CollectionUtil.isEmpty(processManagementList)) {
+            // 业务未启动流程
+            return new ProcessManagementDTO.ApproveResultDTO(dto);
+        }
+
         // 查询流程数据 , dto.getUserId()
         ProcessManagementDTO.ManagementTaskDTO managementTask = getCurApproveTask(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
         // 审核操作
@@ -353,6 +360,12 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 业务未绑定流程定义
             return new ProcessManagementDTO.BackResultDTO(dto);
         }
+        List<ProcessManagementEntity> processManagementList = listByBusiness(dto.getBusinessKey(), dto.getBusinessId());
+        if (CollectionUtil.isEmpty(processManagementList)) {
+            // 业务未启动流程
+            return new ProcessManagementDTO.BackResultDTO(dto);
+        }
+
         // 查询流程数据
         ProcessManagementDTO.ManagementTaskDTO managementTask = getCurApproveTask(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
         // 审核操作
@@ -461,6 +474,12 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 业务未绑定流程定义
             return new ProcessManagementDTO.RevokeResultDTO(dto);
         }
+        List<ProcessManagementEntity> processManagementList = listByBusiness(dto.getBusinessKey(), dto.getBusinessId());
+        if (CollectionUtil.isEmpty(processManagementList)) {
+            // 业务未启动流程
+            return new ProcessManagementDTO.RevokeResultDTO(dto);
+        }
+
         // 查询流程实例
         ProcessManagementDTO.ManagementTaskDTO managementTask = getCurApproveTask(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
         // 查询当前实例
@@ -842,7 +861,29 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     }
 
     @Override
+    public List<ProcessManagementDTO.CurApproveInfoDTO> batchCurApproverByApprove(ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList) {
+        // 查询当前任务
+        List<ProcessManagementDTO.CurApproveInfoDTO> resultList = baseMapper.listApproverByApprover(dtoList);
+        return resultList;
+    }
+
+    @Override
     public void completeTaskHandle(DelegateTask taskDelegate) {
 
+    }
+
+    /**
+     * @description: 根据业务key和业务id查询
+     * @author Will
+     * @date: 2023/7/4 15:47
+     * @param businessKey
+     * @param businessId
+     * @return List<ProcessManagementEntity>
+     */
+    private List<ProcessManagementEntity> listByBusiness(String businessKey,String businessId) {
+        List<ProcessManagementEntity> list = lambdaQuery().eq(ProcessManagementEntity::getBusinessKey, businessKey)
+                .eq(ProcessManagementEntity::getBusinessId, businessId)
+                .list();
+        return list;
     }
 }

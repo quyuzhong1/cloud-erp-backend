@@ -5,19 +5,19 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.server.workflow.service.ProcessManagementService;
-import com.erp.server.workflow.service.ProcessTaskManagementService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
-
-import com.common.core.controller.BaseController;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -156,6 +156,13 @@ public class ProcessManagementController extends BaseController {
         return success(resultList);
     }
 
-
+    /**
+     * 批量查询当前待审核业务单据
+     */
+    @PostMapping("/batchCurApproverByApprove")
+    public ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> batchCurApproverByApprove(@RequestBody @Valid ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList) {
+        List<ProcessManagementDTO.CurApproveInfoDTO> resultList = processManagementService.batchCurApproverByApprove(dtoList);
+        return success(resultList);
+    }
 
 }

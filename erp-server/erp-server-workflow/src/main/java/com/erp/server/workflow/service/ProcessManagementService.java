@@ -2,11 +2,11 @@ package com.erp.server.workflow.service;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
-import com.common.business.service.SuperService;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.DelegateTask;
 
@@ -193,4 +193,11 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @return
      */
     List<ProcessManagementDTO.CurApproveInfoDTO> batchCurApprover(ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList);
+
+    /**
+     * 批量查询当前待审核业务单据
+     * @param dtoList
+     * @return
+     */
+    List<ProcessManagementDTO.CurApproveInfoDTO> batchCurApproverByApprove(ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList);
 }

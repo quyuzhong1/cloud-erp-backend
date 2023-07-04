@@ -74,7 +74,7 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @param ids
      * @return java.lang.Boolean
      */
-    Boolean submitApprove(List<String> ids);
+    Boolean submitApprove(List<String> ids,Boolean isStartProcess);
 
     /**
      * 采购价目变更 审核

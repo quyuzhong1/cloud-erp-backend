@@ -199,7 +199,7 @@ public class PurchasePriceChangeController extends BaseController {
             serviceClass = PurchasePriceChangeService.class,
             keyIdName = "ids")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = purchasePriceChangeService.submitApprove(dto.getIds());
+        Boolean result = purchasePriceChangeService.submitApprove(dto.getIds(),Boolean.TRUE);
         return result == true ? success() : failure();
     }
 

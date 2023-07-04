@@ -171,7 +171,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
             if (isPass) {
                 //提交
-                Boolean isSubmit = this.submitApprove(Arrays.asList(changeEntity.getId()));
+                Boolean isSubmit = this.submitApprove(Arrays.asList(changeEntity.getId()),Boolean.FALSE);
                 if (isSubmit) {
                     //审核
                     BaseApproveParamDTO paramDTO = new BaseApproveParamDTO();
@@ -255,7 +255,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        Boolean result = this.submitApprove(Arrays.asList(id));
+        Boolean result = this.submitApprove(Arrays.asList(id),Boolean.TRUE);
         return result;
     }
 
@@ -431,7 +431,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean submitApprove(List<String> ids) {
+    public Boolean submitApprove(List<String> ids,Boolean isStartProcess) {
         if (CollectionUtils.isEmpty(ids)) {
             return false;
         }
@@ -451,8 +451,10 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
 
-        //提交流程
-        startProcess(priceChangeList);
+        if (isStartProcess) {
+            //提交流程
+            startProcess(priceChangeList);
+        }
 
         List<Pair<String, String>> pairList = priceChangeList.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(waitSubmitStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
@@ -658,7 +660,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submitApprove(Arrays.asList(id));
+        return this.submitApprove(Arrays.asList(id),Boolean.TRUE);
     }
 
 

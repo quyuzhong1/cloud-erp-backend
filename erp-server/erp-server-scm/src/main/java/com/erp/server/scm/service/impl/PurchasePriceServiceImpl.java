@@ -540,6 +540,20 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         //待我审核
         if (SearchType.WAIT_APPROVE.equals(searchType)) {
             statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+
+            ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList = new ValidList<>();
+            ProcessManagementDTO.ApproveActivityDTO approveActivityDTO = new ProcessManagementDTO.ApproveActivityDTO();
+            approveActivityDTO.setCurApproveId(commonService.getUserInfo().getUid());
+            approveActivityDTO.setBusinessKey(SourceTypeEnum.PURCHASE_PRICE.getCode());
+            dtoList.add(approveActivityDTO);
+            ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApproverByApprove(dtoList);
+            if (200 != listApiResult.getCode()) {
+                throw new ServiceException(ApiError.ERROR_94006);
+            }
+            List<String> businessIds = listApiResult.getData().stream().filter(obj -> StringUtils.isNotBlank(obj.getBusinessId())).map(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(businessIds)) {
+                params.setIdList(businessIds);
+            }
         }
 
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
