@@ -99,6 +99,16 @@ public class PoInstockDetailDTO implements Serializable {
         private String productName;
 
         /**
+         * 规格型号
+         */
+        private String spuNo;
+
+        /**
+         * 单位
+         */
+        private String unitName;
+
+        /**
          * 采购数量
          */
         private Integer purchaseQty;
@@ -122,5 +132,10 @@ public class PoInstockDetailDTO implements Serializable {
          * 仓位
          */
         private String warehouseLocation;
+
+        /**
+         * 库存状态
+         */
+        private String inventoryStatusName;
     }
 }

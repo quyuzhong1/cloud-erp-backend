@@ -45,6 +45,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
@@ -342,7 +343,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<PoInstockDetailDTO.ViewDTO> details = BeanMapperUtils.copyList(PoInstockDetailDTO.ViewDTO.class, entityDetails);
         List<String> skuIds = entityDetails.stream().map(PoInstockDetailEntity::getSkuId).collect(Collectors.toList());
         //产品信息
-        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
+        List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIds);
 
         //采购订单明细
         List<String> podIds = entityDetails.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
@@ -354,9 +355,14 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listWarehouseReceiveByPodIds(podIds);
 
         details.forEach(obj -> {
-            if (CollectionUtils.isNotEmpty(productDetailList)) {
-                String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
-                obj.setProductName(productName);
+            if (CollectionUtils.isNotEmpty(skuVOList)) {
+                SkuVO skuVO = skuVOList.stream().filter(e -> e.getSkuId().equals(obj.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(skuVO)) {
+                    throw new ServiceException(ApiError.ERROR_95084);
+                }
+                obj.setProductName(skuVO.getSkuName());
+                obj.setSpuNo(skuVO.getSpuNo());
+                obj.setUnitName(skuVO.getUnitName());
             }
             if (CollectionUtils.isNotEmpty(purchaseOrderDetailList)) {
                 Integer purchaseQty = purchaseOrderDetailList.stream().filter(e -> e.getId().equals(obj.getPurchaseOrderDetailId())).map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -373,7 +379,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 Integer receiveQty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 obj.setReceiveQty(receiveQty);
             }
-
+            //库存状态默认可用
+            obj.setInventoryStatusName(InventoryStatusEnum.USABLE.getName());
         });
         dto.setDetails(details);
 
@@ -384,6 +391,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         }
         PoInstockDTO.SupplierDTO supplierDTO = new PoInstockDTO.SupplierDTO();
         supplierDTO.setSupplierId(purchaseOrderSupplierEntity.getSupplierId());
+        supplierDTO.setSupplierName(purchaseOrderSupplierEntity.getSupplierName());
         supplierDTO.setSupplierContactId(purchaseOrderSupplierEntity.getSupplierContactId());
 
         //查询供应商信息

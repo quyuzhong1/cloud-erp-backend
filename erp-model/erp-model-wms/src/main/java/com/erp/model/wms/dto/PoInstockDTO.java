@@ -334,6 +334,11 @@ public class PoInstockDTO implements Serializable {
         private String supplierId;
 
         /**
+         * 供应商
+         */
+        private String supplierName;
+
+        /**
          * 供应商联系人id
          */
         private String supplierContactId;
@@ -374,14 +379,44 @@ public class PoInstockDTO implements Serializable {
         private String purchaseUserId;
 
         /**
+         * 采购员
+         */
+        private String purchaseUserName;
+
+        /**
          * 收料组织id
          */
         private String receiveOrgId;
 
         /**
+         * 收料组织
+         */
+        private String receiveOrgName;
+
+        /**
          * 采购部门id
          */
         private String purchaseDeptId;
+
+        /**
+         * 采购部门
+         */
+        private String purchaseDeptName;
+
+        /**
+         * 仓管员
+         */
+        private String stockInUserName;
+
+        /**
+         * 交货仓库
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 入库部门
+         */
+        private String stockInDeptName;
 
         /**
          * 新品首批（false否,true是）
@@ -402,6 +437,16 @@ public class PoInstockDTO implements Serializable {
          * 采购单号
          */
         private String purchaseOrderCode;
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+        /**
+         * 审核人
+         */
+        private String approveUserName;
 
         /**
          * 明细
