@@ -41,8 +41,6 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
 
     @Resource
     private ProcessTaskCcService processTaskCcService;
-    @Resource
-    private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
 
     @Override
     public Boolean updateApprove(String taskId, ApproveTypeEnum approveType, String comment, String activityId, ProcessManagementEntity managementEntity) {
@@ -74,15 +72,9 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
                     .update();
         }
         // 发送抄送消息
-        NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
-        noticeMsgInfoDTO.setReceiverUserIds(new ArrayList<>(Arrays.asList("1645710077245652993")));
-        noticeMsgInfoDTO.setTitle(StrUtil.format("【流程管理中心】审批结果抄送"));
-        noticeMsgInfoDTO.setContent(StrUtil.format("**单据名称: **{}\n **审批人：** {} \n 审批结果：{}！", managementEntity.getProcessName(), entity.getCurApproveName(), approveType.getName()));
-        noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.FLW_TASK);
-        // 默认tag请指定为msg_notice_default_tag，可以根据不同业务自行指定
-        SendResult sendResult = mqProducerService.sendNoticeMsg(noticeMsgInfoDTO, Boolean.TRUE);
-        // 审批完成后发送抄送消息更新抄送状态
-        processTaskCcService.updateCcStatus(entity.getProcessInstanceId(), entity.getTaskId(), entity.getId());
+        String title = StrUtil.format("【流程管理中心】审批结果抄送");
+        String content = StrUtil.format("**单据名称: **{}\n**审批人：** {} \n**审批结果：**{}！", managementEntity.getProcessName(), entity.getCurApproveName(), approveType.getName());
+        processTaskCcService.sendCcMsg(entity, title, content);
         return Boolean.TRUE;
     }
 
