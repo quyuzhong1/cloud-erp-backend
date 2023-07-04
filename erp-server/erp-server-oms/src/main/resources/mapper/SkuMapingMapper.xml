@@ -138,7 +138,7 @@
         FROM sku_maping sm
         INNER JOIN
         shop_info si ON sm.shop_id=si.id and si.is_deleted=FALSE
-        WHERE  sm.is_deleted=FALSE
+        WHERE  sm.is_deleted=FALSE  AND sm.is_expire=FALSE
         AND si.customer_code=(SELECT code FROM customer_info WHERE id=#{params.customerId})
         <if test="params.no!=null and params.no!=''">
             AND sm.product_sku_no ILIKE concat('%', #{params.no} ,'%')

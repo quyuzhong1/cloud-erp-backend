@@ -12,10 +12,7 @@ import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.DocsPermissionEntity;
-import com.erp.model.plm.entity.ProjectTaskEntity;
-import com.erp.model.plm.entity.TaskDeliveryDocsEntity;
-import com.erp.model.plm.entity.TaskDocsNameEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.server.plm.constant.AdminUserConstant;
 import com.erp.server.plm.mapper.TaskDocsMapper;
@@ -25,12 +22,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * @Classname TaskDocsServiceImpl
-
  * @Date 2022-09-22 9:43
  * @Created by yl
  */
@@ -49,6 +46,9 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
 
     @Autowired
     private ProjectTaskService projectTaskService;
+
+    @Resource
+    private TaskDocHistoryService taskDocHistoryService;
 
 
     /**
@@ -196,7 +196,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         if (CollectionUtils.isNotEmpty(list)) {
             Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
             Integer finishCode = TaskStateEnum.FINISH.getCode();
-            List<Integer> statusList=Arrays.asList(approvalPass,finishCode);
+            List<Integer> statusList = Arrays.asList(approvalPass, finishCode);
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(params.getFlagId());
             for (DeliveryDocsDTO item : list) {
                 ProjectTaskEntity entity = taskList.stream().filter(d -> d.getId().equals(item.getTaskId())).findFirst().orElse(null);
@@ -279,6 +279,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
     @Override
     public List<DeliveryDocsDTO> getByTaskId(String taskId) {
         List<DeliveryDocsDTO> list = baseMapper.getByTaskId(taskId);
+        List<TaskDocHistoryEntity> docHistoryList = taskDocHistoryService.listByTaskIdList(Arrays.asList(taskId));
         ProjectTaskEntity task = projectTaskService.getById(taskId);
         Integer finish = TaskStateEnum.FINISH.getCode();
         for (DeliveryDocsDTO item : list) {
@@ -286,6 +287,20 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                 item.setOldFileName(item.getFileName());
                 item.setOldFileUrl(item.getFileUrl());
                 item.setOldUploadType(item.getUploadType());
+                Boolean isChange = docHistoryList.stream().filter(h -> item.getFinishDocsId().equals(h.getFinishDocId())).
+                        findFirst().map(TaskDocHistoryEntity::getIsChangeSuccess).orElse(null);
+                 //当不是空的时候
+                if(isChange!=null){
+                    //变更成功了 就不不显示
+                    if(isChange){
+                        item.setIsChange(Boolean.FALSE);
+                    }else{
+                        item.setIsChange(Boolean.TRUE);
+                    }
+                }else{
+                    item.setIsChange(Boolean.FALSE);
+                }
+
             }
         }
         return list;
@@ -671,7 +686,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                             noContainDocsPowerList.add(deliveryDocsId);
                         }
                     }
-                } else{
+                } else {
                     //没有设置权限 也应该看到
                     noContainDocsPowerList.add(deliveryDocsId);
                 }

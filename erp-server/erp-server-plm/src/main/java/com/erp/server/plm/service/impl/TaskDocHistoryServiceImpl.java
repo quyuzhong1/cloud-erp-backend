@@ -12,6 +12,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -65,7 +66,7 @@ public class TaskDocHistoryServiceImpl extends SuperServiceImpl<TaskDocHistoryMa
         QueryWrapper<TaskDocHistoryEntity> queryWrapper = new QueryWrapper<>();
         queryWrapper.select("MAX(change_version) as maxVersion");
         queryWrapper.lambda().eq(TaskDocHistoryEntity::getFinishDocId, finishDocId);
-        List<Object>  list = baseMapper.selectObjs(queryWrapper);
+        List<Object> list = baseMapper.selectObjs(queryWrapper);
         if (CollectionUtils.isNotEmpty(list)) {
             Object obj = list.get(0);
             if (obj != null) {
@@ -112,20 +113,37 @@ public class TaskDocHistoryServiceImpl extends SuperServiceImpl<TaskDocHistoryMa
 
     /**
      * 根据任务ids 更改文档历史
-     * @author yl
-     * @date 2023-07-04 16:58
+     *
      * @param isChangeDocsTaskIdList
      * @return void
+     * @author yl
+     * @date 2023-07-04 16:58
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateChangeResultByTaskIds(List<String> isChangeDocsTaskIdList) {
-        if(CollectionUtils.isNotEmpty(isChangeDocsTaskIdList)){
+        if (CollectionUtils.isNotEmpty(isChangeDocsTaskIdList)) {
             this.lambdaUpdate().set(TaskDocHistoryEntity::getIsChangeSuccess, Boolean.TRUE).
                     in(TaskDocHistoryEntity::getTaskId, isChangeDocsTaskIdList).
                     eq(TaskDocHistoryEntity::getIsChangeSuccess, Boolean.FALSE).update();
         }
 
+    }
+
+    /**
+     * 根据任务ids 查询历史文档
+     *
+     * @param taskIdList
+     * @return java.util.List<com.erp.model.plm.entity.TaskDocHistoryEntity>
+     * @author yl
+     * @date 2023-07-04 20:20
+     */
+    @Override
+    public List<TaskDocHistoryEntity> listByTaskIdList(List<String> taskIdList) {
+        if (CollectionUtils.isEmpty(taskIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(TaskDocHistoryEntity::getTaskId,taskIdList).orderByDesc(TaskDocHistoryEntity::getCreateTime).list();
     }
 
 

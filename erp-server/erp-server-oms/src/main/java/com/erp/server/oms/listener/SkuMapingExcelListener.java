@@ -106,16 +106,35 @@ public class SkuMapingExcelListener extends AnalysisEventListener<SkuMapingImpor
         if (Objects.isNull(platform)) {
             errorMsgList.add("平台 不存在");
         }
+
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             skuMapingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(skuMapingImportExcelDTO);
             return;
         }
+
+
         //平台标识
         String platformDict = platform.getValue();
         //平台skuno
         String platformSkuNo = skuMapingImportExcelDTO.getPlatformSkuNo();
+
+        //已对应的平台sku
+        List<SkuMapingEntity> excelList = skuMapingList.stream().filter(s -> s.getPlatformSkuNo().equals(platformSkuNo)
+                && platformDict.equals(s.getPlatformDict())
+                && sku.getSkuId().equals(s.getProductSkuId())
+        ).collect(Collectors.toList());
+
+        if(CollectionUtils.isNotEmpty(excelList)){
+            errorMsgList.add("同平台只能对应一个个产品sku");
+        }
+        //存在错误数据则直接返回
+        if (errorMsgList.size() > 0) {
+            skuMapingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(skuMapingImportExcelDTO);
+            return;
+        }
 
         //平台skuname
         String platformSkuName = skuMapingImportExcelDTO.getPlatformSkuName();

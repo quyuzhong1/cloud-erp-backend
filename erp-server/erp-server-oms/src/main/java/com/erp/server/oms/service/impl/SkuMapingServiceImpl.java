@@ -261,9 +261,7 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
             throw new ServiceException(ApiError.ERROR_92053);
 
         }
-
-
-        checkExist(id, dto.getPlatformDict(), dto.getPlatformSkuNo());
+        checkExist(id, dto.getPlatformDict(), dto.getPlatformSkuNo(),dto.getProductSkuId());
         LocalDateTime now = LocalDateTime.now();
         skuMaping.setExpireTime(now);
         skuMaping.setIsExpire(Boolean.TRUE);
@@ -274,6 +272,8 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
         addSkuMaping.setPlatformSkuName(dto.getPlatformSkuName());
         addSkuMaping.setPlatformName(dictBasic.getName());
         addSkuMaping.setProductSkuNo(skuVOList.get(0).getSkuNo());
+        addSkuMaping.setProductSkuId(productSkuId);
+        addSkuMaping.setPlatformDict(platformDict);
         addSkuMaping.setIsExpire(Boolean.FALSE);
         addSkuMaping.setMatchResult(Boolean.TRUE);
         addSkuMaping.setEffectiveTime(now);
@@ -285,10 +285,11 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
 
     /**
      * 销售订单添加客户sku
-     * @author yl
-     * @date 2023-07-01 9:19
+     *
      * @param dto
      * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.SkuMapingDTO.ProductSkuInfoDTO>
+     * @author yl
+     * @date 2023-07-01 9:19
      */
     @Override
     public PagingVO<SkuMapingDTO.ProductSkuInfoDTO> listPaging(PagingDTO<SkuMapingDTO.ListParamDTO> dto) {
@@ -311,15 +312,15 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
         return new PagingVO<>(pageData);
     }
 
-    private void checkExist(String id, String platformDict, String platformSkuNo) {
+    private void checkExist(String id, String platformDict, String platformSkuNo,String skuId) {
         LambdaQueryWrapper<SkuMapingEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SkuMapingEntity::getPlatformDict, platformDict);
         queryWrapper.eq(SkuMapingEntity::getPlatformSkuNo, platformSkuNo);
         queryWrapper.eq(SkuMapingEntity::getIsExpire, Boolean.FALSE);
+        queryWrapper.eq(SkuMapingEntity::getProductSkuId, skuId);
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(SkuMapingEntity::getId, id);
         }
-        queryWrapper.last("LIMIT 1");
         long count = this.count(queryWrapper);
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_92052);
@@ -340,12 +341,12 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
         List<String> skuIdList = list.stream().map(SkuMapingDTO.PagingViewDTO::getProductSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         for (SkuMapingDTO.PagingViewDTO item : list) {
-            Boolean matchResult=item.getMatchResult();
+            Boolean matchResult = item.getMatchResult();
             String skuId = item.getProductSkuId();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().map(SkuVO::getSkuName).orElse("");
             item.setProductSkuName(skuName);
-            item.setMatchResultStr(matchResult?"已匹配":"未匹配");
+            item.setMatchResultStr(matchResult ? "已匹配" : "未匹配");
         }
     }
 

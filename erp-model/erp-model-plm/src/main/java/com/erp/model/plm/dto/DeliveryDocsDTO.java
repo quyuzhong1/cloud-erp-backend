@@ -124,6 +124,12 @@ public class DeliveryDocsDTO implements Serializable {
     private Boolean deleteFlag=true;
 
 
+    /**
+     * 是否变更
+     */
+    private Boolean isChange;
+
+
 
 
 }

@@ -52,4 +52,14 @@ public interface TaskDocHistoryService extends SuperService<TaskDocHistoryEntity
      * @return void
      */
     void updateChangeResultByTaskIds(List<String> isChangeDocsTaskIdList);
+
+    
+    /**
+     * 根据任务ids 查询历史文档
+     * @author yl
+     * @date 2023-07-04 20:20
+     * @param taskIdList
+     * @return java.util.List<com.erp.model.plm.entity.TaskDocHistoryEntity>
+     */
+    List<TaskDocHistoryEntity> listByTaskIdList(List<String> taskIdList);
 }
