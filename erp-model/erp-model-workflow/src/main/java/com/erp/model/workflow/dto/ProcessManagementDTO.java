@@ -317,6 +317,10 @@ public class ProcessManagementDTO {
          * 业务编码
          */
         private String businessCode;
+        /**
+         * 流程创建时间
+         */
+        private String managementCreateUserId;
 
         /**
          * 当前节点ID

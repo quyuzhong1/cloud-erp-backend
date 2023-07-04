@@ -36,6 +36,7 @@
         pm.business_name,
         pm.approve_status,
         pm.act_process_definition_id,
+        pm.create_user_id as managementCreateUserId,
         ptm.id AS taskManagementId,
         ptm.cur_activity_id,
         ptm.task_id,

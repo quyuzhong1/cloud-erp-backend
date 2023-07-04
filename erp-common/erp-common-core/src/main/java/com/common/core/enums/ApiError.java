@@ -131,7 +131,7 @@ public enum ApiError implements Serializable {
     ERROR_9046(9046, "字段编号不正确"),
 
     /**
-     * 工作流错误
+     * 工作流错误 workflow
      * 从9040 开始  以端口号
      */
     ERROR_94000(94000, "流程不存在或者流程已结束"),
@@ -166,6 +166,8 @@ public enum ApiError implements Serializable {
     ERROR_WORK_MENU_FEIGN(94027, "工作流feign调用的类名不存在,请检查"),
     PROCESS_ALREADY_END(94028,"审核流程已经结束"),
     PROCESS_LIST_APPROVER_ERROR(94029,"流程审核人查询失败"),
+    // 非流程发起人无法撤销
+    PROCESS_NOT_START_USER(94030,"非流程发起人无法撤销"),
 
 
     /**

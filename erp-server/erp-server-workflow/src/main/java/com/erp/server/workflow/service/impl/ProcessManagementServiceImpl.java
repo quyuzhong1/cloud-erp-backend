@@ -2,6 +2,7 @@ package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
@@ -241,7 +242,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         //添加审批意见
         identityService.setAuthenticatedUserId(dto.getUserId());
         Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
-        variables.put("approveType", dto.getApproveType().getStatus());
+        variables.put("lastApproveType", dto.getApproveType().getStatus());
+        variables.put("lastApproveTime", LocalDateTime.now());
+        variables.put("lastComment", dto.getComment());
+        variables.put("lastApprover", dto.getUserId());
         runtimeService.setVariables(processInstanceId, variables);
         if(ApproveTypeEnum.PASS.equals(dto.getApproveType())) {
             // 审核通过
@@ -276,6 +280,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.PROCESS_ALREADY_END);
         }
         // 审核人校验
+
         ProcessManagementDTO.ManagementTaskDTO managementTask = managementTaskDTOS.stream()
                 .filter(managementTaskDTO -> managementTaskDTO.getCurApproveId().equals(userId))
                 .findFirst()
@@ -395,6 +400,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if(ApproveTypeEnum.REJECT_APPOINT.equals(dto.getApproveType())) {
             Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
             variables.put("approveType", ApproveTypeEnum.REJECT_APPOINT.getStatus());
+            variables.put("lastApproveTime", LocalDateTime.now());
+            variables.put("lastComment", dto.getComment());
+            variables.put("lastApprover", dto.getUserId());
             runtimeService.setVariables(processInstanceId, variables);
             // 驳回指定节点
             runtimeService
@@ -482,6 +490,15 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
         // 查询流程实例
         ProcessManagementDTO.ManagementTaskDTO managementTask = getCurApproveTask(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
+        List<ProcessManagementDTO.ManagementTaskDTO> managementTaskDTOS = listTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey());
+        if (CollectionUtil.isEmpty(managementTaskDTOS)) {
+            throw new ServiceException(ApiError.PROCESS_ALREADY_END);
+        }
+        String managementCreateUserId = managementTaskDTOS.get(0).getManagementCreateUserId();
+        if (!StrUtil.equals(managementCreateUserId, dto.getUserId())) {
+            throw new ServiceException(ApiError.PROCESS_NOT_START_USER);
+        }
+
         // 查询当前实例
         ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(managementTask.getProcessInstanceId()).singleResult();
         if(null == processInstance || processInstance.isEnded()){
@@ -798,11 +815,13 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         ProcessManagementEntity entity = lambdaQuery()
                 .eq(ProcessManagementEntity::getProcessInstanceId, processInstanceId)
                 .oneOpt().orElseThrow(() -> new ServiceException(ApiError.ERROR_PROCESS_NOT_EXIST));
-        ProcessTaskManagementEntity taskEntity = processTaskManagementService.lastTask(processInstanceId);
         Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
-        String approveTypeCode = (String)variables.getOrDefault("approveType", "");
+        String lastApproveType = (String)variables.getOrDefault("lastApproveType", "");
+        LocalDateTime lastApproveTime = (LocalDateTime) variables.get("lastApproveTime");
+        String lastComment = (String) variables.getOrDefault("lastComment", "");
+        String lastApprover = (String) variables.getOrDefault("lastApprover", "");
         // 流程信息传递给业务系统
-        EndProcessDTO dto = new EndProcessDTO(entity, taskEntity, approveTypeCode);
+        EndProcessDTO dto = new EndProcessDTO(entity, lastApproveType,lastApproveTime,lastApprover,lastComment);
         // 获取业务系统feign
         return callFeign(entity.getBusinessKey(), dto);
     }

@@ -50,15 +50,6 @@ public class EndProcessDTO {
      */
     private String comment;
 
-    public EndProcessDTO(ProcessManagementEntity entity, ProcessTaskManagementEntity taskEntity, String approveTypeCode) {
-        this.businessKey = entity.getBusinessKey();
-        this.businessId = entity.getBusinessId();
-        this.approveStatus = ApproveTypeEnum.getByCode(approveTypeCode);
-        this.approveUserId = taskEntity.getApproveId();
-        this.approveTime = taskEntity.getApproveTime();
-        this.comment = taskEntity.getRemark();
-    }
-
     public EndProcessDTO(ProcessManagementDTO.RevokeDTO dto) {
         this.businessKey = dto.getBusinessKey();
         this.businessId = dto.getBusinessId();
@@ -66,5 +57,14 @@ public class EndProcessDTO {
         this.approveUserId = dto.getUserId();
         this.approveTime = LocalDateTime.now();
         this.comment = dto.getRemark();
+    }
+
+    public EndProcessDTO(ProcessManagementEntity entity, String approveTypeCode, LocalDateTime approveTime, String lastApprover, String comment) {
+        this.businessKey = entity.getBusinessKey();
+        this.businessId = entity.getBusinessId();
+        this.approveStatus = ApproveTypeEnum.getByCode(approveTypeCode);
+        this.approveUserId = lastApprover;
+        this.approveTime = approveTime;
+        this.comment = comment;
     }
 }
