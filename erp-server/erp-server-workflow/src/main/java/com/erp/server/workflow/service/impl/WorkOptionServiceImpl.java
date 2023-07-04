@@ -582,7 +582,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         baseApproveParamDTO.setComment(dto.getComment());
         switch (TableNameEnum.getByCode(entity.getBusinessKey())) {
             case PURCHASE_PRICE_CHANGE:
-                scmTaskFeign.purchaseChangeApprove(baseApproveParamDTO);
+                scmTaskFeign.purchasePriceChangeApprove(baseApproveParamDTO);
                 break;
             case SALES_DEMAND:
                 scmTaskFeign.salesDemandApprove(baseApproveParamDTO);

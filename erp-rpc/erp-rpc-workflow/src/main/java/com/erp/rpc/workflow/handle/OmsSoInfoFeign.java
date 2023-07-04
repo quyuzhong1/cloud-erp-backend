@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
  * @Date 2023/7/4 11:18
  **/
 @FeignClient(value = "erp-oms", contextId = "so")
-public interface SoInfoFeign extends BaseWorkflowService {
+public interface OmsSoInfoFeign extends BaseWorkflowService {
     /**
      * purchase_price 采购价目
      * @param dto
