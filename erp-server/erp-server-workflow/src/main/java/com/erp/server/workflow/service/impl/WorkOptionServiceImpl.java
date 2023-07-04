@@ -31,6 +31,9 @@ import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.model.workflow.entity.WorkOptionEntity;
 import com.erp.model.workflow.enums.ApproveSearchOptionEnum;
 import com.erp.model.workflow.enums.SysClassifyEnum;
+import com.erp.rpc.oms.feign.CustomerFeign;
+import com.erp.rpc.oms.feign.SoChangeFeign;
+import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
@@ -83,6 +86,15 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private SoInfoFeign soInfoFeign;
+
+    @Resource
+    private SoChangeFeign soChangeFeign;
+
+    @Resource
+    private CustomerFeign customerFeign;
 
     @Resource
     private ProcessManagementService processManagementService;
@@ -514,6 +526,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             case WMS:
                 wmsApprove(dto, entity);
                 break;
+            case OMS:
+                omsApprove(dto, entity);
+                break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);
         }
@@ -621,6 +636,27 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 break;
             case PO_RETURN:
                 wmsTaskFeign.purchaseReturnOrderApprove(baseApproveParamDTO);
+                break;
+            default:
+                throw new ServiceException(ApiError.ERROR_94006);
+        }
+        return Boolean.TRUE;
+    }
+
+    private Boolean omsApprove(ApproveParamDTO dto, ProcessManagementEntity entity) {
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setIds(Arrays.asList(dto.getId()));
+        baseApproveParamDTO.setType(dto.getType());
+        baseApproveParamDTO.setComment(dto.getComment());
+        switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
+            case SO_INFO:
+                soInfoFeign.approve(baseApproveParamDTO);
+                break;
+            case SO_CHANGE:
+                soChangeFeign.approve(baseApproveParamDTO);
+                break;
+            case CUSTOMER_INFO:
+                customerFeign.approve(baseApproveParamDTO);
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);
