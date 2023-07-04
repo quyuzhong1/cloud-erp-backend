@@ -5,6 +5,7 @@ import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
@@ -30,10 +31,7 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -111,6 +109,17 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             resultMap.put("isFirstMassProduct", 2);
         }
 
+
+/*        金蝶不支持修改业务组织：报错：不允许修改主业务组织！
+        //组织机构编码
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getReceiveOrgId()));
+        //收货组织
+        String receiveOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId()))
+                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+        resultMap.put("receiveOrgCode", receiveOrgCode);*/
+
+        //退货组织
+        resultMap.put("supplierCode", entity.getReceiveOrgId());
         //查询供应商信息
         SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(entity.getSupplierId());
         //供应商编码
