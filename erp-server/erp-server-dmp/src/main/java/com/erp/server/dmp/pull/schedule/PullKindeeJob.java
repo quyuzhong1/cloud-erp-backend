@@ -53,8 +53,8 @@ public class PullKindeeJob {
     private MQProducerService mqProducerService;
 
     // 拉取金蝶数据任务
-     @Scheduled(cron = "*/5 * * * * ?")
-     //@XxlJob("kindeeExecute")
+    //@Scheduled(cron = "*/5 * * * * ?")
+    @XxlJob("kindeeExecute")
     public void execute() {
         threadPoolTaskExecutor.execute(() ->{
             pullErpDateThread.executeTask(TaskConstant.KINGDEE_PULL_DATA_TASK);

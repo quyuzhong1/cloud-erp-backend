@@ -8,6 +8,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -580,7 +581,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         baseApproveParamDTO.setIds(Arrays.asList(dto.getId()));
         baseApproveParamDTO.setType(dto.getType());
         baseApproveParamDTO.setComment(dto.getComment());
-        switch (TableNameEnum.getByCode(entity.getBusinessKey())) {
+        switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
             case PURCHASE_PRICE_CHANGE:
                 scmTaskFeign.purchasePriceChangeApprove(baseApproveParamDTO);
                 break;
