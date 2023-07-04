@@ -227,6 +227,10 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //处理数据id
         doOpHandleDataId(dto.getWarehouseId(), dto.getReceiveOrgId(), dto.getWarehouseKeeperId(),dto.getReceiverId(), entity);
 
+        // 此处增加限制，如果是从FBA发货单同步下来生成的加工单不允许新增或移除SKU
+        List<MachineDetailEntity> originMachineDetailList = machineDetailService.listByMainId(dto.getId());
+        checkFbaMachine(old, originMachineDetailList, dto.getDetailList());
+
         log.info("加工单修改，id=【{}】", dto.getId());
 
         //添加日志
@@ -796,6 +800,30 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                 .set(MachineInfoEntity::getApproveUserName, "")
                 .set(MachineInfoEntity::getApproveTime, null)
                 .update();
+    }
+
+    /**
+     * 检查FBA发货单生成的加工单修改是否新增或移除了SKU
+     * @param machineInfoEntity
+     * @param originDetailList
+     * @param updateDetailList
+     */
+    private void checkFbaMachine(MachineInfoEntity machineInfoEntity, List<MachineDetailEntity> originDetailList, List<MachineDetailDTO.UpdateDTO> updateDetailList) {
+        if(!Objects.equals(machineInfoEntity.getSourceType(), SourceTypeEnum.MABANG_FBA_DELIVERY.getCode())) {
+            return;
+        }
+        // 原加工单父级SKU集合
+        List<String> originParentSkuList = originDetailList.stream().map(MachineDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
+        // 提交的加工单父级SKU集合
+        List<String> updateParentSkuList = updateDetailList.stream().map(MachineDetailDTO.UpdateDTO::getSkuNo).distinct().collect(Collectors.toList());
+        if(originParentSkuList.size() != updateParentSkuList.size()) {
+            throw new ServiceException("FBA发货单同步生成的加工单不允许新增或移除SKU");
+        }
+        updateDetailList.stream().forEach(updateSku->{
+            if(!originParentSkuList.contains(updateSku.getSkuNo())) {
+                throw new ServiceException("FBA发货单同步生成的加工单不允许新增或移除SKU");
+            }
+        });
     }
 
 }
