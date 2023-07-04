@@ -447,7 +447,7 @@ public class MQConsumerService {
     public class ConsumerErpSoReturnInstock implements RocketMQListener<KingdeeReturnOrderEntity> {
         @Override
         public void onMessage(KingdeeReturnOrderEntity ext) {
-            log.info("监听金蝶B2C销售出库单信息消息：entity={}", JSONUtil.toJsonStr(ext));
+            log.info("监听金蝶B2C销售退货信息消息：entity={}", JSONUtil.toJsonStr(ext));
             //新增发送任务
             DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
             dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
