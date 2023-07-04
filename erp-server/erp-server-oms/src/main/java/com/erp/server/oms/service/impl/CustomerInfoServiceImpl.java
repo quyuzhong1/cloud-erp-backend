@@ -27,7 +27,6 @@ import com.erp.model.oms.entity.CustomerContactEntity;
 import com.erp.model.oms.entity.CustomerGroupEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.enums.DictBasicEnum;
-import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
@@ -668,6 +667,17 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
+
+        //撤销现有流程
+        LoginUser userInfo = commonService.getUserInfo();
+        ids.forEach(obj ->{
+            ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+            revokeDTO.setBusinessId(obj);
+            revokeDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_INFO.getCode());
+            revokeDTO.setUserId(userInfo.getUid());
+            workflowFeign.revokeProcess(revokeDTO);
+        });
+
         List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveIngStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
