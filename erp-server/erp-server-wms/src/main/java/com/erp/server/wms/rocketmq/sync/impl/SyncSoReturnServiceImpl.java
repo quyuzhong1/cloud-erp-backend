@@ -135,7 +135,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
 
                 instockDetailEntity.setMainId(instockEntity.getId());
                 instockDetailEntity.setSkuNo(kingdeeReturnOrderItemEntity.getFMaterialNumber());
-                instockDetailEntity.setSkuId(skuVO.getSkuName());
+                instockDetailEntity.setSkuId(skuVO.getSkuId());
                 instockDetailEntity.setRealQty(Double.valueOf(kingdeeReturnOrderItemEntity.getFRealQty()).intValue());
                 detailEntityList.add(instockDetailEntity);
             }
