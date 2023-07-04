@@ -1351,6 +1351,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
     }
 
+    @Override
+    public BigDecimal getSkuPurchasePrice(String skuId) {
+        return null;
+    }
+
     /**
      * 处理数据id
      */

@@ -11,6 +11,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
+import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import org.apache.commons.lang3.StringUtils;
@@ -390,6 +391,16 @@ public class SoInfoController extends BaseController {
     public ApiResult<List<SoInfoDTO.GenerateSoReturnView>> generateSoReturnView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<SoInfoDTO.GenerateSoReturnView> list = soInfoService.generateSoReturnView(dto.getIds());
         return success(list);
+    }
+
+    /**
+     * 根据sku id和数量计算成本毛利
+     * @param costParam
+     * @return
+     */
+    @PostMapping("/getSkuCostProfit")
+    public ApiResult<SkuCostProfitDTO.SkuCostProfitResult> getSkuCostProfit(@RequestBody @Validated SkuCostProfitDTO.SkuCostProfitParam costParam) {
+        return success(soInfoService.getSkuCostProfit(costParam));
     }
 
 }

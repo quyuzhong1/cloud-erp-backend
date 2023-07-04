@@ -129,4 +129,11 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      *
      */
     void updateArrivalStatusByIds(String arrivalStatus, List<String> ids, List<PurchaseOrderDetailEntity> purchaseOrderDetailList, String remark);
+
+    /**
+     * 根据sku id集合获取最新的一个审核通过的采购订单明细，按采购日期倒序
+     * @param skuIds
+     * @return List<PurchaseOrderDetailEntity>
+     */
+    List<PurchaseOrderDetailEntity> getLatest(List<String> skuIds);
 }
