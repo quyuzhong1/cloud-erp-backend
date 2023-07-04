@@ -417,24 +417,7 @@ public class MQConsumerService {
         public void onMessage(KingdeeReturnOrderEntity ext) {
             log.info("监听金蝶B2C销售退货信息消息：entity={}", JSONUtil.toJsonStr(ext));
             //新增发送任务
-            DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
-            dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
-            dmpSyncTaskEntity.setSourceType(SourceTypeEnum.SAL_RETURNSTOCK.getCode());
-            dmpSyncTaskEntity.setSourceId(ext.getFId());
-            dmpSyncTaskEntity.setSourceCode(ext.getFBillNo());
-            dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
-            dmpSyncTaskEntity.setStatus(SyncKingdeeStatusEnum.IN_SYNC.getCode());
-            dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
-            dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.SYNC_KINGDEE_RETURN_ORDER_TO_WMS_TAG.getName());
-            String mqData = JSONObject.toJSONString(ext);
-            dmpSyncTaskEntity.setMqData(mqData);
-            dmpSyncTaskService.saveOrUpdateDmpSyncTask(dmpSyncTaskEntity);
-            DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), mqData);
-            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.SYNC_KINGDEE_RETURN_ORDER_TO_WMS_TAG.getName(),
-                    dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
-            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-            }
+            dmpSyncTaskService.syncKingdeeReturnOrderToWms(ext);
         }
     }
 
