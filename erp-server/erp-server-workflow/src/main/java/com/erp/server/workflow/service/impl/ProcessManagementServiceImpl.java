@@ -487,20 +487,20 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 业务未启动流程
             return new ProcessManagementDTO.RevokeResultDTO(dto);
         }
-
         // 查询流程实例
-        ProcessManagementDTO.ManagementTaskDTO managementTask = getCurApproveTask(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
         List<ProcessManagementDTO.ManagementTaskDTO> managementTaskDTOS = listTaskByBusiness(dto.getBusinessId(), dto.getBusinessKey());
         if (CollectionUtil.isEmpty(managementTaskDTOS)) {
             throw new ServiceException(ApiError.PROCESS_ALREADY_END);
         }
-        String managementCreateUserId = managementTaskDTOS.get(0).getManagementCreateUserId();
+        ProcessManagementDTO.ManagementTaskDTO managementTask = managementTaskDTOS.get(0);
+        String managementCreateUserId = managementTask.getManagementCreateUserId();
         if (!StrUtil.equals(managementCreateUserId, dto.getUserId())) {
             throw new ServiceException(ApiError.PROCESS_NOT_START_USER);
         }
 
+        String processInstanceId = managementTask.getProcessInstanceId();
         // 查询当前实例
-        ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(managementTask.getProcessInstanceId()).singleResult();
+        ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
         if(null == processInstance || processInstance.isEnded()){
             throw new ServiceException(ApiError.ERROR_94000);
         }

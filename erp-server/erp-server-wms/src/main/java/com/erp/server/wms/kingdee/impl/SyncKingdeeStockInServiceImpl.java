@@ -11,7 +11,9 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -74,6 +76,8 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
      **/
     @Override
     public void syncDataToKingdee(PoInstockEntity entity, String operate) {
+        PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
+
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -110,13 +114,17 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         }
 
 
-/*        金蝶不支持修改业务组织：报错：不允许修改主业务组织！
         //组织机构编码
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getReceiveOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getReceiveOrgId(), purchaseOrderEntity.getPurchaseOrgId()));
         //收货组织
-        String receiveOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId()))
+        String receiveOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId())).distinct()
                 .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
-        resultMap.put("receiveOrgCode", receiveOrgCode);*/
+        resultMap.put("receiveOrgCode", receiveOrgCode);
+
+        //采购组织
+        String purchaseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrderId())).distinct()
+                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+        resultMap.put("purchaseOrgCode", purchaseOrgCode);
 
         //退货组织
         resultMap.put("supplierCode", entity.getReceiveOrgId());

@@ -156,6 +156,8 @@ public class KingdeeReturnOrderConsumer implements RocketMQListener<Map<String, 
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
             //给修改json对象赋值ID
             KingdeeUtils.makeFieldJson(json,"FID",".", id);
+            //更新数据不能传入库组织
+            json.remove("FStockOrgId");
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);

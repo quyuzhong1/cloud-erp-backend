@@ -81,6 +81,8 @@ public class MQConsumerService {
     @Autowired
     private DmpFbaDeliveryService dmpFbaDeliveryService;
 
+    @Autowired
+    private DmpTransferInfoService dmpTransferInfoService;
 
 
     // topic需要和生产者的topic一致，consumerGroup属性是必须指定的，内容可以随意
@@ -335,30 +337,14 @@ public class MQConsumerService {
     public class ConsumerErpTransferDirectInfo implements RocketMQListener<DmpTransferInfoDTO> {
         @Override
         public void onMessage(DmpTransferInfoDTO ext) {
+
             log.info("监听直接调拨单信息消息：entity={}", JSONUtil.toJsonStr(ext));
-            //新增发送任务
-            DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
-            dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
-            dmpSyncTaskEntity.setSourceType(SourceTypeEnum.STK_TRANSFERDIRECT.getCode());
-            dmpSyncTaskEntity.setSourceId(ext.getSourceId());
-            dmpSyncTaskEntity.setSourceCode(ext.getCode());
-            dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
-            dmpSyncTaskEntity.setStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
-            dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
-            dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.SYNC_KINGDEE_TRANSFER_INFO_TO_WMS_TAG.getName());
-            String mqData = JSONObject.toJSONString(ext);
-            dmpSyncTaskEntity.setMqData(mqData);
-            dmpSyncTaskService.saveOrUpdateDmpSyncTask(dmpSyncTaskEntity);
+            dmpTransferInfoService.sendSyncTask(ext);
+
             MapUtil mapUtil = getMapParam();
             if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
                 OrderMongoDTO updateDto = new OrderMongoDTO(ext.getSourceId());
                 finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_DIRECT_TRANSFER, KingdeeTransferDirectEntity.class);
-            }
-            DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), mqData);
-            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.SYNC_KINGDEE_TRANSFER_INFO_TO_WMS_TAG.getName(),
-                    dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
-            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }
     }
@@ -369,30 +355,12 @@ public class MQConsumerService {
     @Service
     @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
             selectorExpression = "kingdee_b2c_so_outatock_to_task_tag",
-            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_outatock_to_wms")
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_outstock_consumer")
     public class ConsumerErpSoOutstockInfo implements RocketMQListener<KingdeeDeliveryDetailEntity> {
         @Override
         public void onMessage(KingdeeDeliveryDetailEntity ext) {
             log.info("监听金蝶B2C销售出库单信息消息：entity={}", JSONUtil.toJsonStr(ext));
-            //新增发送任务
-            DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
-            dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
-            dmpSyncTaskEntity.setSourceType(SourceTypeEnum.SAL_OUTSTOCK.getCode());
-            dmpSyncTaskEntity.setSourceId(ext.getFId());
-            dmpSyncTaskEntity.setSourceCode(ext.getFBillNo());
-            dmpSyncTaskEntity.setTargetPlatformName(PlatformEnum.ERP.getDesc());
-            dmpSyncTaskEntity.setStatus(SyncKingdeeStatusEnum.TO_BE_SYNC.getCode());
-            dmpSyncTaskEntity.setMqTopic(RocketMqTopic.DMP_SYNC_TASK_TOPIC);
-            dmpSyncTaskEntity.setMqTag(RocketMqTagEnum.SYNC_KINGDEE_SO_OUTSTOCK_TAG.getName());
-            String mqData = JSONObject.toJSONString(ext);
-            dmpSyncTaskEntity.setMqData(mqData);
-            dmpSyncTaskService.saveOrUpdateDmpSyncTask(dmpSyncTaskEntity);
-            DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(dmpSyncTaskEntity.getId(), mqData);
-            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_SYNC_TASK_TOPIC, RocketMqTagEnum.SYNC_KINGDEE_SO_OUTSTOCK_TAG.getName(),
-                    dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
-            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-            }
+            deliveryDetailInfoService.syncTask(ext);
         }
     }
 
@@ -447,7 +415,7 @@ public class MQConsumerService {
     public class ConsumerErpSoReturnInstock implements RocketMQListener<KingdeeReturnOrderEntity> {
         @Override
         public void onMessage(KingdeeReturnOrderEntity ext) {
-            log.info("监听金蝶B2C销售出库单信息消息：entity={}", JSONUtil.toJsonStr(ext));
+            log.info("监听金蝶B2C销售退货信息消息：entity={}", JSONUtil.toJsonStr(ext));
             //新增发送任务
             DmpSyncTaskEntity dmpSyncTaskEntity = new DmpSyncTaskEntity();
             dmpSyncTaskEntity.setSourcePlatformName(PlatformEnum.KINGDEE.getDesc());
