@@ -2,10 +2,7 @@ package com.erp.server.scm.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -22,6 +19,7 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -310,20 +308,6 @@ public class PurchaseOrderController extends BaseController {
         return success(list);
     }
 
-
-    /**
-     * 下推收货单保存
-     * @author Will
-     * @date: 2023/3/15 18:26
-     * @param dto
-     * @return ApiResult
-     */
-    @PostMapping("/generateReceive")
-    public ApiResult generateReceive(@RequestBody @Validated PurchaseOrderDTO.ListGenerateReceiveDTO dto) {
-        Boolean flag = purchaseOrderService.generateReceive(dto);
-        return flag == true ? success() : failure();
-    }
-
     /**
      * 下推采购入库单弹窗显示
      * @author Will
@@ -355,8 +339,8 @@ public class PurchaseOrderController extends BaseController {
             menuCode = "scm:purchaseOrder:finishDelivery",
             serviceClass = PurchaseOrderService.class,
             keyIdName = "ids")
-    public ApiResult finishDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = purchaseOrderService.finishDelivery(dto.getIds());
+    public ApiResult finishDelivery(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        Boolean result = purchaseOrderService.finishDelivery(dto.getIds(), dto.getRemark(),Boolean.TRUE);
         return result == true ? success() : failure();
     }
 
@@ -501,8 +485,33 @@ public class PurchaseOrderController extends BaseController {
     }
 
 
+    /**
+     * 查询委外采购订单
+     * @author Will
+     * @date: 2023/6/15 15:09
+     * @param dto
+     * @return ApiResult<List<ViewSubcontractPoDTO>>
+     */
+    @PostMapping("/viewSubcontractPo")
+    public ApiResult<List<PurchaseOrderDTO.ViewSubcontractPoDTO>> viewSubcontractPo(@RequestBody @Validated BaseIdDTO dto) {
+        List<PurchaseOrderDTO.ViewSubcontractPoDTO> list = purchaseOrderService.viewSubcontractPo(dto.getId());
+        return success(list);
+    }
 
 
+    /**
+     * 金蝶导入采购订单
+     * @author Will
+     * @date: 2023/7/5 14:59
+     * @param excelFile
+     * @param response
+     * @return ApiResult
+     */
+    @PostMapping("/kingdeeImportPoFile")
+    public ApiResult kingdeeImportPoFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean flag = purchaseOrderService.kingdeePoImportFile(excelFile,response);
+        return flag == true ? success() : failure();
+    }
 
 
 }

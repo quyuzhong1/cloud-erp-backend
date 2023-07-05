@@ -17,6 +17,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -27,7 +28,7 @@ import java.util.stream.Collectors;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2022/11/23 19:04
  */
 @Service
@@ -42,7 +43,7 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
     @Autowired
     private ProductArchiveService productArchiveService;
 
-    @Autowired
+    @Resource
     private ProjectTaskRefSkuMapper projectTaskRefSkuMapper;
 
     @Autowired
@@ -207,7 +208,8 @@ public class ProjectTaskProgressServiceImpl implements ProjectTaskProgressServic
         List<ProductDetailEntity> allSkuList = productDetailService.getSkuListByProductId(productId);
         //查询产品下面的sku关联关系
         List<ProductTaskRefSkuDTO> refList = projectTaskRefSkuMapper.getTaskRefSkuName(productId);
-
+        Integer taskClose = TaskStateEnum.CLOSE.getCode();
+        taskList=taskList.stream().filter(t->!taskClose.equals(t.getStatus())).collect(Collectors.toList());
         //任务下所有阶段
         List<String> phaseIdList = taskList.stream().map(ProjectTaskEntity::getPhaseId).distinct().collect(Collectors.toList());
 

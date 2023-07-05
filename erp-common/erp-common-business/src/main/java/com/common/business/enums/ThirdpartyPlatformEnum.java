@@ -2,7 +2,7 @@ package com.common.business.enums;
 
 /**
  * @Classname ThirdpartyPlatform
- * @Description TODO
+
  * @Date 2022-07-13 17:12
  * @Created by yl
  */

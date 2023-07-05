@@ -1,7 +1,8 @@
 package com.erp.model.plm.entity;
 
-import cn.hutool.core.date.LocalDateTimeUtil;
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.PlanTaskNameDTO;
@@ -14,7 +15,6 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -77,7 +77,7 @@ public class ProjectTaskEntity extends BaseEntity implements Serializable {
     private LocalDate planStartTime;
 
     /**
-     * j计划结束时间
+     * 计划结束时间
      */
     @TableField(value = "plan_end_time", insertStrategy = FieldStrategy.IGNORED, updateStrategy = FieldStrategy.IGNORED)
     private LocalDate planEndTime;
@@ -208,6 +208,14 @@ public class ProjectTaskEntity extends BaseEntity implements Serializable {
      */
     @TableField("work_period")
     private Integer workPeriod;
+
+
+    /**
+     * 是否是文档变更
+     * true 是
+     */
+    @TableField("is_change_docs")
+    private Boolean isChangeDocs;
 
     public ProjectTaskEntity(String taskId, LocalDateTime realityStart, LocalDateTime realityEnd) {
         super(taskId);

@@ -33,6 +33,8 @@ public interface ProductAttestationService  extends IService<ProductAttestationE
      */
     List<ProductAttestationDTO> getByProductId(String productId);
 
+    List<ProductAttestationDTO> getBySkuId(String SkuId);
+
     List<ProductAttestationEntity> getListByIds(List<String> ids);
 
     List<ProductAttestationEntity> getBySkuIds(List<String> skuIds);

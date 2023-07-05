@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @Classname SkuVO
- * @Description TODO
+
  * @Date 2023-01-11 14:28
  * @Created by yl
  */
@@ -107,4 +107,14 @@ public class SkuVO implements Serializable {
      * 产品状态
      */
     private Integer status;
+
+    /**
+     * 最小起订量
+     */
+    private Integer moq;
+
+    /**
+     * 供应商id
+     */
+    private String supplierId;
 }

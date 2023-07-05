@@ -8,9 +8,10 @@ import com.common.core.security.HmacSHA256Utils;
 import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.UrlContant;
-import com.erp.model.dmp.enums.PlatformApiEnum;
+import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
 import com.erp.model.dmp.mabang.*;
 import com.erp.model.dmp.vo.ParamHeaderVO;
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -217,13 +218,12 @@ public class MabangApiUtils {
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         while (StrUtil.isNotBlank(pageIndex)) {
             HashMap<String, Object> params = new HashMap<>(6);
-            params.put("updateTimeStart", sdf.format(startDate));
-            params.put("updateTimeEnd", sdf.format(endDate));
+//            params.put("updateTimeStart", sdf.format(startDate));
+//            params.put("updateTimeEnd", sdf.format(endDate));
             if (StrUtil.isNotBlank(pageIndex) && !"1".equals(pageIndex)){
                 params.put("cursor", pageIndex);
             }
             params.put("maxRows", pageSize);
-//            params.put("stockSku", "JG-0085+0100+0199+0505+0559+0673+1108");
             params.put("showMachining", 1);
             params.put("showVirtualSku", 1);
             params.put("showProvider",1);
@@ -297,11 +297,197 @@ public class MabangApiUtils {
         return new ParamHeaderVO(paramStr, headerMap);
     }
 
+    public static List<ComboSkuInfoEntity> queryComboSkuList(String method, LocalDateTime startDate, LocalDateTime endDate) {
+        // 当前每页条数，默认20，最大值为100
+        Integer pageSize = 1000;
+        Integer pageIndex = 1;
+        Integer count = pageSize;
+        List<ComboSkuInfoEntity> infoArrayList = new ArrayList<>();
+        while (pageSize.equals(count)) {
+            HashMap<String, Object> params = new HashMap<>(6);
+            params.put("page", pageIndex);
+            params.put("rowsPerPage", pageSize);
+            ParamHeaderVO paramVo = getParamMap(method, pageIndex, params);
+
+            JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
+            if (!Objects.equals(responseMap.getInteger("code"), 200)) {
+                log.error("调用url={} param={}马帮SKU数据失败 responseMap={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap));
+                throw new RuntimeException(StrUtil.format("调用url={} param={}马帮SKU数据失败 responseMap={}",
+                        UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap)));
+            }
+            JSONObject jsonObject = JSONObject.parseObject(responseMap.getString("data"));
+            List<ComboSkuInfoEntity> dataList = JSONObject.parseArray(jsonObject.getString("data"), ComboSkuInfoEntity.class);
+            pageIndex ++;
+            count = dataList.size();
+            if(CollectionUtil.isNotEmpty(dataList)){
+                infoArrayList.addAll(dataList);
+            }
+        }
+        return infoArrayList;
+    }
+
+    private static ParamHeaderVO getParamMap(String method, Map<String,Object> params) {
+        Map<String, Object> paramMap = new HashMap(16);
+        paramMap.put("api", method);
+        paramMap.put("appkey", MabangApiUtils.APP_KEY);
+        paramMap.put("version", 1);
+        paramMap.put("timestamp", new Long(System.currentTimeMillis() / 1000).toString());
+        paramMap.put("data",params);
+        String paramStr = JSONUtil.toJsonStr(paramMap);
+        log.info("发送至马帮的请求参数【{}】", paramStr);
+        String sign = HmacSHA256Utils.hmacSHA256(paramStr, MabangApiUtils.SECRET_KEY);
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put("Content-Type", "application/json");
+        headerMap.put("Authorization", sign);
+        return new ParamHeaderVO(paramStr, headerMap);
+    }
+
+    public static Map<String,Object> inStorage(String method, MabangInOutStockDTO mabangInOutStockDTO) {
+        Map<String,Object> resultMap = Maps.newHashMap();
+        resultMap.put("success", false);
+
+        HashMap<String, Object> params = new HashMap<>(10);
+        params.put("warehouseName", mabangInOutStockDTO.getWarehouseName());
+        params.put("employeeName", mabangInOutStockDTO.getEmployeeName());
+        // params.put("typeName", "");
+        params.put("remark", mabangInOutStockDTO.getRemark());
+        params.put("data", mabangInOutStockDTO.getData());
+
+        ParamHeaderVO paramVo = getParamMap(method, params);
+        resultMap.put("request", paramVo.getParamsStr());
+
+        log.info("开始调用马帮手工入库请求内容【{}】", paramVo.getParamsStr());
+        JSONObject response = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
+        log.info("调用马帮手工入库响应内容【{}】", JSONObject.toJSONString(response));
+        if (!Objects.equals(response.getInteger("code"), 200)) {
+            log.error("调用url={} param={} {}，马帮手工入库失败 response={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(response));
+            resultMap.put("msg", JSONUtil.toJsonStr(response));
+        } else {
+            resultMap.put("success", true);
+        }
+        resultMap.put("result", response.getJSONObject("data"));
+        return resultMap;
+    }
+
+    public static Map<String,Object> outStorage(String method, MabangInOutStockDTO mabangInOutStockDTO) {
+        Map<String,Object> resultMap = Maps.newHashMap();
+        resultMap.put("success", false);
+
+        HashMap<String, Object> params = new HashMap<>(10);
+        params.put("warehouseName", mabangInOutStockDTO.getWarehouseName());
+        params.put("employeeName", mabangInOutStockDTO.getEmployeeName());
+        // params.put("typeName", "");
+        params.put("remark", mabangInOutStockDTO.getRemark());
+        params.put("data", mabangInOutStockDTO.getData());
+
+        ParamHeaderVO paramVo = getParamMap(method, params);
+        resultMap.put("request", paramVo.getParamsStr());
+
+        log.info("开始调用马帮手工出库请求内容【{}】", paramVo.getParamsStr());
+        JSONObject response = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
+        log.info("调用马帮手工出库响应内容【{}】", JSONObject.toJSONString(response));
+        if (!Objects.equals(response.getInteger("code"), 200)) {
+            log.error("调用url={} param={} {}，马帮手工出库失败 response={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(response));
+            resultMap.put("msg", JSONUtil.toJsonStr(response));
+        } else {
+            resultMap.put("success", true);
+        }
+        resultMap.put("result", response.getJSONObject("data"));
+        return resultMap;
+    }
+
+    /**
+     * 查询马帮调拨发货列表
+     * @param method
+     * @param startDate
+     * @param endDate
+     * @return
+     *
+     * @throws Exception
+     */
+    public static List<ShipmentEntity> queryShipmentList(String method, LocalDateTime startDate, LocalDateTime endDate) {
+        //每页显示的条数 最小10 最大2000
+        Integer pageSize = 1000;
+        Integer pageIndex = 1;
+        //总页数
+        Integer pageCount = 1;
+        List<ShipmentEntity> infoArrayList = new ArrayList<>();
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
+        while (pageIndex <= pageCount) {
+            HashMap<String, Object> params = new HashMap<>(6);
+            params.put("updateTimeStart", sdf.format(startDate));
+            params.put("updateTimeEnd", sdf.format(endDate));
+            params.put("pageSize", pageSize);
+            ParamHeaderVO paramVo = getParamMap(method, pageIndex, params);
+            JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
+            if (!Objects.equals(responseMap.getInteger("code"), 200)) {
+                log.error("调用url={} param={}马帮退款订单数据失败 responseMap={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap));
+                throw new RuntimeException(StrUtil.format("调用url={} param={}，马帮调拨发货数据失败 responseMap={}",
+                        UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap)));
+            }
+            JSONObject dataJson = JSONObject.parseObject(String.valueOf(responseMap.get("data")));
+            List<ShipmentEntity> dataList = JSONObject.parseArray(dataJson.getString("data"), ShipmentEntity.class);
+            Integer totalCount = dataJson.getInteger("total");
+            pageCount = (totalCount + pageSize - 1) / pageSize;
+            if(CollectionUtil.isNotEmpty(dataList)){
+                infoArrayList.addAll(dataList);
+            }
+            pageIndex ++;
+        }
+        return infoArrayList;
+    }
+
+    /**
+     * 查询马帮发货单列表
+     * @param method
+     * @param startDate
+     * @param endDate
+     * @return
+     *
+     * @throws Exception
+     */
+    public static List<DeliveryEntity> queryDeliveryList(String method, LocalDateTime startDate, LocalDateTime endDate) {
+        //每页显示的条数 最小10 最大2000
+        Integer pageSize = 1000;
+        Integer pageIndex = 1;
+        //总页数
+        Integer pageCount = 1;
+        List<DeliveryEntity> infoArrayList = new ArrayList<>();
+        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
+        while (pageIndex <= pageCount) {
+            HashMap<String, Object> params = new HashMap<>(6);
+            params.put("last_time_start", sdf.format(startDate));
+            params.put("last_time_end", sdf.format(endDate));
+            params.put("prePage", pageSize);
+            ParamHeaderVO paramVo = getParamMap(method, pageIndex, params);
+            JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
+            log.info("FBA发货单响应信息：{}", JSONObject.toJSONString(responseMap));
+            if (!Objects.equals(responseMap.getInteger("code"), 200)) {
+                log.error("调用url={} param={}马帮FBA发货单数据失败 responseMap={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap));
+                throw new RuntimeException(StrUtil.format("调用url={} param={}，马帮FBA发货单数据失败 responseMap={}",
+                        UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap)));
+            }
+            JSONObject dataJson = JSONObject.parseObject(String.valueOf(responseMap.get("data")));
+            List<DeliveryEntity> dataList = JSONObject.parseArray(dataJson.getString("data"), DeliveryEntity.class);
+            Integer totalCount = dataJson.getInteger("total");
+            pageCount = (totalCount + pageSize - 1) / pageSize;
+            if(CollectionUtil.isNotEmpty(dataList)){
+                infoArrayList.addAll(dataList);
+            }
+            pageIndex ++;
+        }
+        return infoArrayList;
+    }
+
     public static void main(String[] args) {
-        LocalDateTime startDate = LocalDateTime.of(2021, 1, 1, 0, 0, 0);
-        LocalDateTime endDate = LocalDateTime.of(2023, 6, 7, 23, 59, 59);
-        List<SkuInfoEntity> skuInfoEntities = querySkuList("stock-do-search-sku-list-new", startDate, endDate);
+        LocalDateTime startDate = LocalDateTime.of(2023, 6, 29, 0, 0, 0);
+        LocalDateTime endDate = LocalDateTime.of(2023, 6, 29, 23, 59, 59);
+        /*
+        List<ComboSkuInfoEntity> skuInfoEntities = queryComboSkuList(PlatformApiEnum.STOCK_DO_SEARCH_COMBO_SKU.getTaskName(), startDate, endDate);
         System.out.println(skuInfoEntities);
+         */
+        List<DeliveryEntity> deliveryList = queryDeliveryList("hwc-get-batch-delivery-list", startDate, endDate);
+        System.out.println(deliveryList);
     }
 
 }

@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -11,6 +12,9 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -24,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -39,6 +44,9 @@ import java.util.List;
 public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseOrderSupplierMapper, PurchaseOrderSupplierEntity> implements PurchaseOrderSupplierService {
 
     @Resource
+    private MQProducerService mQProducerService;
+
+    @Resource
     private SupplierService supplierService;
 
     @Resource
@@ -46,6 +54,10 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
 
     @Override
     public void deleteByPurchaseOrderIds(List<String> purchaseOrderIds) {
+        List<PurchaseOrderSupplierEntity> list = lambdaQuery().in(PurchaseOrderSupplierEntity::getPurchaseOrderId, purchaseOrderIds).list();
+        list.forEach(req -> req.setIsDeleted(Boolean.TRUE));
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_SUPPLIER_TAG.getName(), list, IdUtil.simpleUUID());
         lambdaUpdate().in(PurchaseOrderSupplierEntity::getPurchaseOrderId, purchaseOrderIds).remove();
     }
 
@@ -69,6 +81,8 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
         entity.setPurchaseOrderId(purchaseOrderId);
         doOpHandleDataId(dto.getSupplierId(), entity);
         this.save(entity);
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_SUPPLIER_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
     }
 
     @Override
@@ -89,6 +103,8 @@ public class PurchaseOrderSupplierServiceImpl extends SuperServiceImpl<PurchaseO
         //操作日志
         moduleOperateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.PURCHASE_ORDER.getCode(), purchaseOrderId, "", "");
         this.saveOrUpdate(entity);
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_SUPPLIER_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
     }
 
 

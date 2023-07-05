@@ -2,11 +2,14 @@ package com.erp.server.sys.mapper;
 
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.common.business.dto.FindUserDTO;
 import com.erp.model.sys.dto.FindUserByThirdDTO;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * ${comments}
@@ -19,4 +22,6 @@ import org.apache.ibatis.annotations.Param;
 public interface SysUserThirdMapper extends BaseMapper<SysUserThirdEntity> {
 
     SysUserInfoEntity getUserIdByThird(@Param("params") FindUserByThirdDTO thirdDTO);
+
+    List<FindUserDTO> listThirdBindUser();
 }

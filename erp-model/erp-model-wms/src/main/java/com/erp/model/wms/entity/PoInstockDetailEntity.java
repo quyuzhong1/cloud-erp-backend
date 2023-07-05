@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.time.LocalDate;
+
 /**
  * <p>
  * 采购入库明细表
@@ -96,26 +98,6 @@ public class PoInstockDetailEntity extends BaseEntity<PoInstockDetailEntity> {
     @TableField(exist = false)
     private String approveStatus;
 
-    public static final String MAIN_ID = "main_id";
-
-    public static final String SKU_ID = "sku_id";
-
-    public static final String SKU_NO = "sku_no";
-
-    public static final String PRODUCT_NAME = "product_name";
-
-    public static final String VARIANT_PROPERTY = "variant_property";
-
-    public static final String STOCK_IN_QTY = "stock_in_qty";
-
-    public static final String SOURCE_DETAIL_ID = "source_detail_id";
-
-    public static final String PURCHASE_QTY = "purchase_qty";
-
-    public static final String EXCEED_QTY = "exceed_qty";
-
-    public static final String WAREHOUSE_LOCATION = "warehouse_location";
-
-    public static final String REMARK = "remark";
-
+    @TableField(exist = false)
+    private LocalDate billDate;
 }

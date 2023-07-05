@@ -11,6 +11,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -165,6 +166,12 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     private String approveUserName;
 
     /**
+     * 审核时间
+     */
+    @TableField("approve_time")
+    private LocalDateTime approveTime;
+
+    /**
      * 客户id
      */
     @TableField("customer_id")
@@ -193,6 +200,10 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
      */
     @TableField("sync_operate")
     private String syncOperate;
+
+
+    @TableField(exist = false)
+    private List<SoOutstockDetailEntity> detailList;
 
     public static final String CODE = "code";
 

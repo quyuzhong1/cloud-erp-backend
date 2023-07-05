@@ -14,7 +14,7 @@ import java.util.List;
  * 供应商资质信息
  * @author Lambda
  * @Classname SupplierCredentialDTO
- * @Description TODO
+
  * @Date 2023-03-17 15:06
  * @Created by yl
  */

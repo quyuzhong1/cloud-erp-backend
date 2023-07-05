@@ -33,10 +33,16 @@ public class ProductDetailEntity extends BaseEntity implements Serializable {
     private String skuNo;
 
     /**
-     * 品名
+     * 产品品名
      */
     @TableField(value = "name")
     private String name;
+
+    /**
+     * 产品品名(英文)
+     */
+    @TableField(value = "name_en")
+    private String nameEn;
 
     /**
      * 属性
@@ -63,7 +69,7 @@ public class ProductDetailEntity extends BaseEntity implements Serializable {
     private String unitId;
 
     /**
-     * 产品状态 1:未开发 2:开发中 3:开发完成 4:中止开发 5:暂停开发
+     * 产品开发状态 1:未开发 2:开发中 3:开发完成 4:中止开发 5:暂停开发
      */
     @TableField(value = "product_state")
     private Integer productState;
@@ -138,6 +144,12 @@ public class ProductDetailEntity extends BaseEntity implements Serializable {
      */
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
+
+    /**
+     * 是否占用 默认 false  占用为true 就不能删除
+     */
+    @TableField("occupy_status")
+    private Boolean occupyStatus;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

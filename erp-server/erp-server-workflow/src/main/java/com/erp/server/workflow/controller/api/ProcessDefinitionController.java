@@ -41,7 +41,7 @@ public class ProcessDefinitionController extends BaseController {
      */
     @PostMapping("/addOrUpdate")
     public ApiResult<Boolean> addOrUpdate(@RequestBody @Valid ProcessDefinitionDTO.AddOrUpdateDTO dto) {
-        boolean result = processDefinitionService.saveOrUpdate(dto);
+        boolean result = processDefinitionService.addOrUpdate(dto);
         return result ? success() : failure();
     }
 

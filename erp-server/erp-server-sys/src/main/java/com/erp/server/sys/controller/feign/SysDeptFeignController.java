@@ -1,7 +1,6 @@
 package com.erp.server.sys.controller.feign;
 
 import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
@@ -14,7 +13,7 @@ import java.util.List;
 
 /**
  * @Classname SysDeptFeignController
- * @Description TODO
+
  * @Date 2022-12-28 15:18
  * @Created by yl
  */
@@ -51,4 +50,16 @@ public class SysDeptFeignController extends BaseController {
         return dto;
     }
 
+     /**
+      * 根据用户id 集合获取用户信息 部门信息
+      * @author yl
+      * @date 2023-06-15 16:55
+      * @param userIdList
+      * @return java.util.List<com.erp.model.sys.dto.SysDepartmentUserNumberDTO>
+      */
+    @PostMapping("/listDeptUserByUserIdList")
+    public List<SysDepartmentUserNumberDTO> listDeptUserByUserIdList(@RequestBody List<String> userIdList) {
+        List<SysDepartmentUserNumberDTO> list = sysDepartmentUserService.listDeptUserByUserIdList(userIdList);
+        return list;
+    }
 }

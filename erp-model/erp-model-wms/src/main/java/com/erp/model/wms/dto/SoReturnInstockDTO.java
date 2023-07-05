@@ -486,9 +486,17 @@ public class SoReturnInstockDTO {
          */
         private String returnTypeDict;
         /**
+         * 退货类型名称
+         */
+        private String returnTypeDictName;
+        /**
          * 退货原因
          */
         private String  returnReasonDict;
+        /**
+         * 退货原因名称
+         */
+        private String  returnReasonDictName;
         /**
          * 仓位
          */

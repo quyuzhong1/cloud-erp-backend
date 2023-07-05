@@ -2,7 +2,7 @@ package com.common.core.constant;
 
 /**
  * @Classname Constants
- * @Description TODO
+
  * @Date 2022-07-15 10:40
  * @Created by yl
  */
@@ -15,5 +15,5 @@ public class CommonConstants {
 
     public static final String ADMIN_ROLE_ID = "1";
 
-
+    public static final String SYSTEM = "UlanziERP";
 }

@@ -5,7 +5,7 @@ package com.common.business.enums;
  *
  * @author Lambda
  * @Classname InvoiceTypeEnum
- * @Description TODO
+
  * @Date 2023-05-12 9:12
  * @Created by yl
  */

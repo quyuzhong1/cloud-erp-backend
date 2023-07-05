@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * 流程通过后会 得到的信息
  * @Classname
- * @Description TODO
+
  * @Date 2023-01-30 16:35
  * @Created by yl
  */

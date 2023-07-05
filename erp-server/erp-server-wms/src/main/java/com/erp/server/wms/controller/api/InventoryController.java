@@ -1,6 +1,5 @@
 package com.erp.server.wms.controller.api;
 
-import com.common.business.dto.base.BaseSelectDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -14,12 +13,12 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
+import java.util.LinkedHashMap;
 
 /**
  * 库存报表管理
  * @Classname: InventoryController
- * @Description: TODO
+
  * @CreateTime: 2023-05-08  18:52
  * @Author: zhangchunlin
  */
@@ -129,7 +128,7 @@ public class InventoryController extends BaseController {
      */
     @PostMapping("/transport/paging")
     public ApiResult<PagingVO<InventoryReportDTO.TransportPagingDTO>> transportPaging(@RequestBody @Validated PagingDTO<InventoryReportDTO.TransportSearchParamDTO> dto) {
-        return success(null);
+        return success(transactionFlowService.transportPagingList(dto));
     }
 
     /**
@@ -140,16 +139,7 @@ public class InventoryController extends BaseController {
      */
     @PostMapping(value = "/exportTransport")
     public void exportTransport(@RequestBody InventoryReportDTO.ExportTransportSearchParamDTO dto, HttpServletResponse response) {
-
-    }
-
-    /**
-     * 在途库存单据明细单据类型tab
-     * @return
-     */
-    @GetMapping("/transport/sourceTypeTab")
-    public ApiResult<List<BaseSelectDTO>> transportSourceTypeTab( ) {
-        return success(null);
+        transactionFlowService.exportTransportExcel(dto, response);
     }
 
     /**
@@ -159,7 +149,7 @@ public class InventoryController extends BaseController {
      */
     @PostMapping("/transport/list")
     public ApiResult<PagingVO<InventoryReportDTO.ListTransportPagingDTO>> transportList(@RequestBody @Validated PagingDTO<InventoryReportDTO.ListTransportSearchParam> dto) {
-        return success(null);
+        return success(transactionFlowService.transportList(dto));
     }
 
     /**
@@ -168,8 +158,8 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/inventoryAge/paging")
-    public ApiResult<PagingVO<InventoryReportDTO.InventoryAgePagingDTO>> inventoryAgePaging(@RequestBody @Validated PagingDTO<InventoryReportDTO.InventoryAgeSearchParamDTO> dto) {
-        return success(null);
+    public ApiResult<PagingVO<LinkedHashMap>> inventoryAgePaging(@RequestBody @Validated PagingDTO<InventoryReportDTO.InventoryAgeSearchParamDTO> dto) {
+        return success(inventoryService.inventoryAgePaging(dto));
     }
 
     /**
@@ -180,7 +170,7 @@ public class InventoryController extends BaseController {
      */
     @PostMapping(value = "/exportInventoryAge")
     public void exportInventoryAge(@RequestBody InventoryReportDTO.ExportInventoryAgeSearchParamDTO dto, HttpServletResponse response) {
-
+        inventoryService.exportInventoryAge(dto, response);
     }
 
 }

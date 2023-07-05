@@ -1,10 +1,12 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -34,4 +36,14 @@ public interface SoInfoFeign {
      */
     @PostMapping("feign/soInfo/updateDeliveryStatus")
     void updateDeliveryStatus(@RequestBody List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList);
+
+    /**
+     * 销售订单审核
+     * @Author Luo_WG
+     * @Date 2023/7/4 12:28
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("feign/soInfo/approve")
+    Boolean approve(@RequestBody BaseApproveParamDTO dto);
 }

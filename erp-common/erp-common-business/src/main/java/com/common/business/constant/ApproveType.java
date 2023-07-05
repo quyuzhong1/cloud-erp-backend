@@ -3,7 +3,7 @@ package com.common.business.constant;
 /**
  * @author Lambda
  * @Classname ApproveType
- * @Description TODO
+
  * @Date 2023-05-15 14:22
  * @Created by yl
  */

@@ -16,10 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -143,12 +140,26 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
 
     @Override
     public List<BomChildrenSkuDTO> listBomChildBySkuIds(List<String> parentSkuIds) {
+        if (CollectionUtils.isEmpty(parentSkuIds)) {
+            return Collections.EMPTY_LIST;
+        }
         return baseMapper.listBomChildBySkuIds(parentSkuIds);
     }
 
     @Override
     public List<BomInfoEntity> listBomByParentSkuIds(List<String> parentSkuIds) {
+        if (CollectionUtils.isEmpty(parentSkuIds)) {
+            return Collections.EMPTY_LIST;
+        }
         return baseMapper.listBomByParentSkuIds(parentSkuIds);
+    }
+
+    @Override
+    public List<BomInfoEntity> listBomByParentSkuNos(List<String> parentSkuNos) {
+        if (CollectionUtils.isEmpty(parentSkuNos)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listBomByParentSkuNos(parentSkuNos);
     }
 
     /**

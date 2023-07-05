@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 
 /**
  * @Classname: TransactionRuleMapper
- * @Description: TODO
+
  * @CreateTime: 2023-04-26  10:19
  * @Author: zhangchunlin
  */

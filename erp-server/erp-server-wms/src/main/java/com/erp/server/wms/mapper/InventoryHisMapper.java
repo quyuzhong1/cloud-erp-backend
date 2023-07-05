@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 
 /**
  * @Classname: InventoryHisMapper
- * @Description: TODO
+
  * @CreateTime: 2023-04-27  17:02
  * @Author: zhangchunlin
  */

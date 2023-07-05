@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @Classname BasicDTO
- * @Description TODO
+
  * @Date 2022-10-25 19:00
  * @Created by yl
  */

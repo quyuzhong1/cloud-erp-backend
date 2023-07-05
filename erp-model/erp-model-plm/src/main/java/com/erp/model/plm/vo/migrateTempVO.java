@@ -7,7 +7,7 @@ import java.io.Serializable;
 /**
  * @author Administrator
  * @Classname migrateTempVO
- * @Description TODO
+
  * @Date 2023-03-07 19:41
  * @Created by yl
  */

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.core.utils.ObjectUtils;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -50,6 +51,15 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @return java.util.List<com.erp.model.plm.dto.ProductNoDetailDTO>
      **/
     ProductNoDetailDTO getNoSpecDetailById(@Param("productId") String productId);
+
+    /**
+     * @Description 无规格产品信息明细根据SkuId查询
+     * @Author Luo_WG
+     * @Date 2022/9/22 14:09
+     * @param skuId:skuId
+     * @return java.util.List<com.erp.model.plm.dto.ProductNoDetailDTO>
+     **/
+    ProductNoDetailDTO getNoSpecDetailBySkuId(@Param("skuId") String skuId);
 
     /**
      * @Description 多规格产品信息明细
@@ -108,6 +118,18 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      **/
     List<ProductDetailEntity> getProductDetailAll();
+
+    /**
+     * 批量更新字段
+     * @Author Luo_WG
+     * @Date 2023/6/15 12:17
+     * @param ids
+     * @param tableName
+     * @param filedName
+     * @param values
+     * @return java.lang.Boolean
+     **/
+    Boolean updateFiledBatch(@Param("ids") List<String> ids, @Param("tableName") String tableName, @Param("filedName") String filedName, @Param("values") Object values, @Param("keyName") String keyName);
 }
 
 

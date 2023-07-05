@@ -33,7 +33,7 @@ public enum MessageChannelEnum {
         this.name = name;
     }
 
-    public static MessageChannelEnum of(String code) {
+    public static MessageChannelEnum getByCode(String code) {
         return Arrays.stream(MessageChannelEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 

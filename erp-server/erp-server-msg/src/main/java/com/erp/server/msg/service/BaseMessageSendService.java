@@ -21,7 +21,7 @@ import java.util.Objects;
 
 /**
  * @Classname: BaseMessageSendService
- * @Description: TODO
+
  * @CreateTime: 2023-04-19  14:18
  * @Author: zhangchunlin
  */

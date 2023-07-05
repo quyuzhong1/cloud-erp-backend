@@ -1,13 +1,15 @@
 package com.erp.model.dmp.mabang;
 
+import com.erp.model.dmp.dto.CleanBaseDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.time.LocalDateTime;
+
 @Data
 @NoArgsConstructor
-@ToString
-public class ShopEntity {
+public class ShopEntity extends CleanBaseDTO {
 
     /**
      *               [{
@@ -79,8 +81,24 @@ public class ShopEntity {
      * fba标志
      */
     private String fbaflag;
-    /**
-     * 清洗数据
-     */
-    private Boolean isClean;
+
+    @Override
+    public String toString() {
+        return "ShopEntity{" +
+                "id='" + id + '\'' +
+                ", accountUsername='" + accountUsername + '\'' +
+                ", accountStoreName='" + accountStoreName + '\'' +
+                ", name='" + name + '\'' +
+                ", amazonsite='" + amazonsite + '\'' +
+                ", status=" + status +
+                ", datacenter_tokenid='" + datacenter_tokenid + '\'' +
+                ", shopEmployeeId='" + shopEmployeeId + '\'' +
+                ", financeCode='" + financeCode + '\'' +
+                ", platformId='" + platformId + '\'' +
+                ", platformName='" + platformName + '\'' +
+                ", merchantid='" + merchantid + '\'' +
+                ", tokenflag='" + tokenflag + '\'' +
+                ", fbaflag='" + fbaflag + '\'' +
+                '}';
+    }
 }

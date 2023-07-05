@@ -5,7 +5,7 @@ import com.common.core.constant.EnumMessage;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2022/12/26 12:12
  */
 public enum TargetTypeEnum implements EnumMessage {

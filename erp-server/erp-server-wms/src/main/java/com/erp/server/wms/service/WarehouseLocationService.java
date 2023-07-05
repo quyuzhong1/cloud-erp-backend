@@ -1,6 +1,8 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 
@@ -43,5 +45,11 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @return
      */
     WarehouseLocationEntity findByWarehouseIdAndCode(String warehouseId, String code);
+
+    /**
+     * 所有仓位
+     * @return
+     */
+    List<WarehouseLocationDTO.LocationSelectDTO> all();
 
 }

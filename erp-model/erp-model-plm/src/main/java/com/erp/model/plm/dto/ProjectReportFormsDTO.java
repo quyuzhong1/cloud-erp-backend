@@ -1,10 +1,12 @@
 package com.erp.model.plm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -20,159 +22,261 @@ public class ProjectReportFormsDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingParam {
+    public static class PagingParam extends SortDTO {
         /**
          * id
          */
         private List<String> ids;
         /**
-         * 项目状态
+         * 列表头项目状态 plm/common/enumDropDown?type=ProjectReportStatus
+         * 状态描述：notApproval：未立项  approval：已立项  finished：已完成
          */
-        private String projectStatus;
+        private String approvalStatus;
+        /**
+         * 项目状态（前端不用传，后端自用状态转换）
+         */
+        private List<Integer> approvalStatusList;
+        /**
+         * 立项状态（前端不用传，后端自用状态转换）
+         */
+        private List<Integer> projectStatusList;
         /**
          * spu/sku/产品名称
          */
         private String searchKeyword;
         /**
+         * 产品等级
+         */
+        private List<String> gradeIdList;
+        /**
+         * 产品属性id
+         */
+        private List<String> propertyIdList;
+        /**
+         * 项目经理id
+         */
+        private List<String> projectChargeIdList;
+        /**
+         * 产品等级
+         */
+        private String grade;
+        /**
          * 产品经理
          */
         private List<String> productChargeIdList;
         /**
+         * 产品经理（后端用）
+         */
+        private String chargeIdSplit;
+        /**
          * 产品分类
          */
-        private String categoryId;
+        private List<String> categoryIdList;
         /**
-         * 计划调研时间
+         * 立项状态
          */
-        private List<LocalDate> planSurveyDateList;
+        private List<Integer> searchApprovalStatusList;
         /**
-         * 计划立项时间
+         * 项目状态
          */
-        private List<LocalDate> planProjectApprovalDateList;
-        /**
-         * 计划首批入库时间
-         */
-        private List<LocalDate> planFirstMassStockInDateList;
-        /**
-         * 计划上市时间
-         */
-        private List<LocalDate> planListingTimeList;
+        private List<Integer> searchProjectStatusList;
+
     }
 
     /**
      * 列表查询条件
      */
     @Data
-    @NoArgsConstructor
     public static class PagingView extends SortDTO {
         /**
          * 主键id
          */
         private String id;
+
         /**
-         * SKU编号
+         * 产品图片
          */
-        private String skuNo;
+        private String imageUrl;
+
         /**
          * SPU编号
          */
         private String spuNo;
+
         /**
          * 二级分类
          */
         private String category;
+
         /**
          * 产品名称
          */
         private String productName;
+
         /**
          * 产品等级
          */
         private String grade;
+
         /**
          * 项目属性
          */
         private String property;
+
         /**
          * 产品品牌
          */
         private String brandName;
+
         /**
          * 产品经理
          */
         private String chargeName;
+
+        /**
+         * 项目经理id
+         */
+        private String projectChargeId;
+
         /**
          * 项目经理
          */
         private String projectChargeName;
+
         /**
          * 立项状态
          */
-        private String approvalStatus;
+        private Integer approvalStatus;
+
+        /**
+         * 立项状态名称
+         */
+        private String approvalStatusName;
+
         /**
          * 项目状态
          */
-        private String projectStatus;
+        private Integer projectStatus;
+
+        /**
+         * 项目状态名称
+         */
+        private String projectStatusName;
+
         /**
          * 项目阶段
          */
         private String projectPhase;
+
+        /**
+         * 立项任务完成数量
+         */
+        private Integer approvalFinishTaskCount;
+
+        /**
+         * 立项任务总数量
+         */
+        private Integer approvalTaskCount;
+
+        /**
+         * 项目任务完成数量
+         */
+        private Integer projectFinishTaskCount;
+
+        /**
+         * 项目任务总数量
+         */
+        private Integer projectTaskCount;
+
         /**
          * 立项进度
          */
-        private String approvalProgress;
+        private BigDecimal approvalProgress;
+
         /**
          * 项目进度
          */
-        private String projectProgress;
+        private BigDecimal projectProgress;
+
         /**
-         * 项目进展状态名
+         * 项目进展状态
+         */
+        private String progressStatus;
+
+        /**
+         * 项目进展状态名称
          */
         private String progressStatusName;
+
         /**
          * 总任务数
          */
-        private String totalTaskCount;
+        private Integer totalTaskCount;
+
         /**
          * 已完成任务数
          */
-        private String finishedCount;
+        private Integer finishedCount;
+
         /**
          * 未完成任务数
          */
-        private String unfinishedCount;
+        private Integer unfinishedCount;
+
         /**
          * 本周任务数
          */
-        private String thisWeekTaskCount;
+        private Integer thisWeekTaskCount;
+
         /**
          * 本周已完成任务数
          */
-        private String thisWeekFinishedCount;
+        private Integer thisWeekFinishedCount;
+
         /**
          * 本周未完成任务数
          */
-        private String thisWeekUnfinishedCount;
+        private Integer thisWeekUnfinishedCount;
+
         /**
          * 逾期已完成任务数
          */
-        private String delayFinishedCount;
+        private Integer delayFinishedCount;
+
         /**
          * 逾期未完成任务数
          */
-        private String delayUnfinishedCount;
+        private Integer delayUnfinishedCount;
+
         /**
          * 预计开始时间
          */
         private LocalDate planStartDate;
+
         /**
          * 预计结束时间
          */
         private LocalDate planEndDate;
+
         /**
          * 实际完成日期
          */
         private LocalDate actualFinishDate;
+
+        public PagingView() {
+            this.approvalFinishTaskCount = 0;
+            this.approvalTaskCount = 0;
+            this.projectFinishTaskCount = 0;
+            this.projectTaskCount = 0;
+            this.totalTaskCount = 0;
+            this.finishedCount = 0;
+            this.unfinishedCount = 0;
+            this.thisWeekTaskCount = 0;
+            this.thisWeekFinishedCount = 0;
+            this.thisWeekUnfinishedCount = 0;
+            this.delayFinishedCount = 0;
+            this.delayUnfinishedCount = 0;
+        }
     }
 
     /**
@@ -182,9 +286,9 @@ public class ProjectReportFormsDTO implements Serializable {
     @NoArgsConstructor
     public static class TaskDetailParam {
         /**
-         * id
+         * ids
          */
-        private String id;
+        private List<String> ids;
         /**
          * 任务名称
          */
@@ -196,11 +300,7 @@ public class ProjectReportFormsDTO implements Serializable {
         /**
          * 本周开始日期
          */
-        private LocalDate startDate;
-        /**
-         * 本周结束日期
-         */
-        private LocalDate endDate;
+        private List<LocalDate> thisWeekDateList;
     }
 
     /**
@@ -208,7 +308,11 @@ public class ProjectReportFormsDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class taskDetail {
+    public static class TaskDetail {
+        /**
+         * 任务id
+         */
+        private String id;
         /**
          * 阶段名称
          */
@@ -240,7 +344,11 @@ public class ProjectReportFormsDTO implements Serializable {
         /**
          * 任务状态
          */
-        private String taskState;
+        private Integer taskState;
+        /**
+         * 任务状态名称
+         */
+        private String taskStateName;
     }
 
 }

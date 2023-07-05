@@ -9,7 +9,7 @@ import java.io.Serializable;
 /**
  * @author Lambda
  * @Classname OmsAttachmentDTO
- * @Description TODO
+
  * @Date 2023-05-12 10:24
  * @Created by yl
  */

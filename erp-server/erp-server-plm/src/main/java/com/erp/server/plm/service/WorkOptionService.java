@@ -16,7 +16,7 @@ public interface WorkOptionService {
      * @Author Luo_WG
      * @Date 2023/4/21 15:34
      **/
-    Integer getTableNum(WorkOptionDTO.TableNumDTO tableNumDTO);
+    List<WorkOptionDTO.MyWorkOptionDTO> getTableNum(List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList);
 
     /**
      * 根据用户获取各任务阶段数量
@@ -26,4 +26,5 @@ public interface WorkOptionService {
      * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.StageViewDTO>
      **/
     List<WorkOptionDTO.StageViewDTO> stageView(String optionUserId);
+
 }

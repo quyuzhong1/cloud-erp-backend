@@ -1,14 +1,15 @@
 package com.erp.model.scm.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -123,6 +124,12 @@ public class SubcontractOrderEntity extends BaseEntity<SubcontractOrderEntity> {
     private LocalDateTime invalidTime;
 
     /**
+     * 作废原因
+     */
+    @TableField("invalid_remark")
+    private String invalidRemark;
+
+    /**
     * 审核时间
     */
     @TableField("approve_time")
@@ -157,6 +164,30 @@ public class SubcontractOrderEntity extends BaseEntity<SubcontractOrderEntity> {
     */
     @TableField("source_code")
     private String sourceCode;
+
+    /**
+     * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
+     */
+    @TableField("sync_kingdee_status")
+    private String syncKingdeeStatus;
+
+    /**
+     * 同步时间
+     */
+    @TableField("sync_kingdee_time")
+    private LocalDateTime syncKingdeeTime;
+
+    /**
+     * 金蝶数据id
+     */
+    @TableField("sync_kingdee_id")
+    private String syncKingdeeId;
+
+    /**
+     * 同步操作
+     */
+    @TableField("sync_operate")
+    private String syncOperate;
 
 
     public static final String APPROVE_STATUS = "approve_status";

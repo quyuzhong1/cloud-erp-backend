@@ -39,6 +39,11 @@ public class ProductNoDetailDTO {
      * SKU名称
      */
     private String name;
+
+    /**
+     * SKU名称(英文)
+     */
+    private String nameEn;
     /**
      * SPU名称
      */

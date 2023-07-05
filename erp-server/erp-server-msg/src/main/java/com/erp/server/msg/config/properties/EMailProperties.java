@@ -10,7 +10,7 @@ import java.util.Map;
 
 /**
  * @Classname: MailProperties
- * @Description: TODO
+
  * @CreateTime: 2023-04-23  09:49
  * @Author: zhangchunlin
  */

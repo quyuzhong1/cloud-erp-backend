@@ -8,7 +8,7 @@ import com.erp.model.sys.entity.SysCodeEntity;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2022/11/21 11:35
  */
 public interface SysCodeService extends IService<SysCodeEntity> {

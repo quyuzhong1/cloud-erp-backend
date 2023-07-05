@@ -2,7 +2,7 @@ package com.erp.model.plm.enums;
 
 /**
  * @Classname 项目状态
- * @Description TODO
+
  * @Date 2022-09-21 11:12
  * @Created by yl
  */
@@ -12,7 +12,8 @@ public enum ProjectStateEnum {
     YES_START(1, "已启动"),
     ING(2, "进行中"),
     FINISH(3, "已完成"),
-    STOP(4, "已中止");
+    SUSPEND(4, "已暂停"),
+    TERMINATE(5, "已终止");
 
     private Integer state;
     private String name;
@@ -40,5 +41,16 @@ public enum ProjectStateEnum {
             }
         }
         return "";
+    }
+
+    public static ProjectStateEnum getEnum(Integer code) {
+        if (code != null) {
+            for (ProjectStateEnum state : ProjectStateEnum.values()) {
+                if (code.equals(state.getState())) {
+                    return state;
+                }
+            }
+        }
+        return null;
     }
 }

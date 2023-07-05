@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,4 +18,14 @@ public interface SoReturnNoticeFeign {
      **/
     @PostMapping("/feign/soReturnNotice/listBySourceId")
     List<SoReturnNoticeEntity> listBySourceId(@RequestBody List<String> sourceIds);
+
+    /**
+     * 根据来源详情id查询详情信息
+     * @Author Luo_WG
+     * @Date 2023/5/15 12:29
+     * @param sourceDetailIds sourceDetailIds
+     * @return java.util.List<com.erp.model.wms.entity.SoReturnNoticeEntity>
+     **/
+    @PostMapping("/feign/soReturnNotice/listDetailBySourceDetailIds")
+    List<SoReturnNoticeDetailEntity> listDetailBySourceDetailIds(@RequestBody List<String> sourceDetailIds);
 }

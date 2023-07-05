@@ -90,5 +90,5 @@ public class ProductManySpecDTO {
      * 目的国海关编码信息
      */
     @Valid
-    private List<ProductCustomsDTO> productCustomsDTOList;
+    private List<ProductCustomsDTO> productCustomsList;
 }

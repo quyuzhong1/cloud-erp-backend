@@ -28,11 +28,20 @@
         INNER JOIN purchase_price pp
         ON ppd.purchase_price_id=pp.id
         WHERE pp.is_deleted=false AND ppd.is_deleted= false
+        <if test="params.idList != null and params.idList.size > 0">
+            AND pp.id IN
+            <foreach collection="params.idList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         <if test="params.skuIdList!=null and params.skuIdList.size>0">
             AND ppd.sku_id IN
             <foreach collection="params.skuIdList" item="skuId" open="(" separator="," close=")">
                 #{skuId}
             </foreach>
+        </if>
+        <if test="params.code != null and params.code != ''">
+            and pp.code like concat('%',#{params.code},'%')
         </if>
         <if test="params.name !=null and params.name!=''">
           AND pp.supplier_id IN
@@ -175,5 +184,33 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
+    </select>
+
+    <select id="listSupplierSkuPrice" resultType="com.erp.model.scm.dto.PurchasePriceDTO$SupplierSkuPrice">
+        SELECT
+            p.supplier_id,
+            p.sku_id,
+            p.sku_no,
+            p.tax_price,
+            p.tax_rate
+        from(
+            SELECT
+                pp.supplier_id,
+                ppd.sku_id,
+                ppd.sku_no,
+                ppd.tax_price,
+                ppd.tax_rate,
+                ppd.min_qty,
+                row_number() over(partition by pp.supplier_id,
+                ppd.sku_id,
+                ppd.sku_no order by ppd.min_qty ASC,ppd.update_time desc) as rank
+            FROM purchase_price pp
+            LEFT JOIN purchase_price_detail ppd ON pp.id = ppd.purchase_price_id
+            WHERE approve_status = 'approve' AND pp.supplier_id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        ) p
+        WHERE p.rank=1
     </select>
 </mapper>

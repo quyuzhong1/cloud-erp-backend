@@ -21,6 +21,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 质检单
@@ -340,7 +341,7 @@ public class QcInfoController extends BaseController {
     @PostMapping("/returnReceiveGenerateQCSave")
     public ApiResult returnReceiveGenerateQCSave(@RequestBody List<String> ids) {
         Boolean flag = qcInfoService.returnReceiveGenerateQCSave(ids);
-        return flag == Boolean.TRUE ? success() : failure();
+        return Objects.equals(flag, Boolean.TRUE) ? success() : failure();
     }
 
     /**
@@ -354,6 +355,19 @@ public class QcInfoController extends BaseController {
     public ApiResult<List<SoReturnInstockDTO.GenerateSoReturnInstockView>> generateSoReturnInstockView(@RequestBody BaseIdsDTO.IdsDTO dto) {
         List<SoReturnInstockDTO.GenerateSoReturnInstockView> generateSoDeliveryViews = qcInfoService.generateSoReturnInstockView(dto.getIds());
         return success(generateSoDeliveryViews);
+    }
+
+    /**
+     * 导出质检单日报
+     */
+    @PostMapping("/exportDailyQcBill")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "qc_user_id",
+            menuCode = "wms:qcBill:exportQcBill",
+            tableAlias = "qb")
+    public ApiResult exportDailyExcel(@RequestBody @Valid QcInfoDTO.ExportDTO dto, HttpServletResponse response) {
+        qcInfoService.exportDailyExcel(dto, response);
+        return success();
     }
 
 }

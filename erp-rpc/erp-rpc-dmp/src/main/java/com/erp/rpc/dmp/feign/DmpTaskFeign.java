@@ -3,6 +3,7 @@ package com.erp.rpc.dmp.feign;
 
 import cn.hutool.json.JSONObject;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
+import com.erp.model.dmp.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,4 +39,10 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/createkingdeeSoChange")
     String createkingdeeSoChange(@RequestBody Map<String, Object> paramMap);
+
+    /**
+     * 更新任务状态
+     */
+    @PostMapping("feign/updateSyncInfo")
+    void updateSyncInfo(@RequestBody DmpSyncMqDTO.ParamDTO paramDTO);
 }

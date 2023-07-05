@@ -5,6 +5,7 @@
     <select id="paging" resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$PagingViewDTO">
         SELECT
             wr.id,
+            wrd.id AS detailId,
             wr.code,
             wr.purchase_order_id,
             wr.purchase_order_code,
@@ -24,6 +25,7 @@
             wr.create_user_name,
             wrd.purchase_order_detail_id,
             wrd.remark,
+            wr.subcontract_type as subcontractType,
             wr.create_time
         FROM po_receive_detail wrd
         INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
@@ -301,5 +303,22 @@
         <foreach collection="mainIds" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
+    </select>
+    <select id="getReceiveInfoBySupplierIds"
+            resultType="com.erp.model.wms.dto.WarehouseReceiveDTO$SupplierReceiveInfoDTO">
+        select pr.supplier_id, count(distinct pr.id) as received_count, sum(prd.receive_qty) as received_qty
+        from po_receive pr
+        inner join po_receive_detail prd on prd.main_id = pr.id and prd.is_deleted = false
+        where pr.approve_status = 'approve' and pr.is_deleted = false
+        <if test="supplierIds != null and supplierIds.size > 0">
+            and pr.supplier_id in
+            <foreach collection="supplierIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="dateList != null and dateList.size > 0">AND
+            pr.bill_date >= #{dateList[0]} AND (#{dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pr.bill_date
+        </if>
+        group by pr.supplier_id
     </select>
 </mapper>

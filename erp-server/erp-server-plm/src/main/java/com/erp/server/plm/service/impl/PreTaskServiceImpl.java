@@ -7,8 +7,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.StrUtils;
-import com.erp.model.plm.dto.PreTaskDTO;
 import com.erp.model.plm.dto.PreTaskUpdateDTO;
 import com.erp.model.plm.dto.ProjectChildTaskDTO;
 import com.erp.model.plm.dto.SetPreTaskDTO;
@@ -27,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -127,10 +124,6 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         queryWrapper.eq(PreTaskEntity::getTaskId, dto.getTaskId());
         queryWrapper.eq(PreTaskEntity::getPreTaskId, dto.getPreTaskId());
         Boolean flag = remove(queryWrapper);
-        if (flag) {
-            taskDeliveryService.removeByTaskId(dto.getTaskId());
-            taskDocsFinishService.removeByTaskId(dto.getTaskId());
-        }
         return flag;
     }
 
@@ -185,7 +178,8 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         //获取到前置任务id
         List<String> preTaskIds = getPreTaskIdListByTaskIds(taskIds);
         if (CollectionUtils.isNotEmpty(preTaskIds)) {
-            int count = projectTaskService.countUndoneByTaskIds(TaskStateEnum.FINISH.getCode(), TaskStateEnum.APPROVAL_PASS.getCode(), preTaskIds);
+            List<Integer> excludeStatusList=Arrays.asList(TaskStateEnum.FINISH.getCode(),TaskStateEnum.APPROVAL_PASS.getCode(),TaskStateEnum.CLOSE.getCode());
+            int count = projectTaskService.countUndoneByTaskIds(excludeStatusList,preTaskIds);
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_95035);
             }

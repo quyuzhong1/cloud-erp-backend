@@ -1,5 +1,6 @@
 package com.erp.rpc.plm.feign;
 
+import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -21,7 +22,7 @@ import java.util.Map;
  * plm 远程调用接口
  *
  * @Classname PlmTaskFeign
- * @Description TODO
+
  * @Date 2022-10-21 9:06
  * @Created by yl
  */
@@ -74,6 +75,17 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/getSkuInfoByIds")
     List<SkuVO> getSkuInfoByIds(@RequestBody List<String> skuIds);
+
+    
+    /**
+     * 根据sku no 获取信息
+     * @author yl
+     * @date 2023-06-27 17:48
+     * @param skuNoList
+     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+     */
+    @PostMapping("feign/product/listBySkuNos")
+    List<SkuVO> listBySkuNoList(@RequestBody List<String> skuNoList);
 
     /**
      * @description: 获取已审核sku
@@ -130,7 +142,7 @@ public interface PlmTaskFeign {
      * @Date 2023/4/21 15:34
      **/
     @PostMapping("feign/plmWorkOption/getTableNum")
-    Integer getTableNum(@RequestBody WorkOptionDTO.TableNumDTO tableNumDTO);
+    List<WorkOptionDTO.MyWorkOptionDTO> getTableNum(@RequestBody List<WorkOptionDTO.MyWorkOptionDTO> tableNumDTOList);
 
     /**
      * bom  审核 通过
@@ -221,4 +233,32 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/bom/listBomByParentSkuIds")
     List<BomInfoEntity> listBomByParentSkuIds(List<String> skuIds);
+
+    /**
+     * 根据sku id集合获取采购员、供应商信息
+     * @param dto
+     * @return
+     */
+    @PostMapping("/feign/product/getPurchaseInfoBySkuIds")
+    Map<String, SkuPurchaseDTO.PurchaseInfo> getPurchaseInfoBySkuIds(@RequestBody @Validated BaseIdsDTO.IdsDTO dto);
+
+    /**
+     * 更新不可删除标识
+     * @Author Luo_WG
+     * @Date 2023/6/15 11:32
+     * @param skuIds skuIds
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/feign/product/updateOccupyStatus")
+    Boolean updateOccupyStatus(@RequestBody @Validated List<String> skuIds);
+
+    /**
+     * @description: 根据父级skuNos查询BOM信息
+     * @author Will
+     * @date: 2023/5/31 10:57
+     * @param skuNos
+     * @return List<BomInfoEntity>
+     */
+    @PostMapping("feign/bom/listBomByParentSkuNos")
+    List<BomInfoEntity> listBomByParentSkuNos(List<String> skuNos);
 }

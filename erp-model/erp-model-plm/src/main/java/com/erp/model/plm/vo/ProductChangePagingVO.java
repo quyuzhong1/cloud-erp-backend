@@ -11,7 +11,7 @@ import java.util.Date;
  * 产品变更信息
  *
  * @Classname
- * @Description TODO
+
  * @Date 2023-01-28 11:24
  * @Created by yl
  */

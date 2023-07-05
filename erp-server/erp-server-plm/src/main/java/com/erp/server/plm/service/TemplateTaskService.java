@@ -13,7 +13,7 @@ import java.util.Map;
 
 /**
  * @Classname TemplateTaskService
- * @Description TODO
+
  * @Date 2022-09-20 15:34
  * @Created by yl
  */
@@ -127,4 +127,33 @@ public interface TemplateTaskService extends IService<TemplateTaskEntity> {
      * @return void
      **/
     Boolean templateCiteTask(TemplateCiteTaskDTO dto);
+
+    /**
+     * 根据任务名称查询模板任务信息
+     * @Author Luo_WG
+     * @Date 2023/3/20 14:15
+     * @param templateId
+     * @param taskName
+     * @return void
+     **/
+    TemplateTaskEntity getTaskByName(String templateId, String taskName);
+
+    /**
+     * 根据模板id查询任务
+     * @Author Luo_WG
+     * @Date 2023/6/20 15:26
+     * @param templateId templateId
+     * @return java.util.List<com.erp.model.plm.entity.TemplateTaskEntity>
+     **/
+    List<TemplateTaskEntity> listByTemplateId(String templateId);
+
+    /**
+     * 批量删除任务
+     * @Author Luo_WG
+     * @Date 2023/6/20 16:27
+     * @param ids
+     * @param templateId
+     * @return java.lang.Boolean
+     **/
+    Boolean removeTaskBatch(List<String> ids, String templateId);
 }

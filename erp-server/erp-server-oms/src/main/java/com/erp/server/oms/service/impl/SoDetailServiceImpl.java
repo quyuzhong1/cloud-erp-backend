@@ -23,14 +23,18 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
+import com.erp.model.wms.enums.ReturnReasonEnum;
+import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.constant.OmsConstant;
@@ -94,6 +98,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
     @Resource
     private OperateLogService operateLogService;
 
@@ -187,6 +193,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //从wms 获取到sku 的即时库存信息
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = listSkuInventoryTotalList(skuIdList, soInfoEntity.getWarehouseId());
         for (SoDetailDTO.AddDetailView addDetailView : list) {
+            if (StringUtils.isNotBlank(addDetailView.getReturnTypeDict())) {
+                addDetailView.setReturnTypeDictName(ReturnTypeEnum.getName(addDetailView.getReturnTypeDict()));
+            }
+            if (StringUtils.isNotBlank(addDetailView.getReturnReasonDict())) {
+                addDetailView.setReturnReasonDictName(ReturnReasonEnum.getName(addDetailView.getReturnReasonDict()));
+            }
             //产品sku信息
             ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(addDetailView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             addDetailView.setProductName(productDetailEntity.getName());
@@ -251,6 +263,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockFeign.listDetailBySourceDetailId(detailIds);
         //sku的历史价格
         List<SoDetailDTO.SkuHistoryPriceDTO> skuPriceHistoryList = this.listSkuPriceHistory(skuIdList);
+
+        //发货通知单的
+        List<SoDeliveryNoticeDetailDTO.ListDTO> soDeliveryNoticeList = soDeliveryNoticeFeign.listBySourceIdList(Arrays.asList(mainId));
         for (SoDetailDTO.ViewDTO item : resultList) {
             String skuId = item.getSkuId();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
@@ -269,8 +284,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             Integer qty = item.getQty();
             /**
              * 缺货数量
-             * 当可用即时库存数量小于销售数量时，
-             * 缺货数量=销售数量-可用即时库存数量；
+             * 当可用即时库存数量小于销售数量时， 缺货数量=可用即时库存数量-(销售数量-发货通知单数量)；
              * 当可用即时库存数量大于销售数量时，缺货数量为0
              */
             Integer scarceQty = 0;
@@ -291,6 +305,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
             if (qty > curInventoryQty) {
                 scarceQty = qty - curInventoryQty;
+                // 当可用即时库存数量小于销售数量时， 缺货数量=可用即时库存数量-(销售数量-发货通知单数量)；
+                Integer deliveryNoticeQty = soDeliveryNoticeList.stream().filter(f -> f.getSourceId().equals(item.getId())).
+                        mapToInt(SoDeliveryNoticeDetailDTO.ListDTO::getDeliveryQty).sum();
+                scarceQty = curInventoryQty-(qty -deliveryNoticeQty);
+                scarceQty = scarceQty > 0 ? 0 : Math.abs(scarceQty);
             }
 
             item.setScarceQty(scarceQty);
@@ -436,7 +455,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             //金额
-            BigDecimal amount = MathUtil.multiply(taxPrice, qty);
+            BigDecimal amount = MathUtil.multiply(price, qty);
 
             item.setAmount(amount);
             String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
@@ -635,6 +654,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      */
     @Override
     public SoDetailDTO.SkuDTO getSkuInfoBySkuNo(String skuNo, String warehouseId) {
+        if (StringUtils.isEmpty(warehouseId)) {
+            throw new ServiceException(ApiError.ERROR_99001);
+        }
         SoDetailDTO.SkuDTO result = new SoDetailDTO.SkuDTO();
         List<String> skuIdList = new ArrayList<>(1);
         Map<String, String> param = new HashMap<>();
@@ -700,12 +722,13 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
         //单价
         BigDecimal price = BigDecimal.ZERO;
-        result.setAmount(MathUtil.multiply(price, qty));
+
         //含税单价=销售单价*（税率+1）
         BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
         BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
         result.setTaxPrice(taxPrice);
         result.setPrice(price);
+        result.setAmount(MathUtil.multiply(price, qty));
         result.setTaxRate(taxRate);
         result.setIsGift(Boolean.FALSE);
         result.setIsReissue(Boolean.FALSE);
@@ -788,6 +811,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         String warehouseId = soInfo.getWarehouseId();
 
+        //发货通知单的
+        List<SoDeliveryNoticeDetailDTO.ListDTO> soDeliveryNoticeList = soDeliveryNoticeFeign.listBySourceIdList(Arrays.asList(soId));
+
         List<SoDetailEntity> dbList = this.listBaseByMainId(soId);
         //获取未关闭的数据
         dbList = dbList.stream().filter(s -> s.getIsClose()).collect(Collectors.toList());
@@ -816,8 +842,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             Integer qty = item.getQty();
             /**
              * 缺货数量
-             * 当可用即时库存数量小于销售数量时，
-             * 缺货数量=销售数量-可用即时库存数量；
+             * 当可用即时库存数量小于销售数量时， 缺货数量=可用即时库存数量-(销售数量-发货通知单数量)；
              * 当可用即时库存数量大于销售数量时，缺货数量为0
              */
             Integer scarceQty = 0;
@@ -837,7 +862,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
              */
             Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
             if (qty > curInventoryQty) {
-                scarceQty = qty - curInventoryQty;
+                Integer deliveryNoticeQty = soDeliveryNoticeList.stream().filter(f -> f.getSourceId().equals(item.getId())).
+                        mapToInt(SoDeliveryNoticeDetailDTO.ListDTO::getDeliveryQty).sum();
+                scarceQty = curInventoryQty-(qty -deliveryNoticeQty);
+                scarceQty = scarceQty > 0 ? 0 : Math.abs(scarceQty);
+
             }
 
             item.setScarceQty(scarceQty);
@@ -974,7 +1003,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         if (CollectionUtils.isEmpty(skuIdList)) {
             return Collections.emptyList();
         }
-        return baseMapper.listSkuPriceHistory(skuIdList);
+        String status = ApproveStatusEnum.APPROVE.getStatus();
+        return baseMapper.listSkuPriceHistory(skuIdList, status);
     }
 
 
@@ -1046,7 +1076,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             //金额
-            BigDecimal amount = MathUtil.multiply(taxPrice, qty);
+            BigDecimal amount = MathUtil.multiply(price, qty);
             item.setAmount(amount);
             String skuNo = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");

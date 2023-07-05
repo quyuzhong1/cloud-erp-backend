@@ -10,7 +10,7 @@ import java.io.Serializable;
 /**
  * @author Lambda
  * @Classname QcReportDTO
- * @Description TODO
+
  * @Date 2023-04-13 10:09
  * @Created by yl
  */

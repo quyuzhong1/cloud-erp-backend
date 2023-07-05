@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 /**
  * @Classname: InventoryFinishDeliveryDetailDTO
- * @Description: TODO
+
  * @CreateTime: 2023-05-10  17:15
  * @Author: zhangchunlin
  */

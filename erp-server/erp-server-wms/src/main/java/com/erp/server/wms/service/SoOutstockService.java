@@ -224,4 +224,13 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return java.lang.Boolean
      **/
     Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate);
+
+    /**
+     * 根据code 获取到销售出库单信息
+     * @author yl
+     * @date 2023-06-28 10:17
+     * @param code
+     * @return com.erp.model.wms.entity.SoOutstockEntity
+     */
+    String  getByCode(String code);
 }

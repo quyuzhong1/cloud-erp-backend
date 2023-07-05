@@ -153,6 +153,14 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
     }
 
     @Override
+    public void removeByTaskIdsAndTemplateId(List<String> taskIds, String templateId) {
+        LambdaQueryWrapper<TemplateDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(TemplateDeliveryDocsEntity::getTaskId, taskIds);
+        queryWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId, templateId);
+        this.remove(queryWrapper);
+    }
+
+    @Override
     public void removeByTemplateId(String templateId) {
         LambdaQueryWrapper<TemplateDeliveryDocsEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateDeliveryDocsEntity::getTemplateId, templateId);

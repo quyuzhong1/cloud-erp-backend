@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @Classname SkuCategoryDTO
- * @Description TODO
+
  * @Date 2023-03-10 14:21
  * @Created by yl
  */

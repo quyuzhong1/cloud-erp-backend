@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname SoChangeDTO
- * @Description TODO
+
  * @Date 2023-05-11 9:58
  * @Created by yl
  */
@@ -233,6 +233,11 @@ public class SoChangeDTO implements Serializable {
          * sku no 集合
          */
         private List<String> skuNoList;
+
+        /**
+         * id 集合
+         */
+        private List<String> ids;
 
         /**
          * code
@@ -534,12 +539,6 @@ public class SoChangeDTO implements Serializable {
         private List<SoChangeDetailDTO.UpdateDTO> detailList;
     }
 
-
-    @Data
-    @NoArgsConstructor
-    public static class ExportDTO extends PagingParamDTO {
-        private List<String> ids;
-    }
 
     @Data
     @NoArgsConstructor

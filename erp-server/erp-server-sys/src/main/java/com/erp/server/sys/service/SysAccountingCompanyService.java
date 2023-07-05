@@ -16,7 +16,7 @@ import java.util.List;
 
 /**
  * @Classname SysAccountingCompanyService
- * @Description TODO
+
  * @Date 2022-07-12 9:52
  * @Created by yl
  */
@@ -67,4 +67,12 @@ public interface SysAccountingCompanyService extends IService<SysAccountingCompa
      * @return List<BaseIdDTO>
      */
     List<BaseIdDTO> listAccountingCompany();
+    /**
+     * @description: 根据codes 获取组织列表
+     * @author Will
+     * @date: 2023/6/29 12:29
+     * @param codes
+     * @return List<CodeDTO>
+     */
+    List<BaseIdDTO.CodeDTO> listByCodes(List<String> codes);
 }

@@ -9,7 +9,7 @@ import javax.validation.constraints.Size;
 /**
  * @author Administrator
  * @Classname SysAccountingCompanyDTO
- * @Description TODO
+
  * @Date 2022-07-12 10:03
  * @Created by yl
  */

@@ -5,13 +5,12 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 /**
  * @Classname ProjectTaskDetailsDTO
- * @Description TODO
+
  * @Date 2022-10-11 9:16
  * @Created by yl
  */
@@ -113,6 +112,8 @@ public class ProjectTaskDetailsDTO implements Serializable {
      * 计划时间
      */
     private String planTime;
+
+    private Boolean isChangeDocs;
 
 
     /**

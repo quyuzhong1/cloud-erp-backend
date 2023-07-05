@@ -7,7 +7,7 @@ import lombok.Data;
 /**
  * @author Lambda
  * @Classname FeignServiceException
- * @Description TODO
+
  * @Date 2023-05-06 11:50
  * @Created by yl
  */

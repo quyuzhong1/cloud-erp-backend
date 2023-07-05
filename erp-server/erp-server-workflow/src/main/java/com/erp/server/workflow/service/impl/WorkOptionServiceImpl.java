@@ -8,13 +8,16 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.ObjectUtils;
 import com.erp.model.plm.dto.AuditParamDTO;
 import com.erp.model.plm.dto.ProductDetailOperateDTO;
 import com.erp.model.plm.dto.TaskHandleDataDTO;
@@ -25,10 +28,14 @@ import com.erp.model.workflow.dto.ApproveParamDTO;
 import com.erp.model.workflow.dto.TaskShowDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.entity.WorkOptionEntity;
 import com.erp.model.workflow.enums.ApproveSearchOptionEnum;
 import com.erp.model.workflow.enums.SysClassifyEnum;
-import com.erp.model.workflow.enums.TableNameEnum;
+import com.erp.rpc.oms.feign.CustomerFeign;
+import com.erp.rpc.oms.feign.OmsTaskFeign;
+import com.erp.rpc.oms.feign.SoChangeFeign;
+import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
@@ -36,14 +43,18 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.workflow.mapper.WorkOptionMapper;
 import com.erp.server.workflow.service.*;
 import com.erp.server.workflow.utils.GetHttpGatewayIpPortUtils;
+import com.jgoodies.common.bean.Bean;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -81,7 +92,22 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
+    private OmsTaskFeign omsTaskFeign;
+
+    @Resource
+    private SoInfoFeign soInfoFeign;
+
+    @Resource
+    private SoChangeFeign soChangeFeign;
+
+    @Resource
+    private CustomerFeign customerFeign;
+
+    @Resource
     private ProcessManagementService processManagementService;
+
+    @Resource
+    private ProcessTaskManagementService processTaskManagementService;
 
     /**
      * 待办模块-模块分类下拉
@@ -227,8 +253,8 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      * @Author Luo_WG
      * @Date 2023/4/11 18:48
      **/
-    @Override
-    public List<WorkOptionDTO.PendingViewDTO> listPendingView() {
+   /* @Override
+    public List<WorkOptionDTO.PendingViewDTO> listPendingViewTest() {
         List<WorkOptionDTO.PendingViewDTO> list = new ArrayList<>();
         LoginUser userInfo = commonService.getUserInfo();
         List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
@@ -264,7 +290,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             list.add(pendingViewDTO);
         }
         return list;
-    }
+    }*/
 
     /**
      * 常用列表
@@ -288,6 +314,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                     break;
                 case WMS:
                     req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + req.getModuleUrl());
+                    break;
+                case OMS:
+                    req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.OMS_PORT + req.getModuleUrl());
                     break;
                 default:
                     break;
@@ -323,29 +352,70 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         return this.removeById(id);
     }
 
-    private void getPlmModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
-        Integer tableNum = plmTaskFeign.getTableNum(tableNumDTO);
-        BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
-        pendingViewDetailDTO.setCount(tableNum);
-        pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
-        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT + myWorkOptionDTO.getModuleUrl());
+    private List<WorkOptionDTO.MyWorkOptionDTO> listTableNum(List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList, String sysClassify) {
+        switch (SysClassifyEnum.getEnumByCode(sysClassify)) {
+            case PLM:
+                return plmTaskFeign.getTableNum(myWorkOptionDTOList);
+            case SCM:
+                return scmTaskFeign.getTableNum(myWorkOptionDTOList);
+            case WMS:
+                return wmsTaskFeign.getTableNum(myWorkOptionDTOList);
+            case OMS:
+                return omsTaskFeign.getTableNum(myWorkOptionDTOList);
+            default:
+                break;
+        }
+        return new ArrayList<>();
+    }
+    /**
+     * 代办列表
+     *
+     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO < com.erp.model.wms.dto.PurchaseReturnOrderDTO.PagingViewDTO>>
+     * @Author Luo_WG
+     * @Date 2023/4/11 18:48
+     **/
+    @Override
+    public List<WorkOptionDTO.PendingViewDTO> listPendingView() {
+        List<WorkOptionDTO.PendingViewDTO> list = new ArrayList<>();
+        LoginUser userInfo = commonService.getUserInfo();
+        List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
+        List<SysClassifyEnum> sysClassifyEnums = SysClassifyEnum.getAll();
+        for (SysClassifyEnum searchOptionEnum : sysClassifyEnums) {
+            WorkOptionDTO.PendingViewDTO pendingViewDTO = new WorkOptionDTO.PendingViewDTO();
+            List<WorkOptionDTO.PendingViewDetailDTO> pendingViewDetailDTOList = new ArrayList<>();
+            pendingViewDTO.setSysClassify(searchOptionEnum.getCode());
+            List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList = myWorkOptionDTOS.stream().filter(req -> req.getSysClassify().equals(searchOptionEnum.getCode())).collect(Collectors.toList());
+            List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionList = listTableNum(myWorkOptionDTOList, searchOptionEnum.getCode());
+            for (WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO : myWorkOptionList) {
+                WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO = new WorkOptionDTO.PendingViewDetailDTO();
+                myWorkOptionDTO.setPath(myWorkOptionDTO.getModuleUrl());
+                BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
+                pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
+                pendingViewDetailDTO.setCount(myWorkOptionDTO.getTableNumber());
+                switch (SysClassifyEnum.getEnumByCode(myWorkOptionDTO.getSysClassify())) {
+                    case PLM:
+                        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT + myWorkOptionDTO.getModuleUrl());
+                        break;
+                    case SCM:
+                        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.SCM_PORT + myWorkOptionDTO.getModuleUrl());
+                        break;
+                    case WMS:
+                        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + myWorkOptionDTO.getModuleUrl());
+                        break;
+                    case OMS:
+                        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.OMS_PORT + myWorkOptionDTO.getModuleUrl());
+                        break;
+                    default:
+                        break;
+                }
+                pendingViewDetailDTOList.add(pendingViewDetailDTO);
+            }
+            pendingViewDTO.setList(pendingViewDetailDTOList);
+            list.add(pendingViewDTO);
+        }
+        return list;
     }
 
-    private void getScmModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
-        Integer tableNum = scmTaskFeign.getTableNum(tableNumDTO);
-        BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
-        pendingViewDetailDTO.setCount(tableNum);
-        pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
-        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.SCM_PORT + myWorkOptionDTO.getModuleUrl());
-    }
-
-    private void getWmsModuleCount(WorkOptionDTO.TableNumDTO tableNumDTO, WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO, WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO) {
-        Integer tableNum = wmsTaskFeign.getTableNum(tableNumDTO);
-        BeanMapperUtils.copy(myWorkOptionDTO, pendingViewDetailDTO);
-        pendingViewDetailDTO.setCount(tableNum);
-        pendingViewDetailDTO.setName(myWorkOptionDTO.getModuleClassify());
-        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + myWorkOptionDTO.getModuleUrl());
-    }
 
     /**
      * 审批中心-下拉搜索选项
@@ -441,25 +511,28 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         records.forEach(req -> {
             if (StringUtils.isNotBlank(req.getApproveDuration())) {
                 BigDecimal bigDecimal = BigDecimal.valueOf(Double.valueOf(req.getApproveDuration()));
-                String value = String.valueOf(bigDecimal.divide(BigDecimal.valueOf(60), 2, BigDecimal.ROUND_DOWN));
+                String value = String.valueOf(bigDecimal.divide(BigDecimal.valueOf(3600), 2, BigDecimal.ROUND_DOWN));
                 req.setApproveDuration(value + " H");
             } else {
                 req.setApproveDuration(0 + " H");
             }
 
             req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus()));
-            FindUserDTO findUserDTO = userList.stream().filter(obj -> obj.getUserId().equals(req.getCreateUserName())).findFirst().orElse(new FindUserDTO());
+            FindUserDTO findUserDTO = userList.stream().filter(obj -> obj.getUserId().equals(req.getCreateUserId())).findFirst().orElse(new FindUserDTO());
             req.setCreateUserName(findUserDTO.getUserName());
         });
         return new PagingVO(pageData);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approve(ApproveParamDTO dto) {
         BaseApproveParamDTO paramDTO = new BaseApproveParamDTO();
         BeanMapperUtils.copy(dto, paramDTO);
         paramDTO.setIds(Arrays.asList(dto.getId()));
-        ProcessManagementEntity entity = processManagementService.getById(dto.getId());
+        ProcessTaskManagementEntity taskManagementEntity = processTaskManagementService.getById(dto.getId());
+        ProcessManagementEntity entity = processManagementService.getByProcessInstanceId(taskManagementEntity.getProcessInstanceId());
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_94000);
         }
@@ -474,6 +547,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             case WMS:
                 wmsApprove(dto, entity);
                 break;
+            case OMS:
+                omsApprove(dto, entity);
+                break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);
         }
@@ -481,7 +557,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     }
 
     private Boolean plmApprove(ApproveParamDTO dto, ProcessManagementEntity entity) {
-        switch (TableNameEnum.getByCode(entity.getBusinessKey())) {
+        switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
             case PRODUCT_BOM_INFO:
                 AuditParamDTO auditParamDTO = new AuditParamDTO();
                 auditParamDTO.setId(dto.getId());
@@ -540,9 +616,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         baseApproveParamDTO.setIds(Arrays.asList(dto.getId()));
         baseApproveParamDTO.setType(dto.getType());
         baseApproveParamDTO.setComment(dto.getComment());
-        switch (TableNameEnum.getByCode(entity.getBusinessKey())) {
+        switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
             case PURCHASE_PRICE_CHANGE:
-                scmTaskFeign.purchaseChangeApprove(baseApproveParamDTO);
+                scmTaskFeign.purchasePriceChangeApprove(baseApproveParamDTO);
                 break;
             case SALES_DEMAND:
                 scmTaskFeign.salesDemandApprove(baseApproveParamDTO);
@@ -570,7 +646,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         baseApproveParamDTO.setIds(Arrays.asList(dto.getId()));
         baseApproveParamDTO.setType(dto.getType());
         baseApproveParamDTO.setComment(dto.getComment());
-        switch (TableNameEnum.getByCode(entity.getBusinessKey())) {
+        switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
             case QC_INFO:
                 break;
             case PO_RECEIVE:
@@ -581,6 +657,27 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 break;
             case PO_RETURN:
                 wmsTaskFeign.purchaseReturnOrderApprove(baseApproveParamDTO);
+                break;
+            default:
+                throw new ServiceException(ApiError.ERROR_94006);
+        }
+        return Boolean.TRUE;
+    }
+
+    private Boolean omsApprove(ApproveParamDTO dto, ProcessManagementEntity entity) {
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setIds(Arrays.asList(dto.getId()));
+        baseApproveParamDTO.setType(dto.getType());
+        baseApproveParamDTO.setComment(dto.getComment());
+        switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
+            case SO_INFO:
+                soInfoFeign.approve(baseApproveParamDTO);
+                break;
+            case SO_CHANGE:
+                soChangeFeign.approve(baseApproveParamDTO);
+                break;
+            case CUSTOMER_INFO:
+                customerFeign.approve(baseApproveParamDTO);
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);

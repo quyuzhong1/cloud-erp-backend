@@ -4,17 +4,19 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
+import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
  * @Classname: InventoryMapper
- * @Description: TODO
+
  * @CreateTime: 2023-04-25  15:30
  * @Author: zhangchunlin
  */
@@ -48,5 +50,18 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      */
     List<InventoryDTO.PagingViewDTO> exportInv(@Param("params") InventoryDTO.ExportSearchParamDTO params);
 
+    /**
+     * 库龄计算表分页查询
+     * @param params
+     * @return
+     */
+    IPage<LinkedHashMap> inventoryAgePage(Page query, @Param("params") InventoryReportDTO.InventoryAgeSearchParamDTO params);
+
+    /**
+     * 库龄计算表导出
+     * @param params
+     * @return
+     */
+    List<LinkedHashMap> exportInventoryPage(@Param("params") InventoryReportDTO.ExportInventoryAgeSearchParamDTO params);
 
 }

@@ -162,19 +162,5 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
      * @return java.lang.Integer
      */
     Integer getPushDownBySourceIds(List<String> soIds);
-    /**
-     * @description: 下推委外订单显示
-     * @author Will
-     * @date: 2023/6/12 15:03
-     * @param ids
-     * @return List<ViewGenerateSubcontractOrderDTO>
-     */
-    List<SalesDemandDTO.ViewGenerateSubcontractOrderDTO> viewGenerateSubcontractOrder(List<String> ids);
-    /**
-     * @description: 下推委外订单保存
-     * @author Will
-     * @date: 2023/6/12 15:04
-     * @param list
-     */
-    void generateSubcontractOrder(ValidList<SalesDemandDTO.GenerateSubcontractOrderDTO> list);
+
 }

@@ -3,7 +3,9 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.dto.ProductPurchaseDTO;
 import com.erp.model.plm.dto.ProductPurchaseShowDTO;
+import com.erp.model.plm.dto.SkuPurchaseDTO;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 
 import java.util.List;
 /**
@@ -21,6 +23,15 @@ public interface ProductPurchaseService extends IService<ProductPurchaseEntity> 
      * @return java.util.List<com.erp.model.plm.dto.ProductPurchaseShowDTO>
      **/
     List<ProductPurchaseShowDTO> list(String productId);
+
+    /**
+     * @Description 产品采购信息查询列表
+     * @Author Luo_WG
+     * @Date 2022/9/23 11:25
+     * @param skuId
+     * @return java.util.List<com.erp.model.plm.dto.ProductPurchaseShowDTO>
+     **/
+    List<ProductPurchaseShowDTO> listBySkuId(String skuId);
 
     /**
      * @Description 保存/修改产品采购信息
@@ -44,10 +55,10 @@ public interface ProductPurchaseService extends IService<ProductPurchaseEntity> 
      * @Description 删除产品采购信息
      * @Author Luo_WG
      * @Date 2022/9/26 18:42
-     * @param skuId 产品sku明细表id
+     * @param skuIds 产品sku明细表id
      * @return java.lang.Boolean
      **/
-    Boolean removePurchase(String skuId);
+    Boolean removePurchase(List<String> skuIds);
     /**
      * @description: 根据skuId查询
      * @author Will
@@ -57,10 +68,25 @@ public interface ProductPurchaseService extends IService<ProductPurchaseEntity> 
      */
     ProductPurchaseEntity getBySkuId(String skuId);
     /**
+     * 根据skuIds查询
+     * @Author Luo_WG
+     * @Date 2023/6/30 16:47
+     * @param skuIds
+     * @return com.erp.model.plm.entity.ProductPurchaseEntity
+     **/
+    List<ProductPurchaseEntity> listBySkuIds(List<String> skuIds);
+    /**
      * @description: 采购信息数据验证
      * @author Will
      * @date: 2023/5/16 10:03
      * @param entity
      */
     void checkProductPurchase (ProductPurchaseEntity entity);
+
+    /**
+     * 根据sku id集合获取供应商和采购员信息
+     * @param skuIds
+     * @return
+     */
+    List<SkuPurchaseDTO.PurchaseInfo> getInfoBySkuIds(List<String> skuIds);
 }

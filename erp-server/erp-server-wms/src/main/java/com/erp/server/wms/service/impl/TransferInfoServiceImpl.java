@@ -45,12 +45,14 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeTransferInfoService;
+import com.erp.server.wms.mabang.SyncMabangTransferService;
 import com.erp.server.wms.mapper.TransferInfoMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,10 +60,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -106,6 +105,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Resource
     private SyncKingdeeTransferInfoService syncKingdeeTransferInfoService;
+
+    @Autowired
+    private SyncMabangTransferService syncMabangTransferService;
 
 
 
@@ -178,14 +180,16 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //处理数据id
         doOpHandleDataId(dto.getInWarehouseId(), dto.getOutWarehouseId(), dto.getWarehouseKeeperId(), entity);
         log.info("直接调拨单新增");
-        //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.ZJDB, BusinessNoTypeEnum.CODE_ZJDB.getCode()));
-        entity.setCode(code);
+        if (StringUtils.isBlank(dto.getCode())) {
+            //生成单号
+            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.ZJDB, BusinessNoTypeEnum.CODE_ZJDB.getCode()));
+            entity.setCode(code);
+        }
         //新增主表数据
         boolean save = this.save(entity);
         if (save) {
             //操作日志
-            operateLogService.addModuleOperateLog(String.format("新增了一个直接调拨单【%s】", code), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "新增操作");
+            operateLogService.addModuleOperateLog(String.format("新增了一个直接调拨单【%s】", entity.getCode()), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "新增操作");
             //新增明细
             transferInfoDetailService.add(dto.getDetailList(), entity.getId());
         }
@@ -384,12 +388,25 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             log.info("直接调拨单【{}】审核通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
             //审核通过 TODO(判断是否存在流程)
 
+            //非金蝶拉取数据需要更新发送金蝶状态为待发送
+            List<String> sendIds = list.stream().filter(obj -> !SourceTypeEnum.STK_TRANSFERDIRECT.getCode().equals(obj.getSourceType())).map(TransferInfoEntity::getId).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sendIds)) {
+                updateSyncKingdeeStatus(sendIds,SyncKingdeeStatusEnum.TO_BE_SYNC.getCode(),null,null);
+            }
+
             //更新单据(后面有流程了调用监听可删)
             updateApproveStatusForApprove(ids, ApproveStatusEnum.APPROVE.getStatus());
             //更新库存
             updateInventoryTransCore(list);
             //发送金蝶
             list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            //发送马帮（非马帮平台的才需要推送）
+            list.forEach(obj->{
+                // 直接调拨单发送马帮出入库
+                if(Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_OTHER.getCode())) {
+                    syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+                }
+            });
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("直接调拨单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
             //中止当前审核流程
@@ -425,6 +442,14 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
         //发送金蝶
         list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+
+        //发送马帮（非马帮平台的才需要推送）
+        list.forEach(obj->{
+            // 直接调拨单发送马帮出入库
+            if(Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_OTHER.getCode())) {
+                syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode());
+            }
+        });
 
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -485,14 +510,47 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId,String operate) {
+    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId,String operate) {
         return  this.lambdaUpdate()
-                .eq(TransferInfoEntity::getId,id)
+                .in(TransferInfoEntity::getId,ids)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus),TransferInfoEntity::getSyncKingdeeStatus,syncKingdeeStatus)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus),TransferInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId),TransferInfoEntity::getSyncKingdeeId,syncKingdeeId)
                 .set(StringUtils.isNotBlank(operate),TransferInfoEntity::getSyncOperate,operate)
                 .update();
+    }
+
+    @Override
+    public TransferInfoDTO.ViewDTO viewTransferInfoByCode(String code) {
+
+        TransferInfoDTO.ViewDTO viewDTO = new TransferInfoDTO.ViewDTO();
+        //主表信息
+        TransferInfoEntity entity = this.getTransferInfoByCode(code);
+        if (ObjectUtils.isEmpty(entity)) {
+            return null;
+        }
+        BeanMapperUtils.copy(entity, viewDTO);
+        List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainId(entity.getId());
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_99048);
+        }
+        List<TransferInfoDetailDTO.ViewDTO> viewDetailList = BeanMapperUtils.copyList(TransferInfoDetailDTO.ViewDTO.class, detailList);
+        viewDTO.setDetailList(viewDetailList);
+        viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
+        return viewDTO;
+    }
+
+    /**
+     * @description: 根据编码查询
+     * @author Will
+     * @date: 2023/6/28 18:52
+     * @param code
+     * @return TransferInfoEntity
+     */
+    private TransferInfoEntity getTransferInfoByCode (String code) {
+        return lambdaQuery().eq(TransferInfoEntity::getCode, code)
+                .eq(TransferInfoEntity::getInvalidStatus, Boolean.FALSE)
+                .one();
     }
 
     /**
@@ -531,10 +589,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             transferDTO.setSkuId(detailEntity.getSkuId());
             transferDTO.setSkuNo(detailEntity.getSkuNo());
             transferDTO.setQty(detailEntity.getQty());
-            if (SourceTypeEnum.SELF_ADD.getCode().equals(transferInfoEntity.getSourceType())) {
-                addTransferList.add(transferDTO);
-            } else {
+            if (SourceTypeEnum.TRANSFER_APPLICATION.getCode().equals(transferInfoEntity.getSourceType())) {
                 pushTransferList.add(transferDTO);
+            } else {
+                addTransferList.add(transferDTO);
             }
         }
         //手动新增数据更新库存
@@ -687,7 +745,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 .set(TransferInfoEntity::getApproveUserName, userInfo.getUserName())
                 .set(TransferInfoEntity::getApproveStatus, approveStatus)
                 .set(TransferInfoEntity::getApproveTime, LocalDateTime.now())
-                .set(ApproveStatusEnum.APPROVE.getStatus().equals(approveStatus), TransferInfoEntity::getSyncKingdeeStatus, SyncKingdeeStatusEnum.TO_BE_SYNC.getCode())
                 .update();
     }
 

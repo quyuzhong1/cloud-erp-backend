@@ -11,7 +11,7 @@ import java.io.Serializable;
 
 /**
  * @Classname BomChildrenSkuDTO
- * @Description TODO
+
  * @Date 2023-02-14 19:36
  * @Created by yl
  */

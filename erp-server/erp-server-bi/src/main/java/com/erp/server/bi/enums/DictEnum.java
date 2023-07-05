@@ -2,7 +2,7 @@ package com.erp.server.bi.enums;
 
 /**
  * @Classname DictEnum
- * @Description TODO
+
  * @Date 2022-12-08 18:51
  * @Created by yl
  */

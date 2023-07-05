@@ -21,6 +21,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.Md5Util;
 import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
@@ -49,6 +50,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -545,7 +547,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      */
 
     @Override
-    public void sedEmail(EmailVerifyCodeDTO dto) {
+    public void sendEmail(EmailVerifyCodeDTO dto) {
         String email = dto.getEmail();
         boolean result = redisService.setNx(email, 1, 1, TimeUnit.MINUTES);
         if (!result) {
@@ -570,7 +572,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         emailDTO.setRecipients(recipients);
         emailDTO.setSubject("验证码");
         emailDTO.setTemplate(EmailTemplate.VERIFY_CODE);
-        Boolean sendResult = mailService.sedVerifyCode(emailDTO);
+        Boolean sendResult = mailService.sendVerifyCode(emailDTO);
         if (sendResult) {
             redisService.setCacheObject(RedisKeyUtil.getEmailCodeCacheKey(email), code, RedisCacheConstants.EMAIL_CODE_EXPIRATION, TimeUnit.MINUTES);
         }
@@ -652,6 +654,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             FindUserDTO userDTO = new FindUserDTO();
             userDTO.setUserId(item.getUid());
             userDTO.setUserName(item.getUserName());
+            userDTO.setRealName(item.getRealName());
             userDTO.setIsMyState(0);
             resultList.add(userDTO);
         }
@@ -740,6 +743,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      * @author yl
      * @date 2022-10-15 11:22
      */
+    @Override
     public List<UserRequestPermissionsDTO> getRequestPermissionsList(String userId) {
 
 //        //获取用户角色id
@@ -769,6 +773,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      * @Author Luo_WG
      * @Date 2022/10/19 14:17
      **/
+    @Override
     public List<String> getDepUserList(String userId) {
         List<SysDepartmentTreeDTO> treeList = sysDepartmentMapper.findTree();
         List<String> userDepList = baseMapper.getUserDepList(userId);
@@ -792,7 +797,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Override
     public List<FindUserDTO> getUserListByUserIds(List<String> userIds) {
         if (CollectionUtils.isEmpty(userIds)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(SysUserInfoEntity::getUid, userIds);
@@ -811,17 +816,25 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Override
     public FindUserDTO getUserByUserId(String userId) {
+        if (StringUtils.isBlank(userId)) {
+            return new FindUserDTO();
+        }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysUserInfoEntity::getUid, userId);
         queryWrapper.eq(SysUserInfoEntity::getDeleteState, IsConstant.YES);
         SysUserInfoEntity entity = this.getOne(queryWrapper);
         if (!Objects.isNull(entity)) {
+            SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO = sysDepartmentUserService.getDeptByUserId(userId);
             FindUserDTO userDTO = new FindUserDTO();
             userDTO.setUserId(entity.getUid());
             userDTO.setUserName(entity.getUserName());
             userDTO.setCode(entity.getCode());
             userDTO.setMobile(entity.getMobile());
             userDTO.setIsMyState(0);
+            if (Objects.nonNull(sysDepartmentUserNumberDTO)) {
+                userDTO.setDepartmentId(sysDepartmentUserNumberDTO.getDepartmentId());
+                userDTO.setDepartmentName(sysDepartmentUserNumberDTO.getDepartmentName());
+            }
             return userDTO;
         }
         return new FindUserDTO();
@@ -900,7 +913,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                     .filter(superior -> superior.getLevel() >= ChargeSuperiorEnum.DIRECT_SUPERIOR.getCode())
                     .findFirst()
                     .orElse(null);
-            BeanMapperUtils.copy(userSuperiorDTO,newSuperiorDTO);
+            BeanMapperUtils.copy(userSuperiorDTO, newSuperiorDTO);
             newSuperiorDTO.setSuperiorType(ChargeSuperiorEnum.DIRECT_SUPERIOR.getName());
             parentList.add(newSuperiorDTO);
             parentList.addAll(collect);
@@ -963,12 +976,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     @Override
-    public boolean updateSyncKingdeeStatus(List<String> businessIds, String syncKingdeeStatus, String syncKingdeeId) {
+    public boolean updateSyncKingdeeStatus(List<String> businessIds, String syncKingdeeStatus, String syncKingdeeId,String syncOperate) {
         return this.lambdaUpdate()
                 .in(SysUserInfoEntity::getUid, businessIds)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), SysUserInfoEntity::getSyncKingdeeStatus, syncKingdeeStatus)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), SysUserInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId), SysUserInfoEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncOperate), SysUserInfoEntity::getSyncOperate, syncOperate)
                 .update();
     }
 
@@ -1041,6 +1055,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      * @Author Luo_WG
      * @Date 2023/4/20 11:18
      **/
+    @Override
     public Boolean forgotPassword(ForgotPasswordDTO forgotPasswordDTO) {
         SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, forgotPasswordDTO.getUserAccount()).one();
         if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
@@ -1088,7 +1103,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         EmailVerifyCodeDTO dto = new EmailVerifyCodeDTO();
         dto.setEmail(sysUserInfoEntity.getEmail());
-        sedEmail(dto);
+        sendEmail(dto);
         Map<String, Object> map = new HashMap<>();
         map.put("msg", String.format("已给<'%s'>成功发送验证码，请在邮箱查看", sysUserInfoEntity.getEmail()));
         return map;
@@ -1153,6 +1168,55 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         return resultList;
     }
 
+
+    /**
+     * 上传头像
+     *
+     * @param headPhotoFile
+     * @return
+     */
+    @Override
+    public Boolean uploadHeadPhoto(MultipartFile headPhotoFile) {
+        String userId = commonService.getUserInfo().getUid();
+        SysUserInfoEntity userInfo = this.getById(userId);
+        if (Objects.isNull(userInfo)) {
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
+        }
+
+        String headPhotoUrl = FastDFSClientUtil.uploadFile(headPhotoFile);
+        if (StringUtils.isNotBlank(headPhotoUrl)) {
+            userInfo.setHeadIcon(headPhotoUrl);
+            return this.updateById(userInfo);
+        }
+        return Boolean.FALSE;
+    }
+
+    /**
+     * 根据金蝶code获取用户信息
+     *
+     * @param kingdeeCodeList
+     * @return java.util.List<com.common.business.dto.FindUserDTO>
+     * @author yl
+     * @date 2023-06-27 15:31
+     */
+    @Override
+    public List<FindUserDTO> listUserByKingdeeCode(List<String> kingdeeCodeList) {
+        if (CollectionUtils.isEmpty(kingdeeCodeList)) {
+            return Collections.emptyList();
+        }
+        List<SysUserInfoEntity> userList = this.lambdaQuery().in(SysUserInfoEntity::getCode, kingdeeCodeList).list();
+        List<FindUserDTO> resultList = new ArrayList<>(userList.size());
+        for (SysUserInfoEntity item : userList) {
+            FindUserDTO findUser = new FindUserDTO();
+            findUser.setUserId(item.getUid());
+            findUser.setUserName(item.getUserName());
+            findUser.setRealName(item.getRealName());
+            findUser.setCode(item.getCode());
+            resultList.add(findUser);
+        }
+        return resultList;
+    }
+
     private Boolean sendingEmail(EmailVerifyCodeDTO dto, String subject) {
         String email = dto.getEmail();
         boolean result = redisService.setNx(email, 1, 1, TimeUnit.MINUTES);
@@ -1169,7 +1233,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         emailDTO.setRecipients(recipients);
         emailDTO.setSubject(subject);
         emailDTO.setTemplate(EmailTemplate.RESETTING_PASSWORD);
-        Boolean sendResult = mailService.sedVerifyCode(emailDTO);
+        Boolean sendResult = mailService.sendVerifyCode(emailDTO);
         return sendResult;
     }
 }

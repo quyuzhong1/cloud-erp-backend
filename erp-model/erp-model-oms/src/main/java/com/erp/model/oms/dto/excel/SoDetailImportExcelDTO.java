@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
  * 导出的错误数据
  * @author Lambda
  * @Classname SoDetailImportExcelDTO
- * @Description TODO
+
  * @Date 2023-05-17 19:48
  * @Created by yl
  */

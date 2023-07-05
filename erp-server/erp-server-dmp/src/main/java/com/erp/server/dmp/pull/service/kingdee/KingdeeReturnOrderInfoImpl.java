@@ -2,6 +2,8 @@ package com.erp.server.dmp.pull.service.kingdee;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -12,23 +14,26 @@ import com.common.core.utils.date.EnumTimePattern;
 import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
+import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
-import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
-import com.erp.model.dmp.enums.PlatformApiEnum;
-import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.*;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.kingdee.KingdeeOrderEntity;
 import com.erp.model.dmp.kingdee.KingdeeReturnOrderEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeReturnOrderItemEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,7 +55,9 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
     private MongoService mongoService;
 
     @Resource
-    private MQProducerService<DmpReturnOrderInfoEntity> mqProducerService;
+    private MQProducerService mqProducerService;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
@@ -66,23 +73,26 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         for (KingdeeReturnOrderEntity entity : entityList) {
             OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByBillNoAndOrderNo(entity.getFBillNo(), null);
             List<KingdeeReturnOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_KINGDEE_RETURN_ORDER, KingdeeReturnOrderEntity.class);
+            entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
+            entity.setDownloadTime(LocalDateTime.now());
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
                 pushToMqList.add(entity);
                 continue;
             }
             KingdeeReturnOrderEntity mongoDatum = mongoData.get(0);
-            String id = mongoDatum.get_id();
-            mongoDatum.set_id(null);
             // 比较数据是否相同
             if (mongoDatum.toString().equals(entity.toString())) {
                 continue;
             }
             pushToMqList.add(entity);
             MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
-            OrderMongoDTO updateDto = new OrderMongoDTO(id);
+            OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_RETURN_ORDER, KingdeeReturnOrderEntity.class);
         }
+        //同步到OMS销售退货单
+        pushToMqList.forEach(req -> mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_REFUND_ORDER_TO_TASK_TAG.getName(), req, req.getFBillNo()));
+
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_KINGDEE_RETURN_ORDER);
         }
@@ -106,6 +116,43 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         }).collect(Collectors.toList());
     }
 
+    @Override
+    public void cleanDataSave(String tableName, int size) {
+        // 查询mongo待推送数据
+        String value = cfgSettingService.getValue(SettingEnum.CLEAN_JOB_DELAY_MINUTE);
+        Integer delayMinute = null != value ? NumberUtil.parseInt(value) : 0;
+        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsClean(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
+        List<KingdeeReturnOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.ORIGINAL_KINGDEE_RETURN_ORDER, KingdeeReturnOrderEntity.class);
+        if (CollectionUtil.isEmpty(mongoData)) {
+            return;
+        }
+        for (KingdeeReturnOrderEntity mongoDatum : mongoData) {
+            mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
+            mongoDatum.setLastPushTime(LocalDateTime.now());
+            updateAndSaveDb(mongoDatum);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void updateAndSaveDb(KingdeeReturnOrderEntity mongoDatum) {
+        DmpReturnOrderInfoEntity returnOrderInfo = initOrderInfoEntity(mongoDatum);
+        OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
+        if(null == returnOrderInfo){
+            mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
+            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);
+            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_RETURN_ORDER, KingdeeReturnOrderEntity.class);
+            return;
+        }
+        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);
+        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_RETURN_ORDER, KingdeeReturnOrderEntity.class);
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_RETURN_ORDER_TAG.getName(),
+                returnOrderInfo,returnOrderInfo.getReturnCode());
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
+            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+        }
+    }
+
     /**
      * 请求金蝶云星空销售出库接口
      * @param dto
@@ -119,16 +166,67 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
         queryFilters.add(String.format("FModifyDate >= '%s'", sdf.format(lastTime.minusMinutes(2))));
         queryFilters.add(String.format("FModifyDate <= '%s'", sdf.format(nextTime)));
-        // 标准退货单
-        queryFilters.add(StrUtil.format("FBillTypeID in ('{}','{}')", "73383412199a402bb58439509e089077","559351ce1d0252"));
+        // 退货单拉全类型的单据
+//        queryFilters.add(StrUtil.format("FBillTypeID in ('{}','{}')", "73383412199a402bb58439509e089077","559351ce1d0252"));
 //        queryFilters.add(String.format("FOrderNo <> '%s'", ""));
-        queryFilters.add(String.format("FDocumentStatus = '%s'", "C"));
+        queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'B','C','D'"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillTypeID.FNumber,FBillNo,FDate,FDocumentStatus,FSaleOrgId,FSaleOrgId.FName,FRetcustId," +
-                "FRetcustId.FName,FSalesManId,FSalesManId.FName,FCreateDate,FModifyDate,FCancelStatus,FReceiverCountry,FLinkMan,FExchangeRate," +
-                "FApproveDate,FBussinessType,FOwnerTypeIdHead,FSettleCurrId.FCode,FDelTime,FHeadNote,"
-                + "FOrderNo,FAmount,FMustqty,FUnitID.FName,FMaterialId,FMaterialId.FNumber,FMaterialName,FAuxpropId,FMaterialType,FPrice,FStockId," +
-                "FStocklocId,FStockstatusId,FNote,FSrcBillNo,FSrcBillTypeID,FIsFree,FMaterialModel,FRealQty,FSOBILLTYPEID,FSalUnitQty,FProjectNo,F_ulz_KHSKU,FAllAmount";
+        String fieldKeys = "FID," +
+                "FBillTypeID," +
+                "FBillTypeID.FName," +
+                "FBillTypeID.FNumber," +
+                "FBillNo," +
+                "FDate," +
+                "FDocumentStatus," +
+                "FSaleOrgId," +
+                "FSaleOrgId.FName," +
+                "FRetcustId.FName," +
+                "FRetcustId.FNumber," +
+                "FSalesManId," +
+                "FSalesManId.FName," +
+                "FCreateDate," +
+                "FModifyDate," +
+                "FCancelStatus," +
+                "FReceiverCountry," +
+                "FLinkMan," +
+                "FExchangeRate," +
+                "FApproveDate," +
+                "FBussinessType," +
+                "FOwnerTypeIdHead," +
+                "FSettleCurrId.FCode," +
+                "FDelTime," +
+                "FHeadNote," +
+                "FReturnReason," +
+                "FSaledeptid.FNumber," +
+                "FSaledeptid.FName," +
+                "FOrderNo," +
+                "FAmount," +
+                "FMustqty," +
+                "FUnitID.FName," +
+                "FMaterialId," +
+                "FMaterialId.FNumber," +
+                "FMaterialName," +
+                "FAuxpropId," +
+                "FMaterialType," +
+                "FPrice," +
+                "FStockId," +
+                "FStockId.FNumber," +
+                "FStockId.FName," +
+                "FStocklocId," +
+                "FStockstatusId," +
+                "FNote," +
+                "FSrcBillNo," +
+                "FSrcBillTypeID," +
+                "FIsFree," +
+                "FMaterialModel," +
+                "FRealQty," +
+                "FSOBILLTYPEID," +
+                "FSalUnitQty," +
+                "FProjectNo," +
+                "F_ulz_KHSKU," +
+                "FAllAmount," +
+                "FReturnType," +
+                "FSOEntryId";
 
         Boolean dataSign = true;
         //当前页数
@@ -138,7 +236,7 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
         List<Map<String, Object>> resultAll = new ArrayList<>();
         while (dataSign) {
             //"StartRow\":0,"+// 分页取数开始行索引，从0开始，例如每页10行数据，第2页开始是10，第3页开始是20
-            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName(), 1);
+            KingdeeApiUtils kingdeeApiUtils = new KingdeeApiUtils(dto.getPlatformApiEnum().getTaskName());
             List<Map<String, Object>> result = kingdeeApiUtils.queryList(filterStr, fieldKeys, pageSize, pageIndex, 0);
             log.info("获取金蝶退货数据第[{}]页 有{}条记录", pageIndex, pageSize);
             if (result.size() < pageSize){
@@ -267,8 +365,10 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
             dmpReturnOrderItemEntity.setSkuNo(skuNo);
             //商品名称
             dmpReturnOrderItemEntity.setItemName(orderItemBean.getFMaterialName());
-            //买家购买数量
-            dmpReturnOrderItemEntity.setQuantity(Double.valueOf(orderItemBean.getFSalUnitQty()).intValue());
+            if (StringUtils.isNotBlank(orderItemBean.getFSalUnitQty())) {
+                //买家购买数量
+                dmpReturnOrderItemEntity.setQuantity(Double.valueOf(orderItemBean.getFSalUnitQty()).intValue());
+            }
             //商品单位
             dmpReturnOrderItemEntity.setProductUnit(orderItemBean.getFUnitName());
             //商品图片地址

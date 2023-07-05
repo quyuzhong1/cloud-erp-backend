@@ -26,6 +26,7 @@ import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.QcReportDetailService;
 import com.erp.server.wms.service.QcReportService;
 import com.erp.server.wms.service.WmsAttachmentService;
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -36,10 +37,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -274,6 +272,59 @@ public class QcReportDetailServiceImpl extends SuperServiceImpl<QcReportDetailMa
             log.error("导出质检报告出错  ==e", e);
             throw new ServiceException(ApiError.ERROR_1015);
         }
+    }
+
+    @Override
+    public Map<String, List<QcReportDetailDTO.ViewDTO>> getByMainIds(List<String> ids) {
+        List<QcReportDetailEntity> list =  lambdaQuery().in(QcReportDetailEntity::getMainId, ids).list();
+
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyMap();
+        }
+        // 返回结果map
+        Map<String, List<QcReportDetailDTO.ViewDTO>> resultMap = Maps.newHashMap();
+
+        List<DictBasicEntity> dictList = dictBasicService.getByKeyList(new ArrayList<>());
+
+        // 按质检单id进行分组
+        Map<String,List<QcReportDetailEntity>> detailMap = list.stream().collect(Collectors.groupingBy(QcReportDetailEntity::getMainId));
+        detailMap.forEach((mainId, detailList)->{
+            List<QcReportDetailDTO.ViewDTO> viewList = BeanMapper.copyList(detailList, QcReportDetailDTO.ViewDTO.class);
+            //质检报告的id 集合
+            List<String> qcReportIds = viewList.stream().map(QcReportDetailDTO.ViewDTO::getQcReportId).collect(Collectors.toList());
+            List<QcReportEntity> qcReportList = qcReportService.listByIds(qcReportIds);
+
+            //获取到业务表id
+            List<String> businessIds = detailList.stream().map(QcReportDetailEntity::getId).collect(Collectors.toList());
+
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(businessIds);
+
+            for (QcReportDetailDTO.ViewDTO item : viewList) {
+                QcReportEntity report = qcReportList.stream().filter(q -> q.getId().equals(item.getQcReportId())).
+                        findFirst().orElse(null);
+                if (report != null) {
+                    item.setQcReportName(report.getName());
+                    item.setQcReportContent(report.getContent());
+                }
+                String resultDict = item.getResultDict();
+                String resultName = dictList.stream().filter(d -> d.getValue().equals(resultDict)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                item.setResultName(resultName);
+
+                List<String> attachmentUrlList = attachmentList.stream().
+                        filter(a -> a.getBusinessId().equals(item.getId())).
+                        map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).
+                        collect(Collectors.toList());
+                List<String> attachmentNameList = attachmentList.stream().
+                        filter(a -> a.getBusinessId().equals(item.getId())).
+                        map(WmsAttachmentDTO.UpdateDTO::getAttachName).
+                        collect(Collectors.toList());
+                item.setReportUrlList(attachmentUrlList);
+                item.setReportNameList(attachmentNameList);
+            }
+            resultMap.put(mainId, viewList);
+        });
+        return resultMap;
     }
 
 

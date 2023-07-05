@@ -6,7 +6,7 @@ import com.erp.model.plm.entity.ProductPlanSaleEntity;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/2/20 20:05
  */
 public interface ProductPlanSaleService extends IService<ProductPlanSaleEntity> {

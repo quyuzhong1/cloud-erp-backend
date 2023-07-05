@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.List;
@@ -12,7 +13,7 @@ import java.util.List;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/3/22 11:34
  */
 @Data
@@ -42,5 +43,13 @@ public class BaseIdsDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class QtyDTO extends IdsDTO{
+
+        @NotNull(message = "填写信息不能为空")
+        private Integer qty;
+
+    }
 
 }

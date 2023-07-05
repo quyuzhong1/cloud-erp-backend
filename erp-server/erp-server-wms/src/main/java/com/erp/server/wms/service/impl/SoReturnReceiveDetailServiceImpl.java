@@ -19,10 +19,7 @@ import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.server.wms.mapper.SoReturnReceiveDetailMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.SoDeliveryNoticeDetailService;
-import com.erp.server.wms.service.SoOutstockDetailService;
-import com.erp.server.wms.service.SoReturnReceiveDetailService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.SuperServiceImpl;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
@@ -57,6 +54,9 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
     private SoOutstockDetailService soOutstockDetailService;
 
     @Resource
+    private SoReturnNoticeDetailService soReturnNoticeDetailService;
+
+    @Resource
     private OperateLogService operateLogService;
 
     @Override
@@ -68,6 +68,8 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
         //获取退货单详情表id
         List<String> returnDetailIds = dto.getDetailList().stream().map(SoReturnReceiveDetailDTO.Add::getSourceDetailId).collect(Collectors.toList());
         List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(returnDetailIds);
+
+        List<SoReturnNoticeDetailEntity> returnNoticeDetailEntities = soReturnNoticeDetailService.listDetailBySourceIds(Arrays.asList(dto.getSourceId()));
         List<SoReturnReceiveDetailEntity> list = new ArrayList<>();
         List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = this.listDetailBySourceIds(Arrays.asList(dto.getSourceId()));
 //        List<String> soDetailIds = soReturnDetailEntities.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
@@ -96,8 +98,6 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
             detailEntity.setReturnQty(detailDto.getReturnQty());
             detailEntity.setReceiveQty(detailDto.getReceiveQty());
-            detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
-            detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
             list.add(detailEntity);
@@ -160,8 +160,6 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
             detailEntity.setReturnQty(detailDto.getReturnQty());
             detailEntity.setReceiveQty(detailDto.getReceiveQty());
-            detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
-            detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
             list.add(detailEntity);

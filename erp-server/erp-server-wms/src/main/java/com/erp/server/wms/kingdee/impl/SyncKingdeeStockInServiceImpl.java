@@ -5,12 +5,15 @@ import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -30,10 +33,7 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -76,6 +76,8 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
      **/
     @Override
     public void syncDataToKingdee(PoInstockEntity entity, String operate) {
+        PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
+
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -97,11 +99,13 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         //入库日期
         resultMap.put("billDate", entity.getStockInDate());
 
-        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
-        //采购员
-        resultMap.put("purchaseUserCode", findUserDTO.getCode());
-        //采购员
-        resultMap.put("purchaseUserName", findUserDTO.getUserName());
+        if (StringUtils.isNotBlank(entity.getPurchaseUserId())) {
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
+            //采购员
+            resultMap.put("purchaseUserCode", findUserDTO.getCode());
+            //采购员
+            resultMap.put("purchaseUserName", findUserDTO.getUserName());
+        }
         //新品首批
         if (entity.getIsFirstMassProduct()) {
             resultMap.put("isFirstMassProduct", 1);
@@ -109,6 +113,21 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             resultMap.put("isFirstMassProduct", 2);
         }
 
+
+        //组织机构编码
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getReceiveOrgId(), purchaseOrderEntity.getPurchaseOrgId()));
+        //收货组织
+        String receiveOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId())).distinct()
+                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+        resultMap.put("receiveOrgCode", receiveOrgCode);
+
+        //采购组织
+        String purchaseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(purchaseOrderEntity.getPurchaseOrgId())).distinct()
+                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+        resultMap.put("purchaseOrgCode", purchaseOrgCode);
+
+        //退货组织
+        resultMap.put("supplierCode", entity.getReceiveOrgId());
         //查询供应商信息
         SupplierEntity supplierEntity = scmTaskFeign.getSupplierById(entity.getSupplierId());
         //供应商编码

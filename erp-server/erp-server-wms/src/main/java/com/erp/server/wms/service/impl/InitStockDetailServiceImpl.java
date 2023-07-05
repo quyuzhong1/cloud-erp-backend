@@ -125,20 +125,21 @@ public class InitStockDetailServiceImpl extends SuperServiceImpl<InitStockDetail
         List<InitStockDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
         List<String> skuIds = list.stream().map(InitStockDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuInfos = plmTaskFeign.getSkuInfoByIds(skuIds);
-        Map<String,SkuVO> skuMap =  skuInfos.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        // 此处修复，返回的记录按sku id不是唯一的了
+        Map<String, List<SkuVO>> skuMap = skuInfos.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         for(int i = 0, length = list.size();i < length;i++) {
             InitStockDetailEntity data = list.get(i);
-            SkuVO skuVO = skuMap.get(data.getSkuId());
-            if(Objects.isNull(skuVO)) {
+            if(!skuMap.containsKey(data.getSkuId()) || CollUtil.isEmpty(skuMap.get(data.getSkuId()))) {
                 throw new ServiceException(StrUtil.format("SKU【{}】错误", data.getSkuNo()));
             }
+            SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
             // 验证产品是否审核通过
             Integer skuStatus = skuVO.getStatus();
             if(!Objects.equals(skuStatus, ProductDetailStatusEnum.APPROVAL_PASS.getCode())) {
                 throw new ServiceException(StrUtil.format("SKU【{}】未审核通过", data.getSkuNo()));
             }
             data.setMainId(mainId);
-            data.setSkuNo(skuMap.get(data.getSkuId()).getSkuNo());// 填充真实的sku no
+            data.setSkuNo(skuVO.getSkuNo());// 填充真实的sku no
             data.setWarehouseLocation(StrUtils.null2EmptyWithTrim(data.getWarehouseLocation()));
             // 修改时添加日志
             if(StrUtils.isNotEmpty(data.getId())) {

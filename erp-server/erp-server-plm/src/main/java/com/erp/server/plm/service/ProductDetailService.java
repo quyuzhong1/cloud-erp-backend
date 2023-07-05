@@ -1,13 +1,16 @@
 package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -113,15 +116,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return java.lang.Boolean
      **/
     Boolean deleteByProductId(String id);
-
-    /**
-     * @Description 删除多规格sku信息-批量
-     * @Author Luo_WG
-     * @Date 2022/9/22 11:32
-     * @param skuIds:产品sku表主键id
-     * @return java.lang.Boolean
-     **/
-    Boolean deleteBatch(List<String> skuIds);
 
     /**
      * @Description 根据产品主键id查询sku明细
@@ -452,4 +446,97 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
      **/
     List<ProductDetailEntity> getProductDetailAll();
+
+    /**
+     * 更改产品状态
+     * @author yl
+     * @date 2023-06-14 11:12
+     * @param productIds
+     * @param code
+     * @return void
+     */
+    void updateProductStateByProductIdList(List<String> productIds, Integer code);
+
+    /**
+     * 提交
+     * @Author Luo_WG
+     * @Date 2023/6/14 15:36
+     * @param ids
+     * @return java.lang.Boolean
+     **/
+    Boolean submit(List<String> ids);
+
+    /**
+     * 批量审核
+     * @Author Luo_WG
+     * @Date 2023/6/14 16:38
+     * @param baseApproveParamDTO
+     * @return java.lang.Boolean
+     **/
+    Boolean approve(BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 批量反审核
+     * @Author Luo_WG
+     * @Date 2023/6/14 17:18
+     * @param ids
+     * @return java.lang.Boolean
+     **/
+    Boolean disApprove(List<String> ids);
+
+    /**
+     * 取消流程
+     * @Author Luo_WG
+     * @Date 2023/6/14 17:28
+     * @param ids
+     * @return java.lang.Boolean
+     **/
+    Boolean cancelProcess(List<String> ids);
+
+    /**
+     * 批量删除
+     * @Author Luo_WG
+     * @Date 2023/6/14 17:42
+     * @param ids
+     * @return java.lang.Boolean
+     **/
+    Boolean deleteBatch(List<String> ids);
+
+
+    /**
+     * 根据产品id 集合获取数据
+     * @author yl
+     * @date 2023-06-14 18:33
+     * @param productIdList
+     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
+     */
+    List<ProductDetailEntity> listSkuByProductIds(List<String> productIdList);
+
+    /**
+     * 批量更新字段
+     * @Author Luo_WG
+     * @Date 2023/6/15 11:32
+     * @param dto dto
+     * @return java.lang.Boolean
+     **/
+    Boolean updateBatchFiled(ProductDetailBatchUpdateDTO dto);
+
+    /**
+     * 更新不可删除标识
+     * @Author Luo_WG
+     * @Date 2023/6/15 11:32
+     * @param skuIds skuIds
+     * @return java.lang.Boolean
+     **/
+    Boolean updateOccupyStatus(List<String> skuIds);
+
+    /**
+     * 根据skuId查询产品信息-无规格-产品详情-PLM-1.3
+     * @Author Luo_WG
+     * @Date 2023/6/29 14:21
+     * @param skuId
+     * @return com.erp.model.plm.dto.ProductNoSpecDetailAllDTO
+     **/
+    ProductNoSpecDetailAllDTO getNoSpecDetailBySkuId(String skuId);
+
 }

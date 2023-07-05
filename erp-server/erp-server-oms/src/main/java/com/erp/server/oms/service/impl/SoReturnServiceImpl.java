@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
@@ -19,7 +18,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.dto.SoReturnDetailDTO;
@@ -32,11 +30,13 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
-import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
-import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
+import com.erp.model.wms.entity.SoReturnNoticeEntity;
+import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.erp.model.wms.enums.ReturnReasonEnum;
+import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
@@ -58,7 +58,6 @@ import org.springframework.util.ObjectUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -636,10 +635,14 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<String> skuIdList = list.stream().map(SoReturnDTO.GenerateSoReturnNoticeView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        //获取界面传过来的采购单详情表id集合
+        //获取销售订单详情表id集合
         List<String> orderDetailIds = list.stream().map(SoReturnDTO.GenerateSoReturnNoticeView::getSourceDetailId).collect(Collectors.toList());
         //获取销售单详情信息
         List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByIds(orderDetailIds);
+        //获取退货单详情表id
+        List<String> soReturnDetailIds = list.stream().map(SoReturnDTO.GenerateSoReturnNoticeView::getId).collect(Collectors.toList());
+        //获取退货通知单详情
+        List<SoReturnNoticeDetailEntity> returnNoticeDetailEntities = soReturnNoticeFeign.listDetailBySourceDetailIds(soReturnDetailIds);
         List<String> soIds = soDetailEntities.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
         for (SoReturnDTO.GenerateSoReturnNoticeView generateSoReturnNoticeView : list) {
@@ -647,10 +650,13 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             generateSoReturnNoticeView.setSalesQty(soDetailEntity.getQty());
             Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(generateSoReturnNoticeView.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             generateSoReturnNoticeView.setDeliveryQty(actualQty);
-            generateSoReturnNoticeView.setReturnQty(soDetailEntity.getQty());
+            Integer noticeReturnQty = returnNoticeDetailEntities.stream().filter(detail -> generateSoReturnNoticeView.getId().equals(detail.getSourceDetailId()) && detail.getSkuId().equals(generateSoReturnNoticeView.getSkuId())).map(SoReturnNoticeDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            generateSoReturnNoticeView.setReturnQty(generateSoReturnNoticeView.getReturnQty() - noticeReturnQty);
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(generateSoReturnNoticeView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             generateSoReturnNoticeView.setProductName(productDetailEntity.getName());
             generateSoReturnNoticeView.setSourceDetailId(generateSoReturnNoticeView.getSourceDetailId());
+            generateSoReturnNoticeView.setReturnTypeDictName(ReturnTypeEnum.getName(generateSoReturnNoticeView.getReturnTypeDict()));
+            generateSoReturnNoticeView.setReturnReasonDictName(ReturnReasonEnum.getName(generateSoReturnNoticeView.getReturnReasonDict()));
         }
         return list;
     }

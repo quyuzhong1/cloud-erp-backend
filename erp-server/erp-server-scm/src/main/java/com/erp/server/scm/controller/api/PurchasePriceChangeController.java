@@ -106,7 +106,7 @@ public class PurchasePriceChangeController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",
-            menuCode = "scm:purchase:price:change:addAndSubmit",
+            menuCode = "scm:purchase:price:change:add",
             serviceClass = PurchasePriceChangeService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated PurchasePriceChangeDTO.AddDTO dto) {
@@ -159,7 +159,7 @@ public class PurchasePriceChangeController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",
-            menuCode = "scm:purchase:price:change:updateAndSubmit",
+            menuCode = "scm:purchase:price:change:update",
             serviceClass = PurchasePriceChangeService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated PurchasePriceChangeDTO.UpdateDTO dto) {
@@ -199,7 +199,7 @@ public class PurchasePriceChangeController extends BaseController {
             serviceClass = PurchasePriceChangeService.class,
             keyIdName = "ids")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = purchasePriceChangeService.submitApprove(dto.getIds());
+        Boolean result = purchasePriceChangeService.submitApprove(dto.getIds(),Boolean.TRUE);
         return result == true ? success() : failure();
     }
 

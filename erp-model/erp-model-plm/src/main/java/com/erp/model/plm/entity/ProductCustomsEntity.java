@@ -32,10 +32,28 @@ public class ProductCustomsEntity extends BaseEntity<ProductCustomsEntity> {
     private String skuId;
 
     /**
+    * sku编号
+    */
+    @TableField(exist = false)
+    private String skuNo;
+
+    /**
+    * 图片
+    */
+    @TableField(exist = false)
+    private String imagesUrl;
+
+    /**
     * 国家
     */
     @TableField("country")
     private String country;
+
+    /**
+    * 国家
+    */
+    @TableField(exist = false)
+    private String countryName;
 
     /**
     * 海关编码

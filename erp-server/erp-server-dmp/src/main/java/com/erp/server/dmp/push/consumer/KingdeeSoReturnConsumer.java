@@ -1,5 +1,6 @@
 package com.erp.server.dmp.push.consumer;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -50,10 +51,68 @@ public class KingdeeSoReturnConsumer implements RocketMQListener<Map<String, Obj
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_RETURNSTOCK.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "XSTHD12482569"));
+//        queryFilters.add(String.format("FDocumentStatus = '%s'", "C"));
+        queryFilters.add(String.format("FBillNo = '%s'", "XSTHD12485503"));
+        queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'B','C','D'"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FBillTypeID.FNUMBER";
-        map.put("groupName", "XSCKD01_SYS，XSCKD07_SYS");
+        String fieldKeys = "FID," +
+                "FBillTypeID," +
+                "FBillTypeID.FName," +
+                "FBillTypeID.FNumber," +
+                "FBillNo," +
+                "FDate," +
+                "FDocumentStatus," +
+                "FSaleOrgId," +
+                "FSaleOrgId.FName," +
+                "FRetcustId.FName," +
+                "FRetcustId.FNumber," +
+                "FSalesManId," +
+                "FSalesManId.FName," +
+                "FCreateDate," +
+                "FModifyDate," +
+                "FCancelStatus," +
+                "FReceiverCountry," +
+                "FLinkMan," +
+                "FExchangeRate," +
+                "FApproveDate," +
+                "FBussinessType," +
+                "FOwnerTypeIdHead," +
+                "FSettleCurrId.FCode," +
+                "FDelTime," +
+                "FHeadNote," +
+                "FReturnReason," +
+                "FSaledeptid.FNumber," +
+                "FSaledeptid.FName," +
+                "FOrderNo," +
+                "FAmount," +
+                "FMustqty," +
+                "FUnitID.FName," +
+                "FMaterialId," +
+                "FMaterialId.FNumber," +
+                "FMaterialName," +
+                "FAuxpropId," +
+                "FMaterialType," +
+                "FPrice," +
+                "FStockId," +
+                "FStockId.FNumber," +
+                "FStockId.FName," +
+                "FStocklocId," +
+                "FStockstatusId," +
+                "FNote," +
+                "FSrcBillNo," +
+                "FSrcBillTypeID," +
+                "FIsFree," +
+                "FMaterialModel," +
+                "FRealQty," +
+                "FSOBILLTYPEID," +
+                "FSalUnitQty," +
+                "FProjectNo," +
+                "F_ulz_KHSKU," +
+                "FAllAmount," +
+                "FReturnType," +
+                "FSOEntryId";
+
+        System.out.println(filterStr);
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);
         System.out.println(queryList);
     }
@@ -134,7 +193,7 @@ public class KingdeeSoReturnConsumer implements RocketMQListener<Map<String, Obj
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils,(String)map.get("syncKingdeeId"),(String)map.get("code"));
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),(String)map.get("syncKingdeeId"),(String)map.get("code"));
         } catch (Exception e) {
             Map<String, Object> pushMap = new HashMap<>();
 //            pushMap.put("ids", Arrays.asList(map.get("soSyncKingdeeId")));

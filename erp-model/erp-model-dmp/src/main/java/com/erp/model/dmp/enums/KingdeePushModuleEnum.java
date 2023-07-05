@@ -3,7 +3,7 @@ package com.erp.model.dmp.enums;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/3/3 11:46
  */
 public enum KingdeePushModuleEnum {
@@ -33,6 +33,8 @@ public enum KingdeePushModuleEnum {
     SAL_OUTSTOCK("SAL_OUTSTOCK","销售出库单"),
     SAL_RETURNSTOCK("SAL_RETURNSTOCK","销售退货单"),
     BD_COMMONCONTACT("BD_CommonContact","联系人"),
+    SUB_SUBREQORDER("SUB_SUBREQORDER","委外订单"),
+    SUB_REQCHANGE("SUB_ReqChange","委外变更单"),
 
     ;
     private String code;

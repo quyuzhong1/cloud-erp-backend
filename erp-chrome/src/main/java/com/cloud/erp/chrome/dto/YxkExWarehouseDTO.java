@@ -9,7 +9,7 @@ import java.io.Serializable;
 
 /**
  * @Classname YxkExWarehouseDTO
- * @Description TODO
+
  * @Date 2022-08-29 12:25
  * @Created by yl
  */

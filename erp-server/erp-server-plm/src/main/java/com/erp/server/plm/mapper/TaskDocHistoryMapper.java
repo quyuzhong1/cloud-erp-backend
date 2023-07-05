@@ -1,8 +1,12 @@
 package com.erp.server.plm.mapper;
+import com.erp.model.plm.dto.DocHistoryDTO;
 import com.erp.model.plm.entity.TaskDocHistoryEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -17,4 +21,5 @@ import org.apache.ibatis.annotations.Mapper;
 public interface TaskDocHistoryMapper extends BaseMapper<TaskDocHistoryEntity> {
 
 
+    List<DocHistoryDTO.InfoDTO> historyList(@Param("finishDocsId") String finishDocsId);
 }

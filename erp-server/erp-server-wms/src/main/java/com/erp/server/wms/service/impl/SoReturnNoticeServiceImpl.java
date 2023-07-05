@@ -35,6 +35,7 @@ import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -96,13 +97,13 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     private SoReturnReceiveService soReturnReceiveService;
 
     @Resource
+    private SoReturnReceiveDetailService soReturnReceiveDetailService;
+
+    @Resource
     private WorkflowFeign workflowFeign;
 
     @Resource
     private CustomerFeign customerFeign;
-
-    @Resource
-    private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
 
     @Resource
     private WarehouseService warehouseService;
@@ -247,7 +248,9 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         entity.setSourceType(dto.getSourceType());
         entity.setBillDate(soReturnEntity.getBillDate());
         entity.setInventoryOrgId(dto.getInventoryOrgId());
-        entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());
+        if (ObjectUtils.isNotEmpty(sysAccountingCompanyEntity)) {
+            entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());
+        }
         if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
             //获取用户信息
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
@@ -311,7 +314,9 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         entity.setSourceCode(soReturnEntity.getCode());
         entity.setBillDate(soReturnEntity.getBillDate());
         entity.setInventoryOrgId(dto.getInventoryOrgId());
-        entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());
+        if (ObjectUtils.isNotEmpty(sysAccountingCompanyEntity)) {
+            entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());
+        }
         if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
             entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
         }
@@ -380,6 +385,12 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             detailView.setSalesQty(soDetailEntity.getQty());
             Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(detailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
             detailView.setDeliveryQty(actualQty);
+            if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
+                detailView.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnTypeDict()));
+            }
+            if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
+                detailView.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnDetailEntity.getReturnReasonDict()));
+            }
             detailViewDTOS.add(detailView);
         }
         viewDTO.setDetailList(detailViewDTOS);
@@ -652,7 +663,6 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         if (CollectionUtils.isEmpty(soDetailEntities)) {
             throw new ServiceException(ApiError.ERROR_92015);
         }
-
         for (String id : soReturnIdList) {
             List<SoReturnDTO.GenerateSoReturnNoticeView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
             SoReturnNoticeDTO.Add dto = new SoReturnNoticeDTO.Add();
@@ -664,8 +674,6 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 dto.setInventoryOrgId(view.getInventoryOrgId());
                 SoReturnNoticeDetailDTO.Add detailAddDTO = new SoReturnNoticeDetailDTO.Add();
                 detailAddDTO.setReturnQty(view.getReturnQty());
-                detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
-                detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
                 detailAddDTO.setRemark(view.getRemark());
                 detailAddDTO.setSourceDetailId(view.getId());
                 detailList.add(detailAddDTO);
@@ -697,16 +705,24 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         List<String> skuIdList = list.stream().map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailBySourceIds(returnIds);
         for (SoReturnNoticeDTO.GenerateSoReturnReceiveView view : list) {
+            Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(detail -> view.getSourceDetailId().equals(detail.getSourceDetailId()) && detail.getSkuId().equals(view.getSkuId())).map(SoReturnReceiveDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             //销售退货单
             SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(view.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
             //销售单信息
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             view.setSalesQty(soDetailEntity.getQty());
-            view.setReceiveQty(view.getReturnQty());
+            view.setReceiveQty(view.getReturnQty() - receiveQty);
             //产品sku信息
             ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             view.setProductName(productDetailEntity.getName());
+            if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
+                view.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnTypeDict()));
+            }
+            if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
+                view.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnDetailEntity.getReturnReasonDict()));
+            }
         }
         return list;
     }

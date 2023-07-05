@@ -10,10 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.PositiveOrZero;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -23,7 +20,7 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname SoInfoDTO
- * @Description TODO
+
  * @Date 2023-05-10 17:55
  * @Created by yl
  */
@@ -456,6 +453,52 @@ public class SoInfoDTO implements Serializable {
         @StateEnumValue(strValues = {"forwarder", "receive", "company"}, message = "地址类型有误", groups = {AddGroup.class})
         private String addressType;
 
+        /**
+         * 收款账号 接口地址：/oms/bankAccount/select
+         */
+        @NotBlank(message = "收款账号不能为空", groups = {AddGroup.class})
+        private String receiveAccount;
+
+        /**
+         * 收款方式  http://172.16.100.11:3002/project/110/interface/api/13435?key=receiveMethod
+         */
+        @NotBlank(message = "收款方式不能为空", groups = {AddGroup.class})
+        private String receiveMethod;
+
+        /**
+         * 收款日期
+         */
+        @NotNull(message = "收款日期不能为空", groups = {AddGroup.class})
+        private LocalDate receiveDate;
+
+        /**
+         * 收款金额
+         */
+        @NotNull(message = "收款金额不能为空", groups = {AddGroup.class})
+        @Digits(integer = 16,fraction = 4,message = "收款金额整数位最大12位，小数位不能大于4位", groups = {AddGroup.class})
+        private BigDecimal receiveAmount;
+
+        /**
+         * 收款条件 http://172.16.100.11:3002/project/110/interface/api/13435?key=collectionTerms
+         */
+        @NotBlank(message = "收款条件不能为空", groups = {AddGroup.class})
+        private String receiveCondition;
+
+        /**
+         * 备注
+         */
+        @Size(max = 255, message = "备注最大长度不能超过255", groups = {AddGroup.class})
+        private String remark;
+
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
 
         @Valid
         @Size(min = 1, message = "销售订单详情不能为空", groups = {AddGroup.class})
@@ -608,11 +651,166 @@ public class SoInfoDTO implements Serializable {
          */
         private String addressType;
 
+
+        /**
+         * 收款账号
+         */
+        private String receiveAccount;
+
+        /**
+         * 收款账号描述
+         */
+        private String receiveAccountName;
+
+        /**
+         * 收款方式
+         */
+        private String receiveMethod;
+
+        /**
+         * 收款方式描述
+         */
+        private String receiveMethodName;
+
+        /**
+         * 收款日期
+         */
+        private LocalDate receiveDate;
+
+        /**
+         * 收款金额
+         */
+        private BigDecimal receiveAmount;
+
+        /**
+         * 收款条件
+         */
+        private String receiveCondition;
+
+        /**
+         * 收款条件描述
+         */
+        private String receiveConditionName;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
+
+
         /**
          * 订单产品详情
          */
         private List<SoDetailDTO.ViewDTO> detailList;
     }
+
+
+    /**
+     * 导出的spi 信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SoPIDTO {
+
+
+
+        /**
+         * code
+         */
+        private String code;
+
+
+
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+
+
+        /**
+         * 客户名称
+         */
+        private String customerName;
+
+        /**
+         * 客户地址
+         */
+        private String address;
+
+
+        /**
+         * 客户邮箱
+         */
+        private String email;
+
+        /**
+         * 客户电话
+         */
+        private String telNumber;
+
+
+        /**
+         * 收款条件
+         */
+        private String receiveCondition;
+
+        /**
+         * 收款条件
+         */
+        private String receiveConditionStr;
+
+
+        /**
+         * 运费
+         */
+        private BigDecimal shippingFee;
+
+        /**
+         * 运费
+         */
+        private String shippingFeeStr;
+
+
+        /**
+         * 总数量
+         */
+        private Integer totalQty;
+
+        /**
+         * 总金额
+         */
+        private Integer totalAmount;
+
+        /**
+         * 总金额
+         */
+        private String totalAmountStr;
+
+        /**
+         * 总费用
+         */
+        private BigDecimal totalFee;
+
+        /**
+         * 总费用
+         */
+        private String totalFeeStr;
+
+
+
+    }
+
+
 
 
     /**
@@ -737,6 +935,54 @@ public class SoInfoDTO implements Serializable {
         @StateEnumValue(strValues = {"forwarder", "receive", "company"}, message = "地址类型有误", groups = {AddGroup.class})
         private String addressType;
 
+
+        /**
+         * 收款账号 接口地址：/oms/bankAccount/select
+         */
+        @NotBlank(message = "收款账号不能为空")
+        private String receiveAccount;
+
+        /**
+         * 收款方式  http://172.16.100.11:3002/project/110/interface/api/13435?key=receiveMethod
+         */
+        @NotBlank(message = "收款方式不能为空")
+        private String receiveMethod;
+
+        /**
+         * 收款日期
+         */
+        @NotNull(message = "收款日期不能为空")
+        private LocalDate receiveDate;
+
+        /**
+         * 收款金额
+         */
+        @NotNull(message = "收款金额不能为空")
+        @Digits(integer = 16,fraction = 4,message = "收款金额整数位最大12位，小数位不能大于4位")
+        private BigDecimal receiveAmount;
+
+        /**
+         * 收款条件 http://172.16.100.11:3002/project/110/interface/api/13435?key=collectionTerms
+         */
+        @NotBlank(message = "收款条件不能为空")
+        private String receiveCondition;
+
+        /**
+         * 备注
+         */
+        @Size(max = 255, message = "备注最大长度不能超过255")
+        private String remark;
+
+        /**
+         * 附件名集合
+         */
+        private List<String> attachNameList;
+
+        /**
+         * 附件url集合
+         */
+        private List<String> attachUrlList;
+
         @Valid
         @Size(min = 1, message = "销售订单详情不能为空", groups = {AddGroup.class})
         private List<SoDetailDTO.UpdateDTO> detailList;
@@ -764,6 +1010,8 @@ public class SoInfoDTO implements Serializable {
         private String orderType;
 
         private String code;
+
+        private Boolean invalidStatus;
 
         private LocalDateTime createTime;
 
@@ -900,6 +1148,11 @@ public class SoInfoDTO implements Serializable {
          * 库存组织名称
          */
         private String warehouseOrgName;
+
+        /**
+         * 销售备注
+         */
+        private String soRemark;
 
         private String syncKingdeeId;
     }

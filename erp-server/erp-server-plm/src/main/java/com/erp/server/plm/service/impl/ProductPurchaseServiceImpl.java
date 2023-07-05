@@ -1,25 +1,40 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.ProductPurchaseDTO;
 import com.erp.model.plm.dto.ProductPurchaseShowDTO;
+import com.erp.model.plm.dto.SkuPurchaseDTO;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
+import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.model.scm.dto.SupplierDTO;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.server.plm.mapper.ProductPurchaseMapper;
 import com.erp.server.plm.service.ProductPurchaseService;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -30,8 +45,14 @@ import java.util.stream.Collectors;
 @Service
 public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMapper, ProductPurchaseEntity> implements ProductPurchaseService {
 
+    @Autowired
+    private SysUserFeign sysUserFeign;
+
+    @Autowired
+    private SupplierFeign supplierFeign;
+
     @Resource
-    private ProductPurchaseMapper productPurchaseMapper;
+    private ScmTaskFeign scmTaskFeign;
 
     /**
      * @Description 产品采购信息查询列表
@@ -42,7 +63,20 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
      **/
     @Override
     public List<ProductPurchaseShowDTO> list(String productId) {
-        return productPurchaseMapper.list(productId);
+        return baseMapper.list(productId);
+    }
+
+    /**
+     * @Description 产品采购信息查询列表
+     * @Author Luo_WG
+     * @Date 2022/9/23 11:48
+     * @param skuId
+     * @return java.util.List<com.erp.model.plm.dto.ProductPurchaseShowDTO>
+     **/
+    @Override
+    public List<ProductPurchaseShowDTO> listBySkuId(String skuId) {
+        List<ProductPurchaseShowDTO> purchaseShowDTOList = baseMapper.listBySkuId(skuId);
+        return purchaseShowDTOList;
     }
 
     /**
@@ -58,16 +92,6 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
         BeanMapper.copy(purchaseDTO, purchaseEntity);
         //验证数据
         checkProductPurchase(purchaseEntity);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (ObjectUtils.isNotEmpty(loginUser)) {
-            if (StringUtils.isBlank(purchaseDTO.getId())) {
-                purchaseEntity.setCreateUserId(loginUser.getUid());
-                purchaseEntity.setCreateUserName(loginUser.getUserName());
-            } else {
-                purchaseEntity.setUpdateUserId(loginUser.getUid());
-                purchaseEntity.setUpdateUserName(loginUser.getUserName());
-            }
-        }
         return this.saveOrUpdate(purchaseEntity);
     }
 
@@ -100,13 +124,13 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
      * @Description 删除产品采购信息
      * @Author Luo_WG
      * @Date 2022/9/26 18:42
-     * @param skuId 产品sku明细表id
+     * @param skuIds 产品sku明细表id
      * @return java.lang.Boolean
      **/
     @Override
-    public Boolean removePurchase(String skuId) {
+    public Boolean removePurchase(List<String> skuIds) {
         LambdaQueryWrapper<ProductPurchaseEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(ProductPurchaseEntity::getSkuId, skuId);
+        queryWrapper.in(ProductPurchaseEntity::getSkuId, skuIds);
         return this.remove(queryWrapper);
     }
 
@@ -116,6 +140,11 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
         queryWrapper.eq(ProductPurchaseEntity::getSkuId, skuId);
         queryWrapper.last("limit 1");
         return this.getOne(queryWrapper);
+    }
+
+    @Override
+    public List<ProductPurchaseEntity> listBySkuIds(List<String> skuIds) {
+        return lambdaQuery().in(ProductPurchaseEntity::getSkuId, skuIds).list();
     }
 
     /**
@@ -140,6 +169,47 @@ public class ProductPurchaseServiceImpl extends ServiceImpl<ProductPurchaseMappe
         }
     }
 
+    @Override
+    public List<SkuPurchaseDTO.PurchaseInfo> getInfoBySkuIds(List<String> skuIds) {
+        if(CollUtil.isEmpty(skuIds)) {
+            return null;
+        }
+        List<ProductPurchaseEntity> productPurchaseList = lambdaQuery().in(ProductPurchaseEntity::getSkuId, skuIds).list();
+        if(CollUtil.isEmpty(productPurchaseList)) {
+            return null;
+        }
+        // 此处注意，实际发现某些sku存在多条采购信息
+        Map<String, List<ProductPurchaseEntity>> skuPurchaseMap = productPurchaseList.stream().collect(Collectors.groupingBy(ProductPurchaseEntity::getSkuId));
+
+        List<String> purchaseUserIds = productPurchaseList.stream().filter(r-> StrUtils.isNotEmpty(r.getPurchaseUserId())).map(ProductPurchaseEntity::getPurchaseUserId).distinct().collect(Collectors.toList());
+        List<String> mainSupplierIds = productPurchaseList.stream().filter(r-> StrUtils.isNotEmpty(r.getMainSupplier())).map(ProductPurchaseEntity::getMainSupplier).distinct().collect(Collectors.toList());
+
+        // 用户信息
+        Map<String, FindUserDTO> userMap = Maps.newHashMap();
+        List<FindUserDTO> userInfos = sysUserFeign.getUserListByUserIds(purchaseUserIds);
+        if(CollUtil.isNotEmpty(userInfos)) {
+            userMap = userInfos.stream().collect(Collectors.toMap(FindUserDTO::getUserId, Function.identity()));
+        }
+
+        // 供应商信息
+        Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
+
+        List<SkuPurchaseDTO.PurchaseInfo> resultList = Lists.newArrayListWithExpectedSize(skuIds.size());
+        for(String skuId : skuIds) {
+            List<ProductPurchaseEntity> skuPurchaseList = skuPurchaseMap.get(skuId);
+            if(CollUtil.isNotEmpty(skuPurchaseList)) {
+                ProductPurchaseEntity productPurchaseEntity = skuPurchaseList.get(0);
+                SkuPurchaseDTO.PurchaseInfo purchaseInfo = new SkuPurchaseDTO.PurchaseInfo();
+                purchaseInfo.setSkuId(skuId);
+                purchaseInfo.setPurchaseUserId(productPurchaseEntity.getPurchaseUserId());
+                purchaseInfo.setPurchaseUserName(userMap.getOrDefault(productPurchaseEntity.getPurchaseUserId(),new FindUserDTO()).getUserName());
+                purchaseInfo.setSupplierId(productPurchaseEntity.getMainSupplier());
+                purchaseInfo.setSupplierName(supplierMap.getOrDefault(productPurchaseEntity.getMainSupplier(), new SupplierDTO.SupplierSimpleDTO()).getName());
+                resultList.add(purchaseInfo);
+            }
+        }
+        return resultList;
+    }
 }
 
 

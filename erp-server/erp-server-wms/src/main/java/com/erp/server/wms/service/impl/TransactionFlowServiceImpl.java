@@ -9,28 +9,31 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.ExportTransactionFlowDTO;
 import com.erp.model.wms.dto.inventory.InitStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
+import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.inventory.TransactionFlowDTO;
 import com.erp.model.wms.entity.TransactionFlowEntity;
+import com.erp.model.wms.entity.TransferOutEntity;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.TransactionFlowMapper;
-import com.erp.server.wms.service.CommonService;
-import com.erp.server.wms.service.InitStockService;
-import com.erp.server.wms.service.TransactionFlowService;
-import com.erp.server.wms.service.WarehouseService;
-import com.google.common.collect.Lists;
+import com.erp.server.wms.service.*;
 import com.google.common.collect.Maps;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.ss.usermodel.*;
@@ -41,6 +44,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
@@ -51,7 +55,7 @@ import java.util.stream.Collectors;
 
 /**
  * @Classname: TransactionFlowServiceImpl
- * @Description: TODO
+
  * @CreateTime: 2023-04-25  19:43
  * @Author: zhangchunlin
  */
@@ -75,6 +79,12 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Autowired
     private InitStockService initStockService;
+
+    @Autowired
+    private TransferOutService transferOutService;
+
+    @Autowired
+    private ScmTaskFeign scmTaskFeign;
 
     @Override
     public List<TransactionFlowEntity> getUnApprovedTxnFlows(String sourceType, String sourceId) {
@@ -110,7 +120,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         transactionFlowEntity.setWarehouseId(param.getWarehouseId());
         transactionFlowEntity.setWarehouseName(warehouse.getName());
         // 此处修复BUG，部分库存状态不需要控制库位
-        InventoryStatusEnum inventoryStatus = InventoryStatusEnum.of(param.getDictInventoryStatus());
+        InventoryStatusEnum inventoryStatus = InventoryStatusEnum.getByCode(param.getDictInventoryStatus());
         if (Objects.equals(Boolean.FALSE, inventoryStatus.getControlLocation())) {
             transactionFlowEntity.setWarehouseLocation("");
         } else {
@@ -194,9 +204,234 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Override
     public void exportSummaryExcel(InventoryDTO.ExcelInOutStockSummarySearchParamDTO param, HttpServletResponse response) {
-        OutputStream outputStream = null;
+        // 查询数据
         List<InventoryDTO.InOutStockSummaryPagingViewDTO> dataList = this.baseMapper.exportSummaryList(param);
+
+        // 填充数据
         fillTransactionSummary(dataList);
+
+        // 导出
+        exportTransactionSummaryExcel(dataList, response);
+    }
+
+    @Override
+    public PagingVO<InventoryReportDTO.TransportPagingDTO> transportPagingList(PagingDTO<InventoryReportDTO.TransportSearchParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        // 在途库存大于0的才查询出来
+        IPage<InventoryReportDTO.TransportPagingDTO> pageData = this.baseMapper.transportPagingList(query, pagingParamDTO.getParams());
+        // 填充
+        fillTransportPageData(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public void exportTransportExcel(InventoryReportDTO.ExportTransportSearchParamDTO pagingParamDTO, HttpServletResponse response) {
+        // 如果是否选导出处理
+        if (CollUtil.isNotEmpty(pagingParamDTO.getItems())) {
+            List<InventoryReportDTO.ExportTransportItem> checkData = pagingParamDTO.getItems();
+            List<String> warehouseIds = checkData.stream().map(InventoryReportDTO.ExportTransportItem::getWarehouseId).distinct().collect(Collectors.toList());
+            List<String> skuIds = checkData.stream().map(InventoryReportDTO.ExportTransportItem::getSkuId).distinct().collect(Collectors.toList());
+            pagingParamDTO.setWarehouseIdList(warehouseIds);
+            pagingParamDTO.setSkuIdList(skuIds);
+        }
+        // 在途库存大于0的才查询出来
+        List<InventoryReportDTO.TransportPagingDTO> dataList = this.baseMapper.exportTransport(pagingParamDTO);
+        if (CollUtil.isEmpty(dataList)) {
+            return;
+        }
+        // 填充
+        fillTransportPageData(dataList);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/transportInventory.xlsx";
+        String name = "在途库存导出";
+        String date = com.common.core.utils.date.DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(dataList, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        }
+    }
+
+    @Override
+    public PagingVO<InventoryReportDTO.ListTransportPagingDTO> transportList(PagingDTO<InventoryReportDTO.ListTransportSearchParam> pagingParamDTO) {
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        // 在途库存大于0的才查询出来
+        IPage<InventoryReportDTO.ListTransportPagingDTO> pageData = this.baseMapper.transportList(query, pagingParamDTO.getParams());
+        fillTransportListData(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    /**
+     * 填充即时库存查看交易流水其他字段值
+     * @param dataList
+     */
+    private void fillInventoryTransactionFlowPageData(List<InventoryDTO.TransFlowPagingViewDTO> dataList) {
+        if(CollUtil.isEmpty(dataList)) {
+            return;
+        }
+        List<String> skuIds = dataList.stream().map(InventoryDTO.TransFlowPagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
+        dataList.stream().forEach(data->{
+            if(skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
+                SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
+                data.setProductName(skuVO.getSkuName());
+                data.setSpuNo(skuVO.getSpuNo());
+            }
+            InventorySourceTypeEnum inventorySourceType = InventorySourceTypeEnum.getByCode(data.getSourceType());
+            data.setSourceTypeName(Optional.ofNullable(inventorySourceType).map(InventorySourceTypeEnum::getName).orElse(""));
+            InventoryOperationModeEnum inventoryOperationMode = InventoryOperationModeEnum.getByCode(data.getOperationMode());
+            data.setOperationModeName(Optional.ofNullable(inventoryOperationMode).map(InventoryOperationModeEnum::getName).orElse(""));
+            InventoryStatusEnum inventoryStatus = InventoryStatusEnum.getByCode(data.getInventoryStatus());
+            data.setInventoryStatusName(Optional.ofNullable(inventoryStatus).map(InventoryStatusEnum::getName).orElse(""));
+        });
+    }
+
+    private void fillTransactionFlowPageData(List<InventoryDTO.InOutStockTransFlowPagingViewDTO> dataList) {
+        if(CollUtil.isEmpty(dataList)) {
+            return;
+        }
+        List<String> skuIds = dataList.stream().map(InventoryDTO.InOutStockTransFlowPagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
+        Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
+        dataList.stream().forEach(data->{
+            if(skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
+                SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
+                data.setProductName(skuVO.getSkuName());
+                data.setSpuNo(skuVO.getSpuNo());
+            }
+            SysAccountingCompanyEntity sysAccountingCompanyEntity = accountingCompanyMap.computeIfAbsent(data.getOrgId(),(v)->sysUserFeign.getCompanyById(v));
+            if(Objects.nonNull(sysAccountingCompanyEntity)) {
+                data.setOrgName(sysAccountingCompanyEntity.getCompanyName());
+            }
+            InventorySourceTypeEnum inventorySourceType = InventorySourceTypeEnum.getByCode(data.getSourceType());
+            data.setSourceTypeName(Optional.ofNullable(inventorySourceType).map(InventorySourceTypeEnum::getName).orElse(""));
+            InventoryOperationModeEnum inventoryOperationMode = InventoryOperationModeEnum.getByCode(data.getOperationMode());
+            data.setOperationModeName(Optional.ofNullable(inventoryOperationMode).map(InventoryOperationModeEnum::getName).orElse(""));
+            InventoryStatusEnum inventoryStatus = InventoryStatusEnum.getByCode(data.getInventoryStatus());
+            data.setInventoryStatusName(Optional.ofNullable(inventoryStatus).map(InventoryStatusEnum::getName).orElse(""));
+        });
+    }
+
+    private void fillTransactionSummary(List<InventoryDTO.InOutStockSummaryPagingViewDTO> dataList) {
+        if(CollUtil.isEmpty(dataList)) {
+            return;
+        }
+        List<String> skuIds = dataList.stream().map(InventoryDTO.InOutStockSummaryPagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        // 此处修复，返回的记录按sku id不是唯一的了
+        Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
+        Map<String,WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
+        for(InventoryDTO.InOutStockSummaryPagingViewDTO data : dataList) {
+            if(skuMap.containsKey(data.getSkuId())) {
+                SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
+                data.setProductName(skuVO.getSkuName());
+                data.setProductImgUrl(skuVO.getSkuImagesUrl());
+            }
+            // 仓库名称赋值
+            WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(data.getWarehouseId(), (v) -> warehouseService.detailWithCache(v));
+            if (Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+                data.setWarehouseName(warehouseDetail.getName());
+            }
+            // 查询期初库存（后续出现性能问题，单独出接口改前端调用）
+            InitStockDTO.ConditionDTO condition = new InitStockDTO.ConditionDTO();
+            condition.setWarehouseId(data.getWarehouseId());
+            condition.setSkuId(data.getSkuId());
+            Integer iniQty = initStockService.getInitQty(condition);
+            data.setInitQty(iniQty);
+        }
+    }
+
+    private void fillTransportPageData(List<InventoryReportDTO.TransportPagingDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        // 此处优化，取最新的产品名称和产品图片，防止数据没同步过来，销售状态和SPU则不取最新的，防止查询和显示不一样
+        List<String> skuIds = list.stream().map(InventoryReportDTO.TransportPagingDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
+        Map<String, WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
+        Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
+        list.stream().forEach(data -> {
+            // 仓库名称赋值
+            WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(data.getWarehouseId(), (v) -> warehouseService.detailWithCache(v));
+            if (Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+                data.setWarehouseName(warehouseDetail.getName());
+            }
+            // 仓库组织
+            SysAccountingCompanyEntity sysAccountingCompanyEntity = accountingCompanyMap.computeIfAbsent(data.getOrgId(), (v) -> sysUserFeign.getCompanyById(v));
+            if (Objects.nonNull(sysAccountingCompanyEntity)) {
+                data.setOrgName(sysAccountingCompanyEntity.getCompanyName());
+            }
+            if (skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
+                SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
+                // 产品名称
+                data.setProductName(skuVO.getSkuName());
+                // 产品图片
+                data.setProductImgUrl(skuVO.getSkuImagesUrl());
+            }
+            // 销售状态名称
+            data.setSaleStateName(SaleStateEnum.getNameByCode(data.getSaleState()));
+        });
+    }
+
+    private void fillTransportListData(List<InventoryReportDTO.ListTransportPagingDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        // 采购订单单号
+        List<String> purchaseCodeList = list.stream().filter(r->Objects.equals(r.getSourceType(), InventoryTransportTypeEnum.PURCHASE.getCode()) && StrUtils.isNotEmpty(r.getSourceCode()))
+                .map(InventoryReportDTO.ListTransportPagingDTO::getSourceCode).distinct().collect(Collectors.toList());
+        Map<String, PurchaseOrderEntity> purchaseOrderMap = Maps.newHashMap();
+        if(CollUtil.isNotEmpty(purchaseCodeList)) {
+            List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.getPurchaseOrderByCodes(purchaseCodeList);
+            purchaseOrderMap = purchaseOrderList.stream().collect(Collectors.toMap(PurchaseOrderEntity::getCode,Function.identity()));
+        }
+
+        // 调拨出库单单号
+        List<String> transferCodeList = list.stream().filter(r->Objects.equals(r.getSourceType(), InventoryTransportTypeEnum.TRANSFER.getCode()) && StrUtils.isNotEmpty(r.getSourceCode()))
+                .map(InventoryReportDTO.ListTransportPagingDTO::getSourceCode).distinct().collect(Collectors.toList());
+        Map<String,TransferOutEntity> transferOutMap = Maps.newHashMap();
+        if(CollUtil.isNotEmpty(transferCodeList)) {
+            List<TransferOutEntity> transferOutList = transferOutService.findByCodes(transferCodeList);
+            transferOutMap = transferOutList.stream().collect(Collectors.toMap(TransferOutEntity::getCode,Function.identity()));
+        }
+
+        // 此处优化，取最新的产品名称和产品图片，防止数据没同步过来，销售状态和SPU则不取最新的，防止查询和显示不一样
+        List<String> skuIds = list.stream().map(InventoryReportDTO.ListTransportPagingDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
+        for(InventoryReportDTO.ListTransportPagingDTO data : list) {
+            if (skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
+                // 产品名称
+                SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
+                data.setProductName(skuVO.getSkuName());
+            }
+            // 单据名称
+            data.setSourceTypeName(InventoryTransportTypeEnum.getLabelByCode(data.getSourceType()));
+            // 分步式调出单
+            if(Objects.equals(data.getSourceType(), InventoryTransportTypeEnum.TRANSFER.getCode())) {
+                TransferOutEntity transferOutEntity = transferOutMap.getOrDefault(data.getSourceCode(),new TransferOutEntity());
+                data.setBillDate(transferOutEntity.getBillDate());
+                data.setCreateUserId(transferOutEntity.getCreateUserId());
+                data.setCreateUserName(transferOutEntity.getCreateUserName());
+                data.setCreateTime(transferOutEntity.getCreateTime());
+            } else if (Objects.equals(data.getSourceType(), InventoryTransportTypeEnum.PURCHASE.getCode())) {
+                PurchaseOrderEntity purchaseOrderEntity = purchaseOrderMap.getOrDefault(data.getSourceCode(),new PurchaseOrderEntity());
+                data.setBillDate(purchaseOrderEntity.getPurchaseDate());
+                data.setCreateUserId(purchaseOrderEntity.getCreateUserId());
+                data.setCreateUserName(purchaseOrderEntity.getCreateUserName());
+                data.setCreateTime(purchaseOrderEntity.getCreateTime());
+            }
+        }
+    }
+
+    private void exportTransactionSummaryExcel(List<InventoryDTO.InOutStockSummaryPagingViewDTO> dataList, HttpServletResponse response) {
+        OutputStream outputStream = null;
         // 声明一个工作簿
         XSSFWorkbook wb = new XSSFWorkbook();
         XSSFCellStyle contentCellStyle = wb.createCellStyle();
@@ -213,15 +448,19 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         titleFont.setBold(true);
         titleFont.setFontHeightInPoints((short) 13);
         CellStyle titleStyle = wb.createCellStyle();
-        //设置水平居中
+        // 设置水平居中
         titleStyle.setAlignment(HorizontalAlignment.LEFT);
-        //设置垂直对齐的样式为居中对齐;
+        // 设置垂直对齐的样式为居中对齐;
         titleStyle.setVerticalAlignment(VerticalAlignment.CENTER);
         titleStyle.setFont(titleFont);
-        titleStyle.setBorderBottom(BorderStyle.THIN); //下边框
-        titleStyle.setBorderLeft(BorderStyle.THIN);//左边框
-        titleStyle.setBorderTop(BorderStyle.THIN);//上边框
-        titleStyle.setBorderRight(BorderStyle.THIN);//右边框
+        // 下边框
+        titleStyle.setBorderBottom(BorderStyle.THIN);
+        // 左边框
+        titleStyle.setBorderLeft(BorderStyle.THIN);
+        //上边框
+        titleStyle.setBorderTop(BorderStyle.THIN);
+        // 右边框
+        titleStyle.setBorderRight(BorderStyle.THIN);
 
         CellStyle titleNoBorderStyle = wb.createCellStyle();
         //设置水平居中
@@ -238,7 +477,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         sheet.setColumnWidth(7, 40 * 256);
 
         int rowNo = 0;
-        XSSFRow rowTitle0 = sheet.createRow(rowNo);// 第一行标题
+        // 第一行标题
+        XSSFRow rowTitle0 = sheet.createRow(rowNo);
         Cell cell = rowTitle0.createCell(0);
         cell.setCellValue("");
         cell = rowTitle0.createCell(1);
@@ -257,7 +497,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 6, 7));
 
         ++rowNo;
-        XSSFRow rowTitle1 = sheet.createRow(rowNo);// 第二行标题
+        // 第二行标题
+        XSSFRow rowTitle1 = sheet.createRow(rowNo);
         cell = rowTitle1.createCell(0);
         cell.setCellStyle(titleStyle);
         cell.setCellValue("产品信息");
@@ -289,8 +530,8 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             ++rowNo;
 
             XSSFRow rowContent = sheet.createRow(rowNo);
-            rowContent.setHeight((short) (40 * 20));
-            rowContent.setHeightInPoints((short) 50);
+            rowContent.setHeight((short) (45 * 20));
+            rowContent.setHeightInPoints((short) 60);
             cell = rowContent.createCell(0);
             cell.setCellStyle(contentCellStyle);
             cell.setCellValue(StrUtil.format("{}\n{}", data.getSkuNo(), data.getProductName()));
@@ -308,19 +549,21 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getTotalInstockQty()));
             cell = rowContent.createCell(5);
             cell.setCellStyle(contentCellStyle);
-            cell.setCellValue(StrUtil.format("采购入库：{}盘盈入库：{}\n其他入库：{}退货入库：{}\n调拨入库：{}加工入库：{}",
+            cell.setCellValue(StrUtil.format("采购入库：{}盘盈入库：{}\n其他入库：{}退货入库：{}\n调拨入库：{}加工入库：{}\n退料入库：{}",
                     StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getPurchaseInstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getInventoryProfitInstockQty()), 10, " "),
                     StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getOtherInstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getSaleReturnQty()), 10, " "),
-                    StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getTransferInstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getMachineInstockQty()), 10, " " )));
+                    StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getTransferInstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getMachineInstockQty()), 10, " " ),
+                    StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getReturnMaterielQty()), 10, " ")));
             cell = rowContent.createCell(6);
             cell.setCellStyle(contentCellStyle);
             cell.setCellValue(StrUtils.null2EmptyWithTrim(data.getTotalOutstockQty()));
             cell = rowContent.createCell(7);
             cell.setCellStyle(contentCellStyle);
-            cell.setCellValue(StrUtil.format("采购退货：{}调拨出库：{}\n销售出库：{}盘亏出库：{}\n其他出库：{}加工出库：{}",
+            cell.setCellValue(StrUtil.format("采购退货：{}调拨出库：{}\n销售出库：{}盘亏出库：{}\n其他出库：{}加工出库：{}\n领料出库：{}",
                     StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getPurchaseReturnQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getTransferOutstockQty()), 10, " "),
                     StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getSaleOutstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getInventoryLossOutstockQty()), 10, " "),
-                    StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getOtherOutstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getMachineOutstockQty()),10, " ") ));
+                    StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getOtherOutstockQty()), 10, " "), StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getMachineOutstockQty()),10, " "),
+                    StrUtils.rightPadding(StrUtils.null2EmptyWithTrim(data.getReceiveMaterielQty()),10, " ")));
         }
 
         String fileName = StrUtil.format("出入库列表数据{}.xlsx", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
@@ -335,88 +578,6 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
             throw new ServiceException(ApiError.ERROR_1015);
         } finally {
             IOUtils.closeQuietly(outputStream);
-        }
-
-    }
-
-    /**
-     * 填充即时库存查看交易流水其他字段值
-     * @param dataList
-     */
-    private void fillInventoryTransactionFlowPageData(List<InventoryDTO.TransFlowPagingViewDTO> dataList) {
-        if(CollUtil.isEmpty(dataList)) {
-            return;
-        }
-        List<String> skuIds = dataList.stream().map(InventoryDTO.TransFlowPagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
-        dataList.stream().forEach(data->{
-            if(skuMap.containsKey(data.getSkuId())) {
-                SkuVO skuVO = skuMap.get(data.getSkuId());
-                data.setProductName(skuVO.getSkuName());
-                data.setSpuNo(skuVO.getSpuNo());
-            }
-            InventorySourceTypeEnum inventorySourceType = InventorySourceTypeEnum.of(data.getSourceType());
-            data.setSourceTypeName(Optional.ofNullable(inventorySourceType).map(InventorySourceTypeEnum::getName).orElse(""));
-            InventoryOperationModeEnum inventoryOperationMode = InventoryOperationModeEnum.of(data.getOperationMode());
-            data.setOperationModeName(Optional.ofNullable(inventoryOperationMode).map(InventoryOperationModeEnum::getName).orElse(""));
-            InventoryStatusEnum inventoryStatus = InventoryStatusEnum.of(data.getInventoryStatus());
-            data.setInventoryStatusName(Optional.ofNullable(inventoryStatus).map(InventoryStatusEnum::getName).orElse(""));
-        });
-    }
-
-    private void fillTransactionFlowPageData(List<InventoryDTO.InOutStockTransFlowPagingViewDTO> dataList) {
-        if(CollUtil.isEmpty(dataList)) {
-            return;
-        }
-        List<String> skuIds = dataList.stream().map(InventoryDTO.InOutStockTransFlowPagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
-        Map<String, SysAccountingCompanyEntity> accountingCompanyMap = Maps.newHashMap();
-        dataList.stream().forEach(data->{
-            if(skuMap.containsKey(data.getSkuId())) {
-                SkuVO skuVO = skuMap.get(data.getSkuId());
-                data.setProductName(skuVO.getSkuName());
-                data.setSpuNo(skuVO.getSpuNo());
-            }
-            SysAccountingCompanyEntity sysAccountingCompanyEntity = accountingCompanyMap.computeIfAbsent(data.getOrgId(),(v)->sysUserFeign.getCompanyById(v));
-            if(Objects.nonNull(sysAccountingCompanyEntity)) {
-                data.setOrgName(sysAccountingCompanyEntity.getCompanyName());
-            }
-            InventorySourceTypeEnum inventorySourceType = InventorySourceTypeEnum.of(data.getSourceType());
-            data.setSourceTypeName(Optional.ofNullable(inventorySourceType).map(InventorySourceTypeEnum::getName).orElse(""));
-            InventoryOperationModeEnum inventoryOperationMode = InventoryOperationModeEnum.of(data.getOperationMode());
-            data.setOperationModeName(Optional.ofNullable(inventoryOperationMode).map(InventoryOperationModeEnum::getName).orElse(""));
-            InventoryStatusEnum inventoryStatus = InventoryStatusEnum.of(data.getInventoryStatus());
-            data.setInventoryStatusName(Optional.ofNullable(inventoryStatus).map(InventoryStatusEnum::getName).orElse(""));
-        });
-    }
-
-    private void fillTransactionSummary(List<InventoryDTO.InOutStockSummaryPagingViewDTO> dataList) {
-        if(CollUtil.isEmpty(dataList)) {
-            return;
-        }
-        List<String> skuIds = dataList.stream().map(InventoryDTO.InOutStockSummaryPagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        Map<String, SkuVO> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
-        Map<String,WarehouseDTO.UpdateDTO> warehouseMap = Maps.newHashMap();
-        for(InventoryDTO.InOutStockSummaryPagingViewDTO data : dataList) {
-            if(skuMap.containsKey(data.getSkuId())) {
-                SkuVO skuVO = skuMap.get(data.getSkuId());
-                data.setProductName(skuVO.getSkuName());
-                data.setProductImgUrl(skuVO.getSkuImagesUrl());
-            }
-            // 仓库名称赋值
-            WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(data.getWarehouseId(), (v) -> warehouseService.detailWithCache(v));
-            if (Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
-                data.setWarehouseName(warehouseDetail.getName());
-            }
-            // 查询期初库存（后续出现性能问题，单独出接口改前端调用）
-            InitStockDTO.ConditionDTO condition = new InitStockDTO.ConditionDTO();
-            condition.setWarehouseId(data.getWarehouseId());
-            condition.setSkuId(data.getSkuId());
-            Integer iniQty = initStockService.getInitQty(condition);
-            data.setInitQty(iniQty);
         }
     }
 

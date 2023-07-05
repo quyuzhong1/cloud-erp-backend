@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/4/14 11:47
  */
 @RestController
@@ -64,6 +64,16 @@ public class PurchaseReturnOrderFeignController extends BaseController {
         Boolean flag = purchaseReturnOrderService.batchAdd(list);
         return flag ;
 
+    }
+
+    /**
+     * 根据供应商id集合、单据日期等条件 查询退货数量信息
+     * @param params
+     * @return
+     */
+    @PostMapping("/getReturnInfo")
+    public List<PurchaseReturnOrderDTO.SupplierReturnDTO> getReturnInfo(@RequestBody PurchaseReturnOrderDTO.SupplierReturnParamDTO params) {
+        return purchaseReturnOrderService.getReturnInfo(params);
     }
 
 }

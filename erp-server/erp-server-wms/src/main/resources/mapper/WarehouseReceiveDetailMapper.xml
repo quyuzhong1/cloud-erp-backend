@@ -17,7 +17,8 @@
             wrd.receive_qty,
             wrd.exceed_qty,
             wrd.remark,
-            wrd.purchase_order_detail_id
+            wrd.purchase_order_detail_id,
+            wr.bill_date
         from
         po_receive wr
         inner join po_receive_detail wrd on wr.id = wrd.main_id and wrd.is_deleted = false

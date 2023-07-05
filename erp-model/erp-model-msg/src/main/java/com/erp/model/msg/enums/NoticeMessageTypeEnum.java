@@ -32,7 +32,7 @@ public enum NoticeMessageTypeEnum {
         this.name = name;
     }
 
-    public static NoticeMessageTypeEnum of(String code) {
+    public static NoticeMessageTypeEnum getByCode(String code) {
         return Arrays.stream(NoticeMessageTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 

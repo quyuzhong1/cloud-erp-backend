@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
@@ -30,7 +31,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/4/4 12:25
  */
 @Slf4j
@@ -78,7 +79,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
         //采购日期
         resultMap.put("purchaseDate",entity.getPurchaseDate());
-        
+
         //查询采购供应商
         PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(entity.getId());
         if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {
@@ -88,10 +89,11 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         if (ObjectUtils.isEmpty(supplierEntity)) {
             return;
         }
+
+
+
         //供应商编码
         resultMap.put("supplierCode",supplierEntity.getCode());
-        //采购组织
-        resultMap.put("purchaseOrgName",entity.getPurchaseOrgName());
 
         //采购部门
         resultMap.put("purchaseDeptName",entity.getPurchaseDeptName());
@@ -106,9 +108,11 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         }
 
         //采购员编码
-        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
-        if (ObjectUtils.isNotEmpty(findUserDTO)) {
-            resultMap.put("purchaseUserCode",findUserDTO.getCode());
+        if (StringUtils.isNotBlank(entity.getPurchaseUserId())) {
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
+            if (ObjectUtils.isNotEmpty(findUserDTO)) {
+                resultMap.put("purchaseUserCode", findUserDTO.getCode());
+            }
         }
         //供应商联系人
         resultMap.put("contactName",purchaseOrderSupplierEntity.getContactName());
@@ -128,6 +132,15 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         if (CollectionUtils.isEmpty(details)) {
             return;
         }
+        //组织机构编码
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getPurchaseOrgId(),entity.getReceiveOrgId()));
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            //采购组织编码
+            String purchaseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+            resultMap.put("purchaseOrgCode", purchaseOrgCode);
+        }
+
         //部门信息
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(entity.getDeliveryWarehouseId()));
 
@@ -145,7 +158,12 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
                 jsonObject.set("kingdeeWarehouseCode",kingdeeWarehouseCode);
             }
             jsonObject.set("taxRate",MathUtil.multiply(detailEntity.getTaxRate(),MathUtil.BigDecimal_100));
-            jsonObject.set("receiveOrgName",entity.getReceiveOrgName());
+            if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+                //收料组织编码
+                String receiveOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId()))
+                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+                jsonObject.set("receiveOrgCode", receiveOrgCode);
+            }
             jsonObject.set("isGift",detailEntity.getIsGift());
             jsonObject.set("detailRemark",detailEntity.getRemark());
             list.add(jsonObject);

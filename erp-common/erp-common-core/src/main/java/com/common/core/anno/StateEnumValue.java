@@ -2,7 +2,7 @@ package com.common.core.anno;
 
 /**
  * @Classname StateEnumValue
- * @Description TODO
+
  * @Date 2022-09-15 10:12
  * @Created by yl
  */

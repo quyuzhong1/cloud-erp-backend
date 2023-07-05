@@ -42,7 +42,7 @@ public enum InventoryOperationModeEnum {
      * @param code
      * @return
      */
-    public static InventoryOperationModeEnum of(String code) {
+    public static InventoryOperationModeEnum getByCode(String code) {
         return Arrays.stream(InventoryOperationModeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 

@@ -59,8 +59,8 @@ public enum InventoryBusinessTypeEnum {
     DIRECT_ALLOCATE_APPLY("direct_allocate_apply", "26","直接调拨单（调拨申请单下推）"),
 
     PO_RETURN_QC("po_return_qc", "27","采购退货（质检退货，退货补货）"),
-
-    PURCHASE_ORDER_CHANGE("purchase_order_change", "28","采购订单变更"), // 自定义规则，无法固化
+    // 自定义规则，无法固化
+    PURCHASE_ORDER_CHANGE("purchase_order_change", "28","采购订单变更"),
     ;
 
     private String code;
@@ -96,7 +96,7 @@ public enum InventoryBusinessTypeEnum {
      * @param code
      * @return
      */
-    public static InventoryBusinessTypeEnum of(String code) {
+    public static InventoryBusinessTypeEnum getByCode(String code) {
         return Arrays.stream(InventoryBusinessTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 
@@ -105,7 +105,7 @@ public enum InventoryBusinessTypeEnum {
      * @param type
      * @return
      */
-    public static InventoryBusinessTypeEnum ofType(String type) {
+    public static InventoryBusinessTypeEnum getByType(String type) {
         return Arrays.stream(InventoryBusinessTypeEnum.values()).filter(r -> Objects.equals(r.getType(), type)).findFirst().orElse(null);
     }
 

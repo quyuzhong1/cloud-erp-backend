@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * @Classname: ResultUtil
- * @Description: TODO
+
  * @CreateTime: 2023-05-06  09:22
  * @Author: zhangchunlin
  */

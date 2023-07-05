@@ -2,4 +2,15 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.WarehouseLocationMapper">
 
+    <select id="paging" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$LocationSelectDTO">
+         select distinct code, name from warehouse_location
+         <where>
+             is_deleted = false
+             and type = 'location'
+             <if test="params.code != null and params.code != '' ">
+                 and code ilike concat('%', #{params.code} ,'%')
+             </if>
+         </where>
+         order by code asc NULLS FIRST
+    </select>
 </mapper>

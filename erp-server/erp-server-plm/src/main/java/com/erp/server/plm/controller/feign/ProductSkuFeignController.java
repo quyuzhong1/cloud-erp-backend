@@ -1,23 +1,27 @@
 package com.erp.server.plm.controller.feign;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
-import com.erp.model.plm.dto.BasicCategoryDTO;
-import com.erp.model.plm.dto.CleanSkuDto;
-import com.erp.model.plm.dto.ProductDetailDTO;
-import com.erp.model.plm.dto.ProductInfoDTO;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeService;
 import com.erp.server.plm.service.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 查询sku
@@ -50,6 +54,9 @@ public class ProductSkuFeignController {
 
     @Resource
     private WorkOptionService workOptionService;
+
+    @Autowired
+    private ProductPurchaseService productPurchaseService;
 
     /**
      * 根据sku查询sku表信息
@@ -132,6 +139,20 @@ public class ProductSkuFeignController {
         List<SkuVO> skuList = productDetailService.getSkuInfoBySkuIds(skuIds);
         return skuList;
     }
+
+   /**
+    * 根据sku no 获取sku 信息
+    * @author yl
+    * @date 2023-06-27 17:51
+    * @param skuNoList
+    * @return java.util.List<com.erp.model.plm.vo.SkuVO>
+    */
+    @PostMapping("/listBySkuNos")
+    public List<SkuVO> listBySkuNos(@RequestBody List<String> skuNoList) {
+        List<SkuVO> skuList = productDetailService.getSkuBySkuNos(skuNoList);
+        return skuList;
+    }
+
     /**
      * @description: 获取已审核sku
      * @author Will
@@ -195,4 +216,29 @@ public class ProductSkuFeignController {
         return productInfoService.getRolePeople(skuIds);
     }
 
+    /**
+     * 根据sku id集合获取采购员、供应商信息
+     * @param dto
+     * @return
+     */
+    @PostMapping("/getPurchaseInfoBySkuIds")
+    public Map<String, SkuPurchaseDTO.PurchaseInfo> getPurchaseInfoBySkuIds(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<SkuPurchaseDTO.PurchaseInfo> dataList = productPurchaseService.getInfoBySkuIds(dto.getIds());
+        return dataList.stream().collect(Collectors.toMap(SkuPurchaseDTO.PurchaseInfo::getSkuId, Function.identity()));
+    }
+
+    /**
+     * 更新不可删除标识
+     * @Author Luo_WG
+     * @Date 2023/6/15 11:32
+     * @param skuIds skuIds
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/updateOccupyStatus")
+    public Boolean updateOccupyStatus(@RequestBody List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return Boolean.FALSE;
+        }
+        return productDetailService.updateOccupyStatus(skuIds);
+    }
 }

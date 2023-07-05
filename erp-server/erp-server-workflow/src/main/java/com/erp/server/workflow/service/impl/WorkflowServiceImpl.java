@@ -34,7 +34,6 @@ import java.util.*;
 
 /**
  * @Classname WorkflowServiceImpl
- * @Description TODO
  * @Date 2022-08-16 17:24
  * @Created by yl
  */
@@ -385,13 +384,13 @@ public class WorkflowServiceImpl implements WorkflowService {
         //获取到流程的节点
         ActivityInstance activityInstance = runtimeService.getActivityInstance(processInstanceId);
 
-        if(CollectionUtils.isNotEmpty(taskList)&&activityInstance!=null){
-        for (int i = 0; i < taskList.size(); i++) {
-            runtimeService.createProcessInstanceModification(processInstanceId)
-                    .cancelActivityInstance(getInstanceIdForActivity(activityInstance, taskList.get(i).getTaskDefinitionKey()))//关闭相关任务
-                    .setAnnotation("进行了终止流程操作")
-                    .execute();
-        }
+        if (CollectionUtils.isNotEmpty(taskList) && activityInstance != null) {
+            for (int i = 0; i < taskList.size(); i++) {
+                runtimeService.createProcessInstanceModification(processInstanceId)
+                        .cancelActivityInstance(getInstanceIdForActivity(activityInstance, taskList.get(i).getTaskDefinitionKey()))//关闭相关任务
+                        .setAnnotation("进行了终止流程操作")
+                        .execute();
+            }
         }
     }
 
@@ -408,6 +407,32 @@ public class WorkflowServiceImpl implements WorkflowService {
         }
         //删除流程id
         workflowBusinessProcessService.removeByIds(ids);
+    }
+
+
+    /**
+     * 批量取消流程
+     *
+     * @param processIdList
+     * @return void
+     * @author yl
+     * @date 2023-06-25 18:12
+     */
+    @Override
+    public Boolean batchCancelProcess(List<String> processIdList) {
+        try {
+            if (CollectionUtils.isNotEmpty(processIdList)) {
+                for (String processId : processIdList) {
+                    runtimeService.deleteProcessInstance(processId, "驳回删除流程");
+                }
+            }
+            return Boolean.TRUE;
+        } catch (Exception e) {
+            log.error("plm 批量撤销流程出错 >>>>>{}", e);
+            return Boolean.FALSE;
+        }
+
+
     }
 
 

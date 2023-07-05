@@ -7,6 +7,7 @@ import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.PickingDetailDTO;
+import com.erp.model.wms.dto.SingleApproveParamDTO;
 import com.erp.model.wms.dto.TransferApplicationDTO;
 import com.erp.model.wms.entity.TransferApplicationEntity;
 
@@ -111,6 +112,14 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      */
     void approve(BaseApproveParamDTO baseApproveParamDTO);
     /**
+     * 单个单据的审核
+     * @Author Luo_WG
+     * @Date 2023/6/30 10:23
+     * @param singleApproveParamDTO
+     * @return void
+     **/
+    void singleApprove(SingleApproveParamDTO singleApproveParamDTO);
+    /**
      * @description: 反审核
      * @author Will
      * @date: 2023/5/10 18:56
@@ -167,6 +176,7 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      * @return Boolean
      */
     Boolean generateTransferOut(ValidList<TransferApplicationDTO.GenerateTransferInfoDTO> validList);
+
     /**
      * @description: 查询拣货名称
      * @author Will
@@ -175,4 +185,24 @@ public interface TransferApplicationService extends SuperService<TransferApplica
      * @return List<ListDTO>
      */
     List<PickingDetailDTO.ListDTO> listPickingDetail(PickingDetailDTO.SearchParamDTO dto);
+
+    /**
+     * 下推加工单-列表查询
+     * @Author Luo_WG
+     * @Date 2023/6/29 17:50
+     * @param ids
+     * @param isAutoMachine 是否需要自动生成的
+     * @param qty 审核通过填写的批准加工数量
+     * @return java.util.List<com.erp.model.wms.dto.TransferApplicationDTO.ViewGenerateMachineInfo>
+     **/
+    List<TransferApplicationDTO.ViewGenerateMachineInfo> viewGenerateMachineInfo(List<String> ids, Boolean isAutoMachine, Integer qty);
+
+    /**
+     * 下推加工单-保存
+     * @Author Luo_WG
+     * @Date 2023/6/29 17:49
+     * @param list
+     * @return java.lang.Boolean
+     **/
+    Boolean saveGenerateMachineInfo(List<TransferApplicationDTO.ViewGenerateMachineInfo> list);
 }

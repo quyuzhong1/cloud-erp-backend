@@ -19,6 +19,7 @@ import com.erp.model.dmp.entity.DmpDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.DmpDeliveryDetailItemEntity;
 import com.erp.model.dmp.entity.DmpOrderInfoEntity;
 import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
+import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.mabang.OrderEntity;
@@ -114,6 +115,16 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public void cleanDataSave(String tableName, int size) {
+
+    }
+
+    @Override
+    public void updateAndSaveDb(OrderEntity mongoDatum) {
+
     }
 
     /**
@@ -282,7 +293,7 @@ public class MabangDeliveryDetailServiceImpl implements IReportSaveService<Order
     public void addDeliveryOrder(OrderEntity entity) {
         // 更新mongo数据
         OrderMongoDTO updateDto = OrderMongoDTO.getByOrderIdAndSaleNum(entity.getPlatformOrderId(), entity.getSalesRecordNumber());
-        entity.setCleanToDelivery(Boolean.TRUE);
+        entity.setCleanToDelivery(CleanStatusEnum.CLEANING.getCode());
         MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(entity), MapUtil.class);
         mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
         // 构造订单结构

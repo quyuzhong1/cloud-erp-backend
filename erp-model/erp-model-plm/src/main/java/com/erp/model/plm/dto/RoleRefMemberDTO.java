@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @Classname RoleRefMemberDTO
- * @Description TODO
+
  * @Date 2022-10-10 11:20
  * @Created by yl
  */

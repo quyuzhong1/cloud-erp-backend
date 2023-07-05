@@ -3,12 +3,14 @@ package com.erp.rpc.wms.feign;
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.Map;
@@ -143,8 +145,8 @@ public interface ScmTaskFeign {
      * @Author Luo_WG
      * @Date 2023/4/13 11:20
      **/
-    @PostMapping("feign/purchaseOrder/updatePurchaseOrderDetailById")
-    Boolean updatePurchaseOrderDetailById(@RequestBody PurchaseOrderDetailEntity entity);
+    @PostMapping("feign/purchaseOrder/updatePoArrivalStatus")
+    Boolean updatePoArrivalStatus(@RequestBody PurchaseOrderDetailEntity entity);
 
     /**
      * 批量修改采购订单明细表
@@ -162,7 +164,7 @@ public interface ScmTaskFeign {
      * @Date 2023/4/21 15:34
      **/
     @PostMapping("feign/scmWorkOption/getTableNum")
-    Integer getTableNum(@RequestBody WorkOptionDTO.TableNumDTO tableNumDTO);
+    List<WorkOptionDTO.MyWorkOptionDTO> getTableNum(@RequestBody List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList);
 
     /**
      * 更新业务单据状态
@@ -239,4 +241,61 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/purchaseOrder/getPushDownBySourceIds")
     Integer getPushDownBySourceIds(List<String> soIds);
+
+    /**
+     * 根据采购订单编号获取采购订单信息
+     * @param codes
+     * @return
+     */
+    @PostMapping("feign/purchaseOrder/getPurchaseOrderByCodes")
+    List<PurchaseOrderEntity> getPurchaseOrderByCodes(@RequestBody List<String> codes);
+    /**
+     * @description: 查询委外订单所有子级SKU生成的采购订单信息
+     * @author Will
+     * @date: 2023/6/15 17:46
+     * @param parentPodIds
+     * @return List<SubcontractOrderChildDTO>
+     */
+    @PostMapping("feign/purchaseOrder/listPoRefSubChildByParentPodIds")
+    List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildByParentPodIds(@RequestBody List<String> parentPodIds);
+    /**
+     * @description: 审核采购订单
+     * @author Will
+     * @date: 2023/6/15 18:49
+     * @param poIds
+     */
+    @PostMapping("feign/purchaseOrder/autoApprovePurchaseOrder")
+    void autoApprovePurchaseOrder(@RequestBody List<String> poIds);
+
+    /**
+     * 根据来源ids查询采购明细
+     */
+    @PostMapping("feign/purchaseOrder/listPodBySourceDetailIds")
+    List<PurchaseOrderDetailEntity> listPodBySourceDetailIds(@RequestBody List<String> sourceDetailIds);
+
+    /**
+     * 根据ids查询委外订单明细
+     */
+    @PostMapping("feign/subcontractOrder/listSubcontractDetailByIds")
+    List<SubcontractOrderDetailEntity> listSubcontractDetailByIds(@RequestBody List<String> sourceDetailIds);
+
+    /**
+     * 根据供应商Ids查询最新的sku价格信息
+     * @param ids ids
+     * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
+     * @Author Luo_WG
+     * @Date 2023/4/13 11:20
+     **/
+    @PostMapping("feign/purchasePrice/listSupplierSkuPrice")
+    List<PurchasePriceDTO.SupplierSkuPrice> listSupplierSkuPrice(@RequestBody List<String> ids);
+
+    /**
+     * @description: 根据sku id获取审核通过的最新的采购订单
+     * @author zhangchunlin
+     * @date: 2023/6/26 10:20
+     * @param skuIds
+     * @return List<PurchaseOrderDetailEntity>
+     */
+    @PostMapping("/feign/purchaseOrder/getLatest")
+    List<PurchaseOrderDetailEntity> getLatest(@RequestBody List<String> skuIds);
 }

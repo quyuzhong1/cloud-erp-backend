@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.dto.excel.TaskExportDTO;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -21,9 +22,47 @@ import java.util.List;
 @Mapper
 public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
 
-    IPage<ProductShowDTO> paging(Page query, @Param("params") ProductSearchDTO params,@Param("categoryIdList") List<String> categoryIdList);
+    IPage<ProductShowDTO> paging(Page query, @Param("params") ProductSearchDTO.PagingParamDTO params,@Param("categoryIdList") List<String> categoryIdList);
 
-    List<BasicDTO> listNotPaging(@Param("params") ProductSearchDTO params,@Param("archiveProductIds") List<String> archiveProductIds,@Param("categoryIdList") List<String> categoryIdList);
+    List<ProductShowDTO> listAllExport(@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList);
+
+    List<TaskExportDTO.ProductTaskExcelDTO> listAllTaskExport(@Param("params") ProductSearchDTO.ExportDTO params, @Param("categoryIdList")List<String> categoryIdList);
+    /**
+     * 我的项目
+     * @param query
+     * @param params
+     * @param categoryIdList
+     * @return
+     */
+    IPage<ProductShowDTO> myProjectPaging(Page query, @Param("params")ProductSearchDTO.PagingParamDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId") String userId);
+
+    /**
+     * 我的项目导出
+     * @param params
+     * @param categoryIdList
+     * @param userId
+     * @return
+     */
+    List<ProductShowDTO> listMyProjectExport(@Param("params") ProductSearchDTO.ExportDTO params, @Param("categoryIdList")List<String> categoryIdList, @Param("userId")String userId);
+
+    List<TaskExportDTO.ProductTaskExcelDTO> listMyProjectTaskExport(@Param("params")ProductSearchDTO.ExportDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId")String userId);
+
+
+    /**
+     * 收藏的项目
+     * @param query
+     * @param params
+     * @param categoryIdList
+     * @return
+     */
+    IPage<ProductShowDTO> collect(Page query, @Param("params") ProductSearchDTO.PagingParamDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId")String userId);
+
+    List<ProductShowDTO> collectExport(@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList);
+
+
+    List<TaskExportDTO.ProductTaskExcelDTO> collectTaskExport(@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList);
+
+    List<BasicDTO> listNotPaging(@Param("params") ProductSearchDTO.PagingParamDTO params,@Param("archiveProductIds") List<String> archiveProductIds,@Param("categoryIdList") List<String> categoryIdList);
 
     List<ProductExcelDTO> getExportProduct(@Param("productIds") List<String> productIds);
 
@@ -57,4 +96,36 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
      * @return com.erp.model.plm.dto.ProductInfoDTO.ProductRolePeopleDTO
      */
     List<ProductInfoDTO.ProductRolePeopleDTO> getRolePeopleBySkuId(@Param("skuIdList") List<String> skuIdList);
+
+
+    List<ProductDTO.CountBaseDTO> listStatusCount(@Param("productIdList") List<String> productIdList);
+
+    List<ProductDTO.CountBaseStrDTO> listProgressStatusCount(@Param("productIdList") List<String> productIdList);
+
+    List<String> listProductIdByUserId(@Param("userId")String userId);
+
+    /**
+     * 获取概览的基本信息
+     * @param productId
+     * @return
+     */
+    ProductOverviewDTO.InfoDTO overviewBase(@Param("productId")String productId);
+
+
+    List<ProductDTO.CountBaseDTO> listMyProjectStatusCount(@Param("userId") String userId);
+
+    List<ProductDTO.CountBaseStrDTO> listMyProjectProgressStatusCount(@Param("userId") String userId);
+
+    /**
+     * 收藏的统计
+     * @author yl
+     * @date 2023-06-16 15:12
+     * @param
+     * @return java.util.List<com.erp.model.plm.dto.ProductDTO.CountBaseDTO>
+     */
+    List<ProductDTO.CountBaseDTO> listCollectStatusCount(@Param("userId") String userId);
+
+    List<ProductDTO.CountBaseStrDTO> listCollectProgressStatusCount(@Param("userId") String userId);
+
+
 }

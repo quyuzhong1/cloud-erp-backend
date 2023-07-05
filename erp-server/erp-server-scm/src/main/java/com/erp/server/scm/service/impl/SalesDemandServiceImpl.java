@@ -505,15 +505,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
                 eq(SalesDemandEntity::getInvalidStatus,Boolean.FALSE).count();
     }
 
-    @Override
-    public List<SalesDemandDTO.ViewGenerateSubcontractOrderDTO> viewGenerateSubcontractOrder(List<String> ids) {
-        return null;
-    }
 
-    @Override
-    public void generateSubcontractOrder(ValidList<SalesDemandDTO.GenerateSubcontractOrderDTO> list) {
-
-    }
 
     /**
      * 处理数据id

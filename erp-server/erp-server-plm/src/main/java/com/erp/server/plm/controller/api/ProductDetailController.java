@@ -102,6 +102,22 @@ ProductDetailController extends BaseController {
     @Resource
     private ProductDetailApproverService productDetailApproverService;
 
+    @Resource
+    private ProductCustomsService productCustomsService;
+
+
+    /**
+     * 临时接口-添加产品国外海关编码
+     * @Author Luo_WG
+     * @Date 2023/6/25 10:06
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/addProductCustoms")
+    public ApiResult addProductCustoms() {
+        Boolean flag = productCustomsService.addProductCustoms();
+        return flag == true ? this.success() : this.failure();
+    }
+
     /**
      * 产品信息-主页列表-查询1
      *
@@ -118,7 +134,7 @@ ProductDetailController extends BaseController {
     }
 
     /**
-     * 产品信息-无规格-产品详情
+     * 产品信息-无规格-产品详情-PLM-1.3
      *
      * @param productId 产品信息表id
      * @return com.common.core.vo.ApiResult<com.erp.model.plm.dto.ProductNoSpecDetailAllDTO>
@@ -133,7 +149,22 @@ ProductDetailController extends BaseController {
     }
 
     /**
-     * 产品信息-多规格-产品详情
+     * 根据skuId查询产品信息-无规格-产品详情-PLM-1.3
+     *
+     * @param skuId 产品信息表id
+     * @return com.common.core.vo.ApiResult<com.erp.model.plm.dto.ProductNoSpecDetailAllDTO>
+     * @Author Luo_WG
+     * @Date 2022/10/9 10:21
+     **/
+    @GetMapping("/getNoSpecDetailBySkuId")
+    //@RequestPermissions("plm:product:detail:getNoSpecDetailById")
+    public ApiResult<ProductNoSpecDetailAllDTO> getNoSpecDetailBySkuId(@RequestParam(value = "skuId") String skuId) {
+        ProductNoSpecDetailAllDTO list = productDetailService.getNoSpecDetailBySkuId(skuId);
+        return this.success(list);
+    }
+
+    /**
+     * 产品信息-多规格-产品详情-PLM-1.3
      *
      * @param productId 产品信息表id
      * @return com.common.core.vo.ApiResult<com.erp.model.plm.dto.ProductManyDetailDTO>
@@ -149,7 +180,7 @@ ProductDetailController extends BaseController {
 
 
     /**
-     * 产品信息-多规格-产品详情-编辑
+     * 产品信息-多规格-产品详情-编辑-PLM-1.3
      *
      * @param dto 产品信息表id
      * @return com.common.core.vo.ApiResult<com.erp.model.plm.dto.ProductManyDetailDTO>
@@ -170,7 +201,7 @@ ProductDetailController extends BaseController {
     }
 
     /**
-     * 产品信息-无规格-产品详情-编辑
+     * 产品信息-无规格-产品详情-编辑-PLM-1.3
      *
      * @param dto 产品信息表id
      * @return com.common.core.vo.ApiResult<com.erp.model.plm.dto.ProductNoSpecDetailAllDTO>
@@ -192,7 +223,7 @@ ProductDetailController extends BaseController {
     }
 
     /**
-     * 产品信息-无规格-新增/修改
+     * 产品信息-无规格-新增/修改-PLM-1.3
      *
      * @param productNoSpecDTO 新增产品无规格sku信息请求参数
      * @return com.common.core.vo.ApiResult
@@ -207,7 +238,7 @@ ProductDetailController extends BaseController {
     }
 
     /**
-     * 产品信息-多规格-新增/修改
+     * 产品信息-多规格-新增/修改-PLM-1.3
      *
      * @param productManySpecDTO 新增产品多规格sku信息请求参数
      * @return com.common.core.vo.ApiResult
@@ -287,7 +318,7 @@ ProductDetailController extends BaseController {
         return flag == true ? this.success() : this.failure();
     }
 
-    /*    *//**
+    /**
      * 产品信息-多规格sku-批量删除
      * @Author Luo_WG
      * @Date 2022/10/9 10:42
@@ -486,7 +517,7 @@ ProductDetailController extends BaseController {
     }
 
     /**
-     * 产品信息-变体管理-下拉列表-新增/修改
+     * 产品信息-变体管理-下拉列表-新增/修改-PLM-1.3
      *
      * @param productVariantDTO 产品变体类型属性表
      * @return com.common.core.vo.ApiResult
@@ -932,69 +963,102 @@ ProductDetailController extends BaseController {
         productDetailService.handleChargeId();
     }
 
-/*
-    *//**
-     * 提交
+    /**
+     * 提交-PLM-1.3
      * @Author Luo_WG
      * @Date 2023/4/6 18:52
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
-     **//*
+     **/
     @PostMapping("/submit")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = Boolean.TRUE;
+        Boolean flag = productDetailService.submit(dto.getIds());
         return flag == true ? success() : failure();
     }
 
-    *//**
-     * 批量审核
+    /** 批量审核-PLM-1.3
      * @Author Luo_WG
      * @Date 2023/4/6 19:06
      * @param baseApproveParamDTO baseApproveParamDTO
      * @return com.common.core.controller.vo.ApiResult
-     **//*
+     **/
     @PostMapping("/approve")
     public ApiResult approve(@RequestBody @Validated BaseApproveParamDTO baseApproveParamDTO) {
-        Boolean flag = Boolean.TRUE;
+        Boolean flag = productDetailService.approve(baseApproveParamDTO);
         return flag == true ? success() : failure();
     }
 
-    *//**
-     * 批量反审核
+    /**
+     * 批量反审核-PLM-1.3
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
-     **//*
+     **/
     @PostMapping("/disApprove")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = Boolean.TRUE;
+        Boolean flag = productDetailService.disApprove(dto.getIds());
         return flag == true ? success() : failure();
     }
 
-    *//**
-     * 取消流程
+    /**
+     * 取消流程-PLM-1.3
      * @Author Luo_WG
      * @Date 2023/4/13 18:58
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
-     **//*
+     **/
     @PostMapping("/cancelProcess")
     public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = Boolean.TRUE;
+        Boolean flag = productDetailService.cancelProcess(dto.getIds());
         return flag == true ? success() : failure();
     }
 
-    *//**
-     * 批量删除
+    /**
+     * 批量删除-PLM-1.3
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
      * @param idsDTO idsDTO
      * @return com.common.core.controller.vo.ApiResult
-     **//*
-    @PostMapping("/delete")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        Boolean flag = Boolean.TRUE;
+     **/
+    @PostMapping("/deleteBatch")
+    public ApiResult deleteBatch(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        Boolean flag = productDetailService.deleteBatch(idsDTO.getIds());
         return flag == true ? success() : failure();
-    }*/
+    }
+
+    /**
+     * 批量更新字段-PLM-1.3
+     * @Author Luo_WG
+     * @Date 2023/6/15 11:32
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
+     **/
+    @PostMapping("/updateBatchFiled")
+    public ApiResult updateBatchFiled(@RequestBody @Validated ProductDetailBatchUpdateDTO dto) {
+        Boolean flag = productDetailService.updateBatchFiled(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
+     * 根据sku id集合获取采购员、供应商信息
+     * @param idsDTO
+     * @return
+     */
+    @PostMapping("/getPurchaseInfoBySkuIds")
+    public ApiResult<List<SkuPurchaseDTO.PurchaseInfo>> getPurchaseInfoBySkuIds(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        return success(productPurchaseService.getInfoBySkuIds(idsDTO.getIds()));
+    }
+
+    /**
+     * 根据产品id 获取到产品下的sku信息【PLM1.3】
+     * @author yl
+     * @date 2023-06-25 10:17
+     * @param productId
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.plm.dto.SkuPurchaseDTO.PurchaseInfo>>
+     */
+    @GetMapping("/listSkuByProductId")
+    public ApiResult<List<ProductDetailEntity>> listSkuByProductId(@RequestParam("productId") String productId) {
+        return success(productDetailService.queryByProductId(productId));
+    }
 }

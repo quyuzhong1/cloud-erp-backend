@@ -3,7 +3,7 @@ package com.common.message.constant;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/3/10 11:56
  */
 public class RocketMqConsumerGroup {
@@ -118,6 +118,16 @@ public class RocketMqConsumerGroup {
      */
     public static final String SYNC_KINGDEE_SO_RETURN = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_return";
 
+    /**
+     * 委外订单
+     */
+    public static final String SYNC_KINGDEE_SUBCONTRACT_ORDER = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_subcontract_order";
+
+    /**
+     * 委外变更订单
+     */
+    public static final String SYNC_KINGDEE_SUBCONTRACT_CHANGE = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_subcontract_change";
+
     //-----------------------------------------------------------------dmp数据更新------------------------------------------------------
 
     /**
@@ -141,5 +151,39 @@ public class RocketMqConsumerGroup {
     public static final String PRODUCT_LISTING_UPDATE = "${spring.cloud.nacos.discovery.namespace}-product_listing_update";
 
 
+    //-----------------------------------------------------------------wms数据更新------------------------------------------------------
+    /**
+     * 金蝶B2C 销售出库单同步
+     */
+    public static final String SYNC_KINGDEE_SO_OUTSTOCK_TO_WMS = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_outatock_to_wms";
 
+    /**
+     * 直接调拨单金蝶同步至ERP
+     */
+    public static final String SYNC_KINGDEE_TRANSFER_INFO_TO_WMS = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_transfer_info_to_wms";
+
+    /**
+     * ERP直接调拨单->DMP
+     */
+    public static final String SYNC_ERP_TRANSFER_INFO_TO_DMP = "${spring.cloud.nacos.discovery.namespace}-sync_erp_transfer_info_to_dmp";
+
+    /**
+     * DMP出入库->马帮
+     */
+    public static final String SYNC_DMP_TRANSFER_INFO_TO_MABANG = "${spring.cloud.nacos.discovery.namespace}-sync_dmp_transfer_info_to_mabang";
+
+    /**
+     * 马帮FBA发货单同步到WMS
+     */
+    public static final String SYNC_MABANG_FBA_DELIVERY_TO_WMS = "${spring.cloud.nacos.discovery.namespace}-sync_mabang_fba_delivery_to_wms";
+
+    /**
+     * 金蝶退货单同步
+     */
+    public static final String SYNC_KINGDEE_RETURN_ORDER_TO_WMS = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_return_order_to_wms";
+
+    /**
+     * ERP加工单单->DMP
+     */
+    public static final String SYNC_ERP_MACHINE_INFO_TO_DMP = "${spring.cloud.nacos.discovery.namespace}-sync_ermachine_info_to_dmp";
 }

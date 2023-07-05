@@ -9,6 +9,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -107,6 +108,9 @@ public class PurchaseReturnOrderDetailEntity extends BaseEntity<PurchaseReturnOr
 
     @TableField(exist = false)
     private String returnMode;
+
+    @TableField(exist = false)
+    private LocalDate billDate;
 
     @Override
     public Serializable pkVal() {

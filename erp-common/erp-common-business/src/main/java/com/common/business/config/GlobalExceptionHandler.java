@@ -27,11 +27,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.List;
+import java.util.Objects;
 
 /** 
  *
  * @Classname: GlobalExceptionHandler
- * @Description: TODO
+
  * @CreateTime: 2023-04-13  19:34
  * @Author: zhangchunlin
  */
@@ -47,6 +48,7 @@ import java.util.List;
 
 })
 public class GlobalExceptionHandler {
+
     @ExceptionHandler({ServiceException.class})
     @ResponseStatus(HttpStatus.OK)
     public ApiResult resolveException(ServiceException e) {
@@ -54,6 +56,10 @@ public class GlobalExceptionHandler {
         ApiResult result = new ApiResult();
         result.setCode(e.getCode());
         result.setMsg(e.getMsg());
+        // 某些异常需要返回data
+        if(Objects.nonNull(e.getData())) {
+            result.setData(e.getData());
+        }
         return result;
     }
 
@@ -108,7 +114,7 @@ public class GlobalExceptionHandler {
         if (e.getMessage().contains("value too long")) {
             return ApiResult.error(ApiError.ERROR_1025);
         } else {
-            return ApiResult.error(ApiError.ERROR_1002);
+            return ApiResult.error(ApiError.ERROR_500);
         }
     }
 

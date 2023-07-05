@@ -27,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -63,7 +62,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void add(List<PoInstockDetailDTO.AddDTO> details, String mainId, String sourceType) {
+    public void add(List<PoInstockDetailDTO.AddDTO> details, String mainId, String sourceType,Boolean isNotCheck) {
         if (CollectionUtils.isEmpty(details)) {
             return;
         }
@@ -74,7 +73,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
         doOpHandleDetails(list,mainId,Boolean.FALSE);
 
         //验证关联数量
-        checkStockInQty(list,sourceType,mainId);
+        checkStockInQty(list,sourceType,mainId,isNotCheck);
 
 
         this.saveBatch(list);
@@ -102,7 +101,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
         doOpHandleDetails(newList,mainId,Boolean.TRUE);
 
         //验证关联数量
-        checkStockInQty(newList,sourceType,mainId);
+        checkStockInQty(newList,sourceType,mainId,Boolean.FALSE);
 
         //新增或修改明细
         this.saveOrUpdateBatch(newList);
@@ -184,14 +183,14 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
     }
 
     /**
-     * @description: 验证数量
+     * @description: 验证数量(审核通过的时候校验)
      * @author Will
      * @date: 2023/4/17 16:04
      * @param list
      * @param sourceType
      */
-    private void checkStockInQty (List<PoInstockDetailEntity> list , String sourceType, String mainId) {
-        if (CollectionUtils.isEmpty(list)) {
+    private void checkStockInQty (List<PoInstockDetailEntity> list , String sourceType, String mainId,Boolean isNotCheck) {
+        if (CollectionUtils.isEmpty(list) || isNotCheck) {
             return;
         }
         //来源ids
@@ -260,7 +259,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
                 throw new ServiceException(new ApiResult(MathUtil.ONE,String.format("SKU【%s】入库数量不能大于",detailEntity.getSkuNo()) + (purchaseQty - stockInQty + returnQty)));
             }
             //来源收货单
-            if (SourceTypeEnum.WAREHOUSE_RECEIVE.getCode().equals(sourceType)) {
+            if (SourceTypeEnum.PO_RECEIVE.getCode().equals(sourceType)) {
                 //收货数量
                 Integer receiveQty = receiveDetails.stream().filter(obj -> obj.getId().equals(detailEntity.getSourceDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).findFirst().orElse(MathUtil.ZERO);
 

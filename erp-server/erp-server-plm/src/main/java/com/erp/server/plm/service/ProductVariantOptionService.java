@@ -54,4 +54,5 @@ public interface ProductVariantOptionService extends IService<ProductVariantOpti
      * @return List<ProductVariantOptionEntity>
      */
     List<ProductVariantOptionEntity> getByProductId(String productId);
+
 }

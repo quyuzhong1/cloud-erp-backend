@@ -11,6 +11,7 @@ import com.erp.model.plm.entity.ProjectTaskVO;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
 import com.erp.model.plm.vo.ScheduleTaskExportExcelVO;
 import com.erp.model.plm.vo.ScheduleTaskVO;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import org.apache.commons.math3.util.Pair;
 
 import java.time.LocalDateTime;
@@ -83,9 +84,10 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     boolean updateTaskState(List<String> taskIds, Integer state, LocalDateTime realityStart, LocalDateTime realityEnd);
 
 
-    int countUndoneByTaskIds(Integer code, Integer approvalPass, List<String> preTaskIds);
+    int countUndoneByTaskIds(List<Integer> excludeStatusList , List<String> preTaskIds);
 
     void checkSonTaskFinish(List<String> noProcessTaskIds,String productId);
+    void checkSonTaskFinish(List<String> noProcessTaskIds,List<ProjectTaskEntity> taskList);
 
     Boolean startTask(OperateBaseTaskDTO dto);
 
@@ -164,6 +166,8 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @return List<ProjectTaskEntity>
      */
     List<ProjectTaskEntity> listByProductId(String productId);
+
+    List<ProjectTaskEntity> listByProductIds(List<String> productIds);
 
     /**
      * 分配给我 待审核
@@ -299,4 +303,32 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     Boolean removeBatch(List<String> ids);
 
     List<ProjectTaskEntity> listByTaskNames(String productId, List<String> taskNameList);
+
+
+
+    /**
+     * 根据任务ids 获取到任务信息
+     * @param taskIdList
+     * @return
+     */
+    List<ProductTask.TaskInfoDTO> listTaskInfo(List<String> taskIdList);
+
+
+    /**
+     * 撤销流程
+     * @author yl
+     * @date 2023-06-25 17:11
+     * @param taaskIdList
+     * @return java.lang.Boolean
+     */
+    Boolean cancelProcess(List<String> taaskIdList);
+
+    /**
+     * 获取任务审核情况
+     * @author yl
+     * @date 2023-07-03 14:29
+     * @param taskId
+     * @return java.util.List<com.erp.model.plm.dto.TaskProcessNodeDTO>
+     */
+    List<ApproveNodeRecordVO> listTaskAudit(String taskId);
 }

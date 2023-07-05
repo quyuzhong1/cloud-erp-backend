@@ -12,9 +12,11 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.model.plm.dto.ProductSaleDTO;
 import com.erp.model.plm.dto.ProductSaleShowDTO;
+import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.server.plm.mapper.ProductSaleMapper;
+import com.erp.server.plm.service.BasicDictService;
 import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProductSaleService;
 import org.apache.commons.lang3.StringUtils;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +45,9 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
     @Resource
     private ProductDetailService productDetailService;
 
+    @Resource
+    private BasicDictService basicDictService;
+
     /**
      * @Description 产品销售信息查询列表
      * @Author Luo_WG
@@ -51,7 +57,37 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
      **/
     @Override
     public List<ProductSaleShowDTO> list(String productId){
-        return productSaleMapper.list(productId);
+        List<ProductSaleShowDTO> list = productSaleMapper.list(productId);
+        for (ProductSaleShowDTO productSaleShowDTO : list) {
+            if (StringUtils.isNotBlank(productSaleShowDTO.getSaleCountry())) {
+                List<String> saleCountryList = Arrays.asList(productSaleShowDTO.getSaleCountry().split(","));
+                List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(saleCountryList);
+                List<String> saleCountryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                productSaleShowDTO.setSaleCountryName(StringUtils.join(saleCountryNameList, ","));
+            }
+        }
+        return list;
+    }
+
+    /**
+     * @Description 产品销售信息查询列表
+     * @Author Luo_WG
+     * @Date 2022/9/23 14:06
+     * @param skuId
+     * @return java.util.List<com.erp.model.plm.dto.ProductSaleShowDTO>
+     **/
+    @Override
+    public List<ProductSaleShowDTO> listBySkuId(String skuId){
+        List<ProductSaleShowDTO> list = productSaleMapper.listBySkuId(skuId);
+        for (ProductSaleShowDTO productSaleShowDTO : list) {
+            if (StringUtils.isNotBlank(productSaleShowDTO.getSaleCountry())) {
+                List<String> saleCountryList = Arrays.asList(productSaleShowDTO.getSaleCountry().split(","));
+                List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(saleCountryList);
+                List<String> saleCountryNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                productSaleShowDTO.setSaleCountryName(StringUtils.join(saleCountryNameList, ","));
+            }
+        }
+        return list;
     }
 
     /**
@@ -65,16 +101,6 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
     public Boolean saveOrUpdate(ProductSaleDTO productSaleDTO){
         ProductSaleEntity saleEntity = new ProductSaleEntity();
         BeanMapper.copy(productSaleDTO, saleEntity);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (ObjectUtils.isNotEmpty(loginUser)) {
-            if (StringUtils.isBlank(productSaleDTO.getId())) {
-                saleEntity.setCreateUserId(loginUser.getUid());
-                saleEntity.setCreateUserName(loginUser.getUserName());
-            } else {
-                saleEntity.setUpdateUserId(loginUser.getUid());
-                saleEntity.setUpdateUserName(loginUser.getUserName());
-            }
-        }
         return this.saveOrUpdate(saleEntity);
     }
 
@@ -95,13 +121,13 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
      * @Description 删除产品销售信息
      * @Author Luo_WG
      * @Date 2022/9/26 18:42
-     * @param skuId 产品sku明细表id
+     * @param skuIds 产品sku明细表id
      * @return java.lang.Boolean
      **/
     @Override
-    public Boolean removeSale(String skuId) {
+    public Boolean removeSale(List<String> skuIds) {
         LambdaQueryWrapper<ProductSaleEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(ProductSaleEntity::getSkuId, skuId);
+        queryWrapper.in(ProductSaleEntity::getSkuId, skuIds);
         return this.remove(queryWrapper);
     }
 

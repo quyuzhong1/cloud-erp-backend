@@ -3,7 +3,7 @@ package com.common.business.enums;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/1/17 9:27
  */
 public enum SkuApproveConfigureEnum {

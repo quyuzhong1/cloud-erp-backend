@@ -40,6 +40,21 @@ public class RocketMqTopic {
     public static final String SYNC_PLM_TO_WMS_PRODUCT_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_plm_to_wms_product_topic";
 
     /**
+     * 推送Scm采购单信息到Wms
+     */
+    public static final String SYNC_SCM_TO_WMS_PURCHASE_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_scm_to_wms_purchase_topic";
+
+    /**
+     * 同步金蝶销售信息到OMS
+     */
+    public static final String SYNC_KINGDEE_TO_OMS_SALES_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_to_oms_sales_topic";
+
+    /**
+     * 同步金蝶销售出库单到WMS
+     */
+    public static final String SYNC_KINGDEE_TO_WMS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_to_wms_topic";
+
+    /**
      * 发送预警消息到消息服务主题
      */
     public static final String WARN_MSG_TOPIC = "${spring.cloud.nacos.discovery.namespace}-warn_msg_topic";
@@ -48,5 +63,21 @@ public class RocketMqTopic {
      * dmp 拉取第三方ERP订单topic
      */
     public static final String DMP_ERP_DATA_CLEAN_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_erp_data_clean_topic";
+
+    /**
+     * WMS推送数据到DMP
+     */
+    public static final String SYNC_WMS_TO_DMP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_wms_to_dmp_topic";
+
+    /**
+     * DMP推送数据到马帮
+     */
+    public static final String SYNC_DMP_TO_MABANG_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_dmp_to_mabang_topic";
+
+    /**
+     * DMP同步任务
+     */
+    public static final String DMP_SYNC_TASK_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_sync_task_topic";
+
 
 }

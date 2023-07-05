@@ -5,11 +5,10 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * @Classname 交付物
- *  TODO
+ *
  * @Date 2022-09-23 10:28
  * @Created by yl
  */
@@ -19,13 +18,13 @@ public class DeliveryDocsDTO implements Serializable {
 
 
     /**
-     *id
+     *交付的文档id
      */
     private String id;
 
 
     /**
-     *id
+     *是否系统任务
      */
     private Integer isSys;
 
@@ -123,6 +122,12 @@ public class DeliveryDocsDTO implements Serializable {
      * 能否显示删除
      */
     private Boolean deleteFlag=true;
+
+
+    /**
+     * 是否变更
+     */
+    private Boolean isChange;
 
 
 

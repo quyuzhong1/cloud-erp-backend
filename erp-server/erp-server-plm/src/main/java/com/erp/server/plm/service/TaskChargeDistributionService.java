@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/1/29 14:43
  */
 public interface TaskChargeDistributionService extends IService<TaskChargeDistributionEntity> {
@@ -52,6 +52,8 @@ public interface TaskChargeDistributionService extends IService<TaskChargeDistri
      * @param taskId
      */
     void removeBySourceAndTaskId(Integer source, String taskId);
+
+    void removeBySourceAndTaskIds(Integer source, List<String> taskIds);
     /**
      * @description: 
      * @author Will

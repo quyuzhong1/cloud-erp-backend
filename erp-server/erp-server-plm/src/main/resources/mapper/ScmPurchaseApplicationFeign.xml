@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.TaskDocHistoryMapper">
+
+    <select id="historyList" resultType="com.erp.model.plm.dto.DocHistoryDTO$InfoDTO">
+         SELECT
+           dh.require_doc_id,
+           dh.file_name,
+           dh.file_url,
+           dh.create_user_name,
+           dh.create_time,
+           dh.change_version,
+           tdd.docs_name AS requireDocName
+         FROM task_doc_history dh
+         LEFT JOIN task_delivery_docs tdd
+         ON dh.require_doc_id=tdd.id
+         WHERE dh.is_deleted=FALSE
+         AND dh.is_change_success=TRUE
+         AND dh.finish_doc_id=#{finishDocsId}
+         ORDER BY dh.change_version ASC
+    </select>
+
+
+</mapper>

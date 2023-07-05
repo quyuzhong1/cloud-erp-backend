@@ -5,7 +5,6 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.QcInfoEntity;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -227,4 +226,27 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @return java.lang.Boolean
      **/
     List<QcInfoEntity> listQCBySourceIds(List<String> sourceIds);
+
+    /**
+     * @description: 根据来源明细ids查询质检单
+     * @author Will
+     * @date: 2023/7/3 15:59
+     * @param sourceDetailIds
+     * @return List<QcInfoEntity>
+     */
+    List<QcInfoEntity> listQCBySourceDetailIds(List<String> sourceDetailIds);
+
+    /**
+     * 根据采购订单获取质检信息
+     * @param dto
+     * @return
+     */
+    QcInfoDTO.PurchaseQcInfoDTO getQcInfoByPurchaseOrder(QcInfoDTO.PurchaseQcParamDTO dto);
+
+    /**
+     * 导出质检日报Excel
+     * @param dto
+     * @param response
+     */
+    void exportDailyExcel(QcInfoDTO.ExportDTO dto, HttpServletResponse response);
 }

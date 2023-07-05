@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @Classname FindUserDTO
- * @Description TODO
+
  * @Date 2022-10-08 11:22
  * @Created by yl
  */
@@ -20,8 +20,14 @@ public class FindUserDTO implements Serializable {
 
     private String userName;
 
+    private String realName;
+
 
     private String mobile;
 
     private Integer isMyState;
+
+    private String departmentId;
+
+    private String departmentName;
 }

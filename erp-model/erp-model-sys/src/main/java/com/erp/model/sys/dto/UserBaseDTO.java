@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @Classname SysUserBaseVO
- * @Description TODO
+
  * @Date 2022-08-03 10:27
  * @Created by yl
  */
@@ -20,6 +20,13 @@ public class UserBaseDTO implements Serializable {
      * 用户名
      */
     private String userName;
+
+
+    /**
+     * 头像
+     */
+    private String headIcon;
+
     /**
      * 真实姓名
      */

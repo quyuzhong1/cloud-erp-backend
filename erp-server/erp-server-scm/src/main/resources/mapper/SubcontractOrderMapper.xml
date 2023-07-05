@@ -50,6 +50,7 @@
         sod.sku_id as skuId,
         sod.sku_no as skuNo,
         sod.bom_version as bomVersion,
+        sod.is_urgent as isUrgent,
         sod.qty,
         sod.delivery_qty as deliveryQty,
         so.approve_user_name as approveUserName,
@@ -102,13 +103,13 @@
                 </foreach>
             </if>
             <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
-                and so.warehouse_id in
+                and sod.warehouse_id in
                 <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
             <if test="params.purchaseUserIdList != null and params.purchaseUserIdList.size > 0">
-                and so.purchase_user_id in
+                and so.purchaser_id in
                 <foreach collection="params.purchaseUserIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
@@ -214,13 +215,13 @@
                     </foreach>
                 </if>
                 <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
-                    and so.warehouse_id in
+                    and sod.warehouse_id in
                     <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
                         #{item}
                     </foreach>
                 </if>
                 <if test="params.purchaseUserIdList != null and params.purchaseUserIdList.size > 0">
-                    and so.purchase_user_id in
+                    and so.purchaser_id in
                     <foreach collection="params.purchaseUserIdList" item="item" open="(" close=")" separator=",">
                         #{item}
                     </foreach>
@@ -249,6 +250,58 @@
             </foreach>
         </if>
         so.create_time desc
+    </select>
+
+    <select id="viewGeneratePo" resultType="com.erp.model.scm.dto.SubcontractOrderDTO$ViewGeneratePoDTO">
+        select
+            so.id as sourceId,
+            so.code as sourceCode,
+            sod.id as sourceDetailId,
+            sod.sku_id as skuId,
+            sod.sku_no as skuNo,
+            sod.variant_property as variantProperty,
+            so.purchase_org_id as purchaseOrgId,
+            so.purchase_org_name as purchaseOrgName,
+            so.receive_org_id as receiveOrgId,
+            so.receive_org_name as receiveOrgName,
+            sod.warehouse_id as warehouseId,
+            sod.warehouse_name as warehouseName,
+            sod.qty,
+            sod.price,
+            sod.amount,
+            sod.is_gift,
+            sod.parent_id as parentId,
+            sod.supplier_id as supplierId,
+            sod.is_generate_po as isGeneratePo
+        from subcontract_order so
+        inner join subcontract_order_detail sod on so.id = sod.main_id  and sod.is_deleted = false
+        <where>
+            so.is_deleted = false and so.invalid_status = false
+            <if test="ids != null and ids.size > 0">
+                and so.id in
+                <foreach collection="ids" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+        order by so.id desc,case sod.parent_id when '' then 1 else 2 end asc
+    </select>
+
+    <select id="listPodIdsByDetailIds" resultType="java.lang.String">
+        select
+            pod.id
+        from  subcontract_order_detail sod
+        inner join purchase_order_detail pod on sod.id = pod.source_detail_id and pod.is_deleted = false
+        inner join purchase_order po on pod.purchase_order_id = po.id and po.is_deleted = false
+        <where>
+            sod.is_deleted = false and po.invalid_status = false
+            <if test="detailIds != null and detailIds.size > 0">
+                and sod.id in
+                <foreach collection="detailIds" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
     </select>
 
 </mapper>

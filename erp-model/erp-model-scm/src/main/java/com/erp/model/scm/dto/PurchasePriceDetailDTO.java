@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname PurchasePriceDetailDTO
- * @Description TODO
+
  * @Date 2023-03-16 14:58
  * @Created by yl
  */

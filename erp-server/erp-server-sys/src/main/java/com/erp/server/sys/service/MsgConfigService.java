@@ -5,7 +5,7 @@ import com.erp.model.sys.entity.MsgConfig;
 
 /**
  * @Classname: MsgConfigService
- * @Description: TODO
+
  * @CreateTime: 2023-04-21  12:00
  * @Author: zhangchunlin
  */

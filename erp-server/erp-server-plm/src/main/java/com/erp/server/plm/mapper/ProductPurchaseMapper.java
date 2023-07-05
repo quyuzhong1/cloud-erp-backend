@@ -17,6 +17,15 @@ public interface ProductPurchaseMapper extends BaseMapper<ProductPurchaseEntity>
     * @return java.util.List<com.erp.model.plm.dto.ProductCostShowDTO>
     **/
     List<ProductPurchaseShowDTO> list(@Param("productId") String productId);
+
+    /**
+    * @Description 产品采购信息查询列表
+    * @Author Luo_WG
+    * @Date 2022/9/23 11:44
+    * @param skuId
+    * @return java.util.List<com.erp.model.plm.dto.ProductCostShowDTO>
+    **/
+    List<ProductPurchaseShowDTO> listBySkuId(@Param("skuId") String skuId);
 }
 
 

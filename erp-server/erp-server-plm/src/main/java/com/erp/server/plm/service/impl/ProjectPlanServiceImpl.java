@@ -21,6 +21,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.dto.ProjectImportDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.ProjectImportUtil;
 import com.common.core.utils.date.DateUtil;
@@ -43,6 +44,7 @@ import com.erp.server.plm.service.*;
 import net.sf.mpxj.Task;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -86,6 +88,10 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
     private TaskDeliveryService taskDeliveryService;
 
 
+    @Autowired
+    private SysLogService sysLogService;
+
+
     @Value("${pmoCharge}")
     private String pmoCharge;
 
@@ -94,38 +100,35 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
     @Resource
     private PreTaskService preTaskService;
+
     @Resource
     private ProjectTaskService projectTaskService;
+
     @Resource
     private TaskChargeDistributionService taskChargeDistributionService;
 
     @Resource
     private ProjectPhaseService projectPhaseService;
 
+    @Resource
+    private TaskDocsNameService taskDocsNameService;
 
-    /**
-     * 提交项目计划
-     *
-     * @param dto
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-02-03 17:08
-     */
+
+    private static final String CLASSPATH = String.valueOf(ProjectTaskEntity.class);
+
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean submitSchedule(HandleTaskScheduleDTO dto) {
+    public String saveSchedule(HandleTaskScheduleDTO dto) {
         List<String> taskIds = dto.getTaskIdList();
         if (CollectionUtils.isEmpty(taskIds)) {
-            return false;
+            throw new ServiceException(ApiError.ERROR_98004);
         }
         List<ProjectTaskEntity> taskList = taskService.getByTaskIds(taskIds);
         String productId = dto.getProductId();
-        String userName = commonService.getUserInfo().getUserName();
         checkAuditor();
         if (CollectionUtils.isNotEmpty(taskIds)) {
             checkTaskTime(taskList);
             checkTaskStatus(taskList);
-
             //检查任务审核人不能为空
             checkTaskAuditor(taskIds);
         }
@@ -147,17 +150,51 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         projectPlan.setPhase(phase);
         projectPlan.setId(id);
         Boolean saveResult = this.save(projectPlan);
-        if (saveResult) {
-            projectPlanTaskService.savePlanTask(id, dto.getProductId(), taskList);
-            //发起流程啊
-            startScheduleTaskProcess(id);
-            //给第一个人发信息
-            noticeMessageService.scheduleTaskAuditor(userName, taskList, productId, Arrays.asList(pmoCharge));
-
+        if (!saveResult) {
+            throw new ServiceException(ApiError.ERROR_1002);
         }
+        return id;
+    }
+
+    /**
+     * 提交项目计划
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-02-03 17:08
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean submitSchedule(HandleTaskScheduleDTO dto) {
+        List<String> taskIds = dto.getTaskIdList();
+        if (CollectionUtils.isEmpty(taskIds)) {
+            return false;
+        }
+        List<ProjectTaskEntity> taskList = taskService.getByTaskIds(taskIds);
+        String productId = dto.getProductId();
+        String userName = commonService.getUserInfo().getUserName();
+        String id = saveSchedule(dto);
+
+        String nowTime = DateUtil.conversionDate(new Date(), DateUtil.fmt);
+        projectPlanTaskService.savePlanTask(id, dto.getProductId(), taskList);
+        //发起流程啊
+        startScheduleTaskProcess(id);
+        //给第一个人发信息
+        noticeMessageService.scheduleTaskAuditor(userName, taskList, productId, Arrays.asList(pmoCharge));
+
+        for (ProjectTaskEntity task : taskList) {
+            StringBuffer sb = new StringBuffer();
+            sb.append(userName).append(" ").append(nowTime).append(" ").append("提交 ");
+            sb.append("计划开始时间  ");
+            sb.append(task.getPlanStartTime()).append("  计划结束时间 ").append(task.getPlanEndTime());
+            sysLogService.addSysLogBySave(sb.toString(), CLASSPATH, task.getId(), task.getId());
+        }
+
+
         //异步发送消息
         noticeMessageService.scheduleTaskSubmit(userName, taskList, productId);
-        return saveResult;
+        return Boolean.TRUE;
     }
 
 
@@ -404,7 +441,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         vo.setScheduleEndTine(LocalDateTimeUtil.format(maxEndTime, DateUtil.fmt_day));
         //相差多少天
         Long durationDay = DateUtil.getDiffDay(LocalDateTimeUtil.format(minStartTime, DateUtil.fmt_day), LocalDateTimeUtil.format(maxEndTime, DateUtil.fmt_day)) + 1;
-        vo.setDurationDay(Integer.parseInt(durationDay+""));
+        vo.setDurationDay(Integer.parseInt(durationDay + ""));
         vo.setWaitAuditTaskCount(planTaskList.size());
 
         List<ScheduleTaskDetailsVO> taskList = new ArrayList<>(20);
@@ -442,7 +479,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             task.setDeliveryDocsNames(String.join(",", docsNameList));
             List<String> pretaskIdList = Collections.emptyList();
             List<PreTaskVO> preTaskList = preTaskGourpTaskIdMap.get(task.getId());
-            if(CollectionUtil.isNotEmpty(preTaskList)){
+            if (CollectionUtil.isNotEmpty(preTaskList)) {
                 pretaskIdList = preTaskList.stream().map(PreTaskVO::getPreTaskId).collect(Collectors.toList());
             }
             task.setPreTaskIdList(pretaskIdList);
@@ -611,14 +648,12 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         Boolean saveResult = this.save(projectPlan);
         if (saveResult) {
             projectPlanTaskService.saveChangePlanTask(id, productId, taskList, list);
-
             //发起流程
             startScheduleTaskProcess(id);
 
             String userName = commonService.getUserInfo().getUserName();
             //给第一个人发信息
             noticeMessageService.scheduleTaskAuditor(userName, taskList, productId, Arrays.asList(pmoCharge));
-
             //更改任务状态
             taskService.updateScheduleStatus(productId, taskIds, BaseStatusEnum.WAIT_AUDIT.getStatus(), type);
 
@@ -741,6 +776,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         Boolean result = this.updateById(plan);
 
         ProcessNodeDTO node = workflowFeign.taskPass(approveProcess);
+        String nowTime = DateUtil.conversionDate(new Date(), DateUtil.fmt);
         //表示成功
         if (node != null) {
             if (result) {
@@ -758,6 +794,16 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                 if (CollectionUtils.isNotEmpty(auditorList)) {
                     noticeMessageService.scheduleTaskAuditor(userName, taskEntityList, plan.getProductId(), auditorList);
                 }
+
+                for (ProjectPlanTaskEntity task : taskList) {
+                    String taskId = task.getTaskId();
+                    StringBuffer sb = new StringBuffer();
+                    sb.append(userName).append(" ").append(nowTime).append(" ").append("审核通过");
+                    sb.append("计划开始时间 ");
+                    sb.append(task.getOriginStartTime()).append("  计划结束时间").append(task.getOriginEndTime());
+                    sysLogService.addSysLogBySave(sb.toString(), CLASSPATH, taskId, taskId);
+                }
+
             }
         } else {
             throw new ServiceException(ApiError.ERROR_94005);
@@ -953,9 +999,9 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         if (CollectionUtil.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_1017);
         }
-        List<String> taskIds=list.stream().map(ProjectPlanTaskDTO.AutoDateDTO::getId).collect(Collectors.toList());
-        List<String> deTaskIds=taskIds.stream().distinct().collect(Collectors.toList());
-        if(taskIds.size()!=deTaskIds.size()){
+        List<String> taskIds = list.stream().map(ProjectPlanTaskDTO.AutoDateDTO::getId).collect(Collectors.toList());
+        List<String> deTaskIds = taskIds.stream().distinct().collect(Collectors.toList());
+        if (taskIds.size() != deTaskIds.size()) {
             throw new ServiceException(ApiError.ERROR_95150);
         }
 
@@ -964,8 +1010,8 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                 .sorted(Comparator.comparing(ProjectPlanTaskDTO.AutoDateDTO::getId))
                 .collect(Collectors.toList());
         ProjectPlanTaskDTO.AutoDateDTO autoDTO = autoPlanTaskOrderList.get(0);
-        if (null == autoDTO.getStartDate()){
-           throw new ServiceException(ApiError.ERROR_95144);
+        if (null == autoDTO.getStartDate()) {
+            throw new ServiceException(ApiError.ERROR_95144);
         }
         // 查询所有休息日
         SysCalendarDTO.ListDTO listDTO = new SysCalendarDTO.ListDTO();
@@ -983,50 +1029,50 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         // 查询计划
         List<PlanTaskNameDTO> planEntityList = null;
         Integer type = dto.getType();
-        if (1== type){
+        if (1 == type) {
             List<ProjectTaskEntity> taskEntityList = taskService.listByTaskIds(planIdList);
             planEntityList = taskEntityList.stream().map(PlanTaskNameDTO::new).collect(Collectors.toList());
-        }else {
+        } else {
             planEntityList = projectPlanTaskService.listByPlanId(planIdList);
         }
-        if(CollectionUtil.isEmpty(planEntityList)){
+        if (CollectionUtil.isEmpty(planEntityList)) {
             throw new ServiceException(ApiError.ERROR_95145);
         }
         // 查询任务列表
         Map<String, PlanTaskNameDTO> taskIdMap = planEntityList.stream().collect(Collectors.toMap(PlanTaskNameDTO::getId, e -> e));
 
         // 对当前日期进行排期-校验是否存在冲突重复id
-       Iterator<ProjectPlanTaskDTO.AutoDateDTO> iterator = list.iterator();
-       while (iterator.hasNext()) {
-           ProjectPlanTaskDTO.AutoDateDTO autoEntity = iterator.next();
+        Iterator<ProjectPlanTaskDTO.AutoDateDTO> iterator = list.iterator();
+        while (iterator.hasNext()) {
+            ProjectPlanTaskDTO.AutoDateDTO autoEntity = iterator.next();
 
-           PlanTaskNameDTO planTaskNameDTO = taskIdMap.get(autoEntity.getId());
-           if (checkData(dto.getType(), errorList, exitList, autoEntity, planTaskNameDTO)) {
-               continue;
-           }
-           if(null == autoEntity.getStartDate() || null == autoEntity.getEndDate()){
-               errorList.add(new ProjectTaskPlanAutoVO.ScheduleVO(planTaskNameDTO.getTaskName(), "链路起点任务开始时间结束时间不能为空"));
-               continue;
-           }
-           // 更新任务工期
-           LocalDate endDate;
-           LocalDate startDate;
-           if(1 == type){
-               ProjectTaskEntity updateTaskEntity = new ProjectTaskEntity(planTaskNameDTO, autoEntity.getStartDate(), dateList);
-               projectTaskService.updateById(updateTaskEntity);
-               endDate = updateTaskEntity.getPlanEndTime();
-               startDate = updateTaskEntity.getPlanStartTime();
-               sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(autoEntity.getId(), updateTaskEntity.getPlanStartTime(), updateTaskEntity.getPlanEndTime()));
-           }else {
-               ProjectPlanTaskEntity updateTaskEntity = new ProjectPlanTaskEntity(planTaskNameDTO, autoEntity.getStartDate(), dateList);
-               projectPlanTaskService.updateById(updateTaskEntity);
-               endDate = updateTaskEntity.getChangeEndTime();
-               startDate = updateTaskEntity.getChangeStartTime();
-               sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(autoEntity.getId(), updateTaskEntity.getChangeStartTime(), updateTaskEntity.getChangeEndTime()));
-           }
-           // 对下一个节点进行排期
-           sonNodeSchedule(dto.getType(), dateList, errorList, sucessList, exitList, dtoMap, taskIdMap, autoEntity.getId(), startDate, endDate);
-       }
+            PlanTaskNameDTO planTaskNameDTO = taskIdMap.get(autoEntity.getId());
+            if (checkData(dto.getType(), errorList, exitList, autoEntity, planTaskNameDTO)) {
+                continue;
+            }
+            if (null == autoEntity.getStartDate() || null == autoEntity.getEndDate()) {
+                errorList.add(new ProjectTaskPlanAutoVO.ScheduleVO(planTaskNameDTO.getTaskName(), "链路起点任务开始时间结束时间不能为空"));
+                continue;
+            }
+            // 更新任务工期
+            LocalDate endDate;
+            LocalDate startDate;
+            if (1 == type) {
+                ProjectTaskEntity updateTaskEntity = new ProjectTaskEntity(planTaskNameDTO, autoEntity.getStartDate(), dateList);
+                projectTaskService.updateById(updateTaskEntity);
+                endDate = updateTaskEntity.getPlanEndTime();
+                startDate = updateTaskEntity.getPlanStartTime();
+                sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(autoEntity.getId(), updateTaskEntity.getPlanStartTime(), updateTaskEntity.getPlanEndTime()));
+            } else {
+                ProjectPlanTaskEntity updateTaskEntity = new ProjectPlanTaskEntity(planTaskNameDTO, autoEntity.getStartDate(), dateList);
+                projectPlanTaskService.updateById(updateTaskEntity);
+                endDate = updateTaskEntity.getChangeEndTime();
+                startDate = updateTaskEntity.getChangeStartTime();
+                sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(autoEntity.getId(), updateTaskEntity.getChangeStartTime(), updateTaskEntity.getChangeEndTime()));
+            }
+            // 对下一个节点进行排期
+            sonNodeSchedule(dto.getType(), dateList, errorList, sucessList, exitList, dtoMap, taskIdMap, autoEntity.getId(), startDate, endDate);
+        }
         return new ProjectTaskPlanAutoVO(errorList, sucessList);
     }
 
@@ -1038,28 +1084,39 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             throw new ServiceException(ApiError.ERROR_95123);
         }
         List<ProjectImportDTO> list = new ArrayList<>();
-        Map<Integer,String> map = new LinkedHashMap<>();
+        Map<Integer, String> map = new LinkedHashMap<>();
         //约定任务负责人字段采用的文本10
-        map.put(10,"taskCharge");
-        ProjectImportUtil.getChildrenTask(tasks.get(0), list,map);
+        map.put(10, "taskCharge");
+        //约定交付物字段采用的文本11
+        map.put(11, "finishDoc");
+        ProjectImportUtil.getChildrenTask(tasks.get(0), list, map);
 
         /**
          * 1、第一级别数据无需处理
          * 2、第二级别数据任务名称为阶段，如果有则引用，无则需要新增产品阶段
          * 3、第三级别数据则属于任务，如果无任务则需要新增
          * 4、新增任务后需要新增排期
+         * 5、对应字段目标交付物-----若无交付物则新增
          */
         //阶段信息
         List<ProjectImportDTO> phaseList = list.stream().filter(obj -> MathUtil.TWO.equals(obj.getTaskOutlineLevel())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(phaseList)) {
-            throw new ServiceException(new ApiResult(ApiError.ERROR_1034.code, StrUtil.format(ApiError.ERROR_1034.msg,"二级")) );
+            throw new ServiceException(new ApiResult(ApiError.ERROR_1034.code, StrUtil.format(ApiError.ERROR_1034.msg, "二级")));
         }
-        List<String> phaseNameList = phaseList.stream().map(ProjectImportDTO::getTaskName).collect(Collectors.toList());
+        List<ProjectPhaseEntity> oldPhaseList = projectPhaseService.getByProductId(productId);
+
+        List<String> oldPhaseNameList = oldPhaseList.stream().map(ProjectPhaseEntity::getName).distinct().collect(Collectors.toList());
+        //添加阶段名称
+        for (ProjectImportDTO projectImportDTO : phaseList) {
+            if (!oldPhaseNameList.contains(projectImportDTO.getTaskName())) {
+                oldPhaseNameList.add(projectImportDTO.getTaskName());
+            }
+        }
 
         //新增阶段名称
-        projectPhaseService.batchSaveOrUpdatePhase(phaseNameList,productId);
+        projectPhaseService.batchSaveOrUpdatePhase(oldPhaseNameList, productId);
         //查询阶段
-        List<ProjectPhaseEntity> projectPhaseList = projectPhaseService.listByPhaseNames(phaseNameList, productId);
+        List<ProjectPhaseEntity> projectPhaseList = projectPhaseService.listByPhaseNames(oldPhaseNameList, productId);
         if (CollectionUtils.isEmpty(projectPhaseList)) {
             throw new ServiceException(ApiError.ERROR_95041);
         }
@@ -1067,13 +1124,15 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         //任务信息
         List<ProjectImportDTO> taskList = list.stream().filter(obj -> MathUtil.THREE.equals(obj.getTaskOutlineLevel())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(taskList)) {
-            throw new ServiceException(new ApiResult(ApiError.ERROR_1034.code, StrUtil.format(ApiError.ERROR_1034.msg,"三")) );
+            throw new ServiceException(new ApiResult(ApiError.ERROR_1034.code, StrUtil.format(ApiError.ERROR_1034.msg, "三")));
         }
         //任务负责人不能为空
         long chargeCount = taskList.stream().filter(obj -> ObjectUtils.isEmpty(obj.getCustomFieldValues()) || StringUtils.isBlank(obj.getCustomFieldValues().get("taskCharge"))).count();
         if (chargeCount > 0) {
-            throw new ServiceException(new ApiResult(ApiError.ERROR_1036.code, StrUtil.format(ApiError.ERROR_1036.msg,"二")) );
+            throw new ServiceException(new ApiResult(ApiError.ERROR_1036.code, StrUtil.format(ApiError.ERROR_1036.msg, "二")));
         }
+        //任务交付物
+        List<DocsDTO> docsList = handleDocName(taskList, productId);
 
         //所有任务负责人
         List<String> taskChargeList = taskList.stream().map(obj -> ObjectUtils.isEmpty(obj.getCustomFieldValues()) ? "" : obj.getCustomFieldValues().get("taskCharge")).flatMap(s -> {
@@ -1084,7 +1143,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
         }).distinct().collect(Collectors.toList());
         List<FindUserDTO> findUserList = sysUserFeign.listUserByUserNames(taskChargeList);
         if (CollectionUtils.isEmpty(findUserList)) {
-            throw new ServiceException(new ApiResult(ApiError.ERROR_1038.code, StrUtil.format(ApiError.ERROR_1038.msg,"二")) );
+            throw new ServiceException(new ApiResult(ApiError.ERROR_1038.code, StrUtil.format(ApiError.ERROR_1038.msg, "二")));
         }
 
         //产品下已存在的任务
@@ -1098,7 +1157,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
             //任务名称
             if (StringUtils.isBlank(projectImportDTO.getTaskName())) {
-                throw new ServiceException(new ApiResult(ApiError.ERROR_1035.code, StrUtil.format(ApiError.ERROR_1035.msg,"二")) );
+                throw new ServiceException(new ApiResult(ApiError.ERROR_1035.code, StrUtil.format(ApiError.ERROR_1035.msg, "二")));
             }
             //任务负责人
             Map<String, String> customFieldValues = projectImportDTO.getCustomFieldValues();
@@ -1108,9 +1167,17 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             for (String taskChargeName : taskChargeNameList) {
                 String chargeId = findUserList.stream().filter(obj -> obj.getUserName().equals(taskChargeName)).map(FindUserDTO::getUserId).findFirst().orElse("");
                 if (StringUtils.isBlank(chargeId)) {
-                    throw new ServiceException(new ApiResult(ApiError.ERROR_1037.code, StrUtil.format(ApiError.ERROR_1037.msg,taskChargeName)) );
+                    throw new ServiceException(new ApiResult(ApiError.ERROR_1037.code, StrUtil.format(ApiError.ERROR_1037.msg, taskChargeName)));
                 }
                 chargeIds.add(chargeId);
+            }
+
+            //交付物
+            String finishDoc = customFieldValues.get("finishDoc");
+            if (StringUtils.isNotBlank(finishDoc)) {
+                List<String> finishDocNameList = Arrays.stream(finishDoc.split("\\/")).collect(Collectors.toList());
+                List<DocsDTO> deliveryDocsList = docsList.stream().filter(obj -> finishDocNameList.contains(obj.getName())).collect(Collectors.toList());
+                projectTaskDTO.setDeliveryDocsList(deliveryDocsList);
             }
 
             //任务阶段
@@ -1137,19 +1204,12 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             projectTaskDTO.setPhaseName(phaseName);
             projectTaskDTO.setPlanStartTime(projectImportDTO.getTaskStartDate());
             projectTaskDTO.setPlanEndTime(projectImportDTO.getTaskFinishDate());
+            projectTaskDTO.setWorkPeriod(ObjectUtils.isNotEmpty(projectImportDTO.getTaskDuration()) ? Integer.valueOf((int)Math.round(projectImportDTO.getTaskDuration()))  : null );
             projectTaskList.add(projectTaskDTO);
         }
 
         //新增任务
         for (ProjectTaskDTO projectTaskDTO : projectTaskList) {
-
-            //无需新增数据
-            if (CollectionUtils.isNotEmpty(notAddList)) {
-                long count = notAddList.stream().filter(obj -> notAddList.contains(projectTaskDTO.getId())).count();
-                if (count > 0) {
-                    continue;
-                }
-            }
 
             ProjectImportDTO projectImportDTO = taskList.stream().filter(obj -> obj.getTaskName().equals(projectTaskDTO.getName())).findFirst().orElse(null);
             //前置任务
@@ -1161,21 +1221,62 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
                 projectTaskDTO.setPreTaskIdList(preTaskIdList);
             }
             projectTaskDTO.setType(MathUtil.ZERO);
+
+            //需要修改的数据
+            if (CollectionUtils.isNotEmpty(notAddList) && notAddList.contains(projectTaskDTO.getId())) {
+                projectTaskService.updateTask(projectTaskDTO);
+                continue;
+            }
             projectTaskService.save(projectTaskDTO);
         }
 
-        //新增任务排期
-        List<String> taskIdList = projectTaskList.stream().map(ProjectTaskDTO::getId).collect(Collectors.toList());
-        HandleTaskScheduleDTO dto = new HandleTaskScheduleDTO();
-        dto.setProductId(productId);
-        dto.setTaskIdList(taskIdList);
-        Boolean flag = this.submitSchedule(dto);
-        return flag;
+        return Boolean.TRUE;
+    }
+
+    /**
+     * @description: 格式化交付物
+     * @author Will
+     * @date: 2023/6/29 16:56
+     * @param taskList
+     * @param productId
+     * @return List<DocsDTO>
+     */
+    private List<DocsDTO> handleDocName(List<ProjectImportDTO> taskList,String productId) {
+        //交付物
+        List<String> finishDocList = taskList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getCustomFieldValues()) && StringUtils.isNotBlank(obj.getCustomFieldValues().get("finishDoc"))).map(obj -> obj.getCustomFieldValues().get("finishDoc")).collect(Collectors.toList());
+        List<String> allFinishDocList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(finishDocList)) {
+            for (String finishDoc : finishDocList) {
+                List<String> finishDocNameList = Arrays.stream(finishDoc.split("\\/")).collect(Collectors.toList());
+                allFinishDocList.addAll(finishDocNameList);
+            }
+            allFinishDocList = allFinishDocList.stream().distinct().collect(Collectors.toList());
+        }
+        List<TaskDocsNameEntity> taskDocsNameList = taskDocsNameService.listByNames(productId, allFinishDocList);
+        List<TaskDocsNameEntity> docEntityList = new ArrayList<>();
+        for (String docName : allFinishDocList) {
+            TaskDocsNameEntity docsDTO = new TaskDocsNameEntity();
+            String docId = taskDocsNameList.stream().filter(obj -> obj.getName().equals(docName)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+            docsDTO.setId(docId);
+            docsDTO.setName(docName);
+            docsDTO.setProductId(productId);
+            docEntityList.add(docsDTO);
+        }
+        if (CollectionUtils.isEmpty(docEntityList)) {
+            return Collections.EMPTY_LIST;
+        }
+        boolean saveOrUpdate = taskDocsNameService.saveOrUpdateBatch(docEntityList);
+        if (!saveOrUpdate) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        List<DocsDTO> docList = BeanMapperUtils.copyList(DocsDTO.class, docEntityList);
+        return docList;
     }
 
 
     /**
      * 递归处理子节点
+     *
      * @param type
      * @param dateList
      * @param errorList
@@ -1186,7 +1287,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
      * @param taskId
      * @param endDate
      */
-    private void sonNodeSchedule(Integer type,List<LocalDate> dateList, List<ProjectTaskPlanAutoVO.ScheduleVO> errorList, List<ProjectTaskPlanAutoVO.ScheduleDateVO> sucessList,
+    private void sonNodeSchedule(Integer type, List<LocalDate> dateList, List<ProjectTaskPlanAutoVO.ScheduleVO> errorList, List<ProjectTaskPlanAutoVO.ScheduleDateVO> sucessList,
                                  LinkedList<String> exitList, Map<String, ProjectPlanTaskDTO.AutoDateDTO> dtoMap, Map<String, PlanTaskNameDTO> taskIdMap,
                                  String taskId, LocalDate startDate, LocalDate endDate) {
         // 查询下一个节点
@@ -1196,7 +1297,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
 
         Set<String> taskIds = taskIdMap.keySet();
         childTaskIds.retainAll(taskIds);
-        if(CollectionUtils.isEmpty(childrenTaskList) || CollectionUtils.isEmpty(taskIds)){
+        if (CollectionUtils.isEmpty(childrenTaskList) || CollectionUtils.isEmpty(taskIds)) {
             return;
         }
         // 对子节点进行 更新
@@ -1211,25 +1312,26 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             // 更新任务工期
             LocalDate planEndTime;
             LocalDate planStartTime;
-            if(1 == type){
+            if (1 == type) {
                 ProjectTaskEntity taskEntity = new ProjectTaskEntity(planTask, startDate, endDate, projectChildTaskDTO, dateList);
                 projectTaskService.updateById(taskEntity);
                 planEndTime = taskEntity.getPlanEndTime();
                 planStartTime = taskEntity.getPlanStartTime();
                 sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(taskEntity.getId(), taskEntity.getPlanStartTime(), taskEntity.getPlanEndTime()));
-            }else {
+            } else {
                 ProjectPlanTaskEntity updateTaskEntity = new ProjectPlanTaskEntity(planTask, startDate, endDate, projectChildTaskDTO, dateList);
                 projectPlanTaskService.updateById(updateTaskEntity);
                 planEndTime = updateTaskEntity.getChangeEndTime();
                 planStartTime = updateTaskEntity.getChangeStartTime();
                 sucessList.add(new ProjectTaskPlanAutoVO.ScheduleDateVO(planTask.getId(), updateTaskEntity.getChangeStartTime(), updateTaskEntity.getChangeEndTime()));
             }
-            sonNodeSchedule(type,dateList,errorList,sucessList, exitList,dtoMap,taskIdMap,planTask.getId(), planStartTime,planEndTime);
+            sonNodeSchedule(type, dateList, errorList, sucessList, exitList, dtoMap, taskIdMap, planTask.getId(), planStartTime, planEndTime);
         }
     }
 
     /**
      * 数据问题性校验
+     *
      * @param type
      * @param errorList
      * @param exitList
@@ -1239,7 +1341,7 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
      */
     private static boolean checkData(Integer type, List<ProjectTaskPlanAutoVO.ScheduleVO> errorList, LinkedList<String> exitList, ProjectPlanTaskDTO.AutoDateDTO autoEntity, PlanTaskNameDTO planTaskNameDTO) {
         if (null == planTaskNameDTO || null == planTaskNameDTO.getTaskName()) {
-            errorList.add(new ProjectTaskPlanAutoVO.ScheduleVO(planTaskNameDTO.getTaskName(),"计划数据不存在或项目任务数据不不存在"));
+            errorList.add(new ProjectTaskPlanAutoVO.ScheduleVO(planTaskNameDTO.getTaskName(), "计划数据不存在或项目任务数据不不存在"));
             return true;
         }
         if (exitList.contains(autoEntity.getId())) {

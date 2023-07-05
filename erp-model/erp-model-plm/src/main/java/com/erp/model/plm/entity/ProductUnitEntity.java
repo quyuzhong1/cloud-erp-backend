@@ -22,6 +22,12 @@ public class ProductUnitEntity extends BaseEntity implements Serializable {
     @TableField(value = "name")
     private String name;
 
+    /**
+     * 是否占用 默认 false  占用为true 就不能删除
+     */
+    @TableField(value = "occupy_status")
+    private Boolean occupyStatus;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

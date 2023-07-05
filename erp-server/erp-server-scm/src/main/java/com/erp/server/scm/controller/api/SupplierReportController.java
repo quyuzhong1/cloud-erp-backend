@@ -5,6 +5,8 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.SupplierReportDTO;
+import com.erp.server.scm.service.SupplierReportService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,6 +24,9 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping(value = "/supplierReport")
 public class SupplierReportController extends BaseController {
 
+    @Autowired
+    private SupplierReportService supplierReportService;
+
     /**
      * 供应商报表分页列表
      * @param dto
@@ -29,7 +34,7 @@ public class SupplierReportController extends BaseController {
      */
     @PostMapping("paging")
     public ApiResult<PagingVO<SupplierReportDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<SupplierReportDTO.PagingSearchParamDTO> dto) {
-        return success(null);
+        return success(supplierReportService.supplierPaging(dto));
     }
 
     /**
@@ -40,7 +45,7 @@ public class SupplierReportController extends BaseController {
      */
     @PostMapping(value = "/exportExcel")
     public void exportExcel(@RequestBody SupplierReportDTO.ExportSearchParamDTO dto, HttpServletResponse response) {
-
+        supplierReportService.exportList(dto, response);
     }
 
 }

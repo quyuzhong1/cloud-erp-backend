@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @Classname GyyShipmentsSearchParamDTO
- * @Description TODO
+
  * @Date 2022-08-29 11:05
  * @Created by yl
  */

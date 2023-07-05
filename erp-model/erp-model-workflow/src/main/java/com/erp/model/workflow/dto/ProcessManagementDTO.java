@@ -5,6 +5,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.model.workflow.enums.ProcessStatusEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -97,6 +98,8 @@ public class ProcessManagementDTO {
          */
         private String endTime;
 
+        private Boolean isExistProcess;
+
         public StartResultDTO(String processDefinitionId, String processInstanceId, String taskId, LocalDateTime processStartTime, String businessId, String businessName) {
             this.processDefinitionId = processDefinitionId;
             this.processInstanceId = processInstanceId;
@@ -104,6 +107,13 @@ public class ProcessManagementDTO {
             this.startTime = processStartTime.toString();
             this.businessId = businessId;
             this.businessName = businessName;
+            this.isExistProcess = true;
+        }
+
+        public StartResultDTO(StartDTO dto) {
+            this.businessId = dto.getBusinessId();
+            this.businessName = dto.getBusinessName();
+            this.isExistProcess = false;
         }
     }
 
@@ -184,6 +194,11 @@ public class ProcessManagementDTO {
          */
         private String activityId;
 
+        /**
+         * 流程是否存在
+         */
+        private Boolean isExistProcess;
+
         public ApproveResultDTO(String processDefinitionId, String processInstanceId, String businessId,
                                 String businessName, String taskId, String activityName, String activityId) {
             this.processDefinitionId = processDefinitionId;
@@ -193,6 +208,12 @@ public class ProcessManagementDTO {
             this.taskId = taskId;
             this.activityName = activityName;
             this.activityId = activityId;
+            this.isExistProcess = true;
+        }
+
+        public ApproveResultDTO(ApproveDTO dto) {
+            this.businessId = dto.getBusinessId();
+            this.isExistProcess = false;
         }
     }
 
@@ -229,6 +250,10 @@ public class ProcessManagementDTO {
          * 当前业务名称
          */
         private String businessName;
+        /**
+         * 当前业务key
+         */
+        private String businessKey;
 
         /**
          * 当前节点id
@@ -239,15 +264,28 @@ public class ProcessManagementDTO {
          * 当前节点名称
          */
         private String activityName;
+        /**
+         * 流程是否存在
+         */
+        private Boolean isExistProcess;
 
-        public BackResultDTO(String processDefinitionId, String processInstanceId, String businessId, String businessName, String activityId, String activityName) {
-            this.processDefinitionId = processDefinitionId;
-            this.processInstanceId = processInstanceId;
-            this.businessId = businessId;
-            this.businessName = businessName;
+        public BackResultDTO( String activityId, String activityName,  ManagementTaskDTO managementTask) {
+            this.processDefinitionId = managementTask.getProcessDefinitionId();
+            this.processInstanceId = managementTask.getProcessInstanceId();
+            this.businessId = managementTask.getBusinessId();
+            this.businessName = managementTask.getBusinessName();
             this.activityId = activityId;
             this.activityName = activityName;
+            this.isExistProcess = true;
+            this.businessKey = managementTask.getBusinessKey();
         }
+
+        public BackResultDTO(BackDTO dto) {
+            this.businessId = dto.getBusinessId();
+            this.businessName = dto.getBusinessKey();
+            this.isExistProcess = false;
+        }
+
     }
 
 
@@ -280,6 +318,10 @@ public class ProcessManagementDTO {
          * 业务编码
          */
         private String businessCode;
+        /**
+         * 流程创建时间
+         */
+        private String managementCreateUserId;
 
         /**
          * 当前节点ID
@@ -454,6 +496,7 @@ public class ProcessManagementDTO {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class HistoryActivityDTO {
         /**
          * 业务类型key
@@ -468,6 +511,24 @@ public class ProcessManagementDTO {
         private String businessId;
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ApproveActivityDTO {
+        /**
+         * 业务类型key
+         */
+        @NotBlank(message = "业务类型不能为空")
+        private String businessKey;
+
+        /**
+         * 最新审核人id
+         */
+        @NotBlank(message = "最新审核人id不能为空")
+        private String curApproveId;
+
+    }
+
 
     @Data
     @NoArgsConstructor
@@ -578,11 +639,20 @@ public class ProcessManagementDTO {
          */
         private String businessName;
 
+        private Boolean isExistProcess;
+
         public RevokeResultDTO(String processDefinitionId, String processInstanceId, String businessId, String businessName) {
             this.processDefinitionId = processDefinitionId;
             this.processInstanceId = processInstanceId;
             this.businessId = businessId;
             this.businessName = businessName;
+            this.isExistProcess = true;
+        }
+
+        public RevokeResultDTO(RevokeDTO dto) {
+            this.businessId = dto.getBusinessId();
+            this.businessName = dto.getBusinessKey();
+            this.isExistProcess = false;
         }
     }
 
@@ -836,6 +906,56 @@ public class ProcessManagementDTO {
             this.taskId = taskId;
             this.taskName = taskName;
             this.taskDefinitionKey = taskDefinitionKey;
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CurApproveInfoDTO{
+
+        /**
+         * 流程实例ID
+         */
+        private String processInstanceId;
+
+        /**
+         * 流程业务ID
+         */
+        private String businessId;
+
+        /**
+         * 流程业务KEY
+         */
+        private String businessKey;
+
+        /**
+         * 流程定义ID
+         */
+        private String businessName;
+
+        /**
+         * 当前节点id
+         */
+        private String activityId;
+
+        /**
+         * 当前节点名称
+         */
+        private String activityName;
+
+        /**
+         * 当前审批人id
+         */
+        private String curApproveId;
+
+        /**
+         * 当前审批人名称
+         */
+        private String curApproveName;
+
+        public CurApproveInfoDTO(HistoryActivityDTO historyActivityDTO) {
+            this.businessId = historyActivityDTO.getBusinessId();
+            this.businessKey = historyActivityDTO.getBusinessKey();
         }
     }
 }

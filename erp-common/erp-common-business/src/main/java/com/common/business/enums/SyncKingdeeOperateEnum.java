@@ -3,7 +3,7 @@ package com.common.business.enums;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/4/11 17:13
  */
 public enum SyncKingdeeOperateEnum {
@@ -19,6 +19,7 @@ public enum SyncKingdeeOperateEnum {
     OPERATE_DELETE("operateDelete", "","删除"),
     OPERATE_SUB_EFFECTIVE("operateSubEffective", "SubEffective","取消明细禁用"),
     OPERATE_SUB_UN_EFFECTIVE("operateSubUnEffective", "SubUnEffective","明细禁用"),
+    OPERATE_UNDO_TO_PLAN_CONFIRM("operateUndoToPlanConfirm", "UndoToPlanConfirm","反执行至计划确认"),
 
     ;
     private String code;

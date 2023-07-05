@@ -1,8 +1,10 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -52,5 +54,15 @@ public interface CustomerFeign {
      **/
     @PostMapping("feign/customer/listCustomerByIds")
     List<CustomerInfoEntity> listCustomerByIds(@RequestBody List<String> ids);
+
+    /**
+     * 客户列表审核
+     * @Author Luo_WG
+     * @Date 2023/7/4 12:28
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("feign/customer/approve")
+    Boolean approve(@RequestBody BaseApproveParamDTO dto);
 
 }

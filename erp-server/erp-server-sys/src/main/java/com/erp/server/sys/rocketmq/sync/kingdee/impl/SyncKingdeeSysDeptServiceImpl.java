@@ -22,7 +22,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/4/4 12:25
  */
 @Slf4j
@@ -39,9 +39,7 @@ public class SyncKingdeeSysDeptServiceImpl implements SyncKingdeeSysDeptService 
      * 组装数据发送到金蝶
      */
     @Override
-    public void syncDataToKingdee(String id, String operate) {
-
-        SysDepartmentEntity entity = sysDepartmentService.getById(id);
+    public void syncDataToKingdee(SysDepartmentEntity entity, String operate) {
 
         if (ObjectUtils.isEmpty(entity)) {
             return;
@@ -72,31 +70,7 @@ public class SyncKingdeeSysDeptServiceImpl implements SyncKingdeeSysDeptService 
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SYS_DEPARTMENT_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return sysDepartmentService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"");
-            }
-            return Boolean.TRUE;
-        });
-    }
-
-    @Override
-    public void deleteDataToKingdee(SysDepartmentEntity entity, String operate) {
-        Map<String, Object> resultMap = new HashMap<>();
-
-        //业务id
-        resultMap.put("id",entity.getId());
-        //编码
-        resultMap.put("code",entity.getCode());
-        //金蝶id
-        resultMap.put("syncKingdeeId",entity.getSyncKingdeeId());
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
-
-        //异步推送mq
-        CompletableFuture.supplyAsync(() -> {
-            SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SYS_DEPARTMENT_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
-            if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                //mq发送成更新业务表状态及时间
-                return sysDepartmentService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"");
+                return sysDepartmentService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"",operate);
             }
             return Boolean.TRUE;
         });

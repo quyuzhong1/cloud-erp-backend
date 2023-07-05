@@ -84,7 +84,7 @@ public class PoInStockController extends BaseController {
             serviceClass = PoInstockService.class,
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated PoInstockDTO.AddDTO dto) {
-        String id = poInstockService.add(dto);
+        String id = poInstockService.add(dto,Boolean.FALSE);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
 
@@ -247,7 +247,7 @@ public class PoInStockController extends BaseController {
             serviceClass = PoInstockService.class,
             keyIdName = "ids")
     public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = poInstockService.disApprove(dto.getIds());
+        Boolean flag = poInstockService.disApprove(dto.getIds(),Boolean.TRUE);
         return flag == true ? success() : failure();
     }
 

@@ -39,7 +39,7 @@ public enum NoticeTypeEnum {
     private String mqTag;
 
 
-    public static NoticeTypeEnum of(String code) {
+    public static NoticeTypeEnum getByCode(String code) {
         return Arrays.stream(NoticeTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 

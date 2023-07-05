@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -15,7 +16,7 @@ import java.util.List;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/4/10 11:11
  */
 @Data
@@ -40,6 +41,11 @@ public class PoInstockDTO implements Serializable {
          * 采购订单明细id
          */
         private String purchaseOrderDetailId;
+
+        /**
+         * 采购单id
+         */
+        private String purchaseOrderId;
 
         /**
          * 采购单号
@@ -145,6 +151,11 @@ public class PoInstockDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 委外订单类型(child子级，parent父级)
+         */
+        private String subcontractType;
 
         /**
          * 仓位
@@ -264,6 +275,11 @@ public class PoInstockDTO implements Serializable {
          * 入库部门id
          */
         private String stockInDeptId;
+
+        /**
+         * 入库日期
+         */
+        private LocalDate stockInDate;
     }
 
     @Data
@@ -318,6 +334,11 @@ public class PoInstockDTO implements Serializable {
         private String supplierId;
 
         /**
+         * 供应商
+         */
+        private String supplierName;
+
+        /**
          * 供应商联系人id
          */
         private String supplierContactId;
@@ -358,14 +379,44 @@ public class PoInstockDTO implements Serializable {
         private String purchaseUserId;
 
         /**
+         * 采购员
+         */
+        private String purchaseUserName;
+
+        /**
          * 收料组织id
          */
         private String receiveOrgId;
 
         /**
+         * 收料组织
+         */
+        private String receiveOrgName;
+
+        /**
          * 采购部门id
          */
         private String purchaseDeptId;
+
+        /**
+         * 采购部门
+         */
+        private String purchaseDeptName;
+
+        /**
+         * 仓管员
+         */
+        private String stockInUserName;
+
+        /**
+         * 交货仓库
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 入库部门
+         */
+        private String stockInDeptName;
 
         /**
          * 新品首批（false否,true是）
@@ -381,6 +432,36 @@ public class PoInstockDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
+
+        /**
+         * 采购单号
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * 创建人
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
+         * 审核人
+         */
+        private String approveUserName;
+
+        /**
+         * 采购组织（采购订单组织）
+         */
+        private String purchaseOrgName;
 
         /**
          * 明细
@@ -619,5 +700,49 @@ public class PoInstockDTO implements Serializable {
          * 采购订单明细id
          */
         private String purchaseOrderDetailId;
+    }
+
+    /**
+     * 供应商、单据日期 获取入库批次和入库数量 查询条件
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SupplierInstockParamDTO {
+
+        /**
+         * 供应商id集合
+         */
+        private List<String> supplierIds;
+
+        /**
+         * 单据日期范围
+         */
+        private List<LocalDate> dateList;
+
+    }
+
+    /**
+     * 供应商 入库批次和入库数量
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SupplierInstockInfoDTO {
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 入库批次
+         */
+        private Integer instockCount;
+
+        /**
+         * 已入库量
+         */
+        private Integer instockQty;
+
     }
 }

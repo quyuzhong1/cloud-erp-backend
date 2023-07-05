@@ -21,7 +21,6 @@
             create_time,
             update_time,
             type,
-            delete_state,
             spu_no,
             sell_spot,
             function_desc,
@@ -106,9 +105,6 @@
             </if>
             <if test="type != null">
                 "type" = #{type,jdbcType=SMALLINT},
-            </if>
-            <if test="deleteState != null">
-                delete_state = #{deleteState,jdbcType=SMALLINT},
             </if>
             <if test="spuNo != null">
                 spu_no = #{spuNo,jdbcType=VARCHAR},
@@ -307,13 +303,6 @@
                 <foreach collection="list" index="index" item="item">
                     <if test="item.type != null">
                         when id = #{item.id,jdbcType=VARCHAR} then #{item.type,jdbcType=SMALLINT}
-                    </if>
-                </foreach>
-            </trim>
-            <trim prefix="delete_state = case" suffix="end,">
-                <foreach collection="list" index="index" item="item">
-                    <if test="item.deleteState != null">
-                        when id = #{item.id,jdbcType=VARCHAR} then #{item.deleteState,jdbcType=SMALLINT}
                     </if>
                 </foreach>
             </trim>

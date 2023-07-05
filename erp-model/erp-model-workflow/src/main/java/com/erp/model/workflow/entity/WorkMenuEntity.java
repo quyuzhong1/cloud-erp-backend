@@ -47,6 +47,12 @@ public class WorkMenuEntity extends BaseEntity<WorkMenuEntity> {
     @TableField("detail_url")
     private String detailUrl;
 
+    /**
+     * 工作流feign调用的类名，默认是class名称首字母小写
+     */
+    @TableField("feign_bean_name")
+    private String feignBeanName;
+
 
     public static final String SYS_CLASSIFY = "sys_classify";
 
@@ -59,6 +65,8 @@ public class WorkMenuEntity extends BaseEntity<WorkMenuEntity> {
     public static final String MODULE_CODE = "module_code";
 
     public static final String DETAIL_URL = "detail_url";
+
+    public static final String FEIGN_BEAN_NAME = "feign_bean_name";
 
     @Override
     public Serializable pkVal() {

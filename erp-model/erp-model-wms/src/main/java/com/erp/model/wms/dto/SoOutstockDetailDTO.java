@@ -17,7 +17,7 @@ import java.util.List;
  *
  * @author Lambda
  * @Classname SoOutstockDTO
- * @Description TODO
+
  * @Date 2023-05-11 10:48
  * @Created by yl
  */
@@ -430,6 +430,11 @@ public class SoOutstockDetailDTO implements Serializable {
          * 实发数量
          */
         private Integer actualQty;
+
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
 
 
         /**

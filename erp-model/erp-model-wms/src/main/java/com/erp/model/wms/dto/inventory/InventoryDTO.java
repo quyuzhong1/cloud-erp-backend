@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * @Classname: InventoryDTO
- * @Description: TODO
+
  * @CreateTime: 2023-05-08  18:42
  * @Author: zhangchunlin
  */
@@ -819,6 +819,11 @@ public class InventoryDTO implements Serializable {
         private Integer machineInstockQty;
 
         /**
+         * 退料入库数量（入库）
+         */
+        private Integer returnMaterielQty;
+
+        /**
          * 出库汇总数量（出库）
          */
         private Integer totalOutstockQty;
@@ -854,12 +859,17 @@ public class InventoryDTO implements Serializable {
          */
         private Integer machineOutstockQty;
 
+        /**
+         * 领料出库
+         */
+        private Integer receiveMaterielQty;
+
         public Integer getTotalInstockQty() {
-            return this.totalInstockQty = this.purchaseInstockQty + this.otherInstockQty + this.transferInstockQty + this.inventoryProfitInstockQty + this.saleReturnQty + this.machineInstockQty;
+            return this.totalInstockQty = this.purchaseInstockQty + this.otherInstockQty + this.transferInstockQty + this.inventoryProfitInstockQty + this.saleReturnQty + this.machineInstockQty + this.returnMaterielQty;
         }
 
         public Integer getTotalOutstockQty() {
-            return this.totalOutstockQty = Math.abs(this.purchaseReturnQty + this.saleOutstockQty + this.otherOutstockQty + this.inventoryLossOutstockQty + this.transferOutstockQty + this.machineOutstockQty);
+            return this.totalOutstockQty = Math.abs(this.purchaseReturnQty + this.saleOutstockQty + this.otherOutstockQty + this.inventoryLossOutstockQty + this.transferOutstockQty + this.machineOutstockQty + this.receiveMaterielQty);
         }
 
         public Integer getPurchaseInstockQty() {
@@ -910,6 +920,13 @@ public class InventoryDTO implements Serializable {
             return Math.abs(machineOutstockQty);
         }
 
+        public Integer getReturnMaterielQty() {
+            return Math.abs(returnMaterielQty);
+        }
+
+        public Integer getReceiveMaterielQty() {
+            return Math.abs(receiveMaterielQty);
+        }
     }
 
 }

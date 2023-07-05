@@ -54,6 +54,12 @@ public class SoDeliveryNoticeDetailEntity extends BaseEntity<SoDeliveryNoticeDet
     private Boolean isClose;
 
     /**
+     * 是否关闭
+     */
+    @TableField("is_change_close")
+    private Boolean isChangeClose;
+
+    /**
      * 备注
      */
     @TableField("remark")
@@ -70,6 +76,12 @@ public class SoDeliveryNoticeDetailEntity extends BaseEntity<SoDeliveryNoticeDet
      */
     @TableField(exist = false)
     private String approveStatus;
+
+    /**
+     * 作废状态
+     */
+    @TableField(exist = false)
+    private Boolean invalidStatus;
 
     public static final String MAIN_ID = "main_id";
 

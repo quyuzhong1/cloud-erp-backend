@@ -9,7 +9,7 @@ import java.io.Serializable;
 
 /**
  * @Classname UpdateUserNoticeStateDTO
- * @Description TODO
+
  * @Date 2022-11-14 10:57
  * @Created by yl
  */

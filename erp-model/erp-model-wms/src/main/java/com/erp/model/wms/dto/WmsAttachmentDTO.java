@@ -9,7 +9,7 @@ import java.io.Serializable;
 /**
  * @author Lambda
  * @Classname WmsAttachmentDTO
- * @Description TODO
+
  * @Date 2023-04-19 9:57
  * @Created by yl
  */

@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * @Classname SeriesVO
- * @Description TODO
+
  * @Date 2022-12-15 14:50
  * @Created by yl
  */

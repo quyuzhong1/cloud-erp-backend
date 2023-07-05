@@ -278,7 +278,7 @@ public class SoChangeController extends BaseController {
      * 数据
      */
     @PostMapping("/export")
-    public ApiResult exportWarehouse(@RequestBody @Valid SoChangeDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult exportWarehouse(@RequestBody @Valid SoChangeDTO.PagingParamDTO dto, HttpServletResponse response) {
         Boolean result = soChangeService.exportExcel(dto, response);
         return result ? success() : failure();
     }

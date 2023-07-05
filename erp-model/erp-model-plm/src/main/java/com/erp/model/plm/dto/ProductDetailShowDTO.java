@@ -48,6 +48,11 @@ public class ProductDetailShowDTO implements Serializable {
     private String name;
 
     /**
+     * 产品名称(英文)
+     */
+    private String nameEN;
+
+    /**
      * 首批到货量
      */
     private String actualArrivalQty;
@@ -196,6 +201,11 @@ public class ProductDetailShowDTO implements Serializable {
     private String mainSupplier;
 
     /**
+     * 一级供应商名称
+     */
+    private String mainSupplierName;
+
+    /**
      * 年度销量
      * product_sale
      */
@@ -287,4 +297,9 @@ public class ProductDetailShowDTO implements Serializable {
      * 版本
      */
     private Integer version;
+
+    /**
+     * 是否是组合品 TRUE 是  FAlse 否
+     */
+    private Boolean isCombination;
 }

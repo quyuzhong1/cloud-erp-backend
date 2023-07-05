@@ -18,7 +18,7 @@ import java.util.List;
 
 /**
  * @Classname SysDepartmentUserMapper
- * @Description TODO
+
  * @Date 2022-07-13 18:54
  * @Created by yl
  */
@@ -47,4 +47,6 @@ public interface SysDepartmentUserMapper  extends BaseMapper<SysDepartmentUserEn
      * @return java.util.List<com.common.business.dto.FindUserDTO>
      */
     List<FindUserDTO> listDeptUserByDeptId(@Param("deptId") String deptId);
+
+    List<SysDepartmentUserNumberDTO> listDeptUserByUserIdList(@Param("userIdList")List<String> userIdList);
 }

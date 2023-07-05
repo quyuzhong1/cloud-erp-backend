@@ -42,7 +42,13 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField("sku_no")
     private String skuNo;
 
+
     /**
+     * 平台sku no
+     */
+    @TableField("platform_sku_no")
+    private String platformSkuNo;
+ /**
      * 销售数量
      */
     @TableField("qty")
@@ -119,7 +125,29 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField(exist = false)
     private String approveStatus;
 
+    /**
+     * 采购单价
+     */
+    @TableField("purchase_price")
+    private BigDecimal purchasePrice;
 
+    /**
+     * 销售总成本
+     */
+    @TableField("sale_cost")
+    private BigDecimal saleCost;
+
+    /**
+     * 销售毛利
+     */
+    @TableField("sale_profit")
+    private BigDecimal saleProfit;
+
+    /**
+     * 销售毛利率
+     */
+    @TableField("sale_profit_rate")
+    private BigDecimal saleProfitRate;
 
 
     public static final String MAIN_ID = "main_id";

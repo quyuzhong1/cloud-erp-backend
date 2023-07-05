@@ -1,12 +1,15 @@
 package com.erp.model.scm.dto;
 
 import com.common.business.dto.base.SortDTO;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 供应商报表请求响应实体
@@ -27,7 +30,7 @@ public class SupplierReportDTO implements Serializable {
         /**
          * 日期范围
          */
-        private List<String> dateList;
+        private List<LocalDate> dateList;
 
         /**
          * 供应商名称
@@ -66,7 +69,18 @@ public class SupplierReportDTO implements Serializable {
         /**
          * 供应商禁用状态
          */
-        private String supplierDisabled;
+        private Boolean supplierDisabled;
+
+        /**
+         * 供应商禁用状态描述
+         */
+        private String supplierDisabledName;
+
+        /**
+         * 采购订单id集合，用逗号隔开
+         */
+        @JsonIgnore
+        private String purchaseOrderIds;
 
         /**
          * 采购订单量
@@ -128,6 +142,9 @@ public class SupplierReportDTO implements Serializable {
          */
         private BigDecimal passRateQty;
 
+        public String getSupplierDisabledName() {
+            return Objects.equals(supplierDisabled, Boolean.TRUE) ? "停用" : "启用";
+        }
     }
 
     /**
@@ -141,6 +158,7 @@ public class SupplierReportDTO implements Serializable {
          * 勾选的供应商id集合
          */
         private List<String> ids;
+
 
     }
 

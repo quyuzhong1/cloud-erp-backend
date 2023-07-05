@@ -1,46 +1,48 @@
 package com.erp.server.dmp.pull.service.dmp;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONArray;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.core.security.HmacSHA256Utils;
+import com.common.core.utils.HttpCommonUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
+import com.erp.model.dmp.constant.UrlContant;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.kingdee.KingdeeEccShopEntity;
+import com.erp.model.dmp.vo.ParamHeaderVO;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.pull.service.gyy.GyyDeliveryDetailServiceImpl;
 import com.erp.server.dmp.pull.service.gyy.GyyOrderInfoServiceImpl;
 import com.erp.server.dmp.pull.service.kingdee.KingdeeEccShopServiceImpl;
-import com.erp.server.dmp.pull.service.mabang.MabangHistoryOrderInfoServiceImpl;
-import com.erp.server.dmp.pull.service.mabang.MabangOrderInfoServiceImpl;
-import com.erp.server.dmp.pull.service.mabang.MabangRefundServiceImpl;
-import com.erp.server.dmp.pull.service.mabang.MabangReturnOrderInfoServiceImpl;
+import com.erp.server.dmp.pull.service.mabang.*;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.push.service.kingdee.impl.KingdeeCommonServiceImpl;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
+import com.erp.server.dmp.utils.MabangApiUtils;
 import com.kingdee.bos.webapi.entity.SaveParam;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.IntStream;
+import java.util.*;
 
 /**
- * TODO
  *
  * @Author Cloud
  * @Date 2023/2/6 12:04
@@ -48,9 +50,13 @@ import java.util.stream.IntStream;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {ErpServerDmpApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @Profile("dev")
+@Slf4j
 public class MabangPullServiceTest {
     @Resource
     private KingdeeCommonService kingdeeCommonService;
+
+    @Autowired
+    private MabangDeliveryServiceImpl deliveryService;
 
     @Test
     public void testtt() {
@@ -182,6 +188,75 @@ public class MabangPullServiceTest {
         requestDTO.setJobTaskDTO(jobTaskDTO);
         try {
             orderService.pullDataSave(requestDTO);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 查询仓库列表
+     * sys-get-warehouse-list
+     */
+    public static void main(String[] args) {
+        HashMap<String, Object> params = new HashMap<>(6);
+        Map<String, Object> paramMap = new HashMap(16);
+        paramMap.put("api", "sys-get-warehouse-list");
+        paramMap.put("appkey", "200780");
+        paramMap.put("version", 1);
+        params.put("type", 9);
+        paramMap.put("timestamp", new Long(System.currentTimeMillis() / 1000).toString());
+        paramMap.put("data",params);
+        String paramStr = JSONUtil.toJsonStr(paramMap);
+        String sign = HmacSHA256Utils.hmacSHA256(paramStr, "13c324fa18feaaeb0ebcc8a7746ebfca");
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put("Content-Type", "application/json");
+        headerMap.put("Authorization", sign);
+        com.alibaba.fastjson.JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramStr, null, headerMap, RequestMethod.POST);
+        if (Objects.equals(responseMap.getInteger("code"), 200)) {
+//            log.error("MB获取仓库列表失败，失败原因：{}", responseMap.getString("msg"));
+            JSONArray jsonArray = responseMap.getJSONObject("data").getJSONArray("data");
+            Long id = 1669528950398783506l;
+            for (int i = 0; i < jsonArray.size(); i++) {
+                com.alibaba.fastjson.JSONObject jsonObject = jsonArray.getJSONObject(i);
+                String type = jsonObject.getString("type");
+                String isDefault = jsonObject.getString("isDefault");
+                isDefault = "1".equals(isDefault) ? "true" : "false";
+                if(StrUtil.isBlank(type)){
+                    type = "";
+                }else if("1".equals(type)){
+                    type = "PRIVATE";
+                }else if("2".equals(type)){
+                    type = "THIRD_PARTY";
+                }else if("3".equals(type)){
+                    type = "FBA";
+                }
+                log.info("INSERT INTO \"public\".\"dmp_warehouse_mapping\" (\"id\" , \"warehouse_code\", \"warehouse_name\", \"type\", \"default\", \"source_id\", \"platform_sign\",\"status\") VALUES(\'{}\',\'{}\',\'{}\',\'{}\',\'{}\',\'{}\',\'{}\',\'{}\');",(id+i)+"", jsonObject.getString("finance_code"), jsonObject.getString("name"),
+                        type, isDefault,jsonObject.getString("id"),"马帮",jsonObject.getString("status"));
+            }
+        } else {
+            log.info("MB获取仓库列表成功，返回结果：{}", responseMap.getString("data"));
+        }
+
+    }
+
+    @Test
+    public void pullFbaDeliveryTest(){
+        JobTaskDTO jobTaskDTO = new JobTaskDTO();
+        PlatformApiEnum apiEnum = PlatformApiEnum.MABANG_DELIVERY;
+        jobTaskDTO.setApiCode(apiEnum.getTaskName());
+        jobTaskDTO.setApiId(5);
+        jobTaskDTO.setApiName("获取FBA发货单列表");
+        jobTaskDTO.setId(30L);
+        jobTaskDTO.setIntervalTime(1800);
+        jobTaskDTO.setLastTime(LocalDateTime.parse("2023-06-29 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setNextTime(LocalDateTime.parse("2023-06-29 23:59:59", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        jobTaskDTO.setPlatformId(4);
+        jobTaskDTO.setState(1);
+        RequestDTO requestDTO = new RequestDTO();
+        requestDTO.setPlatformApiEnum(apiEnum);
+        requestDTO.setJobTaskDTO(jobTaskDTO);
+        try {
+            deliveryService.pullDataSave(requestDTO);
         }catch (Exception e) {
             e.printStackTrace();
         }

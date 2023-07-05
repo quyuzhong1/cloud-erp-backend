@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * @author Lambda
  * @Classname CfgNodeMemberDTO
- * @Description TODO
+
  * @Date 2023-04-26 17:51
  * @Created by yl
  */

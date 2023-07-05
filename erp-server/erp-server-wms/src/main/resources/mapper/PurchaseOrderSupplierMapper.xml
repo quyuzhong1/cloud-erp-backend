@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.PurchaseOrderSupplierMapper">
+
+    <sql id="Base_Column_List">
+        <!--@mbg.generated-->
+        id, create_user_id, create_user_name, create_time, update_user_id, update_user_name,
+        update_time, version, is_deleted, purchase_order_id, supplier_id, supplier_name,
+        pay_method_id, pay_currency, supplier_contact_id, contact_name, contact_tel_number
+    </sql>
+
+    <select id="listByIds" resultType="com.erp.model.scm.entity.PurchaseOrderSupplierEntity">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM purchase_order_supplier
+        WHERE id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <update id="updateBatchSelective" parameterType="java.util.List">
+        <!--@mbg.generated-->
+        update purchase_order_supplier
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="create_user_id = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.createUserId != null">
+                        when id = #{item.id,jdbcType=CHAR} then #{item.createUserId,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="create_user_name = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.createUserName != null">
+                        when id = #{item.id,jdbcType=CHAR} then #{item.createUserName,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="create_time = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.createTime != null">
+                        when id = #{item.id,jdbcType=CHAR} then #{item.createTime,jdbcType=TIMESTAMP}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="update_user_id = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.updateUserId != null">
+                        when id = #{item.id,jdbcType=CHAR} then #{item.updateUserId,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="update_user_name = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.updateUserName != null">
+                        when id = #{item.id,jdbcType=CHAR} then #{item.updateUserName,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="update_time = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.updateTime != null">
+                        when id = #{item.id,jdbcType=CHAR} then #{item.updateTime,jdbcType=TIMESTAMP}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="version = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.version != null">
+                        when id = #{item.id,jdbcType=CHAR} then #{item.version,jdbcType=SMALLINT}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="is_deleted = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.isDeleted != null">
+                        when id = #{item.id,jdbcType=CHAR} then #{item.isDeleted,jdbcType=BOOLEAN}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="purchase_order_id = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.purchaseOrderId != null">
+                        when id = #{item.id,jdbcType=CHAR} then #{item.purchaseOrderId,jdbcType=CHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="supplier_id = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.supplierId != null">
+                        when id = #{item.id,jdbcType=CHAR} then #{item.supplierId,jdbcType=CHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="supplier_name = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.supplierName != null">
+                        when id = #{item.id,jdbcType=CHAR} then #{item.supplierName,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="pay_method_id = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.payMethodId != null">
+                        when id = #{item.id,jdbcType=CHAR} then #{item.payMethodId,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="pay_currency = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.payCurrency != null">
+                        when id = #{item.id,jdbcType=CHAR} then #{item.payCurrency,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="supplier_contact_id = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.supplierContactId != null">
+                        when id = #{item.id,jdbcType=CHAR} then #{item.supplierContactId,jdbcType=CHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="contact_name = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.contactName != null">
+                        when id = #{item.id,jdbcType=CHAR} then #{item.contactName,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="contact_tel_number = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.contactTelNumber != null">
+                        when id = #{item.id,jdbcType=CHAR} then #{item.contactTelNumber,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+        </trim>
+        where id in
+        <foreach close=")" collection="list" item="item" open="(" separator=", ">
+            #{item.id,jdbcType=CHAR}
+        </foreach>
+    </update>
+</mapper>

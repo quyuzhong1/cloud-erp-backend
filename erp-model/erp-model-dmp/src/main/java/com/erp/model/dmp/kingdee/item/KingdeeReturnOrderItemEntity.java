@@ -35,6 +35,10 @@ public class KingdeeReturnOrderItemEntity {
     private String fPrice;
     @Alias("FStockId")
     private String fStockId;
+    @Alias("FStockId.FNumber")
+    private String fStockNumber;
+    @Alias("FStockId.FName")
+    private String fStockName;
     @Alias("FStocklocId")
     private String fStockLocId;
     @Alias("FStockstatusId")
@@ -59,10 +63,15 @@ public class KingdeeReturnOrderItemEntity {
     private String fProjectNo;
     @Alias("F_ulz_KHSKU")
     private String f_ulz_KHSKU;
-
     /**
      * 价税合计
      */
     @Alias("FAllAmount")
     private BigDecimal fAllAmount;
+    @Alias("FReturnType")
+    private String fReturnType;
+    @Alias("FSOEntryId")
+    private String fSOEntryId;
+
 }
+

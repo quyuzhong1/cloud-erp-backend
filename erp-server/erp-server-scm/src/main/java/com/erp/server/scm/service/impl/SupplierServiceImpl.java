@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -21,6 +22,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.scm.dto.SupplierAccountDTO;
 import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.dto.SupplierCredentialDTO;
@@ -32,18 +34,23 @@ import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.enums.SysDictBasicEnum;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.kingdee.SyncKingdeeSupplierService;
 import com.erp.server.scm.listener.SupplierExcelListener;
 import com.erp.server.scm.mapper.SupplierMapper;
 import com.erp.server.scm.service.*;
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -56,6 +63,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -102,6 +110,9 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Resource
     private SyncKingdeeSupplierService syncKingdeeSupplierService;
 
+    @Autowired
+    private SysDictFeign sysDictFeign;
+
     /**
      * 保存供应商信息
      *
@@ -122,6 +133,14 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<SupplierCredentialDTO.AddDTO> credentialList = dto.getCredentialList();
         //检查资质日期
         supplierCredentialService.checkDate(credentialList);
+        //验证付款条件是否正确
+        if(StrUtils.isNotEmpty(dto.getPaymentCondition())) {
+            List<DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+            List<String> paymentConditionCodes = paymentConditionList.stream().map(DictBasicDTO.ViewDTO::getValue).distinct().collect(Collectors.toList());
+            if(!paymentConditionCodes.contains(dto.getPaymentCondition())) {
+                throw new ServiceException("付款条件错误");
+            }
+        }
         //供应商id
         String supplierId = IdWorker.getIdStr();
         SupplierEntity addEntity = new SupplierEntity();
@@ -209,6 +228,14 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         BeanMapper.copy(supplier, result);
         result.setApproveStatus(supplier.getApproveStatus().getStatus());
         result.setPhase(supplier.getPhase().getPhase());
+        //付款条件
+        List<DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+        if(StrUtils.isNotEmpty(result.getPaymentCondition())) {
+            DictBasicDTO.ViewDTO dict =  paymentConditionList.stream().filter(r->Objects.equals(r.getValue(), result.getPaymentCondition())).findFirst().orElse(null);
+            if(Objects.nonNull(dict)) {
+                result.setPaymentConditionName(dict.getName());
+            }
+        }
         //根据供应商id 查询 联系人信息
         List<SupplierContactDTO.UpdateDTO> contactList = supplierContactService.listBySupplierId(supplierId);
         result.setContactList(contactList);
@@ -240,6 +267,16 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (Objects.isNull(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
+
+        //验证付款条件是否正确
+        if(StrUtils.isNotEmpty(dto.getPaymentCondition())) {
+            List<DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+            List<String> paymentConditionCodes = paymentConditionList.stream().map(DictBasicDTO.ViewDTO::getValue).distinct().collect(Collectors.toList());
+            if(!paymentConditionCodes.contains(dto.getPaymentCondition())) {
+                throw new ServiceException("付款条件错误");
+            }
+        }
+
         //旧的
         SupplierEntity old = new SupplierEntity();
         BeanMapper.copy(supplier, old);
@@ -953,7 +990,55 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     public List<BaseIdDTO> listSupplierByCategoryType(String categoryType) {
         String supplierCategory = DictBasicEnum.SUPPLIER_CATEGORY.getType();
-        return baseMapper.listSupplierByCategoryType(supplierCategory,categoryType);
+        List<SupplierDTO.SupplierSimpleDTO> dataList = baseMapper.listSupplierByCategoryType(supplierCategory,categoryType, null);
+        if(CollUtil.isNotEmpty(dataList)) {
+            return dataList.stream().map(data->{
+                BaseIdDTO baseIdDTO = new BaseIdDTO();
+                baseIdDTO.setId(data.getId());
+                baseIdDTO.setName(data.getName());
+                return baseIdDTO;
+            }).collect(Collectors.toList());
+        }
+        return null;
+    }
+
+    @Override
+    public Map<String, SupplierDTO.SupplierSimpleDTO> getSupplierSimpleInfo(List<String> ids) {
+        if(CollUtil.isEmpty(ids)) {
+            return Maps.newHashMap();
+        }
+        ids = ids.stream().distinct().collect(Collectors.toList());
+        List<SupplierEntity> supplierList = lambdaQuery().in(SupplierEntity::getId, ids).list();
+        if(CollUtil.isEmpty(supplierList)) {
+            return Maps.newHashMap();
+        }
+        Map<String,SupplierEntity> supplierEntityMap = supplierList.stream().collect(Collectors.toMap(SupplierEntity::getId, Function.identity()));
+
+        Map<String,SupplierDTO.SupplierSimpleDTO> supplierMap = Maps.newHashMapWithExpectedSize(supplierEntityMap.size());
+        supplierEntityMap.forEach((id, sup)->{
+            SupplierDTO.SupplierSimpleDTO supplierSimpleDTO = new SupplierDTO.SupplierSimpleDTO();
+            supplierSimpleDTO.setId(id);
+            supplierSimpleDTO.setCode(sup.getCode());
+            supplierSimpleDTO.setName(sup.getName());
+            supplierSimpleDTO.setDisabled(sup.getDisabled());
+            supplierMap.put(id, supplierSimpleDTO);
+        });
+        return supplierMap;
+    }
+
+    @Override
+    public List<SupplierDTO.SupplierSimpleDTO> listApproveSupplierByCategoryType(String categoryType) {
+        String supplierCategory = DictBasicEnum.SUPPLIER_CATEGORY.getType();
+        List<SupplierDTO.SupplierSimpleDTO> dataList = baseMapper.listSupplierByCategoryType(supplierCategory,categoryType, null);
+        if(CollUtil.isNotEmpty(dataList)) {
+            // 未审核通过的设置为禁用
+            dataList.stream().forEach(data->{
+                if(!Objects.equals(data.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
+                    data.setDisabled(Boolean.TRUE);
+                }
+            });
+        }
+        return dataList;
     }
 
     /**

@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname InventoryDTO
- * @Description TODO
+
  * @Date 2023-05-16 16:59
  * @Created by yl
  */

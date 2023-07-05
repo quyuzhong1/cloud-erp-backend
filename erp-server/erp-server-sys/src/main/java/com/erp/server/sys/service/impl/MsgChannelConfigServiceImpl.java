@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  * @Classname: MsgChannelConfigServiceImpl
- * @Description: TODO
+
  * @CreateTime: 2023-04-21  15:16
  * @Author: zhangchunlin
  */

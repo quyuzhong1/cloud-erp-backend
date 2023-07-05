@@ -97,6 +97,16 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
     Boolean approve(BaseApproveParamDTO dto);
 
     /**
+     * @description: 结束审核
+     * @author Will
+     * @date: 2023/7/3 16:18
+     * @param dto
+     * @param list
+     * @return Boolean
+     */
+    Boolean approveEnd (BaseApproveParamDTO dto,List<PurchasePriceEntity> list);
+
+    /**
      * 取消流程
      * @author yl
      * @date 2023-03-27 14:04
@@ -138,4 +148,13 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * 更新金蝶同步状态
      */
     Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
+
+    /**
+     * 修改状态
+     * @Author Luo_WG
+     * @Date 2023/6/30 19:47
+     * @param ids
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDTO.SupplierSkuPrice>
+     **/
+    List<PurchasePriceDTO.SupplierSkuPrice> listSupplierSkuPrice(List<String> ids);
 }

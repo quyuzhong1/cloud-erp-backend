@@ -3,10 +3,7 @@ package com.erp.model.scm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Digits;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -35,6 +32,11 @@ public class SubcontractChangeDetailDTO implements Serializable {
         * 主键id
         */
         private String  id;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
 
         /**
         * 变体信息
@@ -98,7 +100,86 @@ public class SubcontractChangeDetailDTO implements Serializable {
         /**
          * 明细子集
          */
-        private List<ViewDTO> childList;
+        private List<ChildDTO> childList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ChildDTO extends CommonDTO{
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 采购金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 操作名称
+         */
+        private String optTypeName;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 原采购数量
+         */
+        private Integer oldQty;
+
+        /**
+         * 原领料数量(发料数量)
+         */
+        private Integer oldDeliveryQty;
+
+        /**
+         * 原含税单价
+         */
+        private BigDecimal oldPrice;
+
+        /**
+         * 原采购金额
+         */
+        private BigDecimal oldAmount;
+
+        /**
+         * bom版本
+         */
+        private Integer bomVersion;
+
+        /**
+         * bom用量
+         */
+        private Integer quantity;
     }
 
     /**
@@ -110,6 +191,7 @@ public class SubcontractChangeDetailDTO implements Serializable {
         /**
          * 明细子集
          */
+        @NotEmpty(message = "明细子级SKU不能为空")
         private List<AddDTO> childList;
     }
 
@@ -128,6 +210,7 @@ public class SubcontractChangeDetailDTO implements Serializable {
         /**
          * 明细子集
          */
+        @NotEmpty(message = "明细子级SKU不能为空")
         private List<UpdateDTO> childList;
     }
 
@@ -208,6 +291,10 @@ public class SubcontractChangeDetailDTO implements Serializable {
         @NotNull(message = "是否自动生成采购订单不能为空")
         private Boolean isGeneratePo;
 
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
     }
 
 

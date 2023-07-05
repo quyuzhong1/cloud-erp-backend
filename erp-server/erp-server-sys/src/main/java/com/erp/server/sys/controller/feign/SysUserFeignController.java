@@ -24,7 +24,7 @@ import java.util.Objects;
 
 /**
  * @Classname SysAdminUserFeignController
- * @Description TODO
+
  * @Date 2022-07-08 17:06
  * @Created by yl
  */
@@ -58,13 +58,14 @@ public class SysUserFeignController extends BaseController {
 
 
 
+
     @PostMapping("/accountLogin")
     public ApiResult<SysUserDTO> accountLogin(@RequestBody AccountLoginDTO dto) {
         SysUserDTO info = sysUserInfoService.accountLogin(dto);
         if (Objects.isNull(info)) {
             return failure(ApiError.ERROR_9012, null);
         }
-        if (info.getUserState() == UserStateConstants.USER_DISABLE) {
+        if (UserStateConstants.USER_DISABLE.equals(info.getUserState())) {
             return failure(ApiError.ERROR_9016, null);
         }
         return success(info);
@@ -145,6 +146,7 @@ public class SysUserFeignController extends BaseController {
 
     /**
      * 查询左菜单栏
+     *
      * @param roleIds
      * @return
      */
@@ -195,6 +197,16 @@ public class SysUserFeignController extends BaseController {
     }
 
     /**
+     * 根据用户code集合获取用户list
+     * return
+     */
+    @PostMapping("/listUserByCodeList")
+    public List<FindUserDTO> listUserByCodeList(@RequestBody List<String> codeList) {
+        List<FindUserDTO> list = sysUserInfoService.listUserByKingdeeCode(codeList);
+        return list;
+    }
+
+    /**
      * 根据用户id获取用户
      *
      * @return
@@ -229,9 +241,10 @@ public class SysUserFeignController extends BaseController {
 
     /**
      * 获取所有用户所在的部门
+     *
+     * @return java.util.List<com.erp.model.sys.dto.SysUserDeptDTO>
      * @Author Luo_WG
      * @Date 2022/12/13 17:12
-     * @return java.util.List<com.erp.model.sys.dto.SysUserDeptDTO>
      **/
     @PostMapping("/getUserDeptList")
     public List<SysUserDeptDTO> getUserDeptList() {
@@ -239,11 +252,11 @@ public class SysUserFeignController extends BaseController {
     }
 
     /**
+     * @param deptId
+     * @return SysDepartmentDTO
      * @description: 根据部门id查询部门
      * @author Will
      * @date: 2022/12/15 16:22
-     * @param deptId
-     * @return SysDepartmentDTO
      */
     @PostMapping("/getUserDeptById")
     public SysDepartmentDTO getUserDeptById(@RequestBody String deptId) {
@@ -251,11 +264,23 @@ public class SysUserFeignController extends BaseController {
     }
 
     /**
+     * 根据部门金蝶Code查询部门
+     * @Author Luo_WG
+     * @Date 2023/6/27 14:12
+     * @param code
+     * @return com.erp.model.sys.dto.SysDepartmentDTO
+     **/
+    @PostMapping("/getUserDeptByCode")
+    public SysDepartmentDTO getUserDeptByCode(@RequestBody String code) {
+        return sysDepartmentService.getUserDeptByCode(code);
+    }
+
+    /**
+     * @param userIds
+     * @return List<UserDTO>
      * @description: 根据用户id查询所有上级用户
      * @author Will
      * @date: 2023/1/9 10:24
-     * @param userIds
-     * @return List<UserDTO>
      */
     @PostMapping("/listSuperiorByUserIds")
     public List<UserSuperiorDTO> listSuperiorByUserIds(@RequestBody List<String> userIds) {
@@ -263,11 +288,11 @@ public class SysUserFeignController extends BaseController {
     }
 
     /**
+     * @param roleIds
+     * @return List<String>
      * @description: 根据角色ids查询名称
      * @author Will
      * @date: 2023/1/9 11:36
-     * @param roleIds
-     * @return List<String>
      */
     @PostMapping("/listRoleByIds")
     public List<String> listRoleByIds(@RequestBody List<String> roleIds) {
@@ -275,11 +300,11 @@ public class SysUserFeignController extends BaseController {
     }
 
     /**
+     * @param userIds
+     * @return List<String>
      * @description: 根据用户ids查询角色
      * @author Will
      * @date: 2023/1/9 11:36
-     * @param userIds
-     * @return List<String>
      */
     @PostMapping("/listRoleByUserIds")
     public List<SysRoleDTO> listRoleByUserIds(@RequestBody List<String> userIds) {
@@ -334,18 +359,54 @@ public class SysUserFeignController extends BaseController {
 
     /**
      * 根据用戶id 获取金蝶的对应岗位code
-     * @author yl
-     * @date 2023-06-05 10:08
+     *
      * @param userId
      * @return com.erp.model.sys.dto.KingdeePostDTO.UserKingdeePostInfoDTO
+     * @author yl
+     * @date 2023-06-05 10:08
      */
     @PostMapping("/getUserKingdeePostByUserId")
     public KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePostByUserId(@RequestBody String userId) {
         return userKingdeePostService.getUserKingdeePostByUserId(userId);
     }
-
+    /**
+     * 根据用戶ids 获取金蝶的对应岗位code
+     *
+     * @return
+     */
     @PostMapping("/listUserKingdeePostByUserIds")
     public List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByUserIds(@RequestBody List<String> userIds) {
         return userKingdeePostService.listUserKingdeePostByUserIds(userIds);
     }
+
+    /**
+     * 根据金蝶的对应岗位code获取信息
+     *
+     * @return
+     */
+    @PostMapping("/listUserKingdeePostByKingdeePostCodes")
+    public List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByKingdeePostCodes(@RequestBody List<String> codes) {
+        return userKingdeePostService.listUserKingdeePostByKingdeePostCodes(codes);
+    }
+
+    /**
+     * 获取到第三方绑定的用户
+     *
+     * @return
+     */
+    @GetMapping("/listThirdBindUser")
+    public List<FindUserDTO> listThirdBindUser() {
+        return sysUserThirdService.listThirdBindUser();
+    }
+
+    /**
+     * 根据金蝶code 获取到用户信息
+     *
+     * @return
+     */
+    @GetMapping("/listUserByKingdeeCode")
+    public List<FindUserDTO> listUserByKingdeeCode(@RequestBody List<String> kingdeeCodeList) {
+        return sysUserInfoService.listUserByKingdeeCode(kingdeeCodeList);
+    }
+
 }

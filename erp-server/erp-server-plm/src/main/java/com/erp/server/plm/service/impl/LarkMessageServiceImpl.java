@@ -5,9 +5,11 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.enums.BaseStatusEnum;
+import com.common.business.service.RedisService;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.plm.dto.LarkPressMessageDTO;
 import com.erp.model.plm.dto.ProductShowDTO;
 import com.erp.model.plm.entity.NoticeMessageEntity;
@@ -19,24 +21,25 @@ import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.AuditorHandleDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.erp.sdk.fs.dto.SingleResultDTO;
 import com.erp.sdk.fs.dto.LarkResultDTO;
+import com.erp.sdk.fs.dto.SingleResultDTO;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.plm.constant.NoticeMessageConstant;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.erp.server.plm.service.impl.NoticeMessageServiceImpl.taskCharge;
 
 /**
  * 飞书消息实现类
+ *
  * @Author Cloud
  */
 @Service
@@ -58,6 +61,9 @@ public class LarkMessageServiceImpl implements LarkMessageService {
     @Resource
     private ProductInfoService productInfoService;
 
+    @Resource
+    private RedisService redisService;
+
 
     @Override
     public Boolean press(LarkPressMessageDTO dto) {
@@ -67,43 +73,89 @@ public class LarkMessageServiceImpl implements LarkMessageService {
         String textContent = null;
         NoticeEnum noticeFlag = null;
         String processId = null;
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DateUtil.fmt_day);
+        String redisBaseKey = RedisKeyConstant.PRESS;
+        String redisKey = dto.getBusinessType() + "_" + dto.getBusinessId() + redisBaseKey;
+        //是否存在
+        String redisValue = redisService.getCacheObject(redisKey);
+        if (StringUtils.isNotBlank(redisValue)) {
+            throw new ServiceException(ApiError.ERROR_95178);
+        }
+        List<LarkPressMessageDTO.SendUserInfo> pressUserList = new ArrayList<>(10);
 
-        switch (businessType){
-            case PRODUCT_TASK :
+        switch (businessType) {
+            case PRODUCT_TASK:
+                List<Integer> statusList = new ArrayList<>(3);
+                statusList.add(TaskStateEnum.APPROVAL_PASS.getCode());
+                statusList.add(TaskStateEnum.APPROVAL_NO_PASS.getCode());
+                statusList.add(TaskStateEnum.FINISH.getCode());
                 noticeFlag = NoticeEnum.APPROVAL_TASK;
                 // 根据业务id查询流程id
                 ProjectTaskEntity task = projectTaskService.getById(dto.getBusinessId());
-                if(null == task || !(TaskStateEnum.WAIT_CONFIRM.getCode().equals(task.getStatus())|| TaskStateEnum.APPROVAL_ING.getCode().equals(task.getStatus()))){
+                if (null == task || statusList.contains(task.getStatus())) {
                     throw new ServiceException(ApiError.ERROR_TASK_AUDIT_STATUS);
                 }
                 ProductShowDTO productInfo = productInfoService.getProductInfo(task.getProductId());
-                if(null == productInfo){
+                if (null == productInfo) {
                     throw new ServiceException(ApiError.ERROR_95010);
                 }
+                dto.setBusinessName(task.getName());
                 processId = task.getProcessId();
-                titleContent= String.format(NoticeMessageConstant.FINISH_WAIT_CONFIRM_PRESS, "加急");
-                textContent = String.format(NoticeMessageConstant.TASK_PROJECT_CONTENT, task.getName(), productInfo.getName(), LocalDateTimeUtil.format(task.getPlanEndTime(), DateUtil.fmt_day), taskCharge, task.getChargeName());;
+                titleContent = String.format(NoticeMessageConstant.TASK_CHARGE_PRESS, "加急");
+                textContent = String.format(NoticeMessageConstant.TASK_PROJECT_CONTENT, task.getName(), productInfo.getName(), LocalDateTimeUtil.format(task.getPlanEndTime(), DateUtil.fmt_day), taskCharge, task.getChargeName());
+                //当没有流程就要给任务负责人发消息
+                if (StringUtils.isEmpty(processId)) {
+                    //任务负责人
+                    String taskChargeId = task.getChargeId();
+                    String taskChargeName = task.getChargeName();
+                    String[] taskChargeIdList = taskChargeId.split(",");
+                    String[] taskChargeNameList = taskChargeName.split(",");
+                    for (int i = 0; i < taskChargeIdList.length; i++) {
+                        LarkPressMessageDTO.SendUserInfo sendUserInfo = new LarkPressMessageDTO.SendUserInfo();
+                        sendUserInfo.setUserId(taskChargeIdList[i]);
+                        if (i < taskChargeNameList.length) {
+                            sendUserInfo.setUserName(taskChargeNameList[i]);
+                        } else {
+                            sendUserInfo.setUserName("");
+                        }
+                        pressUserList.add(sendUserInfo);
+                    }
+                }else{
+                    titleContent = String.format(NoticeMessageConstant.FINISH_WAIT_CONFIRM_PRESS, "加急");
+                    // 根据流程id查询下级审核人
+                    if (StringUtils.isNotBlank(processId)) {
+                        List<AuditorHandleDTO> approveRecordShowList = workflowFeign.getHistoryTaskByProcessId(processId);
+                        List<AuditorHandleDTO> auditorHandleList = approveRecordShowList.stream()
+                                .filter(obj -> BaseStatusEnum.WAIT_AUDIT.getName().equals(obj.getHandContent()))
+                                .collect(Collectors.toList());
+                        for (AuditorHandleDTO item : auditorHandleList) {
+                            LarkPressMessageDTO.SendUserInfo sendUserInfo = new LarkPressMessageDTO.SendUserInfo();
+                            sendUserInfo.setUserId(item.getHandleUserId());
+                            sendUserInfo.setUserName(item.getHandleUserName());
+                            pressUserList.add(sendUserInfo);
+                        }
+
+                    }
+                }
+
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_BUSINESS_NOT_EXIT);
 
         }
-        // 根据流程id查询下级审核人
-        List<AuditorHandleDTO> approveRecordShowList = workflowFeign.getHistoryTaskByProcessId(processId);
-        if (CollectionUtils.isEmpty(approveRecordShowList)) {
-            throw new ServiceException(ApiError.ERROR_95045);
-        }
-        List<AuditorHandleDTO> auditorHandleDTO = approveRecordShowList.stream()
-                .filter(obj -> BaseStatusEnum.WAIT_AUDIT.getName().equals(obj.getHandContent()))
-                .collect(Collectors.toList());
+
+
+
         // 发送飞书加急消息
-        sendMessage(auditorHandleDTO, titleContent, textContent, noticeFlag, ThirdConstants.FS_MESSAGE_INTERACTIVE, Boolean.TRUE);
+        sendMessage(pressUserList, titleContent, textContent, noticeFlag, ThirdConstants.FS_MESSAGE_INTERACTIVE, Boolean.TRUE);
+
+        redisService.setCacheObject(redisKey, dto.getBusinessName(), 30L, TimeUnit.MINUTES);
+
+
         return Boolean.TRUE;
     }
 
     @Override
-    public Boolean sendMessage(List<AuditorHandleDTO> auditorHandleDTOList,String titleContent, String textContent,NoticeEnum noticeFlag,String msgType,Boolean isPress) {
+    public Boolean sendMessage(List<LarkPressMessageDTO.SendUserInfo> pressUserList, String titleContent, String textContent, NoticeEnum noticeFlag, String msgType, Boolean isPress) {
         //根据节点标示获取到通知消息实体
         NoticeMessageEntity notice = noticeMessageService.getByNodeFlag(noticeFlag);
         if (Objects.isNull(notice)) {
@@ -112,8 +164,8 @@ public class LarkMessageServiceImpl implements LarkMessageService {
 
         //排除关闭通知的人员 并去重
         List<String> cancelNoticeUserIds = userCancelNoticeService.cancelNoticeUserIds(notice.getId());
-        List<String> noticeUserIds = auditorHandleDTOList.stream().map(AuditorHandleDTO::getHandleUserId).collect(Collectors.toList());
-        Map<String, String> userIdNameMap = auditorHandleDTOList.stream().collect(Collectors.toMap(AuditorHandleDTO::getHandleUserId, AuditorHandleDTO::getHandleUserName));
+        List<String> noticeUserIds = pressUserList.stream().map(LarkPressMessageDTO.SendUserInfo::getUserId).collect(Collectors.toList());
+        Map<String, String> userIdNameMap = pressUserList.stream().collect(Collectors.toMap(LarkPressMessageDTO.SendUserInfo::getUserId, LarkPressMessageDTO.SendUserInfo::getUserName));
         List<String> noticeUserList = noticeUserIds.stream().filter(n -> !cancelNoticeUserIds.contains(n)).distinct().collect(Collectors.toList());
         //获取飞书的 unionId 与用户关系
         List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
@@ -130,7 +182,6 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                 .map(ThirdUnionDTO::getThirdUnionId)
                 .distinct()
                 .collect(Collectors.toList());
-//        Boolean isLog = false;
         //发送消息的结果
         for (String unionId : unionIds) {
             String userName = unionIdUserNameMap.get(unionId);
@@ -146,19 +197,45 @@ public class LarkMessageServiceImpl implements LarkMessageService {
             }
         }
 
-        // 写入日志
-//        if (isLog) {
-//            //消息通知记录
-//            List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
-//            List<NoticeMessageRecordEntity> messageRecordList = acceptUserIds
-//                    .stream()
-//                    .map(userId ->
-//                            new NoticeMessageRecordEntity(titleContent,notice.getId(),NoticeEnum.DOC_CHANGES.getFlag(),userId,taskName,productId,name,chargeName));
-//            //保存发送消息通知记录
-//            noticeMessageRecordService.saveBatch(messageRecordList);
-//        }
-
         return Boolean.TRUE;
+    }
+
+    /**
+     * 批量发送催办信息
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-06-19 16:15
+     */
+    @Override
+    public Boolean batchPress(LarkPressMessageDTO.BatchLarkPressMessageDTO dto) {
+        List<String> businessIdList = dto.getBusinessIdList();
+        String businessType = dto.getBusinessType();
+        String redisBaseKey = RedisKeyConstant.PRESS;
+        List<String> alreadyPress = new ArrayList<>(5);
+        if (CollectionUtils.isNotEmpty(businessIdList)) {
+            for (String businessId : businessIdList) {
+                String redisKey = dto.getBusinessType() + "_" + businessId + redisBaseKey;
+                //是否存在
+                String redisValue = redisService.getCacheObject(redisKey);
+                if (StringUtils.isNotBlank(redisValue)) {
+                    alreadyPress.add(redisValue);
+                } else {
+                    LarkPressMessageDTO pressMessage = new LarkPressMessageDTO();
+                    pressMessage.setBusinessId(businessId);
+                    pressMessage.setBusinessType(businessType);
+                    this.press(pressMessage);
+                }
+            }
+        }
+        if (CollectionUtils.isNotEmpty(alreadyPress)) {
+            String name = alreadyPress.stream().collect(Collectors.joining(","));
+            String message = ApiError.ERROR_95191.msg;
+            throw new ServiceException(ApiError.ERROR_95191.code, String.format(message, name));
+        }
+        return Boolean.TRUE;
+
     }
 
 

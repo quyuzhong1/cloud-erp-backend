@@ -7,6 +7,6 @@
      <select id="listByUserId" resultType="map">
            SELECT pi.id,pi.name FROM user_add_product up
            INNER JOIN  product_info pi ON pi.id=up.product_id AND pi.is_deleted = FALSE
-           WHERE pi.delete_state=0 AND up.is_deleted = FALSE
+           WHERE pi.is_deleted=FALSE AND up.is_deleted = FALSE
      </select>
 </mapper>

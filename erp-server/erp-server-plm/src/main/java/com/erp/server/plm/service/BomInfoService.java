@@ -94,4 +94,12 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
      * @return Boolean
      */
     Boolean updateSyncKingdeeStatus(String id ,String syncKingdeeStatus,String syncKingdeeId);
+    /**
+     * @description: 分页查询显示组合SKU列表
+     * @author Will
+     * @date: 2023/6/14 11:20
+     * @param dto
+     * @return PagingVO<List<ListDTO>>
+     */
+    PagingVO<List<BomSkuPageDTO.ListDTO>> skuPaging(PagingDTO<BomSkuPageDTO.PagingParamDTO> dto);
 }

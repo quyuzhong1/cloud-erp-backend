@@ -27,4 +27,19 @@ public interface PurchaseOrderDetailMapper extends BaseMapper<PurchaseOrderDetai
      * @return ViewProductDTO
      */
     List<PurchaseOrderDetailDTO.ViewProductDTO> viewProduct(@Param("params") PurchaseOrderDetailDTO.ProductSearchParamDTO params);
+    /**
+     * @description: 根据来源明细ids查询
+     * @author Will
+     * @date: 2023/6/19 15:50
+     * @param sourceDetailIds
+     * @return List<PurchaseOrderDetailEntity>
+     */
+    List<PurchaseOrderDetailEntity> listBySourceDetailIds(@Param("sourceDetailIds") List<String> sourceDetailIds);
+
+    /**
+     * 根据sku id集合获取最新的一个审核通过的采购订单，按采购日期倒序
+     * @param skuIds
+     * @return
+     */
+    List<PurchaseOrderDetailEntity> getLatest(@Param(value = "skuIds") List<String> skuIds);
 }

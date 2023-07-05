@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.constant.IsConstant;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseSearchDTO;
@@ -31,7 +32,6 @@ import com.erp.model.workflow.dto.AuditorHandleDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.sdk.fs.service.FsService;
-import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.NoticeMessageConstant;
 import com.erp.server.plm.mapper.NoticeMessageMapper;
 import com.erp.server.plm.service.*;
@@ -45,7 +45,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -85,10 +84,13 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     private ProjectTaskService projectTaskService;
 
     @Autowired
-    private TaskChargeDistributionService taskChargeDistributionService;
+    private TaskCommentRefService taskCommentRefService;
 
     @Autowired
     private WorkflowFeign workflowFeign;
+
+    @Autowired
+    private TaskFollowerService taskFollowerService;
 
     @Value("${third.fs.appUrl}")
     private String fsAppUrl;
@@ -290,7 +292,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         //所有的通知用户人
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
-            List<String> noticeUserIds = getSetNotice(notice, product);
+            List<String> taskIdList = taskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+            List<String> noticeUserIds = getSetNotice(notice, product, taskIdList);
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
 
@@ -400,7 +403,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
-            List<String> noticeUserIds = getSetNotice(notice, product);
+            List<String> taskIdList = taskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+            List<String> noticeUserIds = getSetNotice(notice, product, taskIdList);
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
@@ -525,7 +529,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
-            List<String> noticeUserIds = getSetNotice(notice, product);
+            List<String> taskIdList = taskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+            List<String> noticeUserIds = getSetNotice(notice, product, taskIdList);
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
@@ -603,7 +608,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
-            List<String> noticeUserIds = getSetNotice(notice, product);
+            List<String> taskIdList = taskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+            List<String> noticeUserIds = getSetNotice(notice, product, taskIdList);
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
@@ -681,7 +687,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
-            List<String> noticeUserIds = getSetNotice(notice, product);
+            List<String> noticeUserIds = getSetNotice(notice, product, taskIdList);
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
@@ -920,7 +926,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(noticeFlag);
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
-            List<String> noticeUserIds = getSetNotice(notice, product);
+            List<String> taskIdList = taskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+            List<String> noticeUserIds = getSetNotice(notice, product, taskIdList);
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
@@ -1008,7 +1015,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(noticeFlag);
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
-            List<String> noticeUserIds = getSetNotice(notice, product);
+            List<String> taskIdList = taskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+            List<String> noticeUserIds = getSetNotice(notice, product, taskIdList);
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
@@ -1156,9 +1164,9 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                     }
                 }
             }
-
+            List<String> taskIdList = taskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
             //有没有其他人员
-            List<String> noticeUserIds = getSetNotice(notice, product);
+            List<String> noticeUserIds = getSetNotice(notice, product, taskIdList);
             if (CollectionUtils.isNotEmpty(noticeUserIds)) {
                 //消息内容
                 String messageContent = String.format(NoticeMessageConstant.SCHEDULE_TASK_CHANGE_CONTENT, taskList.size());
@@ -1328,7 +1336,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
-            List<String> noticeUserIds = getSetNotice(notice, product);
+            List<String> noticeUserIds = getSetNotice(notice, product, taskIdList);
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
@@ -1418,7 +1426,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
-            List<String> noticeUserIds = getSetNotice(notice, product);
+            List<String> taskIdList = taskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+            List<String> noticeUserIds = getSetNotice(notice, product, taskIdList);
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
@@ -1496,7 +1505,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
-            List<String> noticeUserIds = getSetNotice(notice, product);
+            List<String> taskIdList = taskList.stream().map(ProjectTaskEntity::getId).collect(Collectors.toList());
+            List<String> noticeUserIds = getSetNotice(notice, product, taskIdList);
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
@@ -1585,7 +1595,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         List<String> allNoticeUserIds = new ArrayList<>();
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
-            List<String> noticeUserIds = getSetNotice(notice, product);
+            List<String> noticeUserIds = getSetNotice(notice, product, Arrays.asList(task.getId()));
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
@@ -1661,7 +1671,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         List<String> allNoticeUserIds = new ArrayList<>();
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
-            List<String> noticeUserIds = getSetNotice(notice, product);
+
+            List<String> noticeUserIds = getSetNotice(notice, product, Arrays.asList(task.getId()));
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
@@ -1735,7 +1746,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
-            List<String> noticeUserIds = getSetNotice(notice, product);
+            List<String> noticeUserIds = getSetNotice(notice, product, new ArrayList<>());
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
@@ -1811,7 +1822,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
-            List<String> noticeUserIds = getSetNotice(notice, product);
+            List<String> noticeUserIds = getSetNotice(notice, product, new ArrayList<>());
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
@@ -1887,7 +1898,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
-            List<String> noticeUserIds = getSetNotice(notice, product);
+            List<String> noticeUserIds = getSetNotice(notice, product, new ArrayList<>());
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
@@ -1962,7 +1973,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
-            List<String> noticeUserIds = getSetNotice(notice, product);
+            List<String> noticeUserIds = getSetNotice(notice, product, new ArrayList<>());
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
@@ -2037,7 +2048,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
-            List<String> noticeUserIds = getSetNotice(notice, product);
+            List<String> noticeUserIds = getSetNotice(notice, product, new ArrayList<>());
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
@@ -2109,7 +2120,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
-            List<String> noticeUserIds = getSetNotice(notice, product);
+            List<String> noticeUserIds = getSetNotice(notice, product, new ArrayList<>());
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
@@ -2171,7 +2182,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      */
     @Override
     @Async("customExecutor")
-    public Boolean remindRemarkNotice(String userName, String productId, String taskId, String comment) {
+    public Boolean remindRemarkNotice(String taskCommentId, String userName, String productId, String taskId, String comment, List<String> refUserIdList, List<FindUserDTO> refUserList) {
         ProductShowDTO product = productInfoService.getProductInfo(productId);
         if (Objects.isNull(product)) {
             return false;
@@ -2180,8 +2191,10 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         //根据节点标示获取到通知消息实体
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
+            //获取飞书的unionid 与用户关系
+            List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
             String noticeMessageId = notice.getId();
-            List<String> noticeUserIds = getSetNotice(notice, product);
+            List<String> noticeUserIds = getSetNotice(notice, product, Arrays.asList(taskId));
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
 
@@ -2199,8 +2212,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             }
             //排除关闭通知的人员 并去重
             List<String> noticeList = eliminateCloseNotice(notice.getId(), noticeUserIds);
-            //获取飞书的unionid 与用户关系
-            List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
+
             List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
             FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
             List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
@@ -2232,7 +2244,30 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             }
             //保存发送消息通知记录
             noticeMessageRecordService.saveBatch(messageRecordList);
+
+            //评论的@的人员
+            if (CollectionUtils.isNotEmpty(refUserIdList)) {
+                FsBatchSendMessageDTO sendRefMessage = new FsBatchSendMessageDTO();
+                List<ThirdUnionDTO> noticeRefUnionList = getNoticeUnionIds(unionIdList, refUserIdList);
+                List<String> refUnionIds = noticeRefUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+                sendRefMessage.setUnionIds(refUnionIds);
+                String refUserName = refUserList.stream().filter(r -> refUserIdList.contains(r.getUserId())).map(FindUserDTO::getUserName).collect(Collectors.joining(","));
+
+                String refMessageContent = String.format(NoticeMessageConstant.REMIND_REMARK_REF, userName, refUserName, comment);
+                Map refContentMap = getCardMessageMap(refMessageContent, projectContent, fsAppUrl);
+                sendRefMessage.setContentMap(refContentMap);
+                //发送消息的结果
+                Boolean sendRefResult = fsService.sendMessage(sendRefMessage);
+                if (sendRefResult) {
+                    List<String> acceptUserIds = noticeRefUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
+                    //更改发送结果
+                    taskCommentRefService.updateSendResult(acceptUserIds,taskCommentId,taskId,sendRefResult);
+                }
+
+            }
         }
+
+
         return true;
     }
 
@@ -2268,7 +2303,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             List<ProductShowDTO> productList = productInfoService.getProductInfoByIds(productIds);
             for (ProjectTaskEntity task : beAlmostExpireTaskList) {
                 ProductShowDTO product = productList.stream().filter(p -> p.getProductId().equals(task.getProductId())).findFirst().orElse(null);
-                List<String> noticeUserIds = getSetNotice(notice, product);
+                List<String> noticeUserIds = getSetNotice(notice, product, new ArrayList<>());
                 String chargeId = task.getChargeId();
                 List<String> chargeIdList = new ArrayList<>();
                 if (isContainsTaskCharge && StringUtils.isNotBlank(chargeId)) {
@@ -2281,7 +2316,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
                 List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
                 sendMessage.setUnionIds(unionIds);
-                Date planEndTime = Date.from(task.getPlanEndTime().atStartOfDay().atZone( ZoneId.systemDefault()).toInstant());;
+                Date planEndTime = Date.from(task.getPlanEndTime().atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+                ;
                 //获取计划时间的开始时间
                 Date planEndStartTime = DateUtil.getStartTime(planEndTime);
                 //比较差值
@@ -2346,7 +2382,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         NoticeMessageEntity notice = baseMapper.getByNodeFlag(flag);
         if (!Objects.isNull(notice)) {
             String noticeMessageId = notice.getId();
-            List<String> noticeUserIds = getSetNotice(notice, product);
+            List<String> noticeUserIds = getSetNotice(notice, product, Arrays.asList(taskId));
             //如果包含任务负责人的话
             boolean isContainsTaskCharge = notice.getItemPeople().contains(NoticeItemPeopleEnum.TASK_CHARGE.getFlag());
             //获取飞书的unionid 与用户关系
@@ -2441,7 +2477,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @author yl
      * @date 2022-11-14 16:16
      */
-    public List<String> getSetNotice(NoticeMessageEntity notice, ProductShowDTO product) {
+    public List<String> getSetNotice(NoticeMessageEntity notice, ProductShowDTO product, List<String> taskIdList) {
         List<String> resultList = new ArrayList<>();
         if (!Objects.isNull(notice)) {
             //其它人
@@ -2475,6 +2511,31 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         if (StringUtils.isNotBlank(productChargeId)) {
                             List<String> productChargeIdList = Arrays.asList(productChargeId.split(","));
                             resultList.addAll(productChargeIdList);
+                        }
+                    }
+                }
+
+                //这个是关注人
+                if (itemPeopleList.contains(NoticeItemPeopleEnum.FOLLOWER.getFlag())) {
+                    if (CollectionUtils.isNotEmpty(taskIdList)) {
+                        List<TaskFollowerEntity> taskConcernEntities = taskFollowerService.listByTaskIds(taskIdList);
+                        if (CollectionUtils.isNotEmpty(taskConcernEntities)) {
+                            List<String> userIdList = taskConcernEntities.stream().map(TaskFollowerEntity::getUserId).distinct().collect(Collectors.toList());
+                            resultList.addAll(userIdList);
+                        }
+                    }
+                }
+
+                //这个是审核人
+                if (itemPeopleList.contains(NoticeItemPeopleEnum.AUDITOR.getFlag())) {
+                    if (CollectionUtils.isNotEmpty(taskIdList)) {
+                        List<ProjectTaskEntity> taskEntityList = projectTaskService.listByTaskIds(taskIdList);
+                        if (CollectionUtils.isNotEmpty(taskEntityList)) {
+                            for (ProjectTaskEntity taskEntity : taskEntityList) {
+                                List<AuditorHandleDTO> historyTaskByProcessId = workflowFeign.getHistoryTaskByProcessId(taskEntity.getProcessId());
+                                List<String> userIdList = historyTaskByProcessId.stream().map(AuditorHandleDTO::getHandleUserId).distinct().collect(Collectors.toList());
+                                resultList.addAll(userIdList);
+                            }
                         }
                     }
                 }

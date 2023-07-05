@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
 
 /**
  * @Classname TemplateTaskServiceImpl
- * @Description TODO
+
  * @Date 2022-09-20 15:35
  * @Created by yl
  */
@@ -120,6 +120,12 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
 
     @Autowired
     private ProjectInfoService projectInfoService;
+
+    @Autowired
+    private TemplateTaskFollowerService templateTaskFollowerService;
+
+    @Autowired
+    private TaskFollowerService taskFollowerService;
 
     /**
      * 产品保存模板 保存任务
@@ -222,8 +228,33 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         templateDeliveryDocsService.removeByTaskIdAndTemplateId(id, templateId);
         //删除任务审核人
         taskChargeDistributionService.removeBySourceAndTaskId(MathUtil.TWO, id);
+        //删除关注人
+        templateTaskFollowerService.deleteByTemplateIdAndTaskIds(templateId, Arrays.asList(id));
         //删除模板任务
         return this.remove(queryWrapper);
+    }
+
+    @Override
+    public Boolean removeTaskBatch(List<String> ids, String templateId) {
+        LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(TemplateTaskEntity::getId, ids);
+        queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
+        List<TemplateTaskEntity> list = this.list(queryWrapper);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_95058);
+        }
+        //删除任务交付文档数据
+        templateDeliveryDocsService.removeByTaskIdsAndTemplateId(ids, templateId);
+        //删除任务审核人
+        taskChargeDistributionService.removeBySourceAndTaskIds(MathUtil.TWO, ids);
+        //删除关注人
+        templateTaskFollowerService.deleteByTemplateIdAndTaskIds(templateId, ids);
+        //删除模板任务
+        return lambdaUpdate()
+                .in(TemplateTaskEntity::getId, ids)
+                .eq(TemplateTaskEntity::getTemplateId, templateId)
+                .set(TemplateTaskEntity::getIsDeleted, Boolean.TRUE)
+                .update();
     }
 
     /**
@@ -322,7 +353,9 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             resultVO.setFieldJson(skuConfigEntity.getFieldJson());
             resultVO.setFieldConfigType(skuConfigEntity.getFieldConfigType());
         }
-
+        List<TemplateTaskFollowerEntity> concernEntityList = templateTaskFollowerService.listTemplateFollower(dto.getTemplateId(), Arrays.asList(dto.getId()));
+        List<String> concernUserIdList = concernEntityList.stream().map(TemplateTaskFollowerEntity::getUserId).collect(Collectors.toList());
+        resultVO.setConcernUserIdList(concernUserIdList);
         return resultVO;
     }
 
@@ -349,7 +382,8 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             return new ArrayList<>();
         }
         List<TemplateTaskEntity> list = this.getByTemplateId(templateId, taskIdList);
-
+        List<String> templateTaskIds = list.stream().map(TemplateTaskEntity::getId).collect(Collectors.toList());
+        List<TemplateTaskFollowerEntity> templateTaskFollowerList = templateTaskFollowerService.listTemplateFollower(templateId, templateTaskIds);
         List<ProjectTaskEntity> byProductId = projectTaskService.getByProductId(productId);
 
         LoginUser loginUser = commonService.getUserInfo();
@@ -408,6 +442,11 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.TWO, item.getId());
 
                 setTaskChargeDistribution(taskChargeDistributionList, chargeIds, projectTemplateEntity.getId(), taskEntity.getId(), MathUtil.THREE);
+
+                //新增关注人
+                List<TemplateTaskFollowerEntity> followerEntityList = templateTaskFollowerList.stream().filter(req -> req.getTemplateTaskId().equals(item.getId())).collect(Collectors.toList());
+                List<String> followerUserIdList = followerEntityList.stream().map(TemplateTaskFollowerEntity::getUserId).collect(Collectors.toList());
+                taskFollowerService.batchAdd(taskId, productId, followerUserIdList);
             }
         }
 
@@ -559,6 +598,9 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             templateTaskRefSkuConfigService.removeByTaskId(entity.getId());
         }
 
+        //添加关注人
+        templateTaskFollowerService.saveTemplateFollowerList(dto.getTemplateId(), entity.getId(), dto.getConcernUserIdList());
+
         //保存前置任务
         templatePreTaskService.saveTemplatePreTaskList(entity.getId(), dto.getPreTaskIdList(), dto.getTemplateId());
         return true;
@@ -575,7 +617,6 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
      */
     public List<TemplateTaskEntity> getByTemplateId(String templateId, List<String> taskIdList) {
         List<TemplateTaskEntity> byTemplateId = baseMapper.getByTemplateId(templateId, taskIdList);
-
  /*       LambdaQueryWrapper<TemplateTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TemplateTaskEntity::getTemplateId, templateId);
         queryWrapper.orderByAsc(TemplateTaskEntity::getCreateTime);*/
@@ -846,7 +887,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
             return new ArrayList<>();
         }
         List<TemplateTaskEntity> list = this.getByTemplateId(templateId, taskIdList);
-
+        List<TemplateTaskFollowerEntity> templateTaskFollowerList = templateTaskFollowerService.listTemplateFollower(templateId, taskIdList);
         List<ProjectTaskEntity> byProductId = projectTaskService.getByProductId(productId);
 
         LoginUser loginUser = commonService.getUserInfo();
@@ -907,6 +948,11 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.TWO, item.getId());
 
                 setTaskChargeDistribution(taskChargeDistributionList, chargeIds, projectTemplateEntity.getId(), taskEntity.getId(), MathUtil.THREE);
+
+                //新增关注人
+                List<TemplateTaskFollowerEntity> followerEntityList = templateTaskFollowerList.stream().filter(req -> req.getTemplateTaskId().equals(item.getId())).collect(Collectors.toList());
+                List<String> followerUserIdList = followerEntityList.stream().map(TemplateTaskFollowerEntity::getUserId).collect(Collectors.toList());
+                taskFollowerService.batchAdd(taskId, productId, followerUserIdList);
             }
         }
 
@@ -935,5 +981,14 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
 
     }
 
+    @Override
+    public TemplateTaskEntity getTaskByName(String templateId, String taskName) {
+        return lambdaQuery().eq(TemplateTaskEntity::getTemplateId, templateId)
+                .eq(TemplateTaskEntity::getName, taskName).one();
+    }
 
+    @Override
+    public List<TemplateTaskEntity> listByTemplateId(String templateId) {
+        return lambdaQuery().eq(TemplateTaskEntity::getTemplateId, templateId).list();
+    }
 }

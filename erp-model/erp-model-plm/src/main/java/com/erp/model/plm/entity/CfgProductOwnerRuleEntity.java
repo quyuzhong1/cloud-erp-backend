@@ -1,12 +1,13 @@
 package com.erp.model.plm.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
 
 
 /**
@@ -35,6 +36,12 @@ public class CfgProductOwnerRuleEntity extends BaseEntity<CfgProductOwnerRuleEnt
     */
     @TableField("org_id")
     private String orgId;
+
+    /**
+     * 组织名
+     */
+    @TableField("org_name")
+    private String orgName;
 
 
     public static final String CATEGORY_ID = "category_id";

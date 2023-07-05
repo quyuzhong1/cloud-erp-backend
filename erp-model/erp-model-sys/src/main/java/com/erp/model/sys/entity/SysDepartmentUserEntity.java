@@ -8,7 +8,7 @@ import java.util.Date;
 
 /**
  * @Classname SysDepartmentUserEntity
- * @Description TODO
+
  * @Date 2022-07-13 18:51
  * @Created by yl
  */

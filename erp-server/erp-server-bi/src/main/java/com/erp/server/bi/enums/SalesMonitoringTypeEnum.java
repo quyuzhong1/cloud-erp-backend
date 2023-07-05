@@ -3,7 +3,7 @@ package com.erp.server.bi.enums;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/1/3 19:42
  */
 public enum SalesMonitoringTypeEnum {

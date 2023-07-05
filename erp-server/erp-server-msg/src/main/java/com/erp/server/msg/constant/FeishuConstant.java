@@ -2,7 +2,7 @@ package com.erp.server.msg.constant;
 
 /**
  * @Classname: FeishuConstant
- * @Description: TODO
+
  * @CreateTime: 2023-04-19  10:42
  * @Author: zhangchunlin
  */

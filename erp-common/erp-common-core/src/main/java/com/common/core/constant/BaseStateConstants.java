@@ -2,7 +2,7 @@ package com.common.core.constant;
 
 /**
  * @Classname BaseStateConstants
- * @Description TODO
+
  * @Date 2023-01-29 8:47
  * @Created by yl
  */

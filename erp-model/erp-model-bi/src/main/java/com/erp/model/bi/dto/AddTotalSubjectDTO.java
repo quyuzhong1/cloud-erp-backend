@@ -12,7 +12,7 @@ import java.util.List;
 
 /**
  * @Classname AddTotalSubjectDTO
- * @Description TODO
+
  * @Date 2022-12-19 17:36
  * @Created by yl
  */

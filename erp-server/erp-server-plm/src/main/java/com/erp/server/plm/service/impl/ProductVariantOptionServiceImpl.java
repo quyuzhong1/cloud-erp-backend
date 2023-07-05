@@ -1,7 +1,9 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.erp.model.plm.entity.ProductUnitEntity;
 import com.erp.model.plm.entity.ProductVariantOptionEntity;
 import com.erp.server.plm.mapper.ProductVariantOptionMapper;
 import com.erp.server.plm.service.ProductVariantOptionService;

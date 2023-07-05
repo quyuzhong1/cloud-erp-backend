@@ -56,6 +56,18 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
     }
 
     /**
+     * @param skuId
+     * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
+     * @Description 产品包装信息查询列表
+     * @Author Luo_WG
+     * @Date 2022/9/22 10:28
+     **/
+    @Override
+    public List<ProductPackShowDTO> listBySkuId(String skuId) {
+        return productPackMapper.listBySkuId(skuId);
+    }
+
+    /**
      * @param productPackDTO 产品包装信息表
      * @return java.lang.Boolean
      * @Description 保存/修改产品包装信息
@@ -66,16 +78,6 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
     public Boolean saveOrUpdate(ProductPackDTO productPackDTO) {
         ProductPackEntity packEntity = new ProductPackEntity();
         BeanMapper.copy(productPackDTO, packEntity);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (ObjectUtils.isNotEmpty(loginUser)) {
-            if (StringUtils.isBlank(productPackDTO.getId())) {
-                packEntity.setCreateUserId(loginUser.getUid());
-                packEntity.setCreateUserName(loginUser.getUserName());
-            } else {
-                packEntity.setUpdateUserId(loginUser.getUid());
-                packEntity.setUpdateUserName(loginUser.getUserName());
-            }
-        }
         return this.saveOrUpdate(packEntity);
     }
 
@@ -93,16 +95,16 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
     }
 
     /**
-     * @param skuId 产品sku明细表id
+     * @param skuIds 产品sku明细表id
      * @return java.lang.Boolean
      * @Description 删除产品包装信息
      * @Author Luo_WG
      * @Date 2022/9/26 18:42
      **/
     @Override
-    public Boolean removePack(String skuId) {
+    public Boolean removePack(List<String> skuIds) {
         LambdaQueryWrapper<ProductPackEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(ProductPackEntity::getSkuId, skuId);
+        queryWrapper.in(ProductPackEntity::getSkuId, skuIds);
         return this.remove(queryWrapper);
     }
 
@@ -197,6 +199,11 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
 
 
         return resultList;
+    }
+
+    @Override
+    public List<ProductPackEntity> findBySkuIds(List<String> skuIds) {
+        return this.lambdaQuery().in(ProductPackEntity::getSkuId, skuIds).list();
     }
 }
 

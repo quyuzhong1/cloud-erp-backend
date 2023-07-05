@@ -1,7 +1,11 @@
 package com.erp.server.scm.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.scm.dto.SubcontractChangeDetailDTO;
 import com.erp.model.scm.entity.SubcontractChangeDetailEntity;
+import org.apache.commons.math3.util.Pair;
+
+import java.util.List;
 
 
 /**
@@ -14,5 +18,42 @@ import com.erp.model.scm.entity.SubcontractChangeDetailEntity;
  */
 public interface SubcontractChangeDetailService extends SuperService<SubcontractChangeDetailEntity> {
 
-
+    /**
+     * @description: 新增变更明细
+     * @author Will
+     * @date: 2023/6/19 11:30
+     * @param detailList
+     * @param mainId
+     */
+    void add(List<SubcontractChangeDetailDTO.AddDTO> detailList, String mainId);
+    /**
+     * @description: 修改变更明细
+     * @author Will
+     * @date: 2023/6/19 11:31
+     * @param detailList
+     * @param mainId
+     */
+    void update(List<SubcontractChangeDetailDTO.UpdateDTO> detailList, String mainId);
+    /**
+     * @description: 根据主表明细ids删除
+     * @author Will
+     * @date: 2023/6/19 11:36
+     * @param mainIds
+     */
+    void removeByMainIds(List<String> mainIds);
+    /**
+     * @description: 根据主表ids查询
+     * @author Will
+     * @date: 2023/6/19 17:29
+     * @param mainIds
+     * @return List<SubcontractChangeDetailEntity>
+     */
+    List<SubcontractChangeDetailEntity> listByMainIds(List<String> mainIds);
+    /**
+     * @description: 委外变更单变更明细id
+     * @author Will
+     * @date: 2023/6/25 17:21
+     * @param pairList
+     */
+    void updateSourceDetailId(List<Pair<String, String>> pairList);
 }

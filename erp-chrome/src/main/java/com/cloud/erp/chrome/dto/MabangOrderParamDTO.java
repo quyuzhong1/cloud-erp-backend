@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @Classname MabanOrderParamDTO
- * @Description TODO
+
  * @Date 2022-08-25 15:14
  * @Created by yl
  */

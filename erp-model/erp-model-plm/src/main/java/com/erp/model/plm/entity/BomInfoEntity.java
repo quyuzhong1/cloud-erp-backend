@@ -68,5 +68,11 @@ public class BomInfoEntity extends BaseEntity implements Serializable {
      */
     @TableField(exist = false)
     private String parentSkuId;
+
+    /**
+     * 父级skuNo
+     */
+    @TableField(exist = false)
+    private String parentSkuNo;
 }
 

@@ -35,9 +35,6 @@ public class StockMQConsumerService {
     @Resource
     private ApiPlmSyncLogService apiPlmSyncLogService;
 
-    @Resource
-    private KingdeeCommonService kingdeeCommonService;
-
     /**
      * rocketmq 监听第三方仓库存变更
      */

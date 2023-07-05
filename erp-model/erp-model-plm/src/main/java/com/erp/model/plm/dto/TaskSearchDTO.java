@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * @Classname TaskSearchDTO
- * @Description TODO
+
  * @Date 2022-09-21 14:20
  * @Created by yl
  */
@@ -38,6 +38,11 @@ public class TaskSearchDTO implements Serializable {
      * status 状态值 0:待发布 1:未开始 2:进行中 3 已完成, 4.完成待确认 5.审核中  6 审核通过 7 审核不通过
      */
     private List<Integer> status;
+
+    /**
+     * 关联的skuIdList
+     */
+    private List<String> skuIdList;
 
     /**
      * 开始时间

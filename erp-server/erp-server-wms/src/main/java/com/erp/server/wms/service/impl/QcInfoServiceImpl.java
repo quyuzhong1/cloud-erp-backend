@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -9,10 +10,7 @@ import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -34,15 +32,14 @@ import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.scm.enums.QcInsideTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.QcBillExportExcelDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.QcBillStatusEnum;
-import com.erp.model.wms.enums.QcResultEnum;
-import com.erp.model.wms.enums.QcTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
@@ -52,17 +49,29 @@ import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcInfoMapper;
 import com.erp.server.wms.service.*;
+import com.erp.server.wms.utils.QcUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -74,6 +83,7 @@ import java.util.stream.Collectors;
  * @author lambda
  * @since 2023-04-14
  */
+@RefreshScope
 @Service
 @Slf4j
 public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEntity> implements QcInfoService {
@@ -157,6 +167,12 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     @Resource
     private SoOutstockDetailService soOutstockDetailService;
+
+    @Autowired
+    private WmsAttachmentService wmsAttachmentService;
+
+    @Value("${fdfs.publicUrl:''}")
+    private String filePublicUrl;
 
     /**
      * 保存 质检单
@@ -563,7 +579,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         details.add(detail);
         dto.setDetails(details);
         dto.setSourceId(billId);
-        dto.setSourceType(SourceTypeEnum.QC_BILL.getCode());
+        dto.setSourceType(SourceTypeEnum.QC_INFO.getCode());
         dto.setPurchaseOrderId(purchaseOrderId);
         dto.setDeliveryWarehouseId(warehouseId);
         String userId = commonService.getUserInfo().getUid();
@@ -598,7 +614,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         stockInList = stockInList.stream().filter(s -> StringUtils.isNotBlank(s.getPurchaseOrderId()) &&
                 b2bQcType.equals(s.getQcType())).collect(Collectors.toList());
 
-        String sourceType = SourceTypeEnum.QC_BILL.getCode();
+        String sourceType = SourceTypeEnum.QC_INFO.getCode();
         String userId = commonService.getUserInfo().getUid();
         //获取部门信息
         SysDepartmentUserNumberDTO depart = sysUserFeign.getDeptByUserId(userId);
@@ -1127,7 +1143,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         for (PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO dto : list) {
             //来源类型
-            dto.setSourceType(SourceTypeEnum.QC_BILL.getCode());
+            dto.setSourceType(SourceTypeEnum.QC_INFO.getCode());
             String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
             dto.setProductName(productName);
             dto.setSourceDetailId(dto.getPurchaseOrderDetailId());
@@ -1205,12 +1221,12 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //收货数量
         List<WarehouseReceiveEntity> receiveList = warehouseReceiveService.listByPurchaseOrderIds(poIds);
         //收货单ids
-        List<String> receiveIds=receiveList.stream().map(WarehouseReceiveEntity::getId).collect(Collectors.toList());
+        List<String> receiveIds = receiveList.stream().map(WarehouseReceiveEntity::getId).collect(Collectors.toList());
         //收货sku 明细信息
         List<WarehouseReceiveDetailEntity> receiveSkuList = warehouseReceiveDetailService.listDetailByMainIds(receiveIds);
         List<PurchaseReturnOrderDTO.AddDTO> addList = new ArrayList<>();
 
-        String qcBill = SourceTypeEnum.QC_BILL.getCode();
+        String qcBill = SourceTypeEnum.QC_INFO.getCode();
         Map<String, List<PoInstockDTO.GeneratePurchaseReturnOrderDTO>> map = list.stream().collect(Collectors.groupingBy(PoInstockDTO.GeneratePurchaseReturnOrderDTO::getSourceId));
 
         for (Map.Entry<String, List<PoInstockDTO.GeneratePurchaseReturnOrderDTO>> entry : map.entrySet()) {
@@ -1235,13 +1251,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             for (PoInstockDTO.GeneratePurchaseReturnOrderDTO detail : value) {
                 PurchaseReturnOrderDetailDTO.AddDTO addDetailDTO = new PurchaseReturnOrderDetailDTO.AddDTO();
                 //收货单的ids
-                List<String> receiveIdList= receiveList.stream().filter(r->r.getPurchaseOrderId().equals(detail.getPurchaseOrderId())).map(WarehouseReceiveEntity::getId).collect(Collectors.toList());
+                List<String> receiveIdList = receiveList.stream().filter(r -> r.getPurchaseOrderId().equals(detail.getPurchaseOrderId())).map(WarehouseReceiveEntity::getId).collect(Collectors.toList());
                 //验证 sku 收货数量
                 Integer receiveQty = receiveSkuList.stream().filter(
-                        obj -> obj.getSkuId().equals(detail.getSkuId())&&
+                        obj -> obj.getSkuId().equals(detail.getSkuId()) &&
                                 receiveIdList.contains(obj.getMainId())
                 ).mapToInt(e -> e.getReceiveQty()).sum();
-                if (receiveQty==0) {
+                if (receiveQty == 0) {
                     throw new ServiceException(1, String.format("SKU【%s】未找到对应收货数量", detail.getSkuNo()));
                 }
                 if (MathUtil.compareTo(detail.getRealityReturnQty(), receiveQty) > 0) {
@@ -1380,10 +1396,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     /**
      * 退货签收单下推质检单-保存
-     * @Author Luo_WG
-     * @Date 2023/5/23 14:05
+     *
      * @param receiveIds receiveIds
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/5/23 14:05
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -1470,10 +1487,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     /**
      * 下推退货入库单-列表查询
-     * @Author Luo_WG
-     * @Date 2023/5/23 15:52
+     *
      * @param ids
      * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.GenerateSoReturnInstockView>
+     * @Author Luo_WG
+     * @Date 2023/5/23 15:52
      **/
     @Override
     public List<SoReturnInstockDTO.GenerateSoReturnInstockView> generateSoReturnInstockView(List<String> ids) {
@@ -1516,10 +1534,19 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //根据销售单获取出库单
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySoIds(soIds);
         for (SoReturnInstockDTO.GenerateSoReturnInstockView view : list) {
+
             //拿到签收单id
             SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveEntities.stream().filter(req -> req.getId().equals(view.getSourceId())).findFirst().orElse(new SoReturnReceiveEntity());
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(view.getSourceDetailId())).findFirst().orElse(new SoReturnReceiveDetailEntity());
             SoReturnEntity soReturnEntity = returnEntityList.stream().filter(req -> req.getId().equals(soReturnReceiveEntity.getSourceId())).findFirst().orElse(new SoReturnEntity());
+            if (StringUtils.isNotBlank(soReturnReceiveDetailEntity.getReturnTypeDict())) {
+                view.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnReceiveDetailEntity.getReturnTypeDict()));
+            }
+            if (StringUtils.isNotBlank(soReturnReceiveDetailEntity.getReturnTypeDict())) {
+                view.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnReceiveDetailEntity.getReturnReasonDict()));
+            }
+
+
             view.setId(view.getId());
             view.setMainId(view.getId());
             view.setSourceId(soReturnReceiveEntity.getSourceId());
@@ -1552,10 +1579,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     /**
      * 根据来源id查询质检单
-     * @Author Luo_WG
-     * @Date 2023/5/10 18:12
+     *
      * @param sourceId sourceId
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/5/10 18:12
      **/
     @Override
     public List<QcInfoEntity> listQCBySourceId(String sourceId) {
@@ -1564,15 +1592,42 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     /**
      * 根据来源ids查询质检单
-     * @Author Luo_WG
-     * @Date 2023/5/10 18:12
+     *
      * @param sourceIds
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/5/10 18:12
      **/
     @Override
     public List<QcInfoEntity> listQCBySourceIds(List<String> sourceIds) {
         return lambdaQuery().in(QcInfoEntity::getSourceId, sourceIds).list();
     }
+
+    @Override
+    public List<QcInfoEntity> listQCBySourceDetailIds(List<String> sourceDetailIds) {
+        return lambdaQuery().in(QcInfoEntity::getSourceDetailId, sourceDetailIds).list();
+    }
+
+    @Override
+    public QcInfoDTO.PurchaseQcInfoDTO getQcInfoByPurchaseOrder(QcInfoDTO.PurchaseQcParamDTO dto) {
+        return this.baseMapper.getQcInfoByPurchaseOrder(dto);
+    }
+
+    @Override
+    public void exportDailyExcel(QcInfoDTO.ExportDTO dto, HttpServletResponse response) {
+        String searchType = dto.getSearchType();
+        //如果等于所有
+        if (searchType.equals(SearchType.ALL)) {
+            dto.setSearchType("");
+        }
+        // 查询数据
+        List<QcInfoDTO.DailyListDTO> dataList = baseMapper.getDailyExport(dto);
+        // 填充数据
+        List<QcInfoDTO.QcDailyReportDTO> resultList = fillQcDailyRptData(dataList);
+        // 导出Excel
+        generateDailyRptExcel(resultList, response);
+    }
+
     /**
      * 批量完成
      * 质检数量
@@ -1661,6 +1716,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             Integer qcQty = qcInfo.getQcQty() != null ? qcInfo.getQcQty() : 0;
             //质检总量
             Integer totalQty = qcInfo.getTotalQty() != null ? qcInfo.getTotalQty() : 0;
+            if (qcQty > totalQty) {
+                throw new ServiceException(ApiError.ERROR_99073);
+            }
+
             if (goodQty + badQty > qcQty) {
                 throw new ServiceException(ApiError.ERROR_99016);
             }
@@ -1687,6 +1746,245 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                     throw new ServiceException(ApiError.ERROR_99017);
                 }
             }
+        }
+
+    }
+
+    private List<QcInfoDTO.QcDailyReportDTO> fillQcDailyRptData(List<QcInfoDTO.DailyListDTO> dataList) {
+        List<QcInfoDTO.QcDailyReportDTO> resultList = new ArrayList<>(dataList.size());
+        if (CollectionUtils.isNotEmpty(dataList)) {
+            List<DictBasicEntity> dictList = dictBasicService.getByKeyList(new ArrayList<>());
+            List<String> supplierIdList = dataList.stream().map(QcInfoDTO.DailyListDTO::getSupplierId).collect(Collectors.toList());
+            List<String> skuIdList = dataList.stream().map(QcInfoDTO.DailyListDTO::getSkuId).collect(Collectors.toList());
+            List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIdList);
+            List<String> billIdList = dataList.stream().map(QcInfoDTO.DailyListDTO::getId).collect(Collectors.toList());
+            List<QcRemarkEntity> billRemarkList = qcRemarkService.getByMainIdList(billIdList);
+            List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+            List<String> billIds = dataList.stream().map(QcInfoDTO.DailyListDTO::getId).distinct().collect(Collectors.toList());
+            List<PurchaseOrderEntity> poList = scmTaskFeign.listPurchaseOrderByIds(billIds);
+
+            List<String> productIdList = dataList.stream().map(QcInfoDTO.DailyListDTO::getProductId).collect(Collectors.toList());
+
+            // 产品图片、箱唛
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(productIdList);
+            Map<String, List<WmsAttachmentDTO.UpdateDTO>> attachmentMap = attachmentList.stream().collect(Collectors.groupingBy(v -> v.getBusinessId() + "_" + v.getType()));
+
+            // 不良附图
+            List<String> qcResultIdList = dataList.stream().map(QcInfoDTO.DailyListDTO::getQcResultId).collect(Collectors.toList());
+            List<WmsAttachmentDTO.UpdateDTO> badAttachmentList = wmsAttachmentService.getByBusinessIds(qcResultIdList);
+            Map<String, List<WmsAttachmentDTO.UpdateDTO>> badAttachmentMap = badAttachmentList.stream().collect(Collectors.groupingBy(v -> v.getBusinessId() + "_" + v.getType()));
+
+            // 报告
+            Map<String, List<QcReportDetailDTO.ViewDTO>> reportMap = qcReportDetailService.getByMainIds(billIdList);
+
+            for (QcInfoDTO.DailyListDTO item : dataList) {
+                QcInfoDTO.QcDailyReportDTO qcDailyReportDTO = new QcInfoDTO.QcDailyReportDTO();
+
+                qcDailyReportDTO.setQcDate(item.getQcDate());
+                // 是否内检
+                Boolean isInside = item.getIsInside();
+                qcDailyReportDTO.setQcInsideType(Objects.equals(isInside, Boolean.TRUE) ? QcInsideTypeEnum.INSIDE_QC.getCode() : QcInsideTypeEnum.OUTSIDE_QC.getCode());
+                qcDailyReportDTO.setQcInsideTypeName(Objects.equals(isInside, Boolean.TRUE) ? QcInsideTypeEnum.INSIDE_QC.getName() : QcInsideTypeEnum.OUTSIDE_QC.getName());
+
+                String skuNo = skuVOList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuNo())).orElse("");
+                qcDailyReportDTO.setSkuNo(skuNo);
+
+                // 是否新品
+                Boolean isFirstMassProduct = poList.stream().filter(p -> p.getId().equals(item.getPurchaseOrderId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getIsFirstMassProduct())).orElse(Boolean.FALSE);
+                qcDailyReportDTO.setIsFirstMassProduct(isFirstMassProduct);
+                qcDailyReportDTO.setFirstMassProductName(Objects.equals(qcDailyReportDTO.getIsFirstMassProduct(), Boolean.TRUE) ? ProductTypeEnum.NEW_PRODUCTS.getName() : ProductTypeEnum.OLD_PRODUCTS.getName());
+
+                String supplierId = item.getSupplierId();
+                String supplierName = supplierList.stream().filter(s -> s.getId().equals(supplierId)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                qcDailyReportDTO.setSupplierName(supplierName);
+
+                String skuId = item.getSkuId();
+                String skuName = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
+                qcDailyReportDTO.setProductName(skuName);
+
+                // 产品图片
+                String productTypeKey = item.getProductId() + "_" + WmsConstant.QC_PRODUCT;
+                if (attachmentMap.containsKey(productTypeKey)) {
+                    List<WmsAttachmentDTO.UpdateDTO> attachList = attachmentMap.get(productTypeKey);
+                    List<String> attachmentUrls = attachList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+                    qcDailyReportDTO.setProductImgUrl(attachmentUrls);
+                }
+
+                // 箱唛图片
+                String productBoxKey = item.getProductId() + "_" + WmsConstant.QC_BOX;
+                if (attachmentMap.containsKey(productBoxKey)) {
+                    List<WmsAttachmentDTO.UpdateDTO> attachList = attachmentMap.get(productBoxKey);
+                    List<String> attachmentUrls = attachList.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+                    qcDailyReportDTO.setBoxMarkImgUrl(attachmentUrls);
+                }
+
+                // 不良附件
+                String qcBadKey = item.getQcResultId() + "_" + WmsConstant.BAD;
+                if (badAttachmentMap.containsKey(qcBadKey)) {
+                    List<WmsAttachmentDTO.UpdateDTO> attachList = badAttachmentMap.get(qcBadKey);
+                    qcDailyReportDTO.setBadAttachments(attachList);
+                }
+
+                // 报告
+                List<QcReportDetailDTO.ViewDTO> reportList = reportMap.get(item.getId());
+
+                qcDailyReportDTO.setReportList(reportList);
+
+                qcDailyReportDTO.setTotalQty(item.getTotalQty());
+
+                QcResultEnum qcResultEnum = item.getQcResult();
+                qcDailyReportDTO.setQcResultName(qcResultEnum != null ? qcResultEnum.getName() : "");
+                qcDailyReportDTO.setQcUserName(item.getQcUserName());
+                qcDailyReportDTO.setQcQty(item.getQcQty());
+                qcDailyReportDTO.setQcBadQty(item.getQcBadQty());
+
+                BigDecimal qcBadRate = item.getQcBadRate();
+                qcDailyReportDTO.setQcBadRate(qcBadRate != null ? qcBadRate.toString() + "%" : "");
+
+                String qcProblemDict = item.getQcProblemDict();
+                qcDailyReportDTO.setQcProblemDict(qcProblemDict);
+                String qcProblemName = dictList.stream().filter(d -> d.getValue().equals(qcProblemDict)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                qcDailyReportDTO.setQcProblemName(qcProblemName);
+
+                String handleModeDict = item.getHandleModeDict();
+                String handleModeName = dictList.stream().filter(d -> d.getValue().equals(handleModeDict)).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+                qcDailyReportDTO.setHandleModeName(handleModeName);
+
+                qcDailyReportDTO.setHandleResultName(qcDailyReportDTO.getQcResultName());
+                qcDailyReportDTO.setBadDescription(item.getBadDescription());
+
+                qcDailyReportDTO.setProductLength(item.getProductLength());
+                qcDailyReportDTO.setProductWidth(item.getProductWidth());
+                qcDailyReportDTO.setProductHeight(item.getProductHeight());
+                qcDailyReportDTO.setBoxLength(item.getBoxLength());
+                qcDailyReportDTO.setBoxWidth(item.getBoxWidth());
+                qcDailyReportDTO.setBoxHeight(item.getBoxHeight());
+                qcDailyReportDTO.setProductNetWeight(item.getProductNetWeight());
+                qcDailyReportDTO.setBoxWeight(item.getBoxWeight());
+
+                Integer unitQty = skuVOList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getUnitQty())).orElse(null);
+                qcDailyReportDTO.setFullBoxQty(unitQty);
+
+                String remark = billRemarkList.stream().filter(r -> r.getMainId().equals(item.getId())).
+                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getRemark())).orElse("");
+                qcDailyReportDTO.setRemark(remark);
+
+                resultList.add(qcDailyReportDTO);
+            }
+        }
+        return resultList;
+    }
+
+    /**
+     * 生成供应商报表excel
+     *
+     * @param resultList
+     * @param response
+     */
+    private void generateDailyRptExcel(List<QcInfoDTO.QcDailyReportDTO> resultList, HttpServletResponse response) {
+        OutputStream outputStream = null;
+        // 声明一个工作簿
+        XSSFWorkbook wb = new XSSFWorkbook();
+        XSSFCellStyle contentCellStyle = wb.createCellStyle();
+        // 水平居左
+        contentCellStyle.setAlignment(HorizontalAlignment.LEFT);
+        //垂直居中
+        contentCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        //自动换行
+        contentCellStyle.setWrapText(true);
+        //下边框
+        contentCellStyle.setBorderBottom(BorderStyle.THIN);
+        //左边框
+        contentCellStyle.setBorderLeft(BorderStyle.THIN);
+        //上边框
+        contentCellStyle.setBorderTop(BorderStyle.THIN);
+        //右边框
+        contentCellStyle.setBorderRight(BorderStyle.THIN);
+
+        // 超链接样式
+        XSSFCellStyle hyperContentCellStyle = wb.createCellStyle();
+        // 水平居左
+        hyperContentCellStyle.setAlignment(HorizontalAlignment.LEFT);
+        //垂直居中
+        hyperContentCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        //自动换行
+        hyperContentCellStyle.setWrapText(true);
+        //下边框
+        hyperContentCellStyle.setBorderBottom(BorderStyle.THIN);
+        //左边框
+        hyperContentCellStyle.setBorderLeft(BorderStyle.THIN);
+        //上边框
+        hyperContentCellStyle.setBorderTop(BorderStyle.THIN);
+        //右边框
+        hyperContentCellStyle.setBorderRight(BorderStyle.THIN);
+
+        Font hyperFont = wb.createFont();
+        hyperFont.setFontHeightInPoints((short) 12);
+        hyperFont.setColor(IndexedColors.BLUE.getIndex());
+        hyperFont.setUnderline(Font.U_SINGLE);
+        hyperContentCellStyle.setFont(hyperFont);
+
+        Font titleFont = wb.createFont();
+        titleFont.setBold(true);
+        titleFont.setFontHeightInPoints((short) 13);
+        CellStyle titleStyle = wb.createCellStyle();
+        // 设置水平居中
+        titleStyle.setAlignment(HorizontalAlignment.LEFT);
+        // 设置垂直对齐的样式为居中对齐;
+        titleStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        titleStyle.setFont(titleFont);
+        // 下边框
+        titleStyle.setBorderBottom(BorderStyle.THIN);
+        // 左边框
+        titleStyle.setBorderLeft(BorderStyle.THIN);
+        //上边框
+        titleStyle.setBorderTop(BorderStyle.THIN);
+        // 右边框
+        titleStyle.setBorderRight(BorderStyle.THIN);
+
+        CellStyle titleNoBorderStyle = wb.createCellStyle();
+        //设置水平居中
+        titleNoBorderStyle.setAlignment(HorizontalAlignment.LEFT);
+        //设置垂直对齐的样式为居中对齐;
+        titleNoBorderStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        titleNoBorderStyle.setFont(titleFont);
+
+        // 创建sheet页
+        XSSFSheet sheet = wb.createSheet("质检日报");
+        sheet.setDefaultColumnWidth(1 * 256);
+        sheet.setColumnWidth(0, 16 * 256);
+        sheet.setColumnWidth(2, 20 * 256);
+        sheet.setColumnWidth(6, 30 * 256);
+        sheet.setColumnWidth(7, 30 * 256);
+        sheet.setColumnWidth(19, 20 * 256);
+        sheet.setColumnWidth(21, 20 * 256);
+
+        int rowNo = 0;
+        // 标题
+        QcUtils.createQcDailyRptTitle(rowNo, sheet, titleStyle);
+
+        // 内容行
+        QcUtils.createQcDailyRptContent(rowNo, resultList, filePublicUrl, sheet, wb, contentCellStyle, hyperContentCellStyle);
+
+        String fileName = StrUtil.format("质检日报数据{}.xlsx", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+        try {
+            response.setCharacterEncoding("utf-8");
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+            outputStream = response.getOutputStream();
+            wb.write(outputStream);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_1015);
+        } finally {
+            IOUtils.closeQuietly(outputStream);
         }
 
     }

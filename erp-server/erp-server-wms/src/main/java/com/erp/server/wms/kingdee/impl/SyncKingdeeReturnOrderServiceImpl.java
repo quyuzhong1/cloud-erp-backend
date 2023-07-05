@@ -106,7 +106,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         //采购员
         resultMap.put("purchaseUserName", findUserDTO.getUserName());
         //退货来源
-        if (SourceTypeEnum.QC_BILL.getCode().equals(entity.getSourceType())) {
+        if (SourceTypeEnum.QC_INFO.getCode().equals(entity.getSourceType())) {
             resultMap.put("sourceTypeName", ReturnOrderSourceEnum.QC.getCode());
         } else {
             resultMap.put("sourceTypeName", ReturnOrderSourceEnum.OTHER.getCode());
@@ -128,7 +128,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
             resultMap.put("returnMode", "A");
         }
 
-        if (SourceTypeEnum.QC_BILL.getCode().equals(entity.getSourceType())) {
+        if (SourceTypeEnum.QC_INFO.getCode().equals(entity.getSourceType())) {
             resultMap.put("sourceType", "检验退料");
         } else {
             resultMap.put("sourceType", "库存退料");

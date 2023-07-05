@@ -3,25 +3,348 @@
 <mapper namespace="com.erp.server.scm.mapper.ReportFormsManageMapper">
     <select id="paging" resultType="com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO$PagingViewDTO">
         SELECT
-            po.purchase_org_name,
-            pos.supplier_name,
-            pod.sku_no,
-            round(SUM(pod.purchase_amount) / COUNT(pod.id)::numeric ,4) AS avgPrice,
-            COUNT(pod.id) AS orderQty,
-            SUM(pod.purchase_amount) AS orderAmount
-        FROM purchase_order_detail pod
-        LEFT JOIN purchase_order po ON pod.purchase_order_id = po.id AND pod.is_deleted = FALSE
-        LEFT JOIN purchase_order_supplier pos ON pos.purchase_order_id = po.id AND po.is_deleted = FALSE
-        WHERE pos.is_deleted = FALSE
-        <if test="params.billDateList">
+            array_to_string(array_agg(t.pid), ',') AS id,
+            purchase_org_name,
+            supplier_name,
+            images_url,
+            sku_no,
+            productName,
+            spu_no,
+            avg(tax_price) AS tax_price,
+            round(SUM(orderAmount) / sum(t.purchase_qty)::numeric ,4) AS avgPrice,
+            COUNT(t.id) AS orderQty,
+            SUM(orderAmount) AS orderAmount,
+            max(createTime) AS createTime
+        FROM (
+            SELECT
+                pod.id AS pid,
+                po.purchase_org_name,
+                pos.supplier_name,
+                pd.images_url,
+                pod.sku_no,
+                pd."name" AS productName,
+                pi.spu_no,
+                pod.tax_price AS tax_price,
+                po.id AS id,
+                pod.purchase_amount AS orderAmount,
+                po.create_time AS createTime,
+                po.purchase_date,
+                pod.purchase_qty
+            FROM purchase_order_detail pod
+            LEFT JOIN purchase_order po ON pod.purchase_order_id = po.id
+            LEFT JOIN purchase_order_supplier pos ON pos.purchase_order_id = po.id
+            LEFT JOIN product_detail pd ON pod.sku_id = pd.id
+            LEFT JOIN product_info pi ON pi.id = pd.product_id
+            WHERE pod.is_deleted = FALSE AND po.approve_status = 'approve'
+            AND po.is_deleted = FALSE
+            AND pos.is_deleted = FALSE
+            AND pd.is_deleted = FALSE
+            AND pi.is_deleted = FALSE
+            <if test="params.billDateList != null and params.billDateList.size > 0">AND
+                po.purchase_date >= #{params.billDateList[0]} AND (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.purchase_date
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size != ''">
+                AND pod.sku_no IN
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
 
-        </if>
-        <if test="params.billDateList != null and params.billDateList.size > 0">
-            and po.purchase_date >= #{params.billDateList[0]} and  (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) >= po.purchase_date
-        </if>
+            <if test="params.spuList != null and params.spuList.size != ''">
+                AND pi.spu_no IN
+                <foreach collection="params.spuList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+                AND po.delivery_warehouse_id in
+                <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.purchaseOrgIdList != null and params.purchaseOrgIdList.size != ''">
+                AND po.purchase_org_id in
+                <foreach collection="params.purchaseOrgIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.supplierIdList != null and params.supplierIdList.size != ''">
+                AND pos.supplier_id in
+                <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        )t
         GROUP BY
-        po.purchase_org_name,
-        pos.supplier_name,
-        pod.sku_no
+        purchase_org_name,
+        supplier_name,
+        images_url,
+        sku_no,
+        productName,
+        spu_no
+        ORDER BY purchase_org_name, supplier_name, createTime DESC
+    </select>
+
+    <select id="exportExcel" resultType="com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO$PagingViewDTO">
+        SELECT
+            id,
+            purchase_org_name,
+            supplier_name,
+            images_url,
+            sku_no,
+            productName,
+            spu_no,
+            tax_price,
+            avgPrice,
+            orderQty,
+            orderAmount,
+            createTime
+        FROM (
+            SELECT
+                array_to_string(array_agg(t.pid), ',') AS id,
+                purchase_org_name,
+                supplier_name,
+                images_url,
+                sku_no,
+                productName,
+                spu_no,
+                avg(tax_price) AS tax_price,
+                round(SUM(orderAmount) / sum(t.purchase_qty)::numeric ,4) AS avgPrice,
+                COUNT(t.id) AS orderQty,
+                SUM(orderAmount) AS orderAmount,
+                max(createTime) AS createTime
+            FROM (
+                SELECT
+                    pod.id AS pid,
+                    po.purchase_org_name,
+                    pos.supplier_name,
+                    pd.images_url,
+                    pod.sku_no,
+                    pd."name" AS productName,
+                    pi.spu_no,
+                    pod.tax_price AS tax_price,
+                    po.id AS id,
+                    pod.purchase_amount AS orderAmount,
+                    po.create_time AS createTime,
+                    po.purchase_date,
+                    pod.purchase_qty
+                FROM purchase_order_detail pod
+                LEFT JOIN purchase_order po ON pod.purchase_order_id = po.id
+                LEFT JOIN purchase_order_supplier pos ON pos.purchase_order_id = po.id
+                LEFT JOIN product_detail pd ON pod.sku_id = pd.id
+                LEFT JOIN product_info pi ON pi.id = pd.product_id
+                WHERE pod.is_deleted = FALSE AND po.approve_status = 'approve'
+                AND po.is_deleted = FALSE
+                AND pos.is_deleted = FALSE
+                AND pd.is_deleted = FALSE
+                AND pi.is_deleted = FALSE
+                <if test="params.billDateList != null and params.billDateList.size > 0">AND
+                    po.purchase_date >= #{params.billDateList[0]} AND (#{params.billDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.purchase_date
+                </if>
+                <if test="params.skuNoList != null and params.skuNoList.size != ''">
+                    AND pod.sku_no IN
+                    <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+
+                <if test="params.spuList != null and params.spuList.size != ''">
+                    AND pi.spu_no IN
+                    <foreach collection="params.spuList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+                    AND po.delivery_warehouse_id in
+                    <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.purchaseOrgIdList != null and params.purchaseOrgIdList.size != ''">
+                    AND po.purchase_org_id in
+                    <foreach collection="params.purchaseOrgIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <if test="params.supplierIdList != null and params.supplierIdList.size != ''">
+                    AND pos.supplier_id in
+                    <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
+                        #{item}
+                    </foreach>
+                </if>
+                <!--权限-->
+                <if test="params.permissionSql!=null and params.permissionSql!=''">
+                    ${params.permissionSql}
+                </if>
+            )t
+            WHERE 1 = 1
+            GROUP BY
+            purchase_org_name,
+            supplier_name,
+            images_url,
+            sku_no,
+            productName,
+            spu_no
+        )tt
+        WHERE 1 = 1
+        <if test="params.ids != null and params.ids.size != ''">
+            AND tt.id in
+            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        ORDER BY purchase_org_name, supplier_name, createTime DESC
+    </select>
+
+    <select id="test" resultType="com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO$PagingViewDTO">
+        SELECT
+		    t.purchase_org_name,
+            t.supplier_name,
+            t.images_url,
+            t.productName,
+            t.spu_no,
+			t.sku_no,
+			sum(t.orderQty),
+		    sum(t.orderAmount),
+			sum(t.receiveQty),
+			sum(t.receiveGiftQty),
+			sum(t.receiveAmount),
+			sum(t.stockInQty),
+			sum(t.stockInGiftQty),
+			sum(t.stockInAmount),
+			sum(t.refundQty),
+			sum(t.replenishQty),
+			sum(t.returnAmount)
+		FROM(
+		    SELECT
+                po.purchase_org_name,
+                pos.supplier_name,
+                pd.images_url,
+                pd."name" AS productName,
+				pd.sku_no,
+                pi.spu_no,
+				count(po.id) AS orderQty,
+				sum(pod.purchase_amount) orderAmount,
+				0 AS receiveQty,
+				0 AS receiveGiftQty,
+				0 AS receiveAmount,
+				0 as stockInQty,
+				0 as stockInGiftQty,
+				0 AS stockInAmount,
+				0 as refundQty,
+				0 as replenishQty,
+				0 AS returnAmount
+            FROM purchase_order_detail pod
+            LEFT JOIN purchase_order po ON pod.purchase_order_id = po.id  AND po.is_deleted = FALSE
+            LEFT JOIN purchase_order_supplier pos ON pos.purchase_order_id = po.id AND pos.is_deleted = FALSE
+            LEFT JOIN product_detail pd ON pod.sku_id = pd.id AND pd.is_deleted = FALSE
+            LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+            WHERE pod.is_deleted = FALSE AND po.approve_status = 'approve'
+			GROUP BY  po.purchase_org_name,
+                pos.supplier_name,
+                pd.images_url,
+                pd."name",
+				pd.sku_no,
+                pi.spu_no
+
+			UNION ALL
+
+			SELECT
+                po.purchase_org_name,
+                pos.supplier_name,
+                pd.images_url,
+                pd."name" AS productName,
+                pd.sku_no,
+                pi.spu_no,
+				0 AS orderQty,
+                0 AS orderAmount,
+				prd.receive_qty as receiveQty,
+				prd.exceed_qty as receiveGiftQty,
+				round(prd.receive_qty * pod.tax_price::numeric ,4) AS receiveAmount,
+				0 as stockInQty,
+				0 as stockInGiftQty,
+				0 AS stockInAmount,
+				0 as refundQty,
+				0 as replenishQty,
+				0 AS returnAmount
+			FROM po_receive_detail prd
+			LEFT JOIN po_receive pr ON prd.main_id = pr."id" AND pr.is_deleted = FALSE
+			LEFT JOIN purchase_order po ON pr.purchase_order_id = po.id AND po.is_deleted = FALSE
+			LEFT JOIN purchase_order_detail pod ON pod.id = prd.purchase_order_detail_id AND pod.is_deleted = FALSE
+			LEFT JOIN purchase_order_supplier pos ON pos.purchase_order_id = po.id AND pos.is_deleted = FALSE
+			LEFT JOIN product_detail pd ON pod.sku_id = pd.id AND pd.is_deleted = FALSE
+            LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+			WHERE prd.is_deleted = FALSE AND pr.approve_status = 'approve'
+
+			UNION ALL
+
+			SELECT
+                po.purchase_org_name,
+                pos.supplier_name,
+                pd.images_url,
+                pd."name" AS productName,
+                pi.spu_no,
+                pd.sku_no,
+				0 AS orderQty,
+                0 AS orderAmount,
+				0 AS receiveQty,
+				0 AS receiveGiftQty,
+				0 AS receiveAmount,
+				pid.stock_in_qty as stockInQty,
+				pid.exceed_qty as stockInGiftQty,
+				round(pid.stock_in_qty * pod.tax_price::numeric ,4) AS stockInAmount,
+				0 as refundQty,
+				0 as replenishQty,
+				0 AS returnAmount
+			FROM po_instock_detail pid
+			LEFT JOIN po_instock pit ON pid.main_id = pit."id" AND pid.is_deleted = FALSE
+			LEFT JOIN purchase_order po ON pit.purchase_order_id = po.id AND po.is_deleted = FALSE
+			LEFT JOIN purchase_order_detail pod ON pod.id = pid.purchase_order_detail_id AND pod.is_deleted = FALSE
+			LEFT JOIN purchase_order_supplier pos ON pos.purchase_order_id = po.id AND pos.is_deleted = FALSE
+			LEFT JOIN product_detail pd ON pod.sku_id = pd.id AND pd.is_deleted = FALSE
+            LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+			WHERE pid.is_deleted = FALSE AND pit.approve_status = 'approve'
+
+			UNION ALL
+
+			SELECT
+                po.purchase_org_name,
+                pos.supplier_name,
+                pd.images_url,
+                pd."name" AS productName,
+                pi.spu_no,
+                pd.sku_no,
+				0 AS orderQty,
+                0 AS orderAmount,
+				0 AS receiveQty,
+				0 AS receiveGiftQty,
+				0 AS receiveAmount,
+				0 as stockInQty,
+				0 as stockInGiftQty,
+				0 AS stockInAmount,
+				prd.deduct_amount_qty as refundQty,
+				prd.replenish_qty as replenishQty,
+				0 AS returnAmount
+			FROM po_return_detail prd
+			LEFT JOIN po_return pr ON prd.main_id = pr."id" AND pr.is_deleted = FALSE
+			LEFT JOIN purchase_order po ON pr.purchase_order_id = po.id AND po.is_deleted = FALSE
+			LEFT JOIN purchase_order_detail pod ON pod.id = prd.purchase_order_detail_id AND pod.is_deleted = FALSE
+			LEFT JOIN purchase_order_supplier pos ON pos.purchase_order_id = po.id AND pos.is_deleted = FALSE
+			LEFT JOIN product_detail pd ON pod.sku_id = pd.id AND pd.is_deleted = FALSE
+            LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+			WHERE prd.is_deleted = FALSE AND pr.approve_status = 'approve'
+		) t
+
+		group by
+		    t.purchase_org_name,
+            t.supplier_name,
+            t.images_url,
+            t.productName,
+            t.spu_no,
+			t.sku_no
     </select>
 </mapper>

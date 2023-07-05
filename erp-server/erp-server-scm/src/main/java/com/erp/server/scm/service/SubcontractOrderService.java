@@ -6,6 +6,8 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
 
@@ -144,9 +146,9 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @author Will
      * @date: 2023/6/9 16:20
      * @param detailId
-     * @return List<PurchaseOrderListDTO>
+     * @return List<PurchaseOrderDTO.ListDTO>
      */
-    List<SubcontractOrderDTO.PurchaseOrderListDTO> listPurchaseOrderByDetailId(String detailId);
+    List<PurchaseOrderDTO.ListDTO> listPurchaseOrderByDetailId(String detailId);
     /**
      * @description: 结束交货
      * @author Will
@@ -170,7 +172,7 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @date: 2023/6/12 14:16
      * @param list
      */
-    void generatePo(ValidList<SubcontractOrderDTO.GeneratePoDTO> list);
+    void generatePo(ValidList<SubcontractOrderDTO.GeneratePoDTO> list,Boolean isAuto);
     /**
      * 添加已有产品显示
      * @author Will
@@ -179,4 +181,40 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @return List<ViewAddDetailDTO>
      */
     List<SubcontractOrderDTO.ViewAddDetailDTO> viewAddDetail(SubcontractOrderDTO.ViewAddDetailParamDTO dto);
+    /**
+     * @description: 作废
+     * @author Will
+     * @date: 2023/6/15 9:37
+     * @param ids
+     * @param remark
+     */
+    void invalid(List<String> ids, String remark);
+    /**
+     * @description: 委外变更
+     * @author Will
+     * @date: 2023/6/20 12:14
+     * @param id
+     * @return ViewDTO
+     */
+    SubcontractChangeDTO.ViewDTO viewSubcontractChange(String id);
+    /**
+     * @description: 根据来源ids查询
+     * @author Will
+     * @date: 2023/6/20 14:49
+     * @param sourceIds
+     * @return List<SubcontractOrderEntity>
+     */
+    List<SubcontractOrderEntity> listBySourceId(List<String> sourceIds);
+
+    /**
+     * 修改金蝶同步信息
+     * @Author Luo_WG
+     * @Date 2023/5/25 10:43
+     * @param ids
+     * @param syncKingdeeStatus
+     * @param syncKingdeeId
+     * @param syncOperate
+     * @return java.lang.Boolean
+     **/
+    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
 }

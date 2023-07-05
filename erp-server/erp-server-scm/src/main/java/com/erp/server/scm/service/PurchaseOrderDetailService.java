@@ -67,14 +67,6 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
 
      */
     void removeByPurchaseOrderIds(List<String> purchaseOrderIds);
-    /**
-     * @description: 根据ids更新
-     * @author Will
-     * @date: 2023/3/29 15:32
-     * @param arrivalStatus
-     * @param ids
-     */
-    void updateArrivalStatusByIds(String arrivalStatus, List<String> ids);
 
     /**
      * @description: 更新生成PO类型
@@ -110,4 +102,38 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @return ViewProductDTO
      */
     List<PurchaseOrderDetailDTO.ViewProductDTO> viewProduct(PurchaseOrderDetailDTO.ProductSearchParamDTO dto);
+    /**
+     * @description: 更新订单到货状态
+     * @author Will
+     * @date: 2023/6/19 15:20
+     * @param entity
+     * @return Boolean
+     */
+    Boolean updatePoArrivalStatus(PurchaseOrderDetailEntity entity);
+    /**
+     * @description: 根据来源明细ids查询
+     * @author Will
+     * @date: 2023/6/19 15:48
+     * @param sourceDetailIds
+     * @return List<PurchaseOrderDetailEntity>
+     */
+    List<PurchaseOrderDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds);
+
+    /**
+     * @description: 根据ids更新
+     * @author zhangchunlin
+     * @date: 2023/6/20 10:33
+     * @param arrivalStatus
+     * @param ids
+     * @param remark
+     *
+     */
+    void updateArrivalStatusByIds(String arrivalStatus, List<String> ids, List<PurchaseOrderDetailEntity> purchaseOrderDetailList, String remark);
+
+    /**
+     * 根据sku id集合获取最新的一个审核通过的采购订单明细，按采购日期倒序
+     * @param skuIds
+     * @return List<PurchaseOrderDetailEntity>
+     */
+    List<PurchaseOrderDetailEntity> getLatest(List<String> skuIds);
 }

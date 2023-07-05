@@ -2,7 +2,6 @@ package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -24,7 +23,6 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -35,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2022/11/21 11:35
  */
 @Slf4j
@@ -163,8 +161,8 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
-    @GlobalTransactional(propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public String getBusinessNo(SysCodeDTO dto) {
         //加锁
         RLock lock = redisson.getLock(DistributedLockEnum.SYS_GEN_DOCNO.getCode() + ":" + dto.getType());
@@ -244,13 +242,10 @@ public class SysCodeServiceImpl extends ServiceImpl<SysCodeMapper, SysCodeEntity
      * @param num
      */
     public void updateNumByCode (String id,Integer num) {
-        LambdaUpdateWrapper<SysCodeEntity> updateWrapper = new LambdaUpdateWrapper<>();
-        updateWrapper.eq(SysCodeEntity::getId,id);
-        updateWrapper.set(SysCodeEntity::getNum,num + 1);
-        updateWrapper.set(SysCodeEntity::getUpdateTime,new Date());
-        this.update(updateWrapper);
-        /*LoginUser loginUser = commonService.getUserInfo();
-        this.baseMapper.updateNum(id, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());*/
+      lambdaUpdate().eq(SysCodeEntity::getId,id)
+              .set(SysCodeEntity::getNum,num + 1)
+              .set(SysCodeEntity::getUpdateTime,new Date())
+              .update();
     }
 
 }

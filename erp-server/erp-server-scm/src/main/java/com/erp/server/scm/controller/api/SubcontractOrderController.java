@@ -7,6 +7,8 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.server.scm.service.SubcontractOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +38,7 @@ public class SubcontractOrderController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "scm:subcontractOrder:tabList",
+            menuCode = "scm:subcontractOrder:paging",
             tableAlias = "so"
     )
     public ApiResult<List<SubcontractOrderDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
@@ -65,10 +67,10 @@ public class SubcontractOrderController extends BaseController {
      * @author Will
      * @date: 2023/6/9 16:16
      * @param dto
-     * @return ApiResult<PurchaseOrderListDTO>
+     * @return ApiResult<List<PurchaseOrderDTO.ListDTO>>
      */
     @PostMapping("/listPurchaseOrderByDetailId")
-    public ApiResult<List<SubcontractOrderDTO.PurchaseOrderListDTO>> listPurchaseOrderByDetailId(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<List<PurchaseOrderDTO.ListDTO>> listPurchaseOrderByDetailId(@RequestBody @Validated BaseIdDTO dto) {
         return success(subcontractOrderService.listPurchaseOrderByDetailId(dto.getId()));
     }
 
@@ -81,11 +83,6 @@ public class SubcontractOrderController extends BaseController {
    * @return ApiResult<Void>
    */
    @PostMapping("/add")
-   @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-           tableField = "create_user_id",
-           menuCode = "scm:subcontractOrder:add",
-           serviceClass = SubcontractOrderService.class,
-           keyIdName = "id")
    public ApiResult<Void> add(@RequestBody @Validated SubcontractOrderDTO.AddDTO dto) {
       subcontractOrderService.add(dto);
       return success();
@@ -119,7 +116,7 @@ public class SubcontractOrderController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:subcontractOrder:addAndSubmit",
+            menuCode = "scm:subcontractOrder:submit",
             serviceClass = SubcontractOrderService.class,
             keyIdName = "id")
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated SubcontractOrderDTO.AddDTO dto) {
@@ -137,7 +134,7 @@ public class SubcontractOrderController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:subcontractOrder:updateAndSubmit",
+            menuCode = "scm:subcontractOrder:submit",
             serviceClass = SubcontractOrderService.class,
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SubcontractOrderDTO.UpdateDTO dto) {
@@ -246,11 +243,29 @@ public class SubcontractOrderController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:subcontractOrder:cancel",
+            menuCode = "scm:subcontractOrder:cancelProcess",
             serviceClass = SubcontractOrderService.class,
             keyIdName = "ids")
     public ApiResult<Void> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         subcontractOrderService.cancelProcess(dto.getIds());
+        return success();
+    }
+
+    /**
+     * 批量作废
+     * @author Will
+     * @date: 2023-06-08
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/invalid")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "scm:subcontractOrder:invalid",
+            serviceClass = SubcontractOrderService.class,
+            keyIdName = "ids")
+    public ApiResult<Void> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        subcontractOrderService.invalid(dto.getIds(),dto.getRemark());
         return success();
     }
 
@@ -317,7 +332,7 @@ public class SubcontractOrderController extends BaseController {
      */
     @PostMapping(value = "/generatePo")
     public ApiResult<Void> generatePo(@RequestBody @Validated ValidList<SubcontractOrderDTO.GeneratePoDTO> list) {
-         subcontractOrderService.generatePo(list);
+         subcontractOrderService.generatePo(list,Boolean.FALSE);
         return success();
     }
 
@@ -332,6 +347,20 @@ public class SubcontractOrderController extends BaseController {
     public ApiResult<List<SubcontractOrderDTO.ViewAddDetailDTO>> viewAddDetail(@RequestBody @Validated SubcontractOrderDTO.ViewAddDetailParamDTO dto) {
         List<SubcontractOrderDTO.ViewAddDetailDTO> list = subcontractOrderService.viewAddDetail(dto);
         return success(list);
+    }
+
+
+    /**
+     * 委外变更数据显示
+     * @author Will
+     * @date: 2023/6/12 16:00
+     * @param id
+     * @return ApiResult<AddDTO>
+     */
+    @GetMapping("/viewSubcontractChange")
+    public ApiResult<SubcontractChangeDTO.ViewDTO> viewSubcontractChange(@RequestParam("id") String id) {
+        SubcontractChangeDTO.ViewDTO viewDTO = subcontractOrderService.viewSubcontractChange(id);
+        return success(viewDTO);
     }
 
 }

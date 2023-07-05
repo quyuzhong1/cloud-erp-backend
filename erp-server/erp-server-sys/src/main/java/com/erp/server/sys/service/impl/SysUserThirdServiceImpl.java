@@ -2,20 +2,19 @@ package com.erp.server.sys.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-
-import com.common.core.utils.BeanMapper;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.vo.LoginUser;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.FindUserByThirdDTO;
-import com.erp.model.sys.vo.ThirdUnionDTO;
-import com.common.business.vo.LoginUser;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
+import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.server.sys.mapper.SysUserThirdMapper;
 import com.erp.server.sys.service.SysUserThirdService;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -169,5 +168,17 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
         List<SysUserThirdEntity> sysUserThirdEntitys =  this.list(queryWrapper);
         List<ThirdUnionDTO> thirdUnionDTOs = BeanMapperUtils.copyList(ThirdUnionDTO.class,sysUserThirdEntitys);
         return thirdUnionDTOs;
+    }
+
+    /**
+     * 获取第三方绑定的用户
+     * @author yl
+     * @date 2023-06-19 20:00
+     * @param
+     * @return java.util.List<com.common.business.dto.FindUserDTO>
+     */
+    @Override
+    public List<FindUserDTO> listThirdBindUser() {
+        return baseMapper.listThirdBindUser();
     }
 }

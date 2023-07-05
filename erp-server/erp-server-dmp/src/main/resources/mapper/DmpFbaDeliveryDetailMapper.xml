@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.DmpFbaDeliveryDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpFbaDeliveryDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="fbastock_id" property="fbastockId" />
+       <result column="shipp_batchnew_id" property="shippBatchnewId" />
+       <result column="platform_sku" property="platformSku" />
+       <result column="stock_id" property="stockId" />
+       <result column="shipp_no" property="shippNo" />
+       <result column="weight" property="weight" />
+       <result column="delivery_num" property="deliveryNum" />
+       <result column="use_delivery_num" property="useDeliveryNum" />
+       <result column="remark" property="remark" />
+       <result column="cost" property="cost" />
+       <result column="company_id" property="companyId" />
+       <result column="fba_warehouse_id" property="fbaWarehouseId" />
+       <result column="amazonsite" property="amazonsite" />
+       <result column="volume" property="volume" />
+       <result column="logic_compute_cost" property="logicComputeCost" />
+       <result column="custom_compute_cost" property="customComputeCost" />
+       <result column="shared_quantity" property="sharedQuantity" />
+       <result column="sale_id" property="saleId" />
+       <result column="package_cost" property="packageCost" />
+       <result column="lock_state" property="lockState" />
+       <result column="lock_qty" property="lockQty" />
+       <result column="lock_time" property="lockTime" />
+       <result column="lock_remark" property="lockRemark" />
+       <result column="lock_version" property="lockVersion" />
+       <result column="salename" property="salename" />
+       <result column="packtype" property="packtype" />
+       <result column="asin" property="asin" />
+       <result column="msku" property="msku" />
+       <result column="correlation_num" property="correlationNum" />
+       <result column="apply_quantity" property="applyQuantity" />
+       <result column="shipment_status" property="shipmentStatus" />
+       <result column="logistics_code" property="logisticsCode" />
+       <result column="stock_name" property="stockName" />
+       <result column="pictururl" property="pictururl" />
+       <result column="fnsku" property="fnsku" />
+       <result column="sku" property="sku" />
+       <result column="state" property="state" />
+       <result column="shop_name" property="shopName" />
+       <result column="shop_id" property="shopId" />
+       <result column="main_id" property="mainId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        create_user_id,
+        create_user_name,
+        update_time,
+        update_user_id,
+        update_user_name,
+        version,
+        is_deleted,
+        fbastock_id, shipp_batchnew_id, platform_sku, stock_id, shipp_no, weight, delivery_num, use_delivery_num, remark, cost, company_id, fba_warehouse_id, amazonsite, volume, logic_compute_cost, custom_compute_cost, shared_quantity, sale_id, package_cost, lock_state, lock_qty, lock_time, lock_remark, lock_version, salename, packtype, asin, msku, correlation_num, apply_quantity, shipment_status, logistics_code, stock_name, pictururl, fnsku, sku, state, shop_name, shop_id, main_id
+    </sql>
+
+
+</mapper>

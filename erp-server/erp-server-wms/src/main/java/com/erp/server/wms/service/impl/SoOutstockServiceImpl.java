@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -15,6 +16,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.service.RedisService;
 import com.common.business.service.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -35,6 +37,7 @@ import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
+import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -108,6 +111,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private SyncKingdeeSoOutstockService syncKingdeeSoOutstockService;
+
+    @Resource
+    private RedisService redisService;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -233,7 +239,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(rejectStatus)).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus), "");
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus), "",null);
         if (result) {
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
@@ -286,6 +292,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (soInfo != null) {
             result.setCustomerName(soInfo.getCustomerName());
             result.setSoCode(soInfo.getCode());
+            result.setSoRemark(soInfo.getSoRemark());
             result.setReceiveAddress(soInfo.getReceiveAddress());
             result.setReceiverName(soInfo.getReceiverName());
             result.setDeliveryModeName(soInfo.getDeliveryModeName());
@@ -341,7 +348,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             approveStatus = ApproveStatusEnum.REJECT;
             content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
         }
-        Boolean result = this.updateApproveStatus(list, approveStatus, userName);
+        Boolean result = this.updateApproveStatus(list, approveStatus, userName,LocalDateTime.now());
         if (result) {
             //处理对应数据
             if (isPass) {
@@ -375,7 +382,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //销售订单的id
         List<String> soIds = list.stream().map(SoOutstockEntity::getSoId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(soIds);
-        List<String> soDetailIdList = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
+        List<String> detailIdList = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
         List<String> allList = list.stream().map(SoOutstockEntity::getId).collect(Collectors.toList());
         //发货通知单
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
@@ -386,6 +393,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> noticeIdList = noticeSoOutstockList.stream().map(SoOutstockEntity::getSourceId).collect(Collectors.toList());
         //发货通知集合
         List<SoDeliveryNoticeEntity> noticeList = CollectionUtils.isNotEmpty(noticeIdList) ? soDeliveryNoticeService.listByIds(noticeIdList) : Collections.emptyList();
+        //发货通知单详情
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailByMainIds(noticeIdList);
+        detailIdList.addAll(soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList()));
         for (SoDeliveryNoticeEntity item : noticeList) {
             String deliveryNoticeId = item.getId();
             SoOutstockEntity noticeSoOutstock = noticeSoOutstockList.stream().filter(o -> o.getSourceId().equals(deliveryNoticeId)).findFirst().orElse(null);
@@ -400,7 +410,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soDeliveryNoticeService.updateBatchById(noticeList);
 
         //这个是销售订单的 这个要统计 存在多个
-        List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockDetailService.listDetailBySoDetailIds(soDetailIdList);
+        List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockDetailService.listDetailBySoDetailIds(detailIdList);
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         soOutstockDetailList = soOutstockDetailList.stream().filter(s -> s.getApproveStatus().equals(approveStatus)).collect(Collectors.toList());
         //分组
@@ -445,7 +455,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //销售订单的id
         List<String> soIds = list.stream().map(SoOutstockEntity::getSoId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByMainIds(soIds);
-        List<String> soDetailIdList = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
+        List<String> detailIdList = soDetailList.stream().map(SoDetailEntity::getId).collect(Collectors.toList());
         //发货通知单
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
         //发货通知单的
@@ -455,6 +465,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<String> noticeIdList = noticeSoOutstockList.stream().map(SoOutstockEntity::getSourceId).collect(Collectors.toList());
         //发货通知集合
         List<SoDeliveryNoticeEntity> noticeList = CollectionUtils.isNotEmpty(noticeIdList) ? soDeliveryNoticeService.listByIds(noticeIdList) : Collections.emptyList();
+        //发货通知单详情
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeDetailService.listDetailByMainIds(noticeIdList);
+        detailIdList.addAll(soDeliveryNoticeDetailList.stream().map(SoDeliveryNoticeDetailEntity::getId).collect(Collectors.toList()));
         for (SoDeliveryNoticeEntity item : noticeList) {
             item.setDeliveryStatus(Boolean.FALSE);
         }
@@ -462,7 +475,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soDeliveryNoticeService.updateBatchById(noticeList);
 
         //这个是销售订单的 这个要统计 存在多个
-        List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockDetailService.listDetailBySoDetailIds(soDetailIdList);
+        List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = soOutstockDetailService.listDetailBySoDetailIds(detailIdList);
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         //分组
         Map<String, List<SoOutstockDetailDTO.DeliveryQtyDTO>> map = soOutstockDetailList.stream().collect(Collectors.groupingBy(SoOutstockDetailDTO.DeliveryQtyDTO::getSoDetailId));
@@ -496,26 +509,23 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public Boolean disApprove(BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<SoOutstockEntity> list = this.listByIds(ids);
-        //审核中
-        String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
+
         //审核通过
         String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
         //待提交
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         List<String> statusList = new ArrayList<>(2);
-        statusList.add(approveIngStatus);
         statusList.add(approveStatus);
         long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveIngStatus))).
-                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus), "");
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus), "",null);
         //反审核 TODO 需要做什么
         if (result) {
             //反审核
@@ -523,8 +533,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             inventoryTransCoreService.batchUnApprove(batchUnApproveDTO);
             handleDisApproveData(list);
             //添加日志
-            String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
-            operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "状态变更");
+            String ingContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
+            operateLogService.batchAddModuleOperateLog(ingContent, ModuleTypeEnum.SO_OUT_STOCK.getCode(), rejectPairList, "状态变更");
 
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeeSoOutstockService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
@@ -550,7 +560,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         //TODO 撤销流程
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus), "");
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus), "",null);
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("销售出库单【%s】取消流程", ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "取消流程操作");
         return result;
@@ -692,6 +702,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     public PagingVO<SoOutstockDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
         SoOutstockDTO.PagingParamDTO params = dto.getParams();
+        params.setNeSourceType(SourceTypeEnum.SAL_OUTSTOCK.getCode());
         params.setPermissionSql(dto.getPermissionSql());
         String searchType = params.getSearchType();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
@@ -764,6 +775,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public Boolean exportExcel(SoOutstockDTO.ExportDTO dto, HttpServletResponse response) {
         String searchType = dto.getSearchType();
         List<String> approveList = listBySearchType(searchType);
+        dto.setNeSourceType(SourceTypeEnum.SAL_OUTSTOCK.getCode());
         //获取导出数据
         List<SoOutstockDTO.PagingViewDTO> list = baseMapper.listExport(dto, approveList);
         if (CollectionUtils.isEmpty(list)) {
@@ -1106,11 +1118,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @param statusEnum
      * @return
      */
-    private Boolean updateApproveStatus(List<SoOutstockEntity> list, ApproveStatusEnum statusEnum, String approveUserName) {
+    private Boolean updateApproveStatus(List<SoOutstockEntity> list, ApproveStatusEnum statusEnum, String approveUserName,LocalDateTime approveTime) {
         if (CollectionUtils.isNotEmpty(list)) {
             for (SoOutstockEntity item : list) {
                 item.setApproveStatus(statusEnum);
                 item.setApproveUserName(approveUserName);
+                item.setApproveTime(approveTime);
+                if (approveTime != null) {
+                    item.setActualDeliveryDate(approveTime.toLocalDate());
+                }
             }
             return this.updateBatchById(list);
         }
@@ -1137,6 +1153,28 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 .set(StringUtils.isNotBlank(syncKingdeeId), SoOutstockEntity::getSyncKingdeeId, syncKingdeeId)
                 .set(StringUtils.isNotBlank(syncOperate), SoOutstockEntity::getSyncOperate, syncOperate)
                 .update();
+    }
+
+
+    /**
+     * 根据code 获取到销售出库单信息
+     *
+     * @param code
+     * @return com.erp.model.wms.entity.SoOutstockEntity
+     * @author yl
+     * @date 2023-06-28 10:17
+     */
+    @Override
+    public String getByCode(String code) {
+        LambdaQueryWrapper<SoOutstockEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(SoOutstockEntity::getCode, code);
+        queryWrapper.last("LIMIT 1");
+        SoOutstockEntity entity = this.getOne(queryWrapper);
+        if (!Objects.isNull(entity)) {
+            String id = entity.getId();
+            return id;
+        }
+        return "";
     }
 
 }

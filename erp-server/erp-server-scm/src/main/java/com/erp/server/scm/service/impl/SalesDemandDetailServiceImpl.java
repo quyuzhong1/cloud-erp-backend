@@ -9,6 +9,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.SalesDemandDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -18,6 +19,7 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.SalesDemandDetailMapper;
 import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.SalesDemandDetailService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -55,20 +57,23 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
     private ModuleOperateLogService moduleOperateLogService;
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public void add(List<SalesDemandDetailDTO.AddDTO> details, String salesDemandId) {
         if (CollectionUtils.isEmpty(details)) {
             return;
         }
         List<SalesDemandDetailEntity> list = BeanMapperUtils.copyList(SalesDemandDetailEntity.class, details);
-
-
+        //更新sku为不可删除标识
+        List<String> skuIds = list.stream().map(SalesDemandDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        plmTaskFeign.updateOccupyStatus(skuIds);
         //处理关联数据
         doOpHandleDataId(list,salesDemandId);
         this.saveBatch(list);
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public void update(List<SalesDemandDetailDTO.UpdateDTO> details,String salesDemandId) {
         if (details == null) {
@@ -90,6 +95,9 @@ public class SalesDemandDetailServiceImpl extends SuperServiceImpl<SalesDemandDe
 
         doOpHandleDataId(newList,salesDemandId);
         this.saveOrUpdateBatch(newList);
+        //更新sku为不可删除标识
+        List<String> skuIds = newList.stream().map(SalesDemandDetailEntity::getSkuId).collect(Collectors.toList());
+        plmTaskFeign.updateOccupyStatus(skuIds);
     }
 
     /**

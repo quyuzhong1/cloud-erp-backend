@@ -1,5 +1,6 @@
 package com.erp.model.dmp.gyy;
 
+import com.erp.model.dmp.dto.CleanBaseDTO;
 import com.erp.model.dmp.gyy.bean.CustomAttrBean;
 import com.erp.model.dmp.gyy.bean.CombineItemsBean;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -9,13 +10,14 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 @Data
 @NoArgsConstructor
 @ToString
-public class GyySkuInfoEntity {
+public class GyySkuInfoEntity extends CleanBaseDTO {
     /**
      * id : 399161543391
      * create_date : 2021-10-25 16:42:33
@@ -264,9 +266,4 @@ public class GyySkuInfoEntity {
      */
     @SerializedName("combine_items")
     private List<CombineItemsBean> combineItems;
-    /**
-     * 清洗数据
-     */
-    private Boolean isClean;
-    
 }

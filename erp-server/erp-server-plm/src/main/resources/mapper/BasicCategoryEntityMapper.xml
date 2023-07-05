@@ -22,7 +22,7 @@
              pd.id AS sku_id
           FROM product_info pi
           INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
-          WHERE pi.delete_state=0 AND pi.is_deleted = FALSE
+          WHERE  pi.is_deleted = FALSE
           <if test="categoryIds!=null and categoryIds.size>0">
              AND pi.category_id  IN
               <foreach collection="categoryIds" item="categoryId" open="(" separator="," close=")">

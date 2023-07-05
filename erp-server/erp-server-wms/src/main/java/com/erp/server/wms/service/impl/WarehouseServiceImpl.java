@@ -109,8 +109,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 listDTO.setDisabled(true);
             }
         }
-
-        return resultList;
+        return resultList.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
     }
 
 
@@ -162,7 +161,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         String code = dto.getKingdeeWarehouseCode();
         String name = dto.getName();
         checkName(warehouseId, name);
-        checkKingdeeWarehouseCode(warehouseId,code);
+        checkKingdeeWarehouseCode(warehouseId, code);
         BeanMapper.copy(dto, warehouse);
         Boolean result = this.updateById(warehouse);
         if (result) {
@@ -551,7 +550,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(new ArrayList<>());
         List<WarehouseEntity> warehouseList = this.list();
-        WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, dictBasicList, userList, orgList,warehouseList);
+        WarehouseExcelListener excelListenerUtil = new WarehouseExcelListener(this, dictBasicList, userList, orgList, warehouseList);
         try {
             EasyExcel.read(excelFile.getInputStream(), WarehouseExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
@@ -589,37 +588,38 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId) {
-        return  this.lambdaUpdate()
-                .eq(WarehouseEntity::getId,id)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),WarehouseEntity::getSyncKingdeeStatus,syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),WarehouseEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId),WarehouseEntity::getSyncKingdeeId,syncKingdeeId)
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId,String syncOperate) {
+        return this.lambdaUpdate()
+                .eq(WarehouseEntity::getId, id)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), WarehouseEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), WarehouseEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), WarehouseEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncOperate), WarehouseEntity::getSyncOperate, syncOperate)
                 .update();
     }
 
     @Override
     public WarehouseDTO.UpdateDTO detailWithCache(String id) {
-        if(StrUtils.isEmpty(id)) {
+        if (StrUtils.isEmpty(id)) {
             return null;
         }
         String redisKey = WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(id);
         Object obj = redisService.getCacheObject(redisKey);
-        if(Objects.nonNull(obj)) {
+        if (Objects.nonNull(obj)) {
             // 判断是否空缓存
-            if(Objects.equals(RedisService.EMPTY_CACHE_VALUE,obj)) {
-                log.info("从redis缓存中查询到仓库信息，仓库id:{}，内容为空",id);
+            if (Objects.equals(RedisService.EMPTY_CACHE_VALUE, obj)) {
+                log.info("从redis缓存中查询到仓库信息，仓库id:{}，内容为空", id);
                 return new WarehouseDTO.UpdateDTO();
             }
-            log.info("从redis缓存中查询到仓库信息，仓库id:{}，内容:{}",id,obj);
+            log.info("从redis缓存中查询到仓库信息，仓库id:{}，内容:{}", id, obj);
             WarehouseDTO.UpdateDTO warehouseDTO = (WarehouseDTO.UpdateDTO) obj;
             return warehouseDTO;
         }
         // 从数据库中查询
         WarehouseEntity warehouse = this.getById(id);
         if (Objects.isNull(warehouse)) {
-            log.info("从数据库中没有查询到仓库信息，仓库id:{}，缓存空",id);
-            redisService.setCacheObject(redisKey,RedisService.EMPTY_CACHE_VALUE, RedisService.ONE_DAY_CACHE_TIME, TimeUnit.SECONDS);
+            log.info("从数据库中没有查询到仓库信息，仓库id:{}，缓存空", id);
+            redisService.setCacheObject(redisKey, RedisService.EMPTY_CACHE_VALUE, RedisService.ONE_DAY_CACHE_TIME, TimeUnit.SECONDS);
             return new WarehouseDTO.UpdateDTO();
         }
         WarehouseDTO.UpdateDTO dto = new WarehouseDTO.UpdateDTO();
@@ -628,6 +628,22 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         dto.setApproveStatusCode(approveStatusEnum.getStatus());
         redisService.setCacheObject(redisKey, dto, RedisService.ONE_DAY_CACHE_TIME, TimeUnit.SECONDS);
         return dto;
+    }
+
+    /**
+     * 根据金蝶仓库code 获取到对应仓库信息
+     *
+     * @param kingdeeWarehouseCodeList
+     * @return java.util.List<com.erp.model.wms.entity.WarehouseEntity>
+     * @author yl
+     * @date 2023-06-27 16:34
+     */
+    @Override
+    public List<WarehouseEntity> listByKingdeeCodeList(List<String> kingdeeWarehouseCodeList) {
+        if (CollectionUtils.isEmpty(kingdeeWarehouseCodeList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(WarehouseEntity::getKingdeeWarehouseCode,kingdeeWarehouseCodeList).list();
     }
 
     /**
@@ -694,7 +710,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     private void removeCache(List<String> ids) {
         List<String> redisKeys = Lists.newArrayList();
-        ids.stream().forEach(id->{
+        ids.stream().forEach(id -> {
             String redisKey = WmsRedisKeyEnum.WMS_WAREHOUSE_DETAIL_ID.keyBuilder(id);
             redisKeys.add(redisKey);
         });

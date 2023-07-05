@@ -55,6 +55,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.WarehouseReceiveMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -171,15 +172,14 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(null);
-                if (ObjectUtil.isEmpty(productDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_95107);
+                if (ObjectUtil.isNotEmpty(productDetailEntity)) {
+                    obj.setProductName(productDetailEntity.getName());
                 }
+
                 PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(detail -> detail.getId().equals(obj.getPurchaseOrderDetailId())).findFirst().orElse(null);
-                if (ObjectUtil.isEmpty(purchaseOrderDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_99006);
+                if (ObjectUtils.isNotEmpty(purchaseOrderDetailEntity)) {
+                    obj.setPurchaseQty(purchaseOrderDetailEntity.getPurchaseQty());
                 }
-                obj.setPurchaseQty(purchaseOrderDetailEntity.getPurchaseQty());
-                obj.setProductName(productDetailEntity.getName());
                 list.add(obj.getId());
             });
         }
@@ -231,6 +231,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      * @Date 2023/4/13 11:03
      **/
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public String add(WarehouseReceiveDTO.AddDTO dto) {
         //获取采购订单主表信息
@@ -256,7 +257,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGSH, BusinessNoTypeEnum.CODE_CGSH.getCode()));
         //设置收货单主表
         WarehouseReceiveEntity warehouseReceiveEntity = new WarehouseReceiveEntity();
-
+        warehouseReceiveEntity.setSubcontractType(purchaseOrderEntity.getSubcontractType());
         warehouseReceiveEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         warehouseReceiveEntity.setCode(code);
         warehouseReceiveEntity.setPurchaseOrderId(purchaseOrderEntity.getId());
@@ -308,6 +309,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      * @Date 2023/4/13 14:51
      **/
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(WarehouseReceiveDTO.UpdateDTO dto) {
         //根据用户id获取用户信息
@@ -555,7 +557,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //获取到sku 信息
         List<ProductVO.ProductPackVO> skuList = plmTaskFeign.getProductPackBySkuIds(skuIds);
         List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(purchaseOrderIds);
-        String sourceType = SourceTypeEnum.WAREHOUSE_RECEIVE.getCode();
+        String sourceType = SourceTypeEnum.PO_RECEIVE.getCode();
         for (QcInfoDTO.ReceiveToQcDTO item : qcList) {
             String skuId = item.getSkuId();
             String purchaseOrderId = item.getPurchaseOrderId();
@@ -711,6 +713,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      * @Date 2023/4/6 19:29
      **/
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean invalid(List<String> ids, String remark) {
         List<WarehouseReceiveEntity> warehouseReceiveList = this.listByIds(ids);
@@ -751,8 +754,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
      **/
-    @Override
+
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Override
     public Boolean delete(List<String> ids) {
         List<WarehouseReceiveEntity> warehouseReceiveList = this.listByIds(ids);
         if (CollectionUtils.isEmpty(ids)) {
@@ -839,6 +844,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //根据ids查询采购单详情
         List<ProductDetailEntity> byIdList = plmTaskFeign.getByIdList(skuIdList);
 
+        //采购明细
+        List<String> podIds = generateStockInViewDTOS.stream().map(WarehouseReceiveDTO.GenerateStockInViewDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
+
         List<PoInstockDetailEntity> stockInDetailEntityListBySource = poInstockDetailService.listDetailBySourceDetailIds(ids);
 
         List<PurchaseReturnOrderDetailEntity> returnDetailEntityList = purchaseReturnOrderDetailService.listBySourceDetailIds(ids);
@@ -851,6 +860,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 req.setSupplierName(null);
                 return;
             }
+            String warehouseLocation = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(req.getPurchaseOrderDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getWarehouseLocation())).orElse("");
+            req.setWarehouseLocation(warehouseLocation);
+
             ProductDetailEntity productDetailEntity = byIdList.stream().filter(obj -> req.getSkuId().equals(obj.getId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(productDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_95107);
@@ -908,13 +920,14 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             }
             PoInstockDTO.AddDTO addDTO = new PoInstockDTO.AddDTO();
             addDTO.setSourceId(id);
-            addDTO.setSourceType(SourceTypeEnum.WAREHOUSE_RECEIVE.getCode());
+            addDTO.setSourceType(SourceTypeEnum.PO_RECEIVE.getCode());
             WarehouseReceiveEntity warehouseReceiveEntity = this.getById(id);
 
             addDTO.setPurchaseOrderId(warehouseReceiveEntity.getPurchaseOrderId());
             addDTO.setDeliveryWarehouseId(warehouseReceiveEntity.getDeliveryWarehouseId());
             addDTO.setStockInUserId(warehouseReceiveEntity.getReceiveUserId());
             addDTO.setStockInDeptId(deptByUserId.getDepartmentId());
+
             List<String> detailList = dtos.stream().filter(req -> req.getMainId().equals(id)).map(WarehouseReceiveDTO.GenerateStockInDTO::getId).collect(Collectors.toList());
             List<PoInstockDetailEntity> stockInDetailEntityList = poInstockDetailService.listDetailBySourceDetailIds(detailList);
             //设置明细
@@ -927,6 +940,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     if (stockInQty + req.getStockInQty() > warehouseReceiveDetailEntity.getReceiveQty()) {
                         throw new ServiceException(ApiError.ERROR_99041.code, String.format(ApiError.ERROR_99041.msg, warehouseReceiveDetailEntity.getSkuNo()));
                     }
+                    addDTO.setStockInDate(req.getStockInDate());
                     PoInstockDetailDTO.AddDTO detailDTO = new PoInstockDetailDTO.AddDTO();
                     detailDTO.setStockInQty(req.getStockInQty());
                     detailDTO.setExceedQty(req.getExceedQty());
@@ -939,7 +953,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             });
             addDTO.setDetails(detailDTOList);
 
-            poInstockService.add(addDTO);
+            poInstockService.add(addDTO,Boolean.FALSE);
         }
         return true;
     }
@@ -1029,6 +1043,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<String> listSign = new ArrayList<>();
 
         for (PurchaseOrderDTO.GenerateReceiveDTO generateReceiveDTO : list) {
+            //采购订单
+            PurchaseOrderEntity entity = purchaseOrderList.stream().filter(obj -> obj.getId().equals(generateReceiveDTO.getId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_98025);
+            }
             boolean contains = listSign.contains(generateReceiveDTO.getId());
             if (!contains) {
                 WarehouseReceiveDTO.AddDTO addDTO = new WarehouseReceiveDTO.AddDTO();
@@ -1060,6 +1079,11 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             }
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<WarehouseReceiveDTO.SupplierReceiveInfoDTO> getReceiveInfoBySupplierIds(WarehouseReceiveDTO.SupplierReceiveParamDTO dto) {
+        return this.baseMapper.getReceiveInfoBySupplierIds(dto.getSupplierIds(), dto.getDateList());
     }
 
     /**

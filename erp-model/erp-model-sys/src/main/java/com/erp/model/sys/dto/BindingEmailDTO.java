@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @Classname BindingEmailDTO
- * @Description TODO
+
  * @Date 2022-08-02 10:08
  * @Created by yl
  */

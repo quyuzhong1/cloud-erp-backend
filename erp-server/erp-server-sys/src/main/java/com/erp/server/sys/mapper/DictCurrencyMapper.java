@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * @author Lambda
  * @Classname DictCurrencyMapper
- * @Description TODO
+
  * @Date 2023-03-21 17:20
  * @Created by yl
  */

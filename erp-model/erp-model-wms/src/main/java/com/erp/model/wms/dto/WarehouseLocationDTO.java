@@ -1,9 +1,11 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * 仓位请求响应实体
@@ -118,6 +120,45 @@ public class WarehouseLocationDTO implements Serializable {
          * 是否可以选择（仓位状态为停用的和仓位禁用的置灰）
          */
         private Boolean canCheck;
+
+    }
+
+
+    /**
+     * 仓位下拉
+     */
+    @Data
+    @NoArgsConstructor
+    public static class LocationSelectDTO {
+
+        /**
+         * 编码
+         */
+        private String code;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+    }
+
+    /**
+     * 仓位查询实体
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseLocationSearchParamDTO extends SortDTO {
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓位编码
+         */
+        private String code;
 
     }
 

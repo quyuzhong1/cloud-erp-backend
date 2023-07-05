@@ -11,12 +11,12 @@ import java.util.List;
 
 /**
  * @Classname ProductArchiveService
- * @Description TODO
+
  * @Date 2022-10-09 11:33
  * @Created by yl
  */
 public interface ProductArchiveService extends IService<ProductArchiveEntity> {
-    PagingVO<List<ProductArchiveDTO>> paging(PagingDTO<ProductSearchDTO> dto);
+    PagingVO<List<ProductArchiveDTO>> paging(PagingDTO<ProductSearchDTO.PagingParamDTO> dto);
 
     boolean activate(String productId);
 
@@ -32,4 +32,14 @@ public interface ProductArchiveService extends IService<ProductArchiveEntity> {
      * @return ProductArchiveEntity
      */
     ProductArchiveEntity getArchiveByProductId(String productId);
+
+    
+    /**
+     * 批量添加归档
+     * @author yl
+     * @date 2023-06-14 14:59
+     * @param productIdList
+     * @return java.lang.Boolean
+     */
+    Boolean batchAddArchive(List<String> productIdList);
 }

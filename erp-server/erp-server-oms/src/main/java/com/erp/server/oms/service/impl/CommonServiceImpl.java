@@ -1,21 +1,35 @@
 package com.erp.server.oms.service.impl;
 
 import com.common.business.interceptor.CommonInterceptor;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.service.CommonService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author yl
  * @Classname CommonServiceImpl
- * @Description TODO
+
  * @Date 2023-03-15 11:50
  * @Created by yl
  */
 @Service
 public class CommonServiceImpl implements CommonService {
+
+    @Resource
+    private WorkflowFeign workflowFeign;
+
     @Override
     public LoginUser getUserInfo() {
         String userId = "";
@@ -30,4 +44,19 @@ public class CommonServiceImpl implements CommonService {
         return loginUser;
     }
 
+    @Override
+    public List<String> listProcessCurBusinessIds (String businessKey) {
+        //获取当前人需要审核的业务ids
+        ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList = new ValidList<>();
+        ProcessManagementDTO.ApproveActivityDTO approveActivityDTO = new ProcessManagementDTO.ApproveActivityDTO();
+        approveActivityDTO.setCurApproveId(this.getUserInfo().getUid());
+        approveActivityDTO.setBusinessKey(businessKey);
+        dtoList.add(approveActivityDTO);
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApproverByApprove(dtoList);
+        if (200 != listApiResult.getCode()) {
+            throw new ServiceException(ApiError.ERROR_94006);
+        }
+        List<String> businessIds = listApiResult.getData().stream().filter(obj -> StringUtils.isNotBlank(obj.getBusinessId())).map(ProcessManagementDTO.CurApproveInfoDTO::getBusinessId).collect(Collectors.toList());
+        return  businessIds;
+    }
 }

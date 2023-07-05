@@ -5,7 +5,7 @@ package com.common.business.constant;
  *
  * @author Lambda
  * @Classname SearchType
- * @Description TODO
+
  * @Date 2023-03-23 18:19
  * @Created by yl
  */

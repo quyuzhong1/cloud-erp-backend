@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 /**
  * @Classname AttestationDTO
- * @Description TODO
+
  * @Date 2023-02-27 11:18
  * @Created by yl
  */

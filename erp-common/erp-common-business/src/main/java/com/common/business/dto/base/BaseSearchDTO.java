@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * @Classname BaseSearchDTO
- * @Description TODO
+
  * @Date 2022-07-12 17:36
  * @Created by yl
  */

@@ -124,6 +124,9 @@
             <if test="syncKingdeeId != null">
                 sync_kingdee_id = #{syncKingdeeId,jdbcType=VARCHAR},
             </if>
+            <if test="occupyStatus != null">
+                occupy_status = #{occupyStatus,jdbcType=BOOLEAN},
+            </if>
         </set>
         where id = #{id,jdbcType=VARCHAR}
     </update>
@@ -318,6 +321,13 @@
                 <foreach collection="list" index="index" item="item">
                     <if test="item.syncKingdeeId != null">
                         when id = #{item.id,jdbcType=VARCHAR} then #{item.syncKingdeeId,jdbcType=VARCHAR}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="occupy_status = case" suffix="end,">
+                <foreach collection="list" index="index" item="item">
+                    <if test="item.occupyStatus != null">
+                        when id = #{item.id,jdbcType=VARCHAR} then #{item.occupyStatus,jdbcType=BOOLEAN}
                     </if>
                 </foreach>
             </trim>

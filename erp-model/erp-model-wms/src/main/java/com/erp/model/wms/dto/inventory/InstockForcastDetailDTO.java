@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 /**
  * @Classname: InstockForcastDetailDTO
- * @Description: TODO
+
  * @CreateTime: 2023-05-09  15:34
  * @Author: zhangchunlin
  */

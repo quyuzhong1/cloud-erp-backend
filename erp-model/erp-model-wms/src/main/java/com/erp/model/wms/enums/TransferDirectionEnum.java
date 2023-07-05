@@ -7,18 +7,19 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/5/15 16:43
  */
 public enum TransferDirectionEnum implements EnumMessage {
 
 
-    ORDINARY ("ordinary", "普通"),
-    RETURN_GOODS("returnGoods", "退货");
+    ORDINARY ("ordinary", "普通","GENERAL"),
+    RETURN_GOODS("returnGoods", "退货","RETURN");
 
     /**
      * 类型
@@ -31,9 +32,15 @@ public enum TransferDirectionEnum implements EnumMessage {
      */
     private String name;
 
-    TransferDirectionEnum(String code, String name) {
+    /**
+     * 金蝶编码
+     */
+    private String kingdeeCode;
+
+    TransferDirectionEnum(String code, String name,String kingdeeCode) {
         this.code = code;
         this.name = name;
+        this.kingdeeCode = kingdeeCode;
     }
 
     @Override
@@ -44,6 +51,10 @@ public enum TransferDirectionEnum implements EnumMessage {
     @Override
     public String getName() {
         return name;
+    }
+
+    public String getKingdeeCode() {
+        return kingdeeCode;
     }
 
     public static String getName(String code) {
@@ -62,7 +73,26 @@ public enum TransferDirectionEnum implements EnumMessage {
      * @param code
      * @return
      */
-    public static TransferDirectionEnum of(String code) {
+    public static TransferDirectionEnum getByCode(String code) {
         return Arrays.stream(TransferDirectionEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
+    }
+
+    /**
+     * 根据金蝶编码获取
+     * @param kingdeeCode
+     * @return
+     */
+    public static TransferDirectionEnum ofKingdeeCode(String kingdeeCode) {
+        return Arrays.stream(TransferDirectionEnum.values()).filter(r -> Objects.equals(r.getKingdeeCode(), kingdeeCode)).findFirst().orElse(null);
+    }
+
+    /**
+     * 根据代码获取名称
+     * @param kingdeeCode
+     * @return
+     */
+    public static String getCodeByKingdeeCode(String kingdeeCode) {
+        TransferDirectionEnum transferDirectionEnum =  ofKingdeeCode(kingdeeCode);
+        return Optional.ofNullable(transferDirectionEnum).map(TransferDirectionEnum::getCode).orElse("");
     }
 }

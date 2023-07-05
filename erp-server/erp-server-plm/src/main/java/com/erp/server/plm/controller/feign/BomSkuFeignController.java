@@ -3,12 +3,14 @@ package com.erp.server.plm.controller.feign;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.server.plm.service.BomSkuService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -33,6 +35,9 @@ public class BomSkuFeignController {
      */
     @PostMapping("/listBomChildBySkuIds")
     public List<BomChildrenSkuDTO> listBomChildBySkuIds(@RequestBody List<String> skuIds) {
+        if (CollectionUtils.isEmpty(skuIds)) {
+            return new ArrayList<>();
+        }
         return bomSkuService.listBomChildBySkuIds(skuIds);
     }
     
@@ -47,4 +52,17 @@ public class BomSkuFeignController {
     public List<BomInfoEntity> listBomByParentSkuIds(@RequestBody List<String> skuIds) {
         return bomSkuService.listBomByParentSkuIds(skuIds);
     }
+
+    /**
+     * @description: 根据父级skuNos查询BOM
+     * @author Will
+     * @date: 2023/5/31 10:59
+     * @param skuNos
+     * @return List<BomInfoEntity>
+     */
+    @PostMapping("/listBomByParentSkuNos")
+    public List<BomInfoEntity> listBomByParentSkuNos(@RequestBody List<String> skuNos) {
+        return bomSkuService.listBomByParentSkuNos(skuNos);
+    }
+
 }

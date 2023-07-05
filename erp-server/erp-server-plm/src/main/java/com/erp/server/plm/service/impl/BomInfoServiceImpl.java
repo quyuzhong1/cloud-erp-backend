@@ -21,6 +21,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
@@ -30,6 +31,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomOperationTypeEnum;
 import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVO;
@@ -220,6 +222,43 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 .set(StringUtils.isNotBlank(syncKingdeeStatus),BomInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId),BomInfoEntity::getSyncKingdeeId,syncKingdeeId)
                 .update();
+    }
+
+    @Override
+    public PagingVO<List<BomSkuPageDTO.ListDTO>> skuPaging(PagingDTO<BomSkuPageDTO.PagingParamDTO> dto) {
+        BomSkuPageDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<BomSkuPageDTO.ListDTO> pageData = baseMapper.skuPaging(query, params);
+        List<BomSkuPageDTO.ListDTO> records = pageData.getRecords();
+        if (CollectionUtils.isEmpty(records)) {
+            return new PagingVO(pageData);
+        }
+        List<String> bomIds = records.stream().map(BomSkuPageDTO.ListDTO::getBomId).collect(Collectors.toList());
+        List<BomSkuPageDTO.ChildDTO> childList = baseMapper.listBomSkuByBomIds(bomIds);
+        if (CollectionUtils.isEmpty(childList)) {
+            throw new ServiceException(ApiError.ERROR_95166);
+        }
+        Integer index = MathUtil.ONE;
+        for (BomSkuPageDTO.ListDTO listDTO : records) {
+            //状态名称
+            listDTO.setStatusName(ProductDetailStatusEnum.getName(listDTO.getStatus()));
+            listDTO.setIndex(index);
+            index++;
+            //子件
+            List<BomSkuPageDTO.ChildDTO> childDTOList = childList.stream().filter(obj -> obj.getBomId().equals(listDTO.getBomId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(childDTOList)) {
+                for (BomSkuPageDTO.ChildDTO childDTO: childDTOList) {
+                    //状态名称
+                    childDTO.setStatusName(ProductDetailStatusEnum.getName(childDTO.getStatus()));
+                    childDTO.setIndex(index);
+                    index++;
+                }
+            }
+            listDTO.setChildList(childDTOList);
+        }
+
+        return new PagingVO(pageData);
     }
 
     /**

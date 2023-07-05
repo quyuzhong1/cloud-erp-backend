@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/5/10 14:03
  */
 @Data
@@ -235,12 +235,27 @@ public class MachineInfoDTO implements Serializable {
         @NotBlank(message = "单据类型不能为空")
         @StateEnumValue(clazz = MachineTypeEnum.class, message = "单据类型有误", groups = {AddGroup.class})
         private String type;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
 
     }
 
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
+
+
 
         /**
          * 明细

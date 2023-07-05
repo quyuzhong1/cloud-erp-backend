@@ -51,16 +51,15 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public boolean saveOrUpdate(ProcessDefinitionDTO.AddOrUpdateDTO dto) {
+    public boolean addOrUpdate(ProcessDefinitionDTO.AddOrUpdateDTO dto) {
         // 查询数据是否存在
         ProcessDefinitionEntity entity = getById(dto.getId());
         // dto转换为 processDefinitionEntity 和 processBusinessEntity 两个实体
         ProcessDefinitionEntity processDefinitionEntity = new ProcessDefinitionEntity(dto);
-        ProcessBusinessEntity processBusinessEntity = new ProcessBusinessEntity(dto);
         // 不存在则新增
         if (null == entity) {
             // 保存 processDefinitionEntity
-            if (!(save(processDefinitionEntity) && processBusinessService.save(processBusinessEntity))) {
+            if (!(save(processDefinitionEntity))) {
                 throw new ServiceException(ApiError.SAVE_PROCESS_ERROR);
             }
         }else {
@@ -71,6 +70,8 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
                 throw new ServiceException(ApiError.UPDATE_PROCESS_ERROR);
             }
         }
+        // 保存 processBusinessEntity
+        processBusinessService.addOrUpdate(dto);
         return Boolean.TRUE;
     }
 
@@ -118,10 +119,10 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
         }
         // 查询关联业务数据
-        List<ProcessBusinessEntity> businessEntityList = processBusinessService.getByDefinitionId(entity.getId());
+        ProcessBusinessEntity businessEntity = processBusinessService.getByDefinitionId(entity.getId());
         String businessKey = null;
-        if(CollectionUtil.isNotEmpty(businessEntityList)){
-            businessKey = businessEntityList.get(0).getBusinessKey();
+        if(null != businessEntity){
+            businessKey = businessEntity.getBusinessKey();
         }
         if(StrUtil.isNotBlank(entity.getBpmnXml())){
             // 替换流程定义id

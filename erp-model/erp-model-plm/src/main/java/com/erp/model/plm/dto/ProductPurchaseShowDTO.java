@@ -94,9 +94,19 @@ public class ProductPurchaseShowDTO implements Serializable {
     private String mainSupplier;
 
     /**
+     * 一级供应商名称
+     */
+    private String mainSupplierName;
+
+    /**
      * 二级供应商
      */
     private String secondSupplier;
+
+    /**
+     * 二级供应商名称
+     */
+    private String secondSupplierName;
 
     /**
      * 创建人名称

@@ -53,4 +53,13 @@ public interface TransferApplicationMapper extends BaseMapper<TransferApplicatio
      * @return List<ViewGenerateTransferInfoDTO>
      */
     List<TransferApplicationDTO.ViewGenerateTransferInfoDTO> viewGenerateTransferInfo(@Param("ids") List<String> ids);
+
+    /**
+     * 下推加工单列表查询
+     * @Author Luo_WG
+     * @Date 2023/6/29 16:52
+     * @param ids
+     * @return java.util.List<com.erp.model.wms.dto.TransferApplicationDTO.generateMachineInfoView>
+     **/
+    List<TransferApplicationDTO.ViewGenerateMachineInfo> viewGenerateMachineInfo(@Param("ids") List<String> ids, @Param("isAutoMachine") Boolean isAutoMachine);
 }

@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
@@ -9,6 +10,10 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
@@ -19,9 +24,11 @@ import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnModeEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
@@ -32,6 +39,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -46,10 +54,16 @@ import java.util.stream.Collectors;
 public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrderDetailMapper, PurchaseOrderDetailEntity> implements PurchaseOrderDetailService {
 
     @Resource
+    private MQProducerService mQProducerService;
+
+    @Resource
     private PurchaseOrderService purchaseOrderService;
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @Resource
     private PurchaseApplicationRefPoService purchaseApplicationRefPoService;
@@ -66,7 +80,12 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
 
+    @Resource
+    private SubcontractOrderDetailService subcontractOrderDetailService;
+
+
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public void add(List<PurchaseOrderDetailDTO.AddDTO> details, String purchaseOrderId) {
         if (CollectionUtils.isEmpty(details)) {
@@ -81,6 +100,11 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         //批量新增
         boolean flag = this.saveBatch(list);
         if (flag) {
+            //更新sku为不可删除标识
+            List<String> skuIds = list.stream().map(PurchaseOrderDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+            plmTaskFeign.updateOccupyStatus(skuIds);
+            //同步到WMS
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(), list, IdUtil.simpleUUID());
             //新增关联关系
             List<PurchaseApplicationRefPoEntity> refList = new ArrayList<>();
 
@@ -139,6 +163,11 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             moduleOperateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(),pairList,"编辑操作");
             //删除关联关系
             purchaseApplicationRefPoService.removeByPurchaseOrderDetailIds(deleteIds);
+
+            List<PurchaseOrderDetailEntity> list = lambdaQuery().in(PurchaseOrderDetailEntity::getPurchaseOrderId, deleteIds).list();
+            list.forEach(req -> req.setIsDeleted(Boolean.TRUE));
+            //同步到WMS
+            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(), list, IdUtil.simpleUUID());
             this.removeByIds(deleteIds);
         }
         List<PurchaseOrderDetailEntity> newList = BeanMapperUtils.copyList(PurchaseOrderDetailEntity.class, details);
@@ -148,6 +177,11 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
         //新增或修改采购订单明细
         this.saveOrUpdateBatch(newList);
+        //更新sku为不可删除标识
+        List<String> skuIds = newList.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
+        plmTaskFeign.updateOccupyStatus(skuIds);
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(), newList, IdUtil.simpleUUID());
 
         //更新采购申请单生成类型
         updateCreatePoType(purchaseOrderId);
@@ -166,17 +200,12 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
     @Override
     public void removeByPurchaseOrderIds(List<String> purchaseOrderIds) {
-        lambdaUpdate().in(PurchaseOrderDetailEntity::getPurchaseOrderId,purchaseOrderIds).remove();
-    }
+        List<PurchaseOrderDetailEntity> list = lambdaQuery().in(PurchaseOrderDetailEntity::getPurchaseOrderId, purchaseOrderIds).list();
+        list.forEach(req -> req.setIsDeleted(Boolean.TRUE));
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(), list, IdUtil.simpleUUID());
 
-    @Override
-    public void updateArrivalStatusByIds(String arrivalStatus, List<String> ids) {
-        lambdaUpdate()
-                .in(PurchaseOrderDetailEntity::getId,ids)
-                .set(PurchaseOrderDetailEntity::getArrivalStatus,arrivalStatus)
-                .set(PurchaseOrderDetailEntity::getArrivalTime, LocalDateTime.now())
-                .set(PurchaseOrderDetailEntity::getIsEndReceive,Boolean.TRUE)
-                .update();
+        lambdaUpdate().in(PurchaseOrderDetailEntity::getPurchaseOrderId,purchaseOrderIds).remove();
     }
 
     /**
@@ -281,6 +310,11 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             return;
         }
 
+        PurchaseOrderEntity entity = purchaseOrderService.getById(purchaseOrderId);
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+
         PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(purchaseOrderId);
         if (ObjectUtils.isEmpty(supplierEntity)) {
             throw new ServiceException(ApiError.ERROR_98036);
@@ -304,7 +338,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                 String error = String.format("SKU【%s】未找到数量【%s】的供应商报价信息", priceDTO.getSkuNo(), priceDTO.getPurchaseQty());
                 throw new ServiceException(new ApiResult(1,error));
             }
-            if (MathUtil.compareTo(taxPrice,addDTO.getTaxPrice()) != MathUtil.ZERO) {
+            if (MathUtil.compareTo(taxPrice,addDTO.getTaxPrice()) != MathUtil.ZERO && StringUtils.isBlank(entity.getSubcontractType())) {
                 String error = String.format("SKU【%s】,数量【%s】录入单价与报价单价不匹配", priceDTO.getSkuNo(), priceDTO.getPurchaseQty());
                 throw new ServiceException(new ApiResult(1,error));
             }
@@ -323,6 +357,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
      **/
     @Override
     public List<PurchaseOrderDetailEntity> listDetailByIds(List<String> ids){
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.EMPTY_LIST;
+        }
         LambdaQueryWrapper<PurchaseOrderDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.in(PurchaseOrderDetailEntity::getId, ids);
         return this.list(queryWrapper);
@@ -403,5 +440,75 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             viewProductDTO.setUnStockInQty(viewProductDTO.getPurchaseQty() - effectiveStockInQty);
         }
         return list;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updatePoArrivalStatus(PurchaseOrderDetailEntity entity) {
+
+        //更新采购订单交货状态
+        boolean update = lambdaUpdate()
+                .eq(PurchaseOrderDetailEntity::getId, entity.getId())
+                .set(PurchaseOrderDetailEntity::getArrivalStatus, entity.getArrivalStatus())
+                .set(PurchaseOrderDetailEntity::getArrivalTime, entity.getArrivalTime())
+                .set(ObjectUtils.isNotNull(entity.getPurchaseAmount()), PurchaseOrderDetailEntity::getPurchaseAmount, entity.getPurchaseAmount())
+                .update();
+        if (!update) {
+            throw new ServiceException(ApiError.ERROR_98081);
+        }
+        //采购订单
+        PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.getById(entity.getPurchaseOrderId());
+        if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        if (StringUtils.isBlank(purchaseOrderEntity.getSubcontractType())) {
+            return Boolean.TRUE;
+        }
+        //委外订单更新到货状态
+        subcontractOrderDetailService.updateArrivalStatusByIds(entity.getSubArrivalStatus(),Arrays.asList(entity.getSourceDetailId()),Boolean.FALSE);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public List<PurchaseOrderDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds) {
+       return baseMapper.listBySourceDetailIds(sourceDetailIds);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateArrivalStatusByIds(String arrivalStatus, List<String> ids, List<PurchaseOrderDetailEntity> purchaseOrderDetailList, String remark) {
+        List<PurchaseOrderDetailEntity> list = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+
+        // 结束交货备注追加在原sku备注
+        Map<String,PurchaseOrderDetailEntity> productOrderDetailMap =  purchaseOrderDetailList.stream().collect(Collectors.toMap(PurchaseOrderDetailEntity::getId, Function.identity()));
+        productOrderDetailMap.forEach((detailId, purchaseOrderDetail)->{
+            String oldRemark = purchaseOrderDetail.getRemark();
+            String newRemark = remark;
+            if(StrUtils.isNotEmpty(oldRemark)) {
+                if(oldRemark.endsWith(";") || oldRemark.endsWith("；")) {
+                    newRemark = oldRemark + remark;
+                } else {
+                    newRemark = oldRemark + "；" + remark;
+                }
+            }
+            lambdaUpdate()
+                    .eq(PurchaseOrderDetailEntity::getId,detailId)
+                    .set(PurchaseOrderDetailEntity::getArrivalStatus,arrivalStatus)
+                    .set(PurchaseOrderDetailEntity::getArrivalTime, LocalDateTime.now())
+                    .set(PurchaseOrderDetailEntity::getIsEndReceive,Boolean.TRUE)
+                    .set(PurchaseOrderDetailEntity::getRemark, newRemark)
+                    .update();
+        });
+        list.forEach(req -> req.setIsDeleted(Boolean.TRUE));
+        //同步到WMS
+        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(), list, IdUtil.simpleUUID());
+    }
+
+    @Override
+    public List<PurchaseOrderDetailEntity> getLatest(List<String> skuIds) {
+        return this.baseMapper.getLatest(skuIds);
     }
 }

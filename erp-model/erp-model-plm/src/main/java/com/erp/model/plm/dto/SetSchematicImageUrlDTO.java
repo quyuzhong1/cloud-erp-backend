@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 /**
  * @Classname SetSchematicImageUrlDTO
- * @Description TODO
+
  * @Date 2023-02-25 12:20
  * @Created by yl
  */

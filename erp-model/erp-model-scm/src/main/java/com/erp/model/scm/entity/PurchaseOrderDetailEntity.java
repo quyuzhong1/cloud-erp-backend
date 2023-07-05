@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,6 +24,8 @@ import java.time.LocalDateTime;
 @Accessors(chain = true)
 @TableName("purchase_order_detail")
 public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEntity> {
+
+
 
     /**
      * 采购订单id
@@ -75,12 +76,6 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private String currency;
 
     /**
-     * 币别符号
-     */
-    @TableField("currency_symbol")
-    private String currencySymbol;
-
-    /**
      * 采购数量
      */
     @TableField("purchase_qty")
@@ -93,7 +88,7 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private BigDecimal purchaseAmount;
 
     /**
-     * 计划交期
+     * 预计交货日期
      */
     @TableField("plan_delivery_date")
     private LocalDate planDeliveryDate;
@@ -129,10 +124,22 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private BigDecimal taxRate;
 
     /**
+     * 签收数量
+     */
+    @TableField(exist = false)
+    private Integer receiveQty;
+
+    /**
      * 是否加急（false否，true是）
      */
     @TableField("is_urgent")
     private Boolean isUrgent;
+
+    /**
+     * 币种符号
+     */
+    @TableField("currency_symbol")
+    private String currencySymbol;
 
     /**
      * 变体信息
@@ -141,12 +148,31 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private String variantProperty;
 
     /**
-     * 是否结束交货
+     * 是否结束收货
      */
+    @TableField("is_end_receive")
     private Boolean isEndReceive;
 
-   /** 采购申请明细id(无需传值，后端使用)
-    *
+    /**
+     * 来源明细id
+     */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
+
+    /**
+     * 库位(委外可用)
+     */
+    @TableField("warehouse_location")
+    private String warehouseLocation;
+
+    /**
+     * 委外到货状态
+     */
+    @TableField(exist = false)
+    private String subArrivalStatus;
+
+   /**
+    *   采购申请明细id(无需传值，后端使用)
     */
     @TableField(exist = false)
     private String purchaseApplicationDetailId;
@@ -206,10 +232,5 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
 
     public static final String VARIANT_PROPERTY = "variant_property";
 
-
-    @Override
-    public Serializable pkVal() {
-        return null;
-    }
 
 }

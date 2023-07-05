@@ -76,4 +76,14 @@ public interface WarehouseReceiveDetailService extends SuperService<WarehouseRec
      * @return java.util.List<com.erp.model.wms.entity.WarehouseReceiveDetailEntity>
      */
     List<WarehouseReceiveDetailEntity> listDetailByMainIds(List<String> mainIds);
+
+    /**
+     * @description: 获取委外到货状态
+     * @author Will
+     * @date: 2023/6/26 9:26
+     * @param podIds
+     * @param qty
+     * @return String 
+     */
+    String getSubArrivalStatus(List<String> podIds, Integer qty);
 }

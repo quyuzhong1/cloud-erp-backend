@@ -1,14 +1,15 @@
 package com.erp.model.wms.dto.inventory;
 
 import com.common.business.dto.base.SortDTO;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
@@ -60,6 +61,12 @@ public class InventoryReportDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ExportTransportSearchParamDTO extends SortDTO {
+
+        /**
+         * sku id编码集合，不提供给前端使用
+         */
+        @JsonIgnore
+        private List<String> skuIdList;
 
         /**
          * sku编码
@@ -205,7 +212,7 @@ public class InventoryReportDTO implements Serializable {
         private String sourceCode;
 
         /**
-         * 单据类型 接口地址：/wms/inventoryReport/transport/sourceTypeTab
+         * 单据类型 接口地址：/wms/common/enumDropDown?type=InventoryTransportType
          */
         private String sourceType;
 
@@ -244,6 +251,11 @@ public class InventoryReportDTO implements Serializable {
          * 单据类型名称
          */
         private String sourceTypeName;
+
+        /**
+         * 单据编号
+         */
+        private String sourceCode;
 
         /**
          * sku id
@@ -314,24 +326,44 @@ public class InventoryReportDTO implements Serializable {
          */
         private List<String> orgIdList;
 
+        /**
+         * 用户区间设置
+         */
+        @JsonIgnore
+        private List<InventoryAgeRangeDTO> userRangeList;
+
+        /**
+         * 结束入库日期
+         */
+        /**
+        @JsonIgnore
+        private LocalDate endDate;
+        */
+
     }
 
     /**
-     * 库龄计算表分页列表结果
+     * 库龄计算区间
      */
     @Data
     @NoArgsConstructor
-    public static class InventoryAgePagingDTO {
+    public static class InventoryAgeRangeDTO {
+
+
+        /**
+         * 开始值
+         */
+        private Integer startValue;
+
+        /**
+         * 结束值
+         */
+        private Integer endValue;
 
         /**
          * 标题
          */
-        LinkedHashMap<String, String> head;
-
-        /**
-         * 结果集
-         */
-        List<LinkedHashMap<String, Object>> data;
+        private String name;
 
     }
 
@@ -372,6 +404,18 @@ public class InventoryReportDTO implements Serializable {
          */
         private List<ExportInventoryAgeItem> items;
 
+        /**
+         * 用户区间设置
+         */
+        @JsonIgnore
+        private List<InventoryAgeRangeDTO> userRangeList;
+
+        /**
+         * sku编码
+         */
+        @JsonIgnore
+        private List<String> skuIdList;
+
     }
 
     /**
@@ -392,6 +436,12 @@ public class InventoryReportDTO implements Serializable {
          */
         @NotEmpty(message = "sku不能为空")
         private String skuId;
+
+        /**
+         * 仓位
+         */
+        @NotNull(message = "仓位不能为null")
+        private String warehouseLocation;
 
     }
 

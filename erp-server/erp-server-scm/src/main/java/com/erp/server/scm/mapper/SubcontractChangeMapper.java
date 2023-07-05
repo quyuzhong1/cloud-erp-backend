@@ -3,7 +3,6 @@ package com.erp.server.scm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.ApproveStatusQtyDTO;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.entity.SubcontractChangeEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -35,7 +34,7 @@ public interface SubcontractChangeMapper extends BaseMapper<SubcontractChangeEnt
     * @param params
     * @return
     */
-    List<ApproveStatusQtyDTO> listCount(@Param("params") SubcontractChangeDTO.PagingParamDTO params);
+    Integer listCount(@Param("params") SubcontractChangeDTO.PagingParamDTO params);
 
     /**
     * 导出Excel查询

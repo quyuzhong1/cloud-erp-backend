@@ -6,16 +6,23 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.ProductCostDTO;
 import com.erp.model.plm.dto.ProductCostShowDTO;
+import com.erp.model.plm.dto.ProductPurchaseShowDTO;
 import com.erp.model.plm.entity.ProductCostEntity;
+import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.server.plm.mapper.ProductCostMapper;
 import com.erp.server.plm.service.ProductCostService;
+import com.erp.server.plm.service.ProductPurchaseService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @Description 产品成本信息服务类
@@ -28,6 +35,12 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
     @Resource
     private ProductCostMapper productCostMapper;
 
+    @Resource
+    private ProductPurchaseService productPurchaseService;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
+
     /**
      * @Description 产品成本信息查询列表
      * @Author Luo_WG
@@ -37,7 +50,48 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
      **/
     @Override
     public List<ProductCostShowDTO> list(String productId) {
-        return productCostMapper.list(productId);
+        List<ProductCostShowDTO> productCostShowDTOList = productCostMapper.list(productId);
+        List<ProductPurchaseShowDTO> purchaseShowDTOList = productPurchaseService.list(productId);
+        List<String> supplierIdList = purchaseShowDTOList.stream().map(ProductPurchaseShowDTO::getMainSupplier).collect(Collectors.toList());
+        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
+        for (ProductCostShowDTO showDTO : productCostShowDTOList) {
+            PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSupplierId().equals(showDTO.getMainSupplier()) && req.getSkuId().equals(showDTO.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
+                //不含税价=含税价÷（1+税率）
+                BigDecimal actualNotTaxCost = supplierSkuPrice.getTaxPrice().divide(MathUtil.BigDecimal_1.add(supplierSkuPrice.getTaxRate()), 4, BigDecimal.ROUND_DOWN);
+                showDTO.setActualNoTaxCost(actualNotTaxCost);
+                //含税价
+                showDTO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
+            }
+        }
+        return productCostShowDTOList;
+    }
+
+
+    /**
+     * @Description 根据skuId查询产品成本信息查询列表
+     * @Author Luo_WG
+     * @Date 2022/9/22 10:28
+     * @param skuId:产品信息表id
+     * @return java.util.List<com.erp.model.plm.dto.ProductCostShowDTO>
+     **/
+    @Override
+    public List<ProductCostShowDTO> listBySkuId(String skuId) {
+        List<ProductCostShowDTO> productCostShowDTOList = productCostMapper.listBySkuId(skuId);
+        List<ProductPurchaseShowDTO> purchaseShowDTOList = productPurchaseService.listBySkuId(skuId);
+        List<String> supplierIdList = purchaseShowDTOList.stream().map(ProductPurchaseShowDTO::getMainSupplier).collect(Collectors.toList());
+        List<PurchasePriceDTO.SupplierSkuPrice> supplierSkuPriceList = scmTaskFeign.listSupplierSkuPrice(supplierIdList);
+        for (ProductCostShowDTO showDTO : productCostShowDTOList) {
+            PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = supplierSkuPriceList.stream().filter(req -> req.getSupplierId().equals(showDTO.getMainSupplier()) && req.getSkuId().equals(showDTO.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
+                //不含税价=含税价÷（1+税率）
+                BigDecimal actualNotTaxCost = supplierSkuPrice.getTaxPrice().divide(MathUtil.BigDecimal_1.add(supplierSkuPrice.getTaxRate()));
+                showDTO.setActualNoTaxCost(actualNotTaxCost);
+                //含税价
+                showDTO.setActualTaxCost(supplierSkuPrice.getTaxPrice());
+            }
+        }
+        return productCostShowDTOList;
     }
 
     /**
@@ -81,13 +135,13 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
      * @Description 删除产品采购信息
      * @Author Luo_WG
      * @Date 2022/9/26 18:42
-     * @param skuId 产品sku明细表id
+     * @param skuIds 产品sku明细表id
      * @return java.lang.Boolean
      **/
     @Override
-    public Boolean removeCost(String skuId) {
+    public Boolean removeCost(List<String> skuIds) {
         LambdaQueryWrapper<ProductCostEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(ProductCostEntity::getSkuId, skuId);
+        queryWrapper.in(ProductCostEntity::getSkuId, skuIds);
         return this.remove(queryWrapper);
     }
 

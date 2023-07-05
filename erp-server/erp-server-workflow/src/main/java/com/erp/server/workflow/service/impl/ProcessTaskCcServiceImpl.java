@@ -1,18 +1,27 @@
 package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.FindUserDTO;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.workflow.entity.ProcessTaskCcEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CcStatusEnum;
 import com.erp.server.workflow.mapper.ProcessTaskCcMapper;
 import com.erp.server.workflow.service.ProcessTaskCcService;
 import com.common.business.service.SuperServiceImpl;
+import org.apache.rocketmq.client.producer.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -24,7 +33,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Service
 public class ProcessTaskCcServiceImpl extends SuperServiceImpl<ProcessTaskCcMapper, ProcessTaskCcEntity> implements ProcessTaskCcService {
-
+    @Resource
+    private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void saveCcUser(String taskId, List<FindUserDTO> copyUser, String taskManagementId) {
@@ -43,10 +53,9 @@ public class ProcessTaskCcServiceImpl extends SuperServiceImpl<ProcessTaskCcMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateCcStatus(String processInstanceId, String taskId, String taskManagementId) {
+    public void updateCcStatus(String taskId) {
         lambdaUpdate()
                 .eq(ProcessTaskCcEntity::getTaskId, taskId)
-                .eq(ProcessTaskCcEntity::getTaskManagementId, taskManagementId)
                 .set(ProcessTaskCcEntity::getStatus, CcStatusEnum.SEND)
                 .update();
     }
@@ -70,5 +79,26 @@ public class ProcessTaskCcServiceImpl extends SuperServiceImpl<ProcessTaskCcMapp
             processTaskCcEntity.setTaskManagementId(insertEntity.getId());
             this.updateById(processTaskCcEntity);
         });
+    }
+
+    @Override
+    public void sendCcMsg(ProcessTaskManagementEntity entity,String title,String content) {
+        List<ProcessTaskCcEntity> list = lambdaQuery()
+                .eq(ProcessTaskCcEntity::getTaskId, entity.getTaskId())
+                .list();
+        if (CollectionUtil.isEmpty(list)) {
+            return;
+        }
+        List<String> userIdList = list.stream().map(ProcessTaskCcEntity::getCcUserId).distinct().collect(Collectors.toList());
+        // 发送抄送消息
+        NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
+        noticeMsgInfoDTO.setReceiverUserIds(userIdList);
+        noticeMsgInfoDTO.setTitle(title);
+        noticeMsgInfoDTO.setContent(content);
+        noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.FLW_TASK);
+        // 默认tag请指定为msg_notice_default_tag，可以根据不同业务自行指定
+        SendResult sendResult = mqProducerService.sendNoticeMsg(noticeMsgInfoDTO, Boolean.TRUE);
+        // 审批完成后发送抄送消息更新抄送状态
+        updateCcStatus(entity.getTaskId());
     }
 }

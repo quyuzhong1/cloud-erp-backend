@@ -5,7 +5,7 @@ import com.erp.model.plm.entity.BomInfoEntity;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/3/9 9:41
  */
 public interface SyncKingdeeBomInfoService {

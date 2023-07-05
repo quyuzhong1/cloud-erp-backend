@@ -4,29 +4,94 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.pull.mapper.ProductDetailMapper">
     <update id="updateAllById">
-        UPDATE product_detail
-            SET product_id = #{productId},
-            sku_no = #{skuNo},
-            NAME = #{name},
-            variant_property = #{variantProperty},
-            product_state = #{productState},
-            images_url = #{imagesUrl},
-            charge_id = #{chargeId},
-            charge_name = #{chargeName},
-            status = #{status},
-            is_change = #{isChange},
-            sync_kingdee_status = #{syncKingdeeStatus},
-            sync_kingdee_time = #{syncKingdeeTime},
-            sync_kingdee_id = #{syncKingdeeId},
-            create_user_id = #{createUserId},
-            create_user_name = #{createUserName},
-            create_time = #{createTime},
-            update_user_id = #{updateUserId},
-            update_user_name = #{updateUserName},
-            update_time = #{updateTime},
-            VERSION = #{version}
-            WHERE
-                ID = #{id}
+        update product_detail
+        <set>
+            <if test="productId != null">
+                product_id = #{productId,jdbcType=VARCHAR},
+            </if>
+            <if test="skuNo != null">
+                sku_no = #{skuNo,jdbcType=VARCHAR},
+            </if>
+            <if test="name != null">
+                "name" = #{name,jdbcType=VARCHAR},
+            </if>
+            <if test="variantProperty != null">
+                variant_property = #{variantProperty,jdbcType=VARCHAR},
+            </if>
+            <if test="planListingTime != null">
+                plan_listing_time = #{planListingTime,jdbcType=DATE},
+            </if>
+            <if test="unitId != null">
+                unit_id = #{unitId,jdbcType=VARCHAR},
+            </if>
+            <if test="productState != null">
+                product_state = #{productState,jdbcType=INTEGER},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="createUserId != null">
+                create_user_id = #{createUserId,jdbcType=VARCHAR},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="updateUserId != null">
+                update_user_id = #{updateUserId,jdbcType=VARCHAR},
+            </if>
+            <if test="imagesUrl != null">
+                images_url = #{imagesUrl,jdbcType=LONGVARCHAR},
+            </if>
+            <if test="unitName != null">
+                unit_name = #{unitName,jdbcType=VARCHAR},
+            </if>
+            <if test="chargeId != null">
+                charge_id = #{chargeId,jdbcType=LONGVARCHAR},
+            </if>
+            <if test="chargeName != null">
+                charge_name = #{chargeName,jdbcType=LONGVARCHAR},
+            </if>
+            <if test="createUserName != null">
+                create_user_name = #{createUserName,jdbcType=VARCHAR},
+            </if>
+            <if test="updateUserName != null">
+                update_user_name = #{updateUserName,jdbcType=VARCHAR},
+            </if>
+            <if test="status != null">
+                "status" = #{status,jdbcType=SMALLINT},
+            </if>
+            <if test="processId != null">
+                process_id = #{processId,jdbcType=VARCHAR},
+            </if>
+            <if test="businessProcessId != null">
+                business_process_id = #{businessProcessId,jdbcType=VARCHAR},
+            </if>
+            <if test="isChange != null">
+                is_change = #{isChange,jdbcType=SMALLINT},
+            </if>
+            <if test="firstMassProductDate != null">
+                first_mass_product_date = #{firstMassProductDate,jdbcType=DATE},
+            </if>
+            <if test="syncKingdeeStatus != null">
+                sync_kingdee_status = #{syncKingdeeStatus,jdbcType=CHAR},
+            </if>
+            <if test="syncKingdeeTime != null">
+                sync_kingdee_time = #{syncKingdeeTime,jdbcType=TIMESTAMP},
+            </if>
+            <if test="version != null">
+                version = #{version,jdbcType=INTEGER},
+            </if>
+            <if test="isDeleted != null">
+                is_deleted = #{isDeleted,jdbcType=BOOLEAN},
+            </if>
+            <if test="syncKingdeeId != null">
+                sync_kingdee_id = #{syncKingdeeId,jdbcType=VARCHAR},
+            </if>
+            <if test="occupyStatus != null">
+                occupy_status = #{occupyStatus,jdbcType=BOOLEAN}
+            </if>
+        </set>
+        where id = #{id,jdbcType=VARCHAR}
     </update>
     <select id="getProductDetailById" resultType="com.erp.model.plm.entity.ProductDetailEntity">
         SELECT

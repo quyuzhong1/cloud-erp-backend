@@ -227,8 +227,42 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     @TableField("sync_operate")
     private String syncOperate;
 
+    /**
+     * 收款账号
+     */
+    @TableField("receive_account")
+    private String receiveAccount;
+
+    /**
+     * 收款方式
+     */
+    @TableField("receive_method")
+    private String receiveMethod;
+
+    /**
+     * 收款日期
+     */
+    @TableField("receive_date")
+    private LocalDate receiveDate;
 
 
+    /**
+     * 收款金额
+     */
+    @TableField("receive_amount")
+    private BigDecimal receiveAmount;
+
+    /**
+     * 收款条件
+     */
+    @TableField("receive_condition")
+    private String receiveCondition;
+
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
 
 
     public static final String CODE = "code";
@@ -274,6 +308,18 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     public static final String IS_TAX = "is_tax";
 
     public static final String ADDRESS_TYPE = "address_type";
+
+    public static final String RECEIVE_CONDITION = "receive_condition";
+
+    public static final String RECEIVE_ACCOUNT = "receive_account";
+
+    public static final String RECEIVE_AMOUNT = "receive_amount";
+
+    public static final String RECEIVE_DATE = "receive_date";
+
+    public static final String RECEIVE_METHOD = "receive_method";
+
+    public static final String REMARK = "remark";
 
     @Override
     public Serializable pkVal() {

@@ -74,7 +74,7 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @param ids
      * @return java.lang.Boolean
      */
-    Boolean submitApprove(List<String> ids);
+    Boolean submitApprove(List<String> ids,Boolean isStartProcess);
 
     /**
      * 采购价目变更 审核
@@ -84,6 +84,16 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @return java.lang.Boolean
      */
     Boolean approve(BaseApproveParamDTO dto);
+
+    /**
+     * @description: 结束审核
+     * @author Will
+     * @date: 2023/7/3 18:53
+     * @param dto
+     * @param list
+     * @return Boolean
+     */
+    Boolean approveEnd (BaseApproveParamDTO dto,List<PurchasePriceChangeEntity> list);
 
     /**
      * 取消流程

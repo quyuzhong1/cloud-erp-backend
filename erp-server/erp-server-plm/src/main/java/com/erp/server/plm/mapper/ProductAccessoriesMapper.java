@@ -19,5 +19,8 @@ public interface ProductAccessoriesMapper extends BaseMapper<ProductAccessoriesE
 
 
     List<ProductAccessoriesDTO> getByProductId(@Param("productId") String productId);
+
+
+    List<ProductAccessoriesDTO> getBySkuId(@Param("skuId") String skuId);
 }
 

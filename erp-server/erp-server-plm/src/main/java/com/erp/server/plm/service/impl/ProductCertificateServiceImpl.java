@@ -53,6 +53,18 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
     }
 
     /**
+     * @Description 产品证书信息查询列表
+     * @Author Luo_WG
+     * @Date 2022/9/22 10:28
+     * @param skuId
+     * @return java.util.List<com.erp.model.plm.dto.ProductCertificateShowDTO>
+     **/
+    @Override
+    public List<ProductCertificateShowDTO> listBySkuId(String skuId) {
+        return productCertificateMapper.listBySkuId(skuId);
+    }
+
+    /**
      * @Description 保存/修改产品证书信息
      * @Author Luo_WG
      * @Date 2022/9/23 10:13
@@ -93,13 +105,13 @@ public class ProductCertificateServiceImpl extends ServiceImpl<ProductCertificat
      * @Description 根据skuid删除产品证书信息
      * @Author Luo_WG
      * @Date 2022/9/26 18:42
-     * @param skuId skuId
+     * @param skuIds skuIds
      * @return java.lang.Boolean
      **/
     @Override
-    public Boolean removeCertificate(String skuId) {
+    public Boolean removeCertificate(List<String> skuIds) {
         LambdaQueryWrapper<ProductCertificateEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.eq(ProductCertificateEntity::getSkuId, skuId);
+        queryWrapper.in(ProductCertificateEntity::getSkuId, skuIds);
         Integer count = baseMapper.delete(queryWrapper);
         if (count > 0) {
             return true;

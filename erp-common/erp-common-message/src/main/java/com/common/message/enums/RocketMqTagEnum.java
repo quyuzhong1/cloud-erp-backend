@@ -80,6 +80,12 @@ public enum RocketMqTagEnum {
      * 金蝶sku信息tag
      */
     KINGDEE_SKU_INFO_TAG(14,RocketMqTagEnum.SKU_INFO,"kingdee_sku_info_tag"),
+
+    /**
+     * 金蝶直接调拨订单tag
+     */
+
+    KINGDEE_TRANSFER_DIRECT_TAG(15,RocketMqTagEnum.TRANSFER,"kingdee_transfer_direct_tag"),
     /**
      * 马帮销售订单tag
      */
@@ -105,6 +111,36 @@ public enum RocketMqTagEnum {
      * 马帮sku信息tag
      */
     MABANG_SKU_INFO_TAG(20, RocketMqTagEnum.SKU_INFO,"mabang_sku_info_tag"),
+
+    /**
+     * 马帮组合sku信息tag
+     */
+    MABANG_SKU_COMBO_INFO_TAG(21, RocketMqTagEnum.SKU_INFO,"mabang_sku_combo_info_tag"),
+
+    /**
+     * 马帮加工sku信息tag
+     */
+    MABANG_SKU_MACHINING_INFO_TAG(22, RocketMqTagEnum.SKU_INFO,"mabang_sku_machining_info_tag"),
+
+    /**
+     * 马帮调拨发货tag
+     */
+    MABANG_SHIPMENT_TAG(23,RocketMqTagEnum.SHIPMENT,"mabang_shipment_tag"),
+
+    /**
+     * 马帮发货单tag
+     */
+    MABANG_FBA_DELIVERY_TAG(24,RocketMqTagEnum.FBA_DELIVERY,"mabang_fba_delivery_tag"),
+
+    /**
+     * B2C销售出库单到TAG
+     */
+    KINGDEE_B2C_SO_OUTSTOCK_TAG(25,RocketMqTagEnum.SYNC_WMS,"kingdee_b2c_so_outatock_to_task_tag"),
+
+    /**
+     * 金蝶退货单保存到dmp_sync_task同步任务表
+     */
+    KINGDEE_REFUND_ORDER_TO_TASK_TAG(26,RocketMqTagEnum.SYNC_WMS,"kingdee_refund_order_to_task_tag"),
 
     //---------------------------------金蝶数据同步code从1001开始------------------------------------------------------------------------------------------
 
@@ -223,6 +259,15 @@ public enum RocketMqTagEnum {
      */
     KINGDEE_CUSTOMER_CONTACT_TAG(1023, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_customer_contact_tag"),
 
+    /**
+     *委外订单同步金蝶
+     */
+    KINGDEE_SUBCONTRACT_ORDER_TAG(1024, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_subcontract_order_tag"),
+
+    /**
+     *委外变更单同步金蝶
+     */
+    KINGDEE_SUBCONTRACT_CHANGE_TAG(1025, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_subcontract_change_tag"),
 
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 
@@ -256,6 +301,8 @@ public enum RocketMqTagEnum {
      * 汇率更新
      */
     CHANGE_CURRENCY_TAG(2009, RocketMqTagEnum.SYNC_DMP,"change_currency_tag"),
+
+
     //-----------------------------plm数据更新编码从3001开始---------------------------------------------------------------
     /**
      * 修改上市时间
@@ -288,14 +335,73 @@ public enum RocketMqTagEnum {
     SYNC_DMP_PRODUCT_SKU_TAG(3006,RocketMqTagEnum.SYNC_DMP,"sync_dmp_product_sku_tag"),
 
     /**
-     * 同步产品信息到中台scm
+     * 同步产品信息到scm
      */
     SYNC_SCM_PRODUCT_INFO_TAG(3007,RocketMqTagEnum.SYNC_DMP,"sync_scm_product_info_tag"),
 
     /**
-     * 同步产品sku到中台scm
+     * 同步产品sku到scm
      */
     SYNC_SCM_PRODUCT_SKU_TAG(3008,RocketMqTagEnum.SYNC_DMP,"sync_scm_product_sku_tag"),
+    //-----------------------------SCM编码从4001开始------------------------------------------------------------------
+
+    /**
+     * 同步采购订单到WMS
+     */
+    SYNC_WMS_PURCHASE_ORDER_TAG(4001,RocketMqTagEnum.SYNC_SCM,"sync_wms_purchase_order_tag"),
+
+    /**
+     * 同步采购订单详情到WMS
+     */
+    SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG(4002,RocketMqTagEnum.SYNC_SCM,"sync_wms_purchase_order_detail_tag"),
+
+    /**
+     * 同步采购订单供应商信息到WMS
+     */
+    SYNC_WMS_PURCHASE_ORDER_SUPPLIER_TAG(4003,RocketMqTagEnum.SYNC_SCM,"sync_wms_purchase_order_supplier_tag"),
+
+
+    //---------------------------------WMS 数据更新从6001开始---------------------------------------------------------------------------------
+
+    /**
+     * 金蝶同步销售出库单到WMS
+     */
+    SYNC_KINGDEE_SO_OUTSTOCK_TAG(6001,RocketMqTagEnum.SYNC_WMS,"sync_kingdee_so_outatock_tag"),
+
+    /**
+     * 金蝶同步直接调拨单到WMS
+     */
+    SYNC_KINGDEE_TRANSFER_INFO_TO_WMS_TAG(6002,RocketMqTagEnum.SYNC_WMS,"sync_kingdee_transfer_info_to_wms_tag"),
+
+    /**
+     * 马帮同步FBA发货单到到WMS加工单
+     */
+    SYNC_MABANG_FBA_DELIVERY_TO_WMS_TAG(6003,RocketMqTagEnum.SYNC_WMS,"sync_mabang_fba_delivery_to_wms_tag"),
+
+    /**
+     * 金蝶退货订单同步到WMS退货入库单
+     */
+    SYNC_KINGDEE_RETURN_ORDER_TO_WMS_TAG(6004,RocketMqTagEnum.SYNC_WMS,"sync_kingdee_return_order_to_wms_tag"),
+
+    //---------------------------------马帮数据同步code从7001开始------------------------------------------------------------------------------------------
+
+    /**
+     * ERP直接调拨单同步DMP出入库
+     */
+    ERP_DMP_TRANSFER_INFO_TAG(7001, RocketMqTagEnum.SYNC_DMP,"erp_dmp_transfer_info_tag"),
+
+    /**
+     * DMP出入库同步到马帮
+     */
+    MABANG_INOUT_STOCK_TAG(7002, RocketMqTagEnum.SYNC_MABANG,"mabang_inout_stock_tag"),
+
+    /**
+     * ERP加工单同步DMP出入库
+     */
+    ERP_DMP_MACHINE_INFO_TAG(7003, RocketMqTagEnum.SYNC_DMP,"erp_dmp_machine_info_tag"),
+
+
+
     //-----------------------------公共信息编码从9001开始------------------------------------------------------------------
 
     /**
@@ -307,6 +413,11 @@ public enum RocketMqTagEnum {
      * 预警通知
      */
     MSG_WARN_TAG(9002,RocketMqTagEnum.MSG_WARN,"msg_warn_tag"),
+
+    /**
+     * DMP同步任务消同步状态信息回调
+     */
+    DMP_SYNC_TASK_CALLBACK_TAG(9003,RocketMqTagEnum.SYNC_DMP,"dmp_sync_task_callback_tag"),
 
     ;
     public static final String SALES_ORDER = "sales";
@@ -327,7 +438,19 @@ public enum RocketMqTagEnum {
 
     public static final String SYNC_WMS = "sync_wms";
 
+    public static final String SYNC_SCM = "sync_scm";
+
+    public static final String SYNC_OMS = "sync_oms";
+
     public static final String MSG_WARN = "msg_warn";
+
+    public static final String TRANSFER = "transfer";
+
+    public static final String SYNC_MABANG = "sync_mabang";
+
+    public static final String SHIPMENT = "shipment";
+
+    public static final String FBA_DELIVERY = "fba_delivery";
 
     private Integer code;
 

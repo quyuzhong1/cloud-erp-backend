@@ -1,6 +1,7 @@
 package com.erp.model.dmp.gyy;
 
 
+import com.erp.model.dmp.dto.CleanBaseDTO;
 import com.erp.model.dmp.gyy.bean.RefundDetailsBean;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
@@ -13,7 +14,7 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
-public class GyyRefundEntity {
+public class GyyRefundEntity extends CleanBaseDTO {
 
     /**
      * create_date : 2022-11-23 16:24:10
@@ -232,10 +233,7 @@ public class GyyRefundEntity {
     private BigDecimal amount;
     @SerializedName("details")
     private List<RefundDetailsBean> details;
-    /**
-     * 清洗数据
-     */
-    private Boolean isClean;
+
     @Override
     public String toString() {
         return "GyyRefundEntity{" +

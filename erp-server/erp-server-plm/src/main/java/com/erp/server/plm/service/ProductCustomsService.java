@@ -2,10 +2,12 @@ package com.erp.server.plm.service;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.common.business.service.SuperService;
 
+import java.util.List;
+
 
 /**
  * <p>
- *  服务类
+ *  目的国海关编码服务类
  * </p>
  *
  * @author Luo_WG
@@ -14,4 +16,33 @@ import com.common.business.service.SuperService;
 public interface ProductCustomsService extends SuperService<ProductCustomsEntity> {
 
 
+    /**
+     * 根据产品id查询目的国海关编码
+     * @Author Luo_WG
+     * @Date 2023/6/15 16:51
+     * @param productId
+     * @return java.util.List<com.erp.model.plm.entity.ProductCustomsEntity>
+     **/
+    List<ProductCustomsEntity> listByProductId(String productId);
+
+    /**
+     * 根据产品id查询目的国海关编码
+     * @Author Luo_WG
+     * @Date 2023/6/15 16:51
+     * @param skuId
+     * @return java.util.List<com.erp.model.plm.entity.ProductCustomsEntity>
+     **/
+    List<ProductCustomsEntity> listBySkuId(String skuId);
+
+
+    Boolean removeBySkuId(List<String> skuIds);
+
+
+    /**
+     * 临时接口-添加产品国外海关编码
+     * @Author Luo_WG
+     * @Date 2023/6/25 10:07
+     * @return java.lang.Boolean
+     **/
+    Boolean addProductCustoms();
 }

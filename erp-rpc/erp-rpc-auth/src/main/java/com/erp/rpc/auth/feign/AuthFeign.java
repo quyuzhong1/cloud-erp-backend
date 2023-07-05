@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 /**
  * @Classname AuthFeign
- * @Description TODO
+
  * @Date 2022-08-19 11:58
  * @Created by yl
  */

@@ -10,7 +10,7 @@ import java.io.Serializable;
 /**
  * @author Lambda
  * @Classname CustomerGroupDTO
- * @Description TODO
+
  * @Date 2023-05-11 17:45
  * @Created by yl
  */

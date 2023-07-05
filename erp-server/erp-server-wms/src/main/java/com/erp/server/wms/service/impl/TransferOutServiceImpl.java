@@ -523,6 +523,11 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         return transferOutDetailService.listChoose(param, transferOutEntity);
     }
 
+    @Override
+    public List<TransferOutEntity> findByCodes(List<String> codes) {
+        return lambdaQuery().in(TransferOutEntity::getCode, codes).list();
+    }
+
     /**
      * 更新审核状态
      */
@@ -666,11 +671,11 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         // 明细信息填充
         List<String> skuIds = viewDetailList.stream().map(TransferOutDetailDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
-        Map<String,SkuVO> skuMap =  skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
         viewDetailList.stream().forEach(member->{
             //产品名称
-            SkuVO skuVO = skuMap.get(member.getSkuId());
-            if(Objects.nonNull(skuVO)) {
+            if(skuMap.containsKey(member.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(member.getSkuId()))) {
+                SkuVO skuVO = skuMap.get(member.getSkuId()).get(0);
                 member.setProductName(skuVO.getSkuName());
                 member.setVariantProperty(skuVO.getVariantProperty());
             }
@@ -754,13 +759,13 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     private TransferInDTO.ViewGenerateTransferInDTO wrapTransferIn(String transferType, String transferDirection,
                                                                    TransferOutDTO.GenerateTransferInDTO pushData,TransferOutDetailEntity transferOutDetailEntity) {
         TransferInDTO.ViewGenerateTransferInDTO transferInDTO = new TransferInDTO.ViewGenerateTransferInDTO();
-        transferInDTO.setTransferType(TransferTypeEnum.of(transferType));
+        transferInDTO.setTransferType(TransferTypeEnum.getByCode(transferType));
         transferInDTO.setSourceCode(pushData.getSourceCode());
         transferInDTO.setSourceId(pushData.getSourceId());
         transferInDTO.setSourceDetailId(pushData.getSourceDetailId());
         transferInDTO.setBillDate(LocalDate.now());
         transferInDTO.setOutDate(pushData.getBillDate());
-        transferInDTO.setTransferDirection(TransferDirectionEnum.of(transferDirection));
+        transferInDTO.setTransferDirection(TransferDirectionEnum.getByCode(transferDirection));
         transferInDTO.setOutWarehouseId(pushData.getOutWarehouseId());
         transferInDTO.setOutWarehouseLocation(pushData.getOutWarehouseLocation());
         transferInDTO.setInWarehouseId(pushData.getInWarehouseId());

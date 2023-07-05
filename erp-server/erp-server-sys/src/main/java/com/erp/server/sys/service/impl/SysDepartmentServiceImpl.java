@@ -66,7 +66,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         this.saveOrUpdate(sysDepartment);
 
         //金蝶推送
-        //syncKingdeeSysDeptService.syncDataToKingdee(id, SyncKingdeeOperateEnum.OPERATE_ADD.getCode());
+        //syncKingdeeSysDeptService.syncDataToKingdee(sysDepartment, SyncKingdeeOperateEnum.OPERATE_ADD.getCode());
     }
 
     @Override
@@ -87,7 +87,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             sysDepartmentUserService.removeByDepartmentIds(ids);
             /*if (CollectionUtils.isNotEmpty(list)) {
                 //金蝶删除
-                list.forEach(obj -> syncKingdeeSysDeptService.deleteDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
+                list.forEach(obj -> syncKingdeeSysDeptService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
             }*/
         }
     }
@@ -196,6 +196,16 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     }
 
     @Override
+    public SysDepartmentDTO getUserDeptByCode(String code) {
+        SysDepartmentEntity sysDepartmentEntity = lambdaQuery().eq(SysDepartmentEntity::getCode, code).last("limit 1").one();
+        SysDepartmentDTO dto = new SysDepartmentDTO();
+        if (ObjectUtils.isNotEmpty(sysDepartmentEntity)) {
+            BeanMapperUtils.copy(sysDepartmentEntity, dto);
+        }
+        return dto;
+    }
+
+    @Override
     public List<SysDepartmentEntity> listDept() {
         List<SysDepartmentEntity> list = lambdaQuery()
                 .in(SysDepartmentEntity::getType, new ArrayList<>(Arrays.asList(1, 2)))
@@ -291,12 +301,13 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId) {
+    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId,String syncOperate) {
         return  this.lambdaUpdate()
                 .in(SysDepartmentEntity::getId,ids)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus),SysDepartmentEntity::getSyncKingdeeStatus,syncKingdeeStatus)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus),SysDepartmentEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId),SysDepartmentEntity::getSyncKingdeeId,syncKingdeeId)
+                .set(org.apache.commons.lang3.StringUtils.isNotBlank(syncOperate), SysDepartmentEntity::getSyncOperate, syncOperate)
                 .update();
     }
 

@@ -9,7 +9,7 @@ import java.util.Map;
  * 通知的项目人员 枚举
  *
  * @Classname NoticeItemPeopleEnum
- * @Description TODO
+
  * @Date 2022-11-07 12:04
  * @Created by yl
  */
@@ -18,7 +18,8 @@ public enum NoticeItemPeopleEnum {
     ITEM_MANAGER("projectCharge", "项目经理"),
     PRODUCT_MANAGER("productCharge", "产品经理"),
     AUDITOR("auditor", "审核人"),
-    TASK_CHARGE("taskCharge", "任务负责人");
+    TASK_CHARGE("taskCharge", "任务负责人"),
+    FOLLOWER("concern", "关注人");
 
     private String flag;
     private String name;

@@ -14,7 +14,7 @@ import java.io.Serializable;
  * 供应商联系信息
  * @author Lambda
  * @Classname SupplierContactDTO
- * @Description TODO
+
  * @Date 2023-03-17 14:39
  * @Created by yl
  */

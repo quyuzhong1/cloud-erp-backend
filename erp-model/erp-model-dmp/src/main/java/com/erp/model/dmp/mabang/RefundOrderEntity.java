@@ -1,15 +1,17 @@
 package com.erp.model.dmp.mabang;
 
+import com.erp.model.dmp.dto.CleanBaseDTO;
 import com.erp.model.dmp.mabang.item.RefundOrderItemEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
-public class RefundOrderEntity {
+public class RefundOrderEntity extends CleanBaseDTO {
     /**
      * 唯一编号 示例：544786
      */
@@ -183,10 +185,7 @@ public class RefundOrderEntity {
      */
     private String trackNumber;
     private List<RefundOrderItemEntity> productList;
-    /**
-     * 清洗数据
-     */
-    private Boolean isClean;
+
 
     @Override
     public String toString() {

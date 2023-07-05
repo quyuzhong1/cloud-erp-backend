@@ -11,6 +11,7 @@ import com.common.business.vo.PagingVO;
 import com.common.message.dto.email.EmailVerifyCodeDTO;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -77,7 +78,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
 
     void bindingEmail(EmailVerifyCodeDTO dto);
 
-    void sedEmail(EmailVerifyCodeDTO dto);
+    void sendEmail(EmailVerifyCodeDTO dto);
 
     void removeEmail();
 
@@ -127,7 +128,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @param syncKingdeeId
      * @return
      */
-    boolean updateSyncKingdeeStatus(List<String> businessIds, String status, String syncKingdeeId);
+    boolean updateSyncKingdeeStatus(List<String> businessIds, String status, String syncKingdeeId,String syncOperate);
     /**
      * @description: 批量删除
      * @author Will
@@ -184,6 +185,23 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @return java.util.List<com.common.business.dto.FindUserDTO>
      */
     List<FindUserDTO> listBySearchKeyword(String searchKeyword);
+
+
+    /**
+     * 上传头像
+     * @param headPhotoFile
+     * @return
+     */
+    Boolean uploadHeadPhoto(MultipartFile headPhotoFile);
+
+    /**
+     * 根据金蝶code获取用户信息
+     * @author yl
+     * @date 2023-06-27 15:31
+     * @param kingdeeCodeList
+     * @return java.util.List<com.common.business.dto.FindUserDTO>
+     */
+    List<FindUserDTO> listUserByKingdeeCode(List<String> kingdeeCodeList);
 
 }
 

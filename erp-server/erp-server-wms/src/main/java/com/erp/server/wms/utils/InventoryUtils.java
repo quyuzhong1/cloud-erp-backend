@@ -13,7 +13,7 @@ import java.util.Objects;
 
 /**
  * @Classname: InventoryUtils
- * @Description: TODO
+
  * @CreateTime: 2023-05-10  14:17
  * @Author: zhangchunlin
  */
@@ -165,7 +165,7 @@ public class InventoryUtils {
         param.setSourceCode(txnFlow.getSourceCode());
         param.setSourceDetailId(txnFlow.getSourceDetailId());
         param.setBillDate(txnFlow.getBillDate());
-        param.setSourceType(InventorySourceTypeEnum.of(txnFlow.getSourceType()));
+        param.setSourceType(InventorySourceTypeEnum.getByCode(txnFlow.getSourceType()));
         param.setOperationMode(inventoryOperationModeEnum);
         return param;
     }

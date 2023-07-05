@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * 对接金蝶仓库
  * @author Lambda
  * @Classname KingdeeWarehouseConsumer
- * @Description TODO
+
  * @Date 2023-04-25 14:29
  * @Created by yl
  */
@@ -92,7 +92,7 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils,(String)map.get("syncKingdeeId"),(String)map.get("code"));
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),(String)map.get("syncKingdeeId"),(String)map.get("code"));
         } catch (Exception e) {
 
             //更新数据

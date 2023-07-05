@@ -6,5 +6,5 @@ import org.apache.ibatis.annotations.Param;
 
 @Mapper
 public interface WorkOptionMapper {
-    Integer getTableNum(WorkOptionDTO.TableNumDTO tableNumDTO);
+    Integer getTableNum(WorkOptionDTO.MyWorkOptionDTO tableNumDTO);
 }

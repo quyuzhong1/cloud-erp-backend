@@ -50,6 +50,18 @@ public class ProductAccessoriesServiceImpl extends ServiceImpl<ProductAccessorie
         return resultList;
     }
 
+    /**
+     * 根据产品id 获取辅料信息
+     *
+     * @param skuId
+     * @return
+     */
+    @Override
+    public List<ProductAccessoriesDTO> getBySkuId(String skuId) {
+        List<ProductAccessoriesDTO> resultList = baseMapper.getBySkuId(skuId);
+        return resultList;
+    }
+
     @Override
     public List<ProductAccessoriesEntity> getListByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {

@@ -3,13 +3,13 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapper;
+import com.common.business.constant.IsConstant;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.DocsDTO;
 import com.erp.model.plm.dto.DocsNameDTO;
 import com.erp.model.plm.entity.TaskDocsNameEntity;
-import com.common.business.constant.IsConstant;
 import com.erp.server.plm.mapper.TaskDocsNameMapper;
 import com.erp.server.plm.service.SysDocsService;
 import com.erp.server.plm.service.TaskDeliveryService;
@@ -17,15 +17,17 @@ import com.erp.server.plm.service.TaskDocsNameService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * @Classname TaskDocsNameServiceImpl
- * @Description TODO
+
  * @Date 2022-09-22 12:21
  * @Created by yl
  */
@@ -142,6 +144,7 @@ public class TaskDocsNameServiceImpl extends ServiceImpl<TaskDocsNameMapper, Tas
      * @return java.lang.String
      **/
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String saveDocs(DocsNameDTO dto) {
         String name = dto.getName();
         String productId = dto.getProductId();
@@ -155,5 +158,15 @@ public class TaskDocsNameServiceImpl extends ServiceImpl<TaskDocsNameMapper, Tas
         entity.setProductId(productId);
         this.save(entity);
         return entity.getId();
+    }
+
+    @Override
+    public List<TaskDocsNameEntity> listByNames(String productId, List<String> docNames) {
+        if (CollectionUtils.isEmpty(docNames)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().eq(TaskDocsNameEntity::getProductId,productId)
+                .in(TaskDocsNameEntity::getName,docNames)
+                .list();
     }
 }

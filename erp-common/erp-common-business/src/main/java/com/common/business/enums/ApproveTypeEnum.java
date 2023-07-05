@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/3/20 9:30
  */
 public enum ApproveTypeEnum {
@@ -17,11 +17,12 @@ public enum ApproveTypeEnum {
     PASS("pass", "审核通过"),
     REJECT("reject", "审核不通过"),
 
-    REJECT_PREVIOUS("reject_previous", "驳回上个节点"),
+//    REJECT_PREVIOUS("reject_previous", "驳回上个节点"),
     /**
      * 驳回指定节点
      */
     REJECT_APPOINT("reject_appoint", "驳回指定节点"),
+    REVOKE("revoke", "撤回流程"),
     ;
     @JsonValue
     @EnumValue

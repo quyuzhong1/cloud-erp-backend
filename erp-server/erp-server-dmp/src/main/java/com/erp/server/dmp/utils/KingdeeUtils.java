@@ -12,7 +12,6 @@ public class KingdeeUtils {
 
     public static final String SO_CHANGE_URL="Kingdee.K3.SCM.WebApi.ServicesStub.SaveXSaleOrderWebApi.SaveXSaleOrder";
 
-    public static final String AUTH_URL="Kingdee.bos.webapi.ServicesStub.authservice.validateuser.common.kdsvc";
 
 
 

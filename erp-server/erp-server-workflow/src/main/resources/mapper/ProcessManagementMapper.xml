@@ -36,6 +36,7 @@
         pm.business_name,
         pm.approve_status,
         pm.act_process_definition_id,
+        pm.create_user_id as managementCreateUserId,
         ptm.id AS taskManagementId,
         ptm.cur_activity_id,
         ptm.task_id,
@@ -56,6 +57,7 @@
         ptm.cur_activity_name
         FROM process_management pm , process_task_management ptm
         where pm.process_instance_id = ptm.process_instance_id
+        and pm.is_deleted = false and ptm.is_deleted = false
     </sql>
 
     <sql id="List_Process_Management">
@@ -79,10 +81,10 @@
             concat(wm.detail_url,pm.business_id) as detail_url,
             pm.create_time as create_time
         FROM process_task_management AS ptm
-                 LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id
-                 LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code
-                 LEFT JOIN process_definition pd on pd.id = pm.process_definition_id
-        where ptm.task_status = 'approveIng'
+                 LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id AND pm.is_deleted = false
+                 LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code AND wm.is_deleted = false
+                 LEFT JOIN process_definition pd on pd.id = pm.process_definition_id and pd.is_deleted = false
+        where ptm.task_status = 'approveIng'  and ptm.is_deleted = false
           <if test="null != param.processName and param.processName != ''">
               and pd.process_name ilike concat('%', #{param.processName},'%')
           </if>
@@ -168,6 +170,46 @@
             </foreach>
         </if>
         ORDER BY ptm.create_time ASC
+    </select>
+    <select id="listApproverByBusiness" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$CurApproveInfoDTO">
+        SELECT
+            pm.process_instance_id,
+            pm.business_id,
+            pm.business_code,
+            pm.business_key,
+            pm.business_name,
+            string_agg(ptm.cur_activity_id,',') AS activityId,
+            string_agg(ptm.cur_activity_name,',') AS activityName,
+            string_agg(ptm.cur_approve_id,',') AS curApproveId,
+            string_agg(ptm.cur_approve_name,',') AS curApproveName
+        FROM process_management pm
+        LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = false AND ptm.task_status = 'approveIng'
+        WHERE pm.is_deleted = false AND
+            (pm.business_id, pm.business_key) in
+            <foreach collection="list" item="item" open="(" separator="," close=")">
+                (#{item.businessId}, #{item.businessKey})
+            </foreach>
+        GROUP BY pm.business_id, pm.business_code, pm.business_key,pm.process_instance_id, pm.business_name
+    </select>
+
+    <select id="listApproverByApprover" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$CurApproveInfoDTO">
+        SELECT
+        pm.process_instance_id,
+        pm.business_id,
+        pm.business_code,
+        pm.business_key,
+        pm.business_name,
+        ptm.cur_activity_id AS activityId,
+        ptm.cur_activity_name AS activityName,
+        ptm.cur_approve_id AS curApproveId,
+        ptm.cur_approve_name AS curApproveName
+        FROM process_management pm
+        LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = false AND ptm.task_status = 'approveIng'
+        WHERE pm.is_deleted = false AND
+        (ptm.cur_approve_id, pm.business_key) in
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            (#{item.curApproveId}, #{item.businessKey})
+        </foreach>
     </select>
 
 </mapper>

@@ -129,7 +129,7 @@ public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Obje
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils,(String)map.get("syncKingdeeId"),(String)map.get("code"));
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),(String)map.get("syncKingdeeId"),(String)map.get("code"));
         } catch (Exception e) {
 /*            Map<String, Object> pushMap = new HashMap<>();
             pushMap.put("ids", Arrays.asList(map.get("soSyncKingdeeId")));
@@ -155,6 +155,8 @@ public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Obje
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
             //给修改json对象赋值ID
             KingdeeUtils.makeFieldJson(json,"FId",".", id);
+            //更新数据不能传入库组织
+            json.remove("FStockOrgId.FNumber");
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);

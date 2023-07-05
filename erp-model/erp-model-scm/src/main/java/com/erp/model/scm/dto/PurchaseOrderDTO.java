@@ -2,6 +2,7 @@ package com.erp.model.scm.dto;
 
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.plm.vo.ProductVO;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,7 +17,7 @@ import java.util.List;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/3/16 11:16
  */
 @Data
@@ -181,6 +182,32 @@ public class PurchaseOrderDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 委外订单类型(child子级，parent父级)
+         */
+        private String subcontractType;
+
+        /**
+         * 是否是组合SKU
+         */
+        private Boolean isConstitute;
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+
+        /**
+         * 采购申请单号
+         */
+        private String purchaseApplicationCode;
+
+        /**
+         * 采购申请单id集合
+         */
+        @JsonIgnore
+        private List<String> purchaseApplicationIds;
     }
 
     @Data
@@ -278,6 +305,11 @@ public class PurchaseOrderDTO implements Serializable {
         private String purchaseUserId;
 
         /**
+         * 采购员名称
+         */
+        private String purchaseUserName;
+
+        /**
          * 采购部门id
          */
         private String purchaseDeptId;
@@ -305,6 +337,26 @@ public class PurchaseOrderDTO implements Serializable {
          */
         @NotNull(message = "新品首批不能为空")
         private Boolean isFirstMassProduct;
+
+        /**
+         * 委外订单类型(child子级，parent父级)
+         */
+        private String subcontractType;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源编码
+         */
+        private String sourceCode;
     }
 
     @Data
@@ -397,12 +449,19 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private String supplierName;
 
+        /**
+         * 采购组织
+         */
+        private String purchaseOrgName;
 
         /**
          * 仓库名
          */
         private String warehouseName;
 
+        /**
+         * 编码
+         */
         private String code;
 
     }
@@ -532,6 +591,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 邮箱（乙方）
          */
         private String supplierEmail;
+
+        /**
+         * 付款方式名称
+         */
+        private String paymentConditionName;
 
         /**
          * 明细信息
@@ -759,6 +823,10 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private Integer exceedQty;
 
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
     }
 
     @Data
@@ -895,6 +963,118 @@ public class PurchaseOrderDTO implements Serializable {
         private String deliveryWarehouseName;
 
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewSubcontractPoDTO {
+
+        /**
+         * 采购单号
+         */
+        private String code;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 单据状态
+         */
+        private String approveStatus;
+        /**
+         * 单据状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * SKUId
+         */
+        private String skuId;
+
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 预计交货日期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 交货仓库
+         */
+        private String deliveryWarehouseName;
+
+        /**
+         * 采购员
+         */
+        private String  purchaseUserName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SubcontractOrderChildDTO {
+        /**
+         * 父级采购明细id
+         */
+        private String parentPodId;
+        /**
+         * 父级采购明细id
+         */
+        private String parentSkuId;
+        /**
+         * 子级采购id
+         */
+        private String childPoId;
+        /**
+         * 子级采购明细id
+         */
+        private String childPodId;
+        /**
+         * 父级委外明细id
+         */
+        private String subParentDetailId;
+        /**
+         * 子级skuid
+         */
+        private String childSkuId;
+        /**
+         * 子级sku编号
+         */
+        private String childSkuNo;
+        /**
+         * 子级仓库
+         */
+        private String childWarehouseId;
+        /**
+         * 子级库位
+         */
+        private String childWarehouseLocation;
+        /**
+         * 子级单据状态
+         */
+        private String childApproveStatus;
+        /**
+         * 子级委外订单id
+         */
+        private String subChildId;
+        /**
+         * 子级委外订单编码
+         */
+        private String subChildCode;
+
+        /**
+         * 子级委外明细id
+         */
+        private String subChildDetailId;
     }
 
 

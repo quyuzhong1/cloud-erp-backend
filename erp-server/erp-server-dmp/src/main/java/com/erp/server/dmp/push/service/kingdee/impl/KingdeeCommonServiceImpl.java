@@ -18,8 +18,11 @@ import com.common.core.utils.FastJsonUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
+import com.erp.model.dmp.constant.CfgApiAuthContant;
 import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
+import com.erp.model.dmp.dto.CfgApiAuthDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
+import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.*;
@@ -29,10 +32,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.erp.server.dmp.service.ApiPlmSyncLogService;
-import com.erp.server.dmp.service.CfgApiFieldMapService;
-import com.erp.server.dmp.service.CfgApiFieldMapValueService;
-import com.erp.server.dmp.service.PlatformService;
+import com.erp.server.dmp.service.*;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
 import com.kingdee.bos.webapi.entity.*;
@@ -40,7 +40,6 @@ import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,12 +54,15 @@ import java.util.stream.Collectors;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/3/3 11:53
  */
 @Slf4j
 @Service
 public class KingdeeCommonServiceImpl implements KingdeeCommonService {
+
+    @Resource
+    private CfgApiAuthService cfgApiAuthService;
 
     @Resource
     private CfgApiFieldMapValueService cfgApiFieldMapValueService;
@@ -73,6 +75,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
     @Resource
     private PlatformService platformService;
 
@@ -91,11 +94,6 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Resource
     private OmsTaskFeign omsTaskFeign;
 
-    @Value("${openApi.kingdee.authName}")
-    private String kingdeeUserName;
-
-    @Value("${openApi.kingdee.pwd}")
-    private String kingdeeUserPwd;
 
 
     @Override
@@ -155,18 +153,38 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
 
     @Override
-    public JSONObject view(KingdeeApiUtils apiUtils, String id, String number) {
-        LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
-
-        if (StringUtils.isNotBlank(id)) {
-            viewMap.put("id", id);
-        } else {
-            viewMap.put("number", number);
-            //现默认唯迹科技
-            viewMap.put("CreateOrgId", 1);
+    public JSONObject view(KingdeeApiUtils apiUtils,String apiPlatformId, String id, String number) {
+        /**
+         * 二级查询：
+         * 优先根据第一创建组织查询，未查到则根据第二创建组织查询
+         */
+        JSONObject model;
+        Integer createOrgId = 1;
+        CfgApiAuthEntity authEntity = cfgApiAuthService.getByKey(CfgApiAuthContant.KINGDEE_CREATE_ORG_Id, apiPlatformId);
+        if (ObjectUtils.isEmpty(authEntity)) {
+            //未配置数据
+            return handleViewJson(apiUtils, id, number, createOrgId);
         }
-        JSONObject model = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
+        CfgApiAuthDTO.KingDeeCreateOrgDTO kingDeeCreateOrgDTO = JSONUtil.toBean(authEntity.getValue(), CfgApiAuthDTO.KingDeeCreateOrgDTO.class);
+        //根据一级创建组织查询
+        try {
+             createOrgId = ObjectUtils.isEmpty(kingDeeCreateOrgDTO.getFirstOrgId()) ? createOrgId : kingDeeCreateOrgDTO.getFirstOrgId();
+             model = handleViewJson(apiUtils, id, number, createOrgId);
+        } catch (Exception e) {
+            log.error("未查询到有效数据，apiPlatformId = {}，id = {}，number = {}，firstOrgId = {}",apiPlatformId,id,number,kingDeeCreateOrgDTO.getFirstOrgId());
+            //根据二级创建组织查询
+            createOrgId = ObjectUtils.isEmpty(kingDeeCreateOrgDTO.getSecondOrgId()) ? createOrgId : kingDeeCreateOrgDTO.getFirstOrgId();
+            model = handleViewJson(apiUtils, id, number, createOrgId);
+        }
         return model;
+    }
+
+    public static void main(String[] args) {
+        CfgApiAuthDTO.KingDeeCreateOrgDTO kingDeeCreateOrgDTO = new CfgApiAuthDTO.KingDeeCreateOrgDTO();
+        kingDeeCreateOrgDTO.setFirstOrgId(1);
+        kingDeeCreateOrgDTO.setSecondOrgId(2);
+        String s = JSONUtil.toJsonStr(kingDeeCreateOrgDTO);
+        System.out.println(s);
     }
 
     @Override
@@ -183,7 +201,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void excuteOperation(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number, String operate) {
+    public Boolean excuteOperation(KingdeeApiUtils apiUtils, PlatformEntity platformEntity, Map<String, Object> map, Integer type, String number, String operate) {
         LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
         //金蝶id
         String syncKingdeeId = (String) map.get("syncKingdeeId");
@@ -203,10 +221,11 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         } catch (Exception e) {
             //新增失败时添加日志
             insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(viewMap), e.getMessage(), type, ApiSendStatusEnum.FAILURE.getCode());
-            return;
+            return Boolean.FALSE;
         }
         //操作成功添加日志
         insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(viewMap), SyncKingdeeOperateEnum.getDescByCode(operate), type, ApiSendStatusEnum.SUCCESS.getCode());
+        return Boolean.TRUE;
     }
 
     @Override
@@ -390,8 +409,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
                 apiUtils.auditById(ids);
             } catch (Exception e) {
                 //审核失败操作日志及定时任务
-                log.error("审核失败", e);
-                insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), "审核失败", e.getMessage(), type, ApiSendStatusEnum.FAILURE.getCode());
+                log.error("审核失败", JSONUtil.toJsonStr(viewMap));
+                insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), JSONUtil.toJsonStr(viewMap), e.getMessage(), type, ApiSendStatusEnum.FAILURE.getCode());
                 return;
             }
             //审核成功操作日志
@@ -549,7 +568,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
      */
     private void formatJsonObject(CfgApiFieldMapDTO cfgApiFieldMapDTO, JSONObject json, Map<String, Object> map, List<CfgApiFieldMapValueEntity> cfgApiFieldMapValueList) {
         //无本身字段时取默认值
-        if (StringUtils.isBlank(cfgApiFieldMapDTO.getSelfField())) {
+        if (StringUtils.isBlank(cfgApiFieldMapDTO.getSelfField()) || ObjectUtils.isEmpty(map.get(cfgApiFieldMapDTO.getSelfField()))) {
             KingdeeUtils.makeFieldJson(json, cfgApiFieldMapDTO.getApiField(), ".", cfgApiFieldMapDTO.getDefaultValue());
             return;
         }
@@ -633,20 +652,39 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @SneakyThrows
     @Override
     public String createkingdeeSoChange(Map<String, Object> paramMap) {
-        String authUrl = KingdeeUtils.AUTH_URL;
-        String userName = kingdeeUserName;
-        String userPwd = kingdeeUserPwd;
 
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER_CHANGE.getCode());
         K3CloudApi client = apiUtils.client;
         RepoResult  repoResult= client.CheckAuthInfo();
         repoResult.getId();
-        // String url = kingdeeServerUrl + KingdeeUtils.SO_CHANGE_URL;
         String url = KingdeeUtils.SO_CHANGE_URL;
         String paramStr = JSONUtil.toJsonStr(paramMap);
         log.info("createkingdeeSoChange  paramStr==={}",paramStr);
         String result = client.execute(url, new Object[]{paramStr});
         return result;
+    }
+
+    /**
+     * @description: 根据创建组织id查询
+     * @author Will
+     * @date: 2023/7/3 10:23
+     * @param apiUtils
+     * @param id
+     * @param number
+     * @param createOrgId
+     * @return JSONObject
+     */
+    private JSONObject handleViewJson (KingdeeApiUtils apiUtils,String id,String number,Integer createOrgId) {
+        LinkedHashMap<String, Object> viewMap = new LinkedHashMap<>();
+        if (StringUtils.isNotBlank(id)) {
+            viewMap.put("id", id);
+        } else {
+            viewMap.put("number", number);
+            //现默认唯迹科技
+            viewMap.put("CreateOrgId", createOrgId);
+        }
+        JSONObject model = apiUtils.getViewJson(JSONUtil.toJsonStr(viewMap));
+        return model;
     }
 }

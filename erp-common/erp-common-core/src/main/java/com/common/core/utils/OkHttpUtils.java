@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @Classname OkHttpUtils
- * @Description TODO
+
  * @Date 2022-07-13 17:33
  * @Created by yl
  */

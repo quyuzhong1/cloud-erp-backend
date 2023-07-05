@@ -1,6 +1,10 @@
 package com.erp.server.oms.controller.feign;
 
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
@@ -9,6 +13,7 @@ import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -109,5 +114,16 @@ public class SoInfoFeignController extends BaseController {
          soDetailService.updateDeliveryStatus(paramList);
     }
 
+    /**
+     * 销售订单审核
+     * @Author Luo_WG
+     * @Date 2023/7/4 12:28
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/approve")
+    public Boolean approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        return soInfoService.approve(dto);
+    }
 
 }

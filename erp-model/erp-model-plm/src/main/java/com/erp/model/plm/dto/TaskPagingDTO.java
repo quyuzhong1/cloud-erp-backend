@@ -1,7 +1,7 @@
 package com.erp.model.plm.dto;
 
-import com.common.core.anno.StateEnumValue;
 import com.common.business.dto.base.SortDTO;
+import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * @Classname TaskPagingDTO
- * @Description TODO
+
  * @Date 2022-09-21 14:41
  * @Created by yl
  */
@@ -35,8 +35,9 @@ public class TaskPagingDTO extends SortDTO implements Serializable {
       * 0 待我完成
       * 1 待我审核
       * 2全部
+      * 3 变更任务
       */
-     @StateEnumValue(intValues = {0,1,2}, message = "任务类型有误")
+     @StateEnumValue(intValues = {0,1,2,3}, message = "任务类型有误")
      private Integer taskFlag;
 
      /**
@@ -53,6 +54,18 @@ public class TaskPagingDTO extends SortDTO implements Serializable {
       *  状态值 0:待发布 1:未开始 2:进行中 3 已完成, 4.完成待确认 5.审核中  6 审核通过 7 审核不通过
       */
      private List<Integer> statusList;
+
+
+     @Data
+     @NoArgsConstructor
+     public static class ExportDTO extends TaskPagingDTO {
+          /**
+           * 产品ids
+           */
+          private List<String> ids;
+
+
+     }
 
 
 }

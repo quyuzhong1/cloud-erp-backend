@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 /**
  * @Classname SysDepartmentUserNumber
- * @Description TODO
+
  * @Date 2022-07-18 14:09
  * @Created by yl
  */
@@ -27,6 +27,14 @@ public class SysDepartmentUserNumberDTO implements Serializable {
     private String userName;
 
     private String code;
+
+
+    private String userCode;
+
+    /**
+     * 头像
+     */
+    private String userHeadIcon;
 
 
 }

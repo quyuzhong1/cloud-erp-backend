@@ -19,7 +19,7 @@ import java.util.List;
  *
  * @author Lambda
  * @Classname SoOutstockDTO
- * @Description TODO
+
  * @Date 2023-05-11 10:48
  * @Created by yl
  */
@@ -267,6 +267,8 @@ public class SoOutstockDTO implements Serializable {
          */
         private String orderType;
 
+
+        private String neSourceType;
         /**
          * 审核列表集合
          */
@@ -507,6 +509,11 @@ public class SoOutstockDTO implements Serializable {
          */
         private Boolean isClose;
 
+        /**
+         * 要货日期
+         */
+        private LocalDate requireDate;
+
 
     }
 
@@ -538,6 +545,7 @@ public class SoOutstockDTO implements Serializable {
         private String soCode;
 
         private ApproveStatusEnum approveStatus;
+
 
         private String approveStatusName;
 
@@ -660,6 +668,31 @@ public class SoOutstockDTO implements Serializable {
          */
         private String deliveryModeName;
 
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 审核人
+         */
+        private String approveUserName;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
+         * 销售订单备注
+         */
+        private String soRemark;
 
         private List<SoOutstockDetailDTO.ViewDTO> detailList;
 

@@ -3,7 +3,6 @@ package com.erp.model.oms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.SalesPlatformEnum;
 import com.common.core.entity.BaseEntity;
 import lombok.Getter;
 import lombok.Setter;
@@ -116,7 +115,7 @@ public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
      * 平台类型
      */
     @TableField("platform_type")
-    private SalesPlatformEnum platformType;
+    private String platformType;
 
     /**
      * 公司分类 从 oms_dict 获取

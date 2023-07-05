@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.DmpFbaDeliveryMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpFbaDeliveryEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="logic_name" property="logicName" />
+       <result column="customs_clearance_time" property="customsClearanceTime" />
+       <result column="total_apply_quantity" property="totalApplyQuantity" />
+       <result column="remark" property="remark" />
+       <result column="delivery_time" property="deliveryTime" />
+       <result column="is_over" property="isOver" />
+       <result column="logic_price" property="logicPrice" />
+       <result column="estimate_time" property="estimateTime" />
+       <result column="delivery_type" property="deliveryType" />
+       <result column="delivery_id" property="deliveryId" />
+       <result column="stock_sum" property="stockSum" />
+       <result column="total_weights" property="totalWeights" />
+       <result column="channel_name" property="channelName" />
+       <result column="sail_time" property="sailTime" />
+       <result column="arrival_time" property="arrivalTime" />
+       <result column="total_volumes" property="totalVolumes" />
+       <result column="employee_name" property="employeeName" />
+       <result column="logistics_code" property="logisticsCode" />
+       <result column="delivery_no" property="deliveryNo" />
+       <result column="extend_fee" property="extendFee" />
+       <result column="warehouse_name" property="warehouseName" />
+       <result column="channel_id" property="channelId" />
+       <result column="delivery_status" property="deliveryStatus" />
+       <result column="warehouse_id" property="warehouseId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        create_user_id,
+        create_user_name,
+        update_time,
+        update_user_id,
+        update_user_name,
+        version,
+        is_deleted,
+        logic_name, customs_clearance_time, total_apply_quantity, remark, delivery_time, is_over, logic_price, estimate_time, delivery_type, delivery_id, stock_sum, total_weights, channel_name, sail_time, arrival_time, total_volumes, employee_name, logistics_code, delivery_no, extend_fee, warehouse_name, channel_id, delivery_status, warehouse_id
+    </sql>
+
+
+</mapper>

@@ -353,8 +353,12 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             //销售单信息
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             detailView.setSalesQty(soDetailEntity.getQty());
-            detailView.setReturnReasonDictName(ReturnReasonEnum.getName(detailEntity.getReturnReasonDict()));
-            detailView.setReturnTypeDictName(ReturnTypeEnum.getName(detailEntity.getReturnTypeDict()));
+            if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
+                detailView.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnTypeDict()));
+            }
+            if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
+                detailView.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnDetailEntity.getReturnReasonDict()));
+            }
             detailView.setSalesQty(soDetailEntity.getQty());
             detailViewDTOS.add(detailView);
         }
@@ -637,8 +641,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 SoReturnReceiveDetailDTO.Add detailAddDTO = new SoReturnReceiveDetailDTO.Add();
                 detailAddDTO.setReturnQty(view.getReturnQty());
                 detailAddDTO.setReceiveQty(view.getReceiveQty());
-                detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
-                detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
                 detailAddDTO.setRemark(view.getRemark());
                 detailAddDTO.setSourceDetailId(view.getSourceDetailId());
                 detailList.add(detailAddDTO);

@@ -6,6 +6,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.RegularValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.erp.model.scm.enums.SupplierPhaseEnum;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -24,7 +25,7 @@ import java.util.List;
  *
  * @author yl
  * @Classname SupplierDTO
- * @Description TODO
+
  * @Date 2023-03-15 16:35
  * @Created by yl
  */
@@ -290,6 +291,15 @@ public class SupplierDTO implements Serializable {
          */
         private Boolean disabled;
 
+        /**
+         * 付款条件
+         */
+        private String paymentCondition;
+
+        /**
+         * 付款条件名称
+         */
+        private String paymentConditionName;
 
         /**
          * 供应商联系信息
@@ -398,6 +408,11 @@ public class SupplierDTO implements Serializable {
          */
         @NotNull(message = "供应商状态不能为空")
         private Boolean disabled;
+
+        /**
+         * 付款条件
+         */
+        private String paymentCondition;
 
     }
 
@@ -704,6 +719,41 @@ public class SupplierDTO implements Serializable {
          * 结算币种
          */
         private String payCurrency;
+    }
+
+    /**
+     * 供应商简单信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SupplierSimpleDTO {
+
+
+        /**
+         * 供应商id
+         */
+        private String id;
+
+        /**
+         * 供应商编码
+         */
+        private String code;
+
+        /**
+         * 供应商名称
+         */
+        private String name;
+
+        /**
+         * 审核状态
+         */
+        @JsonIgnore
+        private String approveStatus;
+
+        /**
+         * 禁用状态
+         */
+        private Boolean disabled;
     }
 
 }

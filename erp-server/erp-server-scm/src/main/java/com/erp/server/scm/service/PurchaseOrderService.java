@@ -93,9 +93,11 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @author Will
      * @date: 2023/3/16 11:35
      * @param ids
+     * @param remark
+     * @param isValid
      * @return Boolean
      */
-    Boolean finishDelivery(List<String> ids);
+    Boolean finishDelivery(List<String> ids, String remark,Boolean isValid);
 
     /**
      * @description: 导出采购合同PDF
@@ -171,14 +173,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return List<ViewGenerateReceiveDTO>
      */
     List<PurchaseOrderDTO.ViewGenerateReceiveDTO> viewGenerateReceive(List<String> ids);
-    /**
-     * @description: 下推签收单保存
-     * @author Will
-     * @date: 2023/3/29 16:46
-     * @param dto
-     * @return Boolean
-     */
-    Boolean generateReceive(PurchaseOrderDTO.ListGenerateReceiveDTO dto);
+
     /**
      * @description: 采购变更数据显示
      * @author Will
@@ -242,5 +237,74 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      */
     List<PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO> viewGeneratePurchaseReturnOrder(List<String> ids);
 
+    /**
+     * @description: 根据来源明细ids查询
+     * @author Will
+     * @date: 2023/6/13 15:36
+     * @param sourceDetailIds
+     * @return List<ListDTO>
+     */
+    List<PurchaseOrderDTO.ListDTO> listBySourceDetailIds(List<String> sourceDetailIds);
 
+    /**
+     * @description: 列表数据处理
+     * @author Will
+     * @date: 2023/6/13 15:57
+     * @param records
+     */
+    void doOpHandlePurchaseOrder(List<PurchaseOrderDTO.ListDTO> records);
+
+    /**
+     * 根据采购订单编号获取采购订单信息
+     * @param codes
+     * @return
+     */
+    List<PurchaseOrderEntity> findByCodes(List<String> codes);
+    /**
+     * @description: 根据采购订单id查询委外订单下所有的采购订单id
+     * @author Will
+     * @date: 2023/6/15 15:10
+     * @param poId
+     * @return List<ViewSubcontractPoDTO>
+     */
+    List<PurchaseOrderDTO.ViewSubcontractPoDTO> viewSubcontractPo(String poId);
+    /**
+     * @description: 查询委外订单所有子级SKU生成的采购订单信息
+     * @author Will
+     * @date: 2023/6/15 17:49
+     * @param parentPodIds
+     * @return List<SubcontractOrderChildDTO>
+     */
+    List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildByParentPodIds(List<String> parentPodIds);
+    /**
+     * @description: 自动审核采购订单
+     * @author Will
+     * @date: 2023/6/15 18:51
+     * @param poIds
+     */
+    void autoApprovePurchaseOrder(List<String> poIds);
+    /**
+     * @description: 来源ids
+     * @author Will
+     * @date: 2023/6/19 14:45
+     * @param sourceIds
+     * @return List<PurchaseOrderEntity>
+     */
+    List<PurchaseOrderEntity> listBySourceIds(List<String> sourceIds);
+    /**
+     * @description: 更新申请单创建采购订单类型
+     * @author Will
+     * @date: 2023/6/25 11:44
+     * @param purchaseOrderIds
+     */
+     void updateCreatePoType(List<String> purchaseOrderIds);
+     /**
+      * @description: 金蝶导入采购订单
+      * @author Will
+      * @date: 2023/7/5 14:59
+      * @param excelFile
+      * @param response
+      * @return Boolean
+      */
+     Boolean kingdeePoImportFile(MultipartFile excelFile, HttpServletResponse response);
 }

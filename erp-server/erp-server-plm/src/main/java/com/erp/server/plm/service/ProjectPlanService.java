@@ -22,9 +22,13 @@ import java.util.Map;
  * @since 2023-02-03 15:14:29
  */
 public interface ProjectPlanService  extends IService<ProjectPlanEntity> {
-
-
-
+    /**
+     * 保存
+     */
+    String saveSchedule (HandleTaskScheduleDTO dto);
+    /**
+     * 保存并提交
+     */
     Boolean submitSchedule(HandleTaskScheduleDTO dto);
 
     /**

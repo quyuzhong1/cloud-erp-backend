@@ -11,6 +11,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
+import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import org.apache.commons.lang3.StringUtils;
@@ -94,7 +95,6 @@ public class SoInfoController extends BaseController {
     }
 
 
-
     /**
      * 根据销售订单 id 获取客户信息
      *
@@ -118,9 +118,6 @@ public class SoInfoController extends BaseController {
         String id = soInfoService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
-
-
-
 
 
     /**
@@ -338,16 +335,29 @@ public class SoInfoController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 导出销售订单的的发票信息
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.oms.dto.SoInfoDTO.ExportPdfDTO>
+     * @author yl
+     * @date 2023-07-04 14:44
+     */
+    @PostMapping("/exportSoPI")
+    public ApiResult exportSoPI(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
+        Boolean result = soInfoService.exportSoPI(dto.getId(),response);
+        return result ? success() : failure();
 
-
+    }
 
 
     /**
      * 下推备货申请单数据显示
+     *
+     * @param dto
+     * @return ApiResult<List < AddDetailView>>
      * @author Will
      * @date: 2023/5/18 19:33
-     * @param dto
-     * @return ApiResult<List<AddDetailView>>
      */
     @PostMapping("/viewGenerateSalesDemand")
     public ApiResult<List<SoInfoDTO.ViewGenerateSalesDemandDTO>> viewGenerateSalesDemand(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -357,10 +367,11 @@ public class SoInfoController extends BaseController {
 
     /**
      * 下推发货通知单\销售出库单-列表查询
+     *
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoInfoDTO.GenerateDeliveryView>>
      * @Author Luo_WG
      * @Date 2023/5/25 12:01
-     * @param dto dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.oms.dto.SoInfoDTO.GenerateDeliveryView>>
      **/
     @PostMapping("/generateDeliveryView")
     public ApiResult<List<SoInfoDTO.GenerateDeliveryView>> generateDeliveryView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -370,15 +381,26 @@ public class SoInfoController extends BaseController {
 
     /**
      * 下推销售退货订单-列表查询
+     *
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoInfoDTO.GenerateSoReturnView>>
      * @Author Luo_WG
      * @Date 2023/5/25 15:16
-     * @param dto dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.oms.dto.SoInfoDTO.GenerateSoReturnView>>
      **/
     @PostMapping("/generateSoReturnView")
     public ApiResult<List<SoInfoDTO.GenerateSoReturnView>> generateSoReturnView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<SoInfoDTO.GenerateSoReturnView> list = soInfoService.generateSoReturnView(dto.getIds());
         return success(list);
+    }
+
+    /**
+     * 根据sku id和数量计算成本毛利
+     * @param costParam
+     * @return
+     */
+    @PostMapping("/getSkuCostProfit")
+    public ApiResult<SkuCostProfitDTO.SkuCostProfitResult> getSkuCostProfit(@RequestBody @Validated SkuCostProfitDTO.SkuCostProfitParam costParam) {
+        return success(soInfoService.getSkuCostProfit(costParam));
     }
 
 }

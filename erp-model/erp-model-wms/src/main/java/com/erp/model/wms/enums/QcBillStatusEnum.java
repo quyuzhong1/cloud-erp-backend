@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  *
  * @author Lambda
  * @Classname QcBillStatusEnum
- * @Description TODO
+
  * @Date 2023-04-17 10:32
  * @Created by yl
  */

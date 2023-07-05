@@ -53,6 +53,11 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
     SysDepartmentDTO getDepartmentById(String deptId);
 
     /**
+     * 根据部门code查询
+     */
+    SysDepartmentDTO getUserDeptByCode(String code);
+
+    /**
      * 部门列表
      * @return
      */
@@ -83,7 +88,7 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
      * @param syncKingdeeId
      * @return Boolean
      */
-    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId);
+    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId,String syncOperate);
 
 }
 

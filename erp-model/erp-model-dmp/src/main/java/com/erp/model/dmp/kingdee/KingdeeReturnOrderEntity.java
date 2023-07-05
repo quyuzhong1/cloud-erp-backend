@@ -1,20 +1,24 @@
 package com.erp.model.dmp.kingdee;
 
 import cn.hutool.core.annotation.Alias;
+import com.erp.model.dmp.dto.CleanBaseDTO;
 import com.erp.model.dmp.kingdee.item.KingdeeReturnOrderItemEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
 @ToString
-public class KingdeeReturnOrderEntity {
+public class KingdeeReturnOrderEntity extends CleanBaseDTO {
 
     private String _id;
+    @Alias("FID")
+    private String fId;
     @Alias("FBillTypeID")
     private String fBillTypeID;
     @Alias("FBillTypeID.FName")
@@ -31,10 +35,10 @@ public class KingdeeReturnOrderEntity {
     private String fSaleOrgId;
     @Alias("FSaleOrgId.FName")
     private String fSaleOrgName;
-    @Alias("FRecustId")
-    private String fRetcustId;
     @Alias("FRetcustId.FName")
     private String fRetcustName;
+    @Alias("FRetcustId.FNumber")
+    private String FRetcustNumber;
     @Alias("FSalesManId")
     private String fSalesManId;
     @Alias("FSalesManId.FName")
@@ -63,11 +67,14 @@ public class KingdeeReturnOrderEntity {
     private String FDelTime;
     @Alias("FHeadNote")
     private String FHeadNote;
+    @Alias("FReturnReason")
+    private String fReturnReason;
+    @Alias("FSaledeptid.FNumber")
+    private String fSaledeptNumber;
+    @Alias("FSaledeptid.FName")
+    private String fSaledeptName;
+
     private List<KingdeeReturnOrderItemEntity> itemEntityList;
-    /**
-     * 清洗数据
-     */
-    private Boolean isClean;
     @Override
     public String toString() {
         return "KingdeeReturnOrderEntity{" +
@@ -79,7 +86,6 @@ public class KingdeeReturnOrderEntity {
                 ", fDocumentStatus='" + fDocumentStatus + '\'' +
                 ", fSaleOrgId='" + fSaleOrgId + '\'' +
                 ", fSaleOrgName='" + fSaleOrgName + '\'' +
-                ", fRetcustId='" + fRetcustId + '\'' +
                 ", fRetcustName='" + fRetcustName + '\'' +
                 ", fSalesManId='" + fSalesManId + '\'' +
                 ", fSalesManName='" + fSalesManName + '\'' +
@@ -99,3 +105,5 @@ public class KingdeeReturnOrderEntity {
                 '}';
     }
 }
+
+

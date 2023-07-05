@@ -6,12 +6,13 @@ import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/3/10 14:43
  */
 @Service
@@ -51,11 +52,11 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
 
         //仓库
         if (ApiModuleTypeEnum.WAREHOUSE_INFO.getCode().toString().equals(code)) {
-            warehouseService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId);
+            warehouseService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
         }
         //调拨申请单
         if (ApiModuleTypeEnum.TRANSFER_INFO.getCode().toString().equals(code)) {
-            transferInfoService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
+            transferInfoService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId,null);
         }
         //其他入库单
         if (ApiModuleTypeEnum.OTHER_INSTOCK.getCode().toString().equals(code)) {
@@ -69,7 +70,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         if (ApiModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode().toString().equals(code)) {
             purchaseReturnOrderService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
         }
-        //采购退货单
+        //采购入库单
         if (ApiModuleTypeEnum.PURCHASE_STOCK_IN.getCode().toString().equals(code)) {
             poInstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
         }
@@ -77,5 +78,6 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         if (ApiModuleTypeEnum.SO_OUTSTOCK.getCode().toString().equals(code)) {
             soOutstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
         }
+
     }
 }

@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.ProjectReportFormsMapper">
+    <select id="projectReportFormsPaging" resultType="com.erp.model.plm.dto.ProjectReportFormsDTO$PagingView">
+        SELECT
+            pi.id,
+            pi.image_url,
+            pi.spu_no,
+            pi.category,
+            pi."name" AS productName,
+            pi.grade AS grade,
+            pi.property,
+            pi.brand_name,
+            Pi.charge_name,
+            pi.project_charge_id,
+            pi.approval_status,
+            poi.project_status,
+            pph.name as projectPhase,
+            pott.approval_finish_task_count,
+            pott.approval_task_count,
+            pott.project_finish_task_count,
+            pott.project_task_count,
+            pi.progress_status,
+            pott.total_task_count,
+            pott.finished_count,
+            pott.unfinished_count,
+            pott.delay_finished_count,
+            pott.delay_unfinished_count,
+            pott.thisWeekTaskCount,
+            pott.thisWeekFinishedCount,
+            pott.thisWeekUnfinishedCount,
+            poi.end_time AS planStartDate,
+            poi.start_time AS planEndDate,
+            CASE WHEN pott.finished_count = pott.total_task_count THEN to_date( pott.reality_end_time, 'YYYY-MM-dd' ) ELSE null END as actualFinishDate
+        FROM product_info pi
+        LEFT JOIN project_info poi ON pi.id = poi.product_id AND poi.is_deleted = FALSE
+        LEFT JOIN (
+            SELECT
+                pt.product_id,
+                COALESCE(MIN(pp.seq),
+                MAX(ppe.seq)) AS seq
+            FROM project_task pt
+            LEFT JOIN project_phase pp ON pt.phase_id = pp.id
+                AND pt.product_id = pp.product_id
+                AND pt.status IN (0,1,2,3,7,9,10)
+                AND pp.is_deleted = FALSE
+            LEFT JOIN project_phase ppe ON pt.phase_id = ppe.id
+                AND pt.product_id = ppe.product_id
+                AND pt.status = 4
+                AND ppe.is_deleted = FALSE
+            WHERE pt.is_deleted = FALSE
+            GROUP BY pt.product_id
+        ) tpp ON pi.id = tpp.product_id
+        LEFT JOIN project_phase pph ON tpp.product_id = pph.product_id AND pph.seq = tpp.seq AND pph.is_deleted = FALSE
+        LEFT JOIN (
+            SELECT
+                pot.product_id,
+                SUM(CASE WHEN pot.status = 4 THEN 1 ELSE 0 END) AS  finished_count,
+                SUM(CASE WHEN pot.status &lt;&gt; 4 AND pot.status &lt;&gt; 5 THEN 1 ELSE 0 END) AS unfinished_count,
+                SUM(CASE WHEN pot.status = 4 AND pot.plan_end_time &lt; pot.reality_end_time THEN 1 ELSE 0 END) AS  delay_finished_count,
+                SUM(CASE WHEN pot.status &lt;&gt; 4 AND pot.status &lt;&gt; 5 AND pot.plan_end_time &lt; current_date THEN 1 ELSE 0 END) AS delay_unfinished_count,
+                SUM(CASE WHEN pot.property = 1 THEN 1 ELSE 0 END) AS approval_task_count,
+                SUM(CASE WHEN (pot.status = 4 OR pot.status = 8) AND pot.property = 1 THEN 1 ELSE 0 END) AS approval_finish_task_count,
+                SUM(CASE WHEN pot.property = 2 THEN 1 ELSE 0 END) AS project_task_count,
+                SUM(CASE WHEN (pot.status = 4 OR pot.status = 8) AND pot.property = 2 THEN 1 ELSE 0 END) AS project_finish_task_count,
+                SUM(CASE
+                    WHEN
+                        to_char(pot.plan_end_time, 'YYYY-MM-dd') :: date >= to_char(date_trunc('week', current_date), 'YYYY-MM-dd') :: date
+                        AND to_char(pot.plan_end_time, 'YYYY-MM-dd') :: date &lt; to_char(date_trunc('week', now()) + INTERVAL '1 week', 'YYYY-MM-dd') :: date
+                    THEN 1 ELSE 0 END
+                ) AS thisWeekTaskCount,
+                SUM(CASE
+                    WHEN
+                        to_char(pot.plan_end_time, 'YYYY-MM-dd') :: date >= to_char(date_trunc('week', current_date), 'YYYY-MM-dd') :: date
+                        AND to_char(pot.plan_end_time, 'YYYY-MM-dd') :: date &lt; to_char(date_trunc('week', now()) + INTERVAL '1 week', 'YYYY-MM-dd') :: date
+                        AND (pot.status = 4 OR pot.status = 8)
+                    THEN 1 ELSE 0 END
+                ) AS thisWeekFinishedCount,
+                SUM(CASE
+                    WHEN
+                        to_char(pot.plan_end_time, 'YYYY-MM-dd') :: date >= to_char(date_trunc('week', current_date), 'YYYY-MM-dd') :: date
+                        AND to_char(pot.plan_end_time, 'YYYY-MM-dd') :: date &lt; to_char(date_trunc('week', now()) + INTERVAL '1 week', 'YYYY-MM-dd') :: date
+                        AND (pot.status &lt;&gt; 4 AND pot.status &lt;&gt; 5 AND pot.status &lt;&gt; 8)
+                    THEN 1 ELSE 0 END
+                ) AS thisWeekUnfinishedCount,
+                count(*) AS total_task_count,
+                to_char(MAX(pot.reality_end_time), 'YYYY-MM-dd') AS reality_end_time
+            FROM project_task pot
+            WHERE pot.is_deleted = FALSE
+            GROUP BY pot.product_id
+        ) pott ON pott.product_id = pi.id
+        WHERE pi.is_deleted = FALSE AND pi.is_finished_product_dev = 1
+        <if test="params.chargeIdSplit != null and params.chargeIdSplit != ''">
+            AND string_to_array(pi.charge_id,',') &amp;&amp; string_to_array(#{params.chargeIdSplit},',')
+        </if>
+
+        <if test="params.approvalStatusList != null and params.approvalStatusList.size > 0">
+            AND pi.approval_status IN
+            <foreach collection="params.approvalStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.projectStatusList != null and params.projectStatusList.size > 0">
+            AND poi.project_status IN
+            <foreach collection="params.projectStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            AND (pi."name" ILIKE concat('%', #{params.searchKeyword} ,'%')
+            OR pi.spu_no ILIKE concat('%', #{params.searchKeyword} ,'%')
+            OR pi.id IN (SELECT product_id FROM product_detail WHERE sku_no ILIKE concat('%', #{params.searchKeyword} ,'%') GROUP BY product_id)
+            )
+        </if>
+
+        <if test="params.categoryIdList != null and params.categoryIdList != ''">
+            AND pi.category_id IN
+            <foreach collection="params.categoryIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.gradeIdList != null and params.gradeIdList.size > 0">
+            AND pi.grade_id IN
+            <foreach collection="params.gradeIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.propertyIdList != null and params.propertyIdList.size > 0">
+            AND pi.property_id IN
+            <foreach collection="params.propertyIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.projectChargeIdList != null and params.projectChargeIdList.size > 0">
+            AND pi.project_charge_id IN
+            <foreach collection="params.projectChargeIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.productChargeIdList != null and params.productChargeIdList.size > 0">
+            AND pi.charge_id IN
+            <foreach collection="params.productChargeIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.searchApprovalStatusList != null and params.searchApprovalStatusList.size > 0">
+            AND pi.approval_status IN
+            <foreach collection="params.searchApprovalStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.searchProjectStatusList != null and params.searchProjectStatusList.size > 0">
+            AND poi.project_status IN
+            <foreach collection="params.searchProjectStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        ORDER BY pi.create_time DESC
+    </select>
+
+    <select id="projectReportFormsExportExcel"  resultType="com.erp.model.plm.dto.ProjectReportFormsDTO$PagingView">
+        SELECT
+            pi.id,
+            pi.image_url,
+            pi.spu_no,
+            pi.category,
+            pi."name" AS productName,
+            pi.grade AS grade,
+            pi.property,
+            pi.brand_name,
+            Pi.charge_name,
+            pi.project_charge_id,
+            pi.approval_status,
+            poi.project_status,
+            pph.name as projectPhase,
+            pott.approval_finish_task_count,
+            pott.approval_task_count,
+            pott.project_finish_task_count,
+            pott.project_task_count,
+            pi.progress_status,
+            pott.total_task_count,
+            pott.finished_count,
+            pott.unfinished_count,
+            pott.delay_finished_count,
+            pott.delay_unfinished_count,
+            pott.thisWeekTaskCount,
+            pott.thisWeekFinishedCount,
+            pott.thisWeekUnfinishedCount,
+            poi.end_time AS planStartDate,
+            poi.start_time AS planEndDate,
+            CASE WHEN pott.finished_count = pott.total_task_count THEN to_date( pott.reality_end_time, 'YYYY-MM-dd' ) ELSE null END as actualFinishDate
+        FROM product_info pi
+        LEFT JOIN project_info poi ON pi.id = poi.product_id AND poi.is_deleted = FALSE
+        LEFT JOIN (
+            SELECT
+                pt.product_id,
+                COALESCE(MIN(pp.seq),
+                MAX(ppe.seq)) AS seq
+            FROM project_task pt
+            LEFT JOIN project_phase pp ON pt.phase_id = pp.id
+                AND pt.product_id = pp.product_id
+                AND pt.status IN (0,1,2,3,7,9,10)
+                AND pp.is_deleted = FALSE
+            LEFT JOIN project_phase ppe ON pt.phase_id = ppe.id
+                AND pt.product_id = ppe.product_id
+                AND pt.status = 4
+                AND ppe.is_deleted = FALSE
+            WHERE pt.is_deleted = FALSE
+            GROUP BY pt.product_id
+        ) tpp ON pi.id = tpp.product_id
+        LEFT JOIN project_phase pph ON tpp.product_id = pph.product_id AND pph.seq = tpp.seq AND pph.is_deleted = FALSE
+        LEFT JOIN (
+            SELECT
+                pot.product_id,
+                SUM(CASE WHEN pot.status = 4 THEN 1 ELSE 0 END) AS  finished_count,
+                SUM(CASE WHEN pot.status &lt;&gt; 4 AND pot.status &lt;&gt; 5 THEN 1 ELSE 0 END) AS unfinished_count,
+                SUM(CASE WHEN pot.status = 4 AND pot.plan_end_time &lt; pot.reality_end_time THEN 1 ELSE 0 END) AS  delay_finished_count,
+                SUM(CASE WHEN pot.status &lt;&gt; 4 AND pot.status &lt;&gt; 5 AND pot.plan_end_time &lt; current_date THEN 1 ELSE 0 END) AS delay_unfinished_count,
+                SUM(CASE WHEN pot.property = 1 THEN 1 ELSE 0 END) AS approval_task_count,
+                SUM(CASE WHEN (pot.status = 4 OR pot.status = 8) AND pot.property = 1 THEN 1 ELSE 0 END) AS approval_finish_task_count,
+                SUM(CASE WHEN pot.property = 2 THEN 1 ELSE 0 END) AS project_task_count,
+                SUM(CASE WHEN (pot.status = 4 OR pot.status = 8) AND pot.property = 2 THEN 1 ELSE 0 END) AS project_finish_task_count,
+                SUM(CASE
+                    WHEN
+                        to_char(pot.plan_end_time, 'YYYY-MM-dd') :: date >= to_char(date_trunc('week', current_date), 'YYYY-MM-dd') :: date
+                        AND to_char(pot.plan_end_time, 'YYYY-MM-dd') :: date &lt; to_char(date_trunc('week', now()) + INTERVAL '1 week', 'YYYY-MM-dd') :: date
+                    THEN 1 ELSE 0 END
+                ) AS thisWeekTaskCount,
+                SUM(CASE
+                    WHEN
+                        to_char(pot.plan_end_time, 'YYYY-MM-dd') :: date >= to_char(date_trunc('week', current_date), 'YYYY-MM-dd') :: date
+                        AND to_char(pot.plan_end_time, 'YYYY-MM-dd') :: date &lt; to_char(date_trunc('week', now()) + INTERVAL '1 week', 'YYYY-MM-dd') :: date
+                        AND (pot.status = 4 OR pot.status = 8)
+                    THEN 1 ELSE 0 END
+                ) AS thisWeekFinishedCount,
+                SUM(CASE
+                    WHEN
+                        to_char(pot.plan_end_time, 'YYYY-MM-dd') :: date >= to_char(date_trunc('week', current_date), 'YYYY-MM-dd') :: date
+                        AND to_char(pot.plan_end_time, 'YYYY-MM-dd') :: date &lt; to_char(date_trunc('week', now()) + INTERVAL '1 week', 'YYYY-MM-dd') :: date
+                        AND (pot.status &lt;&gt; 4 AND pot.status &lt;&gt; 5 AND pot.status &lt;&gt; 8)
+                    THEN 1 ELSE 0 END
+                ) AS thisWeekUnfinishedCount,
+                count(*) AS total_task_count,
+                to_char(MAX(pot.reality_end_time), 'YYYY-MM-dd') AS reality_end_time
+            FROM project_task pot
+            WHERE pot.is_deleted = FALSE
+            GROUP BY pot.product_id
+        ) pott ON pott.product_id = pi.id
+        WHERE pi.is_deleted = FALSE AND pi.is_finished_product_dev = 1
+
+        <if test="params.ids != null and params.ids.size > 0">
+            AND pi.id IN
+            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+
+        <if test="params.chargeIdSplit != null and params.chargeIdSplit != ''">
+            AND string_to_array(pi.charge_id,',') &amp;&amp; string_to_array(#{params.chargeIdSplit},',')
+        </if>
+
+        <if test="params.approvalStatusList != null and params.approvalStatusList.size > 0">
+            AND pi.approval_status IN
+            <foreach collection="params.approvalStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.projectStatusList != null and params.projectStatusList.size > 0">
+            AND poi.project_status IN
+            <foreach collection="params.projectStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            AND (pi."name" ILIKE concat('%', #{params.searchKeyword} ,'%')
+            OR pi.spu_no ILIKE concat('%', #{params.searchKeyword} ,'%')
+            OR pi.id IN (SELECT product_id FROM product_detail WHERE sku_no ILIKE concat('%', #{params.searchKeyword} ,'%') GROUP BY product_id)
+            )
+        </if>
+
+        <if test="params.categoryIdList != null and params.categoryIdList != ''">
+            AND pi.category_id IN
+            <foreach collection="params.categoryIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.gradeIdList != null and params.gradeIdList.size > 0">
+            AND pi.grade_id IN
+            <foreach collection="params.gradeIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.propertyIdList != null and params.propertyIdList.size > 0">
+            AND pi.property_id IN
+            <foreach collection="params.propertyIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.projectChargeIdList != null and params.projectChargeIdList.size > 0">
+            AND pi.project_charge_id IN
+            <foreach collection="params.projectChargeIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.searchApprovalStatusList != null and params.searchApprovalStatusList.size > 0">
+            AND pi.approval_status IN
+            <foreach collection="params.searchApprovalStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+        <if test="params.searchProjectStatusList != null and params.searchProjectStatusList.size > 0">
+            AND poi.project_status IN
+            <foreach collection="params.searchProjectStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        ORDER BY pi.create_time DESC
+    </select>
+
+    <select id="taskDetailView" resultType="com.erp.model.plm.dto.ProjectReportFormsDTO$TaskDetail">
+        SELECT
+            pot.id,
+            pph.name as phaseName,
+            pot.name AS taskName,
+			pot.charge_name,
+			pot.plan_start_time AS planStartDate,
+			pot.plan_end_time AS planEndDate,
+			pot.reality_start_time AS realityStartDate,
+			pot.reality_end_time AS realityEndDate,
+			pot.status AS taskState
+        FROM project_task pot
+        LEFT JOIN project_phase pph on pot.phase_id = pph.id AND pph.is_deleted = FALSE
+        LEFT JOIN product_plan pp ON pp.product_id = pot.product_id AND pp.is_deleted = FALSE
+        WHERE pot.is_deleted = FALSE
+        <if test="params.ids != null and params.ids.size > 0">
+            AND pot.product_id IN
+            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+
+        <if test="params.taskName != null and params.taskName != ''">
+            AND pot.name ILIKE concat('%', #{params.taskName}, '%')
+        </if>
+
+        <if test="params.taskState != null and params.taskState == 4">
+            AND pot.status = 4
+        </if>
+
+        <if test="params.taskState != null and params.taskState != 4">
+            AND pot.status &lt;&gt; 4
+        </if>
+
+        <if test="params.thisWeekDateList != null and params.thisWeekDateList.size > 0">
+            AND pot.plan_end_time >= #{params.thisWeekDateList[0]}
+            AND (#{params.thisWeekDateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > pot.plan_end_time
+        </if>
+        ORDER BY pph.name, pot.plan_end_time, pot.create_time
+    </select>
+</mapper>

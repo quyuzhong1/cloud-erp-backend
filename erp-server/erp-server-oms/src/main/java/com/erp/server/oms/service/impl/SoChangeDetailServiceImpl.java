@@ -17,10 +17,12 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.mapper.SoChangeDetailMapper;
@@ -75,6 +77,9 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
     @Resource
     private SoOutstockFeign soOutstockFeign;
 
+    @Resource
+    private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
+
     /**
      * 添加变更详情信息
      *
@@ -124,7 +129,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             //金额
-            BigDecimal amount = MathUtil.multiply(taxPrice, qty);
+            BigDecimal amount = MathUtil.multiply(price, qty);
             soChangeDetail.setIsGift(isGift);
             soChangeDetail.setPrice(price);
             soChangeDetail.setCurrency(currency);
@@ -196,6 +201,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             item.setTaxPrice(taxPrice);
+
             BigDecimal oldPrice = item.getOldPrice();
             BigDecimal oldTaxRate = item.getOldTaxRate();
             BigDecimal oldFlagTaxRate = MathUtil.divide(oldTaxRate, MathUtil.BigDecimal_100);
@@ -203,7 +209,8 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             //含税单价=销售单价*（税率+1）
             BigDecimal oldMultiplyTax = MathUtil.add(oldFlagTaxRate, MathUtil.BigDecimal_1);
             BigDecimal oldTaxPrice = MathUtil.multiply(oldPrice, oldMultiplyTax);
-            item.setOldPrice(oldTaxPrice);
+            item.setOldPrice(oldPrice);
+            item.setOldTaxPrice(oldTaxPrice);
         }
         return viewList;
     }
@@ -276,12 +283,13 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
 
     /**
      * 根据销售单id 获取到选择产品的信息
-     * @author yl
-     * @date 2023-05-25 14:11
+     *
      * @param soId
      * @param soDetailIds 销售订单详情id
-     * @param hasContain 是否包含
+     * @param hasContain  是否包含
      * @return java.util.List<com.erp.model.oms.dto.SoChangeDetailDTO.ViewDTO>
+     * @author yl
+     * @date 2023-05-25 14:11
      */
     @Override
     public List<SoChangeDetailDTO.SoDetailViewDTO> listSelectDetailBySoId(String soId, List<String> soDetailIds, Boolean hasContain) {
@@ -509,6 +517,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             if (list.size() != distinctCount) {
                 throw new ServiceException(ApiError.ERROR_92038);
             }
+            //刪除
             String deleteCode = SoChangeTypeEnum.DELETE.getCode();
             List<SoChangeDetailDTO.AddDTO> deleteDetailList = detailList.stream().filter(d -> d.getChangeType().getCode().equals(deleteCode)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(deleteDetailList)) {
@@ -524,6 +533,42 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
 
                 }
             }
+            //这个是修改
+            SoChangeTypeEnum update = SoChangeTypeEnum.UPDATE;
+            List<SoChangeDetailDTO.AddDTO> updateDetailList = detailList.stream().filter(d -> update.equals(d.getChangeType())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(updateDetailList)) {
+                List<String> soDetailIdList = updateDetailList.stream().
+                        map(SoChangeDetailDTO.AddDTO::getSoDetailId).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(soDetailIdList)) {
+                    throw new ServiceException(ApiError.ERROR_92015);
+                }
+                //发货通知单
+                List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailList = soDeliveryNoticeFeign.listDetailBySourceDetailIds(soDetailIdList);
+                for (SoChangeDetailDTO.AddDTO item : updateDetailList) {
+                    Integer qty = item.getQty();
+                    Integer deliveryQty = soDeliveryNoticeDetailList.stream().filter(s -> s.getSourceDetailId().
+                            equals(item.getSoDetailId())&&!s.getInvalidStatus()).
+                            mapToInt(SoDeliveryNoticeDetailEntity::getDeliveryQty).sum();
+                    if(qty<deliveryQty){
+                        throw new ServiceException(ApiError.ERROR_92049);
+                    }
+                }
+                //这个是发货通知单的
+                List<SoOutstockDetailDTO.DeliveryQtyDTO>  deliveryQtyList= soOutstockFeign.listDetailBySoDetailIds(soDetailIdList);
+
+                for (SoChangeDetailDTO.AddDTO item : updateDetailList) {
+                    Integer qty = item.getQty();
+                    Integer deliveryQty = deliveryQtyList.stream().filter(s -> s.getSoDetailId().
+                            equals(item.getSoDetailId())).
+                            mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
+                    if(qty<deliveryQty){
+                        throw new ServiceException(ApiError.ERROR_92050);
+                    }
+                }
+
+            }
+
+
         }
 
 
@@ -617,7 +662,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
             //金额
-            BigDecimal amount = MathUtil.multiply(taxPrice, qty);
+            BigDecimal amount = MathUtil.multiply(price, qty);
             item.setPrice(price);
             item.setCurrencySymbol(symbol);
             item.setAmount(amount);

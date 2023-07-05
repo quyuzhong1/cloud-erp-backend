@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.DmpShipmentMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpShipmentEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="shipp_no" property="shippNo" />
+       <result column="batch_no" property="batchNo" />
+       <result column="shipp_name" property="shippName" />
+       <result column="shipment_status" property="shipmentStatus" />
+       <result column="status" property="status" />
+       <result column="express_time" property="expressTime" />
+       <result column="content" property="content" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="warehouse_code" property="warehouseCode" />
+       <result column="fba_warehouse_id" property="fbaWarehouseId" />
+       <result column="shipment_id" property="shipmentId" />
+       <result column="is_over" property="isOver" />
+       <result column="over_time" property="overTime" />
+       <result column="city_code" property="cityCode" />
+       <result column="startport_code" property="startportCode" />
+       <result column="endport_code" property="endportCode" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        create_user_id,
+        create_user_name,
+        update_time,
+        update_user_id,
+        update_user_name,
+        version,
+        is_deleted,
+        shipp_no, batch_no, shipp_name, shipment_status, status, express_time, content, warehouse_id, warehouse_code, fba_warehouse_id, shipment_id, is_over, over_time, city_code, startport_code, endport_code
+    </sql>
+
+
+</mapper>

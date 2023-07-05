@@ -46,4 +46,13 @@ public interface ProductUnitService extends IService<ProductUnitEntity> {
      * @return java.lang.Boolean
      **/
     ProductUnitEntity checkUnitName(String name);
+
+    /**
+     * 设置占用
+     * @Author Luo_WG
+     * @Date 2023/6/14 11:36
+     * @param ids
+     * @return java.lang.Boolean
+     **/
+    Boolean setupOccupy(List<String> ids);
 }

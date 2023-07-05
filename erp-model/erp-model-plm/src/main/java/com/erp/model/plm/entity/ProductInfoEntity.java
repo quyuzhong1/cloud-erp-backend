@@ -1,6 +1,7 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -8,7 +9,6 @@ import lombok.EqualsAndHashCode;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * <p>
@@ -21,7 +21,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("product_info")
-public class ProductInfoEntity extends BaseEntity implements Serializable {
+public class ProductInfoEntity extends BaseEntity<ProductInfoEntity> implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -80,7 +80,7 @@ public class ProductInfoEntity extends BaseEntity implements Serializable {
     private String brandName;
 
     /**
-     * 立项状态 0 待规划 1 调研中  3：ID设计中  4::已立项  5：已终止
+     * 立项状态0 待规划 1 调研中  2：ID设计中  3::已立项  4：已中止(已暂停) 5已终止
      */
     @TableField("approval_status")
     private Integer approvalStatus;
@@ -115,8 +115,7 @@ public class ProductInfoEntity extends BaseEntity implements Serializable {
     @TableField("category_id")
     private String categoryId;
 
-    @TableField("delete_state")
-    private Integer deleteState;
+
 
     @TableField("type")
     private Integer type;
@@ -241,5 +240,12 @@ public class ProductInfoEntity extends BaseEntity implements Serializable {
      */
     @TableField(value = "product_version")
     private Integer productVersion;
+
+
+    /**
+     * 暂停前的状态
+     */
+    @TableField(value = "suspend_before_status")
+    private Integer suspendBeforeStatus;
 
 }

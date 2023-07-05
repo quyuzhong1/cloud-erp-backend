@@ -2,14 +2,20 @@ package com.erp.server.workflow.service;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.service.SuperService;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
-import com.common.business.service.SuperService;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.DelegateTask;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -165,4 +171,57 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @return List<ProcessManagementDTO.ManagementTaskDTO>
      */
     List<ProcessManagementDTO.ManagementTaskDTO> listTaskById(List<String> ids);
+
+    /**
+     * 执行流程结束监听服务处理
+     * @param processInstanceId
+     */
+    Boolean endExecutionHandle(String processInstanceId);
+
+    /**
+     * 批量启动流程
+     * @param dto
+     * @return
+     */
+    List<ProcessManagementDTO.StartResultDTO> batchStartProcess(ValidList<ProcessManagementDTO.StartDTO> dto);
+
+    /**
+     * 批量审批流程
+     * @param dto
+     * @return
+     */
+    List<ProcessManagementDTO.ApproveResultDTO> batchApproveProcess(ValidList<ProcessManagementDTO.ApproveDTO> dto);
+
+    /**
+     * 批量查询当前审批人
+     * @param dtoList
+     * @return
+     */
+    List<ProcessManagementDTO.CurApproveInfoDTO> batchCurApprover(ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList);
+
+    /**
+     * 批量查询当前待审核业务单据
+     * @param dtoList
+     * @return
+     */
+    List<ProcessManagementDTO.CurApproveInfoDTO> batchCurApproverByApprove(ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList);
+
+    /**
+     * 根据流程实例ID查询
+     * @Author Luo_WG
+     * @Date 2023/7/4 19:37
+     * @param processInstanceId
+     * @return com.erp.model.workflow.entity.ProcessManagementEntity
+     **/
+    ProcessManagementEntity getByProcessInstanceId(String processInstanceId);
+
+    /**
+     * 根据业务id获取流程实例信息
+     * @Author Luo_WG
+     * @Date 2023/7/5 17:08
+     * @param businessIds
+     * @return java.util.List<com.erp.model.workflow.entity.ProcessTaskManagementEntity>
+     **/
+    List<ProcessTaskManagementEntity> listProcessByBusinessId(List<String> businessIds);
+
 }

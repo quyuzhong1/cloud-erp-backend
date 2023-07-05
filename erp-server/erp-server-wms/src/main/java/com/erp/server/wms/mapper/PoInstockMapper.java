@@ -9,6 +9,7 @@ import com.erp.model.wms.entity.PoInstockEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -71,4 +72,12 @@ public interface PoInstockMapper extends BaseMapper<PoInstockEntity> {
      * @return List<OrderRefStockInDTO>
      */
     List<PoInstockDTO.OrderRefStockInDTO> purchaseOrderRefStockIn(@Param("purchaseOrderId") String purchaseOrderId);
+
+    /**
+     * 根据供应商id集合获取入库单量和入库数量
+     * @param supplierIds
+     * @return
+     */
+    List<PoInstockDTO.SupplierInstockInfoDTO> getInstockInfoBySupplierIds(@Param("supplierIds") List<String> supplierIds,
+                                                                          @Param("dateList") List<LocalDate> dateList);
 }

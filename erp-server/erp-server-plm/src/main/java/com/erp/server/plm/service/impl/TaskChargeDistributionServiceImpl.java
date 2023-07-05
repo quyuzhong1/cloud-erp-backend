@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/1/29 14:37
  */
 @Service
@@ -83,6 +83,15 @@ public class TaskChargeDistributionServiceImpl extends ServiceImpl<TaskChargeDis
     public void removeBySourceAndTaskId(Integer source, String taskId) {
         LambdaUpdateWrapper<TaskChargeDistributionEntity> updateWrapper = new LambdaUpdateWrapper<>();
         updateWrapper.eq(TaskChargeDistributionEntity::getTaskId, taskId);
+        updateWrapper.eq(TaskChargeDistributionEntity::getSource, source);
+        //删除
+        this.remove(updateWrapper);
+    }
+
+    @Override
+    public void removeBySourceAndTaskIds(Integer source, List<String> taskIds) {
+        LambdaUpdateWrapper<TaskChargeDistributionEntity> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.in(TaskChargeDistributionEntity::getTaskId, taskIds);
         updateWrapper.eq(TaskChargeDistributionEntity::getSource, source);
         //删除
         this.remove(updateWrapper);

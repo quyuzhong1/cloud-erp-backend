@@ -2,7 +2,7 @@ package com.common.business.constant;
 
 /**
  * @Classname 第三方常量
- * @Description TODO
+
  * @Date 2022-07-20 18:09
  * @Created by yl
  */

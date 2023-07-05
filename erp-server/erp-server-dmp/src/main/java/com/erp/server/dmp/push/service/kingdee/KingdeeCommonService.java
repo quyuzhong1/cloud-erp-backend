@@ -10,7 +10,7 @@ import java.util.Map;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/3/3 11:54
  */
 public interface KingdeeCommonService {
@@ -120,11 +120,12 @@ public interface KingdeeCommonService {
      * @author Will
      * @date: 2023/4/7 11:29
      * @param apiUtils
+     * @param apiPlatformId
      * @param id
      * @param number
      * @return JSONObject
      */
-    JSONObject view (KingdeeApiUtils apiUtils,String id,String number);
+    JSONObject view (KingdeeApiUtils apiUtils,String apiPlatformId,String id,String number);
 
     /**
      * 查询客户分组
@@ -158,7 +159,7 @@ public interface KingdeeCommonService {
     * @param operate
 
     */
-    void excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number,String operate);
+    Boolean excuteOperation (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,String number,String operate);
     /**
      * @description: 删除
      * @author Will

@@ -9,7 +9,7 @@ import java.io.Serializable;
 
 /**
  * @Classname ProductFieldDTO
- * @Description TODO
+
  * @Date 2022-09-27 12:11
  * @Created by yl
  */

@@ -212,6 +212,8 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_92029);
         }
+        List<String> excludedIdList = detailList.stream().filter(d -> StringUtils.isNotBlank(d.getId())).
+                map(SoOutstockDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
 
         //发货通知单
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
@@ -220,7 +222,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         List<String> skuIdList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getSkuId).collect(Collectors.toList());
         List<String> warehouseLocationList = detailList.stream().map(SoOutstockDetailDTO.AddDTO::getWarehouseLocation).collect(Collectors.toList());
         //这个是已出数量
-        List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = this.listDetailBySoDetailIds(sourceDetailIdList);
+        List<SoOutstockDetailDTO.DeliveryQtyDTO> soOutstockDetailList = this.listDetailByDetailIds(sourceDetailIdList, excludedIdList);
         //发货通知到
         if (soDeliveryNotice.equals(sourceType)) {
             //表示是发货通知单的
@@ -236,13 +238,11 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
             for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
                 String sourceDetailId = item.getSourceDetailId();
-                String soDetailId=deliveryNoticeDetailList.stream().filter(d -> d.getId().equals(sourceDetailId)).
+                String soDetailId = deliveryNoticeDetailList.stream().filter(d -> d.getId().equals(sourceDetailId)).
                         findFirst().flatMap(obj -> Optional.ofNullable(obj.getSourceDetailId())).orElse("");
-                String id = item.getId();
                 //这个是已出的数量
                 Integer outStockQty = soOutstockDetailList.stream().filter(s ->
-                        s.getSoDetailId().equals(soDetailId) &&
-                                !s.getId().equals(id)
+                        s.getSoDetailId().equals(soDetailId)
                 ).mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
                 if (outStockQty + planQty > deliveryQty) {
                     throw new ServiceException(ApiError.ERROR_92028);
@@ -259,7 +259,6 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             //这个是销售订单的
             List<SoDetailEntity> soDetailList = soInfoFeign.listSoDetailByIds(sourceDetailIdList);
             for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
-                String id = item.getId();
                 String skuId = item.getSkuId();
                 //库位
                 String warehouseLocation = item.getWarehouseLocation();
@@ -278,8 +277,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
                 //这个是已出的数量 这个对应的就是销售订单的详情id
                 Integer outStockQty = soOutstockDetailList.stream().filter(s ->
-                        s.getSoDetailId().equals(sourceDetailId) &&
-                                !s.getId().equals(id)
+                        s.getSoDetailId().equals(sourceDetailId)
                 ).mapToInt(SoOutstockDetailDTO.DeliveryQtyDTO::getActualQty).sum();
                 if (outStockQty + planQty > soQty) {
                     throw new ServiceException(ApiError.ERROR_92028);
@@ -458,6 +456,46 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         List<String> noticeSourceDetailIdS = noticeDetailSourceDetailList.stream().map(SoDeliveryNoticeDetailEntity::getSourceDetailId).collect(Collectors.toList());
         detailIds.addAll(noticeSourceDetailIdS);
         List<SoOutstockDetailEntity> list = this.listBySourceDetailIds(detailIds);
+        List<SoOutstockDetailDTO.DeliveryQtyDTO> resultList = new ArrayList<>(list.size());
+        for (SoOutstockDetailEntity item : list) {
+            SoOutstockDetailDTO.DeliveryQtyDTO out = new SoOutstockDetailDTO.DeliveryQtyDTO();
+            out.setActualQty(item.getActualQty());
+            out.setPlanQty(item.getPlanQty());
+            out.setId(item.getId());
+            out.setSkuId(item.getSkuId());
+            out.setSkuNo(item.getSkuNo());
+            out.setApproveStatus(item.getApproveStatus());
+            //这个可能是发货通知的单
+            String sourceDetailId = item.getSourceDetailId();
+            out.setSourceDetailId(sourceDetailId);
+            //销售订单详情id
+            String soDetailId = noticeDetailSourceDetailList.stream().filter(n -> n.getId().equals(sourceDetailId)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getSourceDetailId())).orElse(sourceDetailId);
+            out.setSoDetailId(soDetailId);
+            resultList.add(out);
+        }
+        return resultList;
+    }
+
+
+    /**
+     * 获取到已生成销售订单的占的数量
+     *
+     * @param sourceDetailIdList
+     * @param excludedIdList
+     * @return
+     */
+    private List<SoOutstockDetailDTO.DeliveryQtyDTO> listDetailByDetailIds(List<String> sourceDetailIdList, List<String> excludedIdList) {
+        if (CollectionUtils.isEmpty(sourceDetailIdList)) {
+            return Collections.emptyList();
+        }
+        //发货通知详情列表
+        List<SoDeliveryNoticeDetailEntity> noticeDetailSourceDetailList = soDeliveryNoticeDetailService.listByIds(sourceDetailIdList);
+        List<String> noticeSourceDetailIdS = noticeDetailSourceDetailList.stream().map(SoDeliveryNoticeDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        sourceDetailIdList.addAll(noticeSourceDetailIdS);
+        List<SoOutstockDetailEntity> list = this.listBySourceDetailIds(sourceDetailIdList);
+        list = list.stream().filter(l -> !excludedIdList.contains(l.getId())).collect(Collectors.toList());
+
         List<SoOutstockDetailDTO.DeliveryQtyDTO> resultList = new ArrayList<>(list.size());
         for (SoOutstockDetailEntity item : list) {
             SoOutstockDetailDTO.DeliveryQtyDTO out = new SoOutstockDetailDTO.DeliveryQtyDTO();

@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/3/17 16:01
  */
 @RestController
@@ -76,6 +76,16 @@ public class PurchaseStockInFeignController {
     @PostMapping("/getStockInQty")
     public List<PoInstockDTO.GetStockInQty> getStockInQty(@RequestBody  List<String> ids) {
         return poInstockService.getStockInQty(ids);
+    }
+
+    /**
+     * 根据供应商id集合/单据日期 获取入库单量和入库数量
+     * @param dto
+     * @return List<PoInstockDTO.SupplierInstockInfoDTO>
+     */
+    @PostMapping("/getInstockInfoBySupplierIds")
+    List<PoInstockDTO.SupplierInstockInfoDTO> getInstockInfoBySupplierIds(@RequestBody PoInstockDTO.SupplierInstockParamDTO dto) {
+        return poInstockService.getInstockInfoBySupplierIds(dto);
     }
 
 }

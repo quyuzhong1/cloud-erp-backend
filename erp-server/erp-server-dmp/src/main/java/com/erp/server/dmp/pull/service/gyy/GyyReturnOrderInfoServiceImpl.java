@@ -1,7 +1,7 @@
 package com.erp.server.dmp.pull.service.gyy;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -11,15 +11,13 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.core.enums.CountrySiteEnum;
 import com.common.core.utils.MapUtil;
 import com.erp.model.dmp.constant.MongoTableNameContant;
+import com.erp.model.dmp.dto.GyyRefundDTO;
 import com.erp.model.dmp.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpReturnOrderInfoEntity;
 import com.erp.model.dmp.entity.DmpReturnOrderItemEntity;
-import com.erp.model.dmp.entity.DmpShopInfoEntity;
-import com.erp.model.dmp.enums.ApiKingdeeOrganizationEnum;
-import com.erp.model.dmp.enums.PlatformApiEnum;
-import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.*;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.gyy.GyyReturnOrderEntity;
 import com.erp.model.dmp.gyy.bean.ReturnOrderDetailsBean;
@@ -28,7 +26,8 @@ import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.server.dmp.pull.service.dmp.DmpShopInfoService;
+import com.erp.server.dmp.service.DmpShopInfoService;
+import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.utils.GyyApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -38,10 +37,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.swing.text.DateFormatter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -64,6 +61,8 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
     private MQProducerService<DmpReturnOrderInfoEntity> mqProducerService;
     @Resource
     private DmpShopInfoService dmpShopInfoService;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     public static void main(String[] args) {
         GyyReturnOrderInfoServiceImpl gyyReturnOrderInfoService = new GyyReturnOrderInfoServiceImpl();
@@ -108,6 +107,8 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
         for (GyyReturnOrderEntity entity : entityList) {
             OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByCode(entity.getCode());
             List<GyyReturnOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_GYY_RETURN_ORDER, GyyReturnOrderEntity.class);
+            entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
+            entity.setDownloadTime(LocalDateTime.now());
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
                 pushToMqList.add(entity);
@@ -125,7 +126,6 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_GYY_RETURN_ORDER, GyyReturnOrderEntity.class);
         }
         if(CollectionUtil.isNotEmpty(insertList)){
-            insertList = insertList.stream().distinct().collect(Collectors.toList());
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_GYY_RETURN_ORDER);
         }
         if (CollectionUtil.isEmpty(pushToMqList)){
@@ -136,7 +136,6 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
         List<DmpReturnOrderInfoEntity> entityToMqlist = pushToMqList.stream()
                 .map(this::initOrderInfoEntity)
                 .filter(ObjectUtil::isNotEmpty)
-                .distinct()
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
@@ -147,6 +146,43 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public void cleanDataSave(String tableName, int size) {
+        // 查询mongo待推送数据
+        String value = cfgSettingService.getValue(SettingEnum.CLEAN_JOB_DELAY_MINUTE);
+        Integer delayMinute = null != value ? NumberUtil.parseInt(value) : 0;
+        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsClean(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
+        List<GyyReturnOrderEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.ORIGINAL_GYY_RETURN_ORDER, GyyReturnOrderEntity.class);
+        if (CollectionUtil.isEmpty(mongoData)) {
+            return;
+        }
+        for (GyyReturnOrderEntity mongoDatum : mongoData) {
+            mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
+            mongoDatum.setLastPushTime(LocalDateTime.now());
+            updateAndSaveDb(mongoDatum);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void updateAndSaveDb(GyyReturnOrderEntity mongoDatum) {
+        DmpReturnOrderInfoEntity returnOrderInfo = initOrderInfoEntity(mongoDatum);
+        GyyRefundDTO updateDto = new GyyRefundDTO(mongoDatum.get_id());
+        if(null == returnOrderInfo){
+            mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
+            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);
+            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_GYY_RETURN_ORDER, GyyReturnOrderEntity.class);
+            return;
+        }
+        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);
+        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_GYY_RETURN_ORDER, GyyReturnOrderEntity.class);
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_RETURN_ORDER_TAG.getName(),
+                returnOrderInfo, StrUtil.format("{}_{}", returnOrderInfo.getReturnCode(), returnOrderInfo.getPlatformOrderId()));
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
+            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+        }
     }
 
     /**
@@ -165,7 +201,7 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
      * 解析订单数据
      **/
     private DmpReturnOrderInfoEntity initOrderInfoEntity(GyyReturnOrderEntity gyyReturnOrderEntity) {
-        if (GyyOrderInfoServiceImpl.assertOrgIsVijim(gyyReturnOrderEntity.getShopName())){
+        if (assertOrgIsVijim(gyyReturnOrderEntity.getShopName())){
             return null;
         }
         DmpReturnOrderInfoEntity dmpReturnOrderInfoEntity = new DmpReturnOrderInfoEntity();
@@ -295,9 +331,10 @@ public class GyyReturnOrderInfoServiceImpl implements IReportSaveService<GyyRetu
         });
        return orderItemList;
     }
-    public boolean assertOrgIsVijim(String shopCode) {
-        DmpShopInfoEntity shopInfo = dmpShopInfoService.getShopByShopNo(shopCode, PlatformEnum.GYY.getDesc());
-        return null != shopInfo && (ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(shopInfo.getUseOrgId().toString()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(shopInfo.getUseOrgId().toString()));
+    private boolean assertOrgIsVijim(String shopCode) {
+        return StrUtil.isNotBlank(shopCode) && (shopCode.contains("小隼") || shopCode.contains("优至胜"));
+//        DmpShopInfoEntity shopInfo = dmpShopInfoService.getShopByShopNo(shopCode, PlatformEnum.GYY.getDesc());
+//        return null != shopInfo && (ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(shopInfo.getUseOrgId().toString()) || ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(shopInfo.getUseOrgId().toString()));
     }
 
 }

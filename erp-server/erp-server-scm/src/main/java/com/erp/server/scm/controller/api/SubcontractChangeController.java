@@ -19,9 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * <p>
  * 委外变更单
- * </p>
  *
  * @author will
  * @since 2023-06-08
@@ -40,8 +38,8 @@ public class SubcontractChangeController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "scm:subcontractChangeOrder:tabList",
-            tableAlias = ""
+            menuCode = "scm:subcontractChangeOrder:paging",
+            tableAlias = "sc"
     )
     public ApiResult<List<SubcontractChangeDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(subcontractChangeService.tabList(dto));
@@ -58,7 +56,7 @@ public class SubcontractChangeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "scm:subcontractChangeOrder:paging",
-            tableAlias = ""
+            tableAlias = "sc"
     )
     public ApiResult<PagingVO<SubcontractChangeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SubcontractChangeDTO.PagingParamDTO> dto) {
         return success(subcontractChangeService.paging(dto));
@@ -72,11 +70,6 @@ public class SubcontractChangeController extends BaseController {
    * @return ApiResult<Void>
    */
    @PostMapping("/add")
-   @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-           tableField = "create_user_id",
-           menuCode = "scm:subcontractChangeOrder:add",
-           serviceClass = SubcontractChangeService.class,
-           keyIdName = "id")
    public ApiResult<Void> add(@RequestBody @Validated SubcontractChangeDTO.AddDTO dto) {
       subcontractChangeService.add(dto);
       return success();
@@ -110,7 +103,7 @@ public class SubcontractChangeController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:subcontractChangeOrder:addAndSubmit",
+            menuCode = "scm:subcontractChangeOrder:submit",
             serviceClass = SubcontractChangeService.class,
             keyIdName = "id")
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated SubcontractChangeDTO.AddDTO dto) {
@@ -128,7 +121,7 @@ public class SubcontractChangeController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:subcontractChangeOrder:updateAndSubmit",
+            menuCode = "scm:subcontractChangeOrder:submit",
             serviceClass = SubcontractChangeService.class,
             keyIdName = "id")
     public ApiResult<Void> updateAndSubmit(@RequestBody @Validated SubcontractChangeDTO.UpdateDTO dto) {
@@ -173,39 +166,20 @@ public class SubcontractChangeController extends BaseController {
     }
 
     /**
-    * 反审核
-    * @author will
-    * @date:  2023-06-08
-    * @param dto
-    * @return ApiResult<Void>
-    */
-    @PostMapping("/disApprove")
+     * 批量作废
+     * @author Will
+     * @date: 2023-06-08
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:subcontractChangeOrder:disApprove",
+            menuCode = "scm:subcontractChangeOrder:invalid",
             serviceClass = SubcontractChangeService.class,
             keyIdName = "ids")
-    public ApiResult<Void> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        subcontractChangeService.disApprove(dto.getIds());
-        return success();
-    }
-
-
-    /**
-    * 删除
-    * @author will
-    * @date:  2023-06-08
-    * @param dto
-    * @return ApiResult<Void>
-    */
-    @PostMapping("/delete")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "scm:subcontractChangeOrder:delete",
-            serviceClass = SubcontractChangeService.class,
-            keyIdName = "ids")
-    public ApiResult<Void> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        subcontractChangeService.delete(dto.getIds());
+    public ApiResult<Void> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        subcontractChangeService.invalid(dto.getIds(),dto.getRemark());
         return success();
     }
 
@@ -219,7 +193,7 @@ public class SubcontractChangeController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "scm:subcontractChangeOrder:cancel",
+            menuCode = "scm:subcontractChangeOrder:cancelProcess",
             serviceClass = SubcontractChangeService.class,
             keyIdName = "ids")
     public ApiResult<Void> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -256,7 +230,7 @@ public class SubcontractChangeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "scm:subcontractChangeOrder:export",
-            tableAlias = ""
+            tableAlias = "sc"
     )
     public void exportList(@RequestBody @Validated SubcontractChangeDTO.ExportDTO dto, HttpServletResponse response) {
         subcontractChangeService.exportList(dto, response);

@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/5/10 14:19
  */
 @Data
@@ -277,6 +277,20 @@ public class TransferInfoDTO implements Serializable {
         @StateEnumValue(clazz = SourceTypeEnum.class, message = "来源类型输入值有误")
         private String sourceType;
 
+        /**
+         * 编码（拉取金蝶数据时需要）
+         */
+        private String code;
+
+        /**
+         * 第三方系统（拉取金蝶数据时需要）
+         */
+        private String thirdPartySystem;
+
+        /**
+         * 金蝶同步状态
+         */
+        private String syncKingdeeStatus;
 
     }
 

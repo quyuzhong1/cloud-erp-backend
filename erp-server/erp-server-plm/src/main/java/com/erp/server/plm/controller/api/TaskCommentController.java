@@ -3,7 +3,6 @@ package com.erp.server.plm.controller.api;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.TaskCommentDTO;
-import com.erp.model.plm.entity.TaskCommentEntity;
 import com.erp.server.plm.service.TaskCommentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -12,10 +11,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 产品开发管理
+ * 任务列表-任务评论
  *
  * @Classname TaskCommentController
- * @Description TODO
+
  * @Date 2022-10-13 17:51
  * @Created by yl
  */
@@ -29,24 +28,24 @@ public class TaskCommentController extends BaseController {
 
 
     /**
-     * 项目任务-任务详情-添加评论
+     * 任务详情-添加评论【PLM1.3】
      *
      * @return
      */
     @PostMapping("/save")
-    public ApiResult saveTaskComment(@RequestBody @Validated TaskCommentDTO dto) {
+    public ApiResult saveTaskComment(@RequestBody @Validated TaskCommentDTO.AddDTO dto) {
         Boolean result = taskCommentService.saveTaskComment(dto);
-        return result == true ? success() : failure();
+        return result ? success() : failure();
     }
 
     /**
-     * 项目任务-任务详情-任务评论列表
+     * 任务详情-任务评论列表【PLM1.3】
      *
      * @return
      */
     @GetMapping("/list")
-    public ApiResult saveTaskComment(String taskId) {
-        List<TaskCommentEntity> result = taskCommentService.getListByTaskId(taskId);
-        return success(result);
+    public ApiResult<List<TaskCommentDTO.ListDTO>> listByTaskId(@RequestParam("taskId") String taskId) {
+        List<TaskCommentDTO.ListDTO> resultList = taskCommentService.listByTaskId(taskId);
+        return success(resultList);
     }
 }

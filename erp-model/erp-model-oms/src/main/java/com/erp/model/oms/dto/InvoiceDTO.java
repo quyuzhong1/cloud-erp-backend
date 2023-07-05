@@ -11,7 +11,7 @@ import java.io.Serializable;
 /**
  * @author Lambda
  * @Classname InvoiceDTO
- * @Description TODO
+
  * @Date 2023-05-10 17:08
  * @Created by yl
  */
@@ -45,7 +45,6 @@ public class InvoiceDTO implements Serializable {
         /**
          * 开户银行
          */
-        @NotBlank(message = "开户银行不能为空")
         @Size(max = 50, message = "开户银行最大50字符")
         private String bankName;
 

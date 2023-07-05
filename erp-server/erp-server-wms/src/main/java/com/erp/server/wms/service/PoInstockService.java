@@ -1,14 +1,13 @@
 package com.erp.server.wms.service;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
+import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.entity.PoInstockEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -48,7 +47,7 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
      * @author Will
      * @date: 2023/4/12 11:41
      */
-    String add(PoInstockDTO.AddDTO dto);
+    String add(PoInstockDTO.AddDTO dto,Boolean isNotCheck);
 
     /**
      * @param dto
@@ -136,12 +135,13 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
 
     /**
      * @param ids
+     * @param isInterface
      * @return Boolean
      * @description: 反审核
      * @author Will
      * @date: 2023/4/12 11:58
      */
-    Boolean disApprove(List<String> ids);
+    Boolean disApprove(List<String> ids,Boolean isInterface);
 
     /**
      * @param ids
@@ -249,4 +249,11 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
      * @Date 2023/4/24 15:29
      **/
     Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId, String syncOperate);
+
+    /**
+     * 根据供应商id集合获取入库单量和入库数量
+     * @param dto
+     * @return
+     */
+    List<PoInstockDTO.SupplierInstockInfoDTO> getInstockInfoBySupplierIds(PoInstockDTO.SupplierInstockParamDTO dto);
 }

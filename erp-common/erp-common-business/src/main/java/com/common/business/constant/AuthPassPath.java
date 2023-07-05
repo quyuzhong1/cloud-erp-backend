@@ -2,7 +2,7 @@ package com.common.business.constant;
 
 /**
  * @Classname AuthPassPath
- * @Description TODO
+
  * @Date 2022-07-14 17:26
  * @Created by yl
  */

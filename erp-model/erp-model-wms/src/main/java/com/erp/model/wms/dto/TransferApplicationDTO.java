@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/5/10 14:11
  */
 @Data
@@ -69,9 +69,17 @@ public class TransferApplicationDTO implements Serializable {
          */
         private String  skuNo;
         /**
+         * 是否是组合品
+         */
+        private Boolean IsCombination;
+        /**
          * 产品名称
          */
         private String  productName;
+        /**
+         * 加工单号
+         */
+        private String  machineCode;
         /**
          * 调拨日期
          */
@@ -535,4 +543,76 @@ public class TransferApplicationDTO implements Serializable {
          */
         private String code;
     }
+
+
+    /**
+     * 下推加工单列表
+     * @Author Luo_WG
+     * @Date 2023/6/29 16:40
+     **/
+    @Data
+    @NoArgsConstructor
+    public static class ViewGenerateMachineInfo {
+        /**
+         * 来源Id
+         */
+        private String sourceId;
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 事务类型
+         */
+        private String workType;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+        /**
+         * 加工数量
+         */
+        private Integer machineQty;
+        /**
+         * 即时库存数量
+         */
+        private Integer curInventoryQty;
+        /**
+         * 备注
+         */
+        private String remark;
+        /**
+         * 是否是组合SKU
+         */
+        private Boolean isCombination;
+        /**
+         * 是否是主体信息
+         */
+        private Boolean isBody;
+    }
+
 }

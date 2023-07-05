@@ -55,7 +55,7 @@ public enum WarehouseLocationTypeEnum implements EnumMessage {
      * @param code
      * @return
      */
-    public static WarehouseLocationTypeEnum of(String code) {
+    public static WarehouseLocationTypeEnum getByCode(String code) {
         return Arrays.stream(WarehouseLocationTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 
@@ -65,7 +65,7 @@ public enum WarehouseLocationTypeEnum implements EnumMessage {
      * @return
      */
     public static String getName(String code) {
-        WarehouseLocationTypeEnum WarehouseLocationType =  of(code);
+        WarehouseLocationTypeEnum WarehouseLocationType =  getByCode(code);
         return Optional.ofNullable(WarehouseLocationType).map(WarehouseLocationTypeEnum::getName).orElse("");
     }
 

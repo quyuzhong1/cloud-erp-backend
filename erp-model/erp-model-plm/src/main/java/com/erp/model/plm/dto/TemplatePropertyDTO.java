@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * @author yl
  * @Classname TemplatePropertyDTO
- * @Description TODO
+
  * @Date 2023-03-06 16:15
  * @Created by yl
  */

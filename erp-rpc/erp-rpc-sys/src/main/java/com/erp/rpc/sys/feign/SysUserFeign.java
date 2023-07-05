@@ -24,7 +24,7 @@ import java.util.Map;
 
 /**
  * @Classname 系统管理 服务
- * @Description TODO
+
  * @Date 2022-07-08 16:52
  * @Created by yl
  */
@@ -103,6 +103,8 @@ public interface SysUserFeign {
     @PostMapping("feign/user/getUserByUserId")
     FindUserDTO getUserByUserId(@RequestBody String userId);
 
+
+
     /**
      *  根据用户名称查询用户
      */
@@ -120,6 +122,13 @@ public interface SysUserFeign {
      */
     @GetMapping("feign/user/getUserListByUserIds")
     List<FindUserDTO> getUserListByUserIds(@RequestBody List<String> userIds);
+
+    /**
+     * 根据编码集合查询
+     */
+    @GetMapping("feign/user/listUserByCodeList")
+    List<FindUserDTO> listUserByCodeList(List<String> codeList);
+
 
     /**
      * 查询sku编码
@@ -147,6 +156,12 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/user/getUserDeptById")
     SysDepartmentDTO getUserDeptById(@RequestBody String deptId);
+
+    /**
+     *  根据部门金蝶Code查询部门
+     */
+    @PostMapping("feign/user/getUserDeptByCode")
+    SysDepartmentDTO getUserDeptByCode(@RequestBody String code);
 
 
     /**
@@ -214,6 +229,16 @@ public interface SysUserFeign {
       */
     @PostMapping("feign/accountingCompany/getByIds")
     List<BaseIdDTO.CodeDTO> getAccountingCompanyList(@RequestBody List<String> ids);
+    /**
+     * @description: 查询组织列表
+     * @author Will
+     * @date: 2023/6/29 12:27
+     * @param codes
+     * @return List<CodeDTO>
+     */
+    @PostMapping("feign/accountingCompany/listByCodes")
+    List<BaseIdDTO.CodeDTO> listAccountingCompanyByCodeList(@RequestBody List<String> codes);
+
 
     /**
      * @description: 查询所有已启用组织
@@ -249,6 +274,9 @@ public interface SysUserFeign {
      **/
     @PostMapping("feign/dept/getDeptByUserId")
     SysDepartmentUserNumberDTO getDeptByUserId(@RequestBody String userId);
+
+    @PostMapping("feign/dept/listDeptUserByUserIdList")
+    List<SysDepartmentUserNumberDTO> listDeptUserByUserIdList(@RequestBody List<String> userIdList);
 
     /**
      * 更新业务单据状态
@@ -357,4 +385,23 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/user/listUserKingdeePostByUserIds")
     List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByUserIds(@RequestBody List<String> userIds);
+
+    /**
+     * 获取用户区间配置
+     * @param type
+     * @return
+     */
+    @GetMapping("feign/cfgUserRange/getByType")
+    List<CfgUserRangeDTO.UserRangeDataDTO> getUserRangeByType(@RequestParam(value = "type")String type,
+                                                              @RequestParam(value = "addLast", required = false, defaultValue = "true") Boolean addLast);
+    /**
+     * @description: 根据金蝶的对应岗位code获取信息
+     * @author Will
+     * @date: 2023/6/6 10:44
+     * @param kingdeePostCodes
+     * @return List<UserKingdeePostInfoDTO>
+     */
+    @PostMapping("feign/user/listUserKingdeePostByKingdeePostCodes")
+    List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByKingdeePostCodes(@RequestBody List<String> kingdeePostCodes);
+
 }

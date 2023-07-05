@@ -3,16 +3,20 @@ package com.erp.server.dmp.push.consumer;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
@@ -30,7 +34,7 @@ import java.util.stream.Collectors;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/4/20 11:12
  */
 @Service
@@ -41,16 +45,19 @@ public class KingdeeSoConsumer implements RocketMQListener<Map<String, Object>> 
     @Resource
     private KingdeeCommonService kingdeeCommonService;
 
+    @Resource
+    private MQProducerService mqProducerService;
+
     public static void main(String[] args) {
 
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_SALEORDER.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "XSD23061200001"));
+        queryFilters.add(String.format("FBillNo = '%s'", "XSD23070500046"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FEntryID";
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 1);
+        String fieldKeys = "F_SKZH.FName";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 11);
         System.out.println(queryList);
 
 
@@ -89,11 +96,12 @@ public class KingdeeSoConsumer implements RocketMQListener<Map<String, Object>> 
         SaveParam param = new SaveParam(json);
         JSONObject model;
         try {
-            model = kingdeeCommonService.view(apiUtils, (String) map.get("syncKingdeeId"), (String) map.get("code"));
+            model = kingdeeCommonService.view(apiUtils,platformEntity.getId(), (String) map.get("syncKingdeeId"), (String) map.get("code"));
         } catch (Exception e) {
-
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+
+            sendWarnMsg(businessId);
             return;
         }
 
@@ -128,6 +136,26 @@ public class KingdeeSoConsumer implements RocketMQListener<Map<String, Object>> 
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
         }
+    }
+
+
+    /***
+     * 发送预警信息
+     * @author yl
+     * @date 2023-06-14 9:50
+     * @param businessId
+     * @return void
+     */
+    private void sendWarnMsg(String businessId) {
+        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+        warnMsgInfo.setBizName("销售订单同步");
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
+        warnMsgInfo.setTitle("销售订单同步失败");
+        warnMsgInfo.setTableName("so_info");
+        warnMsgInfo.setTableId(businessId);
+        warnMsgInfo.setKeyInfo("");
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+        mqProducerService.sendWarnMsg(warnMsgInfo);
     }
 
 }

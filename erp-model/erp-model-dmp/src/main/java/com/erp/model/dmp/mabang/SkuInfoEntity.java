@@ -1,5 +1,6 @@
 package com.erp.model.dmp.mabang;
 
+import com.erp.model.dmp.dto.CleanBaseDTO;
 import com.erp.model.dmp.mabang.item.MachiningDto;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
@@ -7,12 +8,12 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
-@ToString
-public class SkuInfoEntity {
+public class SkuInfoEntity extends CleanBaseDTO {
     /**
      * stockSkuId
      */
@@ -288,8 +289,76 @@ public class SkuInfoEntity {
      */
     @SerializedName("packaging_height")
     private BigDecimal packagingHeight;
-    /**
-     * 清洗数据
-     */
-    private Boolean isClean;
+    @Override
+    public String toString() {
+        return "SkuInfoEntity{" +
+                "id='" + id + '\'' +
+                ", salesSku='" + salesSku + '\'' +
+                ", stockSku='" + stockSku + '\'' +
+                ", nameCN='" + nameCN + '\'' +
+                ", nameEN='" + nameEN + '\'' +
+                ", defaultCost=" + defaultCost +
+                ", forecastDaySale='" + forecastDaySale + '\'' +
+                ", hasBattery=" + hasBattery +
+                ", isNewType=" + isNewType +
+                ", isTort=" + isTort +
+                ", livenessType=" + livenessType +
+                ", status=" + status +
+                ", timeCreated='" + timeCreated + '\'' +
+                ", timeModify='" + timeModify + '\'' +
+                ", originalSku='" + originalSku + '\'' +
+                ", brandName='" + brandName + '\'' +
+                ", parentCategoryName='" + parentCategoryName + '\'' +
+                ", categoryName='" + categoryName + '\'' +
+                ", thirdCategoryName='" + thirdCategoryName + '\'' +
+                ", salePrice=" + salePrice +
+                ", declareValue=" + declareValue +
+                ", stockPicture='" + stockPicture + '\'' +
+                ", salePicture='" + salePicture + '\'' +
+                ", length=" + length +
+                ", width=" + width +
+                ", height=" + height +
+                ", weight=" + weight +
+                ", declareName='" + declareName + '\'' +
+                ", declareEname='" + declareEname + '\'' +
+                ", remark='" + remark + '\'' +
+                ", saleRemark='" + saleRemark + '\'' +
+                ", purchaseRemark='" + purchaseRemark + '\'' +
+                ", packageX='" + packageX + '\'' +
+                ", declareCode='" + declareCode + '\'' +
+                ", isGift=" + isGift +
+                ", magnetic=" + magnetic +
+                ", powder=" + powder +
+                ", purchasePrice='" + purchasePrice + '\'' +
+                ", developerId='" + developerId + '\'' +
+                ", developerName='" + developerName + '\'' +
+                ", buyerId=" + buyerId +
+                ", buyerName='" + buyerName + '\'' +
+                ", artDesignerId=" + artDesignerId +
+                ", artDesignerName='" + artDesignerName + '\'' +
+                ", provider='" + provider + '\'' +
+                ", productLinkAddress='" + productLinkAddress + '\'' +
+                ", financial='" + financial + '\'' +
+                ", commodityUse='" + commodityUse + '\'' +
+                ", commodityMaterial='" + commodityMaterial + '\'' +
+                ", stockDetailImg=" + stockDetailImg +
+                ", sales=" + sales +
+                ", virtualSku=" + virtualSku +
+                ", warehouse=" + warehouse +
+                ", label=" + label +
+                ", attributes=" + attributes +
+                ", isMachining=" + isMachining +
+                ", processCost=" + processCost +
+                ", stocksku='" + stocksku + '\'' +
+                ", warehouseId='" + warehouseId + '\'' +
+                ", warehouseName='" + warehouseName + '\'' +
+                ", quantity='" + quantity + '\'' +
+                ", machiningData=" + machiningData +
+                ", isPaste=" + isPaste +
+                ", chargedProperty='" + chargedProperty + '\'' +
+                ", packagingLength=" + packagingLength +
+                ", packagingWidth=" + packagingWidth +
+                ", packagingHeight=" + packagingHeight +
+                '}';
+    }
 }

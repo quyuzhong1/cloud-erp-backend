@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.base.SortDTO;
 import com.common.core.entity.BaseEntity;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -304,6 +305,11 @@ public class WarehouseReceiveDTO {
         private String id;
 
         /**
+         * 明细Id
+         */
+        private String detailId;
+
+        /**
          * 收货单号
          */
         private String code;
@@ -412,6 +418,11 @@ public class WarehouseReceiveDTO {
          * 收货备注
          */
         private String remark;
+
+        /**
+         * 委外订单类型(child子级，parent父级)
+         */
+        private String subcontractType;
 
         /**
          * 创建时间
@@ -794,6 +805,51 @@ public class WarehouseReceiveDTO {
          * 签收数量
          */
         private Integer receiveQty;
+
+    }
+
+    /**
+     * 供应商 收货批次和收货数量 查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SupplierReceiveParamDTO {
+
+        /**
+         * 供应商id集合
+         */
+        private List<String> supplierIds;
+
+
+        /**
+         * 日期范围
+         */
+        private List<LocalDate> dateList;
+
+    }
+
+    /**
+     * 供应商 收货批次和收货数量
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SupplierReceiveInfoDTO {
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 收货批次
+         */
+        private Integer receivedCount;
+
+        /**
+         * 收货数量
+         */
+        private Integer receivedQty;
 
     }
 

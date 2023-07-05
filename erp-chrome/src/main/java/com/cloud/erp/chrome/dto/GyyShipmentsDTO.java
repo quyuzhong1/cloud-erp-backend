@@ -8,7 +8,7 @@ import javax.validation.constraints.NotNull;
 
 /**
  * @Classname GyyShipmentsDTO
- * @Description TODO
+
  * @Date 2022-08-26 14:38
  * @Created by yl
  */

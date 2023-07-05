@@ -5,10 +5,7 @@ import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.Collections;
@@ -199,9 +196,9 @@ public class PurchaseOrderFeignController {
      * @Author Luo_WG
      * @Date 2023/4/20 18:51
      **/
-    @PostMapping("/updatePurchaseOrderDetailById")
-    public Boolean updatePurchaseOrderDetailById(@RequestBody PurchaseOrderDetailEntity entity) {
-        return purchaseOrderDetailService.updateById(entity);
+    @PostMapping("/updatePoArrivalStatus")
+    public Boolean updatePoArrivalStatus(@RequestBody PurchaseOrderDetailEntity entity) {
+        return purchaseOrderDetailService.updatePoArrivalStatus(entity);
     }
 
     /**
@@ -220,6 +217,61 @@ public class PurchaseOrderFeignController {
     @PostMapping("/getPushDownBySourceIds")
     public Integer getPushDownBySoIds(@RequestBody List<String> soIds) {
         return salesDemandService.getPushDownBySourceIds(soIds);
+    }
+
+    /**
+     * 根据采购订单编号获取采购订单信息
+     * @param codes
+     * @return
+     */
+    @PostMapping("/getPurchaseOrderByCodes")
+    List<PurchaseOrderEntity> getPurchaseOrderByCodes(@RequestBody List<String> codes) {
+        return purchaseOrderService.findByCodes(codes);
+    }
+
+    /**
+     * 查询委外订单所有子级SKU生成的采购订单信息
+     * @param parentPodIds
+     * @return
+     */
+    @PostMapping("/listPoRefSubChildByParentPodIds")
+    public List<PurchaseOrderDTO.SubcontractOrderChildDTO> listPoRefSubChildByParentPodIds(@RequestBody List<String> parentPodIds) {
+        return purchaseOrderService.listPoRefSubChildByParentPodIds(parentPodIds);
+    }
+
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/6/15 18:50
+     * @param poIds
+     */
+    @PostMapping("/autoApprovePurchaseOrder")
+    public void autoApprovePurchaseOrder(@RequestBody List<String> poIds) {
+         purchaseOrderService.autoApprovePurchaseOrder(poIds);
+    }
+
+    /**
+     * @description: 根据来源ids查询采购明细
+     * @author Will
+     * @date: 2023/6/26 10:20
+     * @param sourceDetailIds
+     * @return List<PurchaseOrderDetailEntity>
+     */
+    @PostMapping("/listPodBySourceDetailIds")
+    public List<PurchaseOrderDetailEntity> listPodBySourceDetailIds(@RequestBody List<String> sourceDetailIds) {
+        return purchaseOrderDetailService.listBySourceDetailIds(sourceDetailIds);
+    }
+
+    /**
+     * @description: 根据sku id集合获取审核通过的最新的采购订单明细信息
+     * @author zhangchunlin
+     * @date: 2023/6/26 10:20
+     * @param skuIds
+     * @return List<PurchaseOrderDetailEntity>
+     */
+    @PostMapping("/getLatest")
+    public List<PurchaseOrderDetailEntity> getLatest(@RequestBody List<String> skuIds) {
+        return purchaseOrderDetailService.getLatest(skuIds);
     }
 
 }

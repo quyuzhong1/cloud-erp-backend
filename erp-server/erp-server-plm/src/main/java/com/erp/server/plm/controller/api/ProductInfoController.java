@@ -3,6 +3,7 @@ package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.util.*;
 
 /**
@@ -56,7 +58,7 @@ public class ProductInfoController extends BaseController {
             menuCode = "plm:product:paging",
             tableAlias = "pt"
     )
-    public ApiResult<PagingVO<ProductShowDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
+    public ApiResult<PagingVO<ProductShowDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.paging(dto);
         return success(pagingVO);
     }
@@ -70,7 +72,7 @@ public class ProductInfoController extends BaseController {
      * @date 2023-06-12 14:54
      */
     @PostMapping("/myProject")
-    public ApiResult<PagingVO<ProductShowDTO>> myProject(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
+    public ApiResult<PagingVO<ProductShowDTO>> myProject(@RequestBody @Validated PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.myProject(dto);
         return success(pagingVO);
     }
@@ -84,10 +86,106 @@ public class ProductInfoController extends BaseController {
      * @date 2023-06-12 14:54
      */
     @PostMapping("/collect")
-    public ApiResult<PagingVO<ProductShowDTO>> collect(@RequestBody @Validated PagingDTO<ProductSearchDTO> dto) {
+    public ApiResult<PagingVO<ProductShowDTO>> collect(@RequestBody @Validated PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.collect(dto);
         return success(pagingVO);
     }
+
+    /**
+     * 所有项目的统计【PLM1.3】
+     *
+     * @param
+     * @return
+     */
+    @GetMapping("/allCount")
+    public ApiResult<ProductDTO.ProductCountDTO> allCount() {
+        ProductDTO.ProductCountDTO productCount = productInfoService.allCount();
+        return success(productCount);
+    }
+
+    /**
+     * 我的项目的统计【PLM1.3】
+     *
+     * @param
+     * @return
+     */
+    @GetMapping("/myProjectCount")
+    public ApiResult<ProductDTO.ProductCountDTO> myProjectCount() {
+        ProductDTO.ProductCountDTO productCount = productInfoService.myProjectCount();
+        return success(productCount);
+    }
+
+    /**
+     * 我收藏的统计【PLM1.3】
+     *
+     * @param
+     * @return
+     */
+    @GetMapping("/collectCount")
+    public ApiResult<ProductDTO.ProductCountDTO> collectCount() {
+        ProductDTO.ProductCountDTO productCount = productInfoService.collectCount();
+        return success(productCount);
+    }
+
+
+    /**
+     * 产品开发管理所有导出【PLM1.3】
+     * @param dto
+     * @param response
+     * @return
+     */
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "charge_id",
+            menuCode = "plm:product:paging",
+            tableAlias = "pt"
+    )
+    @PostMapping("/allExport")
+    public ApiResult allExport(@RequestBody @Validated ProductSearchDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result= productInfoService.allExport(dto,response);
+        return result ? success() : failure();
+    }
+
+
+    /**
+     * 产品开发管理我的项目导出【PLM1.3】
+     * @param dto
+     * @param response
+     * @return
+     */
+    @PostMapping("/myProjectExport")
+    public ApiResult myProjectExport(@RequestBody @Validated ProductSearchDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result= productInfoService.myProjectExport(dto,response);
+        return result ? success() : failure();
+    }
+
+
+    /**
+     * 产品开发管理 收藏项目导出【PLM1.3】
+     * @param dto
+     * @param response
+     * @return
+     */
+    @PostMapping("/collectExport")
+    public ApiResult collectExport(@RequestBody @Validated ProductSearchDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result= productInfoService.collectExport(dto,response);
+        return result ? success() : failure();
+    }
+
+
+
+
+    /**
+     * 项目下拉【PLM1.3】
+     *
+     * @param
+     * @return
+     */
+    @GetMapping("/itemDropdown")
+    public ApiResult<List<ProductDTO.DropdownDTO>> itemDropdown() {
+        List<ProductDTO.DropdownDTO> list = productInfoService.getItemDropdown();
+        return success(list);
+    }
+
 
     /**
      * 产品列表-无分页
@@ -99,7 +197,7 @@ public class ProductInfoController extends BaseController {
      */
     @PostMapping("/list")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:paging", tableAlias = "pt")
-    public ApiResult<List<BasicDTO>> listProductInfo(@RequestBody @Validated ProductSearchDTO dto) {
+    public ApiResult<List<BasicDTO>> listProductInfo(@RequestBody @Validated ProductSearchDTO.PagingParamDTO dto) {
         List<BasicDTO> list = productInfoService.listProductInfo(dto);
         return success(list);
     }
@@ -163,7 +261,8 @@ public class ProductInfoController extends BaseController {
     }
 
     /**
-     * 概述
+     * 旧概览
+     * 先保留
      */
     @PostMapping("/info")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -173,6 +272,17 @@ public class ProductInfoController extends BaseController {
     )
     public ApiResult<ProjectInfoDTO> projectInfo(@RequestBody ProductTaskCountShowDTO productTaskCountShowDTO) {
         ProjectInfoDTO info = projectInfoService.projectInfo(productTaskCountShowDTO);
+        return success(info);
+    }
+
+
+    /**
+     * 新概览【PLM1.3】
+     *
+     */
+    @PostMapping("/overview")
+    public ApiResult<ProductOverviewDTO.InfoDTO> overview(@RequestBody BaseIdDTO dto) {
+        ProductOverviewDTO.InfoDTO info = productInfoService.overview(dto.getId());
         return success(info);
     }
 
@@ -200,7 +310,6 @@ public class ProductInfoController extends BaseController {
      * 数据导出
      */
     @PostMapping(value = "/exportProductData", produces = "application/octet-stream")
-    //@RequestPermissions("plm:product:exportProductData")
     public void exportProductData(@RequestBody @Validated ExportProductDataDTO dto) {
         productInfoService.exportProductData(dto);
     }
@@ -284,6 +393,21 @@ public class ProductInfoController extends BaseController {
         return result == true ? success() : failure();
     }
 
+
+
+    /**
+     * 产品开发管理-确认立项  ids为产品id集合【PLM1.3】
+     *
+     * @param
+     * @return void
+     * @author yl
+     * @date 2022-10-09 14:38
+     */
+    @PostMapping("/batchEstablish")
+    public ApiResult batchArchive(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        boolean flag = productInfoService.batchEstablish(dto.getIds());
+        return flag ? success() : failure();
+    }
 
 }
 

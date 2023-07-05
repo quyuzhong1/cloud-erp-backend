@@ -2,7 +2,6 @@ package com.erp.model.plm.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.stereotype.Service;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -12,7 +11,7 @@ import java.util.List;
 
 /**
  * @Classname TaskOperateDTO
- * @Description TODO
+
  * @Date 2022-10-19 14:51
  * @Created by yl
  */
@@ -37,6 +36,17 @@ public class TaskOperateDTO  implements Serializable {
      * 意见
      */
     private String comment;
+
+
+    /**
+     * 附件url集合
+     */
+    private List<String> attachUrlList;
+
+    /**
+     * 附件名集合
+     */
+    private List<String> attachNameList;
 
 
 }

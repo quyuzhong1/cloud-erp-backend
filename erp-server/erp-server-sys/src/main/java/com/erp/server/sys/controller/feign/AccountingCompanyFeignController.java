@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname AccountingCompanyFeignController
- * @Description TODO
+
  * @Date 2023-03-22 15:28
  * @Created by yl
  */
@@ -29,6 +29,13 @@ public class AccountingCompanyFeignController extends BaseController {
         List<BaseIdDTO.CodeDTO> list = sysAccountingCompanyService.getByIds(ids);
         return list;
     }
+
+    @PostMapping("/listByCodes")
+    public List<BaseIdDTO.CodeDTO> listByCodes(@RequestBody List<String> codes) {
+        List<BaseIdDTO.CodeDTO> list = sysAccountingCompanyService.listByCodes(codes);
+        return list;
+    }
+
 
     /**
      * @return List<BaseIdDTO>

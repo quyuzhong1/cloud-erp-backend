@@ -75,6 +75,12 @@ public class ProductSkuBaseInfoDTO {
     private String name;
 
     /**
+     * 品名(英文)
+     */
+    @Size(max = 500,message = "品名(英文)最大500字符")
+    private String nameEn;
+
+    /**
      * 是否已完成任务
      * 0 没有 1 已完成
      */

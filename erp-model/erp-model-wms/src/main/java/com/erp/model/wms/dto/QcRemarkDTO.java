@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 /**
  * @author Lambda
  * @Classname QcRemarkDTO
- * @Description TODO
+
  * @Date 2023-04-18 17:07
  * @Created by yl
  */

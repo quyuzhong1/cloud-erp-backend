@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @Classname ThreadPoolConfig
- * @Description TODO
+
  * @Date 2022-11-16 14:33
  * @Created by yl
  */

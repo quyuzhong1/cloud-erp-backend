@@ -7,6 +7,7 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -349,6 +350,37 @@ public class PurchaseApplicationController extends BaseController {
     public ApiResult exportExcel(@RequestBody PurchaseApplicationDTO.SearchParamDTO dto, HttpServletResponse response) {
         Boolean flag = purchaseApplicationService.exportExcel(dto, response);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 下推委外订单显示
+     * @author Will
+     * @date: 2023/6/12 15:00
+     * @param dto
+     * @return ApiResult<List<ViewGenerateSubcontractOrderDTO>>
+     */
+    @PostMapping(value = "/viewGenerateSubcontractOrder")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "scm:purchaseApplication:viewGenerateSubcontractOrder",
+            tableAlias = "so"
+    )
+    public ApiResult<List<PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO>> viewGenerateSubcontractOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO> list = purchaseApplicationService.viewGenerateSubcontractOrder(dto.getIds());
+        return success(list);
+    }
+
+    /**
+     * 下推委外订单保存
+     * @author Will
+     * @date: 2023/6/12 15:10
+     * @param list
+     * @return ApiResult<Void>
+     */
+    @PostMapping(value = "/generateSubcontractOrder")
+    public ApiResult<Void> generateSubcontractOrder(@RequestBody @Validated ValidList<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> list) {
+        purchaseApplicationService.generateSubcontractOrder(list);
+        return success();
     }
 
 }

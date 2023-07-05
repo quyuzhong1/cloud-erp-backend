@@ -1,10 +1,10 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.util.ArrayUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
-import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -523,40 +523,51 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
             }
         }
         //分类必须要填分类代码，并且当前分类级别的分类代码不能重复，只有一二级存在代号
-        if (StringUtils.isNotBlank(code)) {
-            Boolean flag = false;
-            for (int i = 65; i <= 90; i++) {
-                char c = (char) (i);
-                if (code.equals(String.valueOf(c))) {
-                    flag = true;
-                }
+        if (StringUtils.isBlank(code)) {
+            return;
+        }
+        //编码char数组
+        char[] chars = code.toCharArray();
+        //A-Z字母char数组
+        char[] numbers = new char[26];
+        for (int i = 0; i < numbers.length; i++){
+            numbers[i] = (char)('A' + i);
+        }
+        Boolean isError = false;
+        for (char num : chars) {
+            if (!ArrayUtil.contains(numbers,num)) {
+                isError = true;
             }
-            if (!flag) {
-                throw new ServiceException(ApiError.ERROR_95071);
-            }
-            LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper();
-            queryWrapper.eq(BasicCategoryEntity::getCode, code);
-            queryWrapper.eq(BasicCategoryEntity::getPid, pid);
-            queryWrapper.last("LIMIT 1");
-            BasicCategoryEntity entity = this.getOne(queryWrapper);
-            if (ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(id)) {
-                throw new ServiceException(ApiError.ERROR_95070);
-            }
+        }
+        if (isError) {
+            throw new ServiceException(ApiError.ERROR_95071);
+        }
+        BasicCategoryEntity entity = lambdaQuery().eq(BasicCategoryEntity::getCode, code)
+                .eq(BasicCategoryEntity::getPid, pid)
+                .one();
+        if (ObjectUtils.isNotEmpty(entity) && !entity.getId().equals(id)) {
+            throw new ServiceException(ApiError.ERROR_95070);
         }
     }
 
 
     /**
      * @param categoryName：类别名称
+     * @param isMainCategory：是否是一级主类别
      * @return BasicCategoryEntity
      * @Description 根据类别名称查询类别信息
      * @Author Luo_WG
      * @Date 2022/9/28 18:51
      **/
     @Override
-    public BasicCategoryEntity getCategoryByName(String categoryName) {
+    public BasicCategoryEntity getCategoryByName(String categoryName, Boolean isMainCategory) {
         LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(BasicCategoryEntity::getName, categoryName);
+        if (isMainCategory) {
+            queryWrapper.eq(BasicCategoryEntity::getPid, "0");
+        } else {
+            queryWrapper.ne(BasicCategoryEntity::getPid, "0");
+        }
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
     }

@@ -31,7 +31,8 @@ public enum InventorySourceTypeEnum {
     OTHER_INSTOCK("otherInstock", "其他入库单"),
     OTHER_OUTSTOCK("otherOutstock", "其他出库单"),
     INSTOCK_FORCAST("instockForcast", "入库预报"),
-
+    RECEIVE_MATERIAL("receiveMaterial", "领料"),
+    RETURN_MATERIAL("returnMaterial", "退料"),
     ;
 
     /**
@@ -59,7 +60,7 @@ public enum InventorySourceTypeEnum {
     }
 
 
-    public static InventorySourceTypeEnum of(String code) {
+    public static InventorySourceTypeEnum getByCode(String code) {
         return Arrays.stream(InventorySourceTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 

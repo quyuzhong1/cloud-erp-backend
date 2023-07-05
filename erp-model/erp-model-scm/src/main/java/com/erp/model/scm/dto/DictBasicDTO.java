@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * @author Lambda
  * @Classname DictBasicDTO
- * @Description TODO
+
  * @Date 2023-03-16 16:16
  * @Created by yl
  */

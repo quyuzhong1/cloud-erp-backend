@@ -3,19 +3,21 @@ package com.erp.server.workflow.controller.api;
 
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.server.workflow.service.ProcessManagementService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
-
-import com.common.core.controller.BaseController;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -43,6 +45,11 @@ public class ProcessManagementController extends BaseController {
         ProcessManagementDTO.StartResultDTO result =  processManagementService.startProcess(dto);
         return success(result);
     }
+    @PostMapping("/batchStart")
+    public ApiResult<List<ProcessManagementDTO.StartResultDTO>> batchStartProcess(@RequestBody @Valid ValidList<ProcessManagementDTO.StartDTO> dto) {
+        List<ProcessManagementDTO.StartResultDTO> result =  processManagementService.batchStartProcess(dto);
+        return success(result);
+    }
 
     /**
      * 流程审核
@@ -56,7 +63,19 @@ public class ProcessManagementController extends BaseController {
     }
 
     /**
-     * 驳回流程
+     * 批量审批
+     * @param dto
+     * @return
+     */
+    @PostMapping("/batchApprove")
+    public ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> batchApproveProcess(@RequestBody @Valid ValidList<ProcessManagementDTO.ApproveDTO> dto) {
+        List<ProcessManagementDTO.ApproveResultDTO> resultDTO = processManagementService.batchApproveProcess(dto);
+        return success(resultDTO);
+    }
+
+
+    /**
+     * 流程驳回到指定节点
      * @param dto
      */
     @PostMapping("/back")
@@ -128,6 +147,22 @@ public class ProcessManagementController extends BaseController {
         return success(processManagementService.progress(dto));
     }
 
+    /**
+     * 批量查询流程当前审批人
+     */
+    @PostMapping("/batchCurApprover")
+    public ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> batchCurApprover(@RequestBody @Valid ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList) {
+        List<ProcessManagementDTO.CurApproveInfoDTO> resultList = processManagementService.batchCurApprover(dtoList);
+        return success(resultList);
+    }
 
+    /**
+     * 批量查询当前待审核业务单据
+     */
+    @PostMapping("/batchCurApproverByApprove")
+    public ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> batchCurApproverByApprove(@RequestBody @Valid ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList) {
+        List<ProcessManagementDTO.CurApproveInfoDTO> resultList = processManagementService.batchCurApproverByApprove(dtoList);
+        return success(resultList);
+    }
 
 }

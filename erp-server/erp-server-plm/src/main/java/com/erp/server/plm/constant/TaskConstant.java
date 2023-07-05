@@ -2,7 +2,7 @@ package com.erp.server.plm.constant;
 
 /**
  * @Classname 任务属性
- * @Description TODO
+
  * @Date 2022-09-19 9:48
  * @Created by yl
  */
@@ -30,6 +30,8 @@ public interface TaskConstant {
     Integer MY_FINISH_TASK = 0;
     Integer MY_APPROVAL_TASK = 1;
     Integer ALL_FINISH_TASK = 2;
+    //变更任务
+    Integer CHANGE_TASK = 3;
 
 
     //高级任务
@@ -79,6 +81,16 @@ public interface TaskConstant {
 
     //计划结束时间
     String PLAN_END_TIME = "planEndTime";
+
+    /**
+     * 本地上传
+     */
+    Integer LOCAL_UPLOAD=0;
+
+    /**
+     * 链接
+     */
+    Integer URL=1;
 
 
 }

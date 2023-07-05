@@ -62,16 +62,6 @@ public class ProductOperateRecordServiceImpl extends ServiceImpl<ProductOperateR
     public Boolean saveOrUpdate(ProductOperateRecordDTO dto) {
         ProductOperateRecordEntity recordEntity = new ProductOperateRecordEntity();
         BeanMapper.copy(dto, recordEntity);
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
-        if (ObjectUtils.isNotEmpty(loginUser)) {
-            if (StringUtils.isBlank(dto.getId())) {
-                recordEntity.setCreateUserId(loginUser.getUid());
-                recordEntity.setCreateUserName(loginUser.getUserName());
-            } else {
-                recordEntity.setUpdateUserId(loginUser.getUid());
-                recordEntity.setUpdateUserName(loginUser.getUserName());
-            }
-        }
         return this.saveOrUpdate(recordEntity);
     }
 
@@ -84,19 +74,7 @@ public class ProductOperateRecordServiceImpl extends ServiceImpl<ProductOperateR
      **/
     @Override
     public Boolean saveOrUpdateBatch(List<ProductOperateRecordDTO> dto) {
-        LoginUser loginUser = CommonInterceptor.threadLocal.get();
         List<ProductOperateRecordEntity> productOperateRecordEntities = BeanMapper.copyList(dto, ProductOperateRecordEntity.class);
-        if (ObjectUtils.isNotEmpty(loginUser)) {
-            for (ProductOperateRecordEntity productOperateRecordEntity : productOperateRecordEntities) {
-                if (StringUtils.isBlank(productOperateRecordEntity.getId())) {
-                    productOperateRecordEntity.setCreateUserId(loginUser.getUid());
-                    productOperateRecordEntity.setCreateUserName(loginUser.getUserName());
-                } else {
-                    productOperateRecordEntity.setUpdateUserId(loginUser.getUid());
-                    productOperateRecordEntity.setUpdateUserName(loginUser.getUserName());
-                }
-            }
-        }
         return this.saveOrUpdateBatch(productOperateRecordEntities);
     }
 

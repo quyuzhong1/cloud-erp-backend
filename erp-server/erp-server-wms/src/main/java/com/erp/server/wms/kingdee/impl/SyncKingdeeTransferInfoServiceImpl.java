@@ -6,7 +6,10 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -59,6 +62,10 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
 
     @Override
     public void syncDataToKingdee(TransferInfoEntity entity, String operate) {
+        //第三方拉取数据无推送
+        if (SourceTypeEnum.STK_TRANSFERDIRECT.getCode().equals(entity.getSourceType())) {
+            return;
+        }
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
@@ -88,17 +95,19 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
 
         //组织机构编码
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getInOrgId(), entity.getOutOrgId()));
-        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
-            //调入组织机构编码
-            String inOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInOrgId()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
-            resultMap.put("inOrgCode", inOrgCode);
-
-            //调出组织机构编码
-            String outOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOutOrgId()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
-            resultMap.put("outOrgCode", outOrgCode);
+        if (CollectionUtils.isEmpty(accountingCompanyList)) {
+            throw new ServiceException(ApiError.ERROR_9014);
         }
+        //调入组织机构编码
+        String inOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInOrgId()))
+                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+        resultMap.put("inOrgCode", inOrgCode);
+
+        //调出组织机构编码
+        String outOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOutOrgId()))
+                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+        resultMap.put("outOrgCode", outOrgCode);
+
 
         List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
@@ -125,6 +134,10 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
             jsonObject.set("qty", detail.getQty());
             //单位
             jsonObject.set("unit", detail.getUnit());
+            //调入组织机构编码
+            jsonObject.set("inOrgCode", inOrgCode);
+            //调出组织机构编码
+            jsonObject.set("outOrgCode", outOrgCode);
 
             if (CollectionUtils.isNotEmpty(warehouseList)) {
                 //调入仓库编码
@@ -157,7 +170,7 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_TRANSFER_INFO_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return transferInfoService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "",operate);
+                return transferInfoService.updateSyncKingdeeStatus(Arrays.asList(entity.getId()), SyncKingdeeStatusEnum.IN_SYNC.getCode(), "",operate);
             }
             return Boolean.TRUE;
         });

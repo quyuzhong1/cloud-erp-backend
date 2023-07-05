@@ -163,4 +163,9 @@ public class TemplateTaskVO implements Serializable {
          */
         private Integer workPeriod;
 
+        /**
+         * 关注的人
+         */
+        private List<String> concernUserIdList;
+
 }

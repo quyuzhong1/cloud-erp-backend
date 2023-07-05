@@ -4,37 +4,41 @@
 
     <select id="paging" resultType="com.erp.model.plm.dto.ProductShowDTO">
         SELECT
-          p.id AS product_id,
-          p.name,
-          p.grade,
-          p.charge_name AS productChargeName,
-          pi.project_status,
-          p.brand_name,
-          pi.id AS projectId,
-          p.grade_id,
-          p.charge_id AS productChargeId,
-          p.project_charge_id AS projectChargeId,
-          p.type,
-          p.approval_status,
-          pi.charge_name AS projectChargeName,
-          p.create_time,
-          p.progress_status,
-          p.image_url,
-          p.property,
-          p.category,
-          pi.end_time,
-          p.spu_no,
-          pph.name as projectPhase
+        p.id AS product_id,
+        p.name,
+        p.grade,
+        p.charge_name AS productChargeName,
+        pi.project_status,
+        p.brand_name,
+        pi.id AS projectId,
+        p.grade_id,
+        p.charge_id AS productChargeId,
+        p.project_charge_id AS projectChargeId,
+        p.type,
+        p.approval_status,
+        pi.charge_name AS projectChargeName,
+        p.create_time,
+        p.progress_status,
+        p.image_url,
+        p.property,
+        p.category,
+        pi.end_time,
+        pi.start_time,
+        p.create_user_name,
+        p.spu_no,
+        pph.name as projectPhase
         FROM product_info p
         LEFT JOIN project_info pi ON p.id = pi.product_id AND pi.is_deleted = FALSE
         LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
-        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
-        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND ppe.is_deleted = FALSE
+        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in
+        (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND
+        ppe.is_deleted = FALSE
         WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
-        AND P.id NOT IN (SELECT product_id  FROM product_archive WHERE is_deleted=FALSE)
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
             <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
@@ -49,9 +53,9 @@
         </if>
         <if test="params.stateList !=null and params.stateList.size>0">
             AND P.approval_status IN
-            <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
-                #{state}
-            </foreach>
+                <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                    #{state}
+                </foreach>
         </if>
 
         <if test="params.productIds !=null and params.productIds.size>0">
@@ -61,7 +65,7 @@
             </foreach>
         </if>
         <if test="params.gradeIdList !=null and params.gradeIdList.size>0">
-          AND p.grade_id IN
+            AND p.grade_id IN
             <foreach collection="params.gradeIdList" item="gradeId" open="(" separator="," close=")">
                 #{gradeId}
             </foreach>
@@ -81,10 +85,10 @@
             </foreach>
         </if>
 
-        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0" >
+        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
             AND pi.charge_id IN
-            <foreach collection="params.projectChargeIdList" item="chargeId" open="("  close=")" separator="," >
-                 #{chargeId}
+            <foreach collection="params.projectChargeIdList" item="chargeId" open="(" close=")" separator=",">
+                #{chargeId}
             </foreach>
         </if>
 
@@ -105,8 +109,8 @@
 
         <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
             AND
-            <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")"  separator="AND">
-                   string_to_array(#{chargeId},',')  &amp;&amp; string_to_array(p.charge_id,',')
+            <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")" separator="AND">
+                string_to_array(#{chargeId},',') &amp;&amp; string_to_array(p.charge_id,',')
             </foreach>
         </if>
 
@@ -123,16 +127,247 @@
         ORDER BY p.create_time DESC
     </select>
 
+    <select id="myProjectPaging" resultType="com.erp.model.plm.dto.ProductShowDTO">
+        SELECT
+        p.id AS product_id,
+        p.name,
+        p.grade,
+        p.charge_name AS productChargeName,
+        pi.project_status,
+        p.brand_name,
+        pi.id AS projectId,
+        p.grade_id,
+        p.charge_id AS productChargeId,
+        p.project_charge_id AS projectChargeId,
+        p.type,
+        p.approval_status,
+        pi.charge_name AS projectChargeName,
+        p.create_time,
+        p.progress_status,
+        p.image_url,
+        p.property,
+        p.category,
+        pi.end_time,
+        pi.start_time,
+        p.create_user_name,
+        p.spu_no,
+        pph.name as projectPhase
+        FROM product_info p
+        LEFT JOIN project_info pi ON p.id = pi.product_id AND pi.is_deleted = FALSE
+        LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
+        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in
+        (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND
+        ppe.is_deleted = FALSE
+        WHERE pt.is_deleted = FALSE
+        GROUP BY pt.product_id) pp on p.id = pp.product_id
+        LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        AND (string_to_array( p.charge_id,',') &amp;&amp; string_to_array(#{userId}, ',') or
+        p.project_charge_id=#{userId} or p.id in (select product_id from project_task where is_deleted=false and
+        string_to_array( charge_id,',') &amp;&amp; string_to_array(#{userId}, ',')))
+        AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        <if test="categoryIdList!=null and categoryIdList.size >0 ">
+            AND p.category_id IN
+            <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
+                #{categoryId}
+            </foreach>
+        </if>
+        <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
+            AND (P.name ILIKE concat('%',#{params.searchKeyword},'%')
+            OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE
+            concat('%',#{params.searchKeyword},'%'))
+            OR p.spu_no ILIKE concat('%',#{params.searchKeyword},'%'))
+        </if>
+        <if test="params.stateList !=null and params.stateList.size>0">
+            AND P.approval_status IN
+            <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+        </if>
+        <if test="params.productIds !=null and params.productIds.size>0">
+            AND P.id IN
+            <foreach collection="params.productIds" item="productId" open="(" separator="," close=")">
+                #{productId}
+            </foreach>
+        </if>
+        <if test="params.gradeIdList !=null and params.gradeIdList.size>0">
+            AND p.grade_id IN
+            <foreach collection="params.gradeIdList" item="gradeId" open="(" separator="," close=")">
+                #{gradeId}
+            </foreach>
+        </if>
+        <if test="params.brandIdList !=null and params.brandIdList.size>0">
+            AND p.brand_id IN
+            <foreach collection="params.brandIdList" item="brandId" open="(" separator="," close=")">
+                #{brandId}
+            </foreach>
+        </if>
+        <if test="params.progressStatusList !=null and params.progressStatusList.size>0">
+            AND p.progress_status IN
+            <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator="," close=")">
+                #{progressStatus}
+            </foreach>
+        </if>
+
+        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
+            AND pi.charge_id IN
+            <foreach collection="params.projectChargeIdList" item="chargeId" open="(" close=")" separator=",">
+                #{chargeId}
+            </foreach>
+        </if>
+        <if test="params.propertyIdList !=null and params.propertyIdList.size>0">
+            AND p.property_id IN
+            <foreach collection="params.propertyIdList" item="propertyId" open="(" separator="," close=")">
+                #{propertyId}
+            </foreach>
+        </if>
+        <if test="params.phaseNameList !=null and params.phaseNameList.size>0">
+            AND pph.name IN
+            <foreach collection="params.phaseNameList" item="phaseName" open="(" separator="," close=")">
+                #{phaseName}
+            </foreach>
+        </if>
+        <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
+            AND
+            <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")" separator="AND">
+                string_to_array(#{chargeId},',') &amp;&amp; string_to_array(p.charge_id,',')
+            </foreach>
+        </if>
+        <if test="params.createTimeList !=null and params.createTimeList.size>0">
+            AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > p.create_time
+        </if>
+        ORDER BY p.create_time DESC
+    </select>
+    <select id="collect" resultType="com.erp.model.plm.dto.ProductShowDTO">
+        SELECT
+        p.id AS product_id,
+        p.name,
+        p.grade,
+        p.charge_name AS productChargeName,
+        pi.project_status,
+        p.brand_name,
+        pi.id AS projectId,
+        p.grade_id,
+        p.charge_id AS productChargeId,
+        p.project_charge_id AS projectChargeId,
+        p.type,
+        p.approval_status,
+        pi.charge_name AS projectChargeName,
+        p.create_time,
+        p.progress_status,
+        p.image_url,
+        p.property,
+        p.category,
+        pi.end_time,
+        pi.start_time,
+        p.create_user_name,
+        p.spu_no,
+        pph.name as projectPhase
+        FROM product_info p
+        LEFT JOIN project_info pi ON p.id = pi.product_id AND pi.is_deleted = FALSE
+        LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
+        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in
+        (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND
+        ppe.is_deleted = FALSE
+        WHERE pt.is_deleted = FALSE
+        GROUP BY pt.product_id) pp on p.id = pp.product_id
+        LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        AND p.id IN (SELECT product_id FROM user_add_product WHERE is_deleted=FALSE AND user_id=#{userId})
+        <if test="categoryIdList!=null and categoryIdList.size >0 ">
+            AND p.category_id IN
+            <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
+                #{categoryId}
+            </foreach>
+        </if>
+        <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
+            AND (P.name ILIKE concat('%',#{params.searchKeyword},'%')
+            OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE
+            concat('%',#{params.searchKeyword},'%'))
+            OR p.spu_no ILIKE concat('%',#{params.searchKeyword},'%'))
+        </if>
+        <if test="params.stateList !=null and params.stateList.size>0">
+            AND P.approval_status IN
+            <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                #{state}
+            </foreach>
+        </if>
+        <if test="params.productIds !=null and params.productIds.size>0">
+            AND P.id IN
+            <foreach collection="params.productIds" item="productId" open="(" separator="," close=")">
+                #{productId}
+            </foreach>
+        </if>
+        <if test="params.gradeIdList !=null and params.gradeIdList.size>0">
+            AND p.grade_id IN
+            <foreach collection="params.gradeIdList" item="gradeId" open="(" separator="," close=")">
+                #{gradeId}
+            </foreach>
+        </if>
+        <if test="params.brandIdList !=null and params.brandIdList.size>0">
+            AND p.brand_id IN
+            <foreach collection="params.brandIdList" item="brandId" open="(" separator="," close=")">
+                #{brandId}
+            </foreach>
+        </if>
+        <if test="params.progressStatusList !=null and params.progressStatusList.size>0">
+            AND p.progress_status IN
+            <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator="," close=")">
+                #{progressStatus}
+            </foreach>
+        </if>
+        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
+            AND pi.charge_id IN
+            <foreach collection="params.projectChargeIdList" item="chargeId" open="(" close=")" separator=",">
+                #{chargeId}
+            </foreach>
+        </if>
+        <if test="params.propertyIdList !=null and params.propertyIdList.size>0">
+            AND p.property_id IN
+            <foreach collection="params.propertyIdList" item="propertyId" open="(" separator="," close=")">
+                #{propertyId}
+            </foreach>
+        </if>
+        <if test="params.phaseNameList !=null and params.phaseNameList.size>0">
+            AND pph.name IN
+            <foreach collection="params.phaseNameList" item="phaseName" open="(" separator="," close=")">
+                #{phaseName}
+            </foreach>
+        </if>
+
+        <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
+            AND
+            <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")" separator="AND">
+                string_to_array(#{chargeId},',') &amp;&amp; string_to_array(p.charge_id,',')
+            </foreach>
+        </if>
+        <if test="params.createTimeList !=null and params.createTimeList.size>0">
+            AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > p.create_time
+        </if>
+        <if test="params.permissionSql!=null  and params.permissionSql!=''">
+            AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
+            )
+        </if>
+        ORDER BY p.create_time DESC
+    </select>
+
     <select id="listNotPaging" resultType="com.erp.model.plm.dto.BasicDTO">
         SELECT p.id, p.name FROM product_info p LEFT JOIN project_info pi
         ON p.id = pi.product_id AND pi.is_deleted = FALSE
         left JOin (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
-        left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
-        left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND ppe.is_deleted = FALSE
+        left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in
+        (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND
+        ppe.is_deleted = FALSE
         WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
             <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
@@ -166,16 +401,16 @@
             </foreach>
         </if>
 
-        <if test="params.gradeList !=null and params.gradeList.size>0">
+        <if test="params.gradeIdList !=null and params.gradeIdList.size>0">
             AND p.grade_id IN
-            <foreach collection="params.gradeList" item="gradeId" open="(" separator="," close=")">
+            <foreach collection="params.gradeIdList" item="gradeId" open="(" separator="," close=")">
                 #{gradeId}
             </foreach>
         </if>
 
-        <if test="params.brandList !=null and params.brandList.size>0">
+        <if test="params.brandIdList !=null and params.brandIdList.size>0">
             AND p.brand_id IN
-            <foreach collection="params.brandList" item="brandId" open="(" separator="," close=")">
+            <foreach collection="params.brandIdList" item="brandId" open="(" separator="," close=")">
                 #{brandId}
             </foreach>
         </if>
@@ -187,17 +422,17 @@
             </foreach>
         </if>
 
-        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0" >
+        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
             AND pi.charge_id IN
-            <foreach collection="params.projectChargeIdList" item="chargeId" open="("  close=")" separator="," >
+            <foreach collection="params.projectChargeIdList" item="chargeId" open="(" close=")" separator=",">
                 #{chargeId}
             </foreach>
         </if>
 
 
-        <if test="params.propertyList !=null and params.propertyList.size>0">
+        <if test="params.propertyIdList !=null and params.propertyIdList.size>0">
             AND p.property_id IN
-            <foreach collection="params.propertyList" item="propertyId" open="(" separator="," close=")">
+            <foreach collection="params.propertyIdList" item="propertyId" open="(" separator="," close=")">
                 #{propertyId}
             </foreach>
         </if>
@@ -211,17 +446,14 @@
 
         <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
             AND
-            <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")"  separator="AND">
-                string_to_array(#{chargeId},',')  &amp;&amp; string_to_array(p.charge_id,',')
+            <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")" separator="AND">
+                string_to_array(#{chargeId},',') &amp;&amp; string_to_array(p.charge_id,',')
             </foreach>
         </if>
 
-        <if test="params.startTime !=null">
-            AND p.create_time &gt;=#{params.startTime}
-        </if>
-
-        <if test="params.endTime !=null">
-            AND p.create_time &lt;= #{params.endTime}
+        <if test="params.createTimeList !=null and params.createTimeList.size>0">
+            AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1
+            DAY' ) > p.create_time
         </if>
 
         <if test="params.permissionSql!=null  and params.permissionSql!=''">
@@ -245,7 +477,7 @@
 
     <select id="getProductRelevanceList" resultType="com.erp.model.plm.dto.CountDTO">
         SELECT relevance_product_id AS flagId, COUNT(*)  AS count FROM product_info
-        WHERE relevance_product_id !='' AND delete_state=0 AND is_finished_product_dev = 1 AND is_deleted = FALSE  GROUP BY relevance_product_id
+        WHERE relevance_product_id !='' AND is_finished_product_dev = 1 AND is_deleted = FALSE  GROUP BY relevance_product_id
     </select>
 
     <select id="myCollectPaging" resultType="com.erp.model.plm.dto.ProductShowDTO">
@@ -261,12 +493,14 @@
         FROM product_info p LEFT JOIN project_info pi
         ON p.id = pi.product_id AND pi.is_deleted = FALSE
         LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
-        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
-        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND ppe.is_deleted = FALSE
+        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in
+        (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND
+        ppe.is_deleted = FALSE
         WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
             <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
@@ -313,9 +547,9 @@
                 #{propertyId}
             </foreach>
         </if>
-        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0" >
+        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
             AND pi.charge_id IN
-            <foreach collection="params.projectChargeIdList" item="chargeId" open="("  close=")" separator="," >
+            <foreach collection="params.projectChargeIdList" item="chargeId" open="(" close=")" separator=",">
                 #{chargeId}
             </foreach>
         </if>
@@ -329,8 +563,8 @@
 
         <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
             AND
-            <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")"  separator="AND">
-                string_to_array(#{chargeId},',')  &amp;&amp; string_to_array(p.charge_id,',')
+            <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")" separator="AND">
+                string_to_array(#{chargeId},',') &amp;&amp; string_to_array(p.charge_id,',')
             </foreach>
         </if>
 
@@ -358,12 +592,14 @@
         FROM product_info p LEFT JOIN project_info pi
         ON p.id = pi.product_id
         left JOin (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
-        left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
-        left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND ppe.is_deleted = FALSE
+        left join project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in
+        (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        left join project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND
+        ppe.is_deleted = FALSE
         WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         left join project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE P.delete_state = 0 AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN
             <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
@@ -410,9 +646,9 @@
                 #{propertyId}
             </foreach>
         </if>
-        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0" >
+        <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
             AND pi.charge_id IN
-            <foreach collection="params.projectChargeIdList" item="chargeId" open="("  close=")" separator="," >
+            <foreach collection="params.projectChargeIdList" item="chargeId" open="(" close=")" separator=",">
                 #{chargeId}
             </foreach>
         </if>
@@ -426,8 +662,8 @@
 
         <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
             AND
-            <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")"  separator="AND">
-                string_to_array(#{chargeId},',')  &amp;&amp; string_to_array(p.charge_id,',')
+            <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")" separator="AND">
+                string_to_array(#{chargeId},',') &amp;&amp; string_to_array(p.charge_id,',')
             </foreach>
         </if>
 
@@ -454,7 +690,7 @@
         SELECT pi.id AS productId,pi.name AS productName,pj.id AS projectId
         FROM product_info pi Left JOIN project_info pj
         ON pi.id=pj.product_id AND pj.is_deleted = FALSE
-        WHERE pi.delete_state=0 AND pi.is_finished_product_dev = 1 AND pi.is_deleted = FALSE
+        WHERE pi.is_finished_product_dev = 1 AND pi.is_deleted = FALSE
         AND (pj.project_status IS NULL OR pj.project_status!=#{projectStatus})
         <if test="archiveProductIdList!=null and  archiveProductIdList.size>0">
             AND pi.id NOT IN
@@ -477,14 +713,14 @@
 
 
     <select id="getProductInfoByIds" resultType="com.erp.model.plm.dto.ProductShowDTO">
-           SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,
+        SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,
         pi.project_status,p.brand_name,pi.id AS projectId,p.grade_id,
         p.charge_id AS productChargeId,pi.charge_id AS projectChargeId,
         p.type,p.approval_status,pi.charge_name AS projectChargeName,
         p.create_time,
         pi.end_time FROM product_info p LEFT JOIN project_info pi
         ON p.id=pi.product_id AND pi.is_deleted = FALSE
-        WHERE  p.delete_state=0 AND p.is_deleted = FALSE and  P.id IN
+        WHERE p.is_deleted = FALSE and P.id IN
         <foreach collection="productIds" item="productId" open="(" separator="," close=")">
             #{productId}
 
@@ -510,7 +746,6 @@
             create_time,
             update_time,
             type,
-            delete_state,
             spu_no,
             sell_spot,
             function_desc,
@@ -543,18 +778,853 @@
         FROM product_info
     </select>
     <select id="getRolePeopleBySkuId" resultType="com.erp.model.plm.dto.ProductInfoDTO$ProductRolePeopleDTO">
-       SELECT
-         pi.project_charge_id,
-         pi.charge_id AS productChargeId,
-         pd.id AS skuId
-       FROM product_info pi
-       INNER JOIN  product_detail pd
-       ON pi.id=pd.product_id AND pd.is_deleted=FALSE
-       WHERE pi.is_deleted=FALSE
-       AND  pd.id IN
+        SELECT
+        pi.project_charge_id,
+        pi.charge_id AS productChargeId,
+        pd.id AS skuId
+        FROM product_info pi
+        INNER JOIN product_detail pd
+        ON pi.id=pd.product_id AND pd.is_deleted=FALSE
+        WHERE pi.is_deleted=FALSE
+        AND pd.id IN
         <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
             #{skuId}
         </foreach>
     </select>
+
+    <select id="listStatusCount" resultType="com.erp.model.plm.dto.ProductDTO$CountBaseDTO">
+        SELECT
+        approval_status AS status,
+        count(*)
+        FROM product_info
+        WHERE is_deleted=FALSE AND is_finished_product_dev = 1
+        AND id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        <if test="productIdList!=null and productIdList.size>0">
+            AND id IN
+            <foreach collection="productIdList" item="productId" open="(" separator="," close=")">
+                #{productId}
+            </foreach>
+        </if>
+        GROUP BY approval_status
+    </select>
+
+    <select id="listProgressStatusCount" resultType="com.erp.model.plm.dto.ProductDTO$CountBaseStrDTO">
+        SELECT
+        progress_status AS status,
+        count(*)
+        FROM product_info
+        WHERE is_deleted=FALSE AND is_finished_product_dev = 1
+        AND id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+
+        <if test="productIdList!=null and productIdList.size>0">
+            AND id IN
+            <foreach collection="productIdList" item="productId" open="(" separator="," close=")">
+                #{productId}
+            </foreach>
+        </if>
+        GROUP BY progress_status
+    </select>
+
+    <select id="listProductIdByUserId" resultType="java.lang.String">
+        SELECT
+            id
+        FROM product_info p
+        WHERE  p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        AND (string_to_array( p.charge_id,',') &amp;&amp;  string_to_array(#{userId}, ',') or p.project_charge_id=#{userId})
+    </select>
+
+    <select id="overviewBase" resultType="com.erp.model.plm.dto.ProductOverviewDTO$InfoDTO">
+       SELECT
+         p.id,p.name,p.image_url,
+         p.name_en AS spuEn,
+         p.project_charge_id AS projectChargeId,
+         J.charge_name AS projectChargeName,
+         P.charge_id AS productChargeId,
+         P.charge_name AS productChargeName,
+         P.approval_status AS productStatus,
+         j.start_time AS planStartTime,
+         j.project_status,
+         j.end_time  AS planEndTime,
+         p.grade AS productGrade,
+         j.id AS projectId,
+         p.category_id
+       FROM product_info p
+       LEFT JOIN project_info j
+       ON p.id=j.product_id and j.is_deleted=false
+       WHERE p.id=#{productId} AND p.is_deleted=false
+    </select>
+
+
+    <select id="listAllExport" resultType="com.erp.model.plm.dto.ProductShowDTO">
+        SELECT
+        p.id AS product_id,
+        p.name,
+        p.grade,
+        p.charge_name AS productChargeName,
+        pi.project_status,
+        p.brand_name,
+        pi.id AS projectId,
+        p.grade_id,
+        p.charge_id AS productChargeId,
+        p.project_charge_id AS projectChargeId,
+        p.type,
+        p.approval_status,
+        pi.charge_name AS projectChargeName,
+        p.create_time,
+        p.progress_status,
+        p.image_url,
+        p.property,
+        p.category,
+        pi.end_time,
+        pi.start_time,
+        p.create_user_name,
+        p.spu_no,
+        pph.name as projectPhase
+        FROM product_info p
+        LEFT JOIN project_info pi ON p.id = pi.product_id AND pi.is_deleted = FALSE
+        LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
+        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in
+        (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND
+        ppe.is_deleted = FALSE
+        WHERE pt.is_deleted = FALSE
+        GROUP BY pt.product_id) pp on p.id = pp.product_id
+        LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        <choose>
+            <when test="params.ids!=null and params.ids.size>0">
+                AND p.id IN
+                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </when>
+            <otherwise>
+                <if test="categoryIdList!=null and categoryIdList.size >0 ">
+                    AND p.category_id IN
+                    <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
+                        #{categoryId}
+                    </foreach>
+                </if>
+                <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
+                    AND (P.name ILIKE concat('%',#{params.searchKeyword},'%')
+                    OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE
+                    concat('%',#{params.searchKeyword},'%'))
+                    OR p.spu_no ILIKE concat('%',#{params.searchKeyword},'%'))
+                </if>
+                <if test="params.stateList !=null and params.stateList.size>0">
+                    AND P.approval_status IN
+                    <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                        #{state}
+                    </foreach>
+                </if>
+
+                <if test="params.productIds !=null and params.productIds.size>0">
+                    AND P.id IN
+                    <foreach collection="params.productIds" item="productId" open="(" separator="," close=")">
+                        #{productId}
+                    </foreach>
+                </if>
+                <if test="params.gradeIdList !=null and params.gradeIdList.size>0">
+                    AND p.grade_id IN
+                    <foreach collection="params.gradeIdList" item="gradeId" open="(" separator="," close=")">
+                        #{gradeId}
+                    </foreach>
+                </if>
+
+                <if test="params.brandIdList !=null and params.brandIdList.size>0">
+                    AND p.brand_id IN
+                    <foreach collection="params.brandIdList" item="brandId" open="(" separator="," close=")">
+                        #{brandId}
+                    </foreach>
+                </if>
+
+                <if test="params.progressStatusList !=null and params.progressStatusList.size>0">
+                    AND p.progress_status IN
+                    <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator=","
+                             close=")">
+                        #{progressStatus}
+                    </foreach>
+                </if>
+
+                <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
+                    AND pi.charge_id IN
+                    <foreach collection="params.projectChargeIdList" item="chargeId" open="(" close=")" separator=",">
+                        #{chargeId}
+                    </foreach>
+                </if>
+
+
+                <if test="params.propertyIdList !=null and params.propertyIdList.size>0">
+                    AND p.property_id IN
+                    <foreach collection="params.propertyIdList" item="propertyId" open="(" separator="," close=")">
+                        #{propertyId}
+                    </foreach>
+                </if>
+
+                <if test="params.phaseNameList !=null and params.phaseNameList.size>0">
+                    AND pph.name IN
+                    <foreach collection="params.phaseNameList" item="phaseName" open="(" separator="," close=")">
+                        #{phaseName}
+                    </foreach>
+                </if>
+
+                <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
+                    AND
+                    <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")" separator="AND">
+                        string_to_array(#{chargeId},',') &amp;&amp; string_to_array(p.charge_id,',')
+                    </foreach>
+                </if>
+
+                <if test="params.createTimeList !=null and params.createTimeList.size>0">
+                    AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
+                    INTERVAL '1
+                    DAY' ) > p.create_time
+                </if>
+
+                <if test="params.permissionSql!=null  and params.permissionSql!=''">
+                    AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
+                    )
+                </if>
+            </otherwise>
+        </choose>
+        ORDER BY p.create_time DESC
+    </select>
+
+    <select id="listAllTaskExport" resultType="com.erp.model.plm.dto.excel.TaskExportDTO$ProductTaskExcelDTO">
+        SELECT
+        p.name AS productName,
+        pt.name AS taskName,
+        pt.plan_start_time,
+        pt.plan_end_time,
+        pt.charge_id,
+        pt.charge_name,
+        pt.reality_start_time,
+        pt.reality_end_time,
+        pt.status,
+        date_part('day',pt.plan_end_time - pt.plan_start_time) + 1 AS expectedDay,
+        date_part('day',pt.reality_end_time - pt.reality_start_time) + 1 AS realityDay,
+        pt.work_period
+        FROM product_info p
+        INNER JOIN project_task pt
+        ON p.id = pt.product_id AND pt.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        <choose>
+            <when test="params.ids!=null and params.ids.size>0">
+                AND p.id IN
+                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </when>
+            <otherwise>
+                <if test="categoryIdList!=null and categoryIdList.size >0 ">
+                    AND p.category_id IN
+                    <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
+                        #{categoryId}
+                    </foreach>
+                </if>
+                <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
+                    AND (P.name ILIKE concat('%',#{params.searchKeyword},'%')
+                    OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE
+                    concat('%',#{params.searchKeyword},'%'))
+                    OR p.spu_no ILIKE concat('%',#{params.searchKeyword},'%'))
+                </if>
+                <if test="params.stateList !=null and params.stateList.size>0">
+                    AND P.approval_status IN
+                    <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                        #{state}
+                    </foreach>
+                </if>
+                <if test="params.gradeIdList !=null and params.gradeIdList.size>0">
+                    AND p.grade_id IN
+                    <foreach collection="params.gradeIdList" item="gradeId" open="(" separator="," close=")">
+                        #{gradeId}
+                    </foreach>
+                </if>
+
+                <if test="params.brandIdList !=null and params.brandIdList.size>0">
+                    AND p.brand_id IN
+                    <foreach collection="params.brandIdList" item="brandId" open="(" separator="," close=")">
+                        #{brandId}
+                    </foreach>
+                </if>
+
+                <if test="params.progressStatusList !=null and params.progressStatusList.size>0">
+                    AND p.progress_status IN
+                    <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator=","
+                             close=")">
+                        #{progressStatus}
+                    </foreach>
+                </if>
+
+                <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
+                    AND p.project_charge_id IN
+                    <foreach collection="params.projectChargeIdList" item="chargeId" open="(" close=")" separator=",">
+                        #{chargeId}
+                    </foreach>
+                </if>
+
+                <if test="params.propertyIdList !=null and params.propertyIdList.size>0">
+                    AND p.property_id IN
+                    <foreach collection="params.propertyIdList" item="propertyId" open="(" separator="," close=")">
+                        #{propertyId}
+                    </foreach>
+                </if>
+
+                <if test="params.phaseNameList !=null and params.phaseNameList.size>0">
+                    AND pt.phase_name IN
+                    <foreach collection="params.phaseNameList" item="phaseName" open="(" separator="," close=")">
+                        #{phaseName}
+                    </foreach>
+                </if>
+
+                <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
+                    AND
+                    <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")" separator="AND">
+                        string_to_array(#{chargeId},',') &amp;&amp; string_to_array(p.charge_id,',')
+                    </foreach>
+                </if>
+
+                <if test="params.createTimeList !=null and params.createTimeList.size>0">
+                    AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
+                    INTERVAL '1
+                    DAY' ) > p.create_time
+                </if>
+
+                <if test="params.permissionSql!=null  and params.permissionSql!=''">
+                    AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
+                    )
+                </if>
+            </otherwise>
+        </choose>
+        ORDER BY p.create_time DESC
+
+    </select>
+
+    <select id="listMyProjectExport" resultType="com.erp.model.plm.dto.ProductShowDTO">
+        SELECT
+        p.id AS product_id,
+        p.name,
+        p.grade,
+        p.charge_name AS productChargeName,
+        pi.project_status,
+        p.brand_name,
+        pi.id AS projectId,
+        p.grade_id,
+        p.charge_id AS productChargeId,
+        p.project_charge_id AS projectChargeId,
+        p.type,
+        p.approval_status,
+        pi.charge_name AS projectChargeName,
+        p.create_time,
+        p.progress_status,
+        p.image_url,
+        p.property,
+        p.category,
+        pi.end_time,
+        pi.start_time,
+        p.create_user_name,
+        p.spu_no,
+        pph.name as projectPhase
+        FROM product_info p
+        LEFT JOIN project_info pi ON p.id = pi.product_id AND pi.is_deleted = FALSE
+        LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
+        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in
+        (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND
+        ppe.is_deleted = FALSE
+        WHERE pt.is_deleted = FALSE
+        GROUP BY pt.product_id) pp on p.id = pp.product_id
+        LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        AND (string_to_array( p.charge_id,',') &amp;&amp; string_to_array(#{userId}, ',') or
+        p.project_charge_id=#{userId} or p.id in (select product_id from project_task where is_deleted=false and
+        string_to_array( charge_id,',') &amp;&amp; string_to_array(#{userId}, ',')))
+        AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        <choose>
+            <when test="params.ids!=null and params.ids.size>0">
+                AND p.id IN
+                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </when>
+            <otherwise>
+                <if test="categoryIdList!=null and categoryIdList.size >0 ">
+                    AND p.category_id IN
+                    <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
+                        #{categoryId}
+                    </foreach>
+                </if>
+                <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
+                    AND (P.name ILIKE concat('%',#{params.searchKeyword},'%')
+                    OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE
+                    concat('%',#{params.searchKeyword},'%'))
+                    OR p.spu_no ILIKE concat('%',#{params.searchKeyword},'%'))
+                </if>
+                <if test="params.stateList !=null and params.stateList.size>0">
+                    AND P.approval_status IN
+                    <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                        #{state}
+                    </foreach>
+                </if>
+                <if test="params.productIds !=null and params.productIds.size>0">
+                    AND P.id IN
+                    <foreach collection="params.productIds" item="productId" open="(" separator="," close=")">
+                        #{productId}
+                    </foreach>
+                </if>
+                <if test="params.gradeIdList !=null and params.gradeIdList.size>0">
+                    AND p.grade_id IN
+                    <foreach collection="params.gradeIdList" item="gradeId" open="(" separator="," close=")">
+                        #{gradeId}
+                    </foreach>
+                </if>
+                <if test="params.brandIdList !=null and params.brandIdList.size>0">
+                    AND p.brand_id IN
+                    <foreach collection="params.brandIdList" item="brandId" open="(" separator="," close=")">
+                        #{brandId}
+                    </foreach>
+                </if>
+                <if test="params.progressStatusList !=null and params.progressStatusList.size>0">
+                    AND p.progress_status IN
+                    <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator=","
+                             close=")">
+                        #{progressStatus}
+                    </foreach>
+                </if>
+
+                <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
+                    AND pi.charge_id IN
+                    <foreach collection="params.projectChargeIdList" item="chargeId" open="(" close=")" separator=",">
+                        #{chargeId}
+                    </foreach>
+                </if>
+                <if test="params.propertyIdList !=null and params.propertyIdList.size>0">
+                    AND p.property_id IN
+                    <foreach collection="params.propertyIdList" item="propertyId" open="(" separator="," close=")">
+                        #{propertyId}
+                    </foreach>
+                </if>
+                <if test="params.phaseNameList !=null and params.phaseNameList.size>0">
+                    AND pph.name IN
+                    <foreach collection="params.phaseNameList" item="phaseName" open="(" separator="," close=")">
+                        #{phaseName}
+                    </foreach>
+                </if>
+                <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
+                    AND
+                    <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")" separator="AND">
+                        string_to_array(#{chargeId},',') &amp;&amp; string_to_array(p.charge_id,',')
+                    </foreach>
+                </if>
+                <if test="params.createTimeList !=null and params.createTimeList.size>0">
+                    AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
+                    INTERVAL '1
+                    DAY' ) > p.create_time
+                </if>
+            </otherwise>
+        </choose>
+        ORDER BY p.create_time DESC
+    </select>
+
+    <select id="listMyProjectTaskExport"
+            resultType="com.erp.model.plm.dto.excel.TaskExportDTO$ProductTaskExcelDTO">
+
+        SELECT
+        p.name AS productName,
+        pt.name AS taskName,
+        pt.plan_start_time,
+        pt.plan_end_time,
+        pt.charge_id,
+        pt.charge_name,
+        pt.reality_start_time,
+        pt.reality_end_time,
+        pt.status,
+        date_part('day',pt.plan_end_time - pt.plan_start_time) + 1 AS expectedDay,
+        date_part('day',pt.reality_end_time - pt.reality_start_time) + 1 AS realityDay,
+        pt.work_period
+        FROM product_info p
+        INNER JOIN project_task pt
+        ON p.id = pt.product_id AND pt.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        AND (string_to_array( p.charge_id,',') &amp;&amp; string_to_array(#{userId}, ',') or
+        p.project_charge_id=#{userId} or string_to_array( pt.charge_id,',') &amp;&amp; string_to_array(#{userId}, ',') )
+        <choose>
+            <when test="params.ids!=null and params.ids.size>0">
+                AND p.id IN
+                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </when>
+            <otherwise>
+                <if test="categoryIdList!=null and categoryIdList.size >0 ">
+                    AND p.category_id IN
+                    <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
+                        #{categoryId}
+                    </foreach>
+                </if>
+                <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
+                    AND (P.name ILIKE concat('%',#{params.searchKeyword},'%')
+                    OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE
+                    concat('%',#{params.searchKeyword},'%'))
+                    OR p.spu_no ILIKE concat('%',#{params.searchKeyword},'%'))
+                </if>
+                <if test="params.stateList !=null and params.stateList.size>0">
+                    AND P.approval_status IN
+                    <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                        #{state}
+                    </foreach>
+                </if>
+                <if test="params.productIds !=null and params.productIds.size>0">
+                    AND P.id IN
+                    <foreach collection="params.productIds" item="productId" open="(" separator="," close=")">
+                        #{productId}
+                    </foreach>
+                </if>
+                <if test="params.gradeIdList !=null and params.gradeIdList.size>0">
+                    AND p.grade_id IN
+                    <foreach collection="params.gradeIdList" item="gradeId" open="(" separator="," close=")">
+                        #{gradeId}
+                    </foreach>
+                </if>
+                <if test="params.brandIdList !=null and params.brandIdList.size>0">
+                    AND p.brand_id IN
+                    <foreach collection="params.brandIdList" item="brandId" open="(" separator="," close=")">
+                        #{brandId}
+                    </foreach>
+                </if>
+                <if test="params.progressStatusList !=null and params.progressStatusList.size>0">
+                    AND p.progress_status IN
+                    <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator=","
+                             close=")">
+                        #{progressStatus}
+                    </foreach>
+                </if>
+
+                <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
+                    AND pi.charge_id IN
+                    <foreach collection="params.projectChargeIdList" item="chargeId" open="(" close=")" separator=",">
+                        #{chargeId}
+                    </foreach>
+                </if>
+                <if test="params.propertyIdList !=null and params.propertyIdList.size>0">
+                    AND p.property_id IN
+                    <foreach collection="params.propertyIdList" item="propertyId" open="(" separator="," close=")">
+                        #{propertyId}
+                    </foreach>
+                </if>
+                <if test="params.phaseNameList !=null and params.phaseNameList.size>0">
+                    AND pph.name IN
+                    <foreach collection="params.phaseNameList" item="phaseName" open="(" separator="," close=")">
+                        #{phaseName}
+                    </foreach>
+                </if>
+                <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
+                    AND
+                    <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")" separator="AND">
+                        string_to_array(#{chargeId},',') &amp;&amp; string_to_array(p.charge_id,',')
+                    </foreach>
+                </if>
+                <if test="params.createTimeList !=null and params.createTimeList.size>0">
+                    AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
+                    INTERVAL '1
+                    DAY' ) > p.create_time
+                </if>
+            </otherwise>
+        </choose>
+        ORDER BY pt.create_time DESC
+
+    </select>
+
+
+    <select id="collectExport" resultType="com.erp.model.plm.dto.ProductShowDTO">
+        SELECT
+        p.id AS product_id,
+        p.name,
+        p.grade,
+        p.charge_name AS productChargeName,
+        pi.project_status,
+        p.brand_name,
+        pi.id AS projectId,
+        p.grade_id,
+        p.charge_id AS productChargeId,
+        p.project_charge_id AS projectChargeId,
+        p.type,
+        p.approval_status,
+        pi.charge_name AS projectChargeName,
+        p.create_time,
+        p.progress_status,
+        p.image_url,
+        p.property,
+        p.category,
+        pi.end_time,
+        pi.start_time,
+        p.create_user_name,
+        p.spu_no,
+        pph.name as projectPhase
+        FROM product_info p
+        LEFT JOIN project_info pi ON p.id = pi.product_id AND pi.is_deleted = FALSE
+        LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
+        LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in
+        (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
+        LEFT JOIN project_phase ppe on pt.phase_id = ppe.id and pt.product_id = ppe.product_id and pt.status = 4 AND
+        ppe.is_deleted = FALSE
+        WHERE pt.is_deleted = FALSE
+        GROUP BY pt.product_id) pp on p.id = pp.product_id
+        LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        AND p.id IN (SELECT product_id FROM user_add_product WHERE is_deleted=FALSE)
+        <choose>
+            <when test="params.ids!=null and params.ids.size>0">
+                AND p.id IN
+                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </when>
+            <otherwise>
+                <if test="categoryIdList!=null and categoryIdList.size >0 ">
+                    AND p.category_id IN
+                    <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
+                        #{categoryId}
+                    </foreach>
+                </if>
+                <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
+                    AND (P.name ILIKE concat('%',#{params.searchKeyword},'%')
+                    OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE
+                    concat('%',#{params.searchKeyword},'%'))
+                    OR p.spu_no ILIKE concat('%',#{params.searchKeyword},'%'))
+                </if>
+                <if test="params.stateList !=null and params.stateList.size>0">
+                    AND P.approval_status IN
+                    <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                        #{state}
+                    </foreach>
+                </if>
+                <if test="params.productIds !=null and params.productIds.size>0">
+                    AND P.id IN
+                    <foreach collection="params.productIds" item="productId" open="(" separator="," close=")">
+                        #{productId}
+                    </foreach>
+                </if>
+                <if test="params.gradeIdList !=null and params.gradeIdList.size>0">
+                    AND p.grade_id IN
+                    <foreach collection="params.gradeIdList" item="gradeId" open="(" separator="," close=")">
+                        #{gradeId}
+                    </foreach>
+                </if>
+                <if test="params.brandIdList !=null and params.brandIdList.size>0">
+                    AND p.brand_id IN
+                    <foreach collection="params.brandIdList" item="brandId" open="(" separator="," close=")">
+                        #{brandId}
+                    </foreach>
+                </if>
+                <if test="params.progressStatusList !=null and params.progressStatusList.size>0">
+                    AND p.progress_status IN
+                    <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator=","
+                             close=")">
+                        #{progressStatus}
+                    </foreach>
+                </if>
+                <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
+                    AND pi.charge_id IN
+                    <foreach collection="params.projectChargeIdList" item="chargeId" open="(" close=")" separator=",">
+                        #{chargeId}
+                    </foreach>
+                </if>
+                <if test="params.propertyIdList !=null and params.propertyIdList.size>0">
+                    AND p.property_id IN
+                    <foreach collection="params.propertyIdList" item="propertyId" open="(" separator="," close=")">
+                        #{propertyId}
+                    </foreach>
+                </if>
+                <if test="params.phaseNameList !=null and params.phaseNameList.size>0">
+                    AND pph.name IN
+                    <foreach collection="params.phaseNameList" item="phaseName" open="(" separator="," close=")">
+                        #{phaseName}
+                    </foreach>
+                </if>
+
+                <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
+                    AND
+                    <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")" separator="AND">
+                        string_to_array(#{chargeId},',') &amp;&amp; string_to_array(p.charge_id,',')
+                    </foreach>
+                </if>
+                <if test="params.createTimeList !=null and params.createTimeList.size>0">
+                    AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
+                    INTERVAL '1
+                    DAY' ) > p.create_time
+                </if>
+                <if test="params.permissionSql!=null  and params.permissionSql!=''">
+                    AND (p.id IN (SELECT pt.product_id FROM project_task pt WHERE 1 = 1 ${params.permissionSql})
+                    )
+                </if>
+            </otherwise>
+        </choose>
+        ORDER BY p.create_time DESC
+    </select>
+
+    <select id="collectTaskExport" resultType="com.erp.model.plm.dto.excel.TaskExportDTO$ProductTaskExcelDTO">
+                SELECT
+        p.name AS productName,
+        pt.name AS taskName,
+        pt.plan_start_time,
+        pt.plan_end_time,
+        pt.charge_id,
+        pt.charge_name,
+        pt.reality_start_time,
+        pt.reality_end_time,
+        pt.status,
+        date_part('day',pt.plan_end_time - pt.plan_start_time) + 1 AS expectedDay,
+        date_part('day',pt.reality_end_time - pt.reality_start_time) + 1 AS realityDay,
+        pt.work_period
+        FROM product_info p
+        INNER JOIN project_task pt
+        ON p.id = pt.product_id AND pt.is_deleted = FALSE
+        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        AND p.id IN (SELECT product_id FROM user_add_product WHERE is_deleted=FALSE)
+        <choose>
+            <when test="params.ids!=null and params.ids.size>0">
+                AND p.id IN
+                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </when>
+            <otherwise>
+                <if test="categoryIdList!=null and categoryIdList.size >0 ">
+                    AND p.category_id IN
+                    <foreach collection="categoryIdList" item="categoryId" open="(" separator="," close=")">
+                        #{categoryId}
+                    </foreach>
+                </if>
+                <if test="params.searchKeyword!=null  and params.searchKeyword!=''">
+                    AND (P.name ILIKE concat('%',#{params.searchKeyword},'%')
+                    OR p.id IN (SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no ILIKE
+                    concat('%',#{params.searchKeyword},'%'))
+                    OR p.spu_no ILIKE concat('%',#{params.searchKeyword},'%'))
+                </if>
+                <if test="params.stateList !=null and params.stateList.size>0">
+                    AND P.approval_status IN
+                    <foreach collection="params.stateList" item="state" open="(" separator="," close=")">
+                        #{state}
+                    </foreach>
+                </if>
+                <if test="params.productIds !=null and params.productIds.size>0">
+                    AND P.id IN
+                    <foreach collection="params.productIds" item="productId" open="(" separator="," close=")">
+                        #{productId}
+                    </foreach>
+                </if>
+                <if test="params.gradeIdList !=null and params.gradeIdList.size>0">
+                    AND p.grade_id IN
+                    <foreach collection="params.gradeIdList" item="gradeId" open="(" separator="," close=")">
+                        #{gradeId}
+                    </foreach>
+                </if>
+                <if test="params.brandIdList !=null and params.brandIdList.size>0">
+                    AND p.brand_id IN
+                    <foreach collection="params.brandIdList" item="brandId" open="(" separator="," close=")">
+                        #{brandId}
+                    </foreach>
+                </if>
+                <if test="params.progressStatusList !=null and params.progressStatusList.size>0">
+                    AND p.progress_status IN
+                    <foreach collection="params.progressStatusList" item="progressStatus" open="(" separator=","
+                             close=")">
+                        #{progressStatus}
+                    </foreach>
+                </if>
+
+                <if test="params.projectChargeIdList !=null and params.projectChargeIdList.size>0">
+                    AND pi.charge_id IN
+                    <foreach collection="params.projectChargeIdList" item="chargeId" open="(" close=")" separator=",">
+                        #{chargeId}
+                    </foreach>
+                </if>
+                <if test="params.propertyIdList !=null and params.propertyIdList.size>0">
+                    AND p.property_id IN
+                    <foreach collection="params.propertyIdList" item="propertyId" open="(" separator="," close=")">
+                        #{propertyId}
+                    </foreach>
+                </if>
+                <if test="params.phaseNameList !=null and params.phaseNameList.size>0">
+                    AND pph.name IN
+                    <foreach collection="params.phaseNameList" item="phaseName" open="(" separator="," close=")">
+                        #{phaseName}
+                    </foreach>
+                </if>
+                <if test="params.productChargeIdList !=null and params.productChargeIdList.size>0">
+                    AND
+                    <foreach collection="params.productChargeIdList" item="chargeId" open="(" close=")" separator="AND">
+                        string_to_array(#{chargeId},',') &amp;&amp; string_to_array(p.charge_id,',')
+                    </foreach>
+                </if>
+                <if test="params.createTimeList !=null and params.createTimeList.size>0">
+                    AND p.create_time >= #{params.createTimeList[0]} and (#{params.createTimeList[1]}::TIMESTAMP +
+                    INTERVAL '1
+                    DAY' ) > p.create_time
+                </if>
+            </otherwise>
+        </choose>
+        ORDER BY pt.create_time DESC
+
+
+    </select>
+
+
+    <select id="listMyProjectStatusCount" resultType="com.erp.model.plm.dto.ProductDTO$CountBaseDTO">
+        SELECT
+        approval_status AS status,
+        count(*)
+        FROM product_info P
+        WHERE is_deleted=FALSE  AND is_finished_product_dev = 1
+         AND (string_to_array( p.charge_id,',') &amp;&amp; string_to_array(#{userId}, ',') or
+        p.project_charge_id=#{userId} or   p.id in (select product_id from  project_task where is_deleted=false and
+        string_to_array( charge_id,',') &amp;&amp; string_to_array(#{userId}, ',')))
+        AND  id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        GROUP BY approval_status
+    </select>
+
+    <select id="listMyProjectProgressStatusCount"
+            resultType="com.erp.model.plm.dto.ProductDTO$CountBaseStrDTO">
+        SELECT
+        progress_status AS status,
+        count(*)
+        FROM product_info p
+        WHERE is_deleted=FALSE AND is_finished_product_dev = 1
+         AND (string_to_array( p.charge_id,',') &amp;&amp; string_to_array(#{userId}, ',') or
+        p.project_charge_id=#{userId} or   p.id in (select product_id from  project_task where is_deleted=false and
+        string_to_array( charge_id,',') &amp;&amp; string_to_array(#{userId}, ',')))
+        AND id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        GROUP BY progress_status
+    </select>
+
+    <select id="listCollectStatusCount" resultType="com.erp.model.plm.dto.ProductDTO$CountBaseDTO">
+        SELECT
+        approval_status AS status,
+        count(*)
+        FROM product_info P
+        WHERE is_deleted=FALSE  AND is_finished_product_dev = 1
+        AND p.id IN (SELECT product_id FROM user_add_product WHERE is_deleted=FALSE AND user_id =#{userId})
+        AND p.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        GROUP BY approval_status
+    </select>
+
+    <select id="listCollectProgressStatusCount" resultType="com.erp.model.plm.dto.ProductDTO$CountBaseStrDTO">
+        SELECT
+        progress_status AS status,
+        count(*)
+        FROM product_info p
+        WHERE is_deleted=FALSE AND is_finished_product_dev = 1
+        AND p.id IN (SELECT product_id FROM user_add_product WHERE is_deleted=FALSE AND user_id =#{userId})
+        AND p.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
+        GROUP BY progress_status
+    </select>
+
+
 
 </mapper>

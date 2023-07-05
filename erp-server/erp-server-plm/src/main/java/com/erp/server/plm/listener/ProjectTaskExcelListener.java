@@ -3,8 +3,6 @@ package com.erp.server.plm.listener;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FieldValidUtil;
@@ -18,20 +16,22 @@ import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.entity.ProjectPhaseEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskChargeDistributionEntity;
-import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.plm.enums.DistributionTypeEnum;
+import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.service.*;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskExcelDTO> {
-    private Integer importType;
     private String productId;
     private ProjectTaskService projectTaskService;
 
@@ -51,9 +51,8 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
-    public ProjectTaskExcelListener(Integer importType, String productId, ProjectTaskService projectTaskService, ProductInfoService productInfoService, SysUserFeign sysUserFeign,
+    public ProjectTaskExcelListener(String productId, ProjectTaskService projectTaskService, ProductInfoService productInfoService, SysUserFeign sysUserFeign,
                                     ProjectPhaseService projectPhaseService, TaskDocsNameService taskDocsNameService, TaskChargeDistributionService taskChargeDistributionService) {
-        this.importType = importType;
         this.productId = productId;
         this.projectTaskService = projectTaskService;
         this.productInfoService = productInfoService;
@@ -84,8 +83,8 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
 
         ProductInfoEntity productInfoEntity = productInfoService.getById(productId);
 
-        if (!productInfoEntity.getName().equals(projectTaskExcelDTO.getProductName())) {
-            errorMsgList.add("[所属产品]名称不正确，请输入导入界面的产品名称");
+        if (Objects.isNull(productInfoEntity)) {
+            errorMsgList.add("产品不存在");
             projectTaskExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             list.add(projectTaskExcelDTO);
             return;
@@ -96,7 +95,7 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
                 errorMsgList.add("[任务类型]请输入'一般任务'或'评审任务'");
             }
 
-            if (projectTaskExcelDTO.getType().equals("一般任务")){
+            if (projectTaskExcelDTO.getType().equals("一般任务")) {
                 projectTaskDTO.setType(0);
             } else {
                 projectTaskDTO.setType(1);
@@ -104,88 +103,79 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
         }
         List<TaskChargeDistributionDTO> TaskChargeDistributionlist = new ArrayList<>();
 
-        if (ObjectUtil.isNotEmpty(productInfoEntity)) {
-
 
             ProjectTaskEntity projectTaskEntity = projectTaskService.getTaskByName(productInfoEntity.getId(), projectTaskExcelDTO.getName());
-
-            // 判断是修改还是新增 1：新增 2：修改
+             Integer importType=1;
             /**
              * 任务状态 0:待发布 1:待开始
              * 2:待审核  3:进行中 4 已完成, 5 已关闭   6.完成待审核 7.审核中  8 审核通过  9 审核不通过 ,10 部分完成
              */
-            if (importType == 2) {
-                if (ObjectUtil.isEmpty(projectTaskEntity)) {
-                    errorMsgList.add("[任务名称]在系统中不存在，请确认产品名称存在");
-                } else { //可编辑：待审核  审核通过  已完成
-                    if (projectTaskEntity.getStatus() == 0 || projectTaskEntity.getStatus() == 1 || projectTaskEntity.getStatus() == 3 ) {
-                        projectTaskDTO.setId(projectTaskEntity.getId());
-                        projectTaskDTO.setType(projectTaskEntity.getType());
-                    } else {
-                        errorMsgList.add("只有[任务状态]为待发布或待开始，进行中的任务可修改");
-                    }
-                    //查询模板任务下审核人
-                    List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, projectTaskEntity.getId());
-                    if (taskChargeDistributionList != null && taskChargeDistributionList.size() > 0) {
-                        TaskChargeDistributionlist = BeanMapperUtils.copyList(TaskChargeDistributionDTO.class, taskChargeDistributionList);
-                        TaskChargeDistributionlist.forEach(obj -> {
-                            if (org.apache.commons.lang3.StringUtils.isBlank(obj.getCharges())) {
-                                return;
-                            }
-                            List<String> collect = Arrays.stream(obj.getCharges().split(",")).collect(Collectors.toList());
-                            //回显名称
-                            if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(obj.getDistributionType())) {
-                                //用户分配查询名称
-                                List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(collect);
-                                if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(userList)) {
-                                    List<String> usrNameList = userList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
-                                    obj.setChargeNames(String.join(",", usrNameList));
-                                }
-                                obj.setChargeList(collect);
-                            }
-                            if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(obj.getDistributionType())) {
-                                if (org.apache.commons.lang3.StringUtils.isBlank(obj.getChargeIds())) {
-                                    //角色分配直接取名称
-                                    obj.setChargeNames(obj.getCharges());
-                                    obj.setChargeList(collect);
-                                } else {
-                                    List<String> collect1 = Arrays.stream(obj.getChargeIds().split(",")).collect(Collectors.toList());
-                                    //用户分配查询名称
-                                    List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(collect1);
-                                    if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(userList)) {
-                                        List<String> usrNameList = userList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
-                                        obj.setChargeNames(String.join(",", usrNameList));
-                                    }
-                                    obj.setChargeList(collect1);
-                                }
-                            }
-                            if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(obj.getDistributionType())) {
-                                if (org.apache.commons.lang3.StringUtils.isBlank(obj.getChargeIds())) {
-                                    //上级分配取枚举
-                                    List<String> superiors = collect.stream().map(e -> ChargeSuperiorEnum.getDesc(e)).collect(Collectors.toList());
-                                    obj.setChargeNames(String.join(",", superiors));
-                                    obj.setChargeList(superiors);
-                                } else {
-                                    List<String> collect1 = Arrays.stream(obj.getChargeIds().split(",")).collect(Collectors.toList());
-                                    //用户分配查询名称
-                                    List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(collect1);
-                                    if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(userList)) {
-                                        List<String> usrNameList = userList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
-                                        obj.setChargeNames(String.join(",", usrNameList));
-                                    }
-                                    obj.setChargeList(collect1);
-                                }
-                            }
-                        });
-                    }
-
-                }
-            } else {
-                if (ObjectUtil.isNotEmpty(projectTaskEntity)) {
-                    errorMsgList.add("[任务名称]在系统中已存在，不可重复");
+            if (!Objects.isNull(projectTaskEntity)) {
+                importType=2;
+                //可编辑：待审核  审核通过  已完成
+                if (projectTaskEntity.getStatus() == 0 || projectTaskEntity.getStatus() == 1 || projectTaskEntity.getStatus() == 3) {
+                    projectTaskDTO.setId(projectTaskEntity.getId());
+                    projectTaskDTO.setType(projectTaskEntity.getType());
+                } else {
+                    errorMsgList.add("只有[任务状态]为待发布或待开始，进行中的任务可修改");
                 }
             }
-        }
+
+            //查询模板任务下审核人
+            List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, projectTaskEntity.getId());
+            if (taskChargeDistributionList != null && taskChargeDistributionList.size() > 0) {
+                TaskChargeDistributionlist = BeanMapperUtils.copyList(TaskChargeDistributionDTO.class, taskChargeDistributionList);
+                TaskChargeDistributionlist.forEach(obj -> {
+                    if (org.apache.commons.lang3.StringUtils.isBlank(obj.getCharges())) {
+                        return;
+                    }
+                    List<String> collect = Arrays.stream(obj.getCharges().split(",")).collect(Collectors.toList());
+                    //回显名称
+                    if (DistributionTypeEnum.DISTRIBUTION_USER.getCode().equals(obj.getDistributionType())) {
+                        //用户分配查询名称
+                        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(collect);
+                        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(userList)) {
+                            List<String> usrNameList = userList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
+                            obj.setChargeNames(String.join(",", usrNameList));
+                        }
+                        obj.setChargeList(collect);
+                    }
+                    if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(obj.getDistributionType())) {
+                        if (org.apache.commons.lang3.StringUtils.isBlank(obj.getChargeIds())) {
+                            //角色分配直接取名称
+                            obj.setChargeNames(obj.getCharges());
+                            obj.setChargeList(collect);
+                        } else {
+                            List<String> collect1 = Arrays.stream(obj.getChargeIds().split(",")).collect(Collectors.toList());
+                            //用户分配查询名称
+                            List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(collect1);
+                            if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(userList)) {
+                                List<String> usrNameList = userList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
+                                obj.setChargeNames(String.join(",", usrNameList));
+                            }
+                            obj.setChargeList(collect1);
+                        }
+                    }
+                    if (DistributionTypeEnum.DISTRIBUTION_SUPERIOR.getCode().equals(obj.getDistributionType())) {
+                        if (org.apache.commons.lang3.StringUtils.isBlank(obj.getChargeIds())) {
+                            //上级分配取枚举
+                            List<String> superiors = collect.stream().map(e -> ChargeSuperiorEnum.getDesc(e)).collect(Collectors.toList());
+                            obj.setChargeNames(String.join(",", superiors));
+                            obj.setChargeList(superiors);
+                        } else {
+                            List<String> collect1 = Arrays.stream(obj.getChargeIds().split(",")).collect(Collectors.toList());
+                            //用户分配查询名称
+                            List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(collect1);
+                            if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(userList)) {
+                                List<String> usrNameList = userList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
+                                obj.setChargeNames(String.join(",", usrNameList));
+                            }
+                            obj.setChargeList(collect1);
+                        }
+                    }
+                });
+            }
+
         List<String> chargeNameList = new ArrayList<>();
         String chargeName = projectTaskExcelDTO.getChargeName();
         String[] chargeNames = chargeName.split(",");
@@ -245,6 +235,13 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
             }
         }
 
+        //存在错误数据则直接返回
+        if (errorMsgList.size() > 0) {
+            projectTaskExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            list.add(projectTaskExcelDTO);
+            return;
+        }
+
         //目标交付文档
         String docsName = projectTaskExcelDTO.getDocsName();
         List<DocsDTO> docsNameList = new ArrayList<>();
@@ -269,13 +266,6 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
             }
         }
 
-        //存在错误数据则直接返回
-        if (errorMsgList.size() > 0) {
-            projectTaskExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-            list.add(projectTaskExcelDTO);
-            return;
-        }
-
         projectTaskDTO.setProjectId(productInfoEntity.getId());
         projectTaskDTO.setProductId(productInfoEntity.getId());
         projectTaskDTO.setName(projectTaskExcelDTO.getName());
@@ -283,11 +273,11 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
         projectTaskDTO.setChargeIds(chargeNameList);
         projectTaskDTO.setPreTaskIdList(preTaskList);
 
-        if (org.apache.commons.lang3.StringUtils.isNotBlank(projectTaskExcelDTO.getPlanStartTime())) {
+        if (StringUtils.isNotBlank(projectTaskExcelDTO.getPlanStartTime())) {
             projectTaskDTO.setPlanStartTime(LocalDate.parse(projectTaskExcelDTO.getPlanStartTime(), dateTimeFormatter));
         }
 
-        if (org.apache.commons.lang3.StringUtils.isNotBlank(projectTaskExcelDTO.getPlanEndTime())) {
+        if (StringUtils.isNotBlank(projectTaskExcelDTO.getPlanEndTime())) {
             projectTaskDTO.setPlanEndTime(LocalDate.parse(projectTaskExcelDTO.getPlanEndTime(), dateTimeFormatter));
         }
 
@@ -329,11 +319,11 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
 
     }
 
-    public List<ProjectTaskExcelDTO> getDateList(){
+    public List<ProjectTaskExcelDTO> getDateList() {
         return list;
     }
 
-    public List<ProjectTaskExcelDTO> getExcelDateList(){
+    public List<ProjectTaskExcelDTO> getExcelDateList() {
         return dataList;
     }
 }

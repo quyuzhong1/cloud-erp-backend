@@ -7,7 +7,7 @@ import com.erp.model.dmp.entity.CfgApiAuthEntity;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/1/11 11:38
  */
 public interface CfgApiAuthService extends IService<CfgApiAuthEntity> {
@@ -18,14 +18,25 @@ public interface CfgApiAuthService extends IService<CfgApiAuthEntity> {
      * @param dto
      * @return Boolean
      */
-    Boolean insert(CfgApiAuthDTO dto);
+    Boolean insert(CfgApiAuthDTO.ParamDTO dto);
     /**
      * @description: 编辑
      * @author Will
      * @date: 2023/1/11 17:20
      * @param dto
      */
-    void update(CfgApiAuthDTO dto);
+    void update(CfgApiAuthDTO.ParamDTO dto);
+
+    /**
+     * @description: 根据key值查询
+     * @author Will
+     * @date: 2023/7/3 9:30
+     * @param key
+     * @param apiPlatformId
+     * @return CfgApiAuthEntity
+     */
+    CfgApiAuthEntity getByKey (String key ,String apiPlatformId);
+
     void saveMongoTest(String type);
     void saveMongoTest(String type, String id);
 

@@ -12,7 +12,7 @@ import java.util.List;
  *
  * @author Lambda
  * @Classname NoticeReceivedDTO
- * @Description TODO
+
  * @Date 2023-04-20 20:33
  * @Created by yl
  */

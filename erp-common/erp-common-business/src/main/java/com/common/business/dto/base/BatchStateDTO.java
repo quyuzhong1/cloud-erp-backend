@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * @Classname BatchStateDTO
- * @Description TODO
+
  * @Date 2022-07-29 9:58
  * @Created by yl
  */

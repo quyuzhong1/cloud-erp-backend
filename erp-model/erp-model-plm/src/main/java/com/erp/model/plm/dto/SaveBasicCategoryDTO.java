@@ -8,7 +8,7 @@ import javax.validation.constraints.Size;
 
 /**
  * @Classname SaveBasicCategoryDTO
- * @Description TODO
+
  * @Date 2022-09-13 11:33
  * @Created by yl
  */
@@ -28,7 +28,7 @@ public class SaveBasicCategoryDTO  {
     /**
      * 分类代码
      */
-    @Size(min = 0, max = 1, message = "分类代码长度只能有一个字符")
+    @Size(min = 0, max = 10, message = "分类代码长度只能有一个字符")
     private String code;
 
     /**

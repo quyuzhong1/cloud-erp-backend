@@ -15,7 +15,7 @@ import java.util.Map;
 
 /**
  * @Classname ProjectTaskDTO
- * @Description TODO
+
  * @Date 2022-09-22 15:15
  * @Created by yl
  */
@@ -213,4 +213,10 @@ public class ProjectTaskDTO  implements Serializable {
      * 辅助字段：project导入任务ID
      */
     private String projectTaskId;
+
+
+    /**
+     * 任务关注人集合
+     */
+    private List<String> concernUserIdList;
 }

@@ -45,4 +45,12 @@ public interface PurchaseApplicationMapper extends BaseMapper<PurchaseApplicatio
      * @return Integer
      */
     Integer listCount(@Param("params") PurchaseApplicationDTO.SearchParamDTO dto);
+    /**
+     * @description: 下推委外订单显示
+     * @author Will
+     * @date: 2023/6/14 14:29
+     * @param ids
+     * @return List<ViewGenerateSubcontractOrderDTO>
+     */
+    List<PurchaseApplicationDTO.ViewGenerateSubcontractOrderDTO> viewGenerateSubcontractOrder(@Param("ids") List<String> ids);
 }

@@ -24,7 +24,7 @@ import java.util.Objects;
  * 实现 RequestPermissions 请求权限的注解
  *
  * @Classname
- * @Description TODO
+
  * @Date 2022-10-15 10:21
  * @Created by yl
  */
@@ -59,7 +59,7 @@ public class RequestPermissionsAspect {
                 UserRequestPermissionsDTO permissions = permissionsList.stream().
                         filter(r -> permissionsCode.equals(r.getPermissionsCode())).findFirst().orElse(null);
                 if (Objects.isNull(permissions)) {
-                    throw new ServiceException(ApiError.ERROR_1013);
+                    throw new ServiceException(ApiError.NO_PERMISSION);
                 } else {
                     if(params.length > 0){
                         ObjectUtils.setFieldValue(params[inject.index()],inject.dataScope(),permissions.getDataScope());

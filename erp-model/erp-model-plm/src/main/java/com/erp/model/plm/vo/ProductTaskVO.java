@@ -5,12 +5,11 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 /**
  * @Classname 产品任务
- * @Description TODO
+
  * @Date 2023-02-02 19:48
  * @Created by yl
  */
@@ -166,6 +165,8 @@ public class ProductTaskVO implements Serializable {
      * 排期类型
      */
     private String scheduleType;
+
+
 
 
     /**

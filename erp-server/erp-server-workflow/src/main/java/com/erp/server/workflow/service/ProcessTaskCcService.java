@@ -28,11 +28,9 @@ public interface ProcessTaskCcService extends SuperService<ProcessTaskCcEntity> 
 
     /**
      * 更新抄送状态
-     * @param processInstanceId
      * @param taskId
-     * @param id
      */
-    void updateCcStatus(String processInstanceId, String taskId, String id);
+    void updateCcStatus(String taskId);
 
     /**
      * 转移抄送人
@@ -40,4 +38,12 @@ public interface ProcessTaskCcService extends SuperService<ProcessTaskCcEntity> 
      * @param insertEntity
      */
     void updateCcTransfer(List<ProcessTaskManagementEntity> entityList, ProcessTaskManagementEntity insertEntity);
+
+    /**
+     * 发送抄送消息
+     * @param entity
+     * @param title
+     * @param content
+     */
+    void sendCcMsg(ProcessTaskManagementEntity entity,String title,String content);
 }

@@ -22,7 +22,7 @@ public interface PoInstockDetailService extends SuperService<PoInstockDetailEnti
      * @param details
      * @param mainId
      */
-    void add(List<PoInstockDetailDTO.AddDTO> details, String mainId , String sourceType);
+    void add(List<PoInstockDetailDTO.AddDTO> details, String mainId , String sourceType,Boolean isNotCheck);
     /**
      * @description: 修改明细
      * @author Will

@@ -67,6 +67,12 @@ public class ProductLogisticsEntity extends BaseEntity implements Serializable {
     private String customsCode;
 
     /**
+     * 报关单位
+     */
+    @TableField(value = "declare_unit")
+    private String declareUnit;
+
+    /**
      * 申报要素
      */
     @TableField(value = "declare_element")

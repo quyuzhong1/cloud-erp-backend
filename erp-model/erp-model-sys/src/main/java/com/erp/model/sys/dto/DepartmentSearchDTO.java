@@ -9,7 +9,7 @@ import java.io.Serializable;
 
 /**
  * @Classname DepartmentSearchDTO
- * @Description TODO
+
  * @Date 2022-07-19 12:31
  * @Created by yl
  */

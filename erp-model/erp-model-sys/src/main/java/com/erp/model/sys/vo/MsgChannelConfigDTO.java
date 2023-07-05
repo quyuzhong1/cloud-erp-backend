@@ -6,7 +6,7 @@ import java.io.Serializable;
 
 /**
  * @Classname: MsgConfigDTO
- * @Description: TODO
+
  * @CreateTime: 2023-04-21  14:17
  * @Author: zhangchunlin
  */

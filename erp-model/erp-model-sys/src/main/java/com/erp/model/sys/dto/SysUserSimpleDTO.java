@@ -6,7 +6,7 @@ import java.io.Serializable;
 
 /**
  * @Classname: SysUserSimpleDTO
- * @Description: TODO
+
  * @CreateTime: 2023-04-23  09:55
  * @Author: zhangchunlin
  */

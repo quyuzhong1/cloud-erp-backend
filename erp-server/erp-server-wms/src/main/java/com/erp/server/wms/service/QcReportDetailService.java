@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -60,4 +61,11 @@ public interface QcReportDetailService extends SuperService<QcReportDetailEntity
     void removeByMainIds(List<String> mainIdList);
 
     void exportReportByMainId(String id, HttpServletResponse response);
+
+    /**
+     * 根据质检单id集合  获取报告明细信息
+     * @param ids
+     * @return
+     */
+    Map<String, List<QcReportDetailDTO.ViewDTO>> getByMainIds(List<String> ids);
 }

@@ -31,4 +31,11 @@ public interface WorkMenuService extends SuperService<WorkMenuEntity> {
      * @return java.lang.String
      **/
     String getSysClassifyByCode(String code);
+
+    /**
+     * 根据code获取模块分类
+     * @param code
+     * @return WorkMenuEntity
+     */
+    WorkMenuEntity getByModuleCode(String code);
 }

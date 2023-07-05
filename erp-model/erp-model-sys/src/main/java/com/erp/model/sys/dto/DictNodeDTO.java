@@ -9,7 +9,7 @@ import javax.validation.constraints.Size;
 /**
  * @author Lambda
  * @Classname DictNodeDTO
- * @Description TODO
+
  * @Date 2023-04-26 14:25
  * @Created by yl
  */

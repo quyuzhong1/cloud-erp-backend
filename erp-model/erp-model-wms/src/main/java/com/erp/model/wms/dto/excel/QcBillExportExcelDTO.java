@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 /**
  * @author Lambda
  * @Classname QcBillExportExcelDTO
- * @Description TODO
+
  * @Date 2023-04-19 18:55
  * @Created by yl
  */

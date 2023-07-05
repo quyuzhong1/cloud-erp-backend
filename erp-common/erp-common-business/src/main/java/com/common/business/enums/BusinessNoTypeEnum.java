@@ -46,6 +46,7 @@ public enum BusinessNoTypeEnum {
     CODE_KHDZ(36, "khdz","客户地址编号"),
     CODE_KHLXR(37, "khlxr","客户联系人编号"),
     CODE_SUB(38, "sub","委外订单"),
+    CODE_SUBCH(39, "subch","委外变更单"),
 
     ;
 

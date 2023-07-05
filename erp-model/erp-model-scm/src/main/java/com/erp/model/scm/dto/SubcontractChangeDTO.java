@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -64,6 +65,11 @@ public class SubcontractChangeDTO implements Serializable {
           * sku编码
           */
          private List<String> skuNoList;
+
+         /**
+          * 供应商id
+          */
+         private List<String> supplierIdList;
 
          /**
           * 审核状态（waitSubmit待提交，approveIng审核中，reject审核不通过，approve已审核）
@@ -145,6 +151,11 @@ public class SubcontractChangeDTO implements Serializable {
          * 作废状态名称（false未作废，true已作废）
          */
         private String invalidStatusName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
 
         /**
          * sku编号
@@ -336,6 +347,7 @@ public class SubcontractChangeDTO implements Serializable {
         /**
          * 变更明细
          */
+        @NotEmpty(message = "变更明细不能为空")
         private List<SubcontractChangeDetailDTO.AddDTO> detailList;
     }
 
@@ -353,6 +365,7 @@ public class SubcontractChangeDTO implements Serializable {
         /**
          * 变更明细
          */
+        @NotEmpty(message = "变更明细不能为空")
         private List<SubcontractChangeDetailDTO.UpdateDTO> detailList;
     }
 
@@ -382,7 +395,6 @@ public class SubcontractChangeDTO implements Serializable {
         /**
         * 变更原因
         */
-        @NotBlank(message = "变更原因不能为空")
         @Size(max = 255,message = "变更原因最大长度不能超过255位")
         private String changeReason;
 

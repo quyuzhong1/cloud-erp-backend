@@ -1,6 +1,7 @@
 package com.erp.model.dmp.kingdee;
 
 import cn.hutool.core.annotation.Alias;
+import com.erp.model.dmp.dto.CleanBaseDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -10,7 +11,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Data
 @ToString
-public class KingdeeSkuEntity {
+public class KingdeeSkuEntity extends CleanBaseDTO {
 
     private String _id;
     @Alias("FUseOrgId")
@@ -47,10 +48,7 @@ public class KingdeeSkuEntity {
     private String FSSRQ;
     @Alias("FErpClsID")
     private String FErpClsID;
-    /**
-     * 清洗数据
-     */
-    private Boolean isClean;
+
     @Override
     public String toString() {
         return "KingdeeSkuEntity{" +

@@ -2,7 +2,6 @@ package com.erp.model.oms.dto;
 
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.SalesPlatformEnum;
 import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -10,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -20,7 +18,7 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname CustomerDTO
- * @Description TODO
+
  * @Date 2023-05-10 15:43
  * @Created by yl
  */
@@ -219,9 +217,8 @@ public class CustomerDTO implements Serializable {
          * http://172.16.100.11:3002/project/110/interface/api/13480
          * type=SalesPlatform
          */
-        @NotNull(message = "平台类型不能为空")
-        @StateEnumValue(clazz = SalesPlatformEnum.class, message = "平台类型有误")
-        private SalesPlatformEnum platformType;
+        @NotBlank(message = "平台类型不能为空")
+        private String platformType;
 
 
         /**
@@ -462,7 +459,7 @@ public class CustomerDTO implements Serializable {
          * http://172.16.100.11:3002/project/110/interface/api/13480
          * type=SalesPlatform
          */
-        private SalesPlatformEnum platformType;
+        private String platformType;
 
 
         /**
@@ -553,9 +550,8 @@ public class CustomerDTO implements Serializable {
          * http://172.16.100.11:3002/project/110/interface/api/13480
          * type=SalesPlatform
          */
-        @NotNull(message = "平台类型不能为空")
-        @StateEnumValue(clazz = SalesPlatformEnum.class, message = "平台类型有误")
-        private SalesPlatformEnum platformType;
+        @NotBlank(message = "平台类型不能为空")
+        private String platformType;
 
 
         /**
@@ -751,6 +747,29 @@ public class CustomerDTO implements Serializable {
          * 地址
          */
         private String addressId;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 地址类型
+         */
+        private String addressType;
+
+        /**
+         * 销售员
+         */
+        private String sellerId;
+
+        /**
+         * 收款条件
+         */
+        private String receiveCondition;
+
+        private String receiveConditionName;
+
 
     }
 

@@ -1,8 +1,12 @@
 package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * <p>
@@ -14,5 +18,7 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface WarehouseLocationMapper extends BaseMapper<WarehouseLocationEntity> {
+
+    IPage<WarehouseLocationDTO.LocationSelectDTO> paging(Page query, @Param("params") WarehouseLocationDTO.WarehouseLocationSearchParamDTO dto);
 
 }

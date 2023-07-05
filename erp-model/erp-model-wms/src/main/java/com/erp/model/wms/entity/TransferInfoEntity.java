@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -192,6 +193,21 @@ public class TransferInfoEntity extends BaseEntity<TransferInfoEntity> {
      */
     @TableField("sync_operate")
     private String syncOperate;
+
+    @TableField(exist = false)
+    private String inWarehouseCode;
+
+    @TableField(exist = false)
+    private String outWarehouseCode;
+
+    @TableField(exist = false)
+    private List<TransferInfoDetailEntity> detailList;
+
+    /**
+     * 第三方系统
+     */
+    @TableField("third_party_system")
+    private String thirdPartySystem;
 
 
     public static final String CODE = "code";

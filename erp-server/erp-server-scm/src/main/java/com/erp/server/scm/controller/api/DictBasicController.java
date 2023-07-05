@@ -44,6 +44,7 @@ public class DictBasicController extends BaseController {
      *  supplierPayMode  供应商结算方式
      *  supplierCategory 供应商分类
      *  supplierAccountPayment  供应商支付方式
+     *  subcontractChangeReason 委外变更原因
      * @return
      */
     @GetMapping("/list")

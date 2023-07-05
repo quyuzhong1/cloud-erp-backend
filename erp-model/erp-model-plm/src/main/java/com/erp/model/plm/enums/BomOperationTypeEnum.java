@@ -4,7 +4,7 @@ package com.erp.model.plm.enums;
  * 操作类型枚举
  *
  * @Classname BomOperationTypeEnum
- * @Description TODO
+
  * @Date 2023-01-09 15:22
  * @Created by yl
  */

@@ -3,7 +3,7 @@ package com.erp.server.bi.enums;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2022/12/19 11:38
  */
 public enum BiDataSourceCustomEnum {

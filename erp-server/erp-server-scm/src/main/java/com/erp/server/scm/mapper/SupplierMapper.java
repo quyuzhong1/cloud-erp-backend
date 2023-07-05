@@ -3,7 +3,6 @@ package com.erp.server.scm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -26,5 +25,6 @@ public interface SupplierMapper extends BaseMapper<SupplierEntity> {
 
     List<SupplierDTO.PagingViewDTO> getExportSupplier(@Param("params") SupplierDTO.ExportDTO dto);
 
-    List<BaseIdDTO> listSupplierByCategoryType(@Param("type") String supplierCategory, @Param("value")String categoryType);
+    List<SupplierDTO.SupplierSimpleDTO> listSupplierByCategoryType(@Param("type") String supplierCategory, @Param("value")String categoryType,
+                                               @Param("approveStatus")String approveStatus);
 }

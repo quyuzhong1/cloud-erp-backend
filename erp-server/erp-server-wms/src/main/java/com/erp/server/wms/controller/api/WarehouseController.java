@@ -76,7 +76,7 @@ public class WarehouseController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:warehouse:addAndSubmit",
+            menuCode = "wms:warehouse:add",
             serviceClass = WarehouseService.class,
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated WarehouseDTO.AddDTO dto) {
@@ -144,7 +144,7 @@ public class WarehouseController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:warehouse:updateAndSubmit",
+            menuCode = "wms:warehouse:update",
             serviceClass = WarehouseService.class,
             keyIdName = "id")
     public ApiResult updateAndSubmit(@RequestBody @Validated WarehouseDTO.UpdateDTO dto) {

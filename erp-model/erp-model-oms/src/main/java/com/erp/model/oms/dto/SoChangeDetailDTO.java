@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname SoInfoDTO
- * @Description TODO
+
  * @Date 2023-05-10 17:55
  * @Created by yl
  */
@@ -243,7 +243,7 @@ public class SoChangeDetailDTO implements Serializable {
         private String remark;
 
 
-        private String soDetailKingdeeId;
+        private String kingdeeDetailId;
 
     }
 

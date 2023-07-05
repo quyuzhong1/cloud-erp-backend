@@ -46,7 +46,8 @@
         prod.remark,
         prod.source_detail_id,
         prod.purchase_order_detail_id,
-        pro.return_mode
+        pro.return_mode,
+        pro.bill_date
         from
         po_return pro
         inner join po_return_detail prod on pro.id = prod.main_id and prod.is_deleted = false

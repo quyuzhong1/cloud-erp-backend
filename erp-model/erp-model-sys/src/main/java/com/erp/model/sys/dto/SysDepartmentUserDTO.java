@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * @Classname SysDepartmentUserVO
- * @Description TODO
+
  * @Date 2022-07-19 12:03
  * @Created by yl
  */

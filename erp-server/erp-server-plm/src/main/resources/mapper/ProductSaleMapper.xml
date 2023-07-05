@@ -28,6 +28,19 @@
         ORDER BY pd.id desc
     </select>
 
+    <select id="listBySkuId" resultType="com.erp.model.plm.dto.ProductSaleShowDTO">
+        SELECT
+        ps.id,
+        pd.sku_no,
+        pd.id AS sku_id,
+        pd.images_url,
+        <include refid="Base_Column_List"/>
+        FROM product_detail pd
+        LEFT JOIN product_sale ps ON ps.sku_id = pd."id" AND ps.is_deleted = FALSE
+        WHERE pd.id = #{skuId} AND pd.is_deleted = FALSE
+        ORDER BY pd.id desc
+    </select>
+
     <select id="getListingProductAll" resultType="com.erp.model.plm.dto.NewProductDTO">
         SELECT
         ps.id,

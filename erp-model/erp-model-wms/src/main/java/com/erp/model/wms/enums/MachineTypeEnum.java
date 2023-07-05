@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/5/15 18:12
  */
 public enum MachineTypeEnum implements EnumMessage {

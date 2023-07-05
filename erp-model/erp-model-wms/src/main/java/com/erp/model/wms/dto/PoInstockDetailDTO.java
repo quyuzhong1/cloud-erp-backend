@@ -9,7 +9,7 @@ import java.io.Serializable;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/4/13 10:25
  */
 @Data
@@ -58,6 +58,11 @@ public class PoInstockDetailDTO implements Serializable {
          */
         @NotBlank(message = "采购明细id不能为空")
         private String purchaseOrderDetailId;
+
+        /**
+         * 是否校验（前端无需传值）
+         */
+        private Boolean isNotCheck;
     }
 
     @Data
@@ -94,6 +99,16 @@ public class PoInstockDetailDTO implements Serializable {
         private String productName;
 
         /**
+         * 规格型号
+         */
+        private String spuNo;
+
+        /**
+         * 单位
+         */
+        private String unitName;
+
+        /**
          * 采购数量
          */
         private Integer purchaseQty;
@@ -117,5 +132,10 @@ public class PoInstockDetailDTO implements Serializable {
          * 仓位
          */
         private String warehouseLocation;
+
+        /**
+         * 库存状态
+         */
+        private String inventoryStatusName;
     }
 }

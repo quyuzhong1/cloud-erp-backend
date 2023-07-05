@@ -3,7 +3,7 @@ package com.erp.model.msg.constant;
 /**
  * @author Lambda
  * @Classname NoticeMsgConstant
- * @Description TODO
+
  * @Date 2023-04-28 16:13
  * @Created by yl
  */

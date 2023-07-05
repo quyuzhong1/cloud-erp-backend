@@ -3,6 +3,7 @@ package com.erp.model.scm.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.scm.dto.SubcontractOrderDetailDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -11,6 +12,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 /**
@@ -149,6 +151,12 @@ public class SubcontractOrderDetailEntity extends BaseEntity<SubcontractOrderDet
     private Boolean isGeneratePo;
 
     /**
+     * 仓位
+     */
+    @TableField("warehouse_location")
+    private String warehouseLocation;
+
+    /**
     * 父级SKUid
     */
     @TableField("parent_id")
@@ -165,6 +173,28 @@ public class SubcontractOrderDetailEntity extends BaseEntity<SubcontractOrderDet
      */
     @TableField("is_end_receive")
     private Boolean isEndReceive;
+
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
+    /**
+     * 金蝶id
+     */
+    @TableField("kingdee_detail_id")
+    private String kingdeeDetailId;
+
+
+    @TableField(exist = false)
+    private Boolean isAdd;
+
+    @TableField(exist = false)
+    private String supplierName;
+
+    @TableField(exist = false)
+    private List<SubcontractOrderDetailDTO.UpdateDTO> childList;
 
 
     public static final String MAIN_ID = "main_id";

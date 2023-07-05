@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 
 /**
  * @Classname: InventoryDetailServiceImpl
- * @Description: TODO
+
  * @CreateTime: 2023-04-25  19:00
  * @Author: zhangchunlin
  */

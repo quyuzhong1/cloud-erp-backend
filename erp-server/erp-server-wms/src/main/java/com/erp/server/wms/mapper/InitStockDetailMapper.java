@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  * @Classname: InitStockDetailMapper
- * @Description: TODO
+
  * @CreateTime: 2023-05-11  10:29
  * @Author: zhangchunlin
  */

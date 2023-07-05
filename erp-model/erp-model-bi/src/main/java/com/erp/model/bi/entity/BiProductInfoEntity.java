@@ -103,11 +103,7 @@ public class BiProductInfoEntity extends BaseEntity<BiProductInfoEntity> {
     @TableField("type")
     private Integer type;
 
-    /**
-     * 删除标示 0 未删 1 已删
-     */
-    @TableField("delete_state")
-    private Integer deleteState;
+
 
     /**
      * spu
@@ -274,7 +270,7 @@ public class BiProductInfoEntity extends BaseEntity<BiProductInfoEntity> {
 
     public static final String TYPE = "type";
 
-    public static final String DELETE_STATE = "delete_state";
+
 
     public static final String SPU_NO = "spu_no";
 

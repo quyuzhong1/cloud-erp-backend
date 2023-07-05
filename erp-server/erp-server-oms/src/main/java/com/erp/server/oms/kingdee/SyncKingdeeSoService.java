@@ -5,7 +5,7 @@ import com.erp.model.oms.entity.SoInfoEntity;
 /**
  * @author Lambda
  * @Classname SyncKingdeeSoService
- * @Description TODO
+
  * @Date 2023-05-30 11:46
  * @Created by yl
  */

@@ -42,6 +42,7 @@
         s.name as supplierName,
         sc.approve_status as approveStatus,
         sc.invalid_status as invalidStatus,
+        scd.sku_id as skuId,
         scd.sku_no as skuNo,
         scd.opt_type as optType,
         scd.price,
@@ -67,7 +68,7 @@
         inner join subcontract_change_detail scd on  sc.id = scd.main_id and scd.is_deleted = false
         left join supplier s  on scd.supplier_id = s.id and s.is_deleted = false
         <where>
-            sc.is_deleted = false
+            sc.is_deleted = false and scd.parent_id = ''
             <if test="params.searchType != null and params.searchType != ''">
                 and sc.approve_status like concat('%',#{params.searchType},'%')
             </if>
@@ -83,6 +84,12 @@
                     #{item}
                 </foreach>
             </if>
+            <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
+                and scd.supplier_id in
+                <foreach collection="params.supplierIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
             <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
                 and sc.approve_status in
                 <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
@@ -90,7 +97,7 @@
                 </foreach>
             </if>
             <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
-                and sc.warehouse_id in
+                and scd.warehouse_id in
                 <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
@@ -121,8 +128,23 @@
 
     </select>
 
-    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
-        select approve_status, count(id) from subcontract_change_order where is_deleted = false group by approve_status
+    <select id="listCount" resultType="java.lang.Integer">
+        select
+        count(distinct sc.id)
+        from subcontract_change sc
+        left join subcontract_change_detail scd on sc.id = scd.main_id and scd.is_deleted = false
+        <where>
+            sc.is_deleted = false
+            <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+                and sc.approve_status in
+                <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
     </select>
 
     <select id="listExport" resultType="com.erp.model.scm.dto.SubcontractChangeDTO$ListDTO">

@@ -1,6 +1,7 @@
 package com.erp.model.dmp.kingdee;
 
 import cn.hutool.core.annotation.Alias;
+import com.erp.model.dmp.dto.CleanBaseDTO;
 import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,7 +11,7 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
-public class KingdeeDeliveryDetailEntity{
+public class KingdeeDeliveryDetailEntity  extends CleanBaseDTO {
 
     private String _id;
     @Alias("FID")
@@ -35,6 +36,12 @@ public class KingdeeDeliveryDetailEntity{
      */
     @Alias("FDate")
     private String fDate;
+
+    /**
+     * 运输单号
+     */
+    @Alias("FCarriageNO")
+    private String FCarriageNO;
     /**
      * 销售组织
      */
@@ -55,6 +62,12 @@ public class KingdeeDeliveryDetailEntity{
      */
     @Alias("FCustomerID.FName")
     private String fCustomerName;
+
+    /**
+     * 客户编码
+     */
+    @Alias("FCustomerID.FNumber")
+    private String fCustomerNumber;
     /**
      * 销售部门
      */
@@ -70,6 +83,25 @@ public class KingdeeDeliveryDetailEntity{
      */
     @Alias("FSalesManID.FName")
     private String FSalesManName;
+
+
+    /**
+     * 原销售员编号
+     */
+    @Alias("FSalesManID.FNumber")
+    private String FSalesManNumber;
+
+    /**
+     * 仓管员编号
+     */
+    @Alias("FStockerID.FNumber")
+    private String  fStockerNumber;
+
+    /**
+     * 仓管员
+     */
+    @Alias("FStockerID.FName")
+    private String  fStockerName;
     /**
      * 收货方
      */
@@ -189,10 +221,7 @@ public class KingdeeDeliveryDetailEntity{
     private Boolean FIsGenForIos;
 
     private List<KingdeeDeliveryDetailItemEntity> kingdeeOutStockItemEntityList;
-    /**
-     * 清洗数据
-     */
-    private Boolean isClean;
+
     @Override
     public String toString() {
         return "KingdeeDeliveryDetailEntity{" +

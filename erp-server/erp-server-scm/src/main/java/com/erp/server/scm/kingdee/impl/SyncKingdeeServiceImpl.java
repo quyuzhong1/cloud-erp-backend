@@ -15,7 +15,7 @@ import java.util.Map;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/3/10 14:43
  */
 @Service
@@ -35,6 +35,16 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
 
     @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
+
+    @Resource
+    private SubcontractOrderService subcontractOrderService;
+
+    @Resource
+    private SubcontractChangeService subcontractChangeService;
+
+    @Resource
+    private SubcontractOrderDetailService subcontractOrderDetailService;
+
 
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
@@ -69,6 +79,19 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //供应商表
         if (ApiModuleTypeEnum.SUPPLIER.getCode().toString().equals(code)) {
             supplierService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId,"");
+        }
+        //委外订单
+        if (ApiModuleTypeEnum.SUBCONTRACT_ORDER.getCode().toString().equals(code)) {
+            if (ObjectUtils.isNotEmpty(details)) {
+                JSONArray list = JSONUtil.parseArray(JSONUtil.toJsonStr(params.get("details")));
+                subcontractOrderDetailService.updateKingdeeDetailId(list);
+                return;
+            }
+            subcontractOrderService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId,"");
+        }
+        //委外变更单
+        if (ApiModuleTypeEnum.SUBCONTRACT_CHAGE.getCode().toString().equals(code)) {
+            subcontractChangeService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId,"");
         }
     }
 }

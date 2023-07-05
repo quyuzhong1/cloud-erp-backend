@@ -10,7 +10,7 @@ import java.util.Arrays;
  *
  * @author Lambda
  * @Classname QcTypeEnum
- * @Description TODO
+
  * @Date 2023-04-13 10:34
  * @Created by yl
  */

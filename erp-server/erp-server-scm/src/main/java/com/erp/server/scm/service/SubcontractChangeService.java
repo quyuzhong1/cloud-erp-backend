@@ -138,5 +138,33 @@ public interface SubcontractChangeService extends SuperService<SubcontractChange
     * @return
     */
     void exportList(SubcontractChangeDTO.ExportDTO dto, HttpServletResponse response);
+    /**
+     * @description: 作废
+     * @author Will
+     * @date: 2023/6/19 18:50
+     * @param ids
+     * @param remark
+     */
+    void invalid(List<String> ids, String remark);
 
+    /**
+     * 修改金蝶同步信息
+     * @Author Luo_WG
+     * @Date 2023/5/25 10:43
+     * @param ids
+     * @param syncKingdeeStatus
+     * @param syncKingdeeId
+     * @param syncOperate
+     * @return java.lang.Boolean
+     **/
+    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
+
+    /**
+     * @description: 查询变更单
+     * @author Will
+     * @date: 2023/6/28 14:58
+     * @param ids
+     * @return List<SubcontractChangeEntity>
+     */
+    List<SubcontractChangeEntity> listBySourceIds(List<String> ids);
 }

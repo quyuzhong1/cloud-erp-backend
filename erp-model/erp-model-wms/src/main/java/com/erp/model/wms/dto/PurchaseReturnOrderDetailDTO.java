@@ -64,6 +64,7 @@ public class PurchaseReturnOrderDetailDTO {
         /**
          * 退货单价
          */
+
         private BigDecimal returnPrice;
 
         /**
@@ -204,6 +205,16 @@ public class PurchaseReturnOrderDetailDTO {
          * sku编码
          */
         private String skuNo;
+
+        /**
+         * spu编号
+         */
+        private String spuNo;
+
+        /**
+         * 单位
+         */
+        private String unit;
 
         /**
          * 产品名称

@@ -1,6 +1,7 @@
 package com.erp.server.dmp.pull.service.mabang;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -11,14 +12,18 @@ import com.erp.model.dmp.constant.MongoTableNameContant;
 import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.dto.RequestDTO;
 import com.erp.model.dmp.entity.DmpShopInfoEntity;
+import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformApiEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.dmp.gyy.GyyShopInfoEntity;
 import com.erp.model.dmp.mabang.ShopEntity;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.pull.service.IReportSaveService;
 import com.erp.server.dmp.pull.service.SaveData;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.utils.MabangApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -44,6 +49,8 @@ public class MabangShopInfoServiceImpl implements IReportSaveService<ShopEntity>
 
     @Resource
     private MQProducerService<DmpShopInfoEntity> mqProducerService;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     @Override
     @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
@@ -59,6 +66,8 @@ public class MabangShopInfoServiceImpl implements IReportSaveService<ShopEntity>
         for (ShopEntity entity : entityList) {
             OrderMongoDTO orderMongoDTO = new OrderMongoDTO(entity.getId());
             List<ShopEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 0, 0, MongoTableNameContant.ORIGINAL_MABANG_SHOP, ShopEntity.class);
+            entity.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
+            entity.setDownloadTime(LocalDateTime.now());
             if(CollectionUtil.isEmpty(mongoData)){
                 insertList.add(entity);
                 pushToMqList.add(entity);
@@ -94,6 +103,43 @@ public class MabangShopInfoServiceImpl implements IReportSaveService<ShopEntity>
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public void cleanDataSave(String tableName, int size) {
+        // 查询mongo待推送数据
+        String value = cfgSettingService.getValue(SettingEnum.CLEAN_JOB_DELAY_MINUTE);
+        Integer delayMinute = null != value ? NumberUtil.parseInt(value) : 0;
+        OrderMongoDTO orderMongoDTO = OrderMongoDTO.getByIsClean(CleanStatusEnum.UNCLEAN.getCode(), delayMinute);
+        List<ShopEntity> mongoData = mongoService.findMongoData(orderMongoDTO, 1, size, MongoTableNameContant.ORIGINAL_MABANG_SHOP, ShopEntity.class);
+        if (CollectionUtil.isEmpty(mongoData)) {
+            return;
+        }
+        for (ShopEntity mongoDatum : mongoData) {
+            mongoDatum.setIsClean(CleanStatusEnum.CLEANING.getCode());
+            mongoDatum.setLastPushTime(LocalDateTime.now());
+            updateAndSaveDb(mongoDatum);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class, transactionManager = "mongoTransactionManager")
+    public void updateAndSaveDb(ShopEntity mongoDatum) {
+        DmpShopInfoEntity shopInfo = initOrderInfoEntity(mongoDatum);
+        OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.getId());
+        if(null == shopInfo){
+            mongoDatum.setIsClean(CleanStatusEnum.CLEANED.getCode());
+            MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);
+            mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_SHOP, ShopEntity.class);
+            return;
+        }
+        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(mongoDatum), MapUtil.class);
+        mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_MABANG_SHOP, ShopEntity.class);
+        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_SHOP_INFO_TAG.getName(),
+                shopInfo, StrUtil.format("{}_{}", shopInfo.getPlatformShopNo(), shopInfo.getFinanceCode()));
+        if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
+            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+        }
     }
 
     /**

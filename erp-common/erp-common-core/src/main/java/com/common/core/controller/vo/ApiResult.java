@@ -78,6 +78,12 @@ public class ApiResult<T>  implements Serializable {
         this.msg = msg;
     }
 
+    public ApiResult(int code, String msg, T data) {
+        this.code = code;
+        this.msg = msg;
+        this.data = data;
+    }
+
 
     public static ApiResult error(ApiError error) {
         ApiResult apiResult = new ApiResult();

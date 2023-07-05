@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.ErpServerModuleEnum;
@@ -59,8 +60,6 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
     public MessageChannelEnum channel() {
         return MessageChannelEnum.FEISHU;
     }
-
-    private static final String EXCEPTION_KEY_WORLD = "系统预警";
 
     /**
      * 获取飞书tenantAccessToken
@@ -179,7 +178,7 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             put("Content-Type", FeishuConstant.CONTENT_TYPE);
         }};
         Map<String, Object> bodyMap = new HashMap<>();
-        FeishuMessageTypeEnum feishuMessageTypeEnum = ChannelSendMsgTypeEnum.of(msgTypeEnum.getCode()).getFeishuMsgType();
+        FeishuMessageTypeEnum feishuMessageTypeEnum = ChannelSendMsgTypeEnum.getByCode(msgTypeEnum.getCode()).getFeishuMsgType();
         bodyMap.put("msg_type", feishuMessageTypeEnum.getCode());
         //用户的unionIds
         bodyMap.put("receive_id", unionId);
@@ -274,7 +273,7 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         headerMap.put("Content-Type", FeishuConstant.CONTENT_TYPE);
 
         Map<String, Object> bodyMap = new HashMap<>();
-        FeishuMessageTypeEnum feishuMessageTypeEnum = ChannelSendMsgTypeEnum.of(msgTypeEnum.getCode()).getFeishuMsgType();
+        FeishuMessageTypeEnum feishuMessageTypeEnum = ChannelSendMsgTypeEnum.getByCode(msgTypeEnum.getCode()).getFeishuMsgType();
         bodyMap.put("msg_type", feishuMessageTypeEnum.getCode());
         //用户的unionIds
         bodyMap.put("union_ids", unionIds);
@@ -390,9 +389,8 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             }
             WarnMsgContentDTO warnMsgContentDTO = new WarnMsgContentDTO();
             // 由于采用关键字（系统预警）
-            if(!StrUtils.null2EmptyWithTrim(warnMsgInfo.getTitle()).contains(EXCEPTION_KEY_WORLD)) {
-                warnMsgContentDTO.setTitle(EXCEPTION_KEY_WORLD + "：" + warnMsgInfo.getTitle());
-            }
+            String activeProfile = SpringUtil.getActiveProfile();
+            warnMsgContentDTO.setTitle(activeProfile + "-" + warnMsgTypeEnum.getName() + "：" + warnMsgInfo.getTitle());
             // 组装预警内容
             String msgContent = StrUtil.format("所属项目：{}\n业务名称：{}\n异常日志表名及表id：{} {}\n关键信息：{}\n发生时间：{}",
                     warnMsgInfo.getErpServerModuleEnum().getCode(), StrUtils.null2EmptyWithTrim(warnMsgInfo.getBizName()),

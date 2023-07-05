@@ -618,7 +618,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         // 获取SKU产品名称
         List<String> skuIds = list.stream().map(InitStockDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOs =  plmTaskFeign.getSkuInfoByIds(skuIds);
-        Map<String, SkuVO> skuMap = skuVOs.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+        Map<String, List<SkuVO>> skuMap = skuVOs.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
 
         list.stream().forEach(data->{
             // 单据状态
@@ -637,8 +637,8 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
             if(Objects.nonNull(sysAccountingCompanyEntity)) {
                 data.setOrgName(sysAccountingCompanyEntity.getCompanyName());
             }
-            if(skuMap.containsKey(data.getSkuId())) {
-                SkuVO skuVO = skuMap.get(data.getSkuId());
+            if(skuMap.containsKey(data.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(data.getSkuId()))) {
+                SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
                 // 产品名称
                 data.setProductName(skuVO.getSkuName());
                 // spu型号

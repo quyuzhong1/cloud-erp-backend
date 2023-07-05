@@ -3,6 +3,7 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.dto.CopySourceDTO;
 import com.erp.model.plm.dto.DocsDTO;
+import com.erp.model.plm.dto.DocsNameDTO;
 import com.erp.model.plm.dto.TmeplateDocsNameDTO;
 import com.erp.model.plm.entity.TemplateTaskDocsNameEntity;
 
@@ -70,4 +71,13 @@ public interface TemplateTaskDocsNameService extends IService<TemplateTaskDocsNa
      * @return java.util.List<com.erp.model.plm.entity.TemplateTaskDocsNameEntity>
      **/
     List<TemplateTaskDocsNameEntity> getDocsNamesById(List<String> ids);
+
+    /**
+     * 保存文档名
+     * @Author Luo_WG
+     * @Date 2023/3/29 16:16
+     * @param dto dto
+     * @return java.lang.String
+     **/
+    String saveDocs(TmeplateDocsNameDTO dto);
 }

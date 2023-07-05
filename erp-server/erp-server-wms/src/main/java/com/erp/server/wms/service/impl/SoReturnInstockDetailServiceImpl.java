@@ -58,7 +58,6 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = this.listDetailBySourceDetailIds(returnDetailIds);
         List<SoReturnInstockDetailEntity> list = new ArrayList<>();
         for (SoReturnInstockDetailDTO.Add detailDto : dto.getDetailList()) {
-
             SoReturnInstockDetailEntity detailEntity = new SoReturnInstockDetailEntity();
             SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
@@ -76,8 +75,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
             detailEntity.setRealQty(detailDto.getRealQty());
             detailEntity.setReceiveQty(detailDto.getReceiveQty());
-            detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
-            detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
+            detailEntity.setReturnTypeDict(soReturnDetailEntity.getReturnTypeDict());
+            detailEntity.setReturnReasonDict(soReturnDetailEntity.getReturnReasonDict());
             detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
@@ -129,8 +128,6 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
             detailEntity.setRealQty(detailDto.getRealQty());
             detailEntity.setReceiveQty(detailDto.getReceiveQty());
-            detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
-            detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
             detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());

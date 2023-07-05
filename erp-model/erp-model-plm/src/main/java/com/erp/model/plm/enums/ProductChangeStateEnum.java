@@ -2,7 +2,7 @@ package com.erp.model.plm.enums;
 
 /**
  * @Classname ProductChangeStateEnum
- * @Description TODO
+
  * @Date 2023-01-28 16:30
  * @Created by yl
  */

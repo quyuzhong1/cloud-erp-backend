@@ -19,19 +19,36 @@
        <result column="type" property="type" />
     </resultMap>
 
-    <!-- 通用查询结果列 -->
-    <sql id="Base_Column_List">
-        id,
-        create_time,
-        update_time,
-        create_user_name,
-        create_user_id,
-        update_user_name,
-        update_user_id,
-        version,
-        is_deleted,
-        sku_id, country, customs_code, tax_rate, type
-    </sql>
+    <select id="listByProductId" resultType="com.erp.model.plm.entity.ProductCustomsEntity">
+        SELECT
+        pc.id,
+        pd.id AS skuId,
+        pd.images_url,
+        pd.sku_no,
+        pc.country,
+        pc.customs_code,
+        pc.tax_rate,
+        pc.type
+        FROM product_detail pd
+        LEFT JOIN product_customs pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
+        WHERE pd.product_id = #{productId} AND pd.is_deleted = FALSE
+        ORDER BY pd.id desc
+    </select>
 
+    <select id="listBySkuId" resultType="com.erp.model.plm.entity.ProductCustomsEntity">
+        SELECT
+        pc.id,
+        pd.id AS skuId,
+        pd.images_url,
+        pd.sku_no,
+        pc.country,
+        pc.customs_code,
+        pc.tax_rate,
+        pc.type
+        FROM product_detail pd
+        LEFT JOIN product_customs pc ON pc.sku_id = pd."id" AND pc.is_deleted = FALSE
+        WHERE pd.id = #{skuId} AND pd.is_deleted = FALSE
+        ORDER BY pd.id desc
+    </select>
 
 </mapper>

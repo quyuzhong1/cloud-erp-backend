@@ -34,6 +34,17 @@ public class SubcontractOrderDetailDTO implements Serializable {
          * 主键id
          */
         private String id;
+
+        /**
+         * SKU编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
         /**
         * 变体信息
         */
@@ -42,6 +53,12 @@ public class SubcontractOrderDetailDTO implements Serializable {
         * 供应商名称
         */
         private String supplierName;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
 
         /**
         * 币种符号
@@ -59,19 +76,85 @@ public class SubcontractOrderDetailDTO implements Serializable {
         private String warehouseName;
 
         /**
-        * 是否是赠品（false否，true是）
-        */
-        private Boolean isGift;
-
-        /**
         * bom版本
         */
         private Integer bomVersion;
 
         /**
+         * 即时库存数量
+         */
+        private Integer curInventoryQty;
+
+        /**
          * 子件集合
          */
-        private List<ViewDTO> detailList;
+        private List<ChildDTO> childList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ChildDTO extends CommonDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * SKU编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 变体信息
+         */
+        private String variantProperty;
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
+        /**
+         * 采购金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * bom版本
+         */
+        private Integer bomVersion;
+
+        /**
+         * bom用量
+         */
+        private Integer quantity;
+
+        /**
+         * 即时库存数量
+         */
+        private Integer curInventoryQty;
+
     }
 
     /**
@@ -142,21 +225,27 @@ public class SubcontractOrderDetailDTO implements Serializable {
         private BigDecimal price;
 
         /**
-        * 币别
-        */
-        @Size(max = 20,message = "币别最大长度不能超过20位")
-        private String currency;
-
-        /**
         * 仓库id
         */
         @NotBlank(message = "仓库id不能为空")
         @Size(max = 19,message = "仓库id最大长度不能超过19位")
         private String warehouseId;
+
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+
         /**
         * 预计交货日期
         */
         private LocalDate planDeliveryDate;
+
+        /**
+         * 是否是赠品（false否，true是）
+         */
+        private Boolean isGift;
+
         /**
         * 是否加急（false否，true是）
         */
@@ -166,6 +255,7 @@ public class SubcontractOrderDetailDTO implements Serializable {
         /**
          * 备注
          */
+        @Size(max = 255,message = "备注不能大于255字符")
         private String remark;
 
         /**

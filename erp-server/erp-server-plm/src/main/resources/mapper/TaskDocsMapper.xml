@@ -22,7 +22,8 @@
        COALESCE(f.file_name,'-') fileName,COALESCE(f.file_type,'-') fileType,
        COALESCE(f.file_size,0) fileSize, f.upload_type,f.file_url,
        f.upload_type,f.old_file_url,f.old_upload_type,f.old_file_name,
-       f.create_time submitTime,f.file_url,f.create_user_name AS submitUserName
+       f.create_time submitTime,f.file_url,f.create_user_name AS submitUserName,
+       f.id AS finishDocsId
        FROM  task_delivery_docs d
        LEFT JOIN  task_finish_docs f on f.task_docs_id=d.id AND f.is_deleted = FALSE
        INNER JOIN project_task pt ON pt.id=d.task_id AND pt.is_deleted=FALSE
@@ -101,7 +102,7 @@
 
     <select id="getTaskDocsCountByProductId" resultType="com.erp.model.plm.dto.CountDTO">
         SELECT product_id AS flagId  ,count(*) AS count FROM task_delivery_docs
-        WHERE product_id !='' AND is_deleted = FALSE GROUP BY product_id
+        WHERE product_id !='' AND is_deleted = FALSE  AND task_id !='' GROUP BY product_id
     </select>
 
     <select id="getDocsByTaskId" resultType="com.erp.model.plm.dto.DocsDTO">
@@ -117,6 +118,7 @@
         COALESCE(f.file_name,'-') fileName,COALESCE(f.file_type,'-') fileType,
         COALESCE(f.file_size,0) fileSize, f.upload_type,f.file_url,
         f.upload_type,f.old_file_url,f.old_upload_type,f.old_file_name,
+        f.id AS finishDocsId,
         f.create_time submitTime,f.file_url,f.create_user_name AS submitUserName
         FROM  task_delivery_docs d
         LEFT JOIN  task_finish_docs f on f.task_docs_id=d.id AND f.is_deleted = FALSE
@@ -138,6 +140,7 @@
         COALESCE((SELECT  name FROM   project_task WHERE id=d.task_id),'') taskName,
         COALESCE(f.file_name,'-') fileName,COALESCE(f.file_type,'-') fileType,
         COALESCE(f.file_size,0) fileSize, f.upload_type,f.file_url,
+        f.id AS finishDocsId,
         f.upload_type,f.old_file_url,f.old_upload_type,f.old_file_name,
         f.create_time submitTime,f.file_url,f.create_user_name AS submitUserName
         FROM  task_delivery_docs d

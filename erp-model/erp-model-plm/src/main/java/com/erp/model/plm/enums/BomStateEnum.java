@@ -4,7 +4,7 @@ package com.erp.model.plm.enums;
  * bom  状态
  *
  * @Classname
- * @Description TODO
+
  * @Date 2023-01-09 14:43
  * @Created by yl
  */

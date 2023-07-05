@@ -1,21 +1,36 @@
 package com.erp.server.dmp.service.mq;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
+import com.common.core.utils.MapUtil;
 import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.constant.MongoTableNameContant;
+import com.erp.model.dmp.dto.CleanBaseDTO;
+import com.erp.model.dmp.dto.DmpSyncMqDTO;
+import com.erp.model.dmp.dto.DmpTransferInfoDTO;
+import com.erp.model.dmp.dto.OrderMongoDTO;
 import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.gyy.*;
+import com.erp.model.dmp.kingdee.*;
+import com.erp.model.dmp.mabang.*;
 import com.erp.model.plm.dto.NewProductDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.server.dmp.pull.service.dmp.*;
+import com.erp.server.dmp.pull.mongo.MongoService;
+import com.erp.server.dmp.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -46,6 +61,23 @@ public class MQConsumerService {
 
     @Resource
     private DmpOrderItemService dmpOrderItemService;
+    @Resource
+    private DmpBomService dmpBomService;
+    @Resource
+    private MongoService mongoService;
+
+    @Resource
+    private DmpSyncTaskService dmpSyncTaskService;
+
+    @Resource
+    private MQProducerService mqProducerService;
+
+    @Autowired
+    private DmpFbaDeliveryService dmpFbaDeliveryService;
+
+    @Autowired
+    private DmpTransferInfoService dmpTransferInfoService;
+
 
     // topic需要和生产者的topic一致，consumerGroup属性是必须指定的，内容可以随意
     // selectorExpression的意思指的就是tag，默认为“*”，不设置的话会监听所有消息
@@ -66,6 +98,20 @@ public class MQConsumerService {
             log.info("监听到销售订单消息：entity={}", JSONUtil.toJsonStr(ext));
             // 调用订单写入与更新
             dmpOrderInfoService.checkOrder(ext);
+            MapUtil mapUtil = getMapParam();
+
+            if(PlatformEnum.GYY.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = OrderMongoDTO.getByCode(ext.getSalesRecordNumber());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
+            }
+            if(PlatformEnum.MABANG.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = OrderMongoDTO.getByPlatformOrderId(ext.getPlatformOrderId());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
+            }
+            if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = OrderMongoDTO.getByFBillNo(ext.getPlatformOrderId());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_ORDER, KingdeeOrderEntity.class);
+            }
         }
     }
 
@@ -82,6 +128,23 @@ public class MQConsumerService {
             log.info("监听到发货订单消息：entity={}", JSONUtil.toJsonStr(ext));
             // 调用订单写入与更新
             deliveryDetailInfoService.checkOrder(ext);
+            MapUtil mapUtil = getMapParam();
+            if(PlatformEnum.GYY.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = OrderMongoDTO.getByCode(ext.getBillNo());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_GYY_DELIVERY_DETAIL, GyyDeliveryDetailEntity.class);
+            }
+            if(PlatformEnum.MABANG.getDesc().equals(ext.getPlatformSign())){
+                OrderEntity updateParam = new OrderEntity();
+                updateParam.setCleanToDelivery(CleanStatusEnum.CLEANED.getCode());
+                updateParam.setLastPushDeliveryTime(LocalDateTime.now());
+                mapUtil = JSONObject.parseObject(JSONObject.toJSONString(updateParam), MapUtil.class);
+                OrderMongoDTO updateDto = OrderMongoDTO.getByOrderIdAndSaleNum(ext.getPlatformOrderId(), ext.getBillNo());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_ORDER, OrderEntity.class);
+            }
+            if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = OrderMongoDTO.getByFBillNo(ext.getBillNo());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_DELIVERY_DETAIL, KingdeeDeliveryDetailEntity.class);
+            }
         }
     }
 
@@ -98,6 +161,19 @@ public class MQConsumerService {
             log.info("监听退款订单消息：entity={}", JSONUtil.toJsonStr(ext));
             // 调用订单写入与更新
             dmpRefundInfoService.checkOrder(ext);
+            MapUtil mapUtil = getMapParam();
+            if(PlatformEnum.GYY.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = OrderMongoDTO.getByCode(ext.getRefundCode());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_GYY_REFUND, GyyRefundEntity.class);
+            }
+            if(PlatformEnum.MABANG.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = new OrderMongoDTO(ext.getRefundCode());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_REFUND, RefundOrderEntity.class);
+            }
+            if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = OrderMongoDTO.getByFBillNo(ext.getRefundCode());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_REFUND, KingdeeRefundOrderEntity.class);
+            }
         }
     }
 
@@ -114,6 +190,20 @@ public class MQConsumerService {
             log.info("监听退货订单消息：entity={}", JSONUtil.toJsonStr(ext));
             // 调用订单写入与更新
             dmpReturnOrderInfoService.checkOrder(ext);
+            MapUtil mapUtil = getMapParam();
+
+            if(PlatformEnum.GYY.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = OrderMongoDTO.getByCode(ext.getReturnCode());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_GYY_RETURN_ORDER, GyyReturnOrderEntity.class);
+            }
+            if(PlatformEnum.MABANG.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = OrderMongoDTO.getByReturnOrderId(ext.getReturnCode());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_RETURN_ORDER, ReturnOrderEntity.class);
+            }
+            if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = OrderMongoDTO.getByFBillNo(ext.getReturnCode());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_RETURN_ORDER, KingdeeReturnOrderEntity.class);
+            }
         }
     }
 
@@ -131,7 +221,22 @@ public class MQConsumerService {
             }else {
                 dmpShopInfoService.checkOrder(ext);
             }
-
+            MapUtil mapUtil = getMapParam();
+            if(PlatformEnum.GYY.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = OrderMongoDTO.getByCode(ext.getPlatformShopNo());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_GYY_SHOP, GyyShopInfoEntity.class);
+            }
+            if(PlatformEnum.MABANG.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = new OrderMongoDTO(ext.getPlatformShopNo());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_SHOP, ShopEntity.class);
+            }
+            OrderMongoDTO updateDto = OrderMongoDTO.getByFNumber(ext.getPlatformShopNo());
+            if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_SHOP, KingdeeShopEntity.class);
+            }
+            if(PlatformEnum.KINGDEE_ECC.getDesc().equals(ext.getPlatformSign())){
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_ECC_SHOP, KingdeeEccShopEntity.class);
+            }
         }
     }
 
@@ -145,6 +250,11 @@ public class MQConsumerService {
             log.info("监听商品信息消息：entity={}", JSONUtil.toJsonStr(ext));
             // 调用订单写入与更新
             dmpSkuInfoService.checkOrder(ext);
+            MapUtil mapUtil = getMapParam();
+            if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = OrderMongoDTO.getByFNumber(ext.getSkuNo());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_SKU, KingdeeSkuEntity.class);
+            }
         }
     }
 
@@ -192,5 +302,129 @@ public class MQConsumerService {
         public void onMessage(Map<String,List<NewProductDTO>> ext) {
             dmpOrderItemService.getProductListing(ext);
         }
+    }
+
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
+            selectorExpression = "mabang_sku_combo_info_tag||mabang_sku_machining_info_tag",
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sku_bom_consumer")
+    public class ConsumerErpSkuBomOrder implements RocketMQListener<ComboSkuInfoEntity> {
+        @Override
+        public void onMessage(ComboSkuInfoEntity ext) {
+            log.info("监听组合加工SKU消息：entity={}", JSONUtil.toJsonStr(ext));
+            // 调用订单写入与更新
+            dmpBomService.checkOrder(ext);
+            MapUtil mapUtil = getMapParam();
+            if("combine".equals(ext.getRelationType())){
+                OrderMongoDTO updateDto = OrderMongoDTO.getByComboSku(ext.getComboSku());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_COMBO_SKU, ComboSkuInfoEntity.class);
+            }
+            if ("machining".equals(ext.getRelationType())){
+                OrderMongoDTO updateDto = new OrderMongoDTO(ext.get_id());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_SKU, SkuInfoEntity.class);
+            }
+        }
+    }
+
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
+            selectorExpression = "kingdee_transfer_direct_tag",
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-erp_transfer_direct_consumer")
+    public class ConsumerErpTransferDirectInfo implements RocketMQListener<DmpTransferInfoDTO> {
+        @Override
+        public void onMessage(DmpTransferInfoDTO ext) {
+
+            log.info("监听直接调拨单信息消息：entity={}", JSONUtil.toJsonStr(ext));
+            dmpTransferInfoService.sendSyncTask(ext);
+
+            MapUtil mapUtil = getMapParam();
+            if(PlatformEnum.KINGDEE.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = new OrderMongoDTO(ext.getSourceId());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_KINGDEE_DIRECT_TRANSFER, KingdeeTransferDirectEntity.class);
+            }
+        }
+    }
+
+    /**
+     * 金蝶同步b2c销售出库单保存任务
+     */
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
+            selectorExpression = "kingdee_b2c_so_outatock_to_task_tag",
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-sync_kingdee_so_outstock_consumer")
+    public class ConsumerErpSoOutstockInfo implements RocketMQListener<KingdeeDeliveryDetailEntity> {
+        @Override
+        public void onMessage(KingdeeDeliveryDetailEntity ext) {
+            log.info("监听金蝶B2C销售出库单信息消息：entity={}", JSONUtil.toJsonStr(ext));
+            deliveryDetailInfoService.syncTask(ext);
+        }
+    }
+
+    /**
+     * rocketmq 监听马帮FBA发货单相关数据
+     */
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
+            selectorExpression = "mabang_fba_delivery_tag",
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-fba_delivery_consumer")
+    public class ConsumerFbaDelivery implements RocketMQListener<DmpFbaDeliveryEntity> {
+        @Override
+        public void onMessage(DmpFbaDeliveryEntity ext) {
+            log.info("监听FBA发货单信息消息：entity={}", JSONUtil.toJsonStr(ext));
+            dmpFbaDeliveryService.checkDelivery(ext);
+
+            MapUtil mapUtil = getMapParam();
+            if(PlatformEnum.MABANG.getDesc().equals(ext.getPlatformSign())){
+                OrderMongoDTO updateDto = OrderMongoDTO.getByDeliveryNo(ext.getDeliveryNo());
+                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_MABANG_DELIVERY, DeliveryEntity.class);
+            }
+        }
+    }
+
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
+            selectorExpression = "kingdee_refund_order_to_task_tag",
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-kingdee_so_return_order_consumer")
+    public class ConsumerErpSoReturnInstock implements RocketMQListener<KingdeeReturnOrderEntity> {
+        @Override
+        public void onMessage(KingdeeReturnOrderEntity ext) {
+            log.info("监听金蝶B2C销售退货信息消息：entity={}", JSONUtil.toJsonStr(ext));
+            //新增发送任务
+            dmpSyncTaskService.syncKingdeeReturnOrderToWms(ext);
+        }
+    }
+
+    /**
+     * DMP同步任务同步状态更新
+     */
+    @Service
+    @RocketMQMessageListener(topic = RocketMqTopic.DMP_SYNC_TASK_TOPIC,
+            selectorExpression = "dmp_sync_task_callback_tag",
+            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-dmp_sync_task_callback")
+    public class ConsumerSyncTaskCallback implements RocketMQListener<DmpSyncMqDTO.ParamDTO> {
+        @Override
+        public void onMessage(DmpSyncMqDTO.ParamDTO paramDTO) {
+            log.info("监听到DMP同步任务回调：entity={}", JSONUtil.toJsonStr(paramDTO));
+            dmpSyncTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
+        }
+    }
+
+
+    private <T extends CleanBaseDTO> void finishClean(MapUtil mapUtil, OrderMongoDTO updateDto,String tableName, Class<T> clazz) {
+        List<T> mongoData = mongoService.findMongoData(updateDto, 0, 0, tableName, clazz);
+        if(CollectionUtil.isEmpty(mongoData)){
+            throw new RuntimeException("mongo暂未写入数据, 请稍后重试");
+        }
+        if(CleanStatusEnum.CLEANED.getCode().equals(mongoData.get(0).getIsClean())){
+            return;
+        }
+        mongoService.updateMongoData(updateDto, mapUtil, tableName, clazz);
+    }
+    private static MapUtil getMapParam() {
+        CleanBaseDTO updateParam = new CleanBaseDTO();
+        updateParam.setIsClean(CleanStatusEnum.CLEANED.getCode());
+        updateParam.setLastPushTime(LocalDateTime.now());
+        MapUtil mapUtil = JSONObject.parseObject(JSONObject.toJSONString(updateParam), MapUtil.class);
+        return mapUtil;
     }
 }

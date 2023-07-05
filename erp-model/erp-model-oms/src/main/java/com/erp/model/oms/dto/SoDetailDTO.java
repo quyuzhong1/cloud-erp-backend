@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname SoInfoDTO
- * @Description TODO
+
  * @Date 2023-05-10 17:55
  * @Created by yl
  */
@@ -81,10 +81,36 @@ public class SoDetailDTO implements Serializable {
 
 
         /**
+         * 平台sku no
+         */
+        private String platformSkuNo;
+
+        /**
          * 备注
          */
         @Size(max = 200, message = "备注最大200字符")
         private String remark;
+
+        /**
+         * 采购单价
+         */
+        private BigDecimal purchasePrice;
+
+        /**
+         * 销售总成本
+         */
+        private BigDecimal saleCost;
+
+        /**
+         * 销售毛利
+         */
+        private BigDecimal saleProfit;
+
+        /**
+         * 销售毛利率
+         */
+        private BigDecimal saleProfitRate;
+
 
 
     }
@@ -119,6 +145,11 @@ public class SoDetailDTO implements Serializable {
          * sku no
          */
         private String skuNo;
+
+        /**
+         * 平台sku no
+         */
+        private String platformSkuNo;
 
         /**
          * 产品名称
@@ -232,9 +263,62 @@ public class SoDetailDTO implements Serializable {
          */
         private String remark;
 
+        /**
+         * 采购单价
+         */
+        private BigDecimal purchasePrice;
+
+        /**
+         * 销售总成本
+         */
+        private BigDecimal saleCost;
+
+        /**
+         * 销售毛利
+         */
+        private BigDecimal saleProfit;
+
+        /**
+         * 销售毛利率
+         */
+        private BigDecimal saleProfitRate;
+
 
     }
 
+    /**
+     * 发票信息的
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewPiDTO{
+
+
+        private Integer no;
+
+        private String skuNo;
+
+        /**
+         * 规格类型
+         */
+        private String model;
+
+        private Integer qty;
+
+        private BigDecimal price;
+
+        private String currencySymbol;
+
+        private String priceStr;
+
+        private BigDecimal amount;
+
+        private String amountStr;
+
+        private String skuId;
+
+
+    }
 
     /**
      * 详情
@@ -329,6 +413,25 @@ public class SoDetailDTO implements Serializable {
          */
         private Boolean isClose;
 
+        /**
+         * 采购单价
+         */
+        private BigDecimal purchasePrice;
+
+        /**
+         * 销售总成本
+         */
+        private BigDecimal saleCost;
+
+        /**
+         * 销售毛利
+         */
+        private BigDecimal saleProfit;
+
+        /**
+         * 销售毛利率
+         */
+        private BigDecimal saleProfitRate;
 
         /**
          * 备注
@@ -594,9 +697,17 @@ public class SoDetailDTO implements Serializable {
          */
         private String returnTypeDict;
         /**
+         * 退货类型名称
+         */
+        private String returnTypeDictName;
+        /**
          * 退货原因
          */
         private String returnReasonDict;
+        /**
+         * 退货原因名称
+         */
+        private String returnReasonDictName;
     }
 
 

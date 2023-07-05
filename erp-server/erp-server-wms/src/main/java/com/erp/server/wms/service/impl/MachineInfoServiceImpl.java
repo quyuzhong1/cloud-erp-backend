@@ -45,6 +45,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeMachineInfoService;
+import com.erp.server.wms.mabang.SyncMabangMachineService;
 import com.erp.server.wms.mapper.MachineInfoMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Maps;
@@ -52,6 +53,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -105,6 +107,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
     @Resource
     private SyncKingdeeMachineInfoService syncKingdeeMachineInfoService;
+
+    @Autowired
+    private SyncMabangMachineService syncMabangMachineService;
 
 
     @Override
@@ -221,6 +226,10 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         List<MachineDetailDTO.UpdateDTO> detailList = dto.getDetailList();
         //处理数据id
         doOpHandleDataId(dto.getWarehouseId(), dto.getReceiveOrgId(), dto.getWarehouseKeeperId(),dto.getReceiverId(), entity);
+
+        // 此处增加限制，如果是从FBA发货单同步下来生成的加工单不允许新增或移除SKU
+        List<MachineDetailEntity> originMachineDetailList = machineDetailService.listByMainId(dto.getId());
+        checkFbaMachine(old, originMachineDetailList, dto.getDetailList());
 
         log.info("加工单修改，id=【{}】", dto.getId());
 
@@ -341,6 +350,11 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     }
 
     @Override
+    public List<MachineInfoEntity> findBySourceTypeAndSourceCode(String sourceType, String sourceCode) {
+        return lambdaQuery().eq(MachineInfoEntity::getSourceType, sourceType).eq(MachineInfoEntity::getSourceCode, sourceCode).list();
+    }
+
+    @Override
     public List<MachineSubComponentsDTO.ViewDTO> viewSubComponents(String detailId) {
         List<MachineSubComponentsEntity> machineSubComponentsList = machineSubComponentsService.listByDetailId(detailId);
         if (CollectionUtils.isEmpty(machineSubComponentsList)) {
@@ -454,6 +468,13 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             updateInventoryTransCore(list);
             //金蝶推送
             list.forEach(obj -> syncKingdeeMachineInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+            // 发送马帮
+            list.forEach(obj->{
+                // TODO 此处可能存在一个加工单有些是从FBA发货单同步过来的父子级，需要判断过滤，后面会限制同步过来的不允许新增或移除SKU
+                if(Objects.equals(obj.getSourceType(), SourceTypeEnum.MABANG_FBA_DELIVERY.getCode())) {
+                    syncMabangMachineService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+                }
+            });
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("加工单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
             //中止当前审核流程
@@ -488,6 +509,13 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
         //金蝶推送
         list.forEach(obj -> syncKingdeeMachineInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        // 发送马帮
+        list.forEach(obj->{
+            // TODO 此处可能存在一个加工单有些是从FBA发货单同步过来的父子级，需要判断过滤
+            if(Objects.equals(obj.getSourceType(), SourceTypeEnum.MABANG_FBA_DELIVERY.getCode())) {
+                syncMabangMachineService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode());
+            }
+        });
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("反审核了一个加工单【%s】", ModuleTypeEnum.MACHINE_INFO.getCode(), pairList, "反审核操作");
@@ -772,6 +800,30 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                 .set(MachineInfoEntity::getApproveUserName, "")
                 .set(MachineInfoEntity::getApproveTime, null)
                 .update();
+    }
+
+    /**
+     * 检查FBA发货单生成的加工单修改是否新增或移除了SKU
+     * @param machineInfoEntity
+     * @param originDetailList
+     * @param updateDetailList
+     */
+    private void checkFbaMachine(MachineInfoEntity machineInfoEntity, List<MachineDetailEntity> originDetailList, List<MachineDetailDTO.UpdateDTO> updateDetailList) {
+        if(!Objects.equals(machineInfoEntity.getSourceType(), SourceTypeEnum.MABANG_FBA_DELIVERY.getCode())) {
+            return;
+        }
+        // 原加工单父级SKU集合
+        List<String> originParentSkuList = originDetailList.stream().map(MachineDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
+        // 提交的加工单父级SKU集合
+        List<String> updateParentSkuList = updateDetailList.stream().map(MachineDetailDTO.UpdateDTO::getSkuNo).distinct().collect(Collectors.toList());
+        if(originParentSkuList.size() != updateParentSkuList.size()) {
+            throw new ServiceException("FBA发货单同步生成的加工单不允许新增或移除SKU");
+        }
+        updateDetailList.stream().forEach(updateSku->{
+            if(!originParentSkuList.contains(updateSku.getSkuNo())) {
+                throw new ServiceException("FBA发货单同步生成的加工单不允许新增或移除SKU");
+            }
+        });
     }
 
 }

@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 /**
  * @Classname: InitStockExportExcelDTO
- * @Description: TODO
+
  * @CreateTime: 2023-05-11  12:11
  * @Author: zhangchunlin
  */

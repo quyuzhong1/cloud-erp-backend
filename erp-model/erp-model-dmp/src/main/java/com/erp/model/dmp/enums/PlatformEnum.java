@@ -3,7 +3,7 @@ package com.erp.model.dmp.enums;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/1/11 18:41
  */
 public enum PlatformEnum {
@@ -11,7 +11,8 @@ public enum PlatformEnum {
     MABANG(1, "mabang", "马帮"),
     GYY(2, "gyy", "管易云"),
     KINGDEE(3, "kingdee", "金蝶云星空"),
-    KINGDEE_ECC(4, "kingdeeEcc", "金蝶云星空ECC");
+    KINGDEE_ECC(4, "kingdeeEcc", "金蝶云星空ECC"),
+    ERP(5, "erp", "自研ERP");
 
     private Integer code;
 

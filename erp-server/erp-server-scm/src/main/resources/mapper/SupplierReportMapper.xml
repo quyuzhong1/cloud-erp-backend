@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.SupplierReportMapper">
+
+    <select id="getPurchasePaging" resultType="com.erp.model.scm.dto.SupplierReportDTO$PagingViewDTO">
+         select
+            sup.id,
+            sup.code,
+            sup.name,
+            sup.disabled as supplier_disabled,
+            array_to_string(array_agg(po.id), ',') AS purchase_order_ids,
+            count(distinct po.id) as purchase_count,
+            sum(pod.purchase_qty) as purchase_qty,
+            sum(pod.purchase_amount) as purchase_amount
+            from
+            supplier sup
+            inner join purchase_order_supplier pos on pos.supplier_id = sup.id and pos.is_deleted = false
+            inner join purchase_order po on po.id = pos.purchase_order_id and po.is_deleted = false and po.approve_status = 'approve'
+            inner join purchase_order_detail pod on pod.purchase_order_id = po.id and pod.is_deleted = false
+            <where>
+              sup.is_deleted = false
+              <if test="params.supplierNameList != null and params.supplierNameList.size > 0">
+                  AND sup.name IN
+                  <foreach collection="params.supplierNameList" item="item" open="(" close=")" separator=",">
+                      #{item}
+                  </foreach>
+              </if>
+              <if test="params.dateList != null and params.dateList.size > 0">AND
+                  po.purchase_date >= #{params.dateList[0]} AND (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.purchase_date
+              </if>
+              <!--权限-->
+              <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+              </if>
+            </where>
+            group by sup.id order by purchase_amount desc NULLS LAST
+    </select>
+    <select id="exportList" resultType="com.erp.model.scm.dto.SupplierReportDTO$PagingViewDTO">
+        select
+        sup.id,
+        sup.code,
+        sup.name,
+        sup.disabled as supplier_disabled,
+        array_to_string(array_agg(po.id), ',') AS purchase_order_ids,
+        count(distinct po.id) as purchase_count,
+        sum(pod.purchase_qty) as purchase_qty,
+        sum(pod.purchase_amount) as purchase_amount
+        from
+        supplier sup
+        inner join purchase_order_supplier pos on pos.supplier_id = sup.id and pos.is_deleted = false
+        inner join purchase_order po on po.id = pos.purchase_order_id and po.is_deleted = false and po.approve_status = 'approve'
+        inner join purchase_order_detail pod on pod.purchase_order_id = po.id and pod.is_deleted = false
+        <where>
+            sup.is_deleted = false
+            <if test="params.ids != null and params.ids.size > 0">
+                AND sup.id IN
+                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.supplierNameList != null and params.supplierNameList.size > 0">
+                AND sup.name IN
+                <foreach collection="params.supplierNameList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.dateList != null and params.dateList.size > 0">AND
+                po.purchase_date >= #{params.dateList[0]} AND (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > po.purchase_date
+            </if>
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by sup.id order by purchase_amount desc NULLS LAST
+    </select>
+</mapper>

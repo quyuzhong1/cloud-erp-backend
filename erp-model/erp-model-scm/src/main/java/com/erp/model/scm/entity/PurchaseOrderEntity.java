@@ -25,8 +25,9 @@ import java.time.LocalDateTime;
 @TableName("purchase_order")
 public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
 
+
     /**
-     * 审核状态 
+     * 审核状态
      */
     @TableField("approve_status")
     private String approveStatus;
@@ -68,18 +69,6 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
     private String purchaseOrgName;
 
     /**
-     * 收料组织id
-     */
-    @TableField("receive_org_id")
-    private String receiveOrgId;
-
-    /**
-     * 收料组织名称
-     */
-    @TableField("receive_org_name")
-    private String receiveOrgName;
-
-    /**
      * 采购部门id
      */
     @TableField("purchase_dept_id")
@@ -90,19 +79,6 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
      */
     @TableField("purchase_dept_name")
     private String purchaseDeptName;
-
-
-    /**
-     * 交货仓库id
-     */
-    @TableField("delivery_warehouse_id")
-    private String deliveryWarehouseId;
-
-    /**
-     * 交货仓库名称
-     */
-    @TableField("delivery_warehouse_name")
-    private String deliveryWarehouseName;
 
     /**
      * 新品首批（false否,true是）
@@ -129,16 +105,16 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
     private LocalDateTime approveTime;
 
     /**
-     * 审核人id
-     */
-    @TableField("approve_user_id")
-    private String approveUserId;
-
-    /**
      * 审核人名称
      */
     @TableField("approve_user_name")
     private String approveUserName;
+
+    /**
+     * 审核人id
+     */
+    @TableField("approve_user_id")
+    private String approveUserId;
 
     /**
      * 作废原因
@@ -147,7 +123,55 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
     private String invalidRemark;
 
     /**
-     * 来源id
+     * 交货仓库id
+     */
+    @TableField("delivery_warehouse_id")
+    private String deliveryWarehouseId;
+
+    /**
+     * 交货仓库名称
+     */
+    @TableField("delivery_warehouse_name")
+    private String deliveryWarehouseName;
+
+    /**
+     * 收料组织id
+     */
+    @TableField("receive_org_id")
+    private String receiveOrgId;
+
+    /**
+     * 收料组织名称
+     */
+    @TableField("receive_org_name")
+    private String receiveOrgName;
+
+    /**
+     * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
+     */
+    @TableField("sync_kingdee_status")
+    private String syncKingdeeStatus;
+
+    /**
+     * 同步时间
+     */
+    @TableField("sync_kingdee_time")
+    private LocalDateTime syncKingdeeTime;
+
+    /**
+     * 金蝶数据id
+     */
+    @TableField("sync_kingdee_id")
+    private String syncKingdeeId;
+
+    /**
+     * 同步操作
+     */
+    @TableField("sync_operate")
+    private String syncOperate;
+
+    /**
+     * 来源主键id
      */
     @TableField("source_id")
     private String sourceId;
@@ -159,79 +183,10 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
     private String sourceType;
 
     /**
-     * 是否是委外
+     * 委外订单类型（child子级，parent父级）
      */
-    @TableField("is_subcontract")
-    private Boolean isSubcontract;
-
-    /**
-     * 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
-     */
-    @TableField("sync_kingdee_status")
-    private String syncKingdeeStatus;
-
-    /**
-     * 同步金蝶时间
-     */
-    @TableField("sync_kingdee_time")
-    private LocalDateTime syncKingdeeTime;
-
-    /**
-     * 同步金蝶id
-     */
-    @TableField("sync_kingdee_id")
-    private String syncKingdeeId;
-
-    /**
-     * 同步操作
-     */
-    @TableField("sync_operate")
-    private String syncOperate;
-
-
-    public static final String APPROVE_STATUS = "approve_status";
-
-    public static final String CODE = "code";
-
-    public static final String PURCHASE_DATE = "purchase_date";
-
-    public static final String PURCHASE_USER_ID = "purchase_user_id";
-
-    public static final String PURCHASE_USER_NAME = "purchase_user_name";
-
-    public static final String PURCHASE_ORG_ID = "purchase_org_id";
-
-    public static final String PURCHASE_ORG_NAME = "purchase_org_name";
-
-    public static final String RECEIVE_ORG_ID = "receive_org_id";
-
-    public static final String RECEIVE_ORG_NAME = "receive_org_name";
-
-    public static final String PURCHASE_DEPT_ID = "purchase_dept_id";
-
-    public static final String PURCHASE_DEPT_NAME = "purchase_dept_name";
-
-    public static final String IS_FIRST_MASS_PRODUCT = "is_first_mass_product";
-
-    public static final String INVALID_STATUS = "invalid_status";
-
-    public static final String INVALID_TIME = "invalid_time";
-
-    public static final String APPROVE_TIME = "approve_time";
-
-    public static final String APPROVE_USER_ID = "approve_user_id";
-
-    public static final String APPROVE_USER_NAME = "approve_user_name";
-
-    public static final String INVALID_REMARK = "invalid_remark";
-
-    public static final String SYNC_KINGDEE_STATUS = "sync_kingdee_status";
-
-    public static final String SYNC_KINGDEE_TIME = "sync_kingdee_time";
-
-    public static final String SYNC_KINGDEE_ID = "sync_kingdee_id";
-
-    public static final String SYNC_OPERATE = "sync_operate";
+    @TableField("subcontract_type")
+    private String subcontractType;
 
     @Override
     public Serializable pkVal() {

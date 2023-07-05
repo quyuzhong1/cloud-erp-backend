@@ -1,25 +1,21 @@
 package com.erp.server.plm.service.impl;
 
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.FastDFSClientUtil;
-import com.common.core.utils.FileUtil;
-import com.common.core.utils.MathUtil;
+import com.common.business.constant.IsConstant;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.vo.LoginUser;
+import com.common.core.utils.*;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.*;
 import com.erp.model.workflow.dto.ProcessNodeDTO;
 import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
-import com.common.business.constant.IsConstant;
 import com.erp.server.plm.constant.TaskConstant;
-import com.erp.model.plm.enums.*;
 import com.erp.server.plm.mapper.TaskDocsFinishMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -58,8 +54,6 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
     @Autowired
     private DocsChangeRecordService docsChangeRecordService;
 
-    @Autowired
-    private ProductOperateRecordService productOperateRecordService;
 
     @Autowired
     private BusinessProcessService businessProcessService;
@@ -73,12 +67,16 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
     @Autowired
     @Lazy
     private NoticeMessageService noticeMessageService;
-    
+
     @Autowired
     private SysLogService sysLogService;
 
     @Autowired
     private TaskChargeDistributionService taskChargeDistributionService;
+
+    @Autowired
+    private TaskDocHistoryService taskDocHistoryService;
+
 
     /**
      * 根据任务id 集合获取对应数据
@@ -108,7 +106,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
      * @date 2022-09-23 17:15
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Boolean uploadFile(TaskUploadFileDTO dto) {
         //根据任务id 获取任务信息
         ProjectTaskEntity taskEntity = projectTaskService.getById(dto.getTaskId());
@@ -134,19 +132,22 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 
         List<TaskDocsFinishEntity> resultList = new ArrayList<>();
         List<UploadMultipartFileDTO> list = dto.getList();
-        for (UploadMultipartFileDTO uploadMultipartFileDTO: list) {
+        for (UploadMultipartFileDTO uploadMultipartFileDTO : list) {
             //上传文件
             List<MultipartFile> files = uploadMultipartFileDTO.getFiles();
             //飞书链接
             List<String> fileUrls = uploadMultipartFileDTO.getFileUrls();
             //文件信息保存
             if (CollectionUtils.isNotEmpty(files)) {
-                for (MultipartFile multipartFile: files) {
+                for (MultipartFile multipartFile : files) {
                     TaskDocsFinishEntity entity = new TaskDocsFinishEntity();
-                    BeanMapperUtils.copy(finishEntity,entity);
+                    BeanMapperUtils.copy(finishEntity, entity);
                     double size = multipartFile.getSize();
                     fileSize = size / (1024 * 1024);
                     fileSize = (double) Math.round(fileSize * 100) / 100;
+                    if (fileSize > 300) {
+                        throw new ServiceException(ApiError.ERROR_95160, 300);
+                    }
                     fileName = multipartFile.getOriginalFilename().toLowerCase();
                     fileSuffix = FilenameUtils.getExtension(fileName).toLowerCase();
                     File file = FileUtil.multiToFile(multipartFile);
@@ -172,9 +173,9 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             }
             //飞书链接信息保存
             if (CollectionUtils.isNotEmpty(fileUrls)) {
-                for (String fileUrl: fileUrls) {
+                for (String fileUrl : fileUrls) {
                     TaskDocsFinishEntity entity = new TaskDocsFinishEntity();
-                    BeanMapperUtils.copy(finishEntity,entity);
+                    BeanMapperUtils.copy(finishEntity, entity);
                     entity.setUploadType(IsConstant.YES);
                     entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
                     entity.setFileUrl(fileUrl);
@@ -187,11 +188,11 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         }
         if (CollectionUtils.isNotEmpty(resultList)) {
             //删除飞书通知
-            deleteByUploadType(dto.getProductId(),dto.getTaskId(),IsConstant.YES);
+            deleteByUploadType(dto.getProductId(), dto.getTaskId(), IsConstant.YES);
             boolean flag = this.saveOrUpdateBatch(resultList);
             if (flag) {
                 //新增上传交付物操作日志
-                SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("上传了一个文件[%s]",String.join(",",fileNames)))
+                SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("上传了一个文件[%s]", String.join(",", fileNames)))
                         .setBusinessId(taskEntity.getId())
                         .setOperation("文档操作")
                         .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
@@ -199,8 +200,25 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             }
         }
 
-      return Boolean.TRUE;
+        return Boolean.TRUE;
     }
+
+
+    /**
+     * 根据交付文档ids 获取到已完成的
+     *
+     * @param deliveryDocsIds
+     * @return java.util.List<com.erp.model.plm.entity.TaskDocsFinishEntity>
+     * @author yl
+     * @date 2023-06-21 15:05
+     */
+    private List<TaskDocsFinishEntity> listByDeliveryDocsIds(List<String> deliveryDocsIds) {
+        if (CollectionUtils.isEmpty(deliveryDocsIds)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(TaskDocsFinishEntity::getTaskDocsId, deliveryDocsIds).list();
+    }
+
 
     /**
      * 删除已存在的交付文档
@@ -217,7 +235,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         queryWrapper.eq(TaskDocsFinishEntity::getTaskId, taskId);
         queryWrapper.eq(TaskDocsFinishEntity::getProductId, productId);
         queryWrapper.eq(TaskDocsFinishEntity::getTaskDocsId, taskDocsId);
-         this.remove(queryWrapper);
+        this.remove(queryWrapper);
     }
 
     /**
@@ -275,7 +293,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
      * @date 2022-10-14 11:52
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Boolean changeFile(TaskChangeFileDTO dto) {
         String taskId = dto.getTaskId();
         ProjectTaskEntity taskEntity = projectTaskService.getById(taskId);
@@ -292,104 +310,209 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                 && !approvalNoPassCode.equals(taskState)) {
             throw new ServiceException(ApiError.ERROR_95039);
         }
-
         LoginUser loginUser = commonService.getUserInfo();
-
-        //文件名
-        String fileName = "";
-        List<String> fileNames = new ArrayList<>();
-        //文件后缀
-        String fileSuffix = "";
-        double fileSize = 0.0;
-        TaskDocsFinishEntity finishEntity = new TaskDocsFinishEntity();
-        finishEntity.setCreateUserName(loginUser.getUserName());
-        finishEntity.setFileName(fileName);
-        finishEntity.setProductId(dto.getProductId());
-        finishEntity.setTaskId(dto.getTaskId());
-        finishEntity.setCreateUserId(loginUser.getUid());
-        finishEntity.setFileType(TaskConstant.FILE_TYPE);
-        finishEntity.setFileSuffix(fileSuffix);
-        finishEntity.setFileSize(fileSize);
-
-        List<TaskDocsFinishEntity> resultList = new ArrayList<>();
-        List<UploadMultipartFileDTO> list = dto.getList();
-        for (UploadMultipartFileDTO uploadMultipartFileDTO: list) {
-            //上传文件
-            List<MultipartFile> files = uploadMultipartFileDTO.getFiles();
-            //飞书链接
-            List<String> fileUrls = uploadMultipartFileDTO.getFileUrls();
-            if (CollectionUtils.isEmpty(files) && CollectionUtils.isEmpty(fileUrls)) {
-                continue;
-            }
-            //文件信息保存
-            if (CollectionUtils.isNotEmpty(files)) {
-                for (MultipartFile multipartFile: files) {
-                    TaskDocsFinishEntity entity = new TaskDocsFinishEntity();
-                    BeanMapperUtils.copy(finishEntity,entity);
-                    double size = multipartFile.getSize();
-                    fileSize = size / (1024 * 1024);
-                    fileSize = (double) Math.round(fileSize * 100) / 100;
-                    fileName = multipartFile.getOriginalFilename().toLowerCase();
-                    fileSuffix = FilenameUtils.getExtension(fileName).toLowerCase();
-                    File file = FileUtil.multiToFile(multipartFile);
-                    String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
-                    if (StringUtils.isBlank(fileUrl)) {
-                        throw new ServiceException(ApiError.ERROR_95018);
-                    }
-                    if (fileName.length() > 200) {
-                        throw new ServiceException(ApiError.ERROR_1018);
-                    }
-                    entity.setUploadType(IsConstant.NO);
-                    entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
-                    entity.setFileSuffix(fileSuffix);
-                    entity.setFileSize(fileSize);
-                    entity.setFileName(fileName);
-                    entity.setFileUrl(fileUrl);
-                    entity.setOldFileName(fileName);
-                    entity.setOldUploadType(IsConstant.NO);
-                    entity.setOldFileUrl(fileUrl);
-                    fileNames.add(fileName);
-                    resultList.add(entity);
-                }
-            }
-            //飞书链接信息保存
-            if (CollectionUtils.isNotEmpty(fileUrls)) {
-                for (String fileUrl: fileUrls) {
-                    TaskDocsFinishEntity entity = new TaskDocsFinishEntity();
-                    BeanMapperUtils.copy(finishEntity,entity);
-                    entity.setUploadType(IsConstant.YES);
-                    entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
-                    entity.setFileUrl(fileUrl);
-                    entity.setOldFileUrl(fileUrl);
-                    entity.setOldUploadType(IsConstant.YES);
-                    resultList.add(entity);
-                }
-            }
-
+        //完成的文档
+        String finishDocsId = dto.getFinishDocsId();
+        //这个是已完成交付文档
+        TaskDocsFinishEntity finishEntity = this.getById(finishDocsId);
+        if (Objects.isNull(finishEntity)) {
+            throw new ServiceException(ApiError.ERROR_95028);
         }
-
-        StringBuffer sb = new StringBuffer();
-        if (CollectionUtils.isNotEmpty(resultList)) {
-            //删除飞书通知
-            deleteByUploadType(dto.getProductId(),dto.getTaskId(),IsConstant.YES);
-            Boolean flag = this.saveBatch(resultList);
-            //当更新成功后 保存记录
-            if (flag) {
-                noticeMessageService.docChangesNotice(loginUser.getUserName(), taskEntity.getProductId(), taskId, String.join(",",fileNames));
-                sb.append("变更为").append(String.join(",",fileNames));
-                for (TaskDocsFinishEntity taskDocsFinishEntity: resultList) {
-                    docsChangeRecordService.addRecord(sb.toString(), finishEntity.getTaskId(), taskDocsFinishEntity.getId(), "");
-                }
+        //旧的文档  保存历史用到
+        TaskDocsFinishEntity oldDocs = new TaskDocsFinishEntity();
+        BeanMapper.copy(finishEntity, oldDocs);
+        finishEntity.setFileType(TaskConstant.FILE_TYPE);
+        MultipartFile multipartFile = dto.getFile();
+        Integer uploadType = dto.getUploadType();
+        String fileUrl = "";
+        String fileName = "";
+        //表示上传
+        if (TaskConstant.LOCAL_UPLOAD.equals(uploadType)) {
+            if (Objects.isNull(multipartFile)) {
+                throw new ServiceException(ApiError.ERROR_95185);
             }
+            File file = FileUtil.multiToFile(multipartFile);
+            //文件名
+            fileName = multipartFile.getOriginalFilename().toLowerCase();
+            if (fileName.length() > 200) {
+                throw new ServiceException(ApiError.ERROR_1018);
+            }
+            finishEntity.setFileName(fileName);
+            //文件后缀
+            String fileSuffix = FilenameUtils.getExtension(fileName).toLowerCase();
+            finishEntity.setFileSuffix(fileSuffix);
+            double size = multipartFile.getSize();
+            double fileSize = size / (1024 * 1024);
+            fileSize = (double) Math.round(fileSize * 100) / 100;
+            if (fileSize > 300) {
+                throw new ServiceException(ApiError.ERROR_95160, 300);
+            }
+            finishEntity.setFileSize(fileSize);
+            fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
+        } else {
+            fileUrl = dto.getFileUrl();
+        }
+        if (StringUtils.isEmpty(fileUrl)) {
+            throw new ServiceException(ApiError.ERROR_95186);
+        }
+        finishEntity.setUploadType(dto.getUploadType());
+        finishEntity.setFileUrl(fileUrl);
+        finishEntity.setFileName(fileName);
+        finishEntity.setOldFileName(oldDocs.getFileName());
+        finishEntity.setOldUploadType(oldDocs.getUploadType());
+        finishEntity.setOldFileUrl(oldDocs.getFileUrl());
+        Boolean result = this.updateById(finishEntity);
+        //当更新成功后 保存记录
+        if (result) {
+            taskEntity.setIsChangeDocs(Boolean.TRUE);
+            projectTaskService.updateById(taskEntity);
+            noticeMessageService.docChangesNotice(loginUser.getUserName(), taskEntity.getProductId(), taskId, String.join(",", fileName));
+            StringBuffer sb = new StringBuffer();
+            sb.append("文档").append(oldDocs.getFileName());
+            sb.append("变更为").append(fileName);
+            docsChangeRecordService.addRecord(sb.toString(), finishEntity.getTaskId(), finishDocsId, "");
             //新增变更文档操作日志
-            SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("变更了一个文件[%s]", String.join(",",fileNames)))
+            SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("变更了一个文件[%s]", sb.toString()))
                     .setBusinessId(taskEntity.getId())
                     .setOperation("文档操作")
                     .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
             sysLogService.addSysLogByOther(sysLogEntity);
-        }
-        startChangeDocsProcess(loginUser.getUid(), taskEntity);
 
+            //添加历史
+            taskDocHistoryService.addHistory(oldDocs);
+        }
+
+        return result;
+    }
+
+
+    /**
+     * 任务列表 -变更文档
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2022-11-15 9:22
+     */
+    @Override
+    public Boolean updateFile(TaskChangeFileDTO dto) {
+//        String taskId = dto.getTaskId();
+//        ProjectTaskEntity taskEntity = projectTaskService.getById(taskId);
+//        if (Objects.isNull(taskEntity)) {
+//            throw new ServiceException(ApiError.ERROR_95027);
+//        }
+//        //只有任务完成了 或者 审核通过了  或者审核不通过才能变更流程
+//        Integer finishCode = TaskStateEnum.FINISH.getCode();
+//        Integer approvalPassCode = TaskStateEnum.APPROVAL_PASS.getCode();
+//        Integer approvalNoPassCode = TaskStateEnum.APPROVAL_NO_PASS.getCode();
+//        Integer taskState = taskEntity.getStatus();
+//        //当不为这两个的时候是不能变更的
+//        if (!taskState.equals(finishCode) && !approvalPassCode.equals(taskState)
+//                && !approvalNoPassCode.equals(taskState)) {
+//            throw new ServiceException(ApiError.ERROR_95039);
+//        }
+//        LoginUser loginUser = commonService.getUserInfo();
+//
+//        //文件名
+//        String fileName = "";
+//        List<String> fileNames = new ArrayList<>();
+//        //文件后缀
+//        String fileSuffix = "";
+//        double fileSize = 0.0;
+//        TaskDocsFinishEntity finishEntity = new TaskDocsFinishEntity();
+//        finishEntity.setCreateUserName(loginUser.getUserName());
+//        finishEntity.setFileName(fileName);
+//        finishEntity.setProductId(dto.getProductId());
+//        finishEntity.setTaskId(dto.getTaskId());
+//        finishEntity.setCreateUserId(loginUser.getUid());
+//        finishEntity.setFileType(TaskConstant.FILE_TYPE);
+//        finishEntity.setFileSuffix(fileSuffix);
+//        finishEntity.setFileSize(fileSize);
+//        List<TaskDocsFinishEntity> resultList = new ArrayList<>();
+//        List<UploadMultipartFileDTO> list = dto.getList();
+//        if (CollectionUtils.isNotEmpty(list)) {
+//            for (UploadMultipartFileDTO uploadMultipartFileDTO : list) {
+//                //上传文件
+//                List<MultipartFile> files = uploadMultipartFileDTO.getFiles();
+//                //飞书链接
+//                List<String> fileUrls = uploadMultipartFileDTO.getFileUrls();
+//                if (CollectionUtils.isEmpty(files) && CollectionUtils.isEmpty(fileUrls)) {
+//                    continue;
+//                }
+//                //文件信息保存
+//                if (CollectionUtils.isNotEmpty(files)) {
+//                    for (MultipartFile multipartFile : files) {
+//                        TaskDocsFinishEntity entity = new TaskDocsFinishEntity();
+//                        BeanMapperUtils.copy(finishEntity, entity);
+//                        double size = multipartFile.getSize();
+//                        fileSize = size / (1024 * 1024);
+//                        fileSize = (double) Math.round(fileSize * 100) / 100;
+//                        fileName = multipartFile.getOriginalFilename().toLowerCase();
+//                        fileSuffix = FilenameUtils.getExtension(fileName).toLowerCase();
+//                        File file = FileUtil.multiToFile(multipartFile);
+//                        String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
+//                        if (StringUtils.isBlank(fileUrl)) {
+//                            throw new ServiceException(ApiError.ERROR_95018);
+//                        }
+//                        if (fileName.length() > 200) {
+//                            throw new ServiceException(ApiError.ERROR_1018);
+//                        }
+//                        finishEntity.setUploadType(IsConstant.NO);
+//                        entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
+//                        entity.setFileSuffix(fileSuffix);
+//                        entity.setFileSize(fileSize);
+//                        entity.setFileName(fileName);
+//                        entity.setFileUrl(fileUrl);
+//                        entity.setOldFileName(fileName);
+//                        entity.setOldUploadType(IsConstant.NO);
+//                        entity.setOldFileUrl(fileUrl);
+//                        fileNames.add(fileName);
+//                        resultList.add(entity);
+//                    }
+//                }
+//                //飞书链接信息保存
+//                if (CollectionUtils.isNotEmpty(fileUrls)) {
+//                    for (String fileUrl : fileUrls) {
+//                        TaskDocsFinishEntity entity = new TaskDocsFinishEntity();
+//                        BeanMapperUtils.copy(finishEntity, entity);
+//                        entity.setUploadType(IsConstant.YES);
+//                        entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
+//                        entity.setFileUrl(fileUrl);
+//                        entity.setOldFileUrl(fileUrl);
+//                        entity.setOldUploadType(IsConstant.YES);
+//                        resultList.add(entity);
+//                    }
+//                }
+//
+//            }
+//        }
+//        StringBuffer sb = new StringBuffer();
+//        if (CollectionUtils.isNotEmpty(resultList)) {
+//            //删除飞书通知
+//            deleteByUploadType(dto.getProductId(), dto.getTaskId(), IsConstant.YES);
+//            Boolean flag = this.saveBatch(resultList);
+//            //当更新成功后 保存记录
+//            if (flag) {
+//                noticeMessageService.docChangesNotice(loginUser.getUserName(), taskEntity.getProductId(), taskId, String.join(",", fileNames));
+//                sb.append("新增文档").append(String.join(",", fileNames));
+//                for (TaskDocsFinishEntity taskDocsFinishEntity : resultList) {
+//                    docsChangeRecordService.addRecord(sb.toString(), finishEntity.getTaskId(), taskDocsFinishEntity.getId(), "");
+//                }
+//                //新增产品操作日志
+//                ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
+//                productOperateRecordDTO.setProductId(finishEntity.getProductId());
+//                List<String> remarkList = new ArrayList<>();
+//                remarkList.add("变更文档：[" + fileNames + "]");
+//                productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
+//                productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+//                //新增变更文档操作日志
+//                SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("变更了一个文件[%s]", String.join(",", fileNames)))
+//                        .setBusinessId(taskEntity.getId())
+//                        .setOperation("文档操作")
+//                        .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
+//                sysLogService.addSysLogByOther(sysLogEntity);
+//            }
+//        }
         return Boolean.TRUE;
     }
 
@@ -405,13 +528,13 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         //任务类型
         Integer taskType = taskEntity.getType();
         List<List<String>> membersIds = new ArrayList<>();
-        BusinessProcessEntity businessProcess ;
+        BusinessProcessEntity businessProcess;
         //这里需要启动一个变更流程,如果是评审任务则调用文档变更流程，一般任务采用原有流程
         if (TaskTypeEnum.GENERAL_TASK.getCode().equals(taskType)) {
             //查询任务下审核人
             List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, taskEntity.getId());
             if (CollectionUtils.isNotEmpty(taskChargeDistributionList)) {
-                for (TaskChargeDistributionEntity taskChargeDistributionEntity:taskChargeDistributionList) {
+                for (TaskChargeDistributionEntity taskChargeDistributionEntity : taskChargeDistributionList) {
                     String chargeIds = taskChargeDistributionEntity.getChargeIds();
                     if (StringUtils.isNotBlank(chargeIds)) {
                         List<String> userIdList = Arrays.stream(chargeIds.split(",")).collect(Collectors.toList());
@@ -431,7 +554,12 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 
             businessProcess = businessProcessService.getProcessByBusinessKey(BusinessProcessEnum.DOCS_CHANGE.getBusinessKey());
         }
+        //表示没有流程了
         if (ObjectUtils.isEmpty(businessProcess)) {
+            Integer finishCode = TaskStateEnum.FINISH.getCode();
+            if(finishCode.equals(taskEntity.getStatus())){
+                taskDocHistoryService.updateChangeResult(taskEntity.getId());
+            }
             return Boolean.TRUE;
         }
 
@@ -453,6 +581,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             taskEntity.setProcessId(processId);
             taskEntity.setStatus(TaskStateEnum.WAIT_CONFIRM.getCode());
             taskEntity.setBusinessProcessId(businessProcess.getId());
+            taskEntity.setIsChangeDocs(Boolean.TRUE);
             return projectTaskService.updateById(taskEntity);
         }
         return Boolean.TRUE;
@@ -531,141 +660,12 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 
     }
 
-    /**
-     * 任务列表 -变更文档
-     *
-     * @param dto
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2022-11-15 9:22
-     */
-    @Override
-    public Boolean updateFile(TaskChangeFileDTO dto) {
-        String taskId = dto.getTaskId();
-        ProjectTaskEntity taskEntity = projectTaskService.getById(taskId);
-        if (Objects.isNull(taskEntity)) {
-            throw new ServiceException(ApiError.ERROR_95027);
-        }
-        //只有任务完成了 或者 审核通过了  或者审核不通过才能变更流程
-        Integer finishCode = TaskStateEnum.FINISH.getCode();
-        Integer approvalPassCode = TaskStateEnum.APPROVAL_PASS.getCode();
-        Integer approvalNoPassCode = TaskStateEnum.APPROVAL_NO_PASS.getCode();
-        Integer taskState = taskEntity.getStatus();
-        //当不为这两个的时候是不能变更的
-        if (!taskState.equals(finishCode) && !approvalPassCode.equals(taskState)
-                && !approvalNoPassCode.equals(taskState)) {
-            throw new ServiceException(ApiError.ERROR_95039);
-        }
-        LoginUser loginUser = commonService.getUserInfo();
 
-        //文件名
-        String fileName = "";
-        List<String> fileNames = new ArrayList<>();
-        //文件后缀
-        String fileSuffix = "";
-        double fileSize = 0.0;
-        TaskDocsFinishEntity finishEntity = new TaskDocsFinishEntity();
-        finishEntity.setCreateUserName(loginUser.getUserName());
-        finishEntity.setFileName(fileName);
-        finishEntity.setProductId(dto.getProductId());
-        finishEntity.setTaskId(dto.getTaskId());
-        finishEntity.setCreateUserId(loginUser.getUid());
-        finishEntity.setFileType(TaskConstant.FILE_TYPE);
-        finishEntity.setFileSuffix(fileSuffix);
-        finishEntity.setFileSize(fileSize);
-        List<TaskDocsFinishEntity> resultList = new ArrayList<>();
-        List<UploadMultipartFileDTO> list = dto.getList();
-        if (CollectionUtils.isNotEmpty(list)) {
-            for (UploadMultipartFileDTO uploadMultipartFileDTO: list) {
-                //上传文件
-                List<MultipartFile> files = uploadMultipartFileDTO.getFiles();
-                //飞书链接
-                List<String> fileUrls = uploadMultipartFileDTO.getFileUrls();
-                if (CollectionUtils.isEmpty(files) && CollectionUtils.isEmpty(fileUrls)) {
-                    continue;
-                }
-                //文件信息保存
-                if (CollectionUtils.isNotEmpty(files)) {
-                    for (MultipartFile multipartFile: files) {
-                        TaskDocsFinishEntity entity = new TaskDocsFinishEntity();
-                        BeanMapperUtils.copy(finishEntity,entity);
-                        double size = multipartFile.getSize();
-                        fileSize = size / (1024 * 1024);
-                        fileSize = (double) Math.round(fileSize * 100) / 100;
-                        fileName = multipartFile.getOriginalFilename().toLowerCase();
-                        fileSuffix = FilenameUtils.getExtension(fileName).toLowerCase();
-                        File file = FileUtil.multiToFile(multipartFile);
-                        String fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
-                        if (StringUtils.isBlank(fileUrl)) {
-                            throw new ServiceException(ApiError.ERROR_95018);
-                        }
-                        if (fileName.length() > 200) {
-                            throw new ServiceException(ApiError.ERROR_1018);
-                        }
-                        finishEntity.setUploadType(IsConstant.NO);
-                        entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
-                        entity.setFileSuffix(fileSuffix);
-                        entity.setFileSize(fileSize);
-                        entity.setFileName(fileName);
-                        entity.setFileUrl(fileUrl);
-                        entity.setOldFileName(fileName);
-                        entity.setOldUploadType(IsConstant.NO);
-                        entity.setOldFileUrl(fileUrl);
-                        fileNames.add(fileName);
-                        resultList.add(entity);
-                    }
-                }
-                //飞书链接信息保存
-                if (CollectionUtils.isNotEmpty(fileUrls)) {
-                    for (String fileUrl: fileUrls) {
-                        TaskDocsFinishEntity entity = new TaskDocsFinishEntity();
-                        BeanMapperUtils.copy(finishEntity,entity);
-                        entity.setUploadType(IsConstant.YES);
-                        entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
-                        entity.setFileUrl(fileUrl);
-                        entity.setOldFileUrl(fileUrl);
-                        entity.setOldUploadType(IsConstant.YES);
-                        resultList.add(entity);
-                    }
-                }
-
-            }
-        }
-        StringBuffer sb = new StringBuffer();
-        if (CollectionUtils.isNotEmpty(resultList)) {
-            //删除飞书通知
-            deleteByUploadType(dto.getProductId(),dto.getTaskId(),IsConstant.YES);
-            Boolean flag = this.saveBatch(resultList);
-            //当更新成功后 保存记录
-            if (flag) {
-                noticeMessageService.docChangesNotice(loginUser.getUserName(), taskEntity.getProductId(), taskId, String.join(",",fileNames));
-                sb.append("新增文档").append(String.join(",",fileNames));
-                for (TaskDocsFinishEntity taskDocsFinishEntity:resultList) {
-                    docsChangeRecordService.addRecord(sb.toString(), finishEntity.getTaskId(), taskDocsFinishEntity.getId(), "");
-                }
-                //新增产品操作日志
-                ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
-                productOperateRecordDTO.setProductId(finishEntity.getProductId());
-                List<String> remarkList = new ArrayList<>();
-                remarkList.add("变更文档：[" + fileNames + "]");
-                productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
-                productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
-                //新增变更文档操作日志
-                SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("变更了一个文件[%s]", String.join(",",fileNames)))
-                        .setBusinessId(taskEntity.getId())
-                        .setOperation("文档操作")
-                        .setClassPath(SysLogClassPathEnum.PROJECTTASKENTITY.getDesc());
-                sysLogService.addSysLogByOther(sysLogEntity);
-            }
-        }
-        return Boolean.TRUE;
-    }
-
-    private void deleteByUploadType(String productId, String taskId,Integer uploadType) {
+    private void deleteByUploadType(String productId, String taskId, Integer uploadType) {
         LambdaQueryWrapper<TaskDocsFinishEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(TaskDocsFinishEntity::getTaskId, taskId);
         queryWrapper.eq(TaskDocsFinishEntity::getProductId, productId);
-        queryWrapper.eq(TaskDocsFinishEntity::getUploadType,uploadType);
+        queryWrapper.eq(TaskDocsFinishEntity::getUploadType, uploadType);
         this.remove(queryWrapper);
     }
 

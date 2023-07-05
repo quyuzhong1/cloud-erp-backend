@@ -6,7 +6,7 @@ import java.io.Serializable;
 
 /**
  * @Classname UserInfoDTO
- * @Description TODO
+
  * @Date 2022-10-31 14:46
  * @Created by yl
  */

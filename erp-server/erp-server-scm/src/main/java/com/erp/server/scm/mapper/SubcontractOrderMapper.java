@@ -43,4 +43,20 @@ public interface SubcontractOrderMapper extends BaseMapper<SubcontractOrderEntit
     */
     List<SubcontractOrderDTO.ListDTO> listExport(@Param("params") SubcontractOrderDTO.ExportDTO params);
 
+    /**
+     * @description: 生成采购订单显示
+     * @author Will
+     * @date: 2023/6/13 16:47
+     * @param ids
+     * @return List<ViewGeneratePoDTO>
+     */
+    List<SubcontractOrderDTO.ViewGeneratePoDTO> viewGeneratePo(@Param("ids") List<String> ids);
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/6/19 10:05
+     * @param detailIds
+
+     */
+    List<String> listPodIdsByDetailIds(@Param("detailIds") List<String> detailIds);
 }

@@ -5,7 +5,7 @@ import java.util.Objects;
 
 /**
  * @Classname: InventoryBizTypeEnum
- * @Description: TODO
+
  * @CreateTime: 2023-05-04  15:09
  * @Author: zhangchunlin
  */
@@ -42,7 +42,7 @@ public enum InventoryBizTypeEnum {
      * @param code
      * @return
      */
-    public static InventoryModeEnum of(String code) {
+    public static InventoryModeEnum getByCode(String code) {
         return Arrays.stream(InventoryModeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
 

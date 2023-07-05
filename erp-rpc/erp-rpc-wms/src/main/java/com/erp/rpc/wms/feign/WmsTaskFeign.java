@@ -2,12 +2,10 @@ package com.erp.rpc.wms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseApproveParamDTO;
-import com.erp.model.wms.dto.PoInstockDTO;
-import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.WarehouseReceiveDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -22,7 +20,7 @@ import java.util.Map;
 /**
  * @author Will
  * @version 1.0
- * @description: TODO
+
  * @date 2023/3/17 15:56
  */
 @FeignClient(name = "erp-wms",configuration = {FeignErrorDecoder.class})
@@ -100,7 +98,7 @@ public interface WmsTaskFeign {
      * @Date 2023/4/21 15:34
      **/
     @PostMapping("feign/wmsWorkOption/getTableNum")
-    Integer getTableNum(@RequestBody WorkOptionDTO.TableNumDTO tableNumDTO);
+    List<WorkOptionDTO.MyWorkOptionDTO> getTableNum(@RequestBody List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList);
 
     /**
      * 更新业务单据状态
@@ -168,4 +166,46 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/soDeliveryNotice/closeBySoDetailIds")
     void closeBySoDetailIds(@RequestBody List<String> terminateSoDetailIds);
+
+    /**
+     * 根据供应商id集合获取收货单量和收货数量
+     * @param dto
+     * @return List<WarehouseReceiveDTO.SupplierReceiveInfoDTO>
+     */
+    @PostMapping("feign/warehouseReceive/getReceiveInfoBySupplierIds")
+    List<WarehouseReceiveDTO.SupplierReceiveInfoDTO> getReceiveInfoBySupplierIds(@RequestBody WarehouseReceiveDTO.SupplierReceiveParamDTO dto);
+
+    /**
+     * 根据供应商id集合获取入库单量和入库数量
+     * @param dto
+     * @return List<PoInstockDTO.SupplierInstockInfoDTO>
+     */
+    @PostMapping("feign/purchaseStockIn/getInstockInfoBySupplierIds")
+    List<PoInstockDTO.SupplierInstockInfoDTO> getInstockInfoBySupplierIds(@RequestBody PoInstockDTO.SupplierInstockParamDTO dto);
+
+    /**
+     * 根据供应商id集合获取入库单量和入库数量
+     * @param dto
+     * @return List<PurchaseReturnOrderDTO.SupplierReturnDTO>
+     */
+    @PostMapping("feign/purchaseReturnOrder/getReturnInfo")
+    List<PurchaseReturnOrderDTO.SupplierReturnDTO> getReturnInfo(@RequestBody PurchaseReturnOrderDTO.SupplierReturnParamDTO dto);
+
+    /**
+     * 根据采购订单获取质检信息
+     * @param dto
+     * @return List<PurchaseReturnOrderDTO.SupplierReturnDTO>
+     */
+    @PostMapping("/feign/qcBill/getQcInfoByPurchaseOrder")
+    QcInfoDTO.PurchaseQcInfoDTO getQcInfoByPurchaseOrder(@RequestBody QcInfoDTO.PurchaseQcParamDTO dto);
+
+    /**
+     * 根据金蝶仓库code 获取到对应仓库信息
+     * @Author Luo_WG
+     * @Date 2023/6/28 9:45
+     * @param kingdeeWarehouseCodeList kingdeeWarehouseCodeList
+     * @return java.util.List<com.erp.model.wms.entity.WarehouseEntity>
+     **/
+    @PostMapping("feign/warehouse/listByKingdeeCodeList")
+    List<WarehouseEntity> listByKingdeeCodeList(@RequestBody List<String> kingdeeWarehouseCodeList);
 }

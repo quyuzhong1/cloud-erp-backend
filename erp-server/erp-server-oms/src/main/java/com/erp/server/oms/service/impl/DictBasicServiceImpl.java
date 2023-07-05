@@ -38,7 +38,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         if (CollectionUtils.isEmpty(list)) {
             return true;
         }
-        List<DictBasicEntity>  addList = BeanMapper.copyList(list, DictBasicEntity.class);
+        List<DictBasicEntity> addList = BeanMapper.copyList(list, DictBasicEntity.class);
         return this.saveOrUpdateBatch(addList);
     }
 
@@ -75,6 +75,25 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(DictBasicEntity::getType, keyList);
         return this.list(queryWrapper);
+    }
+
+
+    /**
+     * 根据类型和值获取到对应信息
+     *
+     * @param type
+     * @param value
+     * @return com.erp.model.oms.entity.DictBasicEntity
+     * @author yl
+     * @date 2023-06-28 16:25
+     */
+    @Override
+    public DictBasicEntity getByTypeAndValue(String type, String value) {
+        LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DictBasicEntity::getType, type);
+        queryWrapper.eq(DictBasicEntity::getValue, value);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
     }
 
 

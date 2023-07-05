@@ -1,5 +1,6 @@
 package com.erp.server.workflow.service;
 
+import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.common.business.service.SuperService;
 
@@ -20,7 +21,7 @@ public interface ProcessBusinessService extends SuperService<ProcessBusinessEnti
      * @param definitionId
      * @return
      */
-    List<ProcessBusinessEntity> getByDefinitionId(String definitionId);
+    ProcessBusinessEntity getByDefinitionId(String definitionId);
 
 
     /**
@@ -35,5 +36,11 @@ public interface ProcessBusinessService extends SuperService<ProcessBusinessEnti
      * @param businessKey
      * @return
      */
-    ProcessBusinessEntity getProcessBusiness(String businessKey);
+    ProcessBusinessEntity getProcessBusiness(String businessKey, String condition);
+
+    /**
+     * 保存流程业务绑定关系
+     * @param dto
+     */
+    void addOrUpdate(ProcessDefinitionDTO.AddOrUpdateDTO dto);
 }
