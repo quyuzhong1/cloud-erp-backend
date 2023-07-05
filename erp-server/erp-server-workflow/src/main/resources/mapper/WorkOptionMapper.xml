@@ -156,7 +156,7 @@
             AND ptm.cur_approve_id = #{params.userId}
         </if>
         <if test="params.status == 'alreadyHandle'">
-            AND (ptm.task_status = 'approve' OR pm.task_status = 'reject')
+            AND (ptm.task_status = 'approve' OR ptm.task_status = 'reject')
             AND ptm.cur_approve_id = #{params.userId}
         </if>
         <if test="params.status == 'carbonCopy'">
