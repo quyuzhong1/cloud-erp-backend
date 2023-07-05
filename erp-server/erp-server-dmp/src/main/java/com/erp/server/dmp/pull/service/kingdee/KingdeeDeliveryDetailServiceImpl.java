@@ -215,6 +215,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'A','B','C','D'"));
 
         String filterStr = String.join(" and ", queryFilters);
+        log.info("拉取金蝶条件为>>>>>>>>>>{}",filterStr);
         String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillNo,FSoOrDerNo,FDate,FSaleOrgId,FSaleOrgId.FName,FCarriageNO,FStockerID.FNumber,FStockerID.FName," +
                 "FCustomerID,FCustomerID.FName,FCustomerID.FNumber,FSaleDeptID.FName,FSalesManID,FSalesManID.FName,FSalesManID.FNumber,FReceiverID.FName," +
                 "FTransferBizType.FName,F_ulz_BaseProperty2,F_ulz_BaseProperty2.FNumber,FLinkPhone,FLinkMan,FBussinessType,FDocumentStatus," +
