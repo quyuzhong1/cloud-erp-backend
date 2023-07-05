@@ -5,6 +5,7 @@ import com.common.business.service.SuperServiceImpl;
 import com.erp.model.plm.dto.DocHistoryDTO;
 import com.erp.model.plm.entity.TaskDocHistoryEntity;
 import com.erp.model.plm.entity.TaskDocsFinishEntity;
+import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.TaskDocHistoryMapper;
 import com.erp.server.plm.service.TaskDocHistoryService;
 import lombok.extern.slf4j.Slf4j;
@@ -41,8 +42,15 @@ public class TaskDocHistoryServiceImpl extends SuperServiceImpl<TaskDocHistoryMa
     @Transactional(rollbackFor = Exception.class)
     public void addHistory(TaskDocsFinishEntity oldDocs) {
         TaskDocHistoryEntity entity = new TaskDocHistoryEntity();
+        Integer uploadType = entity.getUploadType();
+        //不是本地上传
+        if (!TaskConstant.LOCAL_UPLOAD.equals(uploadType)) {
+            entity.setFileName(oldDocs.getFileUrl());
+        } else {
+            entity.setFileName(oldDocs.getFileName());
+        }
         entity.setTaskId(oldDocs.getTaskId());
-        entity.setFileName(oldDocs.getFileName());
+
         entity.setFileSize(oldDocs.getFileSize());
         entity.setFileSuffix(oldDocs.getFileSuffix());
         entity.setFileType(oldDocs.getFileType());
@@ -162,8 +170,13 @@ public class TaskDocHistoryServiceImpl extends SuperServiceImpl<TaskDocHistoryMa
             List<TaskDocHistoryEntity> addList = new ArrayList<>(resultList.size());
             for (TaskDocsFinishEntity item : resultList) {
                 TaskDocHistoryEntity entity = new TaskDocHistoryEntity();
+                Integer uploadType = item.getUploadType();
+                if (!TaskConstant.LOCAL_UPLOAD.equals(uploadType)) {
+                    entity.setFileName(item.getFileUrl());
+                } else {
+                    entity.setFileName(item.getFileName());
+                }
                 entity.setTaskId(item.getTaskId());
-                entity.setFileName(item.getFileName());
                 entity.setFileSize(item.getFileSize());
                 entity.setFileSuffix(item.getFileSuffix());
                 entity.setFileType(item.getFileType());
