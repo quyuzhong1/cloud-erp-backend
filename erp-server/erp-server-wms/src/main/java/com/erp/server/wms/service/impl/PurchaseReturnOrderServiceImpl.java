@@ -19,6 +19,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ArrivalStatusEnum;
@@ -26,6 +27,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.PoInstockDTO;
@@ -346,21 +348,35 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         if (ObjectUtil.isNotEmpty(purchaseOrderEntity)) {
             viewDTO.setPurchaseUserDeptId(purchaseOrderEntity.getPurchaseDeptId());
             viewDTO.setPurchaseUserDeptName(purchaseOrderEntity.getPurchaseDeptName());
+            viewDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
+            viewDTO.setPurchaseOrgName(purchaseOrderEntity.getPurchaseOrgName());
+            SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(viewDTO.getReturnUserId());
+            if (ObjectUtils.isNotEmpty(deptByUserId)) {
+                viewDTO.setReturnDeptId(deptByUserId.getDepartmentId());
+                viewDTO.setReturnDeptName(deptByUserId.getDepartmentName());
+            }
         }
 
         if (SourceTypeEnum.QC_INFO.getCode().equals(purchaseReturnOrderEntity.getSourceType())) {
             viewDTO.setSourceType(ReturnOrderSourceEnum.QC.getCode());
+            viewDTO.setSourceTypeName(ReturnOrderSourceEnum.QC.getName());
         } else {
             viewDTO.setSourceType(ReturnOrderSourceEnum.OTHER.getCode());
+            viewDTO.setSourceTypeName(ReturnOrderSourceEnum.OTHER.getName());
         }
+        if (StringUtils.isNotBlank(viewDTO.getReturnMode())) {
+            viewDTO.setReturnModeName(ReturnModeEnum.getName(viewDTO.getReturnMode()));
+        }
+        
         //创库保存详情表的集合
         List<PurchaseReturnOrderDetailDTO.ViewDTO> detailViewDTOS = new ArrayList<>();
         //根据收货单主表id获取详情信息
         List<PurchaseReturnOrderDetailEntity> detail = purchaseReturnOrderDetailService.getDetailByMainId(id);
         //获取sku的id集合
-        List<String> skuIdList = detail.stream().map(PurchaseReturnOrderDetailEntity::getSkuId).collect(Collectors.toList());
+        List<String> skuNoList = detail.stream().map(PurchaseReturnOrderDetailEntity::getSkuNo).collect(Collectors.toList());
         //根据ids查询sku信息
-        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        List<SkuVO> detailEntityList = plmTaskFeign.listBySkuNoList(skuNoList);
+
         //获取采购单详情的id集合
         List<String> detailId = detail.stream().map(PurchaseReturnOrderDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listPurchaseOrderDetailById(detailId);
@@ -380,13 +396,11 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             }
             detailView.setHasStockInQty(stockInQty);
             detailView.setTotalPrice(purchaseReturnOrderDetailEntity.getReturnPrice().multiply(BigDecimal.valueOf(Double.valueOf(purchaseReturnOrderDetailEntity.getReturnQty()))));
-
             //获取sku信息
-            ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(detailView.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(productDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_95107);
-            }
-            detailView.setProductName(productDetailEntity.getName());
+            SkuVO productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getSkuNo().equals(detailView.getSkuNo())).findFirst().orElse(new SkuVO());
+            detailView.setProductName(productDetailEntity.getSkuName());
+            detailView.setSpuNo(productDetailEntity.getSpuNo());
+            detailView.setUnit(productDetailEntity.getUnitName());
             detailView.setVariantProperty(productDetailEntity.getVariantProperty());
             detailViewDTOS.add(detailView);
         }

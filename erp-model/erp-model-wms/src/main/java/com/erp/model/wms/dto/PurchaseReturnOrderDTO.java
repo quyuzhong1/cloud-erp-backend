@@ -231,6 +231,11 @@ public class PurchaseReturnOrderDTO {
         private String returnMode;
 
         /**
+         * 退货方式名称
+         */
+        private String returnModeName;
+
+        /**
          * 供应商id
          */
         private String supplierId;
@@ -264,6 +269,16 @@ public class PurchaseReturnOrderDTO {
          * 退货人名称
          */
         private String returnUserName;
+
+        /**
+         * 退货部门id
+         */
+        private String returnDeptId;
+
+        /**
+         * 退货部门名称
+         */
+        private String returnDeptName;
 
         /**
          * 退货人组织id
@@ -359,6 +374,31 @@ public class PurchaseReturnOrderDTO {
          * 采购部门名称
          */
         private String purchaseUserDeptName;
+
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织名称
+         */
+        private String purchaseOrgName;
+
+        /**
+         * 创建人id
+         */
+        private String createUserId;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
 
         /**
          * 报价明细

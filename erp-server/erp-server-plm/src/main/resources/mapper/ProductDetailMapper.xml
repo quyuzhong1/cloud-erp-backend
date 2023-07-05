@@ -544,9 +544,11 @@
         pi.name AS spuName,
         pd.sku_no,
         pd.name AS skuName,
-        pd.id AS skuId
+        pd.id AS skuId,
+        unit.name as unitName
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
+        LEFT JOIN product_unit unit ON pd.unit_id = unit.id AND unit.is_deleted = FALSE
         WHERE  pd.is_deleted = FALSE
         <if test="skuList != null and skuList.size>0">
             AND pd.sku_no IN

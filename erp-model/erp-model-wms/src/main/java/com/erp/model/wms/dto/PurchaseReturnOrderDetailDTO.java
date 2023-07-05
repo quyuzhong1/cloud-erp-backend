@@ -207,6 +207,16 @@ public class PurchaseReturnOrderDetailDTO {
         private String skuNo;
 
         /**
+         * spu编号
+         */
+        private String spuNo;
+
+        /**
+         * 单位
+         */
+        private String unit;
+
+        /**
          * 产品名称
          */
         private String productName;
