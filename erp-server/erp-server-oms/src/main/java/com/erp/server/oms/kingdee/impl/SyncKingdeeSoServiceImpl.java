@@ -8,10 +8,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.SoDetailDTO;
-import com.erp.model.oms.entity.CustomerAddressEntity;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.DictBasicEntity;
-import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
@@ -218,7 +215,11 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         }
         // 收款账号
         if(StrUtils.isNotEmpty(entity.getReceiveAccount())) {
-            resultMap.put("receiveAccount", entity.getReceiveAccount());
+            BankAccountEntity bankAccountEntity = bankAccountService.findByAccountNo(entity.getReceiveAccount());
+            if(Objects.nonNull(bankAccountEntity)) {
+                resultMap.put("receiveAccount", entity.getReceiveAccount());
+                resultMap.put("receiveAccountName", entity.getReceiveAccount());
+            }
         }
 
         String receiveAddressId = entity.getReceiveAddressId();
