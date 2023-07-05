@@ -3,13 +3,15 @@ package com.erp.server.oms.kingdee.impl;
 import cn.hutool.json.JSONObject;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.StrUtils;
+import com.common.core.utils.ValidatorUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.dto.SoDetailDTO;
-import com.erp.model.oms.entity.CustomerAddressEntity;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
@@ -17,15 +19,14 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
-import com.erp.server.oms.service.CustomerAddressService;
-import com.erp.server.oms.service.CustomerInfoService;
-import com.erp.server.oms.service.SoDetailService;
-import com.erp.server.oms.service.SoInfoService;
+import com.erp.server.oms.service.*;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -33,6 +34,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * @author Lambda
@@ -66,6 +68,12 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+
+    @Autowired
+    private DictBasicService dictBasicService;
+
+    @Autowired
+    private BankAccountService bankAccountService;
 
     /**
      * 销售订单同步金碟
@@ -177,12 +185,41 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         resultMap.put("telNumber", entity.getTelNumber());
         //收货人
         resultMap.put("receiverName", entity.getReceiverName());
-        /**
-         * todo
-         * 先写死
-         * 收款账号
-         * 收款方式
-         */
+
+        List<String> dictKeys = Lists.newArrayList(DictBasicEnum.RECEIVE_METHOD.getType(), DictBasicEnum.COLLECTION_TERMS.getType());
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
+        Map<String,List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+
+        // 收款方式
+        List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicEnum.RECEIVE_METHOD.getType());
+        if (CollectionUtils.isNotEmpty(receiveMethodList) && StrUtils.isNotEmpty(entity.getReceiveMethod())) {
+            DictBasicEntity dictBasicEntity = receiveMethodList.stream().filter(obj -> Objects.equals(obj.getValue(), entity.getReceiveMethod())).findFirst().orElse(null);
+            if(Objects.nonNull(dictBasicEntity)) {
+                resultMap.put("receiveMethod", dictBasicEntity.getRemark());
+            }
+        }
+        // 收款条件
+        List<DictBasicEntity> receiveConditionList = dictBasicMap.get(DictBasicEnum.COLLECTION_TERMS.getType());
+        if (CollectionUtils.isNotEmpty(receiveConditionList)  && StrUtils.isNotEmpty(entity.getReceiveCondition()) ) {
+            DictBasicEntity dictBasicEntity = receiveConditionList.stream().filter(obj -> Objects.equals(obj.getValue(), entity.getReceiveCondition())).findFirst().orElse(null);
+            if(Objects.nonNull(dictBasicEntity)) {
+                resultMap.put("receiveCondition", dictBasicEntity.getRemark());
+            }
+        }
+
+        // 收款日期
+        if(Objects.nonNull(entity.getReceiveDate())) {
+            resultMap.put("receiveDate", entity.getReceiveDate());
+        }
+        // 收款金额
+        if(Objects.nonNull(entity.getReceiveAmount())) {
+            resultMap.put("receiveAmount", entity.getReceiveAmount());
+        }
+        // 收款账号
+        if(StrUtils.isNotEmpty(entity.getReceiveAccount())) {
+            resultMap.put("receiveAccount", entity.getReceiveAccount());
+        }
+
         String receiveAddressId = entity.getReceiveAddressId();
         CustomerAddressEntity addressEntity = customerAddressService.getById(receiveAddressId);
         String receiveAddressCode = addressEntity != null ? addressEntity.getCode() : "";
