@@ -23,4 +23,41 @@
 
     </resultMap>
 
+    <select id="listByProcessInstanceId" resultType="com.erp.model.workflow.entity.ProcessTaskManagementEntity">
+        SELECT
+            ptm.id,
+            ptm.create_user_id,
+            ptm.create_user_name,
+            ptm.create_time,
+            ptm.update_user_id,
+            ptm.update_user_name,
+            ptm.update_time,
+            ptm.process_instance_id,
+            ptm.cur_activity_id,
+            ptm.task_id,
+            ptm.cur_approve_id,
+            ptm.start_time,
+            ptm.task_status,
+            ptm.timeout_status,
+            ptm.timeout_warn_time,
+            ptm.timeout_handle_time,
+            ptm.timeout_handle_type,
+            ptm.approve_time,
+            ptm.remark,
+            ptm.pre_activity_id,
+            ptm.execution_id,
+            ptm.approve_id,
+            ptm.cur_activity_name,
+            ptm.cur_approve_name,
+            ptm.approve_name,
+            pm.business_id
+        FROM process_task_management ptm
+        LEFT JOIN process_management pm ON ptm.process_instance_id = pm.process_instance_id AND pm.is_deleted = false
+        WHERE ptm.is_deleted = false
+        AND pm.business_id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
 </mapper>

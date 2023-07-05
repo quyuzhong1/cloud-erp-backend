@@ -460,6 +460,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 return new PagingVO<>(new Page<>());
             }
         }
+
         IPage pageData = baseMapper.paging(query, params, paramDetailIds);
         List<SoInfoDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
@@ -497,7 +498,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         List<String> flagList = new ArrayList<>();
 
+        List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(soIdList);
         for (SoInfoDTO.PagingViewDTO item : list) {
+            List<String> curApproveName = processTaskManagementEntities.stream().filter(req ->req.getBusinessId().equals(item.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(curApproveName)) {
+                String userName = StringUtils.join(curApproveName, ",");
+                item.setApproveUserName(userName);
+            }
             boolean contains = flagList.contains(item.getId());
             String warehouseId = item.getWarehouseId();
             BillApproveStatusEnum billApproveStatus = item.getApproveStatus();
@@ -818,9 +825,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * @Author Luo_WG
      * @Date 2023/7/4 10:18
      **/
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
-    public void approveProcess(List<SoInfoEntity> list, BaseApproveParamDTO dto) {
+    private void approveProcess(List<SoInfoEntity> list, BaseApproveParamDTO dto) {
         ValidList<ProcessManagementDTO.ApproveDTO> resultList = new ValidList<>();
         LoginUser userInfo = commonService.getUserInfo();
         list.forEach(obj -> {
@@ -860,6 +865,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approveEnd(BaseApproveParamDTO dto, List<SoInfoEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
@@ -867,11 +873,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //意见
         String comment = dto.getComment();
         String content = "";
-
-        List<String> ids = list.stream().map(SoInfoEntity::getId).collect(Collectors.toList());
-        List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
-        List<String> curApproveName = processTaskManagementEntities.stream().filter(req ->req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
-        String userName = StringUtils.join(curApproveName, ",");
+        String userName = commonService.getUserInfo().getUserName();
         String approveStatus = "";
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过

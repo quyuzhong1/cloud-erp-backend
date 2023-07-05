@@ -990,9 +990,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
      **/
     @Override
     public List<ProcessTaskManagementEntity> listProcessByBusinessId(List<String> businessIds) {
-        List<ProcessManagementEntity> list = lambdaQuery().in(ProcessManagementEntity::getBusinessId, businessIds).list();
-        List<String> processInstanceIds = list.stream().map(ProcessManagementEntity::getProcessInstanceId).collect(Collectors.toList());
-        List<ProcessTaskManagementEntity> processTaskManagementEntities = processTaskManagementService.listByProcessInstanceId(processInstanceIds);
+        List<ProcessTaskManagementEntity> processTaskManagementEntities = processTaskManagementService.listByProcessInstanceId(businessIds);
         return processTaskManagementEntities;
     }
 }
