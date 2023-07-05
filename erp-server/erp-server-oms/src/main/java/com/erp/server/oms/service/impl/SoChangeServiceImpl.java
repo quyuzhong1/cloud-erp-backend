@@ -846,7 +846,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         ids.forEach(obj ->{
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
             revokeDTO.setBusinessId(obj);
-            revokeDTO.setBusinessKey(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode());
+            revokeDTO.setBusinessKey(SourceTypeEnum.SO_CHANGE.getCode());
             revokeDTO.setUserId(userInfo.getUid());
             workflowFeign.revokeProcess(revokeDTO);
         });
