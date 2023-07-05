@@ -194,7 +194,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         }
         List<DeliveryDocsDTO> list = baseMapper.list(params, findDeliveryDocsIds);
         if (CollectionUtils.isNotEmpty(list)) {
-            Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
+            Integer approvalNoPass = TaskStateEnum.APPROVAL_NO_PASS.getCode();
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(params.getFlagId());
             for (DeliveryDocsDTO item : list) {
                 ProjectTaskEntity entity = taskList.stream().filter(d -> d.getId().equals(item.getTaskId())).findFirst().orElse(null);
@@ -202,7 +202,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                     continue;
                 }
                 //当没审核通过
-                if (!entity.getStatus().equals(approvalPass)) {
+                if (entity.getStatus().equals(approvalNoPass)) {
                     item.setFileUrl(item.getOldFileUrl());
                     item.setFileName(item.getOldFileName());
                     item.setUploadType(item.getOldUploadType());
