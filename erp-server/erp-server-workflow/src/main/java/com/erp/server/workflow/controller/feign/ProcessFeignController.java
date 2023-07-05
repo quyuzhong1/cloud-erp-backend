@@ -4,6 +4,8 @@ import com.common.business.validator.ValidList;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.entity.ProcessManagementEntity;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
@@ -349,7 +351,7 @@ public class ProcessFeignController extends BaseController {
      * 根据流程id 获取到流程审核情况
      */
     @PostMapping("/listHistoryTaskByProcessId")
-    public List<ApproveNodeRecordVO> listHistoryTaskByProcessId(@RequestBody @Valid String processId) {
+    public List<ApproveNodeRecordVO> listHistoryTaskByProcessId(@RequestBody String processId) {
         List<ApproveNodeRecordVO> resultList = businessService.auditInfo(processId);
         return resultList;
     }
@@ -359,8 +361,8 @@ public class ProcessFeignController extends BaseController {
      * 根据业务id获取流程实例信息
      */
     @PostMapping("/listProcessByProcessId")
-    public List<ApproveNodeRecordVO> listProcessByProcessId(@RequestBody @Valid String processId) {
-        List<ApproveNodeRecordVO> resultList = businessService.auditInfo(processId);
+    public List<ProcessTaskManagementEntity> listProcessByBusinessId(@RequestBody List<String> businessIds) {
+        List<ProcessTaskManagementEntity> resultList = processManagementService.listProcessByBusinessId(businessIds);
         return resultList;
     }
 

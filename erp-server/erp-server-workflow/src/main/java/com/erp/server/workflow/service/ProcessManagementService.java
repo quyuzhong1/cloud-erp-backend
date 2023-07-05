@@ -7,10 +7,15 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
+import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.DelegateTask;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -209,4 +214,14 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @return com.erp.model.workflow.entity.ProcessManagementEntity
      **/
     ProcessManagementEntity getByProcessInstanceId(String processInstanceId);
+
+    /**
+     * 根据业务id获取流程实例信息
+     * @Author Luo_WG
+     * @Date 2023/7/5 17:08
+     * @param businessIds
+     * @return java.util.List<com.erp.model.workflow.entity.ProcessTaskManagementEntity>
+     **/
+    List<ProcessTaskManagementEntity> listProcessByBusinessId(List<String> businessIds);
+
 }

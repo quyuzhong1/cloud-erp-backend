@@ -980,4 +980,19 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     public ProcessManagementEntity getByProcessInstanceId(String processInstanceId) {
         return lambdaQuery().eq(ProcessManagementEntity::getProcessInstanceId, processInstanceId).last("LIMIT 1").one();
     }
+
+    /**
+     * 根据业务id获取流程实例信息
+     * @Author Luo_WG
+     * @Date 2023/7/4 19:37
+     * @param businessIds
+     * @return com.erp.model.workflow.entity.ProcessManagementEntity
+     **/
+    @Override
+    public List<ProcessTaskManagementEntity> listProcessByBusinessId(List<String> businessIds) {
+        List<ProcessManagementEntity> list = lambdaQuery().in(ProcessManagementEntity::getBusinessId, businessIds).list();
+        List<String> processInstanceIds = list.stream().map(ProcessManagementEntity::getProcessInstanceId).collect(Collectors.toList());
+        List<ProcessTaskManagementEntity> processTaskManagementEntities = processTaskManagementService.listByProcessInstanceId(processInstanceIds);
+        return processTaskManagementEntities;
+    }
 }

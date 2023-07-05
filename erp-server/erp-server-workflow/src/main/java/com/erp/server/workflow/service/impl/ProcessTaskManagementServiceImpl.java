@@ -178,4 +178,9 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
                 .oneOpt().orElseThrow(() -> new ServiceException(ApiError.ERROR_TASK_AUDIT_STATUS));
         return entity;
     }
+
+    @Override
+    public List<ProcessTaskManagementEntity> listByProcessInstanceId(List<String> processInstanceId) {
+        return lambdaQuery().in(ProcessTaskManagementEntity::getProcessInstanceId, processInstanceId).list();
+    }
 }

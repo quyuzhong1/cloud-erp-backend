@@ -75,4 +75,11 @@ public interface ProcessTaskManagementService extends SuperService<ProcessTaskMa
      * @return
      */
     ProcessTaskManagementEntity lastTask(String processInstanceId);
+
+    /**
+     * 根据业务id获取任务实例信息
+     * @param processInstanceId
+     * @return
+     */
+    List<ProcessTaskManagementEntity> listByProcessInstanceId(List<String> processInstanceId);
 }
