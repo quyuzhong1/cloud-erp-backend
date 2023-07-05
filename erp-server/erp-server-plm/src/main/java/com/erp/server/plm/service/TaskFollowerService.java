@@ -1,7 +1,7 @@
 package com.erp.server.plm.service;
 
-import com.erp.model.plm.dto.TaskConcernDTO;
-import com.erp.model.plm.entity.TaskConcernEntity;
+import com.erp.model.plm.dto.TaskFollowerDTO;
+import com.erp.model.plm.entity.TaskFollowerEntity;
 import com.common.business.service.SuperService;
 
 import java.util.List;
@@ -14,7 +14,7 @@ import java.util.List;
  * @author Lambda
  * @since 2023-06-19
  */
-public interface TaskConcernService extends SuperService<TaskConcernEntity> {
+public interface TaskFollowerService extends SuperService<TaskFollowerEntity> {
 
     
     /**
@@ -24,21 +24,21 @@ public interface TaskConcernService extends SuperService<TaskConcernEntity> {
      * @param taskId
      * @return java.lang.Boolean
      */
-    TaskConcernDTO.InfoDTO getConcernByTaskId(String taskId);
+    TaskFollowerDTO.InfoDTO getFollowerByTaskId(String taskId);
 
     /**
      * 任务关注
      * @param dto
      * @return
      */
-    Boolean concernTask(TaskConcernDTO.ConcernDTO dto);
+    Boolean followerTask(TaskFollowerDTO.FollowerDTO dto);
 
     /**
      * 取消任务关注
      * @param dto
      * @return
      */
-    Boolean cancelConcern(TaskConcernDTO.ConcernDTO dto);
+    Boolean cancelFollower(TaskFollowerDTO.FollowerDTO dto);
 
 
     /**
@@ -46,7 +46,7 @@ public interface TaskConcernService extends SuperService<TaskConcernEntity> {
      * @param taskId
      * @return
      */
-    Integer getConcernCountByTaskId(String taskId);
+    Integer getFollowerCountByTaskId(String taskId);
 
     /**
      * 保存关注人
@@ -88,5 +88,5 @@ public interface TaskConcernService extends SuperService<TaskConcernEntity> {
      * @param taskIds
      * @return java.util.List<java.lang.String>
      **/
-    List<TaskConcernEntity> listByTaskIds(List<String> taskIds);
+    List<TaskFollowerEntity> listByTaskIds(List<String> taskIds);
 }

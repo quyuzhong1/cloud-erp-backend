@@ -1,6 +1,6 @@
 package com.erp.server.plm.mapper;
 
-import com.erp.model.plm.entity.TaskConcernEntity;
+import com.erp.model.plm.entity.TaskFollowerEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -13,6 +13,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2023-06-19
  */
 @Mapper
-public interface TaskConcernMapper extends BaseMapper<TaskConcernEntity> {
+public interface TaskFollowerMapper extends BaseMapper<TaskFollowerEntity> {
 
 }

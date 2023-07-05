@@ -90,7 +90,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     private WorkflowFeign workflowFeign;
 
     @Autowired
-    private TaskConcernService taskConcernService;
+    private TaskFollowerService taskFollowerService;
 
     @Value("${third.fs.appUrl}")
     private String fsAppUrl;
@@ -2516,11 +2516,11 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 }
 
                 //这个是关注人
-                if (itemPeopleList.contains(NoticeItemPeopleEnum.CONCERN.getFlag())) {
+                if (itemPeopleList.contains(NoticeItemPeopleEnum.FOLLOWER.getFlag())) {
                     if (CollectionUtils.isNotEmpty(taskIdList)) {
-                        List<TaskConcernEntity> taskConcernEntities = taskConcernService.listByTaskIds(taskIdList);
+                        List<TaskFollowerEntity> taskConcernEntities = taskFollowerService.listByTaskIds(taskIdList);
                         if (CollectionUtils.isNotEmpty(taskConcernEntities)) {
-                            List<String> userIdList = taskConcernEntities.stream().map(TaskConcernEntity::getUserId).distinct().collect(Collectors.toList());
+                            List<String> userIdList = taskConcernEntities.stream().map(TaskFollowerEntity::getUserId).distinct().collect(Collectors.toList());
                             resultList.addAll(userIdList);
                         }
                     }

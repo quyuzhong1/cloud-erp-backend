@@ -1,5 +1,5 @@
 package com.erp.server.plm.service;
-import com.erp.model.plm.entity.TemplateTaskConcernEntity;
+import com.erp.model.plm.entity.TemplateTaskFollowerEntity;
 import com.common.business.service.SuperService;
 
 import java.util.List;
@@ -13,7 +13,7 @@ import java.util.List;
  * @author Luo_WG
  * @since 2023-06-20
  */
-public interface TemplateTaskConcernService extends SuperService<TemplateTaskConcernEntity> {
+public interface TemplateTaskFollowerService extends SuperService<TemplateTaskFollowerEntity> {
 
     /**
      * 模板任务编辑关注人
@@ -21,10 +21,10 @@ public interface TemplateTaskConcernService extends SuperService<TemplateTaskCon
      * @Date 2023/6/20 17:17
      * @param templateId
      * @param taskId
-     * @param concernUserIdList
+     * @param followerUserIdList
      * @return void
      **/
-    Boolean saveTemplateConcernList(String templateId, String taskId, List<String> concernUserIdList);
+    Boolean saveTemplateFollowerList(String templateId, String taskId, List<String> followerUserIdList);
 
     /**
      * 删除模板关注人
@@ -42,7 +42,7 @@ public interface TemplateTaskConcernService extends SuperService<TemplateTaskCon
      * @Date 2023/6/20 18:12
      * @param templateId
      * @param taskIds
-     * @return java.util.List<com.erp.model.plm.entity.TemplateTaskConcernEntity>
+     * @return java.util.List<com.erp.model.plm.entity.TemplateTaskFollowerEntity>
      **/
-    List<TemplateTaskConcernEntity> listTemplateConcern(String templateId, List<String> taskIds);
+    List<TemplateTaskFollowerEntity> listTemplateFollower(String templateId, List<String> taskIds);
 }

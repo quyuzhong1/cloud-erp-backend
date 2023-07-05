@@ -20,8 +20,8 @@ import lombok.experimental.Accessors;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("template_task_concern")
-public class TemplateTaskConcernEntity extends BaseEntity<TemplateTaskConcernEntity> {
+@TableName("template_task_follower")
+public class TemplateTaskFollowerEntity extends BaseEntity<TemplateTaskFollowerEntity> {
 
 
     /**

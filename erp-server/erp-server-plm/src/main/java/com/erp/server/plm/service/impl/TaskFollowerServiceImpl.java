@@ -3,12 +3,12 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.service.SuperServiceImpl;
-import com.erp.model.plm.dto.TaskConcernDTO;
-import com.erp.model.plm.entity.TaskConcernEntity;
+import com.erp.model.plm.dto.TaskFollowerDTO;
+import com.erp.model.plm.entity.TaskFollowerEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.plm.mapper.TaskConcernMapper;
+import com.erp.server.plm.mapper.TaskFollowerMapper;
 import com.erp.server.plm.service.CommonService;
-import com.erp.server.plm.service.TaskConcernService;
+import com.erp.server.plm.service.TaskFollowerService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  * @since 2023-06-19
  */
 @Service
-public class TaskConcernServiceImpl extends SuperServiceImpl<TaskConcernMapper, TaskConcernEntity> implements TaskConcernService {
+public class TaskFollowerServiceImpl extends SuperServiceImpl<TaskFollowerMapper, TaskFollowerEntity> implements TaskFollowerService {
 
     @Resource
     private CommonService commonService;
@@ -45,10 +45,10 @@ public class TaskConcernServiceImpl extends SuperServiceImpl<TaskConcernMapper, 
      * @date 2023-06-19 18:57
      */
     @Override
-    public TaskConcernDTO.InfoDTO getConcernByTaskId(String taskId) {
-        TaskConcernDTO.InfoDTO result = new TaskConcernDTO.InfoDTO();
+    public TaskFollowerDTO.InfoDTO getFollowerByTaskId(String taskId) {
+        TaskFollowerDTO.InfoDTO result = new TaskFollowerDTO.InfoDTO();
         String userId = commonService.getUserInfo().getUid();
-        TaskConcernEntity taskConcern = this.getByTaskIdAndUserId(userId, taskId);
+        TaskFollowerEntity taskConcern = this.getByTaskIdAndUserId(userId, taskId);
         if (taskConcern != null) {
             result.setIsConcern(Boolean.TRUE);
         } else {
@@ -71,9 +71,9 @@ public class TaskConcernServiceImpl extends SuperServiceImpl<TaskConcernMapper, 
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean concernTask(TaskConcernDTO.ConcernDTO dto) {
+    public Boolean followerTask(TaskFollowerDTO.FollowerDTO dto) {
         String userId = commonService.getUserInfo().getUid();
-        TaskConcernEntity taskConcern = new TaskConcernEntity();
+        TaskFollowerEntity taskConcern = new TaskFollowerEntity();
         taskConcern.setTaskId(dto.getTaskId());
         taskConcern.setUserId(userId);
         return this.save(taskConcern);
@@ -87,10 +87,10 @@ public class TaskConcernServiceImpl extends SuperServiceImpl<TaskConcernMapper, 
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelConcern(TaskConcernDTO.ConcernDTO dto) {
+    public Boolean cancelFollower(TaskFollowerDTO.FollowerDTO dto) {
         String userId = commonService.getUserInfo().getUid();
         String taskId = dto.getTaskId();
-        TaskConcernEntity taskConcern = this.getByTaskIdAndUserId(userId, taskId);
+        TaskFollowerEntity taskConcern = this.getByTaskIdAndUserId(userId, taskId);
         if (taskConcern != null) {
             return this.removeById(taskConcern.getId());
         }
@@ -104,8 +104,8 @@ public class TaskConcernServiceImpl extends SuperServiceImpl<TaskConcernMapper, 
      * @return
      */
     @Override
-    public Integer getConcernCountByTaskId(String taskId) {
-        return this.lambdaQuery().eq(TaskConcernEntity::getTaskId, taskId).list().size();
+    public Integer getFollowerCountByTaskId(String taskId) {
+        return this.lambdaQuery().eq(TaskFollowerEntity::getTaskId, taskId).list().size();
     }
 
 
@@ -123,9 +123,9 @@ public class TaskConcernServiceImpl extends SuperServiceImpl<TaskConcernMapper, 
     @Transactional(rollbackFor = Exception.class)
     public void batchAdd(String taskId, String productId, List<String> refUserIdList) {
         if (CollectionUtils.isNotEmpty(refUserIdList)) {
-            List<TaskConcernEntity> addList = new ArrayList<>(refUserIdList.size());
+            List<TaskFollowerEntity> addList = new ArrayList<>(refUserIdList.size());
             for (String refUserId : refUserIdList) {
-                TaskConcernEntity taskConcern = new TaskConcernEntity();
+                TaskFollowerEntity taskConcern = new TaskFollowerEntity();
                 taskConcern.setUserId(refUserId);
                 taskConcern.setTaskId(taskId);
                 taskConcern.setProductId(productId);
@@ -166,18 +166,18 @@ public class TaskConcernServiceImpl extends SuperServiceImpl<TaskConcernMapper, 
      */
     @Override
     public List<String> listByTaskId(String taskId) {
-        LambdaQueryWrapper<TaskConcernEntity> queryWrapper = new LambdaQueryWrapper();
-        queryWrapper.select(TaskConcernEntity::getUserId);
-        queryWrapper.eq(TaskConcernEntity::getTaskId, taskId);
+        LambdaQueryWrapper<TaskFollowerEntity> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.select(TaskFollowerEntity::getUserId);
+        queryWrapper.eq(TaskFollowerEntity::getTaskId, taskId);
         return this.listObjs(queryWrapper, Object::toString).stream().distinct().collect(Collectors.toList());
     }
 
     @Override
-    public List<TaskConcernEntity> listByTaskIds(List<String> taskIds) {
+    public List<TaskFollowerEntity> listByTaskIds(List<String> taskIds) {
         if (CollectionUtils.isEmpty(taskIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(TaskConcernEntity::getTaskId, taskIds).list();
+        return lambdaQuery().in(TaskFollowerEntity::getTaskId, taskIds).list();
     }
 
 
@@ -187,16 +187,16 @@ public class TaskConcernServiceImpl extends SuperServiceImpl<TaskConcernMapper, 
      * @param taskId
      */
     public void removeByTaskId(String taskId) {
-        LambdaQueryWrapper<TaskConcernEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TaskConcernEntity::getTaskId, taskId);
+        LambdaQueryWrapper<TaskFollowerEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskFollowerEntity::getTaskId, taskId);
         this.remove(queryWrapper);
     }
 
 
-    private TaskConcernEntity getByTaskIdAndUserId(String userId, String taskId) {
-        LambdaQueryWrapper<TaskConcernEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(TaskConcernEntity::getUserId, userId);
-        queryWrapper.eq(TaskConcernEntity::getTaskId, taskId);
+    private TaskFollowerEntity getByTaskIdAndUserId(String userId, String taskId) {
+        LambdaQueryWrapper<TaskFollowerEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(TaskFollowerEntity::getUserId, userId);
+        queryWrapper.eq(TaskFollowerEntity::getTaskId, taskId);
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
 

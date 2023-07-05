@@ -9,18 +9,18 @@ import java.util.List;
 
 /**
  * @author Lambda
- * @Classname TaskConcernDTO
+ * @Classname TaskFollowerDTO
 
  * @Date 2023-06-19 19:09
  * @Created by yl
  */
 @Data
 @NoArgsConstructor
-public class TaskConcernDTO implements Serializable {
+public class TaskFollowerDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ConcernDTO{
+    public static class FollowerDTO {
         @NotBlank(message = "任务不能为空")
         private String taskId;
     }

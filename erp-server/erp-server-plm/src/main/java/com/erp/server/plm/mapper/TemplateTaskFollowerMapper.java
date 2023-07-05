@@ -1,11 +1,9 @@
 package com.erp.server.plm.mapper;
-import com.erp.model.plm.entity.TemplateTaskConcernEntity;
+import com.erp.model.plm.entity.TemplateTaskFollowerEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-
-import java.util.List;
 
 
 /**
@@ -17,7 +15,7 @@ import java.util.List;
  * @since 2023-06-20
  */
 @Mapper
-public interface TemplateTaskConcernMapper extends BaseMapper<TemplateTaskConcernEntity> {
+public interface TemplateTaskFollowerMapper extends BaseMapper<TemplateTaskFollowerEntity> {
 
-    Boolean deleteConcernUser(@Param("templateId") String templateId, @Param("templateTaskId") String templateTaskId);
+    Boolean deleteFollowerUser(@Param("templateId") String templateId, @Param("templateTaskId") String templateTaskId);
 }

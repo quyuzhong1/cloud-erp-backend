@@ -20,8 +20,8 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("task_concern")
-public class TaskConcernEntity extends BaseEntity<TaskConcernEntity> {
+@TableName("task_follower")
+public class TaskFollowerEntity extends BaseEntity<TaskFollowerEntity> {
 
     /**
      * 产品id
