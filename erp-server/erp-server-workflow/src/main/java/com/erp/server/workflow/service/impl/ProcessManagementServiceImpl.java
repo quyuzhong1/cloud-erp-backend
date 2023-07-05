@@ -533,7 +533,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 删除本地流程任务数据
         removeByProcessInstanceId(processInstance.getProcessInstanceId());
         // 回调feign接口
-        callFeign(dto.getBusinessKey(), new EndProcessDTO(dto));
+//        callFeign(dto.getBusinessKey(), new EndProcessDTO(dto));
         return new ProcessManagementDTO.RevokeResultDTO(processInstance.getProcessDefinitionId(), processInstance.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName());
     }
 
