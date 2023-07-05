@@ -166,7 +166,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setId(id);
         soOutstock.setOrderType(soInfo.getOrderType());
         List<SoOutstockDetailDTO.AddDTO> addDetailList = dto.getDetailList();
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSTH, BusinessNoTypeEnum.CODE_XSCK.getCode()));
+        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.XSCK, BusinessNoTypeEnum.CODE_XSCK.getCode()));
         soOutstock.setCode(code);
 
         soOutstock.setWarehouseOrgId(soInfo.getWarehouseOrgId());
