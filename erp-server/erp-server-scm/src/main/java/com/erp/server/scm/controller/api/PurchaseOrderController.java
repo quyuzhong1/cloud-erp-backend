@@ -19,6 +19,7 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -497,6 +498,20 @@ public class PurchaseOrderController extends BaseController {
         return success(list);
     }
 
+
+    /**
+     * 金蝶导入采购订单
+     * @author Will
+     * @date: 2023/7/5 14:59
+     * @param excelFile
+     * @param response
+     * @return ApiResult
+     */
+    @PostMapping("/kingdeeImportPoFile")
+    public ApiResult kingdeeImportPoFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean flag = purchaseOrderService.kingdeePoImportFile(excelFile,response);
+        return flag == true ? success() : failure();
+    }
 
 
 }

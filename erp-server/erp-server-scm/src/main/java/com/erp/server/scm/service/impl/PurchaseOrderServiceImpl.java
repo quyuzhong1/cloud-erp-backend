@@ -32,6 +32,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
+import com.erp.model.scm.dto.excel.KingdeePoImportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseOrderExportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.*;
@@ -55,6 +56,7 @@ import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.kingdee.SyncKingdeePurchaseOrderService;
+import com.erp.server.scm.listener.KingdeePoExcelListener;
 import com.erp.server.scm.listener.PurchaseOrderExcelListener;
 import com.erp.server.scm.mapper.PurchaseOrderMapper;
 import com.erp.server.scm.service.*;
@@ -1351,8 +1353,19 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
     }
 
+
     @Override
-    public BigDecimal getSkuPurchasePrice(String skuId) {
+    public Boolean kingdeePoImportFile(MultipartFile excelFile, HttpServletResponse response) {
+        KingdeePoExcelListener excelListenerUtil = new KingdeePoExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), KingdeePoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
         return null;
     }
 

@@ -14,7 +14,6 @@ import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -299,11 +298,13 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param purchaseOrderIds
      */
      void updateCreatePoType(List<String> purchaseOrderIds);
-
-    /**
-     * 根据sku id查询最新的采购订单的采购单价
-     * @param skuId
-     * @return
-     */
-     BigDecimal getSkuPurchasePrice(String skuId);
+     /**
+      * @description: 金蝶导入采购订单
+      * @author Will
+      * @date: 2023/7/5 14:59
+      * @param excelFile
+      * @param response
+      * @return Boolean
+      */
+     Boolean kingdeePoImportFile(MultipartFile excelFile, HttpServletResponse response);
 }
