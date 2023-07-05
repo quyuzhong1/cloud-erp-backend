@@ -19,6 +19,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.DeduplicationUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
@@ -246,6 +247,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         variables.put("lastApproveTime", LocalDateTime.now());
         variables.put("lastComment", dto.getComment());
         variables.put("lastApprover", dto.getUserId());
+        variables.put("lastTaskManagementId", managementTask.getTaskManagementId());
         runtimeService.setVariables(processInstanceId, variables);
         if(ApproveTypeEnum.PASS.equals(dto.getApproveType())) {
             // 审核通过
@@ -264,7 +266,70 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
         // 保存流程任务数据
         updateApprove(managementTask.getTaskManagementId(), dto.getApproveType(), managementTask.getManagementId(), processInstanceId,dto.getComment());
+        // 相同审批人去重
+        sameApproverHandler(dto, processBusiness.getProcessDefinitionId());
+        // 返回结果
         return new ProcessManagementDTO.ApproveResultDTO(currentTask.getProcessDefinitionId(), currentTask.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName(),currentTask.getId(),currentTask.getName(), currentTask.getTaskDefinitionKey());
+    }
+
+    private void sameApproverHandler(ProcessManagementDTO.ApproveDTO dto, String processDefinitionId) {
+        // 审批不通过不处理
+        if(ApproveTypeEnum.REJECT.equals(dto.getApproveType())) {
+            return;
+        }
+        ProcessDefinitionEntity processDefinition = processDefinitionService.getById(processDefinitionId);
+        DictBasicEnum reviewSetting = processDefinition.getReviewSetting();
+        // 审核节点不去重不处理
+        if(DictBasicEnum.NO_DEDUPE.equals(reviewSetting)) {
+            return;
+        }
+        //查询当前待审批任务列表
+        List<ProcessManagementDTO.ManagementTaskDTO> managementTaskList = getCurApproveTaskList(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
+        if(CollectionUtil.isEmpty(managementTaskList)) {
+            return;
+        }
+        String userId = dto.getUserId();
+        // 审核人配置
+        if (DictBasicEnum.ADJACENT_DEDUPE.equals(reviewSetting)) {
+            managementTaskList.forEach(item -> {
+                dto.setComment("相邻节点审核人重复,审核自动通过");
+                approveProcess(dto);
+            });
+        }else if(DictBasicEnum.GLOBAL_DEDUPE.equals(reviewSetting)) {
+            // 全局去重
+            String processInstanceId = managementTaskList.get(0).getProcessInstanceId();
+            // 查询已完成审核节点
+            LinkedHashMap<String, List<ProcessTaskManagementEntity>> processTaskManagementMap = processTaskManagementService.listHisByProcessInstanceId(processInstanceId, null);
+            if(CollectionUtil.isNotEmpty(processTaskManagementMap)){
+                return;
+            }
+            // 存在已审核节点
+            Optional<ProcessTaskManagementEntity> processTaskManagement = processTaskManagementMap.values().stream().flatMap(List::stream)
+                        .filter(item -> item.getApproveId().equals(userId))
+                        .findFirst();
+            if(!processTaskManagement.isPresent()) {
+                return;
+            }
+            managementTaskList.forEach(item -> {
+                dto.setComment("全局去重审核人重复,审核自动通过");
+                approveProcess(dto);
+            });
+        }
+    }
+
+    private List<ProcessManagementDTO.ManagementTaskDTO> getCurApproveTaskList(String businessId, String businessKey, String userId) {
+        List<ProcessManagementDTO.ManagementTaskDTO> managementTaskDTOS = listTaskByBusiness(businessId, businessKey);
+        if(CollectionUtil.isEmpty(managementTaskDTOS)){
+            return Collections.emptyList();
+        }
+        // 审核人校验
+        List<ProcessManagementDTO.ManagementTaskDTO> resultList = managementTaskDTOS.stream()
+                // 过滤当前审核人
+                .filter(managementTaskDTO -> managementTaskDTO.getCurApproveId().equals(userId))
+                // 过滤重复的执行id
+                .filter(DeduplicationUtil.distinctByKey(ProcessManagementDTO.ManagementTaskDTO::getExecutionId))
+                .collect(Collectors.toList());
+        return resultList;
     }
 
     /**
@@ -280,7 +345,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.PROCESS_ALREADY_END);
         }
         // 审核人校验
-
         ProcessManagementDTO.ManagementTaskDTO managementTask = managementTaskDTOS.stream()
                 .filter(managementTaskDTO -> managementTaskDTO.getCurApproveId().equals(userId))
                 .findFirst()
@@ -663,34 +727,34 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 processTaskCcService.saveCcUser(task.getId(), ccUserList, taskManagementEntity.getId());
             }
 
-            // 审核人配置
-            if (DictBasicEnum.ADJACENT_DEDUPE.equals(reviewSetting)) {
-                // 相邻节点去重
-                // 查询当前节点的上一个节点
-                LinkedHashMap<String, List<ProcessTaskManagementEntity>> processTaskManagementList = processTaskManagementService.listHisByProcessInstanceId(processInstanceId, MathUtil.ONE);
-                if(CollectionUtil.isNotEmpty(processTaskManagementList)){
-                    processTaskManagement = processTaskManagementList.entrySet().stream()
-                            .findFirst()
-                            .get()
-                            .getValue().stream().filter(item -> item.getCurApproveId().equals(userId))
-                            .findFirst();
-                }
-            }else if(DictBasicEnum.GLOBAL_DEDUPE.equals(reviewSetting)) {
-                // 全局去重
-                // 查询已完成审核节点
-                LinkedHashMap<String, List<ProcessTaskManagementEntity>> processTaskManagementList = processTaskManagementService.listHisByProcessInstanceId(processInstanceId, null);
-                if(CollectionUtil.isNotEmpty(processTaskManagementList)){
-                    processTaskManagement = processTaskManagementList.values().stream().flatMap(List::stream)
-                            .filter(item -> item.getCurApproveId().equals(userId))
-                            .findFirst();
-                }
-            }
-            if (processTaskManagement.isPresent()) {
-                // 审核人已存在，自动审核通过
-                taskService.createComment(task.getId(), processInstanceId, "审核人重复,审核自动通过");
-                taskService.complete(task.getId());
-                updateApprove(processTaskManagement.get().getId(), ApproveTypeEnum.PASS, insertTask.getId(), processInstanceId, "审核人重复,审核自动通过");
-            }
+//            // 审核人配置
+//            if (DictBasicEnum.ADJACENT_DEDUPE.equals(reviewSetting)) {
+//                // 相邻节点去重
+//                // 查询当前节点的上一个节点
+//                LinkedHashMap<String, List<ProcessTaskManagementEntity>> processTaskManagementList = processTaskManagementService.listHisByProcessInstanceId(processInstanceId, MathUtil.ONE);
+//                if(CollectionUtil.isNotEmpty(processTaskManagementList)){
+//                    processTaskManagement = processTaskManagementList.entrySet().stream()
+//                            .findFirst()
+//                            .get()
+//                            .getValue().stream().filter(item -> item.getCurApproveId().equals(userId))
+//                            .findFirst();
+//                }
+//            }else if(DictBasicEnum.GLOBAL_DEDUPE.equals(reviewSetting)) {
+//                // 全局去重
+//                // 查询已完成审核节点
+//                LinkedHashMap<String, List<ProcessTaskManagementEntity>> processTaskManagementList = processTaskManagementService.listHisByProcessInstanceId(processInstanceId, null);
+//                if(CollectionUtil.isNotEmpty(processTaskManagementList)){
+//                    processTaskManagement = processTaskManagementList.values().stream().flatMap(List::stream)
+//                            .filter(item -> item.getCurApproveId().equals(userId))
+//                            .findFirst();
+//                }
+//            }
+//            if (processTaskManagement.isPresent()) {
+//                // 审核人已存在，自动审核通过
+//                taskService.createComment(task.getId(), processInstanceId, "审核人重复,审核自动通过");
+//                taskService.complete(task.getId());
+//                updateApprove(processTaskManagement.get().getId(), ApproveTypeEnum.PASS, insertTask.getId(), processInstanceId, "审核人重复,审核自动通过");
+//            }
         });
     }
 

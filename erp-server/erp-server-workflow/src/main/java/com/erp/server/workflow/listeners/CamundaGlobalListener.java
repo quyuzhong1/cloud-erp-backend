@@ -100,7 +100,7 @@ public class CamundaGlobalListener {
       log.info("CamundaGlobalListener onTaskEvent Task created: {}", executionDelegate.getCurrentActivityName());
       processManagementService.startExecutionHandle(executionDelegate);
     }else if(ExecutionListener.EVENTNAME_END.equals(executionDelegate.getEventName())){
-      if (((ActivityInstanceState.CANCELED.getStateCode() == activityInstanceState && ObjectUtil.isEmpty(type)) || endTypeList.contains(type))){
+      if ((ActivityInstanceState.CANCELED.getStateCode() == activityInstanceState && ObjectUtil.isEmpty(type)) || endTypeList.contains(type)){
         log.info("CamundaGlobalListener onTaskEvent Task completed: {} {} {} {}", executionDelegate.getEventName(), type, activityInstanceState,executionDelegate.getCurrentActivityName());
         if(ActivityInstanceState.ENDING.getStateCode() == activityInstanceState){
           log.info("CamundaGlobalListener onTaskEvent Task completed: {}", executionDelegate.getCurrentActivityName());
