@@ -4092,7 +4092,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             approveRecordShowList = workflowFeign.listHistoryTaskByProcessId(taskEntity.getProcessId());
         }
         //当状态为待审核、审核中、审核通过、审核不通过时添加详情
-        if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(status) || TaskStateEnum.APPROVAL_ING.getCode().equals(status)
+        if (TaskStateEnum.WAIT_CONFIRM.getCode().equals(status)
                 || TaskStateEnum.FINISH.getCode().equals(status) || TaskStateEnum.APPROVAL_NO_PASS.getCode().equals(status)) {
 
             return approveRecordShowList;
