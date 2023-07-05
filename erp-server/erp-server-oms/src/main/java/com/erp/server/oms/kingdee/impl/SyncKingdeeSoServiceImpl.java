@@ -218,7 +218,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             BankAccountEntity bankAccountEntity = bankAccountService.findByAccountNo(entity.getReceiveAccount());
             if(Objects.nonNull(bankAccountEntity)) {
                 resultMap.put("receiveAccount", entity.getReceiveAccount());
-                resultMap.put("receiveAccountName", entity.getReceiveAccount());
+                resultMap.put("receiveAccountName", bankAccountEntity.getAccountName());
             }
         }
 
