@@ -407,7 +407,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         String searchType = params.getSearchType();
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         //根据搜索类型获取到审核状态
-        List<String> approveList = listBySearchType(searchType);
+        List<String> approveList = listBySearchType(searchType,params);
         IPage pageData = baseMapper.paging(query, params, approveList);
         List<SoChangeDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
@@ -465,9 +465,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
      * @date 2023-05-24 17:47
      */
     @Override
-    public Boolean exportExcel(SoChangeDTO.ExportDTO dto, HttpServletResponse response) {
+    public Boolean exportExcel(SoChangeDTO.PagingParamDTO dto, HttpServletResponse response) {
         String searchType = dto.getSearchType();
-        List<String> approveList = listBySearchType(searchType);
+        List<String> approveList = listBySearchType(searchType,dto);
         List<SoChangeDTO.PagingViewDTO> list = baseMapper.listExport(dto, approveList);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
@@ -1020,11 +1020,18 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         return Boolean.TRUE;
     }
 
-    private List<String> listBySearchType(String searchType) {
+    private List<String> listBySearchType(String searchType,SoChangeDTO.PagingParamDTO params) {
         List<String> approveList = new ArrayList<>(3);
         //待审核
         if (SearchType.WAIT_APPROVE.equals(searchType)) {
             approveList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+            if (CollectionUtils.isEmpty(params.getIds())) {
+                //需要审核的业务ids
+                List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.SO_CHANGE.getCode());
+                if (CollectionUtils.isNotEmpty(businessIds)) {
+                    params.setIds(businessIds);
+                }
+            }
         }
         //已审核
         if (ApproveStatusEnum.APPROVE.getStatus().equals(searchType)) {

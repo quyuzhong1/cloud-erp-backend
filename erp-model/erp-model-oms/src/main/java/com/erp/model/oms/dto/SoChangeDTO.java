@@ -235,6 +235,11 @@ public class SoChangeDTO implements Serializable {
         private List<String> skuNoList;
 
         /**
+         * id 集合
+         */
+        private List<String> ids;
+
+        /**
          * code
          */
         private String code;
@@ -534,12 +539,6 @@ public class SoChangeDTO implements Serializable {
         private List<SoChangeDetailDTO.UpdateDTO> detailList;
     }
 
-
-    @Data
-    @NoArgsConstructor
-    public static class ExportDTO extends PagingParamDTO {
-        private List<String> ids;
-    }
 
     @Data
     @NoArgsConstructor

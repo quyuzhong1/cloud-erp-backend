@@ -78,7 +78,7 @@ public interface SoChangeService extends SuperService<SoChangeEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean exportExcel(SoChangeDTO.ExportDTO dto,HttpServletResponse response);
+    Boolean exportExcel(SoChangeDTO.PagingParamDTO dto,HttpServletResponse response);
 
     
     /**

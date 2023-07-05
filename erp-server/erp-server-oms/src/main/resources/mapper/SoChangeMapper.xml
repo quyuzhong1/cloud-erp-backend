@@ -40,6 +40,12 @@
         INNER JOIN so_info si ON si.id=sc.so_id AND si.is_deleted=FALSE
         INNER JOIN so_change_detail scd ON sc.id=scd.main_id AND scd.is_deleted=FALSE
         WHERE sc.is_deleted=FALSE
+        <if test="params.ids != null and params.ids.size > 0">
+            AND sc.id IN
+            <foreach collection="params.ids" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         <if test="approveList !=null and approveList.size>0">
             AND sc.approve_status IN
             <foreach collection="approveList" item="approve" open="(" separator="," close=")">
