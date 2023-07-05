@@ -180,8 +180,8 @@
             pm.business_name,
             string_agg(ptm.cur_activity_id,',') AS activityId,
             string_agg(ptm.cur_activity_name,',') AS activityName,
-            string_agg(ptm.cur_approve_id,',') AS approveId,
-            string_agg(ptm.cur_approve_name,',') AS approveName
+            string_agg(ptm.cur_approve_id,',') AS curApproveId,
+            string_agg(ptm.cur_approve_name,',') AS curApproveName
         FROM process_management pm
         LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = false AND ptm.task_status = 'approveIng'
         WHERE pm.is_deleted = false AND
@@ -201,8 +201,8 @@
         pm.business_name,
         ptm.cur_activity_id AS activityId,
         ptm.cur_activity_name AS activityName,
-        ptm.cur_approve_id AS approveId,
-        ptm.cur_approve_name AS approveName
+        ptm.cur_approve_id AS curApproveId,
+        ptm.cur_approve_name AS curApproveName
         FROM process_management pm
         LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = false AND ptm.task_status = 'approveIng'
         WHERE pm.is_deleted = false AND
