@@ -169,12 +169,12 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
 
         List<DeliveryDocsDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
-            Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
+            Integer approvalNoPass = TaskStateEnum.APPROVAL_NO_PASS.getCode();
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(params.getFlagId());
             for (DeliveryDocsDTO item : list) {
                 ProjectTaskEntity entity = taskList.stream().filter(d -> d.getId().equals(item.getTaskId())).findFirst().orElse(null);
                 //当没审核通过
-                if (Objects.isNull(entity) || !entity.getStatus().equals(approvalPass)) {
+                if (Objects.isNull(entity) || !entity.getStatus().equals(approvalNoPass)) {
                     item.setFileUrl(item.getOldFileUrl());
                     item.setFileName(item.getOldFileName());
                     item.setUploadType(item.getOldUploadType());
@@ -195,8 +195,6 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         List<DeliveryDocsDTO> list = baseMapper.list(params, findDeliveryDocsIds);
         if (CollectionUtils.isNotEmpty(list)) {
             Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
-            Integer finishCode = TaskStateEnum.FINISH.getCode();
-            List<Integer> statusList = Arrays.asList(approvalPass, finishCode);
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductId(params.getFlagId());
             for (DeliveryDocsDTO item : list) {
                 ProjectTaskEntity entity = taskList.stream().filter(d -> d.getId().equals(item.getTaskId())).findFirst().orElse(null);
@@ -204,7 +202,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                     continue;
                 }
                 //当没审核通过
-                if (!statusList.contains(entity.getStatus())) {
+                if (!entity.getStatus().equals(approvalPass)) {
                     item.setFileUrl(item.getOldFileUrl());
                     item.setFileName(item.getOldFileName());
                     item.setUploadType(item.getOldUploadType());
@@ -281,9 +279,9 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         List<DeliveryDocsDTO> list = baseMapper.getByTaskId(taskId);
         List<TaskDocHistoryEntity> docHistoryList = taskDocHistoryService.listByTaskIdList(Arrays.asList(taskId));
         ProjectTaskEntity task = projectTaskService.getById(taskId);
-        Integer finish = TaskStateEnum.FINISH.getCode();
+        Integer approvalNoPass = TaskStateEnum.APPROVAL_NO_PASS.getCode();
         for (DeliveryDocsDTO item : list) {
-            if (task != null && finish.equals(task.getStatus())) {
+            if (task != null && !approvalNoPass.equals(task.getStatus())) {
                 item.setOldFileName(item.getFileName());
                 item.setOldFileUrl(item.getFileUrl());
                 item.setOldUploadType(item.getUploadType());

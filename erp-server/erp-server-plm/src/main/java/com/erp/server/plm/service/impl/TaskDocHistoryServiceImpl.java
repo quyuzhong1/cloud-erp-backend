@@ -12,6 +12,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -143,7 +144,43 @@ public class TaskDocHistoryServiceImpl extends SuperServiceImpl<TaskDocHistoryMa
         if (CollectionUtils.isEmpty(taskIdList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(TaskDocHistoryEntity::getTaskId,taskIdList).orderByDesc(TaskDocHistoryEntity::getCreateTime).list();
+        return this.lambdaQuery().in(TaskDocHistoryEntity::getTaskId, taskIdList).orderByDesc(TaskDocHistoryEntity::getCreateTime).list();
+    }
+
+
+    /**
+     * 批量提交
+     *
+     * @param resultList
+     * @return void
+     * @author yl
+     * @date 2023-07-05 19:50
+     */
+    @Override
+    public void addBatchHistory(List<TaskDocsFinishEntity> resultList) {
+        if (CollectionUtils.isNotEmpty(resultList)) {
+            List<TaskDocHistoryEntity> addList = new ArrayList<>(resultList.size());
+            for (TaskDocsFinishEntity item : resultList) {
+                TaskDocHistoryEntity entity = new TaskDocHistoryEntity();
+                entity.setTaskId(item.getTaskId());
+                entity.setFileName(item.getFileName());
+                entity.setFileSize(item.getFileSize());
+                entity.setFileSuffix(item.getFileSuffix());
+                entity.setFileType(item.getFileType());
+                entity.setFileUrl(item.getFileUrl());
+                entity.setFinishDocId(item.getId());
+                entity.setProductId(item.getProductId());
+                entity.setUploadType(item.getUploadType());
+                entity.setRequireDocId(item.getTaskDocsId());
+                Integer maxVersion = getMaxVersion(item.getId());
+                entity.setChangeVersion(maxVersion);
+                addList.add(entity);
+
+            }
+            this.saveBatch(addList);
+
+        }
+
     }
 
 

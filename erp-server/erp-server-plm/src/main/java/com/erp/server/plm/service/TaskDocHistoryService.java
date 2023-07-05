@@ -62,4 +62,14 @@ public interface TaskDocHistoryService extends SuperService<TaskDocHistoryEntity
      * @return java.util.List<com.erp.model.plm.entity.TaskDocHistoryEntity>
      */
     List<TaskDocHistoryEntity> listByTaskIdList(List<String> taskIdList);
+
+    
+    /**
+     * 批量提交
+     * @author yl
+     * @date 2023-07-05 19:50
+     * @param resultList
+     * @return void
+     */
+    void addBatchHistory(List<TaskDocsFinishEntity> resultList);
 }
