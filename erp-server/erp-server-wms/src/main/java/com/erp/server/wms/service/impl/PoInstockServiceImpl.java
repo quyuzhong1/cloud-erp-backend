@@ -335,6 +335,9 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         }
         dto.setPurchaseOrderCode(purchaseOrderDTO.getCode());
 
+        //采购组织
+        dto.setPurchaseOrgName(purchaseOrderDTO.getPurchaseOrgName());
+
         //明细信息
         List<PoInstockDetailEntity> entityDetails = poInstockDetailService.listByMainId(id);
         if (CollectionUtils.isEmpty(entityDetails)) {
