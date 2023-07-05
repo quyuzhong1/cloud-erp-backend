@@ -205,7 +205,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             map.put("isGift", soDetailEntity.getIsGift());
             if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
                 String warehouseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soInfoById.getWarehouseOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
-                resultMap.put("warehouseOrgCode", warehouseOrgCode);
+                map.put("warehouseOrgCode", warehouseOrgCode);
             }
             map.put("taxRate", soDetailEntity.getTaxRate());
             if (CollectionUtils.isNotEmpty(warehouseList)) {
