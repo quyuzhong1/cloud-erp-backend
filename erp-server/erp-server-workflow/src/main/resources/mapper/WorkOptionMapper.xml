@@ -90,7 +90,7 @@
         LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = FALSE
         INNER JOIN work_menu wm ON pm.business_key = wm.module_code
         WHERE 1 = 1 AND pm.is_deleted = FALSE
-        AND pm.approve_status = #{approveStatus}
+        AND ptm.task_status = #{approveStatus}
         AND ptm.cur_approve_id = #{userId}
         GROUP BY wm.sys_classify
     </select>
@@ -103,7 +103,7 @@
         LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
         INNER JOIN work_menu wm ON pm.business_key = wm.module_code
         WHERE 1 = 1
-        AND (pm.approve_status = #{approveStatus} OR pm.approve_status = 'reject')
+        AND (ptm.task_status = #{approveStatus} OR ptm.task_status = 'reject')
         AND ptm.cur_approve_id = #{userId}
         GROUP BY wm.sys_classify
     </select>
@@ -152,11 +152,11 @@
         LEFT JOIN process_task_cc cc ON cc.task_management_id = ptm.id AND cc.is_deleted = FALSE
         WHERE pm.is_deleted = FALSE
         <if test="params.status == 'waitHandle'">
-            AND pm.approve_status = 'approveIng'
+            AND ptm.task_status = 'approveIng'
             AND ptm.cur_approve_id = #{params.userId}
         </if>
         <if test="params.status == 'alreadyHandle'">
-            AND (pm.approve_status = 'approve' OR pm.approve_status = 'reject')
+            AND (ptm.task_status = 'approve' OR pm.task_status = 'reject')
             AND ptm.cur_approve_id = #{params.userId}
         </if>
         <if test="params.status == 'carbonCopy'">
