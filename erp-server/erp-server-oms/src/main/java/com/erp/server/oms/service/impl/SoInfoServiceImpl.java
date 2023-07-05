@@ -1,7 +1,6 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -32,6 +31,7 @@ import com.common.core.utils.ValidatorUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.OmsAttachmentDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
@@ -243,7 +243,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         // 字典值获取
         List<String> dictKeys = Lists.newArrayList(DictBasicEnum.RECEIVE_METHOD.getType(), DictBasicEnum.COLLECTION_TERMS.getType());
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
-        Map<String,List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+        Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
 
         // 验证字典值
         checkDict(addEntity);
@@ -406,7 +406,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         // 字典值获取
         List<String> dictKeys = Lists.newArrayList(DictBasicEnum.RECEIVE_METHOD.getType(), DictBasicEnum.COLLECTION_TERMS.getType());
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
-        Map<String,List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+        Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
 
         // 收款方式
         List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicEnum.RECEIVE_METHOD.getType());
@@ -421,8 +421,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             view.setReceiveConditionName(receiveConditionName);
         }
         // 收款账号
-        if(StrUtils.isNotEmpty(view.getReceiveAccount())) {
-            BankAccountEntity bankAccountEntity =  bankAccountService.findByAccountNo(view.getReceiveAccount());
+        if (StrUtils.isNotEmpty(view.getReceiveAccount())) {
+            BankAccountEntity bankAccountEntity = bankAccountService.findByAccountNo(view.getReceiveAccount());
             view.setReceiveAccountName(Optional.ofNullable(bankAccountEntity).map(BankAccountEntity::getAccountName).orElse(""));
         }
 
@@ -909,7 +909,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         //撤销流程
         LoginUser userInfo = commonService.getUserInfo();
-        ids.forEach(obj ->{
+        ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.SO_INFO.getCode());
@@ -1710,16 +1710,108 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      */
     @Override
     public Boolean exportSoPI(String id, HttpServletResponse response) {
-        SoInfoDTO.SoPIDTO so = new SoInfoDTO.SoPIDTO();
-        return null;
+        SoInfoDTO.SoPIDTO soPi = new SoInfoDTO.SoPIDTO();
+        SoInfoEntity soInfo = this.getById(id);
+        if (Objects.isNull(soInfo)) {
+            throw new ServiceException(ApiError.ERROR_92003);
+        }
+        soPi.setCode(soInfo.getCode());
+        soPi.setBillDate(soInfo.getCreateTime().toLocalDate());
+        //币种符号
+        String currencySymbol = soInfo.getCurrencySymbol();
+        //海运
+        BigDecimal shippingFee = soInfo.getShippingFee();
+        String shippingFeeStr = currencySymbol + shippingFee;
+        soPi.setShippingFeeStr(shippingFeeStr);
+        soPi.setShippingFee(shippingFee);
+        //客户id
+        String customerId = soInfo.getCustomerId();
+        String receiveCondition = soInfo.getReceiveCondition();
+
+
+        //收款条件
+        String receiveMethodType = DictBasicEnum.RECEIVE_METHOD.getType();
+        DictBasicEntity dictBasic = dictBasicService.getByTypeAndValue(receiveMethodType, receiveCondition);
+        if (Objects.isNull(dictBasic)) {
+            soPi.setReceiveConditionStr("");
+        } else {
+            soPi.setReceiveConditionStr(dictBasic.getName());
+
+        }
+
+        CustomerInfoEntity customerInfo = StringUtils.isNotEmpty(customerId) ? customerInfoService.getById(customerId) : null;
+        String customerName = "";
+        if (customerInfo != null) {
+            customerName = customerInfo.getName();
+        }
+        soPi.setCustomerName(customerName);
+
+        List<CustomerAddressDTO.ViewDTO> addressList = customerAddressService.listByMainId(customerId);
+        CustomerAddressDTO.ViewDTO address = addressList.stream().filter(a -> a.getIsDefault()).findFirst().orElse(null);
+        if (!Objects.isNull(address)) {
+            soPi.setAddress(address.getAddress());
+            soPi.setEmail(address.getEmail());
+            soPi.setTelNumber(address.getTelNumber());
+        }
+
+
+        List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainId(id);
+        List<SoDetailDTO.ViewPiDTO> viewPiList = new ArrayList<>(soDetailList.size());
+        int i = 1;
+        List<String> skuIdList = soDetailList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+        for (SoDetailEntity item : soDetailList) {
+            String symbol = item.getCurrencySymbol();
+            SoDetailDTO.ViewPiDTO viewPi = new SoDetailDTO.ViewPiDTO();
+            viewPi.setNo(i);
+            BigDecimal amount = item.getAmount();
+            viewPi.setAmount(amount);
+            viewPi.setCurrencySymbol(symbol);
+            viewPi.setSkuNo(item.getSkuNo());
+            Integer qty = item.getQty();
+            viewPi.setQty(qty);
+            BigDecimal price = item.getPrice();
+            viewPi.setPrice(price);
+            viewPi.setPriceStr(symbol + price);
+            viewPi.setAmountStr(symbol + amount);
+            String model = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).findFirst().map(SkuVO::getDeclareModel).orElse("");
+            viewPi.setModel(model);
+            i++;
+            viewPiList.add(viewPi);
+
+        }
+
+        //总金额
+        BigDecimal totalAmount = viewPiList.stream().map(SoDetailDTO.ViewPiDTO::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        //总数量
+        Integer totalQty = viewPiList.stream().mapToInt(SoDetailDTO.ViewPiDTO::getQty).sum();
+        soPi.setTotalAmountStr(currencySymbol + totalAmount);
+        soPi.setTotalQty(totalQty);
+        //总费用
+        BigDecimal totalFee = totalAmount.add(shippingFee);
+        soPi.setTotalFeeStr(currencySymbol + totalFee);
+        StringBuffer sb = new StringBuffer();
+        String excelPath = "excel/SalesContract.xlsx";
+        String name = "销售单发票信息";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(viewPiList, soPi, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            log.error("销售单发票导出出错 {}", e);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
     }
 
     @Override
     public SkuCostProfitDTO.SkuCostProfitResult getSkuCostProfit(SkuCostProfitDTO.SkuCostProfitParam costParam) {
-        if(Objects.isNull(costParam.getQty()) || costParam.getQty() < 0) {
+        if (Objects.isNull(costParam.getQty()) || costParam.getQty() < 0) {
             costParam.setQty(0);
         }
-        SkuCostProfitDTO.SkuCostProfitResult  skuCostProfitResult = new SkuCostProfitDTO.SkuCostProfitResult();
+        SkuCostProfitDTO.SkuCostProfitResult skuCostProfitResult = new SkuCostProfitDTO.SkuCostProfitResult();
         skuCostProfitResult.setSkuId(costParam.getSkuId());
         skuCostProfitResult.setPurchasePrice(BigDecimal.ZERO);
         skuCostProfitResult.setSaleCost(BigDecimal.ZERO);
@@ -1736,24 +1828,24 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         // 字典值获取
         List<String> dictKeys = Lists.newArrayList(DictBasicEnum.RECEIVE_METHOD.getType(), DictBasicEnum.COLLECTION_TERMS.getType());
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
-        Map<String,List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+        Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
 
         // 收款方式
         List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicEnum.RECEIVE_METHOD.getType());
         if (CollectionUtils.isNotEmpty(receiveMethodList) && StrUtils.isNotEmpty(soInfoEntity.getReceiveMethod())) {
             DictBasicEntity dictBasicEntity = receiveMethodList.stream().filter(obj -> Objects.equals(obj.getValue(), soInfoEntity.getReceiveMethod())).findFirst().orElse(null);
-            ValidatorUtil.isTrue(Objects.nonNull(dictBasicEntity),()->new ServiceException("收款方式错误"));
+            ValidatorUtil.isTrue(Objects.nonNull(dictBasicEntity), () -> new ServiceException("收款方式错误"));
         }
         // 收款条件
         List<DictBasicEntity> receiveConditionList = dictBasicMap.get(DictBasicEnum.COLLECTION_TERMS.getType());
-        if (CollectionUtils.isNotEmpty(receiveConditionList)  && StrUtils.isNotEmpty(soInfoEntity.getReceiveCondition()) ) {
+        if (CollectionUtils.isNotEmpty(receiveConditionList) && StrUtils.isNotEmpty(soInfoEntity.getReceiveCondition())) {
             DictBasicEntity dictBasicEntity = receiveConditionList.stream().filter(obj -> Objects.equals(obj.getValue(), soInfoEntity.getReceiveCondition())).findFirst().orElse(null);
-            ValidatorUtil.isTrue(Objects.nonNull(dictBasicEntity),()->new ServiceException("收款条件错误"));
+            ValidatorUtil.isTrue(Objects.nonNull(dictBasicEntity), () -> new ServiceException("收款条件错误"));
         }
         // 收款账号
-        if(StrUtils.isNotEmpty(soInfoEntity.getReceiveAccount())) {
-            BankAccountEntity bankAccountEntity =  bankAccountService.findByAccountNo(soInfoEntity.getReceiveAccount());
-            ValidatorUtil.isTrue(Objects.nonNull(bankAccountEntity),()->new ServiceException("收款账号错误"));
+        if (StrUtils.isNotEmpty(soInfoEntity.getReceiveAccount())) {
+            BankAccountEntity bankAccountEntity = bankAccountService.findByAccountNo(soInfoEntity.getReceiveAccount());
+            ValidatorUtil.isTrue(Objects.nonNull(bankAccountEntity), () -> new ServiceException("收款账号错误"));
         }
     }
 }

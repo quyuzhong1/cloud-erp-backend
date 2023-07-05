@@ -286,6 +286,39 @@ public class SoDetailDTO implements Serializable {
 
     }
 
+    /**
+     * 发票信息的
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewPiDTO{
+
+
+        private Integer no;
+
+        private String skuNo;
+
+        /**
+         * 规格类型
+         */
+        private String model;
+
+        private Integer qty;
+
+        private BigDecimal price;
+
+        private String currencySymbol;
+
+        private String priceStr;
+
+        private BigDecimal amount;
+
+        private String amountStr;
+
+        private String skuId;
+
+
+    }
 
     /**
      * 详情

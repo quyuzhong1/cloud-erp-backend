@@ -738,6 +738,11 @@ public class SoInfoDTO implements Serializable {
 
 
         /**
+         * 客户名称
+         */
+        private String customerName;
+
+        /**
          * 客户地址
          */
         private String address;
@@ -755,6 +760,17 @@ public class SoInfoDTO implements Serializable {
 
 
         /**
+         * 收款条件
+         */
+        private String receiveCondition;
+
+        /**
+         * 收款条件
+         */
+        private String receiveConditionStr;
+
+
+        /**
          * 运费
          */
         private BigDecimal shippingFee;
@@ -762,15 +778,39 @@ public class SoInfoDTO implements Serializable {
         /**
          * 运费
          */
-        private BigDecimal shippingFeeStr;
-
+        private String shippingFeeStr;
 
 
         /**
-         * 订单产品详情
+         * 总数量
          */
-        private List<SoDetailDTO.ViewDTO> detailList;
+        private Integer totalQty;
+
+        /**
+         * 总金额
+         */
+        private Integer totalAmount;
+
+        /**
+         * 总金额
+         */
+        private String totalAmountStr;
+
+        /**
+         * 总费用
+         */
+        private BigDecimal totalFee;
+
+        /**
+         * 总费用
+         */
+        private String totalFeeStr;
+
+
+
     }
+
+
 
 
     /**
