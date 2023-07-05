@@ -999,15 +999,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        //撤销流程
-        LoginUser userInfo = commonService.getUserInfo();
-        ids.forEach(obj -> {
-            ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
-            revokeDTO.setBusinessId(obj);
-            revokeDTO.setBusinessKey(SourceTypeEnum.SO_INFO.getCode());
-            revokeDTO.setUserId(userInfo.getUid());
-            workflowFeign.revokeProcess(revokeDTO);
-        });
 
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(waitSubmitStatus), "");
