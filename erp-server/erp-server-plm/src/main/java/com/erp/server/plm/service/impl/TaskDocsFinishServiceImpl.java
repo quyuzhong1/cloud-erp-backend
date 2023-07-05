@@ -554,7 +554,12 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
 
             businessProcess = businessProcessService.getProcessByBusinessKey(BusinessProcessEnum.DOCS_CHANGE.getBusinessKey());
         }
+        //表示没有流程了
         if (ObjectUtils.isEmpty(businessProcess)) {
+            Integer finishCode = TaskStateEnum.FINISH.getCode();
+            if(finishCode.equals(taskEntity.getStatus())){
+                taskDocHistoryService.updateChangeResult(taskEntity.getId());
+            }
             return Boolean.TRUE;
         }
 

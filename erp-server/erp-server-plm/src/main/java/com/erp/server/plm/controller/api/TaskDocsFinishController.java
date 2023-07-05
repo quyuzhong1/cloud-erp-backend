@@ -73,18 +73,7 @@ public class TaskDocsFinishController extends BaseController {
         return flag ? success() : failure();
     }
 
-//    /**
-//     * 任务列表-变更文档
-//     * @author yl
-//     * @date 2022-10-14 11:05
-//     * @param
-//     * @return com.common.core.vo.ApiResult
-//     */
-//    @PostMapping("/updateFile")
-//    public ApiResult updateFile(@ModelAttribute @Validated TaskChangeFileDTO dto) {
-//        Boolean flag = taskDocsFinishService.updateFile(dto);
-//        return flag == true ? success() : failure();
-//    }
+
 
     /**
      * 任务列表-变更文档-发起变更文档流程

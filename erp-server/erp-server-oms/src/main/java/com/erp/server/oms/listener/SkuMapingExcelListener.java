@@ -128,6 +128,10 @@ public class SkuMapingExcelListener extends AnalysisEventListener<SkuMapingImpor
         if(CollectionUtils.isNotEmpty(excelList)){
             errorMsgList.add("同平台只能对应一个产品sku");
         }
+        long count=addSkuMapingList.stream().filter(a->a.getPlatformSkuNo().equals(platformSkuNo)&&platformDict.equals(a.getPlatformDict())).count();
+        if(count>0){
+            errorMsgList.add("同平台只能对应一个产品sku");
+        }
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             skuMapingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -139,15 +143,6 @@ public class SkuMapingExcelListener extends AnalysisEventListener<SkuMapingImpor
         String platformSkuName = skuMapingImportExcelDTO.getPlatformSkuName();
         LocalDateTime now = LocalDateTime.now();
 
-        //已对应的平台sku
-        List<SkuMapingEntity> alreadyList = skuMapingList.stream().filter(s -> s.getPlatformSkuNo().equals(platformSkuNo) && platformDict.equals(s.getPlatformDict())).
-                collect(Collectors.toList());
-        //设置失效时间为现在
-        for (SkuMapingEntity already : alreadyList) {
-            already.setExpireTime(now);
-            already.setIsExpire(Boolean.TRUE);
-        }
-        updateSkuMapingList.addAll(alreadyList);
         SkuMapingEntity add = new SkuMapingEntity();
         add.setPlatformDict(platformDict);
         add.setPlatformName(platformName);
