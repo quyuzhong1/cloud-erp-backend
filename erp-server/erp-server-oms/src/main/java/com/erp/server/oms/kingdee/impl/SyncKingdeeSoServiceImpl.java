@@ -186,8 +186,6 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         //收货人
         resultMap.put("receiverName", entity.getReceiverName());
 
-        // TODO 暂注释，后续测试无问题再打开
-        /*
         List<String> dictKeys = Lists.newArrayList(DictBasicEnum.RECEIVE_METHOD.getType(), DictBasicEnum.COLLECTION_TERMS.getType());
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
         Map<String,List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
@@ -221,7 +219,6 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         if(StrUtils.isNotEmpty(entity.getReceiveAccount())) {
             resultMap.put("receiveAccount", entity.getReceiveAccount());
         }
-         */
 
         String receiveAddressId = entity.getReceiveAddressId();
         CustomerAddressEntity addressEntity = customerAddressService.getById(receiveAddressId);
