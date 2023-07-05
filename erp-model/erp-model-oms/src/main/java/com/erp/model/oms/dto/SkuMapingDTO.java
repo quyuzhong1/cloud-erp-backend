@@ -298,7 +298,7 @@ public class SkuMapingDTO implements Serializable {
         private String customerId;
 
 
-        private List<String> skuList;
+        private List<String> skuNoList;
 
 
     }
