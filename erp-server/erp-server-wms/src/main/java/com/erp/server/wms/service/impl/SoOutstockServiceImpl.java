@@ -1124,7 +1124,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 item.setApproveStatus(statusEnum);
                 item.setApproveUserName(approveUserName);
                 item.setApproveTime(approveTime);
-                item.setActualDeliveryDate(approveTime.toLocalDate());
+                if (approveTime != null) {
+                    item.setActualDeliveryDate(approveTime.toLocalDate());
+                }
             }
             return this.updateBatchById(list);
         }
