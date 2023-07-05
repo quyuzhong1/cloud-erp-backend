@@ -818,7 +818,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * @Author Luo_WG
      * @Date 2023/7/4 10:18
      **/
-    private void approveProcess(List<SoInfoEntity> list, BaseApproveParamDTO dto) {
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void approveProcess(List<SoInfoEntity> list, BaseApproveParamDTO dto) {
         ValidList<ProcessManagementDTO.ApproveDTO> resultList = new ValidList<>();
         LoginUser userInfo = commonService.getUserInfo();
         list.forEach(obj -> {
@@ -858,7 +860,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approveEnd(BaseApproveParamDTO dto, List<SoInfoEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return Boolean.TRUE;
@@ -866,7 +867,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //意见
         String comment = dto.getComment();
         String content = "";
-        String userName = commonService.getUserInfo().getUserName();
+
+        List<String> ids = list.stream().map(SoInfoEntity::getId).collect(Collectors.toList());
+        List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
+        List<String> curApproveName = processTaskManagementEntities.stream().filter(req ->req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
+        String userName = StringUtils.join(curApproveName, ",");
         String approveStatus = "";
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过

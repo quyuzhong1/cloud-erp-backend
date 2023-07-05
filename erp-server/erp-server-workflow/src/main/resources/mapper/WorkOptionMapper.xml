@@ -135,7 +135,7 @@
 
     <select id="approveView" resultType="com.erp.model.workflow.dto.WorkOptionDTO$ApproveViewDTO">
         SELECT
-            ptm.id AS id,
+            max(ptm.id) AS id,
             wm.module_classify,
             pm.business_code,
             pm.business_name,
@@ -175,6 +175,16 @@
         <if test="params.sourceCode != '' and  params.sourceCode != null">
             AND pm.business_code ilike concat('%',#{params.sourceCode},'%')
         </if>
+        GROUP BY wm.module_classify,
+        pm.business_code,
+        pm.business_name,
+        pm.business_id,
+        pm.business_key,
+        pm.create_user_id,
+        EXTRACT(EPOCH FROM (pm.end_time - pm.start_time)),
+        pm.create_time,
+        pm.approve_status,
+        concat(wm.detail_url,pm.business_id)
     </select>
 
 </mapper>
