@@ -122,7 +122,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         resultMap.put("receiveOrgCode", receiveOrgCode);
 
         //采购组织
-        String purchaseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrderId())).distinct()
+        String purchaseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(purchaseOrderEntity.getPurchaseOrgId())).distinct()
                 .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
         resultMap.put("purchaseOrgCode", purchaseOrgCode);
 

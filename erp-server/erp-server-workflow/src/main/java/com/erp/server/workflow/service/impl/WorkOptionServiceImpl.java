@@ -497,7 +497,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         records.forEach(req -> {
             if (StringUtils.isNotBlank(req.getApproveDuration())) {
                 BigDecimal bigDecimal = BigDecimal.valueOf(Double.valueOf(req.getApproveDuration()));
-                String value = String.valueOf(bigDecimal.divide(BigDecimal.valueOf(60), 2, BigDecimal.ROUND_DOWN));
+                String value = String.valueOf(bigDecimal.divide(BigDecimal.valueOf(3600), 2, BigDecimal.ROUND_DOWN));
                 req.setApproveDuration(value + " H");
             } else {
                 req.setApproveDuration(0 + " H");
