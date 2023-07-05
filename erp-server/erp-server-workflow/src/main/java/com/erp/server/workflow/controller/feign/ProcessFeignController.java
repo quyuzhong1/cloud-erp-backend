@@ -354,4 +354,14 @@ public class ProcessFeignController extends BaseController {
         return resultList;
     }
 
+
+    /**
+     * 根据业务id获取流程实例信息
+     */
+    @PostMapping("/listProcessByProcessId")
+    public List<ApproveNodeRecordVO> listProcessByProcessId(@RequestBody @Valid String processId) {
+        List<ApproveNodeRecordVO> resultList = businessService.auditInfo(processId);
+        return resultList;
+    }
+
 }
