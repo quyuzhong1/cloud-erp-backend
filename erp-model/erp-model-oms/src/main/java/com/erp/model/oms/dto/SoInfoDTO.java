@@ -1149,6 +1149,11 @@ public class SoInfoDTO implements Serializable {
          */
         private String warehouseOrgName;
 
+        /**
+         * 销售备注
+         */
+        private String soRemark;
+
         private String syncKingdeeId;
     }
 

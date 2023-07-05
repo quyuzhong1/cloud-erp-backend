@@ -239,7 +239,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(rejectStatus)).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus), "");
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus), "",null);
         if (result) {
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
@@ -292,6 +292,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (soInfo != null) {
             result.setCustomerName(soInfo.getCustomerName());
             result.setSoCode(soInfo.getCode());
+            result.setSoRemark(soInfo.getSoRemark());
             result.setReceiveAddress(soInfo.getReceiveAddress());
             result.setReceiverName(soInfo.getReceiverName());
             result.setDeliveryModeName(soInfo.getDeliveryModeName());
@@ -347,7 +348,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             approveStatus = ApproveStatusEnum.REJECT;
             content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
         }
-        Boolean result = this.updateApproveStatus(list, approveStatus, userName);
+        Boolean result = this.updateApproveStatus(list, approveStatus, userName,LocalDateTime.now());
         if (result) {
             //处理对应数据
             if (isPass) {
@@ -524,7 +525,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(approveStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus), "");
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus), "",null);
         //反审核 TODO 需要做什么
         if (result) {
             //反审核
@@ -559,7 +560,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         //TODO 撤销流程
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus), "");
+        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus), "",null);
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("销售出库单【%s】取消流程", ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "取消流程操作");
         return result;
@@ -1117,11 +1118,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @param statusEnum
      * @return
      */
-    private Boolean updateApproveStatus(List<SoOutstockEntity> list, ApproveStatusEnum statusEnum, String approveUserName) {
+    private Boolean updateApproveStatus(List<SoOutstockEntity> list, ApproveStatusEnum statusEnum, String approveUserName,LocalDateTime approveTime) {
         if (CollectionUtils.isNotEmpty(list)) {
             for (SoOutstockEntity item : list) {
                 item.setApproveStatus(statusEnum);
                 item.setApproveUserName(approveUserName);
+                item.setApproveTime(approveTime);
             }
             return this.updateBatchById(list);
         }

@@ -1276,7 +1276,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             throw new ServiceException(ApiError.ERROR_92016);
         }
         BeanMapper.copy(soInfo, customer);
-
+        customer.setSoRemark(soInfo.getRemark());
         String customerId = customer.getCustomerId();
         CustomerInfoEntity customerInfo = StringUtils.isNotEmpty(customerId) ? customerInfoService.getById(customerId) : null;
         String customerName = "";

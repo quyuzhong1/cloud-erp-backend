@@ -541,6 +541,7 @@ public class SoOutstockDTO implements Serializable {
 
         private ApproveStatusEnum approveStatus;
 
+
         private String approveStatusName;
 
 
@@ -662,6 +663,31 @@ public class SoOutstockDTO implements Serializable {
          */
         private String deliveryModeName;
 
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 审核人
+         */
+        private String approveUserName;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
+         * 销售订单备注
+         */
+        private String soRemark;
 
         private List<SoOutstockDetailDTO.ViewDTO> detailList;
 

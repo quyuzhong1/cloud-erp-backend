@@ -166,6 +166,12 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     private String approveUserName;
 
     /**
+     * 审核时间
+     */
+    @TableField("approve_time")
+    private LocalDateTime approveTime;
+
+    /**
      * 客户id
      */
     @TableField("customer_id")
