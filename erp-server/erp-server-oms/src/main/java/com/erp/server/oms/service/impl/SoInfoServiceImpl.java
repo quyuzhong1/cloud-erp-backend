@@ -798,8 +798,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             throw new ServiceException(ApiError.ERROR_98006);
         }
         //审核流程
-        Boolean flag = approveProcess(list, dto);
-        return flag;
+        approveProcess(list, dto);
+        return Boolean.TRUE;
     }
 
     /**
@@ -811,7 +811,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * @Author Luo_WG
      * @Date 2023/7/4 10:18
      **/
-    private Boolean approveProcess(List<SoInfoEntity> list, BaseApproveParamDTO dto) {
+    private void approveProcess(List<SoInfoEntity> list, BaseApproveParamDTO dto) {
         ValidList<ProcessManagementDTO.ApproveDTO> resultList = new ValidList<>();
         LoginUser userInfo = commonService.getUserInfo();
         list.forEach(obj -> {
@@ -836,10 +836,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         if (CollectionUtils.isNotEmpty(businessIdList)) {
             List<SoInfoEntity> businessSoInfoList = list.stream().filter(obj -> businessIdList.contains(obj.getId())).collect(Collectors.toList());
-            Boolean flag = approveEnd(dto, businessSoInfoList);
-            return flag;
+            approveEnd(dto, businessSoInfoList);
         }
-        return Boolean.FALSE;
     }
 
     /**
