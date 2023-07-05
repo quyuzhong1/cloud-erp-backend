@@ -1011,6 +1011,8 @@ public class SoInfoDTO implements Serializable {
 
         private String code;
 
+        private Boolean invalidStatus;
+
         private LocalDateTime createTime;
 
         /**

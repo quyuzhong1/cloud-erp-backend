@@ -251,8 +251,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         transactionRule.setInventoryStatus(InventoryStatusEnum.USABLE);
         transactionRule.setWarehouseOption(InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT);
         transactionRule.setTransactionMode(InventoryModeEnum.OUT_STOCK);
+        ruleList.add(transactionRule);
         inventoryInOutStockRuleDTO.setRules(ruleList);
-
         result.setInventoryInOutStockRuleDTO(inventoryInOutStockRuleDTO);
         return result;
     }

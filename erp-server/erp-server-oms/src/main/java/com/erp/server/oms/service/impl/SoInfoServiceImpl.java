@@ -1335,10 +1335,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public SoInfoDTO.ExportPdfDTO exportSoContractPdf(String id) {
         SoInfoDTO.ExportPdfDTO result = new SoInfoDTO.ExportPdfDTO();
         SoInfoDTO.CustomerDTO customer = this.getSoCustomer(id);
+
+        Boolean invalidStatus=customer.getInvalidStatus();
+        if(invalidStatus!=null&&invalidStatus){
+            throw new ServiceException(ApiError.ERROR_92022);
+        }
+
+
         String approveStatus = customer.getApproveStatus().getStatus();
         String approve = ApproveStatusEnum.APPROVE.getStatus();
         String approveIng = ApproveStatusEnum.APPROVE_ING.getStatus();
-        List<String> statusList = Arrays.asList(approve, approveIng);
+        String waitSubmit = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        List<String> statusList = Arrays.asList(approve, approveIng,waitSubmit);
         if (!statusList.contains(approveStatus)) {
             throw new ServiceException(ApiError.ERROR_92022);
         }
@@ -1715,6 +1723,20 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (Objects.isNull(soInfo)) {
             throw new ServiceException(ApiError.ERROR_92003);
         }
+        Boolean invalidStatus=soInfo.getInvalidStatus();
+        if(invalidStatus!=null&&invalidStatus){
+            throw new ServiceException(ApiError.ERROR_92022);
+        }
+        String approveStatus = soInfo.getApproveStatus().getStatus();
+        String approve = ApproveStatusEnum.APPROVE.getStatus();
+        String approveIng = ApproveStatusEnum.APPROVE_ING.getStatus();
+        String waitSubmit = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        List<String> statusList = Arrays.asList(approve, approveIng,waitSubmit);
+        if (!statusList.contains(approveStatus)) {
+            throw new ServiceException(ApiError.ERROR_92022);
+        }
+
+
         soPi.setCode(soInfo.getCode());
         soPi.setBillDate(soInfo.getCreateTime().toLocalDate());
         //币种符号
