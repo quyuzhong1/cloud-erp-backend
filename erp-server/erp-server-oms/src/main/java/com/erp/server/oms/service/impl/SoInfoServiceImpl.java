@@ -1000,7 +1000,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         ids.forEach(obj ->{
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
             revokeDTO.setBusinessId(obj);
-            revokeDTO.setBusinessKey(SourceTypeEnum.CUSTOMER_INFO.getCode());
+            revokeDTO.setBusinessKey(SourceTypeEnum.SO_INFO.getCode());
             revokeDTO.setUserId(userInfo.getUid());
             workflowFeign.revokeProcess(revokeDTO);
         });
