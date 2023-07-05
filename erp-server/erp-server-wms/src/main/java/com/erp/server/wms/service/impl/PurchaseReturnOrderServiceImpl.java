@@ -367,7 +367,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
         if (StringUtils.isNotBlank(viewDTO.getReturnMode())) {
             viewDTO.setReturnModeName(ReturnModeEnum.getName(viewDTO.getReturnMode()));
         }
-        
+
         //创库保存详情表的集合
         List<PurchaseReturnOrderDetailDTO.ViewDTO> detailViewDTOS = new ArrayList<>();
         //根据收货单主表id获取详情信息
