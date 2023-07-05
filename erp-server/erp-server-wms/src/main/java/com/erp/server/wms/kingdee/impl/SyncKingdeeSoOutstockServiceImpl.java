@@ -43,7 +43,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
- * 同步金蝶采购退货单
+ * 同步金蝶销售出库单
  *
  * @Author Luo_WG
  * @Date 2023/4/24 11:22
@@ -124,7 +124,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         //单据类型
         resultMap.put("orderType", entity.getOrderType());
         //单据日期
-        resultMap.put("billDate", entity.getActualDeliveryDate());
+        resultMap.put("billDate", entity.getApproveTime().toLocalDate());
         //销售组织
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
             String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(soInfoById.getSalesOrgId())).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);

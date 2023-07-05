@@ -509,6 +509,11 @@ public class SoOutstockDTO implements Serializable {
          */
         private Boolean isClose;
 
+        /**
+         * 要货日期
+         */
+        private LocalDate requireDate;
+
 
     }
 
