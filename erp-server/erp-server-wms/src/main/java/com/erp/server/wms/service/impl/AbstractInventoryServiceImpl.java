@@ -66,15 +66,14 @@ public abstract class AbstractInventoryServiceImpl {
     /**
      *
      * @param paramList      参数
-     * @param ruleList       规则（调拨自定义时必填）
+     * @param ruleList       规则
      * @param businessType   业务类型
      * @param byType         按业务类型
      */
     @Transactional(rollbackFor = Exception.class)
     public <T extends InventoryStockBaseDTO> void approve(List<T> paramList, List<TransactionRuleDTO> ruleList, InventoryBusinessTypeEnum businessType, Boolean byType) {
         Stopwatch stopwatch = Stopwatch.createStarted();
-        Boolean isInOrOutStock = Objects.equals(byType, Boolean.TRUE) && CollUtil.isEmpty(ruleList);
-        log.info("》》》库存交易按【{}】，出入库或调拨【{}】，入参：{}，业务类型：{}", Objects.equals(byType, Boolean.TRUE) ? "业务类型" : "自定义规则", isInOrOutStock ? "出入库" : "调拨", JSONObject.toJSONString(paramList), businessType.getName());
+        log.info("》》》库存交易按【{}】，入参：{}，业务类型：{}", Objects.equals(byType, Boolean.TRUE) ? "业务类型" : "自定义规则", JSONObject.toJSONString(paramList), businessType.getName());
         // 1.验证参数
         List<TransactionRuleDTO> transactionRuleParams;
         if(Objects.equals(byType,Boolean.TRUE)) {
@@ -84,7 +83,8 @@ public abstract class AbstractInventoryServiceImpl {
         }
         this.checkParam(paramList, businessType, transactionRuleParams);
         // 2.业务处理，同一个操作产生的交易流水使用同一个关联交易号
-        String transactionNo = IdUtil.getSnowflake().nextIdStr(); // 关联交易号
+        // 关联交易号
+        String transactionNo = IdUtil.getSnowflake().nextIdStr();
         this.stockHandler(paramList, businessType, transactionRuleParams, transactionNo);
         stopwatch.stop();
         log.info("结束库存交易，耗时【{}】秒", stopwatch.elapsed(TimeUnit.SECONDS));
