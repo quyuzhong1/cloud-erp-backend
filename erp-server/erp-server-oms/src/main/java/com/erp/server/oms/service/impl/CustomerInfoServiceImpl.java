@@ -356,6 +356,19 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<CustomerDTO.PagingViewDTO> list = pageData.getRecords();
         List<String> groupIdList = list.stream().map(CustomerDTO.PagingViewDTO::getGroupId).collect(Collectors.toList());
         List<CustomerGroupEntity> groupList = CollectionUtils.isNotEmpty(groupIdList) ? customerGroupService.listByIds(groupIdList) : Collections.emptyList();
+
+
+        List<String> ids = list.stream().map(CustomerDTO.PagingViewDTO::getId).collect(Collectors.toList());
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        ids.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_INFO.getCode(),obj));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        Integer code = listApiResult.getCode();
+        if (200 != code) {
+            throw new ServiceException(ApiError.ERROR_500);
+        }
+
         for (CustomerDTO.PagingViewDTO item : list) {
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
@@ -363,6 +376,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             String groupName = groupList.stream().filter(g -> g.getId().equals(groupId)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setGroupName(groupName);
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(item.getId())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                item.setApproveUserName(curApprove);
+            }
         }
 
         return new PagingVO<>(pageData);

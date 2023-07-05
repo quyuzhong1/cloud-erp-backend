@@ -5,15 +5,15 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 
 /**
- * @description: 采购调价审核通过feign
+ * @description: scm服务结束审核feign
  * @author Will
  * @date: 2023/7/3 15:27
  */
-@FeignClient(value = "erp-scm", contextId = "purchasePriceChange")
-public interface ScmPurchasePriceChangeFeign extends BaseWorkflowService{
+@FeignClient(value = "erp-scm", contextId = "workflow-scm")
+public interface ScmWorkflowFeign extends BaseWorkflowService{
 
     /**
-     * purchase_price_change 采购调价
+     * 结束审核
      * @param dto
      * @return
      */

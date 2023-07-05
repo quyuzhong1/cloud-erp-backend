@@ -5,14 +5,15 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 
 /**
- * @Author Cloud
- * @Date 2023/6/27 18:29
- **/
-@FeignClient(value = "erp-oms", contextId = "workflow")
-public interface OmsCustomerInfoFeign extends BaseWorkflowService{
+ * @description: oms服务结束审核feign
+ * @author Will
+ * @date: 2023/7/3 15:27
+ */
+@FeignClient(value = "erp-oms", contextId = "workflow-oms")
+public interface OmsWorkflowFeign extends BaseWorkflowService{
 
     /**
-     * customer_info 客户列表
+     * 结束审核
      * @param dto
      * @return
      */

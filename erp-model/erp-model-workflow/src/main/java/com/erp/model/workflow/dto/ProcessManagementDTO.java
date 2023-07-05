@@ -5,6 +5,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.model.workflow.enums.ProcessStatusEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -495,6 +496,7 @@ public class ProcessManagementDTO {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class HistoryActivityDTO {
         /**
          * 业务类型key
