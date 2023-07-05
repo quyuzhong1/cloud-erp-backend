@@ -43,9 +43,11 @@ import com.erp.server.workflow.mapper.WorkOptionMapper;
 import com.erp.server.workflow.service.*;
 import com.erp.server.workflow.utils.GetHttpGatewayIpPortUtils;
 import com.jgoodies.common.bean.Bean;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -511,6 +513,8 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approve(ApproveParamDTO dto) {
         BaseApproveParamDTO paramDTO = new BaseApproveParamDTO();
         BeanMapperUtils.copy(dto, paramDTO);
