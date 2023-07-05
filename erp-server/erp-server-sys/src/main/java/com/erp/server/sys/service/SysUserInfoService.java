@@ -128,7 +128,7 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @param syncKingdeeId
      * @return
      */
-    boolean updateSyncKingdeeStatus(List<String> businessIds, String status, String syncKingdeeId);
+    boolean updateSyncKingdeeStatus(List<String> businessIds, String status, String syncKingdeeId,String syncOperate);
     /**
      * @description: 批量删除
      * @author Will

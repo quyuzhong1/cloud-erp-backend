@@ -588,12 +588,13 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId) {
+    public Boolean updateSyncKingdeeStatus(String id, String syncKingdeeStatus, String syncKingdeeId,String syncOperate) {
         return this.lambdaUpdate()
                 .eq(WarehouseEntity::getId, id)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), WarehouseEntity::getSyncKingdeeStatus, syncKingdeeStatus)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), WarehouseEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId), WarehouseEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncOperate), WarehouseEntity::getSyncOperate, syncOperate)
                 .update();
     }
 

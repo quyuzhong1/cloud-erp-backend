@@ -52,7 +52,7 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
 
         //仓库
         if (ApiModuleTypeEnum.WAREHOUSE_INFO.getCode().toString().equals(code)) {
-            warehouseService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId);
+            warehouseService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
         }
         //调拨申请单
         if (ApiModuleTypeEnum.TRANSFER_INFO.getCode().toString().equals(code)) {

@@ -976,12 +976,13 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     @Override
-    public boolean updateSyncKingdeeStatus(List<String> businessIds, String syncKingdeeStatus, String syncKingdeeId) {
+    public boolean updateSyncKingdeeStatus(List<String> businessIds, String syncKingdeeStatus, String syncKingdeeId,String syncOperate) {
         return this.lambdaUpdate()
                 .in(SysUserInfoEntity::getUid, businessIds)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), SysUserInfoEntity::getSyncKingdeeStatus, syncKingdeeStatus)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), SysUserInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
                 .set(StringUtils.isNotBlank(syncKingdeeId), SysUserInfoEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(StringUtils.isNotBlank(syncOperate), SysUserInfoEntity::getSyncOperate, syncOperate)
                 .update();
     }
 

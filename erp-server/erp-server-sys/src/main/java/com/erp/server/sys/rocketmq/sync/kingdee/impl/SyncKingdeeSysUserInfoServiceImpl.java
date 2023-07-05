@@ -63,7 +63,7 @@ public class SyncKingdeeSysUserInfoServiceImpl implements SyncKingdeeSysUserInfo
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SYS_USER_INFO_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return sysUserInfoService.updateSyncKingdeeStatus(Arrays.asList(entity.getUid()), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"");
+                return sysUserInfoService.updateSyncKingdeeStatus(Arrays.asList(entity.getUid()), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"",operate);
             }
             return Boolean.TRUE;
         });

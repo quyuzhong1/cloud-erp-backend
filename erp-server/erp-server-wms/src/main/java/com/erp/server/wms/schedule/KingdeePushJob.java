@@ -206,7 +206,7 @@ public class KingdeePushJob {
             return;
         }
         list.forEach(obj->{
-            syncKingdeeWarehouseService.syncDataToKingdee(obj, "");
+            syncKingdeeWarehouseService.syncDataToKingdee(obj, obj.getSyncOperate());
         });
     }
 

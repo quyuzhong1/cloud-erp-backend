@@ -38,11 +38,11 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
 
         //系统用户
         if (ApiModuleTypeEnum.SYS_USER_INFO.getCode().toString().equals(code)) {
-            sysUserInfoService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId);
+            sysUserInfoService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId,null);
         }
         //部门
         if (ApiModuleTypeEnum.SYS_DEPARTMENT.getCode().toString().equals(code)) {
-            sysDepartmentService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId);
+            sysDepartmentService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId,null);
         }
     }
 }

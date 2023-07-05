@@ -7,7 +7,6 @@ import com.erp.model.sys.dto.DeptUserDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -89,7 +88,7 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
      * @param syncKingdeeId
      * @return Boolean
      */
-    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId);
+    Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId,String syncOperate);
 
 }
 
