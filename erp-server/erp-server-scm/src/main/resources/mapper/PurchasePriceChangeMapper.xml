@@ -28,6 +28,12 @@
         INNER JOIN purchase_price_change pp
         ON ppd.purchase_price_change_id=PP.id
         WHERE pp.is_deleted=false AND ppd.is_deleted= false
+        <if test="params.idList != null and params.idList.size > 0">
+            AND pp.id IN
+            <foreach collection="params.idList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         <if test="params.skuIdList!=null and params.skuIdList.size>0">
             AND ppd.sku_id IN
             <foreach collection="params.skuIdList" item="skuId" open="(" separator="," close=")">

@@ -609,6 +609,11 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         //待我审核
         if (SearchType.WAIT_APPROVE.equals(searchType)) {
             statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+            //需要审核的业务ids
+            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode());
+            if (CollectionUtils.isNotEmpty(businessIds)) {
+                params.setIdList(businessIds);
+            }
         }
 
         IPage pageData = baseMapper.paging(query, params, statusList);
