@@ -123,11 +123,10 @@ public class SkuMapingExcelListener extends AnalysisEventListener<SkuMapingImpor
         //已对应的平台sku
         List<SkuMapingEntity> excelList = skuMapingList.stream().filter(s -> s.getPlatformSkuNo().equals(platformSkuNo)
                 && platformDict.equals(s.getPlatformDict())
-                && sku.getSkuId().equals(s.getProductSkuId())
         ).collect(Collectors.toList());
 
         if(CollectionUtils.isNotEmpty(excelList)){
-            errorMsgList.add("同平台只能对应一个个产品sku");
+            errorMsgList.add("同平台只能对应一个产品sku");
         }
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {

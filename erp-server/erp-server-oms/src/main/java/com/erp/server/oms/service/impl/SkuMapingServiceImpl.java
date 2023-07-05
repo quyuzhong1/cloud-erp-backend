@@ -317,7 +317,6 @@ public class SkuMapingServiceImpl extends SuperServiceImpl<SkuMapingMapper, SkuM
         queryWrapper.eq(SkuMapingEntity::getPlatformDict, platformDict);
         queryWrapper.eq(SkuMapingEntity::getPlatformSkuNo, platformSkuNo);
         queryWrapper.eq(SkuMapingEntity::getIsExpire, Boolean.FALSE);
-        queryWrapper.eq(SkuMapingEntity::getProductSkuId, skuId);
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(SkuMapingEntity::getId, id);
         }

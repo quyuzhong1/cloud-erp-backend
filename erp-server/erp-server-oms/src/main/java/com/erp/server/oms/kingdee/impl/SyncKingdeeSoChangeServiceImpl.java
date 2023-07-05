@@ -213,6 +213,8 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
                 jsonObject.set("oldTaxPrice", item.getOldTaxPrice());
                 jsonObject.set("oldTaxRate", item.getOldTaxRate());
                 jsonObject.set("isGift", item.getIsGift());
+                //jsonObject.set("amount", item.getAmount());
+
                 //是否补发
                 jsonObject.set("isReissue", item.getIsReissue());
                 jsonObject.set("unit", "Pcs");
