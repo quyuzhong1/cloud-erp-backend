@@ -1,10 +1,12 @@
 package com.erp.rpc.oms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.util.List;
 import java.util.Map;
 
 @FeignClient(name = "erp-oms")
@@ -14,4 +16,13 @@ public interface OmsTaskFeign {
      */
     @PostMapping("feign/syncKingdee/updateBusinessSyncKingdeeStatus")
     void updateBusinessSyncKingdeeStatus(@RequestBody Map<String, Object> params);
+
+    /**
+     * 根据入参查询单据数量
+     * @Author Luo_WG
+     * @Date 2023/4/21 15:34
+     **/
+    @PostMapping("feign/omsWorkflow/getTableNum")
+    List<WorkOptionDTO.MyWorkOptionDTO> getTableNum(@RequestBody List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList);
+
 }

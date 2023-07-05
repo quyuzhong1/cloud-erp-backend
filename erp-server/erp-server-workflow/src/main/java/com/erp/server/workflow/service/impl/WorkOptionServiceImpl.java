@@ -33,6 +33,7 @@ import com.erp.model.workflow.entity.WorkOptionEntity;
 import com.erp.model.workflow.enums.ApproveSearchOptionEnum;
 import com.erp.model.workflow.enums.SysClassifyEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
+import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.oms.feign.SoChangeFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -89,6 +90,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private OmsTaskFeign omsTaskFeign;
 
     @Resource
     private SoInfoFeign soInfoFeign;
@@ -311,6 +315,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 case WMS:
                     req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + req.getModuleUrl());
                     break;
+                case OMS:
+                    req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.OMS_PORT + req.getModuleUrl());
+                    break;
                 default:
                     break;
             }
@@ -353,6 +360,8 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 return scmTaskFeign.getTableNum(myWorkOptionDTOList);
             case WMS:
                 return wmsTaskFeign.getTableNum(myWorkOptionDTOList);
+            case OMS:
+                return omsTaskFeign.getTableNum(myWorkOptionDTOList);
             default:
                 break;
         }
@@ -392,6 +401,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                         break;
                     case WMS:
                         pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + myWorkOptionDTO.getModuleUrl());
+                        break;
+                    case OMS:
+                        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.OMS_PORT + myWorkOptionDTO.getModuleUrl());
                         break;
                     default:
                         break;

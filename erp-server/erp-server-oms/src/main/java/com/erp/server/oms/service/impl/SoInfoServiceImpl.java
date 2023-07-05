@@ -307,7 +307,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         startProcess(list);
 
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
-        List<String> curApproveName = processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getCurApproveName).collect(Collectors.toList());
+        List<String> curApproveName = processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
         String approveName = StringUtils.join(curApproveName, ",");
         List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(waitSubmitStatus)).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());

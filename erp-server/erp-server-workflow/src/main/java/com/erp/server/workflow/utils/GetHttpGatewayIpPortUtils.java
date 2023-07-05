@@ -23,6 +23,8 @@ public class GetHttpGatewayIpPortUtils {
 
     public static String WMS_PORT;
 
+    public static String OMS_PORT;
+
     @Value("${HttpGatewayIpPort.ip}")
     public void setIP(String IP) {
         GetHttpGatewayIpPortUtils.IP = IP;
@@ -41,5 +43,10 @@ public class GetHttpGatewayIpPortUtils {
     @Value("${HttpGatewayIpPort.wms.port}")
     public void setWMS_PORT(String WMS_PORT) {
         GetHttpGatewayIpPortUtils.WMS_PORT = WMS_PORT;
+    }
+
+    @Value("${HttpGatewayIpPort.oms.port}")
+    public void setOMS_PORT(String OMS_PORT) {
+        GetHttpGatewayIpPortUtils.OMS_PORT = OMS_PORT;
     }
 }
