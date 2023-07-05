@@ -16,6 +16,7 @@ import com.erp.server.workflow.mapper.ProcessTaskManagementMapper;
 import com.erp.server.workflow.service.ProcessTaskCcService;
 import com.erp.server.workflow.service.ProcessTaskManagementService;
 import com.common.business.service.SuperServiceImpl;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -181,6 +182,9 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
 
     @Override
     public List<ProcessTaskManagementEntity> listByProcessInstanceId(List<String> processInstanceId) {
+        if (CollectionUtils.isEmpty(processInstanceId)) {
+            return new ArrayList<>();
+        }
         return lambdaQuery().in(ProcessTaskManagementEntity::getProcessInstanceId, processInstanceId).list();
     }
 }
