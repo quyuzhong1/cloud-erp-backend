@@ -449,12 +449,19 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private String supplierName;
 
+        /**
+         * 采购组织
+         */
+        private String purchaseOrgName;
 
         /**
          * 仓库名
          */
         private String warehouseName;
 
+        /**
+         * 编码
+         */
         private String code;
 
     }

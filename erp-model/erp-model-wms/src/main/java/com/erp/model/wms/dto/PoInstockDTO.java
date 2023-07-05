@@ -441,12 +441,27 @@ public class PoInstockDTO implements Serializable {
         /**
          * 创建人
          */
+        private LocalDateTime createTime;
+
+        /**
+         * 创建人
+         */
         private String createUserName;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
 
         /**
          * 审核人
          */
         private String approveUserName;
+
+        /**
+         * 采购组织（采购订单组织）
+         */
+        private String purchaseOrgName;
 
         /**
          * 明细
