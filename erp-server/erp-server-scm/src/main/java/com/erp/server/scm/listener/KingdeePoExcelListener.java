@@ -48,6 +48,7 @@ public class KingdeePoExcelListener extends AnalysisEventListener<KingdeePoImpor
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
+
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
