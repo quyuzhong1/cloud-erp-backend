@@ -16,10 +16,12 @@ import com.erp.server.oms.service.CustomerInfoService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -323,6 +325,17 @@ public class CustomerInfoController extends BaseController {
     public ApiResult processData() {
         Boolean result = customerInfoService.processData();
         return result ? success() : failure();
+    }
+
+    /**
+     * 导入客户
+     * @param file
+     * @return
+     */
+    @PostMapping(value = "importCustomer")
+    public ApiResult<Void> importCustomer(@RequestParam(value = "file") MultipartFile file) throws IOException {
+        customerInfoService.importCustomer(file);
+        return success();
     }
 
 

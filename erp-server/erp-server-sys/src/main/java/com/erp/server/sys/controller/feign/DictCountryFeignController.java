@@ -1,13 +1,12 @@
 package com.erp.server.sys.controller.feign;
 
+import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.server.sys.service.DictCountryService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 获取国家信息feign
@@ -32,4 +31,17 @@ public class DictCountryFeignController {
     public DictCountryEntity getCountryById(@RequestBody String id) {
         return dictCountryService.getById(id);
     }
+
+
+    /**
+     * 获取国家列表
+     * @param
+     * @return
+     */
+    @GetMapping("/list")
+    public List<DictCountryDTO.ListDTO> list() {
+        List<DictCountryDTO.ListDTO> list = dictCountryService.listCountry();
+        return list;
+    }
+
 }
