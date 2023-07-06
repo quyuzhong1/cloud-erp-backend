@@ -1787,12 +1787,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 String groupFlag = params.getGroupFlag();
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
-                params.setStartTime(planTimeMap.get("startTime").toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime());
-                params.setEndTime(planTimeMap.get("endTime").toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime());
+                if(planTimeMap.get("startTime")!=null){
+                    params.setStartTime(planTimeMap.get("startTime").toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime());
+                }
+                if(planTimeMap.get("endTime")!=null){
+                    params.setEndTime(planTimeMap.get("endTime").toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime());
+                }
                 params.setSearchCategory(TaskSearchCategoryEnum.ALLPLANTIMETASKLIST.getCode());
                 //计划时间
                 pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
@@ -1941,12 +1945,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
                 params.setSearchCategory(TaskSearchCategoryEnum.TOMEPLANENDTIMETASKLIST.getCode());
-                params.setStartTime(planTimeMap.get("startTime").toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime());
-                params.setEndTime(planTimeMap.get("endTime").toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime());
+                if(planTimeMap.get("startTime")!=null){
+                    params.setStartTime(planTimeMap.get("startTime").toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime());
+                }
+                if(planTimeMap.get("endTime")!=null){
+                    params.setEndTime(planTimeMap.get("endTime").toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime());
+                }
+
+
                 //计划时间
                 pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
             }
@@ -1971,7 +1981,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //产品id
             List<String> productIds = records.stream().map(TaskPagingShowDTO::getProductId).collect(Collectors.toList());
             List<ProductInfoEntity> productList = productInfoService.listByIds(productIds);
-            Integer finish = TaskStateEnum.FINISH.getCode();
             //根据产品id 获取到所有的 任务信息
             for (TaskPagingShowDTO item : records) {
                 String taskId = item.getId();
@@ -1992,7 +2001,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 if (workflowTask != null) {
                     item.setProcessTaskId(workflowTask.getTaskId());
                 }
-                String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
+                String warning = getWarning(item.getStatus(), finishState, item.getPlanEndTime());
                 item.setWarning(warning);
 
                 if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(item.getDistributionType())) {
@@ -2103,12 +2112,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
                 params.setSearchCategory(TaskSearchCategoryEnum.TOMEWAITAUDITPLANENDTIMETASKLIST.getCode());
-                params.setStartTime(planTimeMap.get("startTime").toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime());
-                params.setEndTime(planTimeMap.get("endTime").toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime());
+                if(planTimeMap.get("startTime")!=null){
+                    params.setStartTime(planTimeMap.get("startTime").toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime());
+                }
+                if(planTimeMap.get("endTime")!=null){
+                    params.setEndTime(planTimeMap.get("endTime").toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime());
+                }
+
+
                 params.setProcessInstanceIds(processInstanceIds);
                 //计划时间
                 pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
@@ -2653,12 +2668,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
                 params.setSearchCategory(TaskSearchCategoryEnum.MYCREATEPLANENDTIMETASKLIST.getCode());
-                params.setStartTime(planTimeMap.get("startTime").toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime());
-                params.setEndTime(planTimeMap.get("endTime").toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime());
+                if(planTimeMap.get("startTime")!=null){
+                    params.setStartTime(planTimeMap.get("startTime").toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime());
+                }
+                if(planTimeMap.get("endTime")!=null){
+                    params.setEndTime(planTimeMap.get("endTime").toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime());
+                }
+
+
                 //计划时间
                 pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
             }

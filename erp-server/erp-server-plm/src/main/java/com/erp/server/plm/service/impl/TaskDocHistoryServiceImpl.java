@@ -42,7 +42,7 @@ public class TaskDocHistoryServiceImpl extends SuperServiceImpl<TaskDocHistoryMa
     @Transactional(rollbackFor = Exception.class)
     public void addHistory(TaskDocsFinishEntity oldDocs) {
         TaskDocHistoryEntity entity = new TaskDocHistoryEntity();
-        Integer uploadType = entity.getUploadType();
+        Integer uploadType = oldDocs.getUploadType();
         //不是本地上传
         if (!TaskConstant.LOCAL_UPLOAD.equals(uploadType)) {
             entity.setFileName(oldDocs.getFileUrl());
