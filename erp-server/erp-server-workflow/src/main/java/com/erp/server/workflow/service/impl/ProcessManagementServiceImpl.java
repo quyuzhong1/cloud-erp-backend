@@ -945,6 +945,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     public List<ProcessManagementDTO.CurApproveInfoDTO> batchCurApproverByApprove(ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList) {
+        if(CollectionUtil.isEmpty(dtoList)){
+            return Collections.emptyList();
+        }
         // 查询当前任务
         List<ProcessManagementDTO.CurApproveInfoDTO> resultList = baseMapper.listApproverByApprover(dtoList);
         return resultList;
