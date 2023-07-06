@@ -21,7 +21,7 @@ public enum QcTypeEnum {
     INSIDE_QC("insideQc", "在库质检",true),
     NEW_PRODUCT_STOCK_IN("newProductStockIn", "新品入库质检",true),
     B2B_OUTSIDE_QC("b2bOutsideQc", "B2B外检",false),
-    RETURN_QC("returnQc", "退货质检",false);
+    RETURN_QC("returnQc", "退货质检",true);
 
 
     /**
