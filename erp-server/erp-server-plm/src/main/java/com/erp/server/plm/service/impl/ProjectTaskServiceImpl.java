@@ -1923,7 +1923,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Boolean ifProductGroup = ifGroup && groupNameFlag.equals(TaskConstant.PRODUCT) ? true : false;
         //不在的 任务状态
         List<Integer> notStateList = getAssignToMeNoExistState(taskProperty, taskCondition);
-        List<TaskShowDTO> workflowList = workflowFeign.queryMyToDo(userId);
+
         //当不分组
         if (!ifGroup) {
             params.setGroupFlag("");
@@ -1955,6 +1955,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         List<TaskPagingShowDTO> records = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(records)) {
+            List<TaskShowDTO> workflowList = workflowFeign.queryMyToDo(userId);
             //完成的状态
             Integer finishState = TaskStateEnum.FINISH.getCode();
             //获取到任务id 集合

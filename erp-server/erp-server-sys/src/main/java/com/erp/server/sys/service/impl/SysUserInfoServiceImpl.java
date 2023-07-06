@@ -42,7 +42,6 @@ import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.mapper.SysDepartmentMapper;
 import com.erp.server.sys.mapper.SysUserInfoMapper;
-import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysUserInfoService;
 import com.erp.server.sys.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -86,11 +85,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     @Resource
     private SysDepartmentUserService sysDepartmentUserService;
 
-    @Resource
-    private SysDepartmentService sysDepartmentService;
 
-    @Resource
-    private SyncKingdeeSysUserInfoService syncKingdeeSysUserInfoService;
 
     @Resource
     private SysCodeService sysCodeService;

@@ -4,12 +4,16 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.mapper.ShopInfoMapper;
 import com.erp.server.oms.service.ShopInfoService;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -23,6 +27,9 @@ import java.util.Objects;
 @Service
 public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopInfoEntity> implements ShopInfoService {
 
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     /**
      * 添加店铺
@@ -67,6 +74,21 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             return shopInfo.getId();
         }
         return "";
+    }
+
+
+    /**
+     * 初始同步店铺信息
+     *
+     * @param
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-07-06 12:23
+     */
+    @Override
+    public Boolean initialSync() {
+       List<DmpShopInfoEntity> dmpShopList=dmpTaskFeign.listShop();
+        return null;
     }
 
 }
