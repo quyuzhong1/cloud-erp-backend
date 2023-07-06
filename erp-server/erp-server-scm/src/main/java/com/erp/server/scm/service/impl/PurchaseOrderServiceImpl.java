@@ -1871,6 +1871,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             detailMembers.stream().forEach(member->{
                 //已到货的无需再次结束交货
                 if (ArrivalStatusEnum.ARRIVED.getCode().equals(member.getArrivalStatus())) {
+                    log.info("采购订单明细id:{}，对应采购订单:{}, 已经到货，无需结束交货", member.getId(), po.getCode());
                     return;
                 }
                 InventoryFinishDeliveryDetailDTO.AddDTO inventoryMember = new InventoryFinishDeliveryDetailDTO.AddDTO();
@@ -1900,8 +1901,13 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                             && Objects.equals(e.getReturnMode(), ReturnModeEnum.REPLENISHMENT.getCode()))
                             .map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
-                // 此处会有问题，采购订单增加的在途，收货单，采购订单直接生成入库单减少的在途未必一样
+                log.info("采购订单明细id:{}，对应采购订单:{}, 采购订单明细采购数量:{}", member.getId(), po.getCode(), member.getPurchaseQty());
+                log.info("采购订单明细id:{}，对应采购订单:{}, 采购订单明细对应收货单收货数量:{}", member.getId(), po.getCode(), receiveQty);
+                log.info("采购订单明细id:{}，对应采购订单:{}, 采购订单明细对应采购入库单（无收货单）入库数量:{}", member.getId(), po.getCode(), poQty);
+                log.info("采购订单明细id:{}，对应采购订单:{}, 采购订单明细对应退货单（退货补货）退货数量:{}", member.getId(), po.getCode(), returnQty);
+                // 采购订单增加的在途，收货单，采购订单直接生成入库单减少的在途未必一样
                 Integer deliveryQty = member.getPurchaseQty() + returnQty - receiveQty - poQty;
+                log.info("采购订单明细id:{}，对应采购订单:{}, 采购订单明细剩余待交数量:{}", member.getId(), po.getCode(), deliveryQty);
                 inventoryMember.setQty(deliveryQty);
                 inventoryMembers.add(inventoryMember);
             });

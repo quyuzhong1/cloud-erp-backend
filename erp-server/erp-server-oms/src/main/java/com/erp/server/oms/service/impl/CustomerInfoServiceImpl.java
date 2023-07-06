@@ -1,6 +1,8 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -10,6 +12,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.SearchType;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.SuperServiceImpl;
@@ -24,14 +27,12 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.entity.CustomerContactEntity;
-import com.erp.model.oms.entity.CustomerGroupEntity;
-import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.AddressTypeEnum;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.DictBasicDTO;
-import com.erp.model.sys.dto.DictGlobalAreaDTO;
-import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.dto.*;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -45,14 +46,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -1070,6 +1077,391 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             item.setPlatformType(newPlatformType);
         }
         return this.updateBatchById(list);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void importCustomer(MultipartFile file) throws IOException {
+        XSSFWorkbook wb = new XSSFWorkbook(file.getInputStream());
+        XSSFSheet sheet = wb.getSheetAt(1);
+        // 读取数据集
+        int rows = sheet.getPhysicalNumberOfRows();
+
+        // 组织
+        List<BaseIdDTO> accountingCompanyList =  sysUserFeign.listAccountingCompany();
+        Map<String, List<BaseIdDTO>> accountCompanyNameMap = accountingCompanyList.stream().collect(Collectors.groupingBy(BaseIdDTO::getName));
+        // 客户分组
+        List<CustomerGroupEntity> customerGroupEntityList = customerGroupService.list();
+        Map<String, List<CustomerGroupEntity>> customerGroupNameMap =  customerGroupEntityList.stream().collect(Collectors.groupingBy(CustomerGroupEntity::getName));
+        // 国家
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        Map<String, List<DictCountryDTO.ListDTO>> countryNameMap =  countryList.stream().collect(Collectors.groupingBy(DictCountryDTO.ListDTO::getNameCn));
+        // 平台类型
+        List<DictBasicDTO.ViewDTO> platFormList = dictBasicService.getByKey(DictBasicEnum.PLATFORM.getType());
+        Map<String,DictBasicDTO.ViewDTO> platformNameMap = platFormList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
+        // 客户类别
+        List<DictBasicDTO.ViewDTO> customerCategoryList = dictBasicService.getByKey("customerCompanyCategory");
+        Map<String,DictBasicDTO.ViewDTO> customerCategoryNameMap = customerCategoryList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
+        // 结算方式
+        List<DictBasicDTO.ViewDTO> settleModeList = dictBasicService.getByKey("settleMode");
+        Map<String,DictBasicDTO.ViewDTO> settleModeNameMap = settleModeList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
+        // 币别
+        List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
+        Map<String,DictCurrencyEntity> currencyNameMap = currencyList.stream().collect(Collectors.toMap(DictCurrencyEntity::getName, Function.identity()));
+        // 收款条件
+        List<DictBasicDTO.ViewDTO> collectionTermList = dictBasicService.getByKey(DictBasicEnum.COLLECTION_TERMS.getType());
+        Map<String,DictBasicDTO.ViewDTO> collectionTermNameMap = collectionTermList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
+        // 部门
+        List<SysUserDeptDTO> userDeptList = sysUserFeign.getUserDeptList();
+        Map<String,List<SysUserDeptDTO>> deptNameMap = userDeptList.stream().collect(Collectors.groupingBy(SysUserDeptDTO::getDeptName));
+        // 人员
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        Map<String,List<FindUserDTO>> userNameMap = userList.stream().collect(Collectors.groupingBy(FindUserDTO::getUserName));
+
+        for(int i = 1;i < rows;i++) {
+            int noticeRow = i + 1;
+            CustomerInfoEntity customerInfoEntity = new CustomerInfoEntity();
+            XSSFRow row = sheet.getRow(i);
+            // 基本信息
+
+            // 客户编码
+            String code = StrUtils.null2EmptyWithTrim(row.getCell(0).getStringCellValue());
+            customerInfoEntity.setCode(code);
+            // 使用组织
+            String useOrgName = StrUtils.null2EmptyWithTrim(row.getCell(2).getStringCellValue());
+            customerInfoEntity.setUseOrgName(useOrgName);
+            // 使用组织id需根据名称获取
+            if(!accountCompanyNameMap.containsKey(useOrgName)) {
+                throw new ServiceException(StrUtil.format("第【{}】行未找到组织【{}】", noticeRow, useOrgName));
+            }
+            // 名称不会重复
+            customerInfoEntity.setUseOrgId(accountCompanyNameMap.get(useOrgName).get(0).getId());
+
+            // 客户分组（单独的表需提前维护customer_group），分组id需要根据名称获取
+            String groupName = StrUtils.null2EmptyWithTrim(row.getCell(3).getStringCellValue());
+            // 客户分组id需根据客户分组名称获取
+            if(StrUtils.isNotEmpty(groupName) && customerGroupNameMap.containsKey(groupName)) {
+                customerInfoEntity.setGroupName(groupName);
+                customerInfoEntity.setGroupId(customerGroupNameMap.get(groupName).get(0).getId());
+            }
+
+            // 国家
+            String countryName = row.getCell(4).getStringCellValue();
+            if(!countryNameMap.containsKey(countryName)) {
+                throw new ServiceException(StrUtil.format("第【{}】行未找到组织【{}】", noticeRow, countryName));
+            }
+            // 国家id需根据国家名称获取
+            customerInfoEntity.setCountryId(countryNameMap.get(countryName).get(0).getId());
+            // 区域id需根据国家id获取
+            customerInfoEntity.setAreaId(customerInfoEntity.getCountryId());
+            // 省份
+            String provinceName = StrUtils.null2EmptyWithTrim(row.getCell(6).getStringCellValue());
+            // 省份id需要根据名称获取
+            DictCityDTO.ListDTO provinceDTO = null;
+            if(StrUtils.isNotEmpty(provinceName)) {
+                List<DictCityDTO.ListDTO> provinceList = sysUserFeign.getProvincesByCountryCode(customerInfoEntity.getCountryId());
+                if(CollUtil.isNotEmpty(provinceList)) {
+                    provinceDTO =   provinceList.stream().filter(r-> Objects.equals(r.getName(), provinceName)).findFirst().orElse(null);
+                    if(Objects.nonNull(provinceDTO)) {
+                        customerInfoEntity.setProvinceId(provinceDTO.getId());
+                    }
+                }
+            }
+
+            // 城市
+            DictCityDTO.ListDTO cityDTO = null;
+            String cityName = StrUtils.null2EmptyWithTrim(row.getCell(7).getStringCellValue());
+            if(StrUtils.isNotEmpty(cityName) && Objects.nonNull(provinceDTO)) {
+                List<DictCityDTO.ListDTO> cityList =  provinceDTO.getChildrenList();
+                if(CollUtil.isNotEmpty(cityList)) {
+                    cityDTO =  cityList.stream().filter(r-> Objects.equals(r.getName(), cityName)).findFirst().orElse(null);
+                }
+                if(Objects.nonNull(cityDTO)) {
+                    customerInfoEntity.setCityId(cityDTO.getId());
+                }
+            }
+
+            // 客户名称
+            String name = StrUtils.null2EmptyWithTrim(row.getCell(8).getStringCellValue());
+            customerInfoEntity.setName(name);
+            // 客户简称
+            String shortName = StrUtils.null2EmptyWithTrim(row.getCell(9).getStringCellValue());
+            customerInfoEntity.setShortName(shortName);
+            // 平台类型
+            String platformTypeName = StrUtils.null2EmptyWithTrim(row.getCell(10).getStringCellValue());
+            if(!platformNameMap.containsKey(platformTypeName)) {
+                throw new ServiceException(StrUtil.format("第【{}】行未找到平台类型【{}】", noticeRow, platformTypeName));
+            }
+            customerInfoEntity.setPlatformType(platformNameMap.get(platformTypeName).getValue());
+            // 公司类别
+            String companyCategoryName = row.getCell(11).getStringCellValue();
+            if(StrUtils.isNotEmpty(companyCategoryName) && customerCategoryNameMap.containsKey(companyCategoryName)) {
+                customerInfoEntity.setCompanyCategoryDict(customerCategoryNameMap.get(companyCategoryName).getValue());
+            }
+
+            // 商务信息
+            // 结算方（也是启用的客户）
+            customerInfoEntity.setSettleCode("");
+            // 付款方（也是启用的客户）
+            customerInfoEntity.setPayCode("");
+            // 结算方式
+            String settleDictName = StrUtils.null2EmptyWithTrim(row.getCell(14).getStringCellValue());
+            if(StrUtils.isNotEmpty(settleDictName) && settleModeNameMap.containsKey(settleDictName)) {
+                customerInfoEntity.setSettleDict(settleModeNameMap.get(settleDictName).getValue());
+            }
+            // 结算币别
+            String currencyName = StrUtils.null2EmptyWithTrim(row.getCell(15).getStringCellValue());
+            if(StrUtils.isEmpty(currencyName) || !currencyNameMap.containsKey(currencyName)) {
+                throw new ServiceException(StrUtil.format("第【{}】行未找到结算币别【{}】", noticeRow, currencyName));
+            }
+            customerInfoEntity.setCurrency(currencyNameMap.get(currencyName).getId());
+            // 收款条件
+            String conditionDictName = StrUtils.null2EmptyWithTrim(row.getCell(16).getStringCellValue());
+            if(StrUtils.isEmpty(conditionDictName) || !collectionTermNameMap.containsKey(conditionDictName)) {
+                throw new ServiceException(StrUtil.format("第【{}】行未找到收款条件【{}】", noticeRow, conditionDictName));
+            }
+            customerInfoEntity.setConditionDict(collectionTermNameMap.get(conditionDictName).getValue());
+
+            // 无附件
+
+            // 备注
+            String remark =  StrUtils.null2EmptyWithTrim(row.getCell(18).getStringCellValue());
+            customerInfoEntity.setRemark(remark);
+            // 审核状态
+            customerInfoEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
+            customerInfoEntity.setApproveUserName("admin");
+            customerInfoEntity.setCreateTime(LocalDateTime.now());
+            customerInfoEntity.setUpdateTime(LocalDateTime.now());
+            customerInfoEntity.setCreateUserId("");
+            customerInfoEntity.setCreateUserName("");
+            customerInfoEntity.setUpdateUserId("");
+            customerInfoEntity.setUpdateUserName("");
+            super.save(customerInfoEntity);
+
+            // 客户联系人
+            this.importCustomerContact(customerInfoEntity.getId(), row);
+
+            // 客户地址
+            this.importCustomerAddress(customerInfoEntity.getId(), row);
+
+            // 客户发票
+            this.importCustomerInvoice(customerInfoEntity.getId(), row);
+
+            // 客户销售员信息
+            this.importCustomerSale(customerInfoEntity.getId(), row, noticeRow, deptNameMap, userNameMap);
+
+            // 需要拉取客户的金蝶id
+        }
+
+    }
+
+    /**
+     * 客户联系人信息
+     * @param customerId
+     * @param row
+     */
+    public void importCustomerContact(String customerId, XSSFRow row) {
+        // 联系人信息
+        // 联系人名称
+        String person = StrUtils.null2EmptyWithTrim(row.getCell(19).getStringCellValue());
+        if(StrUtils.isEmpty(person)) {
+            return;
+        }
+
+        CustomerContactEntity customerContactEntity = new CustomerContactEntity();
+        customerContactEntity.setMainId(customerId);
+
+
+        customerContactEntity.setPerson(person);
+        // 职务
+        String position = StrUtils.null2EmptyWithTrim(row.getCell(20).getStringCellValue());
+        customerContactEntity.setPosition(position);
+        // 电话
+        String telNumber = StrUtils.null2EmptyWithTrim(row.getCell(21).getStringCellValue());
+        customerContactEntity.setTelNumber(telNumber);
+        // 邮箱
+        String email  = StrUtils.null2EmptyWithTrim(row.getCell(22).getStringCellValue());
+        customerContactEntity.setEmail(email);
+        // 默认联系人
+        String isDefaultName = StrUtils.null2EmptyWithTrim(row.getCell(23).getStringCellValue());
+        customerContactEntity.setIsDefault(Boolean.FALSE);
+        if(Objects.equals(isDefaultName, "是") || Objects.equals(isDefaultName, "默认")  ) {
+            customerContactEntity.setIsDefault(Boolean.TRUE);
+        }
+
+        // 是否启用
+        String isDisableName = StrUtils.null2EmptyWithTrim(row.getCell(24).getStringCellValue());
+        customerContactEntity.setDisabled(Boolean.FALSE);
+        if(Objects.equals(isDisableName, "是") || Objects.equals(isDisableName, "禁用")  ) {
+            customerContactEntity.setDisabled(Boolean.TRUE);
+        }
+
+        // 备注
+        String contactRemark = StrUtils.null2EmptyWithTrim(row.getCell(25).getStringCellValue());
+        customerContactEntity.setRemark(contactRemark);
+
+        customerContactService.save(customerContactEntity);
+    }
+
+    /**
+     * 客户地址信息
+     * @param customerId
+     * @param row
+     */
+    public void importCustomerAddress(String customerId, XSSFRow row) {
+        // 地址信息
+        // 详细地址
+        String address = StrUtils.null2EmptyWithTrim(row.getCell(26).getStringCellValue());
+        // 联系人
+        String addressPerson = StrUtils.null2EmptyWithTrim(row.getCell(27).getStringCellValue());
+        if((StrUtils.isEmpty(address) && StrUtils.isNotEmpty(addressPerson)) || (StrUtils.isNotEmpty(address) && StrUtils.isEmpty(addressPerson)) ) {
+            throw new ServiceException("联系人和联系地址不允许一个为空，一个不为空");
+        }
+        if(StrUtils.isEmpty(address) && StrUtils.isEmpty(addressPerson)) {
+            return;
+        }
+
+        CustomerAddressEntity customerAddressEntity = new CustomerAddressEntity();
+        customerAddressEntity.setMainId(customerId);
+
+        customerAddressEntity.setAddress(address);
+
+        customerAddressEntity.setPerson(addressPerson);
+        // 地址类型
+        String addressTypeName = StrUtils.null2EmptyWithTrim(row.getCell(28).getStringCellValue());
+        if(StrUtils.isNotEmpty(addressTypeName)) {
+            customerAddressEntity.setType(AddressTypeEnum.getCodeByName(addressTypeName));
+        }
+        // 电话
+        String addressTelNumber = StrUtils.null2EmptyWithTrim(row.getCell(29).getStringCellValue());
+        customerAddressEntity.setTelNumber(addressTelNumber);
+        // 邮箱
+        String addressEmail = StrUtils.null2EmptyWithTrim(row.getCell(30).getStringCellValue());
+        customerAddressEntity.setEmail(addressEmail);
+        // 默认地址
+        String isDefaultAddress = StrUtils.null2EmptyWithTrim(row.getCell(31).getStringCellValue());
+        customerAddressEntity.setIsDefault(Boolean.FALSE);
+        if(Objects.equals(isDefaultAddress, "是") || Objects.equals(isDefaultAddress, "默认")  ) {
+            customerAddressEntity.setIsDefault(Boolean.TRUE);
+        }
+        // 是否启用
+        String isDisableAddress = StrUtils.null2EmptyWithTrim(row.getCell(32).getStringCellValue());
+        customerAddressEntity.setDisabled(Boolean.FALSE);
+        if(Objects.equals(isDisableAddress, "是") || Objects.equals(isDisableAddress, "禁用")  ) {
+            customerAddressEntity.setDisabled(Boolean.TRUE);
+        }
+
+        // 备注
+        String addressRemark = StrUtils.null2EmptyWithTrim(row.getCell(33).getStringCellValue());
+        customerAddressEntity.setRemark(addressRemark);
+        customerAddressEntity.setCreateTime(LocalDateTime.now());
+        customerAddressEntity.setUpdateTime(LocalDateTime.now());
+        customerAddressEntity.setCreateUserId("");
+        customerAddressEntity.setCreateUserName("");
+        customerAddressEntity.setUpdateUserId("");
+        customerAddressEntity.setUpdateUserName("");
+        customerAddressService.save(customerAddressEntity);
+
+    }
+
+    /**
+     * 客户发票信息
+     * @param mainId
+     * @param row
+     */
+    public void importCustomerInvoice(String mainId, XSSFRow row) {
+        // 发票信息
+        // 发票抬头
+        String invoiceHead = StrUtils.null2EmptyWithTrim(row.getCell(34).getStringCellValue());
+        if(StrUtils.isEmpty(invoiceHead)) {
+            return;
+        }
+        CustomerInvoiceEntity customerInvoiceEntity = new CustomerInvoiceEntity();
+        customerInvoiceEntity.setMainId(mainId);
+        customerInvoiceEntity.setHead(invoiceHead);
+        // 发票类型
+        String invoiceTypeName = StrUtils.null2EmptyWithTrim(row.getCell(35).getStringCellValue());
+        customerInvoiceEntity.setType(invoiceTypeName);
+        // 开户银行
+        String bankName = StrUtils.null2EmptyWithTrim(row.getCell(36).getStringCellValue());
+        customerInvoiceEntity.setBankName(bankName);
+        // 银行账号
+        String bankAccount = StrUtils.null2EmptyWithTrim(row.getCell(37).getStringCellValue());
+        customerInvoiceEntity.setBankAccount(bankAccount);
+        // 是否默认银行
+        String isDefaultBank = row.getCell(38).getStringCellValue();
+        customerInvoiceEntity.setIsDefault(Boolean.FALSE);
+        if(Objects.equals(isDefaultBank, "是") || Objects.equals(isDefaultBank, "默认")  ) {
+            customerInvoiceEntity.setIsDefault(Boolean.TRUE);
+        }
+
+        // 备注
+        String invoiceRemark = StrUtils.null2EmptyWithTrim(row.getCell(39).getStringCellValue());
+        customerInvoiceEntity.setRemark(invoiceRemark);
+        customerInvoiceEntity.setCreateTime(LocalDateTime.now());
+        customerInvoiceEntity.setUpdateTime(LocalDateTime.now());
+        customerInvoiceEntity.setCreateUserId("");
+        customerInvoiceEntity.setCreateUserName("");
+        customerInvoiceEntity.setUpdateUserId("");
+        customerInvoiceEntity.setUpdateUserName("");
+        customerInvoiceService.save(customerInvoiceEntity);
+    }
+
+    /**
+     * 新增客户销售员信息
+     * @param mainId
+     * @param row
+     * @param noticeRow
+     * @param deptNameMap
+     * @param userNameMap
+     */
+    public void importCustomerSale(String mainId, XSSFRow row,
+                                   Integer noticeRow,
+                                   Map<String,List<SysUserDeptDTO>> deptNameMap,
+                                   Map<String,List<FindUserDTO>> userNameMap) {
+        // 销售部门
+        String deptName = row.getCell(40).getStringCellValue();
+        if(StrUtils.isEmpty(deptName)) {
+            return;
+        }
+        if(StrUtils.isNotEmpty(deptName) && !deptNameMap.containsKey(deptName)) {
+            throw new ServiceException(StrUtil.format("第【{}】行未找到销售部门【{}】", noticeRow, deptName));
+        }
+        // 销售员信息
+        CustomerSellerEntity customerSellerEntity = new CustomerSellerEntity();
+        customerSellerEntity.setMainId(mainId);
+        customerSellerEntity.setDeptId(deptNameMap.get(deptName).get(0).getDeptId());
+        // 销售员
+        String sellerName = row.getCell(41).getStringCellValue();
+        if(StrUtils.isNotEmpty(sellerName) && !userNameMap.containsKey(sellerName)) {
+            throw new ServiceException(StrUtil.format("第【{}】行未找到销售员【{}】", noticeRow, sellerName));
+        }
+        customerSellerEntity.setSellerName(sellerName);
+        // 需转换成销售员id
+        customerSellerEntity.setSellerId(userNameMap.get(sellerName).get(0).getUserId());
+        // 开始日期
+        String startDateStr = row.getCell(42).getStringCellValue();
+        if(StrUtils.isNotEmpty(startDateStr) && startDateStr.contains("-") && startDateStr.length() == 10) {
+            LocalDate startDate = LocalDate.parse(startDateStr);
+            customerSellerEntity.setStartDate(startDate);
+        }
+        // 结束日期
+        String endDateStr = row.getCell(43).getStringCellValue();
+        if(StrUtils.isNotEmpty(endDateStr) && endDateStr.contains("-") && endDateStr.length() == 10) {
+            LocalDate endDate = LocalDate.parse(endDateStr);
+            customerSellerEntity.setEndDate(endDate);
+        }
+        // 备注
+        String sellerRemark = StrUtils.null2EmptyWithTrim(row.getCell(44).getStringCellValue());
+        customerSellerEntity.setRemark(sellerRemark);
+        customerSellerEntity.setCreateTime(LocalDateTime.now());
+        customerSellerEntity.setUpdateTime(LocalDateTime.now());
+        customerSellerEntity.setCreateUserId("");
+        customerSellerEntity.setCreateUserName("");
+        customerSellerEntity.setUpdateUserId("");
+        customerSellerEntity.setUpdateUserName("");
+        customerSellerService.save(customerSellerEntity);
+
     }
 
     /**

@@ -8,8 +8,10 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -236,4 +238,10 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @return java.lang.Boolean
      */
     Boolean processData();
+
+    /**
+     * 导入客户信息（系统上线临时使用，后续移除）
+     * @param file
+     */
+    void importCustomer(MultipartFile file) throws IOException;
 }

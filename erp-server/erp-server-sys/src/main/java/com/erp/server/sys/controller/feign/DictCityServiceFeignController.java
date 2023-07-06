@@ -1,14 +1,13 @@
 package com.erp.server.sys.controller.feign;
 
+import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.server.sys.service.DictCityService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 省/市
@@ -29,4 +28,19 @@ public class DictCityServiceFeignController {
     public DictCityEntity getById(@RequestBody String id) {
         return dictCityService.getById(id);
     }
+
+
+    /**
+     * 获取省份城市列表
+     * @param countryCode
+     * @return
+     */
+    @GetMapping("/getProvincesByCountryCode")
+    public List<DictCityDTO.ListDTO> getProvincesByCountryCode(@RequestParam("countryCode") String countryCode) {
+        List<DictCityDTO.ListDTO> list = dictCityService.listCity(countryCode);
+        return list;
+    }
+
+
+
 }
