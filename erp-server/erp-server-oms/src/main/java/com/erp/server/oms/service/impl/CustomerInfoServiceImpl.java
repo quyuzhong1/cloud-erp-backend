@@ -1136,13 +1136,13 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             // 客户编码
             String code = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(0)));
 
+            /*
             LambdaQueryWrapper<CustomerInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(CustomerInfoEntity::getCode, code);
             queryWrapper.last("LIMIT 1");
             CustomerInfoEntity customerInfoEntity = this.baseMapper.selectOne(queryWrapper);
-            if(Objects.isNull(customerInfoEntity)) {
-                customerInfoEntity = new CustomerInfoEntity();
-            }
+             */
+            CustomerInfoEntity customerInfoEntity = new CustomerInfoEntity();
 
             // 基本信息
             customerInfoEntity.setCode(code);
@@ -1257,11 +1257,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             customerInfoEntity.setUpdateUserName("");
 
             if(!customerBaseMap.containsKey(code)) {
-                if(StrUtils.isNotEmpty(customerInfoEntity.getId())) {
-                    super.updateById(customerInfoEntity);
-                } else {
-                    super.save(customerInfoEntity);
-                }
+                super.save(customerInfoEntity);
                 customerBaseMap.put(code, customerInfoEntity);
             } else {
                 customerInfoEntity = customerBaseMap.get(code);
