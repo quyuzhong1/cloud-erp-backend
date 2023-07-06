@@ -36,7 +36,7 @@ public interface ProcessBusinessService extends SuperService<ProcessBusinessEnti
      * @param businessKey
      * @return
      */
-    ProcessBusinessEntity getProcessBusiness(String businessKey, String condition);
+    ProcessBusinessEntity getProcessBusiness(String businessKey, String condition, Boolean disabled);
 
     /**
      * 保存流程业务绑定关系
