@@ -1380,7 +1380,13 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //错误数据
             List<KingdeePoImportExcelDTO> errorList = excelListenerUtil.getErrorList();
             //处理重复SKU
-            doOpHandleOrderInfo(successList, errorList);
+            doOpHandlePo(successList, errorList);
+
+            if (CollectionUtils.isEmpty(errorList)) {
+                return true;
+            }
+            String fileName = "采购订单数据错误";
+            ExcelUtil.export(fileName, "采购订单", errorList, KingdeePoImportExcelDTO.class, response);
 
         } catch (IOException e) {
             log.error("导入错误！", e);
@@ -1389,11 +1395,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
         }
-        return null;
+        return Boolean.TRUE;
     }
 
 
-    private void doOpHandleOrderInfo (List<KingdeePoImportExcelDTO> successList, List<KingdeePoImportExcelDTO> errorList) {
+    private void doOpHandlePo (List<KingdeePoImportExcelDTO> successList, List<KingdeePoImportExcelDTO> errorList) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
@@ -1497,7 +1503,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                             .orElse(null);
 
                     if (ObjectUtils.isEmpty(userDTO) && StringUtils.isNotBlank(importExcelDTO.getApproveUserCode())) {
-                        errorMsgList.add(StrUtil.format("未找到有效审核人编码【{}】",importExcelDTO.getCreateUserCode()));
+                        errorMsgList.add(StrUtil.format("未找到有效审核人编码【{}】",importExcelDTO.getApproveUserCode()));
                     }
 
                     //采购员
@@ -1511,12 +1517,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     }
 
                     //币别
-                    String currency = currencyList.stream().filter(obj -> obj.getKingdeeCode().equals(importExcelDTO.getPayCurrencyCode()))
+                    CurrencyDTO.ViewDTO currency = currencyList.stream().filter(obj -> obj.getKingdeeCode().equals(importExcelDTO.getPayCurrencyCode()))
                             .findFirst()
-                            .flatMap(obj -> Optional.ofNullable(obj.getId()))
-                            .orElse("");
+                            .orElse(null);
 
-                    if (StringUtils.isBlank(currency)) {
+                    if (ObjectUtils.isEmpty(currency)) {
                         errorMsgList.add(StrUtil.format("未找到有效结算币别编码【{}】",importExcelDTO.getPayCurrencyCode()));
                     }
 
@@ -1571,7 +1576,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     addDetailDTO.setSkuNo(skuVO.getSkuNo());
                     addDetailDTO.setTaxPrice(new BigDecimal(importExcelDTO.getTaxPrice()));
                     addDetailDTO.setTaxRate(new BigDecimal(importExcelDTO.getTaxRate()));
-                    addDetailDTO.setCurrency(currency);
+                    addDetailDTO.setCurrency(currency.getId());
+                    addDetailDTO.setCurrencySymbol(currency.getSymbol());
                     addDetailDTO.setPurchaseQty(Integer.valueOf(importExcelDTO.getQty()));
                     addDetailDTO.setPlanDeliveryDate(LocalDateUtil.date2LocalDate(DateUtil.stringToDate(importExcelDTO.getPlanDeliveryDateStr())));
                     addDetailDTO.setIsGift("true".equals(importExcelDTO.getIsGift()) ? Boolean.TRUE : Boolean.FALSE);

@@ -303,6 +303,10 @@ public class SubcontractOrderDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
       /**
+       * 编码
+       */
+      private String code;
+      /**
        * 明细集合
        */
       private List<SubcontractOrderDetailDTO.AddDTO> detailList;

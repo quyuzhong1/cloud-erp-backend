@@ -408,6 +408,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         //根据搜索类型获取到审核状态
         List<String> approveList = listBySearchType(searchType,params);
+        if (approveList == null) {
+            return new PagingVO(new Page());
+        }
         IPage pageData = baseMapper.paging(query, params, approveList);
         List<SoChangeDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
@@ -484,6 +487,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     public Boolean exportExcel(SoChangeDTO.PagingParamDTO dto, HttpServletResponse response) {
         String searchType = dto.getSearchType();
         List<String> approveList = listBySearchType(searchType,dto);
+        if (approveList == null) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
         List<SoChangeDTO.PagingViewDTO> list = baseMapper.listExport(dto, approveList);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
@@ -1044,9 +1050,10 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             if (CollectionUtils.isEmpty(params.getIds())) {
                 //需要审核的业务ids
                 List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.SO_CHANGE.getCode());
-                if (CollectionUtils.isNotEmpty(businessIds)) {
-                    params.setIds(businessIds);
+                if (CollectionUtils.isEmpty(businessIds)) {
+                    return null;
                 }
+                params.setIds(businessIds);
             }
         }
         //已审核

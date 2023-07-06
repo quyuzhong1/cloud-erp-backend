@@ -10,6 +10,7 @@ import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -217,4 +218,13 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @return java.lang.Boolean
      **/
     Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
+    /**
+     * @description: 金蝶导入委外
+     * @author Will
+     * @date: 2023/7/6 10:45
+     * @param excelFile
+     * @param response
+     * @return Boolean
+     */
+    Boolean kingdeeImportFile(MultipartFile excelFile, HttpServletResponse response);
 }
