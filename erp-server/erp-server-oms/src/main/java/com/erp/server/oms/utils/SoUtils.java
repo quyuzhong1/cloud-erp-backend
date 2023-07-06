@@ -33,12 +33,14 @@ public class SoUtils {
         }
 
         // 不含税销售额
-        BigDecimal noTaxAmount = costParam.getSaleAmount().divide(BigDecimal.ONE.add(costParam.getTaxRate().divide(new BigDecimal("100"))), 4, BigDecimal.ROUND_HALF_UP);
+        // BigDecimal noTaxAmount = costParam.getSaleAmount().divide(BigDecimal.ONE.add(costParam.getTaxRate().divide(new BigDecimal("100"))), 4, BigDecimal.ROUND_HALF_UP);
         // 销售毛利
-        skuCostProfitResult.setSaleProfit(noTaxAmount.subtract(skuCostProfitResult.getSaleCost()).setScale(4, BigDecimal.ROUND_HALF_UP));
+        // skuCostProfitResult.setSaleProfit(noTaxAmount.subtract(skuCostProfitResult.getSaleCost()).setScale(4, BigDecimal.ROUND_HALF_UP));
+        // 销售毛利
+        skuCostProfitResult.setSaleProfitRate(costParam.getSaleAmount().subtract(skuCostProfitResult.getSaleCost()).setScale(4, BigDecimal.ROUND_HALF_UP));
         // 销售毛利率
         if(costParam.getSaleAmount().compareTo(BigDecimal.ZERO) > 0) {
-            skuCostProfitResult.setSaleProfitRate(skuCostProfitResult.getSaleProfit().divide(noTaxAmount, 4, BigDecimal.ROUND_HALF_UP));
+            skuCostProfitResult.setSaleProfitRate(skuCostProfitResult.getSaleProfit().divide(costParam.getSaleAmount(), 4, BigDecimal.ROUND_HALF_UP));
         }
     }
 
