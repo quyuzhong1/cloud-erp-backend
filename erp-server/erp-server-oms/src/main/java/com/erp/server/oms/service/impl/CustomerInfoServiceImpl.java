@@ -1383,9 +1383,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String address = ExcelUtil.convertCellValueToString(row.getCell(26));
         // 联系人
         String addressPerson = StrUtils.null2EmptyWithTrim(row.getCell(27).getStringCellValue());
-        if((StrUtils.isEmpty(address) && StrUtils.isNotEmpty(addressPerson)) || (StrUtils.isNotEmpty(address) && StrUtils.isEmpty(addressPerson)) ) {
-            throw new ServiceException("联系人和联系地址不允许一个为空，一个不为空");
-        }
         if(StrUtils.isEmpty(address) && StrUtils.isEmpty(addressPerson)) {
             return;
         }
