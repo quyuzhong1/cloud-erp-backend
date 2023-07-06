@@ -42,7 +42,6 @@ import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchaseListTypeEnum;
-import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -1093,10 +1092,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<String> userCodeList = successList.stream().map(KingdeeSubImportExcelDTO::getApproveUserCode).distinct().collect(Collectors.toList());
         List<FindUserDTO> userList = sysUserFeign.listUserByCodeList(userCodeList);
 
-        //币别信息
-        List<String> currCodeList = successList.stream().map(KingdeeSubImportExcelDTO::getPayCurrencyCode).distinct().collect(Collectors.toList());
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listCurrencyByKingdeeCodeList(currCodeList);
-
         //仓库信息
         List<String> warehouseCodeList = successList.stream().map(KingdeeSubImportExcelDTO::getWarehouseCode).distinct().collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = wmsTaskFeign.listByKingdeeCodeList(warehouseCodeList);
@@ -1104,6 +1099,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //产品信息
         List<String> skuNoList = successList.stream().map(KingdeeSubImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
+
+        //bom信息
+        List<String> skuIds = skuVOList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
 
         if (CollectionUtils.isNotEmpty(successList)) {
@@ -1189,14 +1188,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                         errorMsgList.add(StrUtil.format("未找到有效采购员编码【{}】",importExcelDTO.getPurchaseUserCode()));
                     }
 
-                    //币别
-                    CurrencyDTO.ViewDTO currency = currencyList.stream().filter(obj -> obj.getKingdeeCode().equals(importExcelDTO.getPayCurrencyCode()))
-                            .findFirst()
-                            .orElse(null);
-
-                    if (ObjectUtils.isEmpty(currency)) {
-                        errorMsgList.add(StrUtil.format("未找到有效结算币别编码【{}】",importExcelDTO.getPayCurrencyCode()));
-                    }
 
                     //仓库
                     String warehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(importExcelDTO.getWarehouseCode()))
@@ -1224,9 +1215,30 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                     priceDTO.setPurchaseQty(Integer.valueOf(importExcelDTO.getQty()));
                     Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> stringListPair = purchasePriceDetailService.listPurchaseTaxPriceView(priceDTO);
                     if (StringUtils.isNotBlank(stringListPair.getKey())) {
-                        errorMsgList.add(StrUtil.format(stringListPair.getKey()));
+                        errorMsgList.add("父级SKU未找到报价信息");
                     }
 
+                    //bom信息
+                    List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj -> obj.getSkuNo().equals(importExcelDTO.getSkuNo()))
+                            .collect(Collectors.toList());
+                    if (CollectionUtils.isEmpty(childList)) {
+                        errorMsgList.add(StrUtil.format("未找到有效Bom子集【{}】",importExcelDTO.getSkuNo()));
+                    }
+
+                    if (CollectionUtils.isNotEmpty(childList)) {
+                        for (BomChildrenSkuDTO bomChildrenSkuDTO : childList) {
+                            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO childPriceDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+                            childPriceDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
+                            childPriceDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+                            childPriceDTO.setSupplierId(supplierId);
+                            priceDTO.setPurchaseQty(Integer.valueOf(importExcelDTO.getQty()) * bomChildrenSkuDTO.getQuantity());
+                            Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> childListPair = purchasePriceDetailService.listPurchaseTaxPriceView(childPriceDTO);
+                            if (StringUtils.isNotBlank(childListPair.getKey())) {
+                                errorMsgList.add("子级SKU未找到报价信息");
+                            }
+
+                        }
+                    }
                     //存在错误数据则直接返回
                     if (errorMsgList.size() > 0) {
                         importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -1256,11 +1268,34 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                     addDetailDTO.setIsUrgent(Boolean.FALSE);
                     addDetailDTO.setIsGeneratePo(Boolean.FALSE);
                     addDetailDTO.setRemark(importExcelDTO.getRemark());
+                    List<SubcontractOrderDetailDTO.AddDTO> addChildList = new ArrayList<>();
+                    for (BomChildrenSkuDTO childrenSkuDTO : bomChildrenSkuList) {
+                        SubcontractOrderDetailDTO.AddDTO childDetailDTO = new SubcontractOrderDetailDTO.AddDTO();
+                        //查询报价
+                        PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO childPriceDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+                        childPriceDTO.setSkuId(childrenSkuDTO.getSkuId());
+                        childPriceDTO.setSkuNo(childrenSkuDTO.getSkuNo());
+                        childPriceDTO.setSupplierId(supplierId);
+                        childPriceDTO.setPurchaseQty(Integer.valueOf(importExcelDTO.getQty()) * childrenSkuDTO.getQuantity());
+                        Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> childListPair = purchasePriceDetailService.listPurchaseTaxPriceView(childPriceDTO);
+                        childDetailDTO.setSkuId(childrenSkuDTO.getSkuId());
+                        childDetailDTO.setSupplierId(supplierId);
+                        childDetailDTO.setQty(addDetailDTO.getQty() * childrenSkuDTO.getQuantity());
+                        childDetailDTO.setDeliveryQty(addDetailDTO.getDeliveryQty() * childrenSkuDTO.getQuantity());
+                        childDetailDTO.setPrice(childListPair.getValue().get(0).getTaxPrice());
+                        childDetailDTO.setWarehouseId(warehouseId);
+                        childDetailDTO.setIsGift(Boolean.FALSE);
+                        childDetailDTO.setIsUrgent(Boolean.FALSE);
+                        childDetailDTO.setIsGeneratePo(Boolean.FALSE);
+                        addChildList.add(childDetailDTO);
+                    }
+                    addDetailDTO.setChildList(addChildList);
                     addDetailList.add(addDetailDTO);
                 }
                 //错误
                 if (isError) {
                     errorList.addAll(value);
+                    continue;
                 }
                 addDTO.setDetailList(addDetailList);
                 String id = this.add(addDTO);

@@ -1417,7 +1417,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<SysDepartmentDTO> sysDepartmentList = sysUserFeign.listDeptByCodeList(deptCodeList);
 
         //人员信息
-        List<String> userCodeList = successList.stream().flatMap(obj -> Stream.of(obj.getPurchaseUserCode(),obj.getCreateUserCode(), obj.getApproveUserCode())).distinct().collect(Collectors.toList());
+        List<String> userCodeList = successList.stream().flatMap(obj -> Stream.of(obj.getPurchaseUserCode(), obj.getApproveUserCode())).distinct().collect(Collectors.toList());
         List<FindUserDTO> userList = sysUserFeign.listUserByCodeList(userCodeList);
 
         //币别信息
@@ -1486,15 +1486,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                         errorMsgList.add(StrUtil.format("未找到有效采购部门编码【{}】",importExcelDTO.getPurchaseDeptCode()));
                     }
 
-                    //创建人
-                    String createUserId = userList.stream().filter(obj -> obj.getCode().equals(importExcelDTO.getCreateUserCode()))
-                            .findFirst()
-                            .flatMap(obj -> Optional.ofNullable(obj.getUserId()))
-                            .orElse("");
-
-                    if (StringUtils.isBlank(createUserId)) {
-                        errorMsgList.add(StrUtil.format("未找到有效创建人编码【{}】",importExcelDTO.getCreateUserCode()));
-                    }
 
                     //审核人
                     FindUserDTO userDTO = userList.stream().filter(obj -> obj.getCode().equals(importExcelDTO.getApproveUserCode()))
@@ -1569,10 +1560,19 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                         addDTO.setReceiveOrgId(receiveOrgId);
                         addDTO.setDeliveryWarehouseId(warehouseId);
                         addDTO.setIsFirstMassProduct("true".equals(importExcelDTO.getIsFirstMassProduct()) ? Boolean.TRUE : Boolean.FALSE);
+
+                        //供应商信息
+                        List<SupplierContactDTO.UpdateDTO> contactList = supplierContactService.listBySupplierId(supplierEntity.getId());
                         PurchaseOrderSupplierDTO.AddDTO supplierDTO = new PurchaseOrderSupplierDTO.AddDTO();
                         supplierDTO.setSupplierId(supplierEntity.getId());
-                        supplierDTO.setContactTelNumber(supplierEntity.getPurchaseUserName());
-
+                        if (CollectionUtils.isNotEmpty(contactList)) {
+                            SupplierContactDTO.UpdateDTO updateDTO = contactList.stream().filter(obj -> obj.getPerson().equals(importExcelDTO.getContactName())).findFirst().orElse(null);
+                            if (ObjectUtils.isNotEmpty(updateDTO)) {
+                                supplierDTO.setSupplierContactId(updateDTO.getId());
+                                supplierDTO.setContactTelNumber(importExcelDTO.getTelNumber());
+                            }
+                        }
+                        addDTO.setPurchaseOrderSupplierDTO(supplierDTO);
                     }
                     PurchaseOrderDetailDTO.AddDTO addDetailDTO = new PurchaseOrderDetailDTO.AddDTO();
                     addDetailDTO.setSkuId(skuVO.getSkuId());
@@ -1590,6 +1590,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 //错误
                 if (isError) {
                     errorList.addAll(value);
+                    continue;
                 }
                 addDTO.setDetails(addDetailList);
                 String id = this.add(addDTO);
