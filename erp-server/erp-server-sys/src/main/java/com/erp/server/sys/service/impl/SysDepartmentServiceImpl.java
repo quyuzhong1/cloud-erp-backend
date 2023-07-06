@@ -343,9 +343,11 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             XSSFRow row = sheet.getRow(i);
 
             // 部门名称
-            String name = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(4)));
+            String name = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(6)));
             // 金蝶id
             String kingdeeId = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(0)));
+            // 金蝶编码
+            String code = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(3)));
             LambdaQueryWrapper<SysDepartmentEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(SysDepartmentEntity::getName, name);
             queryWrapper.last("LIMIT 1");
@@ -361,6 +363,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             lambdaUpdate().set(SysDepartmentEntity::getSyncKingdeeId, kingdeeId).set(SysDepartmentEntity::getSyncKingdeeTime, LocalDateTime.now())
                     .set(SysDepartmentEntity::getSyncOperate, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode())
                     .set(SysDepartmentEntity::getSyncKingdeeStatus, SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode())
+                    .set(SysDepartmentEntity::getCode, code)
                     .eq(SysDepartmentEntity::getId, sysDepartmentEntity.getId())
                     .update();
         }
