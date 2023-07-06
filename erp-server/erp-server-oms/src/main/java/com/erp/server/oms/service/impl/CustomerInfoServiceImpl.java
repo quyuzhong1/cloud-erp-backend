@@ -1147,7 +1147,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             // 基本信息
             customerInfoEntity.setCode(code);
             // 使用组织
-            String useOrgName = StrUtils.null2EmptyWithTrim(row.getCell(2).getStringCellValue());
+            String useOrgName = ExcelUtil.convertCellValueToString(row.getCell(2));
             customerInfoEntity.setUseOrgName(useOrgName);
             // 使用组织id需根据名称获取
             if(!accountCompanyNameMap.containsKey(useOrgName)) {
@@ -1332,7 +1332,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     public void importCustomerContact(String customerId, XSSFRow row) {
         // 联系人信息
         // 联系人名称
-        String person = StrUtils.null2EmptyWithTrim(row.getCell(19).getStringCellValue());
+        String person = ExcelUtil.convertCellValueToString(row.getCell(19));
         if(StrUtils.isEmpty(person)) {
             return;
         }
