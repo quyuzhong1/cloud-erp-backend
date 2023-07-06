@@ -287,7 +287,9 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
                 item.setOldFileUrl(item.getFileUrl());
                 item.setOldUploadType(item.getUploadType());
             }
-            Boolean isChange = docHistoryList.stream().filter(h -> item.getFinishDocsId().equals(h.getFinishDocId())&&!item.getFileUrl().equals(fileUrl)).
+            Boolean isChange = docHistoryList.stream().filter(h -> item.getFinishDocsId().equals(h.getFinishDocId())&&
+                    !item.getFileUrl().equals(fileUrl)&&
+                    task.getIsChangeDocs()).
                     findFirst().map(TaskDocHistoryEntity::getIsChangeSuccess).orElse(null);
             //当不是空的时候
             if (isChange != null) {
