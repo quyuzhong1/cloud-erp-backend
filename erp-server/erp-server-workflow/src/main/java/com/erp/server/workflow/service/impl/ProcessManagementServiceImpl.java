@@ -118,7 +118,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.StartResultDTO startProcess(ProcessManagementDTO.StartDTO dto) {
         // 查询业务数据和关联流程定义
-        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"");
+        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"", Boolean.FALSE);
         if (null == processBusiness) {
             // 业务未绑定流程定义
             return new ProcessManagementDTO.StartResultDTO(dto);
@@ -219,7 +219,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.ApproveResultDTO approveProcess(ProcessManagementDTO.ApproveDTO dto) {
         // 查询业务数据和关联流程定义
-        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"");
+        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"", Boolean.FALSE);
         if (null == processBusiness) {
             // 业务未绑定流程定义
             return new ProcessManagementDTO.ApproveResultDTO(dto);
@@ -424,7 +424,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.BackResultDTO back(ProcessManagementDTO.BackDTO dto) {
         // 查询业务数据和关联流程定义
-        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"");
+        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"", Boolean.FALSE);
         if (null == processBusiness) {
             // 业务未绑定流程定义
             return new ProcessManagementDTO.BackResultDTO(dto);
@@ -541,7 +541,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.RevokeResultDTO revoke(ProcessManagementDTO.RevokeDTO dto) {
         // 查询业务数据和关联流程定义
-        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"");
+        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"", Boolean.FALSE);
         if (null == processBusiness) {
             // 业务未绑定流程定义
             return new ProcessManagementDTO.RevokeResultDTO(dto);
