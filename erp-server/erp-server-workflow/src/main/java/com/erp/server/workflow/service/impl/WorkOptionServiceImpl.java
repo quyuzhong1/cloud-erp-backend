@@ -1,6 +1,8 @@
 package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
@@ -43,6 +45,7 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.workflow.mapper.WorkOptionMapper;
 import com.erp.server.workflow.service.*;
 import com.erp.server.workflow.utils.GetHttpGatewayIpPortUtils;
+import com.google.gson.JsonObject;
 import com.jgoodies.common.bean.Bean;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
@@ -477,7 +480,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             } else {
                 req.setApproveDuration(0 + " H");
             }
-
+            if (StringUtils.isNotBlank(req.getCancelProcessParam())) {
+                req.setCancelProcessParam(JSONUtil.toJsonStr(StrUtil.format(req.getCancelProcessParam(), req.getBusinessId())));
+            }
             req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus()));
             FindUserDTO findUserDTO = userList.stream().filter(obj -> obj.getUserId().equals(req.getCreateUserId())).findFirst().orElse(new FindUserDTO());
             req.setCreateUserName(findUserDTO.getUserName());

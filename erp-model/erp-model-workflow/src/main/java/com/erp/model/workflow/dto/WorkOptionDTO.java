@@ -353,6 +353,14 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          * 详情地址
          */
         private String detailUrl;
+        /**
+         * 撤销接口地址
+         */
+        private String cancelProcessUrl;
+        /**
+         * 撤销请求参数
+         */
+        private String cancelProcessParam;
     }
 
     /**

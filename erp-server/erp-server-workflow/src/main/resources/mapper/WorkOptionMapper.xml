@@ -94,10 +94,13 @@
             EXTRACT(EPOCH FROM (pm.end_time - pm.start_time)) AS approveDuration,
             pm.create_time,
             pm.approve_status,
-            concat(wm.detail_url,pm.business_id) as detail_url
+            concat(wm.detail_url,pm.business_id) as detail_url,
+            wmrs.cancel_process_url,
+            wmrs.cancel_process_param
         FROM process_management pm
         INNER JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = FALSE
         INNER JOIN work_menu wm ON pm.business_key = wm.module_code AND wm.is_deleted = FALSE
+        LEFT JOIN work_menu_ref_status wmrs ON wmrs.menu_id = wm.id
         LEFT JOIN process_task_cc cc ON cc.task_management_id = ptm.id AND cc.is_deleted = FALSE
         WHERE pm.is_deleted = FALSE
         <if test="params.status == 'waitHandle'">
@@ -133,7 +136,9 @@
         EXTRACT(EPOCH FROM (pm.end_time - pm.start_time)),
         pm.create_time,
         pm.approve_status,
-        concat(wm.detail_url,pm.business_id)
+        concat(wm.detail_url,pm.business_id),
+        wmrs.cancel_process_url,
+        wmrs.cancel_process_param
     </select>
 
 
