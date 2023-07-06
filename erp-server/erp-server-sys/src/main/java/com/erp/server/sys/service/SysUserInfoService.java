@@ -13,6 +13,7 @@ import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -202,6 +203,13 @@ public interface SysUserInfoService extends IService<SysUserInfoEntity> {
      * @return java.util.List<com.common.business.dto.FindUserDTO>
      */
     List<FindUserDTO> listUserByKingdeeCode(List<String> kingdeeCodeList);
+
+    /**
+     * 导入用户金蝶
+     * @param file
+     * @throws IOException
+     */
+    void importUserKingdee(MultipartFile file) throws IOException;
 
 }
 

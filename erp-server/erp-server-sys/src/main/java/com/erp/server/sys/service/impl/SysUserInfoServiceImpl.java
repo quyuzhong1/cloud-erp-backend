@@ -15,6 +15,7 @@ import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.service.RedisService;
 import com.common.business.vo.LoginUser;
@@ -42,21 +43,26 @@ import com.erp.server.sys.mapper.SysDepartmentMapper;
 import com.erp.server.sys.mapper.SysUserInfoMapper;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysUserInfoService;
 import com.erp.server.sys.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-
+@Slf4j
 @Service
 public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUserInfoEntity> implements SysUserInfoService {
 
@@ -1087,6 +1093,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      * @Author Luo_WG
      * @Date 2023/4/20 11:45
      **/
+    @Override
     public Map<String, Object> forgotPasswordGetCode(String userAccount) {
         SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, userAccount).one();
         if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
@@ -1210,6 +1217,44 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             resultList.add(findUser);
         }
         return resultList;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void importUserKingdee(MultipartFile file) throws IOException {
+        XSSFWorkbook wb = new XSSFWorkbook(file.getInputStream());
+        XSSFSheet sheet = wb.getSheetAt(0);
+        // 读取数据集
+        int rows = sheet.getPhysicalNumberOfRows();
+
+        for(int i = 2;i < rows;i++) {
+            XSSFRow row = sheet.getRow(i);
+
+            // 用户名称
+            String name = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(1)));
+            // 金蝶id
+            String kingdeeId = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(0)));
+            // 金蝶编码
+            String code = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(2)));
+            LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(SysUserInfoEntity::getUserName, name);
+            queryWrapper.last("LIMIT 1");
+            SysUserInfoEntity sysUserInfoEntity =super.getOne(queryWrapper);
+            if(Objects.isNull(sysUserInfoEntity)) {
+                log.info("未找到人员【{}】", name);
+                continue;
+            }
+            if(StrUtils.isNotEmpty(sysUserInfoEntity.getSyncKingdeeId())) {
+                log.info("人员【{}】已经存在金蝶id，不处理", name);
+                continue;
+            }
+            lambdaUpdate().set(SysUserInfoEntity::getSyncKingdeeId, kingdeeId).set(SysUserInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
+                    .set(SysUserInfoEntity::getSyncOperate, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode())
+                    .set(SysUserInfoEntity::getSyncKingdeeStatus, SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode())
+                    .set(SysUserInfoEntity::getCode, code)
+                    .eq(SysUserInfoEntity::getUid, sysUserInfoEntity.getUid())
+                    .update();
+        }
     }
 
     private Boolean sendingEmail(EmailVerifyCodeDTO dto, String subject) {
