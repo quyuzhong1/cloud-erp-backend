@@ -33,6 +33,12 @@ public class DocHistoryDTO implements Serializable {
          */
         private String requireDocName;
 
+
+        /**
+         * 文档名称
+         */
+        private Integer uploadType;
+
         /**
          * 文档名称
          */

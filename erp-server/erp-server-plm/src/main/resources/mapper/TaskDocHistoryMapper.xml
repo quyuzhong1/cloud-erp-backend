@@ -10,6 +10,7 @@
            dh.create_user_name,
            dh.create_time,
            dh.change_version,
+           dh.upload_type,
            tdd.docs_name AS requireDocName
          FROM task_doc_history dh
          LEFT JOIN task_delivery_docs tdd
