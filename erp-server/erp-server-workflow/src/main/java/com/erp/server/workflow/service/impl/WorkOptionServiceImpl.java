@@ -247,7 +247,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     }
 
     /**
-     * 代办列表
+     * 待办列表
      *
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO < com.erp.model.wms.dto.PurchaseReturnOrderDTO.PagingViewDTO>>
      * @Author Luo_WG
@@ -368,7 +368,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         return new ArrayList<>();
     }
     /**
-     * 代办列表
+     * 待办列表
      *
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO < com.erp.model.wms.dto.PurchaseReturnOrderDTO.PagingViewDTO>>
      * @Author Luo_WG
@@ -429,7 +429,24 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         List<WorkOptionDTO.ApproveSearchOptionDTO> list = new ArrayList<>();
         String userId = commonService.getUserInfo().getUid();
         List<ApproveSearchOptionEnum> all = ApproveSearchOptionEnum.getAll();
+        WorkOptionDTO.ApproveViewParamDTO paramDTO = new WorkOptionDTO.ApproveViewParamDTO();
         for (ApproveSearchOptionEnum optionEnum : all) {
+            WorkOptionDTO.ApproveSearchOptionDTO approveSearchOptionDTO = new WorkOptionDTO.ApproveSearchOptionDTO();
+            paramDTO.setStatus(optionEnum.getCode());
+            paramDTO.setUserId(userId);
+            List<WorkOptionDTO.Module> modules = baseMapper.approveViewCount(paramDTO);
+            Integer quantity = modules.stream().map(WorkOptionDTO.Module::getQuantity).reduce(MathUtil.ZERO, Integer::sum);
+            approveSearchOptionDTO.setStatus(optionEnum.getCode());
+            approveSearchOptionDTO.setStatusName(ApproveSearchOptionEnum.getName(optionEnum.getCode()));
+            approveSearchOptionDTO.setQuantity(quantity);
+            for (WorkOptionDTO.Module module : modules) {
+                module.setSysClassifyName(SysClassifyEnum.getName(module.getSysClassify()));
+            }
+            approveSearchOptionDTO.setModuleList(modules);
+            list.add(approveSearchOptionDTO);
+        }
+        return list;
+        /*for (ApproveSearchOptionEnum optionEnum : all) {
             if (optionEnum.getCode().equals(ApproveSearchOptionEnum.WAITHANDLE.getCode())) {
                 WorkOptionDTO.ApproveSearchOptionDTO approveSearchOptionDTO = new WorkOptionDTO.ApproveSearchOptionDTO();
                 //获取我的待办数量
@@ -484,7 +501,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 list.add(approveSearchOptionDTO);
             }
         }
-        return list;
+        return list;*/
     }
 
     /**

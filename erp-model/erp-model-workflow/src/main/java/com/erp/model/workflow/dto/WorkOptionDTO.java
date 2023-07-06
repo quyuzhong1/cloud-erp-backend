@@ -35,7 +35,7 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          */
         private String moduleParam;
         /**
-         * 类型  1：常用模块  2：代办模块
+         * 类型  1：常用模块  2：待办模块
          */
         private String type;
     }
@@ -151,13 +151,13 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
         private String moduleParam;
 
         /**
-         * 代办数量
+         * 待办数量
          */
         private Integer tableNumber;
     }
 
     /**
-     * 代办列表
+     * 待办列表
      */
     @Data
     @NoArgsConstructor
@@ -173,7 +173,7 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
         public List<PendingViewDetailDTO> list;
     }
     /**
-     * 代办列表
+     * 待办列表
      */
     @Data
     @NoArgsConstructor
@@ -362,7 +362,7 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
     @NoArgsConstructor
     public static class ApproveViewParamDTO extends SortDTO {
         /**
-         * 数据审核状态（代办、已办、抄送我、已发送）
+         * 数据审核状态（待办、已办、抄送我、已发送）
          */
         private String status;
 
@@ -389,12 +389,12 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
     @NoArgsConstructor
     public static class ApproveSearchOptionDTO {
         /**
-         * 数据审核状态（代办、已办、已发送）
+         * 数据审核状态（待办、已办、已发送）
          */
         private String status;
 
         /**
-         * 数据审核状态（代办、已办、已发送）
+         * 数据审核状态（待办、已办、已发送）
          */
         private String statusName;
 

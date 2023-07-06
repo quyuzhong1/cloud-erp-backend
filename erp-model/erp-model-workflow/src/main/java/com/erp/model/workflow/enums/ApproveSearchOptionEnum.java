@@ -13,7 +13,7 @@ import java.util.List;
  **/
 public enum ApproveSearchOptionEnum {
 
-    WAITHANDLE("waitHandle", "代办"),
+    WAITHANDLE("waitHandle", "待办"),
     ALREADYHANDLE("alreadyHandle", "已办"),
     CARBONCOPY("carbonCopy", "抄送我"),
     INITIATE("initiate", "已发起");
