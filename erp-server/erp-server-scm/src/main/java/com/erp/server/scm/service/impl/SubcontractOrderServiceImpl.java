@@ -1084,6 +1084,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<String> supplierCodeList = successList.stream().map(KingdeeSubImportExcelDTO::getSupplierCode).distinct().collect(Collectors.toList());
         List<SupplierEntity> supplierList = supplierService.listByCodes(supplierCodeList);
 
+
         //组织机构信息
         List<String> orgCodeList = successList.stream().flatMap(obj -> Stream.of(obj.getPurchaseOrgCode(), obj.getReceiveOrgCode(),obj.getSubOrgCode())).distinct().collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.listAccountingCompanyByCodeList(orgCodeList);
