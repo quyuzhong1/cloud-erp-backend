@@ -1,5 +1,6 @@
 package com.erp.server.dmp.push.consumer;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -45,9 +46,10 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils("BD_Customer");
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FNumber = '%s'", "CUST23060800001"));
+        // queryFilters.add(String.format("FNumber = '%s'", "CUST23060900001"));
+        queryFilters.add(StrUtil.format("FNumber in ({})", "'CUST23060900001','CUST23060600001'"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FT_BD_CUSTOMEREXT.FEntryId";
+        String fieldKeys = "FNumber,FCUSTID";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);
         System.out.println(queryList);
        /* JSONObject entries = apiUtils.customerGroupDelete("");*/
