@@ -190,6 +190,8 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             //删除飞书通知
             deleteByUploadType(dto.getProductId(), dto.getTaskId(), IsConstant.YES);
             boolean flag = this.saveOrUpdateBatch(resultList);
+            taskDocHistoryService.addBatchHistory(resultList);
+
             if (flag) {
                 //新增上传交付物操作日志
                 SysLogEntity sysLogEntity = new SysLogEntity().setContent(String.format("上传了一个文件[%s]", String.join(",", fileNames)))
@@ -351,6 +353,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
         } else {
             fileUrl = dto.getFileUrl();
+            fileName = fileUrl;
         }
         if (StringUtils.isEmpty(fileUrl)) {
             throw new ServiceException(ApiError.ERROR_95186);
@@ -557,7 +560,7 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
         //表示没有流程了
         if (ObjectUtils.isEmpty(businessProcess)) {
             Integer finishCode = TaskStateEnum.FINISH.getCode();
-            if(finishCode.equals(taskEntity.getStatus())){
+            if (finishCode.equals(taskEntity.getStatus())) {
                 taskDocHistoryService.updateChangeResult(taskEntity.getId());
             }
             return Boolean.TRUE;

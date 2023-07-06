@@ -23,10 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -309,6 +306,18 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
                 .set(StringUtils.isNotBlank(syncKingdeeId),SysDepartmentEntity::getSyncKingdeeId,syncKingdeeId)
                 .set(org.apache.commons.lang3.StringUtils.isNotBlank(syncOperate), SysDepartmentEntity::getSyncOperate, syncOperate)
                 .update();
+    }
+
+    @Override
+    public List<SysDepartmentDTO> listDeptByCodeList(List<String> codeList) {
+        if (CollectionUtils.isEmpty(codeList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<SysDepartmentEntity> list = lambdaQuery().in(SysDepartmentEntity::getCode, codeList).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        return BeanMapperUtils.copyList(SysDepartmentDTO.class,list);
     }
 
     @Override

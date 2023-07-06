@@ -88,8 +88,8 @@
         wm.sys_classify
         FROM process_management pm
         LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = FALSE
-        INNER JOIN work_menu wm ON pm.business_key = wm.module_code
-        WHERE 1 = 1 AND pm.is_deleted = FALSE
+        INNER JOIN work_menu wm ON pm.business_key = wm.module_code AND wm.is_deleted = FALSE
+        WHERE pm.is_deleted = FALSE
         AND ptm.task_status = #{approveStatus}
         AND ptm.cur_approve_id = #{userId}
         GROUP BY wm.sys_classify
@@ -100,9 +100,9 @@
         count(*) AS quantity,
         wm.sys_classify
         FROM process_management pm
-        LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
-        INNER JOIN work_menu wm ON pm.business_key = wm.module_code
-        WHERE 1 = 1
+        LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = FALSE
+        INNER JOIN work_menu wm ON pm.business_key = wm.module_code AND wm.is_deleted = FALSE
+        WHERE pm.is_deleted = FALSE
         AND (ptm.task_status = #{approveStatus} OR ptm.task_status = 'reject')
         AND ptm.cur_approve_id = #{userId}
         GROUP BY wm.sys_classify
@@ -113,9 +113,9 @@
         count(*) AS quantity,
         wm.sys_classify
         FROM process_management pm
-        LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
-        INNER JOIN work_menu wm ON pm.business_key = wm.module_code
-        WHERE 1 = 1
+        LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = FALSE
+        INNER JOIN work_menu wm ON pm.business_key = wm.module_code AND wm.is_deleted = FALSE
+        WHERE pm.is_deleted = FALSE
         AND ptm.create_user_id = #{userId}
         GROUP BY wm.sys_classify
     </select>
@@ -125,17 +125,17 @@
         count(*) AS quantity,
         wm.sys_classify
         FROM process_management pm
-        INNER JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id
-        INNER JOIN work_menu wm ON pm.business_key = wm.module_code
-        LEFT JOIN process_task_cc cc ON cc.task_management_id = ptm.id
-        WHERE 1 = 1
+        INNER JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = FALSE
+        INNER JOIN work_menu wm ON pm.business_key = wm.module_code  AND wm.is_deleted = FALSE
+        LEFT JOIN process_task_cc cc ON cc.task_management_id = ptm.id  AND ptm.is_deleted = FALSE
+        WHERE pm.is_deleted = FALSE
         AND cc.cc_user_id = #{userId}
         GROUP BY wm.sys_classify
     </select>
 
     <select id="approveView" resultType="com.erp.model.workflow.dto.WorkOptionDTO$ApproveViewDTO">
         SELECT
-            ptm.id AS id,
+            max(ptm.id) AS id,
             wm.module_classify,
             pm.business_code,
             pm.business_name,
@@ -175,6 +175,16 @@
         <if test="params.sourceCode != '' and  params.sourceCode != null">
             AND pm.business_code ilike concat('%',#{params.sourceCode},'%')
         </if>
+        GROUP BY wm.module_classify,
+        pm.business_code,
+        pm.business_name,
+        pm.business_id,
+        pm.business_key,
+        pm.create_user_id,
+        EXTRACT(EPOCH FROM (pm.end_time - pm.start_time)),
+        pm.create_time,
+        pm.approve_status,
+        concat(wm.detail_url,pm.business_id)
     </select>
 
 </mapper>

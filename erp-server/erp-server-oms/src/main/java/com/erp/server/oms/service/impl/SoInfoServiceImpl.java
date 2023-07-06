@@ -460,6 +460,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 return new PagingVO<>(new Page<>());
             }
         }
+
         IPage pageData = baseMapper.paging(query, params, paramDetailIds);
         List<SoInfoDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
@@ -497,7 +498,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
         List<String> flagList = new ArrayList<>();
 
+        List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(soIdList);
         for (SoInfoDTO.PagingViewDTO item : list) {
+            List<String> curApproveName = processTaskManagementEntities.stream().filter(req ->req.getBusinessId().equals(item.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(curApproveName)) {
+                String userName = StringUtils.join(curApproveName, ",");
+                item.setApproveUserName(userName);
+            }
             boolean contains = flagList.contains(item.getId());
             String warehouseId = item.getWarehouseId();
             BillApproveStatusEnum billApproveStatus = item.getApproveStatus();

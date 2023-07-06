@@ -89,6 +89,13 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
      * @return Boolean
      */
     Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId,String syncOperate);
-
+    /**
+     * @description: 根据编码查询部门
+     * @author Will
+     * @date: 2023/7/5 18:17
+     * @param codeList
+     * @return List<SysDepartmentDTO>
+     */
+    List<SysDepartmentDTO> listDeptByCodeList(List<String> codeList);
 }
 

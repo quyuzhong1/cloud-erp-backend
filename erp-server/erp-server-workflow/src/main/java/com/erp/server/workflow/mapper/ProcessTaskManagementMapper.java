@@ -3,6 +3,9 @@ package com.erp.server.workflow.mapper;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,4 +18,6 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface ProcessTaskManagementMapper extends BaseMapper<ProcessTaskManagementEntity> {
 
+
+    List<ProcessTaskManagementEntity> listByProcessInstanceId(@Param("ids") List<String> businessIds);
 }

@@ -5,6 +5,7 @@ import com.common.business.service.SuperServiceImpl;
 import com.erp.model.plm.dto.DocHistoryDTO;
 import com.erp.model.plm.entity.TaskDocHistoryEntity;
 import com.erp.model.plm.entity.TaskDocsFinishEntity;
+import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.TaskDocHistoryMapper;
 import com.erp.server.plm.service.TaskDocHistoryService;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +13,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -40,8 +42,15 @@ public class TaskDocHistoryServiceImpl extends SuperServiceImpl<TaskDocHistoryMa
     @Transactional(rollbackFor = Exception.class)
     public void addHistory(TaskDocsFinishEntity oldDocs) {
         TaskDocHistoryEntity entity = new TaskDocHistoryEntity();
+        Integer uploadType = entity.getUploadType();
+        //不是本地上传
+        if (!TaskConstant.LOCAL_UPLOAD.equals(uploadType)) {
+            entity.setFileName(oldDocs.getFileUrl());
+        } else {
+            entity.setFileName(oldDocs.getFileName());
+        }
         entity.setTaskId(oldDocs.getTaskId());
-        entity.setFileName(oldDocs.getFileName());
+
         entity.setFileSize(oldDocs.getFileSize());
         entity.setFileSuffix(oldDocs.getFileSuffix());
         entity.setFileType(oldDocs.getFileType());
@@ -143,7 +152,48 @@ public class TaskDocHistoryServiceImpl extends SuperServiceImpl<TaskDocHistoryMa
         if (CollectionUtils.isEmpty(taskIdList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(TaskDocHistoryEntity::getTaskId,taskIdList).orderByDesc(TaskDocHistoryEntity::getCreateTime).list();
+        return this.lambdaQuery().in(TaskDocHistoryEntity::getTaskId, taskIdList).orderByDesc(TaskDocHistoryEntity::getCreateTime).list();
+    }
+
+
+    /**
+     * 批量提交
+     *
+     * @param resultList
+     * @return void
+     * @author yl
+     * @date 2023-07-05 19:50
+     */
+    @Override
+    public void addBatchHistory(List<TaskDocsFinishEntity> resultList) {
+        if (CollectionUtils.isNotEmpty(resultList)) {
+            List<TaskDocHistoryEntity> addList = new ArrayList<>(resultList.size());
+            for (TaskDocsFinishEntity item : resultList) {
+                TaskDocHistoryEntity entity = new TaskDocHistoryEntity();
+                Integer uploadType = item.getUploadType();
+                if (!TaskConstant.LOCAL_UPLOAD.equals(uploadType)) {
+                    entity.setFileName(item.getFileUrl());
+                } else {
+                    entity.setFileName(item.getFileName());
+                }
+                entity.setTaskId(item.getTaskId());
+                entity.setFileSize(item.getFileSize());
+                entity.setFileSuffix(item.getFileSuffix());
+                entity.setFileType(item.getFileType());
+                entity.setFileUrl(item.getFileUrl());
+                entity.setFinishDocId(item.getId());
+                entity.setProductId(item.getProductId());
+                entity.setUploadType(item.getUploadType());
+                entity.setRequireDocId(item.getTaskDocsId());
+                Integer maxVersion = getMaxVersion(item.getId());
+                entity.setChangeVersion(maxVersion);
+                addList.add(entity);
+
+            }
+            this.saveBatch(addList);
+
+        }
+
     }
 
 

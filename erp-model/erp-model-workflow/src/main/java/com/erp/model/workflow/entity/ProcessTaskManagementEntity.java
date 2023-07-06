@@ -127,6 +127,9 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     @TableField("approve_name")
     private String approveName;
 
+    @TableField(exist = false)
+    private String businessId;
+
 
     public static final String PROCESS_INSTANCE_ID = "process_instance_id";
 

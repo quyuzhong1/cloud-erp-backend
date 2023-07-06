@@ -4,7 +4,6 @@ import com.common.business.validator.ValidList;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.*;
-import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
@@ -346,6 +345,14 @@ public class ProcessFeignController extends BaseController {
         return success(resultList);
     }
 
+    /**
+     * 批量查询当前待审核业务单据
+     */
+    @PostMapping("/batchCurApproverByApprove")
+    public ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> batchCurApproverByApprove(@RequestBody @Valid ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList) {
+        List<ProcessManagementDTO.CurApproveInfoDTO> resultList = processManagementService.batchCurApproverByApprove(dtoList);
+        return success(resultList);
+    }
 
     /**
      * 根据流程id 获取到流程审核情况

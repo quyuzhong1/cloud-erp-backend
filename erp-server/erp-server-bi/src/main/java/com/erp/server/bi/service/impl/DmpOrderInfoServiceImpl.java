@@ -1027,9 +1027,14 @@ public class DmpOrderInfoServiceImpl extends ServiceImpl<DmpOrderInfoMapper, Dmp
         return  true;
     }
 
-
-    @Transactional(rollbackFor = Exception.class)
-    public void doOpHandleOrderInfo (List<DmpOrderInfoImportExcelDTO> successList, List<DmpOrderInfoImportExcelDTO> errorList) {
+    /**
+     * @description: 基础验证数据再次进行逻辑验证
+     * @author Will
+     * @date: 2023/7/5 17:31
+     * @param successList
+     * @param errorList
+     */
+    private void doOpHandleOrderInfo (List<DmpOrderInfoImportExcelDTO> successList, List<DmpOrderInfoImportExcelDTO> errorList) {
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }

@@ -4,10 +4,8 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.core.utils.FieldValidUtil;
-import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.dto.excel.KingdeePoImportExcelDTO;
 
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,16 +30,8 @@ public class KingdeePoExcelListener extends AnalysisEventListener<KingdeePoImpor
     /**
      * 导入正确数据
      */
-    private List<PurchaseOrderDetailDTO.AddDTO> successList = new ArrayList<>();
+    private List<KingdeePoImportExcelDTO> successList = new ArrayList<>();
 
-    /**
-     * 导入成功的skuId集合
-     */
-    private List<String> importSkuIds = new ArrayList<>();
-
-
-
-    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
     public KingdeePoExcelListener() {
 
@@ -49,7 +39,6 @@ public class KingdeePoExcelListener extends AnalysisEventListener<KingdeePoImpor
 
     @Override
     public void invoke(KingdeePoImportExcelDTO importExcelDTO, AnalysisContext analysisContext) {
-        PurchaseOrderDetailDTO.AddDTO excelDTO = new PurchaseOrderDetailDTO.AddDTO();
         //添加数据用于判断是否为空
         allList.add(importExcelDTO);
 
@@ -64,8 +53,7 @@ public class KingdeePoExcelListener extends AnalysisEventListener<KingdeePoImpor
             errorList.add(importExcelDTO);
             return;
         }
-        importSkuIds.add(excelDTO.getSkuId());
-        successList.add(excelDTO);
+        successList.add(importExcelDTO);
     }
 
     @Override
@@ -81,7 +69,7 @@ public class KingdeePoExcelListener extends AnalysisEventListener<KingdeePoImpor
         return errorList;
     }
 
-    public List<PurchaseOrderDetailDTO.AddDTO> getSuccessList(){
+    public List<KingdeePoImportExcelDTO> getSuccessList(){
         return successList;
     }
 }

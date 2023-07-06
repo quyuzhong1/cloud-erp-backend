@@ -536,6 +536,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_94000);
         }
+        dto.setId(entity.getBusinessId());
         String sysClassifyByCode = workMenuService.getSysClassifyByCode(entity.getBusinessKey());
         switch (SysClassifyEnum.getEnumByCode(sysClassifyByCode)) {
             case PLM :

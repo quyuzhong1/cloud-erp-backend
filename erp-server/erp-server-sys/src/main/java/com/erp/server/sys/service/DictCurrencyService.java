@@ -31,4 +31,12 @@ public interface DictCurrencyService extends SuperService<DictCurrencyEntity> {
      * @return List<CurrencyDTO.ViewDTO>
      */
     List<CurrencyDTO.ViewDTO> listByCurrency(List<String> currencyList);
+    /**
+     * @description:
+     * @author Will
+     * @date: 2023/7/5 18:43
+     * @param currCodeList 
+     * @return List<ViewDTO> 
+     */
+    List<CurrencyDTO.ViewDTO> listCurrencyByKingdeeCodeList(List<String> currCodeList);
 }

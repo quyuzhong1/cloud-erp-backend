@@ -404,4 +404,22 @@ public interface SysUserFeign {
     @PostMapping("feign/user/listUserKingdeePostByKingdeePostCodes")
     List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByKingdeePostCodes(@RequestBody List<String> kingdeePostCodes);
 
+    /**
+     * @description: 根据部门编码查询
+     * @author Will
+     * @date: 2023/7/5 18:14
+     * @param deptCodeList
+     * @return List<SysDepartmentDTO>
+     */
+    @PostMapping("feign/dept/listDeptByCodeList")
+    List<SysDepartmentDTO> listDeptByCodeList(List<String> deptCodeList);
+    /**
+     * @description: 根据金蝶编码查询币别
+     * @author Will
+     * @date: 2023/7/5 18:37
+     * @param currCodeList
+     * @return List<CurrencyDTO>
+     */
+    @PostMapping("feign/currency/listCurrencyByKingdeeCodeList")
+    List<CurrencyDTO.ViewDTO> listCurrencyByKingdeeCodeList(List<String> currCodeList);
 }

@@ -1,14 +1,13 @@
 package com.erp.sdk.fs.service;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.constant.ThirdConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
-import com.common.business.constant.ThirdConstants;
 import com.erp.model.sys.dto.FindThirdUserDTO;
 import com.erp.model.sys.vo.FsBatchSendMessageDTO;
 import com.erp.sdk.fs.config.FsProperties;
@@ -54,6 +53,7 @@ public class FsService {
      * @date 2022-07-20 18:27
      */
     public Map<String, Object> getFsUser(FindThirdUserDTO dto) {
+
         String redirectUri = fsProperties.getRedirectLoginUri();
         String thirdType = dto.getThirdType();
         if (StringUtils.isNotBlank(thirdType) && ThirdConstants.THIRD_BINDING_TYPE.equals(thirdType)) {
@@ -66,20 +66,25 @@ public class FsService {
         paramsMap.put("client_id", fsProperties.getClientId());
         paramsMap.put("redirect_uri", redirectUri);
         String bodyStr = OkHttpUtils.doPost(ThirdConstants.FS_TOKEN_URL, paramsMap, null);
-        if (StringUtils.isNotBlank(bodyStr)) {
-            Map<String, Object> tokenMap = JSONObject.parseObject(bodyStr, Map.class);
-            if (tokenMap.containsKey("access_token")) {
-                String accessToken = tokenMap.get("access_token").toString();
-                String authorization = LoginConstant.FS_AUTHORIZATION + accessToken;
-                Map<String, String> headerMap = new HashMap<>();
-                headerMap.put("Authorization", authorization);
-                headerMap.put("Content-Type", ThirdConstants.CONTENT_TYPE);
-                String userStr = OkHttpUtils.doGet(ThirdConstants.FS_USER_URL, null, headerMap);
-                Map<String, Object> userMap = JSONObject.parseObject(userStr, Map.class);
-                return userMap;
+        try {
+            if (StringUtils.isNotBlank(bodyStr)) {
+                Map<String, Object> tokenMap = JSONObject.parseObject(bodyStr, Map.class);
+                if (tokenMap.containsKey("access_token")) {
+                    String accessToken = tokenMap.get("access_token").toString();
+                    String authorization = LoginConstant.FS_AUTHORIZATION + accessToken;
+                    Map<String, String> headerMap = new HashMap<>();
+                    headerMap.put("Authorization", authorization);
+                    headerMap.put("Content-Type", ThirdConstants.CONTENT_TYPE);
+                    String userStr = OkHttpUtils.doGet(ThirdConstants.FS_USER_URL, null, headerMap);
+                    Map<String, Object> userMap = JSONObject.parseObject(userStr, Map.class);
+                    return userMap;
+                }
             }
-
+        }catch (Exception e){
+            log.error("扫码获取飞书信息出错>>>>>{}",e);
+            log.info("bodyStr >>>>>>{}",bodyStr);
         }
+
         return null;
     }
 
