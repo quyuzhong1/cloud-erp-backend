@@ -1382,7 +1382,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         // 详细地址
         String address = ExcelUtil.convertCellValueToString(row.getCell(26));
         // 联系人
-        String addressPerson = StrUtils.null2EmptyWithTrim(row.getCell(27).getStringCellValue());
+        String addressPerson = ExcelUtil.convertCellValueToString(row.getCell(27));
         if(StrUtils.isEmpty(address) && StrUtils.isEmpty(addressPerson)) {
             return;
         }
