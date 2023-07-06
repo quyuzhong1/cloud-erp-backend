@@ -1252,9 +1252,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             customerInfoEntity.setCreateTime(LocalDateTime.now());
             customerInfoEntity.setUpdateTime(LocalDateTime.now());
             customerInfoEntity.setCreateUserId("");
-            customerInfoEntity.setCreateUserName("");
+            customerInfoEntity.setCreateUserName("admin");
             customerInfoEntity.setUpdateUserId("");
-            customerInfoEntity.setUpdateUserName("");
+            customerInfoEntity.setUpdateUserName("admin");
 
             if(!customerBaseMap.containsKey(code)) {
                 super.save(customerInfoEntity);
