@@ -31,42 +31,6 @@ public interface WorkOptionMapper extends BaseMapper<WorkOptionEntity> {
     List<WorkOptionDTO.FrequentlyViewDTO> listFrequentlyView(@Param("optionUserId") String optionUserId);
 
     /**
-     * 根据用户获取待办任务数量
-     * @Author Luo_WG
-     * @Date 2023/5/11 14:42
-     * @param userId
-     * @return
-     **/
-//    List<WorkOptionDTO.Module> getWaitHandleCount(@Param("userId") String userId, @Param("approveStatus") String approveStatus, @Param("sysClassify") String sysClassify);
-
-    /**
-     * 根据用户获取已办任务数量
-     * @Author Luo_WG
-     * @Date 2023/5/11 14:42
-     * @param userId
-     * @return
-     **/
-//    List<WorkOptionDTO.Module> getApproveCount(@Param("userId") String userId, @Param("approveStatus") String approveStatus, @Param("sysClassify") String sysClassify);
-
-    /**
-     * 根据用户获取发起任务数量
-     * @Author Luo_WG
-     * @Date 2023/5/11 14:42
-     * @param userId
-     * @return
-     **/
-//    List<WorkOptionDTO.Module> getCreateCount(@Param("userId") String userId, @Param("approveStatus") String approveStatus, @Param("sysClassify") String sysClassify);
-
-    /**
-     * 根据用户获取抄送的任务数量
-     * @Author Luo_WG
-     * @Date 2023/5/11 14:42
-     * @param userId
-     * @return
-     **/
-//    List<WorkOptionDTO.Module> getTaskCcCount(@Param("userId") String userId, @Param("approveStatus") String approveStatus, @Param("sysClassify") String sysClassify);
-
-    /**
      * 审核中心列表
      * @Author Luo_WG
      * @Date 2023/5/11 16:01

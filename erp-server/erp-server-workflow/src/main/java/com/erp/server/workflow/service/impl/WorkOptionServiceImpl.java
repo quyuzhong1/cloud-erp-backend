@@ -446,62 +446,6 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             list.add(approveSearchOptionDTO);
         }
         return list;
-        /*for (ApproveSearchOptionEnum optionEnum : all) {
-            if (optionEnum.getCode().equals(ApproveSearchOptionEnum.WAITHANDLE.getCode())) {
-                WorkOptionDTO.ApproveSearchOptionDTO approveSearchOptionDTO = new WorkOptionDTO.ApproveSearchOptionDTO();
-                //获取我的待办数量
-                List<WorkOptionDTO.Module> waitHandleCount = baseMapper.getWaitHandleCount(userId, ApproveStatusEnum.APPROVE_ING.getStatus(), optionEnum.getCode());
-                Integer quantity = waitHandleCount.stream().map(WorkOptionDTO.Module::getQuantity).reduce(MathUtil.ZERO, Integer::sum);
-                approveSearchOptionDTO.setStatus(optionEnum.getCode());
-                approveSearchOptionDTO.setStatusName(ApproveSearchOptionEnum.getName(optionEnum.getCode()));
-                approveSearchOptionDTO.setQuantity(quantity);
-                for (WorkOptionDTO.Module module : waitHandleCount) {
-                    module.setSysClassifyName(SysClassifyEnum.getName(module.getSysClassify()));
-                }
-                approveSearchOptionDTO.setModuleList(waitHandleCount);
-                list.add(approveSearchOptionDTO);
-            } else if (optionEnum.getCode().equals(ApproveSearchOptionEnum.ALREADYHANDLE.getCode())) {
-                WorkOptionDTO.ApproveSearchOptionDTO approveSearchOptionDTO = new WorkOptionDTO.ApproveSearchOptionDTO();
-                //获取我的已办数量
-                List<WorkOptionDTO.Module> approveCount = baseMapper.getApproveCount(userId, ApproveStatusEnum.APPROVE.getStatus(), optionEnum.getCode());
-                Integer quantity = approveCount.stream().map(WorkOptionDTO.Module::getQuantity).reduce(MathUtil.ZERO, Integer::sum);
-                approveSearchOptionDTO.setStatus(optionEnum.getCode());
-                approveSearchOptionDTO.setStatusName(ApproveSearchOptionEnum.getName(optionEnum.getCode()));
-                approveSearchOptionDTO.setQuantity(quantity);
-                for (WorkOptionDTO.Module module : approveCount) {
-                    module.setSysClassifyName(SysClassifyEnum.getName(module.getSysClassify()));
-                }
-                approveSearchOptionDTO.setModuleList(approveCount);
-                list.add(approveSearchOptionDTO);
-            } else if (optionEnum.getCode().equals(ApproveSearchOptionEnum.CARBONCOPY.getCode())) {
-                WorkOptionDTO.ApproveSearchOptionDTO approveSearchOptionDTO = new WorkOptionDTO.ApproveSearchOptionDTO();
-                //获取我的抄送我的数量
-                List<WorkOptionDTO.Module> approveCount = baseMapper.getTaskCcCount(userId, ApproveStatusEnum.APPROVE.getStatus(), optionEnum.getCode());
-                Integer quantity = approveCount.stream().map(WorkOptionDTO.Module::getQuantity).reduce(MathUtil.ZERO, Integer::sum);
-                approveSearchOptionDTO.setStatus(optionEnum.getCode());
-                approveSearchOptionDTO.setStatusName(ApproveSearchOptionEnum.getName(optionEnum.getCode()));
-                approveSearchOptionDTO.setQuantity(quantity);
-                for (WorkOptionDTO.Module module : approveCount) {
-                    module.setSysClassifyName(SysClassifyEnum.getName(module.getSysClassify()));
-                }
-                approveSearchOptionDTO.setModuleList(approveCount);
-                list.add(approveSearchOptionDTO);
-            } else if (optionEnum.getCode().equals(ApproveSearchOptionEnum.INITIATE.getCode())) {
-                WorkOptionDTO.ApproveSearchOptionDTO approveSearchOptionDTO = new WorkOptionDTO.ApproveSearchOptionDTO();
-                //获取我的已发起数量
-                List<WorkOptionDTO.Module> createCount = baseMapper.getCreateCount(userId, ApproveStatusEnum.APPROVE.getStatus(), optionEnum.getCode());
-                Integer quantity = createCount.stream().map(WorkOptionDTO.Module::getQuantity).reduce(MathUtil.ZERO, Integer::sum);
-                approveSearchOptionDTO.setStatus(optionEnum.getCode());
-                approveSearchOptionDTO.setStatusName(ApproveSearchOptionEnum.getName(optionEnum.getCode()));
-                approveSearchOptionDTO.setQuantity(quantity);
-                for (WorkOptionDTO.Module module : createCount) {
-                    module.setSysClassifyName(SysClassifyEnum.getName(module.getSysClassify()));
-                }
-                approveSearchOptionDTO.setModuleList(createCount);
-                list.add(approveSearchOptionDTO);
-            }
-        }
-        return list;*/
     }
 
     /**
