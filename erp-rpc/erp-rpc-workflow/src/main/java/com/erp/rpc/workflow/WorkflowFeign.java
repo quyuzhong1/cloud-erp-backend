@@ -3,7 +3,6 @@ package com.erp.rpc.workflow;
 import com.common.business.validator.ValidList;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.*;
-import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
@@ -228,7 +227,7 @@ public interface WorkflowFeign {
      * @return
      */
     @PostMapping("/feign/process/batchCurApproverByApprove")
-    ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> curApproverByApprove(@RequestBody @Valid ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList);
+    ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> batchCurApproverByApprove(@RequestBody @Valid ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList);
 
     /**
      * 根据流程id 获取审核情况

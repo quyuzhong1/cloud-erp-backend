@@ -32,4 +32,11 @@ public class DictCurrencyFeignController extends BaseController {
         return dictCurrencyService.listByCurrency(currencyList);
     }
 
+    /**
+     * 根据金蝶编码查询币别
+     */
+    @PostMapping("/listCurrencyByKingdeeCodeList")
+    public List<CurrencyDTO.ViewDTO> listCurrencyByKingdeeCodeList(@RequestBody List<String> currCodeList) {
+        return dictCurrencyService.listCurrencyByKingdeeCodeList(currCodeList);
+    }
 }

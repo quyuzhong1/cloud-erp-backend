@@ -62,4 +62,17 @@ public class SysDeptFeignController extends BaseController {
         List<SysDepartmentUserNumberDTO> list = sysDepartmentUserService.listDeptUserByUserIdList(userIdList);
         return list;
     }
+
+    /**
+     * @description: 根据编码集合查询
+     * @author Will
+     * @date: 2023/7/5 18:16
+     * @param codeList
+     * @return List<SysDepartmentDTO>
+     */
+    @PostMapping("/listDeptByCodeList")
+    public List<SysDepartmentDTO> listDeptByCodeList(@RequestBody List<String> codeList) {
+        List<SysDepartmentDTO> list = departmentService.listDeptByCodeList(codeList);
+        return list;
+    }
 }

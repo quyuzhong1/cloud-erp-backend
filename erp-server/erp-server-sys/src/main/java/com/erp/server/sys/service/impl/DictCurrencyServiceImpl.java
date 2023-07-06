@@ -3,6 +3,7 @@ package com.erp.server.sys.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.server.sys.mapper.DictCurrencyMapper;
@@ -11,6 +12,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -47,5 +49,17 @@ public class DictCurrencyServiceImpl extends SuperServiceImpl<DictCurrencyMapper
             return new ArrayList<>();
         }
         return BeanMapper.copyList(list, CurrencyDTO.ViewDTO.class);
+    }
+
+    @Override
+    public List<CurrencyDTO.ViewDTO> listCurrencyByKingdeeCodeList(List<String> currCodeList) {
+        if (CollectionUtils.isEmpty(currCodeList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<DictCurrencyEntity> list = lambdaQuery().in(DictCurrencyEntity::getKingdeeCode, currCodeList).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
+        }
+        return BeanMapperUtils.copyList(CurrencyDTO.ViewDTO.class,list);
     }
 }

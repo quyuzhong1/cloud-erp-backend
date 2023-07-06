@@ -92,7 +92,7 @@ public class CommonServiceImpl implements CommonService {
         approveActivityDTO.setCurApproveId(this.getUserInfo().getUid());
         approveActivityDTO.setBusinessKey(businessKey);
         dtoList.add(approveActivityDTO);
-        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApproverByApprove(dtoList);
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.batchCurApproverByApprove(dtoList);
         if (200 != listApiResult.getCode()) {
             throw new ServiceException(ApiError.ERROR_94006);
         }

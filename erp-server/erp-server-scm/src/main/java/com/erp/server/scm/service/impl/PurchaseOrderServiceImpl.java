@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -37,7 +38,9 @@ import com.erp.model.scm.dto.excel.PurchaseOrderExportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -46,6 +49,7 @@ import com.erp.model.wms.dto.inventory.InstockForcastDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryFinishDeliveryDetailDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PurchaseReturnOrderDetailEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
@@ -80,6 +84,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -1359,6 +1364,19 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         KingdeePoExcelListener excelListenerUtil = new KingdeePoExcelListener();
         try {
             EasyExcel.read(excelFile.getInputStream(), KingdeePoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+
+            //验证导入数据是否为空
+            List<KingdeePoImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+            if (CollectionUtils.isEmpty(excelDateList)) {
+                throw new ServiceException(ApiError.ERROR_95123);
+            }
+            //成功数据
+            List<KingdeePoImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+            //错误数据
+            List<KingdeePoImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+            //处理重复SKU
+            doOpHandleOrderInfo(successList, errorList);
+
         } catch (IOException e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -1368,6 +1386,168 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         return null;
     }
+
+
+    private void doOpHandleOrderInfo (List<KingdeePoImportExcelDTO> successList, List<KingdeePoImportExcelDTO> errorList) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+
+        //供应商信息
+        List<String> supplierCodeList = successList.stream().map(KingdeePoImportExcelDTO::getSupplierCode).distinct().collect(Collectors.toList());
+        List<SupplierEntity> supplierList = supplierService.listByCodes(supplierCodeList);
+
+        //组织机构信息
+        List<String> orgCodeList = successList.stream().flatMap(obj -> Stream.of(obj.getPurchaseOrgCode(), obj.getReceiveOrgCode())).distinct().collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.listAccountingCompanyByCodeList(orgCodeList);
+
+        //部门信息
+        List<String> deptCodeList = successList.stream().map(KingdeePoImportExcelDTO::getPurchaseDeptCode).distinct().collect(Collectors.toList());
+        List<SysDepartmentDTO> sysDepartmentList = sysUserFeign.listDeptByCodeList(deptCodeList);
+
+        //人员信息
+        List<String> userCodeList = successList.stream().flatMap(obj -> Stream.of(obj.getPurchaseUserCode(),obj.getCreateUserCode(), obj.getApproveUserCode())).distinct().collect(Collectors.toList());
+        List<FindUserDTO> userList = sysUserFeign.listUserByCodeList(userCodeList);
+
+        //币别信息
+        List<String> currCodeList = successList.stream().map(KingdeePoImportExcelDTO::getPayCurrencyCode).distinct().collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listCurrencyByKingdeeCodeList(currCodeList);
+
+        //仓库信息
+        List<String> warehouseCodeList = successList.stream().map(KingdeePoImportExcelDTO::getWarehouseCode).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = wmsTaskFeign.listByKingdeeCodeList(warehouseCodeList);
+
+        //产品信息
+        List<String> skuNoList = successList.stream().map(KingdeePoImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
+
+        if (CollectionUtils.isNotEmpty(successList)) {
+            Map<String, List<KingdeePoImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(KingdeePoImportExcelDTO::getId));
+
+
+            for (Map.Entry<String, List<KingdeePoImportExcelDTO>> entry :  map.entrySet()) {
+
+                List<KingdeePoImportExcelDTO> value = entry.getValue();
+
+                Boolean isError = Boolean.FALSE;
+
+
+                for (KingdeePoImportExcelDTO importExcelDTO : value) {
+
+                    //错误信息
+                    List<String> errorMsgList = new ArrayList<>();
+
+                    //供应商（必填）
+                    String supplierId = supplierList.stream().filter(obj -> obj.getCode().equals(importExcelDTO.getSupplierCode()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus()))
+                            .findFirst()
+                            .flatMap(obj -> Optional.ofNullable(obj.getId()))
+                            .orElse("");
+                    if (StringUtils.isBlank(supplierId)) {
+                        errorMsgList.add(StrUtil.format("未找到有效供应商编码【{}】",importExcelDTO.getSupplierCode()));
+                    }
+
+                    //采购组织（必填）
+                    String purchaseOrgId = orgList.stream().filter(obj -> obj.getCode().equals(importExcelDTO.getPurchaseOrgCode()) )
+                            .findFirst()
+                            .flatMap(obj -> Optional.ofNullable(obj.getId()))
+                            .orElse("");
+                    if (StringUtils.isBlank(purchaseOrgId)) {
+                        errorMsgList.add(StrUtil.format("未找到有效采购组织编码【{}】",importExcelDTO.getPurchaseOrgCode()));
+                    }
+
+                    //收料组织（必填）
+                    String receiveOrgId = orgList.stream().filter(obj -> obj.getCode().equals(importExcelDTO.getReceiveOrgCode()) )
+                            .findFirst()
+                            .flatMap(obj -> Optional.ofNullable(obj.getId()))
+                            .orElse("");
+                    if (StringUtils.isBlank(receiveOrgId)) {
+                        errorMsgList.add(StrUtil.format("未找到有效收料组织编码【{}】",importExcelDTO.getReceiveOrgCode()));
+                    }
+
+                    //采购部门
+                    String purchaseDeptId = sysDepartmentList.stream().filter(obj -> obj.getCode().equals(importExcelDTO.getPurchaseDeptCode()))
+                            .findFirst()
+                            .flatMap(obj -> Optional.ofNullable(obj.getId()))
+                            .orElse("");
+
+                    if (StringUtils.isBlank(purchaseDeptId) && StringUtils.isNotBlank(importExcelDTO.getPurchaseDeptCode())) {
+                        errorMsgList.add(StrUtil.format("未找到有效采购部门编码【{}】",importExcelDTO.getPurchaseDeptCode()));
+                    }
+
+                    //创建人
+                    String createUserId = userList.stream().filter(obj -> obj.getCode().equals(importExcelDTO.getCreateUserCode()))
+                            .findFirst()
+                            .flatMap(obj -> Optional.ofNullable(obj.getUserId()))
+                            .orElse("");
+
+                    if (StringUtils.isBlank(createUserId)) {
+                        errorMsgList.add(StrUtil.format("未找到有效创建人编码【{}】",importExcelDTO.getCreateUserCode()));
+                    }
+
+                    //审核人
+                    String approveUserId = userList.stream().filter(obj -> obj.getCode().equals(importExcelDTO.getApproveUserCode()))
+                            .findFirst()
+                            .flatMap(obj -> Optional.ofNullable(obj.getUserId()))
+                            .orElse("");
+
+                    if (StringUtils.isBlank(approveUserId)) {
+                        errorMsgList.add(StrUtil.format("未找到有效审核人编码【{}】",importExcelDTO.getCreateUserCode()));
+                    }
+
+                    //采购员
+                    String purchaseUserId = userList.stream().filter(obj -> obj.getCode().equals(importExcelDTO.getPurchaseUserCode()))
+                            .findFirst()
+                            .flatMap(obj -> Optional.ofNullable(obj.getUserId()))
+                            .orElse("");
+
+                    if (StringUtils.isBlank(purchaseUserId) && StringUtils.isNotBlank(importExcelDTO.getPurchaseUserCode())) {
+                        errorMsgList.add(StrUtil.format("未找到有效采购员编码【{}】",importExcelDTO.getPurchaseUserCode()));
+                    }
+
+                    //币别
+                    String currency = currencyList.stream().filter(obj -> obj.getKingdeeCode().equals(importExcelDTO.getPayCurrencyCode()))
+                            .findFirst()
+                            .flatMap(obj -> Optional.ofNullable(obj.getId()))
+                            .orElse("");
+
+                    if (StringUtils.isBlank(currency)) {
+                        errorMsgList.add(StrUtil.format("未找到有效结算币别编码【{}】",importExcelDTO.getPayCurrencyCode()));
+                    }
+
+                    //仓库
+                    String warehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(importExcelDTO.getWarehouseCode()))
+                            .findFirst()
+                            .flatMap(obj -> Optional.ofNullable(obj.getId()))
+                            .orElse("");
+
+                    if (StringUtils.isBlank(warehouseId)) {
+                        errorMsgList.add(StrUtil.format("未找到有效仓库编码【{}】",importExcelDTO.getWarehouseCode()));
+                    }
+
+                    //产品信息
+                    SkuVO skuVO = skuVOList.stream().filter(obj -> obj.getSkuNo().equals(importExcelDTO.getSkuNo()))
+                            .findFirst()
+                            .orElse(null);
+                    if (ObjectUtils.isEmpty(skuVO)) {
+                        errorMsgList.add(StrUtil.format("未找到有效SKU【{}】",importExcelDTO.getSkuNo()));
+                    }
+                    //存在错误数据则直接返回
+                    if (errorMsgList.size() > 0) {
+                        importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                        isError = Boolean.TRUE;
+                        break;
+                    }
+                }
+                //错误
+                if (isError) {
+                    errorList.addAll(value);
+                }
+
+
+            }
+        }
+    }
+
 
     /**
      * 处理数据id
