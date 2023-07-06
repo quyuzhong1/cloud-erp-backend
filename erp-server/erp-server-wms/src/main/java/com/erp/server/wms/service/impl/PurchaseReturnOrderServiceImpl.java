@@ -1199,6 +1199,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                 }
             }
         }
+        if(CollUtil.isEmpty(unApproveIds)) {
+            return;
+        }
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.PURCHASE_RETURN_ORDER, unApproveIds);
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
     }
