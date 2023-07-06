@@ -112,7 +112,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             SysDepartmentDTO departmentDTO = sysUserFeign.getUserDeptById(salesDeptId);
             //销售部门
             if (!Objects.isNull(departmentDTO)) {
-                resultMap.put("deptCode", departmentDTO.getCode());
+              //  resultMap.put("deptCode", departmentDTO.getCode());
             }
         }
         //获取员工
@@ -121,8 +121,8 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             KingdeePostDTO.UserKingdeePostInfoDTO userDTO = sysUserFeign.getUserKingdeePostByUserId(sellerId);
             //销售员
             if (!Objects.isNull(userDTO)) {
-                resultMap.put("sellerCode", userDTO.getKingdeePostCode());
-                resultMap.put("seller", userDTO.getUserName());
+//                resultMap.put("sellerCode", userDTO.getKingdeePostCode());
+//                resultMap.put("seller", userDTO.getUserName());
             }
         }
         //销售组织
