@@ -1,11 +1,13 @@
 package com.erp.server.oms.utils;
 
 import cn.hutool.core.collection.CollUtil;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -17,15 +19,15 @@ public class SoUtils {
 
     /**
      * 计算成本毛利
-     * @param purchaseOrderDetailEntityList
+     * @param purchaseOrderDetailEntity
      * @param costParam
      * @param skuCostProfitResult
      */
-    public static void calCostProfit(List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList,
+    public static SkuCostProfitDTO.SkuCostProfitResult  calCostProfit(PurchaseOrderDetailEntity purchaseOrderDetailEntity,
                                      SkuCostProfitDTO.SkuCostProfitParam costParam,
                                      SkuCostProfitDTO.SkuCostProfitResult skuCostProfitResult) {
-        if(CollUtil.isNotEmpty(purchaseOrderDetailEntityList)) {
-            skuCostProfitResult.setPurchasePrice(purchaseOrderDetailEntityList.get(0).getTaxPrice());
+        if(Objects.nonNull(purchaseOrderDetailEntity)) {
+            skuCostProfitResult.setPurchasePrice(purchaseOrderDetailEntity.getTaxPrice());
         }
         skuCostProfitResult.setSaleCost(skuCostProfitResult.getPurchasePrice().multiply(new BigDecimal(costParam.getQty())).setScale(4, BigDecimal.ROUND_HALF_UP));
         if(Objects.isNull(costParam.getTaxRate())) {
@@ -45,6 +47,38 @@ public class SoUtils {
         if(costParam.getSaleAmount().compareTo(BigDecimal.ZERO) > 0) {
             skuCostProfitResult.setSaleProfitRate(skuCostProfitResult.getSaleProfit().divide(costParam.getSaleAmount(), 4, BigDecimal.ROUND_HALF_UP));
         }
+        return skuCostProfitResult;
+    }
+
+    /**
+     * 销售订单明细成本
+     * @param item
+     * @param purchaseOrderDetailMap
+     */
+    public static void updateSoDetailCost(SoDetailEntity item, Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap) {
+        SkuCostProfitDTO.SkuCostProfitResult skuCostProfitResult = new SkuCostProfitDTO.SkuCostProfitResult();
+        skuCostProfitResult.setSkuId(item.getSkuId());
+        skuCostProfitResult.setPurchasePrice(BigDecimal.ZERO);
+        skuCostProfitResult.setSaleCost(BigDecimal.ZERO);
+        skuCostProfitResult.setSaleProfit(BigDecimal.ZERO);
+        skuCostProfitResult.setSaleProfitRate(BigDecimal.ZERO);
+
+        SkuCostProfitDTO.SkuCostProfitParam costParam = new SkuCostProfitDTO.SkuCostProfitParam();
+        costParam.setSkuId(item.getSkuId());
+        costParam.setSaleAmount(item.getAmount());
+        costParam.setQty(item.getQty());
+        costParam.setTaxRate(item.getTaxRate());
+
+        PurchaseOrderDetailEntity purchaseOrderDetailEntity = null;
+        if(purchaseOrderDetailMap.containsKey(item.getSkuId())) {
+            purchaseOrderDetailEntity = purchaseOrderDetailMap.get(item.getSkuId()).get(0);
+        }
+        SoUtils.calCostProfit(purchaseOrderDetailEntity,costParam,skuCostProfitResult);
+
+        item.setPurchasePrice(skuCostProfitResult.getPurchasePrice());
+        item.setSaleCost(skuCostProfitResult.getSaleCost());
+        item.setSaleProfit(skuCostProfitResult.getSaleProfit());
+        item.setSaleProfitRate(skuCostProfitResult.getSaleProfitRate());
     }
 
 }
