@@ -3679,10 +3679,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> finishSkuTaskIdList = noProcessTaskIds.stream().filter(t -> !noFinishSkuTaskIdList.contains(t)).collect(Collectors.toList());
         //更改完成状态
         this.updateTaskState(finishSkuTaskIdList, TaskStateEnum.FINISH.getCode(), null, nowDate);
-        List<String> isChangeDocsTaskIdList=list.stream().filter(l->finishSkuTaskIdList.contains(l.getId())).map(ProjectTaskEntity::getId).collect(Collectors.toList());
+        List<String> isChangeDocsTaskIdList = list.stream().filter(l -> finishSkuTaskIdList.contains(l.getId())).map(ProjectTaskEntity::getId).collect(Collectors.toList());
         //更改文档历史的
         taskDocHistoryService.updateChangeResultByTaskIds(isChangeDocsTaskIdList);
-
 
 
         taskOperatorRecordService.batchSaveRecord(noProcessTaskIds, ingCode, TaskStateEnum.FINISH.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
@@ -3769,7 +3768,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         return true;
     }
-
 
 
     /**
@@ -4192,11 +4190,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (!Objects.isNull(taskEntity)) {
             //是否是变更任务
             Boolean isChangeDocs = taskEntity.getIsChangeDocs();
-            //如果是变更任务就要更改历史文档状态
-            if (isChangeDocs) {
-                taskDocHistoryService.updateChangeResult(taskEntity.getId());
-            }
-
+            taskDocHistoryService.updateChangeResult(taskEntity.getId());
             List<ProjectTaskRefSkuEntity> list = projectTaskRefSkuService.getByTaskId(taskEntity.getId());
             List<String> skuIdList = list.stream().filter(ref -> notFinish.equals(ref.getIsFinishTask())).map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(skuIdList)) {
