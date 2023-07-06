@@ -43,12 +43,13 @@ public class TaskDocHistoryServiceImpl extends SuperServiceImpl<TaskDocHistoryMa
     public void addHistory(TaskDocsFinishEntity oldDocs) {
         TaskDocHistoryEntity entity = new TaskDocHistoryEntity();
         Integer uploadType = oldDocs.getUploadType();
-        //不是本地上传
-        if (!TaskConstant.LOCAL_UPLOAD.equals(uploadType)) {
-            entity.setFileName(oldDocs.getFileUrl());
-        } else {
-            entity.setFileName(oldDocs.getFileName());
-        }
+//        //不是本地上传
+//        if (!TaskConstant.LOCAL_UPLOAD.equals(uploadType)) {
+//            entity.setFileName(oldDocs.getFileUrl());
+//        } else {
+//            entity.setFileName(oldDocs.getFileName());
+//        }
+        entity.setFileName(oldDocs.getFileName());
         entity.setTaskId(oldDocs.getTaskId());
 
         entity.setFileSize(oldDocs.getFileSize());

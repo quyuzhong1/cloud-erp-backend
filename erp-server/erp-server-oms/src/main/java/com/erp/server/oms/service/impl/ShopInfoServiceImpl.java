@@ -87,7 +87,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      */
     @Override
     public Boolean initialSync() {
-       List<DmpShopInfoEntity> dmpShopList=dmpTaskFeign.listShop();
+        //获取到dmp 店铺
+        List<DmpShopInfoEntity> dmpShopList = dmpTaskFeign.listShop();
+
+        List<ShopInfoEntity> shopInfoList = this.list();
+        for(ShopInfoEntity item:shopInfoList){
+            String shopCode=item.getShopCode();
+
+        }
         return null;
     }
 
