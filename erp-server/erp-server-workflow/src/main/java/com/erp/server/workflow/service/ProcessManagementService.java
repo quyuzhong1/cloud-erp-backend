@@ -215,13 +215,4 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      **/
     ProcessManagementEntity getByProcessInstanceId(String processInstanceId);
 
-    /**
-     * 根据业务id获取流程实例信息
-     * @Author Luo_WG
-     * @Date 2023/7/5 17:08
-     * @param businessIds
-     * @return java.util.List<com.erp.model.workflow.entity.ProcessTaskManagementEntity>
-     **/
-    List<ProcessTaskManagementEntity> listProcessByBusinessId(List<String> businessIds);
-
 }

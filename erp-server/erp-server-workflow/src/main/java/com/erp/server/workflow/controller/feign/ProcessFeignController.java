@@ -369,7 +369,7 @@ public class ProcessFeignController extends BaseController {
      */
     @PostMapping("/listProcessByProcessId")
     public List<ProcessTaskManagementEntity> listProcessByBusinessId(@RequestBody List<String> businessIds) {
-        List<ProcessTaskManagementEntity> resultList = processManagementService.listProcessByBusinessId(businessIds);
+        List<ProcessTaskManagementEntity> resultList = processManagementTaskService.listProcessByBusinessId(businessIds);
         return resultList;
     }
 
