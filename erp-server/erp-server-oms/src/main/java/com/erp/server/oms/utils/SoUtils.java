@@ -37,7 +37,10 @@ public class SoUtils {
         // 销售毛利
         // skuCostProfitResult.setSaleProfit(noTaxAmount.subtract(skuCostProfitResult.getSaleCost()).setScale(4, BigDecimal.ROUND_HALF_UP));
         // 销售毛利
-        skuCostProfitResult.setSaleProfitRate(costParam.getSaleAmount().subtract(skuCostProfitResult.getSaleCost()).setScale(4, BigDecimal.ROUND_HALF_UP));
+        BigDecimal saleAmount = costParam.getSaleAmount();
+        BigDecimal saleCost = skuCostProfitResult.getSaleCost();
+        BigDecimal saleProfit = saleAmount.subtract(saleCost).setScale(4, BigDecimal.ROUND_HALF_UP);
+        skuCostProfitResult.setSaleProfit(saleProfit);
         // 销售毛利率
         if(costParam.getSaleAmount().compareTo(BigDecimal.ZERO) > 0) {
             skuCostProfitResult.setSaleProfitRate(skuCostProfitResult.getSaleProfit().divide(costParam.getSaleAmount(), 4, BigDecimal.ROUND_HALF_UP));

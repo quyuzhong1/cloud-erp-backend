@@ -17,7 +17,7 @@ import javax.annotation.Resource;
  **/
 @Component
 @Slf4j
-public class scmJob {
+public class ScmJob {
     @Resource
     private WmsSyncPurchaseService WmsSyncPurchaseService;
 
@@ -38,15 +38,5 @@ public class scmJob {
         WmsSyncPurchaseService.syncPurchaseOrderToWms(purchaseOrderService.list());
         WmsSyncPurchaseService.syncPurchaseOrderDetailToWms(purchaseOrderDetailService.list());
         WmsSyncPurchaseService.syncPurchaseOrderSupplierToWms(purchaseOrderSupplierService.list());
-    }
-
-    @XxlJob("productSkuSyncDmp")
-    public void syncPurchaseOrderDetailToWms() {
-
-    }
-
-    @XxlJob("productSkuSyncDmps")
-    public void syncPurchaseOrderSupplierToWms() {
-
     }
 }

@@ -174,7 +174,7 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             for (DeliveryDocsDTO item : list) {
                 ProjectTaskEntity entity = taskList.stream().filter(d -> d.getId().equals(item.getTaskId())).findFirst().orElse(null);
                 //当没审核通过
-                if (Objects.isNull(entity) || !entity.getStatus().equals(approvalNoPass)) {
+                if (Objects.isNull(entity) || approvalNoPass.equals(entity.getStatus())) {
                     item.setFileUrl(item.getOldFileUrl());
                     item.setFileName(item.getOldFileName());
                     item.setUploadType(item.getOldUploadType());

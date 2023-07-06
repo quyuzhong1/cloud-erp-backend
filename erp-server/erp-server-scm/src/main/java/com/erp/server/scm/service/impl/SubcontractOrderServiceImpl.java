@@ -27,10 +27,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.FieldValidUtil;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.StrUtils;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -1062,6 +1059,12 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //处理数据
             doOpHandleSub(successList, errorList);
 
+            if (CollectionUtils.isEmpty(errorList)) {
+                return true;
+            }
+            String fileName = "委外订单数据错误";
+            ExcelUtil.export(fileName, "委外订单", errorList, KingdeeSubImportExcelDTO.class, response);
+
         } catch (IOException e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -1191,7 +1194,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
 
                     //仓库
-                    String warehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(importExcelDTO.getWarehouseCode()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus()))
+                    String warehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(importExcelDTO.getWarehouseCode()) && ApproveStatusEnum.APPROVE.equals(obj.getApproveStatus()))
                             .findFirst()
                             .flatMap(obj -> Optional.ofNullable(obj.getId()))
                             .orElse("");
@@ -1220,7 +1223,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                     }
 
                     //bom信息
-                    List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj -> obj.getSkuNo().equals(importExcelDTO.getSkuNo()))
+                    List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj -> obj.getParentSkuId().equals(skuVO.getSkuId()))
                             .collect(Collectors.toList());
                     if (CollectionUtils.isEmpty(childList)) {
                         errorMsgList.add(StrUtil.format("未找到有效Bom子集【{}】",importExcelDTO.getSkuNo()));

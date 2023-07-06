@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 /**
  * @author Lambda
  * @Classname SyncKingdeeSoServiceImpl
-
  * @Date 2023-05-30 11:46
  * @Created by yl
  */
@@ -186,37 +185,37 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
 
         List<String> dictKeys = Lists.newArrayList(DictBasicEnum.RECEIVE_METHOD.getType(), DictBasicEnum.COLLECTION_TERMS.getType());
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
-        Map<String,List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+        Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
 
         // 收款方式
         List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicEnum.RECEIVE_METHOD.getType());
         if (CollectionUtils.isNotEmpty(receiveMethodList) && StrUtils.isNotEmpty(entity.getReceiveMethod())) {
             DictBasicEntity dictBasicEntity = receiveMethodList.stream().filter(obj -> Objects.equals(obj.getValue(), entity.getReceiveMethod())).findFirst().orElse(null);
-            if(Objects.nonNull(dictBasicEntity)) {
+            if (Objects.nonNull(dictBasicEntity)) {
                 resultMap.put("receiveMethod", dictBasicEntity.getRemark());
             }
         }
         // 收款条件
         List<DictBasicEntity> receiveConditionList = dictBasicMap.get(DictBasicEnum.COLLECTION_TERMS.getType());
-        if (CollectionUtils.isNotEmpty(receiveConditionList)  && StrUtils.isNotEmpty(entity.getReceiveCondition()) ) {
+        if (CollectionUtils.isNotEmpty(receiveConditionList) && StrUtils.isNotEmpty(entity.getReceiveCondition())) {
             DictBasicEntity dictBasicEntity = receiveConditionList.stream().filter(obj -> Objects.equals(obj.getValue(), entity.getReceiveCondition())).findFirst().orElse(null);
-            if(Objects.nonNull(dictBasicEntity)) {
+            if (Objects.nonNull(dictBasicEntity)) {
                 resultMap.put("receiveCondition", dictBasicEntity.getRemark());
             }
         }
 
         // 收款日期
-        if(Objects.nonNull(entity.getReceiveDate())) {
+        if (Objects.nonNull(entity.getReceiveDate())) {
             resultMap.put("receiveDate", entity.getReceiveDate());
         }
         // 收款金额
-        if(Objects.nonNull(entity.getReceiveAmount())) {
+        if (Objects.nonNull(entity.getReceiveAmount())) {
             resultMap.put("receiveAmount", entity.getReceiveAmount());
         }
         // 收款账号
-        if(StrUtils.isNotEmpty(entity.getReceiveAccount())) {
+        if (StrUtils.isNotEmpty(entity.getReceiveAccount())) {
             BankAccountEntity bankAccountEntity = bankAccountService.findByAccountNo(entity.getReceiveAccount());
-            if(Objects.nonNull(bankAccountEntity)) {
+            if (Objects.nonNull(bankAccountEntity)) {
                 resultMap.put("receiveAccount", entity.getReceiveAccount());
                 // resultMap.put("receiveAccountName", bankAccountEntity.getAccountName());
             }
