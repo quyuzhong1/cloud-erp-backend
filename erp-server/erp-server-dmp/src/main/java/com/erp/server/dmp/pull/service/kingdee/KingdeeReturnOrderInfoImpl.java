@@ -8,6 +8,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
@@ -29,6 +30,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.MapCountUtils;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -90,8 +92,16 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
             OrderMongoDTO updateDto = new OrderMongoDTO(mongoDatum.get_id());
             mongoService.updateMongoData(updateDto, mapUtil, MongoTableNameContant.ORIGINAL_KINGDEE_RETURN_ORDER, KingdeeReturnOrderEntity.class);
         }
+
         //同步到OMS销售退货单
-        pushToMqList.forEach(req -> mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_REFUND_ORDER_TO_TASK_TAG.getName(), req, req.getFBillNo()));
+        pushToMqList.forEach(req -> {
+            if (StringUtils.isNotBlank(req.getFModifyDate()) && !req.getFModifyDate().equals("null")) {
+                if (LocalDateTime.parse(req.getFModifyDate()).compareTo(LocalDateTime.parse("2023-07-06 21:00:00")) > 0) {
+                    mqProducerService.asyncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_REFUND_ORDER_TO_TASK_TAG.getName(), req, req.getFBillNo());
+                }
+            }
+
+        });
 
         if(CollectionUtil.isNotEmpty(insertList)){
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_KINGDEE_RETURN_ORDER);

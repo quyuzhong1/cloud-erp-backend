@@ -23,9 +23,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.StrUtils;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
@@ -1133,12 +1131,20 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         Map<String, CustomerInfoEntity> customerBaseMap = Maps.newHashMap();
         for(int i = 2;i < rows;i++) {
             int noticeRow = i + 1;
-            CustomerInfoEntity customerInfoEntity = new CustomerInfoEntity();
             XSSFRow row = sheet.getRow(i);
-            // 基本信息
 
             // 客户编码
             String code = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(0)));
+
+            /*
+            LambdaQueryWrapper<CustomerInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(CustomerInfoEntity::getCode, code);
+            queryWrapper.last("LIMIT 1");
+            CustomerInfoEntity customerInfoEntity = this.baseMapper.selectOne(queryWrapper);
+             */
+            CustomerInfoEntity customerInfoEntity = new CustomerInfoEntity();
+
+            // 基本信息
             customerInfoEntity.setCode(code);
             // 使用组织
             String useOrgName = StrUtils.null2EmptyWithTrim(row.getCell(2).getStringCellValue());
@@ -1161,7 +1167,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             // 国家
             String countryName = ExcelUtil.convertCellValueToString(row.getCell(4));
             if(!countryNameMap.containsKey(countryName)) {
-                throw new ServiceException(StrUtil.format("第【{}】行未找到组织【{}】", noticeRow, countryName));
+                throw new ServiceException(StrUtil.format("第【{}】行未找到国家【{}】", noticeRow, countryName));
             }
             // 国家id需根据国家名称获取
             customerInfoEntity.setCountryId(countryNameMap.get(countryName).get(0).getId());

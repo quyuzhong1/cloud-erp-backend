@@ -106,13 +106,18 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
          * 获取到想要同步的销售出库单列表
          */
         List<KingdeeDeliveryDetailEntity> wantToMqList = listWantToMqSoOutstock(pushToMqList);
-        if(CollectionUtils.isEmpty(wantToMqList)){
+        if (CollectionUtils.isEmpty(wantToMqList)) {
             log.warn("金蝶发货订单,推送消息的没有数据 dto>>>>>>{}", JSONUtil.toJsonStr(dto));
         }
 
         // 异步推送B2C销售出库单到MQ
-        wantToMqList.forEach(p -> mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_B2C_SO_OUTSTOCK_TAG.getName(), p, p.getFBillNo()));
-
+        wantToMqList.forEach(obj -> {
+            if (!Objects.isNull(obj.getFModifyDate())) {
+                if (LocalDateTime.parse(obj.getFModifyDate()).compareTo(LocalDateTime.parse("2023-07-06 21:00:00")) > 0) {
+                    mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_B2C_SO_OUTSTOCK_TAG.getName(), obj, obj.getFBillNo());
+                }
+            }
+        });
 
         // 构造订单结构
         List<DmpDeliveryDetailInfoEntity> entityToMqlist = pushToMqList.stream()
@@ -215,7 +220,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'A','B','C','D'"));
 
         String filterStr = String.join(" and ", queryFilters);
-        log.info("拉取金蝶条件为>>>>>>>>>>{}",filterStr);
+        log.info("拉取金蝶条件为>>>>>>>>>>{}", filterStr);
         String fieldKeys = "FID,FBillTypeID,FBillTypeID.FName,FBillNo,FSoOrDerNo,FDate,FSaleOrgId,FSaleOrgId.FName,FCarriageNO,FStockerID.FNumber,FStockerID.FName," +
                 "FCustomerID,FCustomerID.FName,FCustomerID.FNumber,FSaleDeptID.FName,FSalesManID,FSalesManID.FName,FSalesManID.FNumber,FReceiverID.FName," +
                 "FTransferBizType.FName,F_ulz_BaseProperty2,F_ulz_BaseProperty2.FNumber,FLinkPhone,FLinkMan,FBussinessType,FDocumentStatus," +
@@ -277,7 +282,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         if (StrUtil.isEmpty(kingdeeOutStockEntity.getFSaleOrgId()) ||
                 ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(kingdeeOutStockEntity.getFSaleOrgId()) ||
                 ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(kingdeeOutStockEntity.getFSaleOrgId()) ||
-                ObjectUtil.equals(fBillTypeID, kingdeeOutStockEntity.getFBillTypeID())||
+                ObjectUtil.equals(fBillTypeID, kingdeeOutStockEntity.getFBillTypeID()) ||
                 !list.contains(kingdeeOutStockEntity.getF_ulz_BaseProperty2Code())
         ) {
             return null;
