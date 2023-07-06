@@ -281,12 +281,13 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
         ProjectTaskEntity task = projectTaskService.getById(taskId);
         Integer approvalNoPass = TaskStateEnum.APPROVAL_NO_PASS.getCode();
         for (DeliveryDocsDTO item : list) {
+            String fileUrl = item.getFileUrl();
             if (task != null && !approvalNoPass.equals(task.getStatus())) {
                 item.setOldFileName(item.getFileName());
                 item.setOldFileUrl(item.getFileUrl());
                 item.setOldUploadType(item.getUploadType());
             }
-            Boolean isChange = docHistoryList.stream().filter(h -> item.getFinishDocsId().equals(h.getFinishDocId())).
+            Boolean isChange = docHistoryList.stream().filter(h -> item.getFinishDocsId().equals(h.getFinishDocId())&&!item.getFileUrl().equals(fileUrl)).
                     findFirst().map(TaskDocHistoryEntity::getIsChangeSuccess).orElse(null);
             //当不是空的时候
             if (isChange != null) {

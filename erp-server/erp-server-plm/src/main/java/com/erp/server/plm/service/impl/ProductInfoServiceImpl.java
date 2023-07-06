@@ -2150,7 +2150,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         Integer totalChangeCount = 0;
         //这个是排期任务的id 集合
         List<String> planTaskIdList = taskList.stream().filter(t -> change.equals(t.getScheduleType())||t.getIsChangeDocs()).map(ProjectTaskEntity::getId).collect(Collectors.toList());
-        //todo 还要更改
         totalChangeCount = planTaskIdList.size();
         totalTask.setFinishCount((int) totalFinishCount);
         totalTask.setDoingCount((int) totalDoingCount);
