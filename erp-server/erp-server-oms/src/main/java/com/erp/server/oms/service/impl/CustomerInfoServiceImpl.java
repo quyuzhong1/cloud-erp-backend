@@ -366,19 +366,23 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params, approveList);
         List<CustomerDTO.PagingViewDTO> list = pageData.getRecords();
+        if(CollectionUtils.isEmpty(list)){
+            return new PagingVO<>(pageData);
+        }
         List<String> groupIdList = list.stream().map(CustomerDTO.PagingViewDTO::getGroupId).collect(Collectors.toList());
         List<CustomerGroupEntity> groupList = CollectionUtils.isNotEmpty(groupIdList) ? customerGroupService.listByIds(groupIdList) : Collections.emptyList();
-
-
         List<String> ids = list.stream().map(CustomerDTO.PagingViewDTO::getId).collect(Collectors.toList());
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         ids.forEach(obj -> {
-            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_INFO.getCode(),obj));
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_INFO.getCode(), obj));
         });
-        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
-        Integer code = listApiResult.getCode();
-        if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_500);
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult=null;
+        if(CollectionUtils.isNotEmpty(dtoList)){
+           listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(ApiError.ERROR_500);
+            }
         }
 
         for (CustomerDTO.PagingViewDTO item : list) {
@@ -389,7 +393,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setGroupName(groupName);
             //最新审核人
-            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+            if (listApiResult!=null&&CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 item.setApproveUserName(curApprove);
             }
@@ -1267,6 +1271,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             // 需要拉取客户的金蝶id
         }
 
+    }
+
+    @Override
+    public List<CustomerInfoEntity> listByKingdeeIdList(List<String> kingdeeCustomerIds) {
+        return null;
     }
 
     /**

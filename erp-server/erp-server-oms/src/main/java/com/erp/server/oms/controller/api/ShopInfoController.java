@@ -67,6 +67,7 @@ public class ShopInfoController extends BaseController {
      *
      * @return
      */
+    @PostMapping("/initialSync")
     public ApiResult initialSync() {
         Boolean result = shopInfoService.initialSync();
         return result ? success() : failure();
