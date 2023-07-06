@@ -114,8 +114,16 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
             throw new ServiceException(ApiError.ERROR_98073);
         }
 
+        //组织机构
+        List<String> orgIdList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(warehouseList)) {
+            List<String> orgIds = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).collect(Collectors.toList());
+            orgIdList.addAll(orgIds);
+        }
+        orgIdList.add(subcontractOrderEntity.getSubcontractOrgId());
+        orgIdList.add(entity.getPurchaseOrgId());
         //组织机构编码
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(subcontractOrderEntity.getSubcontractOrgId(),entity.getPurchaseOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIdList);
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
             //委外组织编码
             String subcontractOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(subcontractOrderEntity.getSubcontractOrgId()))
@@ -144,8 +152,16 @@ public class SyncKingdeeSubcontractChangeServiceImpl implements SyncKingdeeSubco
             jsonObject.set("billDate",entity.getBillDate());
             //仓库编码
             if (CollectionUtils.isNotEmpty(warehouseList)) {
-                String kingdeeWarehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse("");
-                jsonObject.set("warehouseCode",kingdeeWarehouseCode);
+                WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(updateDTO)) {
+                    jsonObject.set("warehouseCode",updateDTO.getKingdeeWarehouseCode());
+                    //库存组织
+                    if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+                        String inStockOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(updateDTO.getOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
+                        jsonObject.set("inStockOrgCode",inStockOrgCode);
+                    }
+
+                }
             }
             //供应商编码
             if (CollectionUtils.isNotEmpty(supplierList)) {

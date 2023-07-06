@@ -81,15 +81,6 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
         //采购日期
         resultMap.put("billDate",entity.getBillDate());
 
-        //组织机构编码
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getSubcontractOrgId(),entity.getPurchaseOrgId()));
-        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
-            //委外组织编码
-            String subcontractOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getSubcontractOrgId()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
-            resultMap.put("subcontractOrgCode", subcontractOrgCode);
-        }
-
         //采购员编码
         if (StringUtils.isNotBlank(entity.getPurchaserId())) {
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaserId());
@@ -121,6 +112,23 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
         List<String> skuIds = parentList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
         List<BomInfoEntity> bomInfoList = plmTaskFeign.listBomByParentSkuIds(skuIds);
 
+        //组织机构
+        List<String> orgIdList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(warehouseList)) {
+            List<String> orgIds = warehouseList.stream().map(WarehouseDTO.UpdateDTO::getOrgId).collect(Collectors.toList());
+            orgIdList.addAll(orgIds);
+        }
+        orgIdList.add(entity.getSubcontractOrgId());
+        orgIdList.add(entity.getPurchaseOrgId());
+        //组织机构编码
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIdList);
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            //委外组织编码
+            String subcontractOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getSubcontractOrgId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+            resultMap.put("subcontractOrgCode", subcontractOrgCode);
+        }
+
         List<JSONObject> list = new ArrayList<>();
         for (SubcontractOrderDetailEntity detailEntity : parentList) {
             JSONObject jsonObject = new JSONObject();
@@ -134,10 +142,14 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
 
             //仓库编码
             if (CollectionUtils.isNotEmpty(warehouseList)) {
-                String kingdeeWarehouseCode = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse("");
-                jsonObject.set("kingdeeWarehouseCode",kingdeeWarehouseCode);
+                WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
+                jsonObject.set("kingdeeWarehouseCode",updateDTO.getKingdeeWarehouseCode());
+                //库存组织
+                if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+                    String inStockOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(updateDTO.getOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
+                    jsonObject.set("inStockOrgCode",inStockOrgCode);
+                }
             }
-
             //采购组织编码
             if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
                 String purchaseOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getPurchaseOrgId()))

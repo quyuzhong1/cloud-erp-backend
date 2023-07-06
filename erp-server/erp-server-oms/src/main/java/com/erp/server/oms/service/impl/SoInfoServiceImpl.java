@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -1845,7 +1846,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         // 获取采购单价
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.getLatest(Arrays.asList(costParam.getSkuId()));
         // 计算成本毛利信息
-        SoUtils.calCostProfit(purchaseOrderDetailEntityList, costParam, skuCostProfitResult);
+        skuCostProfitResult = SoUtils.calCostProfit(CollUtil.isNotEmpty(purchaseOrderDetailEntityList) ? purchaseOrderDetailEntityList.get(0) : null , costParam, skuCostProfitResult);
         return skuCostProfitResult;
     }
 

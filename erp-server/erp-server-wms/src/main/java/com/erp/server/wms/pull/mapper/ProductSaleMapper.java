@@ -3,6 +3,9 @@ package com.erp.server.wms.pull.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * @Entity com.erp.model.plm.entity.ProductSale
@@ -24,6 +27,21 @@ public interface ProductSaleMapper extends BaseMapper<ProductSaleEntity> {
      * @return
      */
     ProductSaleEntity selectById(String id);
+
+    /**
+     * 根据主键Id查询产品销售表信息
+     * @Author zhangchunlin
+     * @param ids
+     * @return com.erp.model.plm.entity.ProductSaleEntity
+     **/
+    List<ProductSaleEntity> listProductSaleByIds(@Param("ids") List<String> ids);
+
+    /**
+     * 批量修改
+     * @param list
+     * @return
+     */
+    int updateBatchSelective(List<ProductSaleEntity> list);
 
 
 }
