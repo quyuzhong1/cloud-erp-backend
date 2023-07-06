@@ -122,7 +122,12 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
         orgIdList.add(entity.getPurchaseOrgId());
         //组织机构编码
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIdList);
-
+        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+            //委外组织编码
+            String subcontractOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getSubcontractOrgId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+            resultMap.put("subcontractOrgCode", subcontractOrgCode);
+        }
 
         List<JSONObject> list = new ArrayList<>();
         for (SubcontractOrderDetailEntity detailEntity : parentList) {
