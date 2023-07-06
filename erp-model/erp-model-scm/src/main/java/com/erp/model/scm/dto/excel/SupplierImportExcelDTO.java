@@ -194,7 +194,7 @@ public class SupplierImportExcelDTO implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "银行账号", index = 19)
-    @FieldValid(fieldName = "银行账号",maxLength = 20)
+    @FieldValid(fieldName = "银行账号",maxLength = 50)
     private String bankAccount;
 
     /**
