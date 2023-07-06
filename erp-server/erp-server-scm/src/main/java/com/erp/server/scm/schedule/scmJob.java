@@ -17,7 +17,7 @@ import javax.annotation.Resource;
  **/
 @Component
 @Slf4j
-public class ScmJob {
+public class scmJob {
     @Resource
     private WmsSyncPurchaseService WmsSyncPurchaseService;
 

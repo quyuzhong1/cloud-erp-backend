@@ -27,7 +27,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isEmpty(ids)) {
             return new ArrayList<>();
         }
-        return baseMapper.ListProductDetailByIds(ids);
+        return baseMapper.listProductDetailByIds(ids);
     }
 
     /**
