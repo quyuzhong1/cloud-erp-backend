@@ -52,7 +52,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
             }
         }
         if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
-            this.saveOrUpdateBatch(notExistDetailEntityList);
+            this.saveBatch(notExistDetailEntityList);
         }
         if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
             baseMapper.updateBatchSelective(existDetailEntityList);
