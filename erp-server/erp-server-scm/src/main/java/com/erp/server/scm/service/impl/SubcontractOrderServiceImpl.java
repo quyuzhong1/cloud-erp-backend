@@ -1259,6 +1259,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                         addDTO.setReceiveOrgId(receiveOrgId);
                         addDTO.setSubcontractOrgId(subOrgId);
                         addDTO.setIsFirstMassProduct(Boolean.FALSE);
+                        addDTO.setSyncKingdeeId(importExcelDTO.getId());
                     }
                     SubcontractOrderDetailDTO.AddDTO addDetailDTO = new SubcontractOrderDetailDTO.AddDTO();
                     addDetailDTO.setSkuId(skuVO.getSkuId());
@@ -1271,6 +1272,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                     addDetailDTO.setIsGift(Boolean.FALSE);
                     addDetailDTO.setIsUrgent(Boolean.FALSE);
                     addDetailDTO.setIsGeneratePo(Boolean.FALSE);
+                    addDetailDTO.setKingdeeDetailId(importExcelDTO.getDetailId());
                     addDetailDTO.setRemark(importExcelDTO.getRemark());
                     List<SubcontractOrderDetailDTO.AddDTO> addChildList = new ArrayList<>();
                     for (BomChildrenSkuDTO childrenSkuDTO : bomChildrenSkuList) {
