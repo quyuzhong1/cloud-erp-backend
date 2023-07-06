@@ -25,7 +25,7 @@ public class KingdeePoImportExcelDTO {
 
     @ExcelProperty(value = "FDate")
     @FieldValid(fieldName = "采购日期", isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.DATE)
-    private String  billDate;
+    private String  billDateStr;
 
     @ExcelProperty(value = "FSupplierId")
     @FieldValid(fieldName = "供应商编码", isNotBlank = true)

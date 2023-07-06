@@ -1,6 +1,7 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -25,6 +26,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
+import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -181,13 +184,15 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         doOpHandleDataId(dto.getPurchaseUserId(), dto.getPurchaseDeptId(), dto.getPurchaseOrgId(), dto.getReceiveOrgId(), dto.getDeliveryWarehouseId(), entity);
         log.info("采购订单新增");
         //生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.PO, BusinessNoTypeEnum.CODE_PO.getCode()));
-        entity.setCode(code);
+        if (StringUtils.isBlank(dto.getCode())) {
+            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.PO, BusinessNoTypeEnum.CODE_PO.getCode()));
+            entity.setCode(code);
+        }
         //新增主表数据
         boolean save = this.save(entity);
         if (save) {
             //操作日志
-            moduleOperateLogService.addModuleOperateLog(String.format("新增了一个采购订单【%s】", code), ModuleTypeEnum.PURCHASE_ORDER.getCode(), entity.getId(), "新增操作");
+            moduleOperateLogService.addModuleOperateLog(String.format("新增了一个采购订单【%s】", dto.getCode()), ModuleTypeEnum.PURCHASE_ORDER.getCode(), entity.getId(), "新增操作");
             //新增供应商信息
             purchaseOrderSupplierService.add(dto.getPurchaseOrderSupplierDTO(), entity.getId());
             //新增明细
@@ -1421,6 +1426,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<String> skuNoList = successList.stream().map(KingdeePoImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNoList);
 
+
         if (CollectionUtils.isNotEmpty(successList)) {
             Map<String, List<KingdeePoImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(KingdeePoImportExcelDTO::getId));
 
@@ -1430,8 +1436,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 List<KingdeePoImportExcelDTO> value = entry.getValue();
 
                 Boolean isError = Boolean.FALSE;
+                PurchaseOrderDTO.AddDTO addDTO = null;
 
-
+                List<PurchaseOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
                 for (KingdeePoImportExcelDTO importExcelDTO : value) {
 
                     //错误信息
@@ -1485,12 +1492,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     }
 
                     //审核人
-                    String approveUserId = userList.stream().filter(obj -> obj.getCode().equals(importExcelDTO.getApproveUserCode()))
+                    FindUserDTO userDTO = userList.stream().filter(obj -> obj.getCode().equals(importExcelDTO.getApproveUserCode()))
                             .findFirst()
-                            .flatMap(obj -> Optional.ofNullable(obj.getUserId()))
-                            .orElse("");
+                            .orElse(null);
 
-                    if (StringUtils.isBlank(approveUserId)) {
+                    if (ObjectUtils.isEmpty(userDTO) && StringUtils.isNotBlank(importExcelDTO.getApproveUserCode())) {
                         errorMsgList.add(StrUtil.format("未找到有效审核人编码【{}】",importExcelDTO.getCreateUserCode()));
                     }
 
@@ -1531,19 +1537,67 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     if (ObjectUtils.isEmpty(skuVO)) {
                         errorMsgList.add(StrUtil.format("未找到有效SKU【{}】",importExcelDTO.getSkuNo()));
                     }
+
+                    //验证录入的SKU明细报价信息是否正确
+                    PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+                    priceDTO.setSkuId(skuVO.getSkuId());
+                    priceDTO.setSkuNo(skuVO.getSkuNo());
+                    priceDTO.setSupplierId(supplierId);
+                    priceDTO.setPurchaseQty(Integer.valueOf(importExcelDTO.getQty()));
+                    Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> stringListPair = purchasePriceDetailService.listPurchaseTaxPriceView(priceDTO);
+                    if (StringUtils.isNotBlank(stringListPair.getKey())) {
+                        errorMsgList.add(StrUtil.format(stringListPair.getKey()));
+                    }
+
                     //存在错误数据则直接返回
                     if (errorMsgList.size() > 0) {
                         importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                         isError = Boolean.TRUE;
                         break;
                     }
+                    if (ObjectUtils.isEmpty(addDTO)) {
+                        addDTO = new PurchaseOrderDTO.AddDTO();
+                        addDTO.setCode(importExcelDTO.getCode());
+                        addDTO.setPurchaseDate(LocalDateUtil.date2LocalDate(DateUtil.stringToDate(importExcelDTO.getBillDateStr())));
+                        addDTO.setPurchaseUserId(purchaseUserId);
+                        addDTO.setPurchaseDeptId(purchaseDeptId);
+                        addDTO.setPurchaseOrgId(purchaseOrgId);
+                        addDTO.setReceiveOrgId(receiveOrgId);
+                        addDTO.setDeliveryWarehouseId(warehouseId);
+                        addDTO.setIsFirstMassProduct("true".equals(importExcelDTO.getIsFirstMassProduct()) ? Boolean.TRUE : Boolean.FALSE);
+                    }
+                    PurchaseOrderDetailDTO.AddDTO addDetailDTO = new PurchaseOrderDetailDTO.AddDTO();
+                    addDetailDTO.setSkuId(skuVO.getSkuId());
+                    addDetailDTO.setSkuNo(skuVO.getSkuNo());
+                    addDetailDTO.setTaxPrice(new BigDecimal(importExcelDTO.getTaxPrice()));
+                    addDetailDTO.setTaxRate(new BigDecimal(importExcelDTO.getTaxRate()));
+                    addDetailDTO.setCurrency(currency);
+                    addDetailDTO.setPurchaseQty(Integer.valueOf(importExcelDTO.getQty()));
+                    addDetailDTO.setPlanDeliveryDate(LocalDateUtil.date2LocalDate(DateUtil.stringToDate(importExcelDTO.getPlanDeliveryDateStr())));
+                    addDetailDTO.setIsGift("true".equals(importExcelDTO.getIsGift()) ? Boolean.TRUE : Boolean.FALSE);
+                    addDetailDTO.setRemark(importExcelDTO.getRemark());
+                    addDetailList.add(addDetailDTO);
                 }
                 //错误
                 if (isError) {
                     errorList.addAll(value);
                 }
+                addDTO.setDetails(addDetailList);
+                String id = this.add(addDTO);
 
+                //判断是否需要将状态更新为已审核
+                if (StringUtils.isNotBlank(value.get(0).getApproveUserCode())) {
+                    //审核人
+                    FindUserDTO userDTO = userList.stream().filter(obj -> obj.getCode().equals(value.get(0).getApproveUserCode()))
+                            .findFirst()
+                            .orElse(null);
 
+                    this.lambdaUpdate().eq(PurchaseOrderEntity::getId,id)
+                            .set(PurchaseOrderEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getStatus())
+                            .set(PurchaseOrderEntity::getApproveUserId,userDTO.getUserId())
+                            .set(PurchaseOrderEntity::getApproveTime, LocalDateTimeUtil.of(DateUtil.stringToDate(value.get(0).getApproveTimeStr())))
+                            .update();
+                }
             }
         }
     }
