@@ -1,7 +1,6 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -44,6 +43,7 @@ import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.enums.SysDictBasicEnum;
@@ -1421,7 +1421,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         //人员信息
         List<String> userCodeList = successList.stream().flatMap(obj -> Stream.of(obj.getPurchaseUserCode(), obj.getApproveUserCode())).distinct().collect(Collectors.toList());
-        List<FindUserDTO> userList = sysUserFeign.listUserByCodeList(userCodeList);
+        List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoDTOS = sysUserFeign.listUserKingdeePostByKingdeePostCodes(userCodeList);
 
         //币别信息
         List<String> currCodeList = successList.stream().map(KingdeePoImportExcelDTO::getPayCurrencyCode).distinct().collect(Collectors.toList());
@@ -1491,16 +1491,16 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
 
                     //审核人
-                    FindUserDTO userDTO = userList.stream().filter(obj -> obj.getCode().equals(importExcelDTO.getApproveUserCode()))
+                    KingdeePostDTO.UserKingdeePostInfoDTO userKingdeePostInfoDTO = userKingdeePostInfoDTOS.stream().filter(obj -> obj.getKingdeeUserCode().equals(importExcelDTO.getApproveUserCode()))
                             .findFirst()
                             .orElse(null);
 
-                    if (ObjectUtils.isEmpty(userDTO) && StringUtils.isNotBlank(importExcelDTO.getApproveUserCode())) {
+                    if (ObjectUtils.isEmpty(userKingdeePostInfoDTO) && StringUtils.isNotBlank(importExcelDTO.getApproveUserCode())) {
                         errorMsgList.add(StrUtil.format("未找到有效审核人编码【{}】",importExcelDTO.getApproveUserCode()));
                     }
 
                     //采购员
-                    String purchaseUserId = userList.stream().filter(obj -> obj.getCode().equals(importExcelDTO.getPurchaseUserCode()))
+                    String purchaseUserId = userKingdeePostInfoDTOS.stream().filter(obj -> obj.getKingdeePostCode().equals(importExcelDTO.getPurchaseUserCode()))
                             .findFirst()
                             .flatMap(obj -> Optional.ofNullable(obj.getUserId()))
                             .orElse("");
@@ -1598,21 +1598,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     continue;
                 }
                 addDTO.setDetails(addDetailList);
-                String id = this.add(addDTO);
-
-                //判断是否需要将状态更新为已审核
-                if (StringUtils.isNotBlank(value.get(0).getApproveUserCode())) {
-                    //审核人
-                    FindUserDTO userDTO = userList.stream().filter(obj -> obj.getCode().equals(value.get(0).getApproveUserCode()))
-                            .findFirst()
-                            .orElse(null);
-
-                    this.lambdaUpdate().eq(PurchaseOrderEntity::getId,id)
-                            .set(PurchaseOrderEntity::getApproveStatus,ApproveStatusEnum.APPROVE.getStatus())
-                            .set(PurchaseOrderEntity::getApproveUserId,userDTO.getUserId())
-                            .set(PurchaseOrderEntity::getApproveTime, LocalDateTimeUtil.of(DateUtil.stringToDate(value.get(0).getApproveTimeStr())))
-                            .update();
-                }
+                this.add(addDTO);
             }
         }
     }

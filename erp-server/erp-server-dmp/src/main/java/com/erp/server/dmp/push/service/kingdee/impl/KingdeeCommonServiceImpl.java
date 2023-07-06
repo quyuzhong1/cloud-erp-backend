@@ -568,7 +568,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
      */
     private void formatJsonObject(CfgApiFieldMapDTO cfgApiFieldMapDTO, JSONObject json, Map<String, Object> map, List<CfgApiFieldMapValueEntity> cfgApiFieldMapValueList) {
         //无本身字段时取默认值
-        if (StringUtils.isBlank(cfgApiFieldMapDTO.getSelfField()) || ObjectUtils.isEmpty(map.get(cfgApiFieldMapDTO.getSelfField()))) {
+        if (StringUtils.isBlank(cfgApiFieldMapDTO.getSelfField())) {
             KingdeeUtils.makeFieldJson(json, cfgApiFieldMapDTO.getApiField(), ".", cfgApiFieldMapDTO.getDefaultValue());
             return;
         }
