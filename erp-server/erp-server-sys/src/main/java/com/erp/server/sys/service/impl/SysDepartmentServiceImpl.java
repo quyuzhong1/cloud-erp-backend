@@ -7,9 +7,12 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncKingdeeOperateEnum;
+import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.server.sys.mapper.SysDepartmentMapper;
@@ -17,17 +20,24 @@ import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysDeptService;
 import com.erp.server.sys.service.SysCodeService;
 import com.erp.server.sys.service.SysDepartmentService;
 import com.erp.server.sys.service.SysDepartmentUserService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 
+@Slf4j
 @Service
 public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, SysDepartmentEntity> implements SysDepartmentService {
 
@@ -319,6 +329,42 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             return Collections.EMPTY_LIST;
         }
         return BeanMapperUtils.copyList(SysDepartmentDTO.class,list);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void importDeptKingdee(MultipartFile file) throws IOException {
+        XSSFWorkbook wb = new XSSFWorkbook(file.getInputStream());
+        XSSFSheet sheet = wb.getSheetAt(0);
+        // 读取数据集
+        int rows = sheet.getPhysicalNumberOfRows();
+
+        for(int i = 2;i < rows;i++) {
+            XSSFRow row = sheet.getRow(i);
+
+            // 部门名称
+            String name = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(4)));
+            // 金蝶id
+            String kingdeeId = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(0)));
+            LambdaQueryWrapper<SysDepartmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(SysDepartmentEntity::getName, name);
+            queryWrapper.last("LIMIT 1");
+            SysDepartmentEntity sysDepartmentEntity =super.getOne(queryWrapper);
+            if(Objects.isNull(sysDepartmentEntity)) {
+                log.info("未找到部门【{}】", name);
+                continue;
+            }
+            if(StrUtils.isNotEmpty(sysDepartmentEntity.getSyncKingdeeId())) {
+                log.info("部门【{}】已经存在金蝶id，不处理", name);
+                continue;
+            }
+            lambdaUpdate().set(SysDepartmentEntity::getSyncKingdeeId, kingdeeId).set(SysDepartmentEntity::getSyncKingdeeTime, LocalDateTime.now())
+                    .set(SysDepartmentEntity::getSyncOperate, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode())
+                    .set(SysDepartmentEntity::getSyncKingdeeStatus, SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode())
+                    .eq(SysDepartmentEntity::getId, sysDepartmentEntity.getId())
+                    .update();
+        }
+
     }
 
     @Override

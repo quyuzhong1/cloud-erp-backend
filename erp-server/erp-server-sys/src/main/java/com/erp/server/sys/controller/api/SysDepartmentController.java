@@ -10,7 +10,9 @@ import com.erp.model.sys.vo.SysDeptDropDownVO;
 import com.erp.server.sys.service.SysDepartmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -101,6 +103,17 @@ public class SysDepartmentController extends BaseController {
                 )
                 .collect(Collectors.toList());
         return success(resultList);
+    }
+
+    /**
+     * 导入部门关联金蝶信息
+     * @param file
+     * @return
+     */
+    @PostMapping(value = "importDepatKingdee")
+    public ApiResult<Void> importDepatKingdee(@RequestParam(value = "file") MultipartFile file) throws IOException {
+        sysDepartmentService.importDeptKingdee(file);
+        return success();
     }
 
 }
