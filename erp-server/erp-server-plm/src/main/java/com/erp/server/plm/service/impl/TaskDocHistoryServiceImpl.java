@@ -33,37 +33,55 @@ public class TaskDocHistoryServiceImpl extends SuperServiceImpl<TaskDocHistoryMa
     /**
      * 添加历史文档
      *
-     * @param oldDocs
+     * @param taskDocs
      * @return void
      * @author yl
      * @date 2023-06-25 9:02
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void addHistory(TaskDocsFinishEntity oldDocs) {
-        TaskDocHistoryEntity entity = new TaskDocHistoryEntity();
-        Integer uploadType = oldDocs.getUploadType();
-//        //不是本地上传
-//        if (!TaskConstant.LOCAL_UPLOAD.equals(uploadType)) {
-//            entity.setFileName(oldDocs.getFileUrl());
-//        } else {
-//            entity.setFileName(oldDocs.getFileName());
-//        }
-        entity.setFileName(oldDocs.getFileName());
-        entity.setTaskId(oldDocs.getTaskId());
+    public void addHistory(TaskDocsFinishEntity taskDocs) {
+        String finishDocId = taskDocs.getId();
+        List<TaskDocHistoryEntity> list = this.listByFinishDocId(finishDocId);
+        if (CollectionUtils.isNotEmpty(list)) {
+            TaskDocHistoryEntity one = list.get(0);
+            if (one.getFileUrl().equals(taskDocs.getFileUrl())) {
+                return;
+            }
 
-        entity.setFileSize(oldDocs.getFileSize());
-        entity.setFileSuffix(oldDocs.getFileSuffix());
-        entity.setFileType(oldDocs.getFileType());
-        entity.setFileUrl(oldDocs.getFileUrl());
-        entity.setFinishDocId(oldDocs.getId());
-        entity.setProductId(oldDocs.getProductId());
-        entity.setUploadType(oldDocs.getUploadType());
-        entity.setRequireDocId(oldDocs.getTaskDocsId());
-        Integer maxVersion = getMaxVersion(oldDocs.getId());
+        }
+        TaskDocHistoryEntity entity = new TaskDocHistoryEntity();
+
+        entity.setFileName(taskDocs.getFileName());
+        entity.setTaskId(taskDocs.getTaskId());
+
+        entity.setFileSize(taskDocs.getFileSize());
+        entity.setFileSuffix(taskDocs.getFileSuffix());
+        entity.setFileType(taskDocs.getFileType());
+        entity.setFileUrl(taskDocs.getFileUrl());
+        entity.setFinishDocId(taskDocs.getId());
+        entity.setProductId(taskDocs.getProductId());
+        entity.setUploadType(taskDocs.getUploadType());
+        entity.setRequireDocId(taskDocs.getTaskDocsId());
+        Integer maxVersion = getMaxVersion(taskDocs.getId());
         entity.setChangeVersion(maxVersion);
         this.save(entity);
 
+    }
+
+
+    /**
+     * 方法说明
+     *
+     * @param finishDocId
+     * @return java.util.List<com.erp.model.plm.entity.TaskDocsFinishEntity>
+     * @author yl
+     * @date 2023-07-06 16:53
+     */
+    private List<TaskDocHistoryEntity> listByFinishDocId(String finishDocId) {
+
+
+        return this.lambdaQuery().eq(TaskDocHistoryEntity::getFinishDocId, finishDocId).orderByDesc(TaskDocHistoryEntity::getChangeVersion).list();
     }
 
     /**
