@@ -1571,8 +1571,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 view.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnTypeDict()));
             }
             view.setReturnReasonDict(soReturnDetailEntity.getReturnReasonDict());
-            if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
-                view.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnTypeDict()));
+            if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
+                view.setReturnReasonDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnReasonDict()));
             }
             view.setWarehouseId(view.getWarehouseId());
             List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(view.getWarehouseId()));
