@@ -501,10 +501,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(soIdList);
         for (SoInfoDTO.PagingViewDTO item : list) {
             List<String> curApproveName = processTaskManagementEntities.stream().filter(req ->req.getBusinessId().equals(item.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(curApproveName)) {
-                String userName = StringUtils.join(curApproveName, ",");
-                item.setApproveUserName(userName);
-            }
+            String userName = StringUtils.join(curApproveName, ",");
+            item.setApproveUserName(userName);
             boolean contains = flagList.contains(item.getId());
             String warehouseId = item.getWarehouseId();
             BillApproveStatusEnum billApproveStatus = item.getApproveStatus();

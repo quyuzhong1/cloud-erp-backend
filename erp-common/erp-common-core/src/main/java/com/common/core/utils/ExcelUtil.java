@@ -14,6 +14,8 @@ import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.IndexedColors;
 
@@ -288,4 +290,46 @@ public class ExcelUtil {
             }
         }
     }
+
+    /**
+     * 获取EXCEL单元格值
+     * @param cell
+     * @return
+     */
+    public static String convertCellValueToString(Cell cell) {
+        if (null == cell) {
+            return null;
+        }
+        String returnValue = null;
+        switch (cell.getCellType()) {
+            case STRING:
+                //字符串
+                returnValue = cell.getStringCellValue();
+                break;
+            case NUMERIC:
+                //数字
+                cell.setCellType(CellType.STRING);
+                returnValue = cell.getStringCellValue();
+                break;
+            case BOOLEAN:
+                //布尔
+                boolean booleanCellValue = cell.getBooleanCellValue();
+                returnValue = Boolean.toString(booleanCellValue);
+                break;
+            case BLANK:
+                //空值
+                break;
+            case FORMULA:
+                //公式
+                returnValue = cell.getCellFormula();
+                break;
+            case ERROR:
+                //故障
+                break;
+            default:
+                break;
+        }
+        return StrUtils.null2EmptyWithTrim(returnValue);
+    }
+
 }

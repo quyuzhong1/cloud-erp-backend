@@ -81,5 +81,5 @@ public interface ProcessTaskManagementService extends SuperService<ProcessTaskMa
      * @param businessIds
      * @return
      */
-    List<ProcessTaskManagementEntity> listByProcessInstanceId(List<String> businessIds);
+    List<ProcessTaskManagementEntity> listProcessByBusinessId(List<String> businessIds);
 }

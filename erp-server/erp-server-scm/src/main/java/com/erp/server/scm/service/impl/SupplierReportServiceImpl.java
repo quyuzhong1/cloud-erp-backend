@@ -3,6 +3,7 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -21,6 +22,7 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.SupplierReportMapper;
 import com.erp.server.scm.service.SupplierReportService;
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +39,7 @@ import java.util.stream.Collectors;
  * @CreateTime: 2023-06-16  16:49
  * @Author: zhangchunlin
  */
+@Slf4j
 @Service
 public class SupplierReportServiceImpl implements SupplierReportService {
 
@@ -116,7 +119,9 @@ public class SupplierReportServiceImpl implements SupplierReportService {
         // 质检退货批次、质检退货量
         List<String> sourceTypeList = Lists.newArrayList(SourceTypeEnum.QC_INFO.getCode());
         PurchaseReturnOrderDTO.SupplierReturnParamDTO returnParamDTO = new PurchaseReturnOrderDTO.SupplierReturnParamDTO(supplierIds, paramDTO.getDateList(), sourceTypeList);
+        log.info("质检退货查询参数：{}", JSONObject.toJSONString(returnParamDTO));
         List<PurchaseReturnOrderDTO.SupplierReturnDTO> supplierReturnInfos = wmsTaskFeign.getReturnInfo(returnParamDTO);
+        log.info("质检退货查询结果：{}", JSONObject.toJSONString(supplierReturnInfos));
         if(CollUtil.isNotEmpty(supplierReturnInfos)) {
             Map<String,PurchaseReturnOrderDTO.SupplierReturnDTO> supplierReturnMap = supplierReturnInfos.stream().collect(Collectors.toMap(PurchaseReturnOrderDTO.SupplierReturnDTO::getSupplierId, Function.identity()));
             records.stream().forEach(record->{

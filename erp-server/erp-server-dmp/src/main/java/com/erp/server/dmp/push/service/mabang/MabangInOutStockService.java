@@ -1,11 +1,7 @@
 package com.erp.server.dmp.push.service.mabang;
 
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
-import com.erp.model.dmp.entity.DmpOutInStockEntity;
 import com.erp.model.dmp.entity.DmpSyncTaskEntity;
-import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.wms.entity.TransferInfoEntity;
-
 
 
 /**

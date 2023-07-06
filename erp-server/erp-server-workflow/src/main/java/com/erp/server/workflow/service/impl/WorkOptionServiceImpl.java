@@ -1,6 +1,8 @@
 package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
@@ -43,6 +45,7 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.workflow.mapper.WorkOptionMapper;
 import com.erp.server.workflow.service.*;
 import com.erp.server.workflow.utils.GetHttpGatewayIpPortUtils;
+import com.google.gson.JsonObject;
 import com.jgoodies.common.bean.Bean;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
@@ -247,7 +250,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     }
 
     /**
-     * 代办列表
+     * 待办列表
      *
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO < com.erp.model.wms.dto.PurchaseReturnOrderDTO.PagingViewDTO>>
      * @Author Luo_WG
@@ -368,7 +371,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         return new ArrayList<>();
     }
     /**
-     * 代办列表
+     * 待办列表
      *
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO < com.erp.model.wms.dto.PurchaseReturnOrderDTO.PagingViewDTO>>
      * @Author Luo_WG
@@ -429,60 +432,21 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         List<WorkOptionDTO.ApproveSearchOptionDTO> list = new ArrayList<>();
         String userId = commonService.getUserInfo().getUid();
         List<ApproveSearchOptionEnum> all = ApproveSearchOptionEnum.getAll();
+        WorkOptionDTO.ApproveViewParamDTO paramDTO = new WorkOptionDTO.ApproveViewParamDTO();
         for (ApproveSearchOptionEnum optionEnum : all) {
-            if (optionEnum.getCode().equals(ApproveSearchOptionEnum.WAITHANDLE.getCode())) {
-                WorkOptionDTO.ApproveSearchOptionDTO approveSearchOptionDTO = new WorkOptionDTO.ApproveSearchOptionDTO();
-                //获取我的待办数量
-                List<WorkOptionDTO.Module> waitHandleCount = baseMapper.getWaitHandleCount(userId, ApproveStatusEnum.APPROVE_ING.getStatus(), optionEnum.getCode());
-                Integer quantity = waitHandleCount.stream().map(WorkOptionDTO.Module::getQuantity).reduce(MathUtil.ZERO, Integer::sum);
-                approveSearchOptionDTO.setStatus(optionEnum.getCode());
-                approveSearchOptionDTO.setStatusName(ApproveSearchOptionEnum.getName(optionEnum.getCode()));
-                approveSearchOptionDTO.setQuantity(quantity);
-                for (WorkOptionDTO.Module module : waitHandleCount) {
-                    module.setSysClassifyName(SysClassifyEnum.getName(module.getSysClassify()));
-                }
-                approveSearchOptionDTO.setModuleList(waitHandleCount);
-                list.add(approveSearchOptionDTO);
-            } else if (optionEnum.getCode().equals(ApproveSearchOptionEnum.ALREADYHANDLE.getCode())) {
-                WorkOptionDTO.ApproveSearchOptionDTO approveSearchOptionDTO = new WorkOptionDTO.ApproveSearchOptionDTO();
-                //获取我的已办数量
-                List<WorkOptionDTO.Module> approveCount = baseMapper.getApproveCount(userId, ApproveStatusEnum.APPROVE.getStatus(), optionEnum.getCode());
-                Integer quantity = approveCount.stream().map(WorkOptionDTO.Module::getQuantity).reduce(MathUtil.ZERO, Integer::sum);
-                approveSearchOptionDTO.setStatus(optionEnum.getCode());
-                approveSearchOptionDTO.setStatusName(ApproveSearchOptionEnum.getName(optionEnum.getCode()));
-                approveSearchOptionDTO.setQuantity(quantity);
-                for (WorkOptionDTO.Module module : approveCount) {
-                    module.setSysClassifyName(SysClassifyEnum.getName(module.getSysClassify()));
-                }
-                approveSearchOptionDTO.setModuleList(approveCount);
-                list.add(approveSearchOptionDTO);
-            } else if (optionEnum.getCode().equals(ApproveSearchOptionEnum.CARBONCOPY.getCode())) {
-                WorkOptionDTO.ApproveSearchOptionDTO approveSearchOptionDTO = new WorkOptionDTO.ApproveSearchOptionDTO();
-                //获取我的抄送我的数量
-                List<WorkOptionDTO.Module> approveCount = baseMapper.getTaskCcCount(userId, ApproveStatusEnum.APPROVE.getStatus(), optionEnum.getCode());
-                Integer quantity = approveCount.stream().map(WorkOptionDTO.Module::getQuantity).reduce(MathUtil.ZERO, Integer::sum);
-                approveSearchOptionDTO.setStatus(optionEnum.getCode());
-                approveSearchOptionDTO.setStatusName(ApproveSearchOptionEnum.getName(optionEnum.getCode()));
-                approveSearchOptionDTO.setQuantity(quantity);
-                for (WorkOptionDTO.Module module : approveCount) {
-                    module.setSysClassifyName(SysClassifyEnum.getName(module.getSysClassify()));
-                }
-                approveSearchOptionDTO.setModuleList(approveCount);
-                list.add(approveSearchOptionDTO);
-            } else if (optionEnum.getCode().equals(ApproveSearchOptionEnum.INITIATE.getCode())) {
-                WorkOptionDTO.ApproveSearchOptionDTO approveSearchOptionDTO = new WorkOptionDTO.ApproveSearchOptionDTO();
-                //获取我的已发起数量
-                List<WorkOptionDTO.Module> createCount = baseMapper.getCreateCount(userId, ApproveStatusEnum.APPROVE.getStatus(), optionEnum.getCode());
-                Integer quantity = createCount.stream().map(WorkOptionDTO.Module::getQuantity).reduce(MathUtil.ZERO, Integer::sum);
-                approveSearchOptionDTO.setStatus(optionEnum.getCode());
-                approveSearchOptionDTO.setStatusName(ApproveSearchOptionEnum.getName(optionEnum.getCode()));
-                approveSearchOptionDTO.setQuantity(quantity);
-                for (WorkOptionDTO.Module module : createCount) {
-                    module.setSysClassifyName(SysClassifyEnum.getName(module.getSysClassify()));
-                }
-                approveSearchOptionDTO.setModuleList(createCount);
-                list.add(approveSearchOptionDTO);
+            WorkOptionDTO.ApproveSearchOptionDTO approveSearchOptionDTO = new WorkOptionDTO.ApproveSearchOptionDTO();
+            paramDTO.setStatus(optionEnum.getCode());
+            paramDTO.setUserId(userId);
+            List<WorkOptionDTO.Module> modules = baseMapper.approveViewCount(paramDTO);
+            Integer quantity = modules.stream().map(WorkOptionDTO.Module::getQuantity).reduce(MathUtil.ZERO, Integer::sum);
+            approveSearchOptionDTO.setStatus(optionEnum.getCode());
+            approveSearchOptionDTO.setStatusName(ApproveSearchOptionEnum.getName(optionEnum.getCode()));
+            approveSearchOptionDTO.setQuantity(quantity);
+            for (WorkOptionDTO.Module module : modules) {
+                module.setSysClassifyName(SysClassifyEnum.getName(module.getSysClassify()));
             }
+            approveSearchOptionDTO.setModuleList(modules);
+            list.add(approveSearchOptionDTO);
         }
         return list;
     }
@@ -516,7 +480,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             } else {
                 req.setApproveDuration(0 + " H");
             }
-
+            if (StringUtils.isNotBlank(req.getCancelProcessParam())) {
+                req.setCancelProcessParam(JSONUtil.toJsonStr(StrUtil.format(req.getCancelProcessParam(), req.getBusinessId())));
+            }
             req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus()));
             FindUserDTO findUserDTO = userList.stream().filter(obj -> obj.getUserId().equals(req.getCreateUserId())).findFirst().orElse(new FindUserDTO());
             req.setCreateUserName(findUserDTO.getUserName());

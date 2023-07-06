@@ -676,6 +676,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 detailAddDTO.setReturnQty(view.getReturnQty());
                 detailAddDTO.setRemark(view.getRemark());
                 detailAddDTO.setSourceDetailId(view.getId());
+
                 detailList.add(detailAddDTO);
             }
             dto.setDetailList(detailList);

@@ -548,6 +548,7 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
             updateInventoryTransCore(purchaseReturnOrderEntityList);
             //审核通过发送金蝶
             purchaseReturnOrderEntityList.forEach(obj -> syncKingdeeReturnOrderService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
+
         } else {
             //审核不通过
             lambdaUpdate().set(PurchaseReturnOrderEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -1197,6 +1198,9 @@ public class PurchaseReturnOrderServiceImpl extends SuperServiceImpl<PurchaseRet
                     unApproveIds.add(purchaseReturnOrder.getId());
                 }
             }
+        }
+        if(CollUtil.isEmpty(unApproveIds)) {
+            return;
         }
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.PURCHASE_RETURN_ORDER, unApproveIds);
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);

@@ -397,47 +397,6 @@ public class MabangApiUtils {
     }
 
     /**
-     * 查询马帮调拨发货列表
-     * @param method
-     * @param startDate
-     * @param endDate
-     * @return
-     *
-     * @throws Exception
-     */
-    public static List<ShipmentEntity> queryShipmentList(String method, LocalDateTime startDate, LocalDateTime endDate) {
-        //每页显示的条数 最小10 最大2000
-        Integer pageSize = 1000;
-        Integer pageIndex = 1;
-        //总页数
-        Integer pageCount = 1;
-        List<ShipmentEntity> infoArrayList = new ArrayList<>();
-        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-        while (pageIndex <= pageCount) {
-            HashMap<String, Object> params = new HashMap<>(6);
-            params.put("updateTimeStart", sdf.format(startDate));
-            params.put("updateTimeEnd", sdf.format(endDate));
-            params.put("pageSize", pageSize);
-            ParamHeaderVO paramVo = getParamMap(method, pageIndex, params);
-            JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
-            if (!Objects.equals(responseMap.getInteger("code"), 200)) {
-                log.error("调用url={} param={}马帮退款订单数据失败 responseMap={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap));
-                throw new RuntimeException(StrUtil.format("调用url={} param={}，马帮调拨发货数据失败 responseMap={}",
-                        UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap)));
-            }
-            JSONObject dataJson = JSONObject.parseObject(String.valueOf(responseMap.get("data")));
-            List<ShipmentEntity> dataList = JSONObject.parseArray(dataJson.getString("data"), ShipmentEntity.class);
-            Integer totalCount = dataJson.getInteger("total");
-            pageCount = (totalCount + pageSize - 1) / pageSize;
-            if(CollectionUtil.isNotEmpty(dataList)){
-                infoArrayList.addAll(dataList);
-            }
-            pageIndex ++;
-        }
-        return infoArrayList;
-    }
-
-    /**
      * 查询马帮发货单列表
      * @param method
      * @param startDate

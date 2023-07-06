@@ -8,6 +8,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.KingdeeDTO;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -87,6 +89,19 @@ public class DmpFeignController extends BaseController {
     @PostMapping("/updateSyncInfo")
     public void updateSyncInfo(@RequestBody DmpSyncMqDTO.ParamDTO paramDTO) {
          dmpSyncTaskService.updateSyncInfo(paramDTO.getDmpSyncTaskId(),paramDTO.getSyncStatus(),paramDTO.getResponseMsg());
+    }
+    
+    
+    /**
+     * 获取到所有的店铺信息
+     * @author yl
+     * @date 2023-07-06 12:26
+     * @param
+     * @return 
+     */
+    @PostMapping("/listShop")
+    public List<DmpShopInfoEntity> listShop(){
+        return dmpShopInfoService.list();
     }
 
 }

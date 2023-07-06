@@ -945,6 +945,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     public List<ProcessManagementDTO.CurApproveInfoDTO> batchCurApproverByApprove(ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList) {
+        if(CollectionUtil.isEmpty(dtoList)){
+            return Collections.emptyList();
+        }
         // 查询当前任务
         List<ProcessManagementDTO.CurApproveInfoDTO> resultList = baseMapper.listApproverByApprover(dtoList);
         return resultList;
@@ -981,16 +984,4 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return lambdaQuery().eq(ProcessManagementEntity::getProcessInstanceId, processInstanceId).last("LIMIT 1").one();
     }
 
-    /**
-     * 根据业务id获取流程实例信息
-     * @Author Luo_WG
-     * @Date 2023/7/4 19:37
-     * @param businessIds
-     * @return com.erp.model.workflow.entity.ProcessManagementEntity
-     **/
-    @Override
-    public List<ProcessTaskManagementEntity> listProcessByBusinessId(List<String> businessIds) {
-        List<ProcessTaskManagementEntity> processTaskManagementEntities = processTaskManagementService.listByProcessInstanceId(businessIds);
-        return processTaskManagementEntities;
-    }
 }

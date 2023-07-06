@@ -180,12 +180,19 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
         return entity;
     }
 
+    /**
+     * 根据业务id获取流程实例信息
+     * @Author Luo_WG
+     * @Date 2023/7/4 19:37
+     * @param businessIds
+     * @return com.erp.model.workflow.entity.ProcessManagementEntity
+     **/
     @Override
-    public List<ProcessTaskManagementEntity> listByProcessInstanceId(List<String> businessIds) {
+    public List<ProcessTaskManagementEntity> listProcessByBusinessId(List<String> businessIds) {
         if (CollectionUtils.isEmpty(businessIds)) {
             return new ArrayList<>();
         }
-
         return baseMapper.listByProcessInstanceId(businessIds);
     }
+
 }

@@ -3,6 +3,8 @@ package com.erp.model.oms.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 
+import java.util.Objects;
+
 public enum AddressTypeEnum {
     FORWARDER("forwarder","货代地址"),
     DELIVER("deliver","发货地址"),
@@ -41,4 +43,14 @@ public enum AddressTypeEnum {
         }
         return "";
     }
+
+    public static String getCodeByName(String name) {
+        for (AddressTypeEnum addressTypeEnum : AddressTypeEnum.values()) {
+            if(Objects.equals(name, addressTypeEnum.name)) {
+                return addressTypeEnum.code;
+            }
+        }
+        return "";
+    }
+
 }

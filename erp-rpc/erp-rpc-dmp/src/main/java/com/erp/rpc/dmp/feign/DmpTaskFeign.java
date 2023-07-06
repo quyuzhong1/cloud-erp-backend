@@ -5,10 +5,12 @@ import cn.hutool.json.JSONObject;
 import com.erp.model.dmp.dto.DmpShopInfoDTO;
 import com.erp.model.dmp.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.KingdeeDTO;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -19,9 +21,18 @@ import java.util.Map;
 @FeignClient("erp-dmp")
 public interface DmpTaskFeign {
 
-    //店铺id查询店铺
+    /**
+     * 店铺id查询店铺
+     */
     @PostMapping("feign/getShopById")
     DmpShopInfoDTO getShopById(@RequestBody String shopId);
+
+
+    /**
+     *  获取所有的店铺信息
+     */
+    @PostMapping("feign/listShop")
+    List<DmpShopInfoEntity> listShop();
 
     /**
      * 根据条件获详情

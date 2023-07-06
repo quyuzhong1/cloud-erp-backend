@@ -54,7 +54,7 @@ public class WorkOptionEntity extends BaseEntity<WorkOptionEntity> {
     private String moduleParam;
 
     /**
-     * 类型  1：常用模块  2：代办模块
+     * 类型  1：常用模块  2：待办模块
      */
     @TableField("type")
     private String type;

@@ -1047,7 +1047,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             return Collections.EMPTY_LIST;
         }
         return lambdaQuery()
-                .in(SupplierEntity::getCode)
+                .in(SupplierEntity::getCode,supplierCodes)
                 .list();
     }
 

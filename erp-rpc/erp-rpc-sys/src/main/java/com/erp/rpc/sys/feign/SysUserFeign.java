@@ -7,10 +7,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.*;
-import com.erp.model.sys.entity.DictCityEntity;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.model.sys.vo.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -422,4 +419,27 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/currency/listCurrencyByKingdeeCodeList")
     List<CurrencyDTO.ViewDTO> listCurrencyByKingdeeCodeList(List<String> currCodeList);
+
+    /**
+     * 获取国家列表
+     * @param
+     * @return
+     */
+    @GetMapping("/feign/dictCountry/list")
+    List<DictCountryDTO.ListDTO> countryList();
+
+    /**
+     * 获取省份城市列表
+     * @param countryCode
+     * @return
+     */
+    @GetMapping("/feign/city/getProvincesByCountryCode")
+    List<DictCityDTO.ListDTO> getProvincesByCountryCode(@RequestParam("countryCode") String countryCode);
+
+    /**
+     * 获取所有币别
+     */
+    @GetMapping("/feign/currency/list")
+    List<DictCurrencyEntity> currencyList();
+
 }

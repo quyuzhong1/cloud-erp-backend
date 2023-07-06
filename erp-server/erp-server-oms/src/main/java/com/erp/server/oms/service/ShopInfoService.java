@@ -32,4 +32,14 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return java.lang.String
      */
     String updateShop(ShopDTO.UpdateDTO dto);
+
+    
+    /**
+     * 初始同步店铺信息
+     * @author yl
+     * @date 2023-07-06 12:23
+     * @param
+     * @return java.lang.Boolean
+     */
+    Boolean initialSync();
 }

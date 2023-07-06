@@ -62,4 +62,15 @@ public class ShopInfoController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 初始同步dmp 店铺信息
+     *
+     * @return
+     */
+    @PostMapping("/initialSync")
+    public ApiResult initialSync() {
+        Boolean result = shopInfoService.initialSync();
+        return result ? success() : failure();
+    }
+
 }

@@ -540,16 +540,33 @@
 
     <select id="getSkuBySkuNos" resultType="com.erp.model.plm.vo.SkuVO">
         SELECT
+        pd.version,
+        pd.id AS skuId,
+        pi.id AS productId,
         pi.spu_no,
         pi.name AS spuName,
         pd.sku_no,
+        pd.images_url AS skuImagesUrl,
         pd.name AS skuName,
-        pd.id AS skuId,
-        unit.name as unitName
+        pd.variant_property as variantProperty,
+        pl.declare_chinese_name as declareName,
+        pl.declare_model as declareModel,
+        pl.product_property_id AS productPropertyId,
+        pi.materials,
+        pi.function_desc,
+        pi.grade AS productGrade,
+        pi.brand_name as brandName,
+        ps.sale_state as saleState,
+        pd.unit_name,
+        pd.status,
+        pp.moq,
+        pp.main_supplier as supplierId
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
-        LEFT JOIN product_unit unit ON pd.unit_id = unit.id AND unit.is_deleted = FALSE
-        WHERE  pd.is_deleted = FALSE
+        left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
+        left join product_sale ps on pd.id = ps.sku_id and ps.is_deleted = FALSE
+        LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
+        WHERE pi.is_deleted = FALSE AND pd.is_deleted = FALSE
         <if test="skuList != null and skuList.size>0">
             AND pd.sku_no IN
             <foreach collection="skuList" item="sku" open="(" separator="," close=")">

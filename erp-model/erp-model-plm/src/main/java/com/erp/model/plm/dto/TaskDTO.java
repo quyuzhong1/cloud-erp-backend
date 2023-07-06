@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 
 /**
  * @author Lambda
@@ -144,14 +145,14 @@ public class TaskDTO implements Serializable {
          */
         @ExcelProperty(value = "计划开始时间", index = 8)
         @FieldValid(fieldName = "计划开始时间",formatPattern = FieldFormatPatternTypeEnum.DATE)
-        private String planStartTime;
+        private LocalDate planStartTime;
 
         /**
          * 计划结束时间
          */
         @ExcelProperty(value = "计划结束时间", index = 9)
         @FieldValid(fieldName = "计划结束时间",formatPattern = FieldFormatPatternTypeEnum.DATE)
-        private String planEndTime;
+        private LocalDate planEndTime;
 
         /**
          * 工期

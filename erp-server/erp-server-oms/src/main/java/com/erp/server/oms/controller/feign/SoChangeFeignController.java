@@ -31,7 +31,7 @@ public class SoChangeFeignController extends BaseController {
      * @param dto
      * @return java.lang.Boolean
      **/
-    @PostMapping("feign/soChange/approve")
+    @PostMapping("/approve")
     public Boolean approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         return soChangeService.approve(dto);
     }

@@ -4,7 +4,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.core.utils.FieldValidUtil;
-import com.erp.model.scm.dto.excel.KingdeePoImportExcelDTO;
+import com.erp.model.scm.dto.excel.KingdeeSubImportExcelDTO;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,31 +14,31 @@ import java.util.List;
  * @version 1.0
  * @date 2023/3/27 16:00
  */
-public class KingdeePoExcelListener extends AnalysisEventListener<KingdeePoImportExcelDTO> {
+public class KingdeeSubExcelListener extends AnalysisEventListener<KingdeeSubImportExcelDTO> {
 
 
     /**
      * 导入数据，用于判断导入是否为空
      */
-    private List<KingdeePoImportExcelDTO> allList = new ArrayList<>();
+    private List<KingdeeSubImportExcelDTO> allList = new ArrayList<>();
 
     /**
      * 导入错误数据
      */
-    private List<KingdeePoImportExcelDTO> errorList = new ArrayList<>();
+    private List<KingdeeSubImportExcelDTO> errorList = new ArrayList<>();
 
     /**
      * 导入正确数据
      */
-    private List<KingdeePoImportExcelDTO> successList = new ArrayList<>();
+    private List<KingdeeSubImportExcelDTO> successList = new ArrayList<>();
 
 
-    public KingdeePoExcelListener() {
+    public KingdeeSubExcelListener() {
 
     }
 
     @Override
-    public void invoke(KingdeePoImportExcelDTO importExcelDTO, AnalysisContext analysisContext) {
+    public void invoke(KingdeeSubImportExcelDTO importExcelDTO, AnalysisContext analysisContext) {
         //添加数据用于判断是否为空
         allList.add(importExcelDTO);
 
@@ -62,15 +62,15 @@ public class KingdeePoExcelListener extends AnalysisEventListener<KingdeePoImpor
 
     }
 
-    public List<KingdeePoImportExcelDTO> getAllList(){
+    public List<KingdeeSubImportExcelDTO> getAllList(){
         return allList;
     }
 
-    public List<KingdeePoImportExcelDTO> getErrorList(){
+    public List<KingdeeSubImportExcelDTO> getErrorList(){
         return errorList;
     }
 
-    public List<KingdeePoImportExcelDTO> getSuccessList(){
+    public List<KingdeeSubImportExcelDTO> getSuccessList(){
         return successList;
     }
 }

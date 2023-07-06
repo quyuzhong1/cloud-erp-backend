@@ -8,8 +8,10 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -236,4 +238,26 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @return java.lang.Boolean
      */
     Boolean processData();
+
+    /**
+     * 导入客户信息（系统上线临时使用，后续移除）
+     * @param file
+     */
+    void importCustomer(MultipartFile file) throws IOException;
+
+    /**
+     * 根据金蝶id获取客户信息
+     * @author yl
+     * @date 2023-07-06 15:04
+     * @param kingdeeCustomerIds
+     * @return java.util.List<com.erp.model.oms.entity.CustomerInfoEntity>
+     */
+    List<CustomerInfoEntity> listByKingdeeIdList(List<String> kingdeeCustomerIds);
+
+
+    /**
+     * 导入客户金蝶信息（系统上线临时使用，后续移除）
+     * @param file
+     */
+    void importCustomerKingdee(MultipartFile file) throws IOException;
 }

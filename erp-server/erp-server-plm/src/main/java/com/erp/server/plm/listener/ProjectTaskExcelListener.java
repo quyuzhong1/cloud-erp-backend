@@ -25,10 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskExcelDTO> {
@@ -122,11 +119,11 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
             }
 
             //查询模板任务下审核人
-            List<TaskChargeDistributionEntity> taskChargeDistributionList = taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, projectTaskEntity.getId());
+            List<TaskChargeDistributionEntity> taskChargeDistributionList =projectTaskEntity!=null? taskChargeDistributionService.listBySourceAndTaskId(MathUtil.THREE, projectTaskEntity.getId()): Collections.emptyList();
             if (taskChargeDistributionList != null && taskChargeDistributionList.size() > 0) {
                 TaskChargeDistributionlist = BeanMapperUtils.copyList(TaskChargeDistributionDTO.class, taskChargeDistributionList);
                 TaskChargeDistributionlist.forEach(obj -> {
-                    if (org.apache.commons.lang3.StringUtils.isBlank(obj.getCharges())) {
+                    if (StringUtils.isBlank(obj.getCharges())) {
                         return;
                     }
                     List<String> collect = Arrays.stream(obj.getCharges().split(",")).collect(Collectors.toList());

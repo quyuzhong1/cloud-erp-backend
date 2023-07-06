@@ -204,6 +204,11 @@ public class PurchaseOrderDTO implements Serializable {
         private String purchaseApplicationCode;
 
         /**
+         * 是否结束交货
+         */
+        private Boolean isEndReceive;
+
+        /**
          * 采购申请单id集合
          */
         @JsonIgnore
@@ -362,6 +367,11 @@ public class PurchaseOrderDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
+
+        /**
+         * 编码 （用于同步数据）
+         */
+        private String code;
 
         /**
          * 供应商信息

@@ -305,6 +305,42 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             throw new ServiceException(ApiError.ERROR_98010);
         }
 
+        //本次下推入库明细信息
+        List<PoInstockDetailEntity> thisDetailList = poInstockDetailService.listByMainIds(ids);
+        List<String> podIds = thisDetailList.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
+
+        //存在收货单,且收货单下面的质检单未质检完成则不允许提交
+        checkQcInfo(podIds);
+        //已下推入库明细信息
+        List<PoInstockDetailEntity> hasDetailList = poInstockDetailService.listDetailByPodIds(podIds);
+
+        //采购订单数量校验
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
+        if (CollectionUtils.isNotEmpty(purchaseOrderDetailList)) {
+            for (PurchaseOrderDetailEntity purchaseOrderDetailEntity : purchaseOrderDetailList) {
+
+                //已入库数量
+                Integer hasInstockQty = hasDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus()))
+                        .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                //本次入库数量
+                Integer thisInstockQty = thisDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()))
+                        .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+                //入库明细
+                String poInstockId = thisDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(PoInstockDetailEntity::getMainId).findFirst().orElse("");
+                //采购单
+                String poCode = list.stream().filter(obj -> obj.getId().equals(poInstockId)).map(PoInstockEntity::getPurchaseOrderCode).findFirst().orElse("");
+
+                //入库完成
+                if ( purchaseOrderDetailEntity.getPurchaseQty() == hasInstockQty.intValue()) {
+                    throw new ServiceException(ApiError.ERROR_99075,poCode,purchaseOrderDetailEntity.getSkuNo());
+                }
+                //未入库完成，但剩余数量不够
+                if (thisInstockQty > purchaseOrderDetailEntity.getPurchaseQty() - hasInstockQty.intValue()) {
+                    throw new ServiceException(ApiError.ERROR_99074,poCode,purchaseOrderDetailEntity.getSkuNo(),purchaseOrderDetailEntity.getPurchaseQty() - hasInstockQty.intValue());
+                }
+            }
+        }
+
         log.info("采购入库单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
 
         //启动流程 TODO
@@ -466,42 +502,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98006);
-        }
-
-        //本次下推入库明细信息
-        List<PoInstockDetailEntity> thisDetailList = poInstockDetailService.listByMainIds(ids);
-        List<String> podIds = thisDetailList.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
-
-        //存在收货单,且收货单下面的质检单未质检完成则不允许提交
-        checkQcInfo(podIds);
-        //已下推入库明细信息
-        List<PoInstockDetailEntity> hasDetailList = poInstockDetailService.listDetailByPodIds(podIds);
-
-        //采购订单数量校验
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
-        if (CollectionUtils.isNotEmpty(purchaseOrderDetailList)) {
-            for (PurchaseOrderDetailEntity purchaseOrderDetailEntity : purchaseOrderDetailList) {
-
-                //已入库数量
-                Integer hasInstockQty = hasDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus()))
-                        .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
-                //本次入库数量
-                Integer thisInstockQty = thisDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId()))
-                        .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
-                //入库明细
-                String poInstockId = thisDetailList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(purchaseOrderDetailEntity.getId())).map(PoInstockDetailEntity::getMainId).findFirst().orElse("");
-                //采购单
-                String poCode = list.stream().filter(obj -> obj.getId().equals(poInstockId)).map(PoInstockEntity::getPurchaseOrderCode).findFirst().orElse("");
-
-                //入库完成
-                if ( purchaseOrderDetailEntity.getPurchaseQty() == hasInstockQty.intValue()) {
-                    throw new ServiceException(ApiError.ERROR_99075,poCode,purchaseOrderDetailEntity.getSkuNo());
-                }
-                //未入库完成，但剩余数量不够
-                if (thisInstockQty > purchaseOrderDetailEntity.getPurchaseQty() - hasInstockQty.intValue()) {
-                    throw new ServiceException(ApiError.ERROR_99074,poCode,purchaseOrderDetailEntity.getSkuNo(),purchaseOrderDetailEntity.getPurchaseQty() - hasInstockQty.intValue());
-                }
-            }
         }
 
         String type = baseApproveParamDTO.getType();

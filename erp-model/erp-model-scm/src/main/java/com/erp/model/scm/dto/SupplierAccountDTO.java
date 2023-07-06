@@ -87,7 +87,7 @@ public class SupplierAccountDTO implements Serializable {
         /**
          * 银行账号
          */
-        @Size(max = 20, message = "卡号最大20字符")
+        @Size(max = 50, message = "卡号最大50字符")
         private String bankAccount;
 
 

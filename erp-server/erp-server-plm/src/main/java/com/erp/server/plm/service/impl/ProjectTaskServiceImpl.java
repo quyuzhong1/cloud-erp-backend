@@ -1787,12 +1787,16 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 String groupFlag = params.getGroupFlag();
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
-                params.setStartTime(planTimeMap.get("startTime").toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime());
-                params.setEndTime(planTimeMap.get("endTime").toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime());
+                if(planTimeMap.get("startTime")!=null){
+                    params.setStartTime(planTimeMap.get("startTime").toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime());
+                }
+                if(planTimeMap.get("endTime")!=null){
+                    params.setEndTime(planTimeMap.get("endTime").toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime());
+                }
                 params.setSearchCategory(TaskSearchCategoryEnum.ALLPLANTIMETASKLIST.getCode());
                 //计划时间
                 pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
@@ -1923,7 +1927,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         Boolean ifProductGroup = ifGroup && groupNameFlag.equals(TaskConstant.PRODUCT) ? true : false;
         //不在的 任务状态
         List<Integer> notStateList = getAssignToMeNoExistState(taskProperty, taskCondition);
-        List<TaskShowDTO> workflowList = workflowFeign.queryMyToDo(userId);
+
         //当不分组
         if (!ifGroup) {
             params.setGroupFlag("");
@@ -1941,12 +1945,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
                 params.setSearchCategory(TaskSearchCategoryEnum.TOMEPLANENDTIMETASKLIST.getCode());
-                params.setStartTime(planTimeMap.get("startTime").toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime());
-                params.setEndTime(planTimeMap.get("endTime").toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime());
+                if(planTimeMap.get("startTime")!=null){
+                    params.setStartTime(planTimeMap.get("startTime").toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime());
+                }
+                if(planTimeMap.get("endTime")!=null){
+                    params.setEndTime(planTimeMap.get("endTime").toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime());
+                }
+
+
                 //计划时间
                 pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
             }
@@ -1955,6 +1965,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         List<TaskPagingShowDTO> records = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(records)) {
+            List<TaskShowDTO> workflowList = workflowFeign.queryMyToDo(userId);
             //完成的状态
             Integer finishState = TaskStateEnum.FINISH.getCode();
             //获取到任务id 集合
@@ -1970,7 +1981,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
             //产品id
             List<String> productIds = records.stream().map(TaskPagingShowDTO::getProductId).collect(Collectors.toList());
             List<ProductInfoEntity> productList = productInfoService.listByIds(productIds);
-            Integer finish = TaskStateEnum.FINISH.getCode();
             //根据产品id 获取到所有的 任务信息
             for (TaskPagingShowDTO item : records) {
                 String taskId = item.getId();
@@ -1991,7 +2001,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 if (workflowTask != null) {
                     item.setProcessTaskId(workflowTask.getTaskId());
                 }
-                String warning = getWarning(item.getStatus(), finish, item.getPlanEndTime());
+                String warning = getWarning(item.getStatus(), finishState, item.getPlanEndTime());
                 item.setWarning(warning);
 
                 if (DistributionTypeEnum.DISTRIBUTION_ROLE.getCode().equals(item.getDistributionType())) {
@@ -2102,12 +2112,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
                 params.setSearchCategory(TaskSearchCategoryEnum.TOMEWAITAUDITPLANENDTIMETASKLIST.getCode());
-                params.setStartTime(planTimeMap.get("startTime").toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime());
-                params.setEndTime(planTimeMap.get("endTime").toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime());
+                if(planTimeMap.get("startTime")!=null){
+                    params.setStartTime(planTimeMap.get("startTime").toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime());
+                }
+                if(planTimeMap.get("endTime")!=null){
+                    params.setEndTime(planTimeMap.get("endTime").toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime());
+                }
+
+
                 params.setProcessInstanceIds(processInstanceIds);
                 //计划时间
                 pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
@@ -2652,12 +2668,18 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
                 //获取到时间
                 Map<String, Date> planTimeMap = getPlanEndTime(groupFlag);
                 params.setSearchCategory(TaskSearchCategoryEnum.MYCREATEPLANENDTIMETASKLIST.getCode());
-                params.setStartTime(planTimeMap.get("startTime").toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime());
-                params.setEndTime(planTimeMap.get("endTime").toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime());
+                if(planTimeMap.get("startTime")!=null){
+                    params.setStartTime(planTimeMap.get("startTime").toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime());
+                }
+                if(planTimeMap.get("endTime")!=null){
+                    params.setEndTime(planTimeMap.get("endTime").toInstant()
+                            .atZone(ZoneId.systemDefault())
+                            .toLocalDateTime());
+                }
+
+
                 //计划时间
                 pageData = baseMapper.listProductTaskBySearchCategory(query, notStateList, params);
             }
@@ -3679,10 +3701,9 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         List<String> finishSkuTaskIdList = noProcessTaskIds.stream().filter(t -> !noFinishSkuTaskIdList.contains(t)).collect(Collectors.toList());
         //更改完成状态
         this.updateTaskState(finishSkuTaskIdList, TaskStateEnum.FINISH.getCode(), null, nowDate);
-        List<String> isChangeDocsTaskIdList=list.stream().filter(l->finishSkuTaskIdList.contains(l.getId())).map(ProjectTaskEntity::getId).collect(Collectors.toList());
+        List<String> isChangeDocsTaskIdList = list.stream().filter(l -> finishSkuTaskIdList.contains(l.getId())).map(ProjectTaskEntity::getId).collect(Collectors.toList());
         //更改文档历史的
         taskDocHistoryService.updateChangeResultByTaskIds(isChangeDocsTaskIdList);
-
 
 
         taskOperatorRecordService.batchSaveRecord(noProcessTaskIds, ingCode, TaskStateEnum.FINISH.getCode(), loginUser.getUid(), loginUser.getUserName(), "");
@@ -3769,7 +3790,6 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
 
         return true;
     }
-
 
 
     /**
@@ -4192,11 +4212,7 @@ public class ProjectTaskServiceImpl extends ServiceImpl<ProjectTaskMapper, Proje
         if (!Objects.isNull(taskEntity)) {
             //是否是变更任务
             Boolean isChangeDocs = taskEntity.getIsChangeDocs();
-            //如果是变更任务就要更改历史文档状态
-            if (isChangeDocs) {
-                taskDocHistoryService.updateChangeResult(taskEntity.getId());
-            }
-
+            taskDocHistoryService.updateChangeResult(taskEntity.getId());
             List<ProjectTaskRefSkuEntity> list = projectTaskRefSkuService.getByTaskId(taskEntity.getId());
             List<String> skuIdList = list.stream().filter(ref -> notFinish.equals(ref.getIsFinishTask())).map(ProjectTaskRefSkuEntity::getSkuId).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(skuIdList)) {

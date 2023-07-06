@@ -4,13 +4,22 @@ import com.common.business.service.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.oms.dto.ShopDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.mapper.ShopInfoMapper;
+import com.erp.server.oms.service.CustomerInfoService;
+import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.ShopInfoService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -22,6 +31,15 @@ import java.util.Objects;
  */
 @Service
 public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopInfoEntity> implements ShopInfoService {
+
+
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private DictBasicService dictBasicService;
+
+    @Resource
+    private CustomerInfoService customerInfoService;
 
 
     /**
@@ -67,6 +85,38 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             return shopInfo.getId();
         }
         return "";
+    }
+
+
+    /**
+     * 初始同步店铺信息
+     *
+     * @param
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-07-06 12:23
+     */
+    @Override
+    public Boolean initialSync() {
+        //获取到dmp 店铺
+        List<DmpShopInfoEntity> dmpShopList = dmpTaskFeign.listShop();
+        List<String> kingdeeCustomerIds = dmpShopList.stream().map(DmpShopInfoEntity::getCustomerId).collect(Collectors.toList());
+        List<CustomerInfoEntity> customerInfoList = customerInfoService.listByKingdeeIdList(kingdeeCustomerIds);
+        List<ShopInfoEntity> shopInfoList = this.list();
+        for (ShopInfoEntity item : shopInfoList) {
+            String shopCode = item.getShopCode();
+            DmpShopInfoEntity dmpShop = dmpShopList.stream().filter(d -> d.getPlatformShopNo().equals(shopCode)).
+                    findFirst().orElse(null);
+            //表示是没有
+            if (Objects.isNull(dmpShop)) {
+                continue;
+            }
+            String customerInfoCode = customerInfoList.stream().filter(c -> StringUtils.isNotBlank(dmpShop.getCustomerId())&& c.getSyncKingdeeId().equals(dmpShop.getCustomerId())).
+                    findFirst().map(CustomerInfoEntity::getCode).orElse("");
+            item.setCustomerCode(customerInfoCode);
+
+        }
+        return this.updateBatchById(shopInfoList);
     }
 
 }

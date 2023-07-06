@@ -2,11 +2,9 @@ package com.erp.server.sys.controller.feign;
 
 import com.common.core.controller.BaseController;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.server.sys.service.DictCurrencyService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -38,5 +36,13 @@ public class DictCurrencyFeignController extends BaseController {
     @PostMapping("/listCurrencyByKingdeeCodeList")
     public List<CurrencyDTO.ViewDTO> listCurrencyByKingdeeCodeList(@RequestBody List<String> currCodeList) {
         return dictCurrencyService.listCurrencyByKingdeeCodeList(currCodeList);
+    }
+
+    /**
+     * 获取所有币别
+     */
+    @GetMapping("/list")
+    public List<DictCurrencyEntity> list() {
+        return dictCurrencyService.list();
     }
 }

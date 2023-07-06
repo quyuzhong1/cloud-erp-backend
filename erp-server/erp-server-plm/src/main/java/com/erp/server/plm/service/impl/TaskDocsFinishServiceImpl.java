@@ -179,7 +179,9 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
                     entity.setUploadType(IsConstant.YES);
                     entity.setTaskDocsId(uploadMultipartFileDTO.getTaskDocsId());
                     entity.setFileUrl(fileUrl);
+                    entity.setFileName(fileUrl);
                     entity.setOldFileUrl(fileUrl);
+                    entity.setOldFileName(fileUrl);
                     entity.setOldUploadType(IsConstant.YES);
                     resultList.add(entity);
                 }
@@ -353,7 +355,10 @@ public class TaskDocsFinishServiceImpl extends ServiceImpl<TaskDocsFinishMapper,
             fileUrl = FastDFSClientUtil.uploadFile(file, fileName);
         } else {
             fileUrl = dto.getFileUrl();
-            fileName = fileUrl;
+            if (Objects.isNull(multipartFile)) {
+                fileName = fileUrl;
+            }
+
         }
         if (StringUtils.isEmpty(fileUrl)) {
             throw new ServiceException(ApiError.ERROR_95186);

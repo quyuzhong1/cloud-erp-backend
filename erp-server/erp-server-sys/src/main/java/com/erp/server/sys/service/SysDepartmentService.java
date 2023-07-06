@@ -7,7 +7,9 @@ import com.erp.model.sys.dto.DeptUserDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -97,5 +99,12 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
      * @return List<SysDepartmentDTO>
      */
     List<SysDepartmentDTO> listDeptByCodeList(List<String> codeList);
+
+    /**
+     * 导入部门金蝶
+     * @param file
+     * @throws IOException
+     */
+    void importDeptKingdee(MultipartFile file) throws IOException;
 }
 
