@@ -1451,11 +1451,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     List<String> errorMsgList = new ArrayList<>();
 
                     //供应商（必填）
-                    String supplierId = supplierList.stream().filter(obj -> obj.getCode().equals(importExcelDTO.getSupplierCode()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus()))
+                    SupplierEntity supplierEntity = supplierList.stream().filter(obj -> obj.getCode().equals(importExcelDTO.getSupplierCode()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus()))
                             .findFirst()
-                            .flatMap(obj -> Optional.ofNullable(obj.getId()))
-                            .orElse("");
-                    if (StringUtils.isBlank(supplierId)) {
+                            .orElse(null);
+                    if (ObjectUtils.isEmpty(supplierEntity)) {
                         errorMsgList.add(StrUtil.format("未找到有效供应商编码【{}】",importExcelDTO.getSupplierCode()));
                     }
 
@@ -1547,7 +1546,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
                     priceDTO.setSkuId(skuVO.getSkuId());
                     priceDTO.setSkuNo(skuVO.getSkuNo());
-                    priceDTO.setSupplierId(supplierId);
+                    priceDTO.setSupplierId(supplierEntity.getId());
                     priceDTO.setPurchaseQty(Integer.valueOf(importExcelDTO.getQty()));
                     Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> stringListPair = purchasePriceDetailService.listPurchaseTaxPriceView(priceDTO);
                     if (StringUtils.isNotBlank(stringListPair.getKey())) {
@@ -1570,6 +1569,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                         addDTO.setReceiveOrgId(receiveOrgId);
                         addDTO.setDeliveryWarehouseId(warehouseId);
                         addDTO.setIsFirstMassProduct("true".equals(importExcelDTO.getIsFirstMassProduct()) ? Boolean.TRUE : Boolean.FALSE);
+                        PurchaseOrderSupplierDTO.AddDTO supplierDTO = new PurchaseOrderSupplierDTO.AddDTO();
+                        supplierDTO.setSupplierId(supplierEntity.getId());
+                        supplierDTO.setContactTelNumber(supplierEntity.getPurchaseUserName());
+
                     }
                     PurchaseOrderDetailDTO.AddDTO addDetailDTO = new PurchaseOrderDetailDTO.AddDTO();
                     addDetailDTO.setSkuId(skuVO.getSkuId());

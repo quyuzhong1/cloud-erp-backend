@@ -45,7 +45,7 @@ public class scmJob {
 
     }
 
-    @XxlJob("productSkuSyncDmp")
+    @XxlJob("productSkuSyncDmps")
     public void syncPurchaseOrderSupplierToWms() {
 
     }
