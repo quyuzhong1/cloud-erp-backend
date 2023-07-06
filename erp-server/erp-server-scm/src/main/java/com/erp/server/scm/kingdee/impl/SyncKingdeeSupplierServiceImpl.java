@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -97,10 +98,12 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
             return;
         }
 
-        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
-        if (ObjectUtils.isNotEmpty(findUserDTO)) {
-            //采购员
-            resultMap.put("purchaseUserCode",findUserDTO.getCode());
+        if (StringUtils.isNotBlank(entity.getPurchaseUserId())) {
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPurchaseUserId());
+            if (ObjectUtils.isNotEmpty(findUserDTO)) {
+                //采购员
+                resultMap.put("purchaseUserCode",findUserDTO.getCode());
+            }
         }
 
         DictBasicEntity category = dictBasicService.getById(entity.getCategoryId());

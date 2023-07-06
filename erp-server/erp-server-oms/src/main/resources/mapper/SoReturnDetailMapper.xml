@@ -34,6 +34,7 @@
         srd.sales_qty,
         srd.return_qty,
         srd.return_type_dict,
+        srd.return_reason_dict,
         srd.remark,
         srd.source_detail_id,
         sr.approve_status
