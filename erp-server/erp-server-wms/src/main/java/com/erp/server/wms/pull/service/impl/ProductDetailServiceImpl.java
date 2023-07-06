@@ -6,10 +6,13 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.server.wms.pull.mapper.ProductDetailMapper;
 import com.erp.server.wms.pull.service.ProductDetailService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -20,7 +23,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @Author zhangchunlin
      * @Date 2023-05-11 18:10
      **/
-    public void saveOrUpdateProductDetail(List<ProductDetailEntity> productDetailEntities) {
+/*    public void saveOrUpdateProductDetail(List<ProductDetailEntity> productDetailEntities) {
         for(ProductDetailEntity productDetailEntity: productDetailEntities) {
             log.info("开始同步SKU编号：【{}】", productDetailEntity.getSkuNo());
             ProductDetailEntity entity = this.baseMapper.getProductDetailById(productDetailEntity.getId());
@@ -43,5 +46,51 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             }
         }
+    }*/
+
+    /**
+     * 根据主键Id查询产品Sku表信息
+     * @Author Luo_WG
+     * @Date 2023/4/19 16:25
+     * @param ids
+     * @return com.erp.model.plm.entity.ProductInfoEntity
+     **/
+    @Override
+    public List<ProductDetailEntity> ListProductDetailByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return new ArrayList<>();
+        }
+        return baseMapper.listProductDetailByIds(ids);
+    }
+
+    /**
+     * 更新PLM同步过来的数据
+     * @Author Luo_WG
+     * @Date 2023/4/19 16:05
+     **/
+    public Boolean saveOrUpdateProductDetail(List<ProductDetailEntity> productDetailEntityList) {
+        List<String> detailIds = productDetailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+        List<ProductDetailEntity> detailEntityList = ListProductDetailByIds(detailIds);
+        List<String> ids = productDetailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+        List<String> dbIds = detailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+        List<String> existIdList = ids.stream().filter(s -> dbIds.contains(s)).collect(Collectors.toList());
+        List<String> notExistIdList = ids.stream().filter(s -> !dbIds.contains(s)).collect(Collectors.toList());
+        List<ProductDetailEntity> notExistDetailEntityList = new ArrayList<>();
+        List<ProductDetailEntity> existDetailEntityList = new ArrayList<>();
+        for (ProductDetailEntity detailEntity : productDetailEntityList) {
+            if (notExistIdList.contains(detailEntity.getId())) {
+                notExistDetailEntityList.add(detailEntity);
+            }
+            if (existIdList.contains(detailEntity.getId())) {
+                existDetailEntityList.add(detailEntity);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
+            this.saveBatch(notExistDetailEntityList);
+        }
+        if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
+            baseMapper.updateBatchSelective(existDetailEntityList);
+        }
+        return Boolean.TRUE;
     }
 }

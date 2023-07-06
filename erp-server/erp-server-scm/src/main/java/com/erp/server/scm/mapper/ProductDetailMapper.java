@@ -17,7 +17,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @param ids
      * @return com.erp.model.plm.entity.ProductDetailEntity
      **/
-    List<ProductDetailEntity> ListProductDetailByIds(@Param("ids") List<String> ids);
+    List<ProductDetailEntity> listProductDetailByIds(@Param("ids") List<String> ids);
 
     /**
      * 修改
