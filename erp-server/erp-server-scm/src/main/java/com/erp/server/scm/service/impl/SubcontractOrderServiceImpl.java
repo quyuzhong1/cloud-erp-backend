@@ -1044,6 +1044,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean kingdeeImportFile(MultipartFile excelFile, HttpServletResponse response) {
         KingdeeSubExcelListener excelListenerUtil = new KingdeeSubExcelListener();
         try {
@@ -1123,7 +1124,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                     List<String> errorMsgList = new ArrayList<>();
 
                     //供应商（必填）
-                    String supplierId = supplierList.stream().filter(obj -> obj.getCode().equals(importExcelDTO.getSupplierCode()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus()))
+                    String supplierId = supplierList.stream().filter(obj -> obj.getCode().equals(importExcelDTO.getSupplierCode()) && ApproveStatusEnum.APPROVE.equals(obj.getApproveStatus()) && !obj.getDisabled())
                             .findFirst()
                             .flatMap(obj -> Optional.ofNullable(obj.getId()))
                             .orElse("");
@@ -1190,7 +1191,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
 
                     //仓库
-                    String warehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(importExcelDTO.getWarehouseCode()))
+                    String warehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(importExcelDTO.getWarehouseCode()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus()))
                             .findFirst()
                             .flatMap(obj -> Optional.ofNullable(obj.getId()))
                             .orElse("");

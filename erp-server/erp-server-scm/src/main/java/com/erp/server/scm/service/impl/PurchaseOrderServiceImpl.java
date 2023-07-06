@@ -33,9 +33,11 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
+import com.erp.model.scm.dto.excel.KingdeePoExportExcelDTO;
 import com.erp.model.scm.dto.excel.KingdeePoImportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseOrderExportExcelDTO;
 import com.erp.model.scm.dto.excel.PurchaseOrderImportExcelDTO;
@@ -1365,6 +1367,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean kingdeePoImportFile(MultipartFile excelFile, HttpServletResponse response) {
         KingdeePoExcelListener excelListenerUtil = new KingdeePoExcelListener();
         try {
@@ -1386,7 +1389,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 return true;
             }
             String fileName = "采购订单数据错误";
-            ExcelUtil.export(fileName, "采购订单", errorList, KingdeePoImportExcelDTO.class, response);
+            ExcelUtil.export(fileName, "采购订单", errorList, KingdeePoExportExcelDTO.class, response);
 
         } catch (IOException e) {
             log.error("导入错误！", e);
@@ -1447,11 +1450,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 List<PurchaseOrderDetailDTO.AddDTO> addDetailList = new ArrayList<>();
                 for (KingdeePoImportExcelDTO importExcelDTO : value) {
 
-                    //错误信息
+                    //错误信
                     List<String> errorMsgList = new ArrayList<>();
 
                     //供应商（必填）
-                    SupplierEntity supplierEntity = supplierList.stream().filter(obj -> obj.getCode().equals(importExcelDTO.getSupplierCode()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus()))
+                    SupplierEntity supplierEntity = supplierList.stream().filter(obj -> obj.getCode().equals(importExcelDTO.getSupplierCode()) && ApproveStatusEnum.APPROVE.equals(obj.getApproveStatus()) && !obj.getDisabled())
                             .findFirst()
                             .orElse(null);
                     if (ObjectUtils.isEmpty(supplierEntity)) {
@@ -1516,7 +1519,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     }
 
                     //仓库
-                    String warehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(importExcelDTO.getWarehouseCode()))
+                    String warehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(importExcelDTO.getWarehouseCode()) && ApproveStatusEnum.APPROVE.equals(obj.getApproveStatus()))
                             .findFirst()
                             .flatMap(obj -> Optional.ofNullable(obj.getId()))
                             .orElse("");
@@ -1526,22 +1529,24 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     }
 
                     //产品信息
-                    SkuVO skuVO = skuVOList.stream().filter(obj -> obj.getSkuNo().equals(importExcelDTO.getSkuNo()))
+                    SkuVO skuVO = skuVOList.stream().filter(obj -> obj.getSkuNo().equals(importExcelDTO.getSkuNo()) && ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(obj.getStatus()))
                             .findFirst()
                             .orElse(null);
                     if (ObjectUtils.isEmpty(skuVO)) {
                         errorMsgList.add(StrUtil.format("未找到有效SKU【{}】",importExcelDTO.getSkuNo()));
                     }
 
-                    //验证录入的SKU明细报价信息是否正确
-                    PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
-                    priceDTO.setSkuId(skuVO.getSkuId());
-                    priceDTO.setSkuNo(skuVO.getSkuNo());
-                    priceDTO.setSupplierId(supplierEntity.getId());
-                    priceDTO.setPurchaseQty(Integer.valueOf(importExcelDTO.getQty()));
-                    Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> stringListPair = purchasePriceDetailService.listPurchaseTaxPriceView(priceDTO);
-                    if (StringUtils.isNotBlank(stringListPair.getKey())) {
-                        errorMsgList.add(StrUtil.format(stringListPair.getKey()));
+                    if (ObjectUtils.isNotEmpty(skuVO) && ObjectUtils.isNotEmpty(supplierEntity)) {
+                        //验证录入的SKU明细报价信息是否正确
+                        PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+                        priceDTO.setSkuId(skuVO.getSkuId());
+                        priceDTO.setSkuNo(skuVO.getSkuNo());
+                        priceDTO.setSupplierId(supplierEntity.getId());
+                        priceDTO.setPurchaseQty(Integer.valueOf(importExcelDTO.getQty()));
+                        Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> stringListPair = purchasePriceDetailService.listPurchaseTaxPriceView(priceDTO);
+                        if (StringUtils.isNotBlank(stringListPair.getKey())) {
+                            errorMsgList.add(StrUtil.format(stringListPair.getKey()));
+                        }
                     }
 
                     //存在错误数据则直接返回
