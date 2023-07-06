@@ -82,57 +82,6 @@
         ORDER BY wm.sys_classify,wm.id
     </select>
 
-    <select id="getWaitHandleCount" resultType="com.erp.model.workflow.dto.WorkOptionDTO$Module">
-        SELECT
-        count(*) AS quantity,
-        wm.sys_classify
-        FROM process_management pm
-        LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = FALSE
-        INNER JOIN work_menu wm ON pm.business_key = wm.module_code AND wm.is_deleted = FALSE
-        WHERE pm.is_deleted = FALSE
-        AND ptm.task_status = #{approveStatus}
-        AND ptm.cur_approve_id = #{userId}
-        GROUP BY wm.sys_classify
-    </select>
-
-    <select id="getApproveCount" resultType="com.erp.model.workflow.dto.WorkOptionDTO$Module">
-        SELECT
-        count(*) AS quantity,
-        wm.sys_classify
-        FROM process_management pm
-        LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = FALSE
-        INNER JOIN work_menu wm ON pm.business_key = wm.module_code AND wm.is_deleted = FALSE
-        WHERE pm.is_deleted = FALSE
-        AND (ptm.task_status = #{approveStatus} OR ptm.task_status = 'reject')
-        AND ptm.cur_approve_id = #{userId}
-        GROUP BY wm.sys_classify
-    </select>
-
-    <select id="getCreateCount" resultType="com.erp.model.workflow.dto.WorkOptionDTO$Module">
-        SELECT
-        count(*) AS quantity,
-        wm.sys_classify
-        FROM process_management pm
-        LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = FALSE
-        INNER JOIN work_menu wm ON pm.business_key = wm.module_code AND wm.is_deleted = FALSE
-        WHERE pm.is_deleted = FALSE
-        AND ptm.create_user_id = #{userId}
-        GROUP BY wm.sys_classify
-    </select>
-
-    <select id="getTaskCcCount" resultType="com.erp.model.workflow.dto.WorkOptionDTO$Module">
-        SELECT
-        count(*) AS quantity,
-        wm.sys_classify
-        FROM process_management pm
-        INNER JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = FALSE
-        INNER JOIN work_menu wm ON pm.business_key = wm.module_code  AND wm.is_deleted = FALSE
-        LEFT JOIN process_task_cc cc ON cc.task_management_id = ptm.id  AND ptm.is_deleted = FALSE
-        WHERE pm.is_deleted = FALSE
-        AND cc.cc_user_id = #{userId}
-        GROUP BY wm.sys_classify
-    </select>
-
     <select id="approveView" resultType="com.erp.model.workflow.dto.WorkOptionDTO$ApproveViewDTO">
         SELECT
             max(ptm.id) AS id,
@@ -163,7 +112,7 @@
             AND cc.cc_user_id = #{params.userId}
         </if>
         <if test="params.status == 'initiate'">
-            AND ptm.create_user_id = #{params.userId}
+            AND pm.create_user_id = #{params.userId}
         </if>
 
         <if test="params.sysClassifyList != null and params.sysClassifyList.size > 0">
@@ -223,7 +172,7 @@
             AND cc.cc_user_id = #{params.userId}
         </if>
         <if test="params.status == 'initiate'">
-            AND ptm.create_user_id = #{params.userId}
+            AND pm.create_user_id = #{params.userId}
         </if>
 
         <if test="params.sysClassifyList != null and params.sysClassifyList.size > 0">
