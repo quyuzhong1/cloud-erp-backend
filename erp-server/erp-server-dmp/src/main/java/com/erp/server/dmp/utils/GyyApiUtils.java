@@ -60,10 +60,9 @@ public class GyyApiUtils {
         Integer pageSize = 100;
         Integer pageIndex = 1;
         //总页数
-        Integer pageCount = 1;
         List<GyyOrderEntity> infoArrayList = new ArrayList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-        while (pageIndex <= pageCount) {
+        while (true) {
             HashMap<String, Object> params = new HashMap<>(6);
             params.put("date_type", 3);
             params.put("order_state", 0);
@@ -82,11 +81,10 @@ public class GyyApiUtils {
             }
             JSONUtil.parseArray(responseMap.getString("orders"));
             List<GyyOrderEntity> dataList = JSONObject.parseArray(responseMap.getString("orders"), GyyOrderEntity.class);
-            Integer totalCount = responseMap.getInteger("total");
-            pageCount = (totalCount + pageSize - 1) / pageSize;
-            if(CollectionUtil.isNotEmpty(dataList)){
-                infoArrayList.addAll(dataList);
+            if(CollectionUtil.isEmpty(dataList)){
+                break;
             }
+            infoArrayList.addAll(dataList);
             pageIndex ++;
         }
         return infoArrayList;
@@ -130,11 +128,9 @@ public class GyyApiUtils {
     public static List<GyyDeliveryDetailEntity> queryDeliveryList(String method, LocalDateTime startDate, LocalDateTime endDate, Boolean isHistory){
         Integer pageSize = 100;
         Integer pageIndex = 1;
-        //总页数
-        Integer pageCount = 1;
         List<GyyDeliveryDetailEntity> infoArrayList = new ArrayList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-        while (pageIndex <= pageCount) {
+        while (true) {
             HashMap<String, Object> params = new HashMap<>(6);
             if(isHistory){
                 params.put("start_delivery_date", sdf.format(startDate));
@@ -158,11 +154,10 @@ public class GyyApiUtils {
                         UrlContant.GYY_HOST, JSONUtil.toJsonStr(paramMap), isHistory?"历史":"", JSONUtil.toJsonStr(responseMap)));
             }
             List<GyyDeliveryDetailEntity> dataList = JSONObject.parseArray(responseMap.getString("deliverys"), GyyDeliveryDetailEntity.class);
-            Integer totalCount = responseMap.getInteger("total");
-            pageCount = (totalCount + pageSize - 1) / pageSize;
-            if(CollectionUtil.isNotEmpty(dataList)){
-                infoArrayList.addAll(dataList);
+            if(CollectionUtil.isEmpty(dataList)){
+                break;
             }
+            infoArrayList.addAll(dataList);
             pageIndex ++;
         }
         return infoArrayList;
@@ -211,11 +206,9 @@ public class GyyApiUtils {
     public static List<GyyRefundEntity> queryRefundList(String method, LocalDateTime startDate, LocalDateTime endDate) {
         Integer pageSize = 100;
         Integer pageIndex = 1;
-        //总页数
-        Integer pageCount = 1;
         List<GyyRefundEntity> infoArrayList = new ArrayList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-        while (pageIndex <= pageCount) {
+        while (true) {
             HashMap<String, Object> params = new HashMap<>(6);
             params.put("start_modify_date", sdf.format(startDate));
             params.put("end_modify_date", sdf.format(endDate));
@@ -232,11 +225,10 @@ public class GyyApiUtils {
                         UrlContant.GYY_HOST, JSONUtil.toJsonStr(paramMap), JSONUtil.toJsonStr(responseMap)));
             }
             List<GyyRefundEntity> dataList = JSONObject.parseArray(responseMap.getString("tradeRefunds"), GyyRefundEntity.class);
-            Integer totalCount = responseMap.getInteger("total");
-            pageCount = (totalCount + pageSize - 1) / pageSize;
-            if(CollectionUtil.isNotEmpty(dataList)){
-                infoArrayList.addAll(dataList);
+            if(CollectionUtil.isEmpty(dataList)){
+                break;
             }
+            infoArrayList.addAll(dataList);
             pageIndex ++;
         }
         return infoArrayList;
@@ -253,11 +245,9 @@ public class GyyApiUtils {
     public static List<GyyReturnOrderEntity> queryReturnOrderList(String method, LocalDateTime startDate, LocalDateTime endDate) {
         Integer pageSize = 100;
         Integer pageIndex = 1;
-        //总页数
-        Integer pageCount = 1;
         List<GyyReturnOrderEntity> infoArrayList = new ArrayList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-        while (pageIndex <= pageCount) {
+        while (true) {
             HashMap<String, Object> params = new HashMap<>(6);
             params.put("modify_start_date", sdf.format(startDate));
             params.put("modify_end_date", sdf.format(endDate));
@@ -274,11 +264,10 @@ public class GyyApiUtils {
                         UrlContant.GYY_HOST, JSONUtil.toJsonStr(paramMap), JSONUtil.toJsonStr(responseMap)));
             }
             List<GyyReturnOrderEntity> dataList = JSONObject.parseArray(responseMap.getString("tradeReturns"), GyyReturnOrderEntity.class);
-            Integer totalCount = responseMap.getInteger("total");
-            pageCount = (totalCount + pageSize - 1) / pageSize;
-            if(CollectionUtil.isNotEmpty(dataList)){
-                infoArrayList.addAll(dataList);
+            if(CollectionUtil.isEmpty(dataList)){
+                break;
             }
+            infoArrayList.addAll(dataList);
             pageIndex ++;
         }
         return infoArrayList;
@@ -296,11 +285,9 @@ public class GyyApiUtils {
     public static List<GyyShopInfoEntity> queryShopList(String method, LocalDateTime startDate, LocalDateTime endDate) {
         Integer pageSize = 100;
         Integer pageIndex = 1;
-        //总页数
-        Integer pageCount = 1;
         List<GyyShopInfoEntity> infoArrayList = new ArrayList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-        while (pageIndex <= pageCount) {
+        while (true) {
             HashMap<String, Object> params = new HashMap<>(6);
             params.put("modify_start_date", sdf.format(startDate));
             params.put("modify_end_date", sdf.format(endDate));
@@ -316,11 +303,10 @@ public class GyyApiUtils {
                         UrlContant.GYY_HOST, JSONUtil.toJsonStr(paramMap), JSONUtil.toJsonStr(responseMap)));
             }
             List<GyyShopInfoEntity> dataList = JSONObject.parseArray(responseMap.getString("shops"), GyyShopInfoEntity.class);
-            Integer totalCount = responseMap.getInteger("total");
-            pageCount = (totalCount + pageSize - 1) / pageSize;
-            if(CollectionUtil.isNotEmpty(dataList)){
-                infoArrayList.addAll(dataList);
+            if(CollectionUtil.isEmpty(dataList)){
+                break;
             }
+            infoArrayList.addAll(dataList);
             pageIndex ++;
         }
         return infoArrayList;
@@ -338,11 +324,9 @@ public class GyyApiUtils {
     public static List<GyySkuInfoEntity> querySkuList(String method, LocalDateTime startDate, LocalDateTime endDate) {
         Integer pageSize = 100;
         Integer pageIndex = 1;
-        //总页数
-        Integer pageCount = 1;
         List<GyySkuInfoEntity> infoArrayList = new ArrayList<>();
         DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_dhms.toTimePattern());
-        while (pageIndex <= pageCount) {
+        while (true) {
             HashMap<String, Object> params = new HashMap<>(6);
             params.put("start_date", sdf.format(startDate));
             params.put("end_date", sdf.format(endDate));
@@ -358,11 +342,10 @@ public class GyyApiUtils {
                         UrlContant.GYY_HOST, JSONUtil.toJsonStr(paramMap), JSONUtil.toJsonStr(responseMap)));
             }
             List<GyySkuInfoEntity> dataList = JSONObject.parseArray(responseMap.getString("items"), GyySkuInfoEntity.class);
-            Integer totalCount = responseMap.getInteger("total");
-            pageCount = (totalCount + pageSize - 1) / pageSize;
-            if(CollectionUtil.isNotEmpty(dataList)){
-                infoArrayList.addAll(dataList);
+            if(CollectionUtil.isEmpty(dataList)){
+                break;
             }
+            infoArrayList.addAll(dataList);
             pageIndex ++;
         }
         return infoArrayList;
