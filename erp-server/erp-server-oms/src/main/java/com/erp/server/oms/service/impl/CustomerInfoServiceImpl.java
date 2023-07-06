@@ -1282,6 +1282,42 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         return this.lambdaQuery().in(CustomerInfoEntity::getSyncKingdeeId,kingdeeCustomerIds).list();
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void importCustomerKingdee(MultipartFile file) throws IOException {
+        XSSFWorkbook wb = new XSSFWorkbook(file.getInputStream());
+        XSSFSheet sheet = wb.getSheetAt(0);
+        // 读取数据集
+        int rows = sheet.getPhysicalNumberOfRows();
+
+        for(int i = 2;i < rows;i++) {
+            XSSFRow row = sheet.getRow(i);
+
+            // 客户名称
+            String customerName = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(6)));
+            // 金蝶id
+            String kingdeeId = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(0)));
+            LambdaQueryWrapper<CustomerInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(CustomerInfoEntity::getName, customerName);
+            queryWrapper.last("LIMIT 1");
+            CustomerInfoEntity customerInfoEntity =super.getOne(queryWrapper);
+            if(Objects.isNull(customerInfoEntity)) {
+                log.info("未找到客户【{}】", customerName);
+                continue;
+            }
+            if(StrUtils.isNotEmpty(customerInfoEntity.getSyncKingdeeId())) {
+                log.info("客户【{}】已经存在金蝶id，不处理", customerName);
+                continue;
+            }
+            lambdaUpdate().set(CustomerInfoEntity::getSyncKingdeeId, kingdeeId).set(CustomerInfoEntity::getSyncKingdeeTime, LocalDateTime.now())
+                    .set(CustomerInfoEntity::getSyncOperate, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode())
+                    .set(CustomerInfoEntity::getSyncKingdeeStatus, SyncKingdeeStatusEnum.SUCCESS_SYNC.getCode())
+                    .eq(CustomerInfoEntity::getId, customerInfoEntity.getId())
+                    .update();
+        }
+
+    }
+
     /**
      * 客户联系人信息
      * @param customerId

@@ -338,5 +338,16 @@ public class CustomerInfoController extends BaseController {
         return success();
     }
 
+    /**
+     * 导入客户关联金蝶信息
+     * @param file
+     * @return
+     */
+    @PostMapping(value = "importCustomerKingdee")
+    public ApiResult<Void> importCustomerKingdee(@RequestParam(value = "file") MultipartFile file) throws IOException {
+        customerInfoService.importCustomerKingdee(file);
+        return success();
+    }
+
 
 }

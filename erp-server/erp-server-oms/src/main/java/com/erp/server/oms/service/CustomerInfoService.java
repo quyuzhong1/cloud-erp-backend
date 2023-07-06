@@ -253,4 +253,11 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @return java.util.List<com.erp.model.oms.entity.CustomerInfoEntity>
      */
     List<CustomerInfoEntity> listByKingdeeIdList(List<String> kingdeeCustomerIds);
+
+
+    /**
+     * 导入客户金蝶信息（系统上线临时使用，后续移除）
+     * @param file
+     */
+    void importCustomerKingdee(MultipartFile file) throws IOException;
 }
