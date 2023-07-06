@@ -969,11 +969,10 @@
                 </foreach>
             </if>
             <if test="params.isExecutable != null  and params.isExecutable == 1 ">
-                AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = t.id AND a.is_deleted = FALSE )
-                or not EXISTS (select
+                AND  not EXISTS (select
                 b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where
                 a.is_deleted = false and (b.status != 4 and b.status != 5) and a.task_id
-                = t.id ))
+                = t.id )
             </if>
             <if test="params.isExecutable != null  and params.isExecutable == 0 ">
                 AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and
@@ -1001,11 +1000,11 @@
             </foreach>
         </if>
         <if test="params.isExecutable != null  and params.isExecutable == 1 ">
-            AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = t.id AND a.is_deleted = FALSE ) or
+            AND
             not EXISTS (select
             b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where
             a.is_deleted = false and (b.status != 4 and b.status != 5) and a.task_id
-            = t.id ))
+            = t.id )
         </if>
         <if test="params.isExecutable != null  and params.isExecutable == 0 ">
             AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted =
@@ -1032,11 +1031,11 @@
                 </foreach>
             </if>
             <if test="params.isExecutable != null  and params.isExecutable == 1 ">
-                AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = t.id AND a.is_deleted = FALSE )
-                or not EXISTS (select
+                AND
+                 not EXISTS (select
                 b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where
                 a.is_deleted = false and (b.status != 4 and b.status != 5) and a.task_id
-                = t.id ))
+                = t.id )
             </if>
             <if test="params.isExecutable != null  and params.isExecutable == 0 ">
                 AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and
@@ -1056,8 +1055,8 @@
         FROM project_task t
         left join product_info pdi on t.product_id = pdi.id AND pdi.is_deleted = FALSE
         left join project_info pji on pdi.id = pji.product_id AND pji.is_deleted = FALSE
-        WHERE (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or
-        pji.project_status != 5) and t.plan_end_time IS NOT NULL AND t.is_deleted = FALSE
+        WHERE pdi.approval_status != 5 and pji.project_status != 5 and t.plan_end_time
+        IS NOT NULL AND t.is_deleted = FALSE
         <if test="notStateList !=null and notStateList.size>0">
             AND t.status NOT IN
             <foreach collection="notStateList" item="state" open="(" separator="," close=")">
@@ -1065,11 +1064,10 @@
             </foreach>
         </if>
         <if test="params.isExecutable != null  and params.isExecutable == 1 ">
-            AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = t.id AND a.is_deleted = FALSE ) or
-            not EXISTS (select
+            AND not EXISTS (select
             b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where
             a.is_deleted = false and (b.status != 4 and b.status != 5) and a.task_id
-            = t.id ))
+            = t.id )
         </if>
         <if test="params.isExecutable != null  and params.isExecutable == 0 ">
             AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted =
@@ -1088,8 +1086,7 @@
         left join product_info pdi on t.product_id = pdi.id AND pdi.is_deleted = FALSE
         left join project_info pji on pdi.id = pji.product_id AND pji.is_deleted = FALSE
         <where>
-            (pdi.approval_status is null or pdi.approval_status != 5) and (pji.project_status is null or
-            pji.project_status != 5) AND t.is_deleted = FALSE
+             pdi.approval_status != 5 and pji.project_status != 5 AND t.is_deleted = FALSE
             <if test="notStateList !=null and notStateList.size>0">
                 AND t.status NOT IN
                 <foreach collection="notStateList" item="state" open="(" separator="," close=")">
@@ -1097,11 +1094,10 @@
                 </foreach>
             </if>
             <if test="params.isExecutable != null  and params.isExecutable == 1 ">
-                AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = t.id AND a.is_deleted = FALSE )
-                or not EXISTS (select
+                AND  not EXISTS (select
                 b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where
                 a.is_deleted = false and (b.status != 4 and b.status != 5) and a.task_id
-                = t.id ))
+                = t.id )
             </if>
             <if test="params.isExecutable != null  and params.isExecutable == 0 ">
                 AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and
@@ -1128,11 +1124,10 @@
             </foreach>
         </if>
         <if test="params.isExecutable != null  and params.isExecutable == 1 ">
-            AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = t.id AND a.is_deleted = FALSE ) or
-            not EXISTS (select
+            AND not EXISTS (select
             b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where
             a.is_deleted = false and (b.status != 4 and b.status != 5) and a.task_id
-            = t.id ))
+            = t.id )
         </if>
         <if test="params.isExecutable != null  and params.isExecutable == 0 ">
             AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted =
@@ -1216,11 +1211,10 @@
             )
         </if>
         <if test="params.isExecutable != null  and params.isExecutable == 1 ">
-            AND (not EXISTS (select a.pre_task_id from pre_task a where a.task_id = pt.id AND a.is_deleted = FALSE ) or
-            not EXISTS (select
+            AND not EXISTS (select
             b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted = false where
             a.is_deleted = false and (b.status != 4 and b.status != 5) and a.task_id
-            = pt.id ))
+            = pt.id )
         </if>
         <if test="params.isExecutable != null  and params.isExecutable == 0 ">
             AND EXISTS (select b.id from pre_task a left join project_task b on a.pre_task_id = b.id and b.is_deleted =
