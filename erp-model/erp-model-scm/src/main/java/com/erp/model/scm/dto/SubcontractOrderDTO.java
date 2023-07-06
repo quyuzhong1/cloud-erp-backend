@@ -306,6 +306,10 @@ public class SubcontractOrderDTO implements Serializable {
        * 编码
        */
       private String code;
+
+
+      private String syncKingdeeId;
+
       /**
        * 明细集合
        */

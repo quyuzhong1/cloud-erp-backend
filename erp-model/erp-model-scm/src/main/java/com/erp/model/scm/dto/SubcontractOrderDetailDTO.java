@@ -270,6 +270,7 @@ public class SubcontractOrderDetailDTO implements Serializable {
         @Size(max = 19,message = "来源明细id最大长度不能超过19位")
         private String sourceDetailId;
 
+        private String kingdeeDetailId;
     }
 
 
