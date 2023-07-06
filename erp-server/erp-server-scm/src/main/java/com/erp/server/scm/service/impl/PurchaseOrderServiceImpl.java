@@ -1536,19 +1536,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                         errorMsgList.add(StrUtil.format("未找到有效SKU【{}】",importExcelDTO.getSkuNo()));
                     }
 
-                    if (ObjectUtils.isNotEmpty(skuVO) && ObjectUtils.isNotEmpty(supplierEntity)) {
-                        //验证录入的SKU明细报价信息是否正确
-                        PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
-                        priceDTO.setSkuId(skuVO.getSkuId());
-                        priceDTO.setSkuNo(skuVO.getSkuNo());
-                        priceDTO.setSupplierId(supplierEntity.getId());
-                        priceDTO.setPurchaseQty(Integer.valueOf(importExcelDTO.getQty()));
-                        Pair<String, List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>> stringListPair = purchasePriceDetailService.listPurchaseTaxPriceView(priceDTO);
-                        if (StringUtils.isNotBlank(stringListPair.getKey())) {
-                            errorMsgList.add(StrUtil.format(stringListPair.getKey()));
-                        }
-                    }
-
                     //存在错误数据则直接返回
                     if (errorMsgList.size() > 0) {
                         importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
