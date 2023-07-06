@@ -1082,7 +1082,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<SupplierEntity> supplierList = supplierService.listByCodes(supplierCodeList);
 
         //组织机构信息
-        List<String> orgCodeList = successList.stream().flatMap(obj -> Stream.of(obj.getPurchaseOrgCode(), obj.getReceiveOrgCode())).distinct().collect(Collectors.toList());
+        List<String> orgCodeList = successList.stream().flatMap(obj -> Stream.of(obj.getPurchaseOrgCode(), obj.getReceiveOrgCode(),obj.getSubOrgCode())).distinct().collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.listAccountingCompanyByCodeList(orgCodeList);
 
         //部门信息
@@ -1148,6 +1148,15 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                             .orElse("");
                     if (StringUtils.isBlank(receiveOrgId)) {
                         errorMsgList.add(StrUtil.format("未找到有效收料组织编码【{}】",importExcelDTO.getReceiveOrgCode()));
+                    }
+
+                    //委外组织（必填）
+                    String subOrgId = orgList.stream().filter(obj -> obj.getCode().equals(importExcelDTO.getSubOrgCode()) )
+                            .findFirst()
+                            .flatMap(obj -> Optional.ofNullable(obj.getId()))
+                            .orElse("");
+                    if (StringUtils.isBlank(subOrgId)) {
+                        errorMsgList.add(StrUtil.format("未找到有效收料组织编码【{}】",importExcelDTO.getSubOrgCode()));
                     }
 
                     //采购部门
@@ -1232,6 +1241,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                         addDTO.setDeptId(purchaseDeptId);
                         addDTO.setPurchaseOrgId(purchaseOrgId);
                         addDTO.setReceiveOrgId(receiveOrgId);
+                        addDTO.setSubcontractOrgId(subOrgId);
                         addDTO.setIsFirstMassProduct(Boolean.FALSE);
                     }
                     SubcontractOrderDetailDTO.AddDTO addDetailDTO = new SubcontractOrderDetailDTO.AddDTO();
@@ -1243,6 +1253,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                     addDetailDTO.setPlanDeliveryDate(LocalDateUtil.date2LocalDate(DateUtil.stringToDate(importExcelDTO.getPlanDeliveryDateStr())));
                     addDetailDTO.setWarehouseId(warehouseId);
                     addDetailDTO.setIsGift(Boolean.FALSE);
+                    addDetailDTO.setIsUrgent(Boolean.FALSE);
+                    addDetailDTO.setIsGeneratePo(Boolean.FALSE);
                     addDetailDTO.setRemark(importExcelDTO.getRemark());
                     addDetailList.add(addDetailDTO);
                 }
