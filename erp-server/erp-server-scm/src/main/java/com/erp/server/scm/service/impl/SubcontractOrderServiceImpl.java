@@ -1059,7 +1059,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //处理数据
             doOpHandleSub(successList, errorList);
 
-            if (org.apache.commons.collections4.CollectionUtils.isEmpty(errorList)) {
+            if (CollectionUtils.isEmpty(errorList)) {
                 return true;
             }
             String fileName = "委外订单数据错误";
@@ -1194,7 +1194,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
 
                     //仓库
-                    String warehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(importExcelDTO.getWarehouseCode()) && ApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus()))
+                    String warehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(importExcelDTO.getWarehouseCode()) && ApproveStatusEnum.APPROVE.equals(obj.getApproveStatus()))
                             .findFirst()
                             .flatMap(obj -> Optional.ofNullable(obj.getId()))
                             .orElse("");
@@ -1223,7 +1223,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                     }
 
                     //bom信息
-                    List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj -> obj.getSkuNo().equals(importExcelDTO.getSkuNo()))
+                    List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj -> obj.getParentSkuId().equals(skuVO.getSkuId()))
                             .collect(Collectors.toList());
                     if (CollectionUtils.isEmpty(childList)) {
                         errorMsgList.add(StrUtil.format("未找到有效Bom子集【{}】",importExcelDTO.getSkuNo()));
