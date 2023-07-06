@@ -27,10 +27,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.FieldValidUtil;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.StrUtils;
+import com.common.core.utils.*;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -1061,6 +1058,12 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             List<KingdeeSubImportExcelDTO> errorList = excelListenerUtil.getErrorList();
             //处理数据
             doOpHandleSub(successList, errorList);
+
+            if (org.apache.commons.collections4.CollectionUtils.isEmpty(errorList)) {
+                return true;
+            }
+            String fileName = "委外订单数据错误";
+            ExcelUtil.export(fileName, "委外订单", errorList, KingdeeSubImportExcelDTO.class, response);
 
         } catch (IOException e) {
             log.error("导入错误！", e);

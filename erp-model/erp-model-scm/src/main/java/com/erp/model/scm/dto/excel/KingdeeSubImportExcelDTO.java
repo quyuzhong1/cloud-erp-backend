@@ -28,7 +28,7 @@ public class KingdeeSubImportExcelDTO {
     private String  subOrgCode;
 
     @ExcelProperty(value = "*(单据头)单据日期")
-    @FieldValid(fieldName = "单据日期", isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.DATE)
+    @FieldValid(fieldName = "单据日期", isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.DATE_)
     private String  billDateStr;
 
     @ExcelProperty(value = "(单据头)采购部门编码")
@@ -45,7 +45,7 @@ public class KingdeeSubImportExcelDTO {
     private String  approveUserCode;
 
     @ExcelProperty(value = "(单据头)审核日期")
-    @FieldValid(fieldName = "审核日期",formatPattern = FieldFormatPatternTypeEnum.DATE)
+    @FieldValid(fieldName = "审核日期",formatPattern = FieldFormatPatternTypeEnum.DATETIME_)
     private String  approveTimeStr;
 
     @ExcelProperty(value = "(明细)采购组织#编码")
@@ -69,7 +69,7 @@ public class KingdeeSubImportExcelDTO {
     private String  qty;
 
     @ExcelProperty(value = "(明细)领料数量")
-    @FieldValid(fieldName = "采购数量", isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
+    @FieldValid(fieldName = "领料数量", isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String  deliveryQty;
 
     @ExcelProperty(value = "(明细)含税单价")
@@ -77,7 +77,7 @@ public class KingdeeSubImportExcelDTO {
     private String  taxPrice;
 
     @ExcelProperty(value = "(明细)交货日期")
-    @FieldValid(fieldName = "交货日期Str",formatPattern = FieldFormatPatternTypeEnum.DATE)
+    @FieldValid(fieldName = "交货日期Str",formatPattern = FieldFormatPatternTypeEnum.DATE_)
     private String  planDeliveryDateStr;
 
     @ExcelProperty(value = "(明细)供应商#编码")
