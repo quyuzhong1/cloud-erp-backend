@@ -6,11 +6,27 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import java.util.List;
 
 public interface ProductDetailService extends IService<ProductDetailEntity> {
-
-    /**
+/*
+    *//**
      * 更新PLM同步过来的数据
      * @Author zhangchunlin
      * @Date 2023-05-11 18:07
+     **//*
+    void saveOrUpdateProductDetail(List<ProductDetailEntity> productDetailEntities);*/
+
+    /**
+     * 根据主键Id查询产品Sku表信息
+     * @Author Luo_WG
+     * @Date 2023/4/19 16:25
+     * @param ids
+     * @return com.erp.model.plm.entity.ProductInfoEntity
      **/
-    void saveOrUpdateProductDetail(List<ProductDetailEntity> productDetailEntities);
+    List<ProductDetailEntity> ListProductDetailByIds(List<String> ids);
+
+    /**
+     * 更新PLM同步过来的数据
+     * @Author Luo_WG
+     * @Date 2023/4/19 16:05
+     **/
+    Boolean saveOrUpdateProductDetail(List<ProductDetailEntity> productDetailEntityList);
 }

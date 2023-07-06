@@ -6,11 +6,14 @@ import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.server.wms.pull.mapper.ProductSaleMapper;
 import com.erp.server.wms.pull.service.ProductSaleService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @Description 产品销售信息服务类
@@ -21,7 +24,7 @@ import java.util.Objects;
 @Service
 public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, ProductSaleEntity> implements ProductSaleService {
 
-
+    /**
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void saveOrUpdateProductSaleDetail(List<ProductSaleEntity> productSaleEntities) {
@@ -46,6 +49,42 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
                 }
             }
         }
+    }
+     */
+
+    @Override
+    public List<ProductSaleEntity> listProductSaleByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return new ArrayList<>();
+        }
+        return baseMapper.listProductSaleByIds(ids);
+    }
+
+    @Override
+    public Boolean saveOrUpdateProductSaleDetail(List<ProductSaleEntity> productSaleEntityList) {
+        List<String> detailIds = productSaleEntityList.stream().map(ProductSaleEntity::getId).collect(Collectors.toList());
+        List<ProductSaleEntity> detailEntityList = listProductSaleByIds(detailIds);
+        List<String> ids = productSaleEntityList.stream().map(ProductSaleEntity::getId).collect(Collectors.toList());
+        List<String> dbIds = detailEntityList.stream().map(ProductSaleEntity::getId).collect(Collectors.toList());
+        List<String> existIdList = ids.stream().filter(s -> dbIds.contains(s)).collect(Collectors.toList());
+        List<String> notExistIdList = ids.stream().filter(s -> !dbIds.contains(s)).collect(Collectors.toList());
+        List<ProductSaleEntity> notExistDetailEntityList = new ArrayList<>();
+        List<ProductSaleEntity> existDetailEntityList = new ArrayList<>();
+        for (ProductSaleEntity detailEntity : productSaleEntityList) {
+            if (notExistIdList.contains(detailEntity.getId())) {
+                notExistDetailEntityList.add(detailEntity);
+            }
+            if (existIdList.contains(detailEntity.getId())) {
+                existDetailEntityList.add(detailEntity);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
+            this.saveBatch(notExistDetailEntityList);
+        }
+        if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
+            baseMapper.updateBatchSelective(existDetailEntityList);
+        }
+        return Boolean.TRUE;
     }
 
 }

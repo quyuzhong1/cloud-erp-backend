@@ -2,6 +2,7 @@ package com.erp.server.wms.pull.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.plm.entity.ProductSaleEntity;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -17,6 +18,14 @@ public interface ProductSaleService extends IService<ProductSaleEntity> {
      * @Author zhangchunlin
      * @Date 2023-05-11 18:07
      **/
-    void saveOrUpdateProductSaleDetail(List<ProductSaleEntity> productSaleEntity);
+    Boolean saveOrUpdateProductSaleDetail(List<ProductSaleEntity> productSaleEntity);
+
+    /**
+     * 根据主键Id查询产品销售表信息
+     * @Author zhangchunlin
+     * @param ids
+     * @return com.erp.model.plm.entity.ProductSaleEntity
+     **/
+    List<ProductSaleEntity> listProductSaleByIds(@Param("ids") List<String> ids);
 
 }
