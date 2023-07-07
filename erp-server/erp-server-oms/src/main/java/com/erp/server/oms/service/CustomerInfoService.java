@@ -240,7 +240,7 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
     Boolean processData();
 
     /**
-     * 导入客户信息（系统上线临时使用，后续移除）
+     * 导入客户信息（系统上线临时使用，后续移除）新增客户，如果存在了则不导入
      * @param file
      */
     void importCustomer(MultipartFile file) throws IOException;
