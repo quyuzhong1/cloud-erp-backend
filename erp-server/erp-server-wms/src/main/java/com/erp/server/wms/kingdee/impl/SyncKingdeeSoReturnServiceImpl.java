@@ -15,6 +15,7 @@ import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
@@ -23,6 +24,8 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
+import com.erp.server.wms.service.SoReturnInstockDetailService;
+import com.erp.server.wms.service.SoReturnInstockService;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -48,9 +51,6 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
     private SysUserFeign sysUserFeign;
 
     @Resource
-    private OmsTaskFeign omsTaskFeign;
-
-    @Resource
     private CustomerFeign customerFeign;
 
     @Resource
@@ -63,16 +63,24 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
     private WarehouseService warehouseService;
 
     @Resource
+    private SoReturnInstockService soReturnInstockService;
+
+    @Resource
+    private SoReturnInstockDetailService soReturnInstockDetailService;
+
+    @Resource
     private MQProducerService mQProducerService;
 
     @Override
     public void syncDataToKingdee(SoReturnInstockEntity entity, String operate) {
-       /* //客户信息
+        List<SoReturnInstockDetailEntity> returnInstockDetailEntities = soReturnInstockDetailService.listDetailByMainId(entity.getId());
+
+        //客户信息
         List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Arrays.asList(entity.getCustomerId()));
         //退货单
-        SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(entity.getId());
+        SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(entity.getSourceId());
         //退货详情
-        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainId(entity.getId());
+        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainId(entity.getSourceId());
         //销售单
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(entity.getSourceId());
         //销售单明细
@@ -105,7 +113,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             resultMap.put("inventoryOrgCode", inventoryOrgCode);
         }
         //销售部门
-        List<SellerDTO.ViewDTO> sellerList = customerFeign.listByMainId(entity.getId());
+        List<SellerDTO.ViewDTO> sellerList = customerFeign.listSellerByMainId(entity.getId());
         if (CollectionUtils.isNotEmpty(sellerList)) {
             SellerDTO.ViewDTO viewDTO = sellerList.get(MathUtil.ZERO);
             String deptId = viewDTO.getDeptId();
@@ -125,7 +133,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             CustomerInfoEntity customerInfoEntity = customerInfoEntitieList.stream().filter(obj -> obj.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             resultMap.put("customerCode", customerInfoEntity.getCode());
             //收款条件
-            List<DictBasicDTO.ViewDTO> collectionTermsList = dictBasicService.getByKey("collectionTerms");
+            List<DictBasicDTO.ViewDTO> collectionTermsList = customerFeign.getDictBasicByKey("collectionTerms");
             DictBasicDTO.ViewDTO viewDTO = collectionTermsList.stream().filter(req -> req.getValue().equals(customerInfoEntity.getCode())).findFirst().orElse(new DictBasicDTO.ViewDTO());
             resultMap.put("collectionTerms", viewDTO.getRemark());
         }
@@ -142,19 +150,20 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         resultMap.put("soKingdeeDetailIds", String.join(",", soKingdeeDetailIdList));
         //金蝶 FEntity:物料信息
         List<Map<String,Object>> list = new ArrayList<>();
-        for (SoReturnDetailEntity detailEntity : returnDetailEntityList) {
-            SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+        for (SoReturnInstockDetailEntity detailEntity : returnInstockDetailEntities) {
+            SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(req -> req.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(null);
+            SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             Map<String,Object> map = new HashMap<>();
             //退货原因
             if (StringUtils.isNotBlank(detailEntity.getReturnReasonDict())) {
                 resultMap.put("returnReason", ReturnReasonEnum.getEnum(detailEntity.getReturnReasonDict()).getKingdeeCode());
             }
             //销售订单金蝶id
-            map.put("soSyncKingdeeId", soInfoEntity.getSyncKingdeeId());
+            map.put("soSyncKingdeeId", entity.getSyncKingdeeId());
             //物料编码
             map.put("skuNo", detailEntity.getSkuNo());
             //退货数量
-            map.put("returnQty", detailEntity.getReturnQty());
+            map.put("returnQty", detailEntity.getRealQty());
             map.put("salesQty", soDetailEntity.getQty());
             //单价
             map.put("price", soDetailEntity.getPrice());
@@ -184,11 +193,11 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             map.put("billDate", entity.getBillDate());
             //备注
             map.put("remark", detailEntity.getRemark());
-            if (entity.getSourceType().equals(SourceTypeEnum.SO_INFO.getCode())) {
+            if (soReturnEntity.getSourceType().equals(SourceTypeEnum.SO_INFO.getCode())) {
                 //原单类型
                 map.put("FSrcBillTypeID", "SAL_SaleOrder");
                 //原单编号
-                map.put("FSrcBillNo", soInfoEntity.getCode());
+                map.put("FSrcBillNo", soReturnEntity.getSourceCode());
             }
             list.add(map);
         }
@@ -199,9 +208,9 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, RocketMqTagEnum.KINGDEE_SO_RETURN_TAG.getName(), resultMap, String.valueOf(resultMap.get("id")));
             if (result.getSendStatus().equals(SendStatus.SEND_OK)) {
                 //mq发送成更新业务表状态及时间
-                return soReturnService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"", operate);
+                return soReturnInstockService.updateSyncKingdeeStatus(entity.getId(), SyncKingdeeStatusEnum.IN_SYNC.getCode(),"", operate);
             }
             return Boolean.TRUE;
-        });*/
+        });
     }
 }
