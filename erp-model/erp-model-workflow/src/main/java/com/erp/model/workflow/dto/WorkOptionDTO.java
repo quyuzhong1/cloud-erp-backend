@@ -46,18 +46,12 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
     @Data
     @NoArgsConstructor
     public static class AddOftenDTO {
-        /**
-         * 菜单id
-         */
-        private String workMenuId;
+
         /**
          * 地址（预留）
          */
         private String moduleUrl;
-        /**
-         * 入参（预留）
-         */
-        private String moduleParam;
+
         /**
          * 类型  2：常用模块  1：代办模块
          */
