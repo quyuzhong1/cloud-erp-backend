@@ -35,9 +35,37 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          */
         private String moduleParam;
         /**
-         * 类型  1：常用模块  2：待办模块
+         * 类型  2：常用模块  1：代办模块
          */
         private String type;
+    }
+
+    /**
+     * 添加
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddOftenDTO {
+        /**
+         * 菜单id
+         */
+        private String workMenuId;
+        /**
+         * 地址（预留）
+         */
+        private String moduleUrl;
+        /**
+         * 入参（预留）
+         */
+        private String moduleParam;
+        /**
+         * 类型  2：常用模块  1：代办模块
+         */
+        private String type;
+        /**
+         * 模块名称
+         */
+        private String moduleName;
     }
 
     /**
@@ -274,6 +302,11 @@ public class WorkOptionDTO extends BaseEntity<WorkOptionDTO> {
          * 入参（预留）
          */
         private String moduleParam;
+
+        /**
+         * 模块名称
+         */
+        private String moduleName;
     }
 
     /**

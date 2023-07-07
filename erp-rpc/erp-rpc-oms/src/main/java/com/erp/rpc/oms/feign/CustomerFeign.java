@@ -1,8 +1,10 @@
 package com.erp.rpc.oms.feign;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.sys.dto.DictBasicDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -64,5 +66,25 @@ public interface CustomerFeign {
      **/
     @PostMapping("feign/customer/approve")
     Boolean approve(@RequestBody BaseApproveParamDTO dto);
+
+    /**
+     * 售货员信息
+     * @author yl
+     * @date 2023-05-15 10:10
+     * @param mainId
+     * @return java.util.List<com.erp.model.oms.dto.SellerDTO.ViewDTO>
+     */
+    @PostMapping("feign/customer/listSellerByMainId")
+    List<SellerDTO.ViewDTO> listSellerByMainId(@RequestBody String mainId);
+
+    /**
+     * 根据key 获取字典数据
+     * @author yl
+     * @date 2023-03-17 14:16
+     * @param Key
+     * @return java.util.List<com.erp.model.scm.dto.DictBasicDTO>
+     */
+    @PostMapping("feign/customer/getDictBasicByKey")
+    List<DictBasicDTO.ViewDTO> getDictBasicByKey(@RequestBody String Key);
 
 }

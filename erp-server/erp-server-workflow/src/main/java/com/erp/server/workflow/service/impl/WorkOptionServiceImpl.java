@@ -161,7 +161,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         LoginUser userInfo = commonService.getUserInfo();
         List<WorkOptionDTO.FrequentlyViewDTO> frequentlyViewDTOS = baseMapper.listFrequentlyView(userInfo.getUid());
         if (ObjectUtil.isNotEmpty(frequentlyViewDTOS)) {
-            collect = frequentlyViewDTOS.stream().map(WorkOptionDTO.FrequentlyViewDTO::getModuleStatusId).collect(Collectors.toList());
+            collect = frequentlyViewDTOS.stream().map(WorkOptionDTO.FrequentlyViewDTO::getModuleName).collect(Collectors.toList());
         }
         List<WorkOptionDTO.WaitDoMenu> waitDoMenus = baseMapper.listOftenMenu(sysClassify);
         for (WorkOptionDTO.WaitDoMenu req : waitDoMenus) {
@@ -211,6 +211,32 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         workOptionEntity.setModuleUrl(dto.getModuleUrl());
         workOptionEntity.setModuleParam(dto.getModuleParam());
         workOptionEntity.setType(dto.getType());
+        return this.save(workOptionEntity);
+    }
+
+    /**
+     * 新增常用模块
+     * @Author Luo_WG
+     * @Date 2023/7/7 16:28
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean addOften(WorkOptionDTO.AddOftenDTO dto) {
+        LoginUser userInfo = commonService.getUserInfo();
+        List<WorkOptionDTO.FrequentlyViewDTO> frequentlyViewDTOS = baseMapper.listFrequentlyView(userInfo.getUid());
+        List<WorkOptionDTO.FrequentlyViewDTO> collect = frequentlyViewDTOS.stream().filter(req -> req.getModuleStatusId().equals(dto.getWorkMenuId())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(collect)) {
+            throw new ServiceException(ApiError.ERROR_940022);
+        }
+        WorkOptionEntity workOptionEntity = new WorkOptionEntity();
+        workOptionEntity.setOptionUserId(userInfo.getUid());
+        workOptionEntity.setOptionUserMame(userInfo.getUserName());
+        workOptionEntity.setWorkMenuId(dto.getWorkMenuId());
+        workOptionEntity.setModuleUrl(dto.getModuleUrl());
+        workOptionEntity.setModuleParam(dto.getModuleParam());
+        workOptionEntity.setType(dto.getType());
+        workOptionEntity.setModuleName(dto.getModuleName());
         return this.save(workOptionEntity);
     }
 
