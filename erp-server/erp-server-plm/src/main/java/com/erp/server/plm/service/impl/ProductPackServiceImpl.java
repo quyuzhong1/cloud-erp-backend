@@ -148,22 +148,36 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
             if (StringUtils.isNotBlank(productSize)) {
                 String[] productSizes = productSize.split("X");
                 //长
-                packVO.setProductLength(new BigDecimal(productSizes[0]));
+                if (productSizes.length > 0) {
+                    packVO.setProductLength(new BigDecimal(productSizes[0]));
+                }
                 //宽
-                packVO.setProductWidth(new BigDecimal(productSizes[1]));
+                if (productSizes.length > 1) {
+                    packVO.setProductWidth(new BigDecimal(productSizes[1]));
+                }
                 //高
-                packVO.setProductHeight(new BigDecimal(productSizes[2]));
+                if (productSizes.length > 2) {
+                    packVO.setProductHeight(new BigDecimal(productSizes[2]));
+                }
+
             }
+
             //外箱大小
             String boxSize = item.getBoxSize();
             if (StringUtils.isNotBlank(boxSize)) {
                 String[] boxSizes = boxSize.split("X");
                 //长
-                packVO.setBoxLength(new BigDecimal(boxSizes[0]));
+                if (boxSizes.length > 0) {
+                    packVO.setBoxLength(new BigDecimal(boxSizes[0]));
+                }
                 //宽
-                packVO.setBoxWidth(new BigDecimal(boxSizes[1]));
+                if (boxSizes.length > 1) {
+                    packVO.setBoxWidth(new BigDecimal(boxSizes[1]));
+                }
                 //高
-                packVO.setBoxHeight(new BigDecimal(boxSizes[2]));
+                if (boxSizes.length > 2) {
+                    packVO.setBoxHeight(new BigDecimal(boxSizes[2]));
+                }
             }
             //外箱重量
             BigDecimal boxWeight = item.getBoxWeight();
