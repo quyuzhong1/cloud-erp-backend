@@ -22,6 +22,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
@@ -33,6 +34,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.constant.ScmConstant;
@@ -92,6 +94,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
     @Resource
     private CommonService commonService;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
 
     /**
@@ -553,10 +558,14 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         List<PurchasePriceDTO.PagingViewDTO> list = pageData.getRecords();
         List<String> flagList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(list)) {
+            List<String> skuIds = list.stream().map(PurchasePriceDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+            List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(skuIds);
             List<String> currencyIdList = list.stream().map(PurchasePriceDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
             //币种信息
             List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
             for (PurchasePriceDTO.PagingViewDTO item : list) {
+                SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(null);
+                item.setProductName(skuVO.getSkuName());
                 boolean contains = flagList.contains(item.getId());
                 ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
                 item.setApproveStatusCode(approveStatusEnum.getStatus());
