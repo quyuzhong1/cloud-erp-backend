@@ -419,8 +419,9 @@ public class MabangApiUtils {
             params.put("last_time_end", sdf.format(endDate));
             params.put("prePage", pageSize);
             ParamHeaderVO paramVo = getParamMap(method, pageIndex, params);
+            log.info("马帮FBA发货单请求参数：{}", paramVo.getParamsStr());
             JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
-            log.info("FBA发货单响应信息：{}", JSONObject.toJSONString(responseMap));
+            log.info("马帮FBA发货单响应信息：{}", JSONObject.toJSONString(responseMap));
             if (!Objects.equals(responseMap.getInteger("code"), 200)) {
                 log.error("调用url={} param={}马帮FBA发货单数据失败 responseMap={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap));
                 throw new RuntimeException(StrUtil.format("调用url={} param={}，马帮FBA发货单数据失败 responseMap={}",
