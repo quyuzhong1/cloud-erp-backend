@@ -113,7 +113,7 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
         // 异步推送B2C销售出库单到MQ
         wantToMqList.forEach(obj -> {
             if (!Objects.isNull(obj.getFModifyDate())) {
-                if (LocalDateTime.parse(obj.getFModifyDate()).compareTo(LocalDateTime.parse("2023-07-06 21:00:00")) > 0) {
+                if (LocalDateTime.parse(obj.getFModifyDate()).compareTo(LocalDateTime.parse("2023-07-06T21:00:00")) > 0) {
                     mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_B2C_SO_OUTSTOCK_TAG.getName(), obj, obj.getFBillNo());
                 }
             }
