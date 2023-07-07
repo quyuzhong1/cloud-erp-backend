@@ -76,11 +76,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void syncKingdeeSoOutstock(KingdeeDeliveryDetailEntity entity) {
-        //根据单号检查能否同步 true 可以
-        Boolean checkSyncResult = checkIsSync(entity.getFBillNo());
-        if (!checkSyncResult) {
-            return;
-        }
         List<KingdeeDeliveryDetailItemEntity> kingdeeDetailList = entity.getKingdeeOutStockItemEntityList();
         if (CollectionUtils.isEmpty(kingdeeDetailList)) {
             return;
@@ -257,22 +252,4 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         return result;
     }
 
-    /**
-     * 检查能否同步
-     *
-     * @param fBillNo
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-06-28 9:57
-     */
-    private Boolean checkIsSync(String fBillNo) {
-        if (StringUtils.isBlank(fBillNo)) {
-            throw new ServiceException(ApiError.ERROR_KINGDEE_CODE_NOT_EXIST);
-        }
-        if (fBillNo.length() == 15) {
-            return Boolean.FALSE;
-        }
-        return Boolean.TRUE;
-
-    }
 }

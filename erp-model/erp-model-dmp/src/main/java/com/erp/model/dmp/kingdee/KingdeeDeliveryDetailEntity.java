@@ -117,6 +117,10 @@ public class KingdeeDeliveryDetailEntity  extends CleanBaseDTO {
      */
     @Alias("F_ulz_BaseProperty2.FNumber")
     private String f_ulz_BaseProperty2Code;
+
+    @Alias("F_ULZ_data_sources")
+    private String dataSources;
+
     /**
      * 联系电话
      */
