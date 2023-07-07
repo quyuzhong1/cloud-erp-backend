@@ -59,6 +59,12 @@ public class WorkOptionEntity extends BaseEntity<WorkOptionEntity> {
     @TableField("type")
     private String type;
 
+    /**
+     * 模块名称
+     */
+    @TableField("module_name")
+    private String moduleName;
+
     public static final String DICT_BASIC_ID = "dict_basic_id";
 
     public static final String DICT_BASIC_NAME = "dict_basic_name";
