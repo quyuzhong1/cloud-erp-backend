@@ -94,6 +94,7 @@ public enum ApiError implements Serializable {
      */
     ERROR_9010(9010, "手机号码已存在"),
     USER_NOT_EXIST(9011, "用户不存在"),
+    USER_NOT_EXIST_PARAM(9011, "用户不存在 uid={}"),
     ERROR_9012(9012, "用户不存在或者密码错误"),
     ERROR_9013(9013, "存在父级节点，无法删除"),
     ERROR_9014(9014, "核算公司不存在"),
@@ -168,6 +169,8 @@ public enum ApiError implements Serializable {
     PROCESS_LIST_APPROVER_ERROR(94029,"流程审核人查询失败"),
     // 非流程发起人无法撤销
     PROCESS_NOT_START_USER(94030,"非流程发起人无法撤销"),
+    // 下级节点无审核人，无法提交
+    PROCESS_NOT_APPROVER(94031,"下级节点无审核人，无法提交，请联系管理员"),
 
 
     /**

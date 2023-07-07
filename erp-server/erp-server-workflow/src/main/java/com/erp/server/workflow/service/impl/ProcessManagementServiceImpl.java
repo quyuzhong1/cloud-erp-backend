@@ -2,7 +2,6 @@ package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
@@ -20,7 +19,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.DeduplicationUtil;
-import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.service.mq.MQProducerService;
@@ -51,10 +49,12 @@ import org.camunda.bpm.engine.history.HistoricProcessInstance;
 import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.ProcessInstanceWithVariablesImpl;
 import org.camunda.bpm.engine.impl.persistence.entity.TaskEntity;
+import org.camunda.bpm.engine.impl.pvm.PvmActivity;
 import org.camunda.bpm.engine.impl.pvm.process.ActivityImpl;
 import org.camunda.bpm.engine.runtime.ActivityInstance;
 import org.camunda.bpm.engine.runtime.Execution;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
+import org.camunda.bpm.engine.task.IdentityLink;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.model.bpmn.Bpmn;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
@@ -391,33 +391,35 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void startExecutionHandle(DelegateExecution executionDelegate) {
+    public List<String> getCandidateByAct(PvmActivity act, String processDefinitionId, String startUserId) {
+        BpmnModelInstance modelInstance = repositoryService.getBpmnModelInstance(processDefinitionId);
         // 获取当前节点的 CamundaProperty
-        FlowElement flowElement = executionDelegate.getBpmnModelElementInstance();
+        String actId = act.getId();
+        actId =actId.contains("#") ? actId.substring(0, actId.indexOf("#")) : actId;
+        FlowElement flowElement = modelInstance.getModelElementById(actId);
+        // 获取当前节点的 CamundaProperty
         ExtensionElements extensionElements = flowElement.getExtensionElements();
         if(null == extensionElements){
-            log.warn("流程设计未配置扩展属性, processDefinitionId: {}, taskDefinitionKey: {}", executionDelegate.getProcessDefinitionId(), executionDelegate.getProcessInstanceId());
-            return;
+            log.warn("流程设计未配置扩展属性, processDefinitionId: {}", processDefinitionId);
+            return Collections.emptyList();
         }
         Query<CamundaProperties> camundaPropertiesQuery = extensionElements.getElementsQuery().filterByType(CamundaProperties.class);
         if (camundaPropertiesQuery.count() <= 0) {
-            log.warn("流程设计未配置扩展属性, processDefinitionId: {}, taskDefinitionKey: {}", executionDelegate.getProcessDefinitionId(), executionDelegate.getProcessInstanceId());
-            return;
+            log.warn("流程设计未配置扩展属性, processDefinitionId: {}", processDefinitionId);
+            return Collections.emptyList();
         }
         Collection<CamundaProperty> camundaProperties = camundaPropertiesQuery.singleResult().getCamundaProperties();
         Map<String, String> propertiesMap = camundaProperties.stream()
                 .collect(Collectors.toMap(CamundaProperty::getCamundaName, value -> StrUtil.isNotBlank(value.getCamundaValue()) ? value.getCamundaValue() : ""));
         CamundaDTO.PropertiesDTO propertiesDTO = BeanUtil.toBean(propertiesMap, CamundaDTO.PropertiesDTO.class);
-        String startUserId = (String) executionDelegate.getVariable("creator");
         // 获取当前节点的候选人
         List<String> candidateUsers = addApproveInfo(startUserId, propertiesDTO);
         if(CollectionUtil.isEmpty(candidateUsers)){
             log.warn("任务节点无审批人为空 startUserId={}", startUserId);
             // 无审批人终止流程
-            runtimeService.deleteProcessInstance(executionDelegate.getProcessInstanceId(), "流程审核人为空, 流程自动关闭");
+            throw new ServiceException(ApiError.PROCESS_NOT_APPROVER);
         }
-        // 填充用户变量
-        executionDelegate.setVariableLocal("userList", candidateUsers);
+        return candidateUsers;
     }
 
     @Override
@@ -701,12 +703,19 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if(null == processDefinition) {
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
         }
-//        List<String> candidateUsers = task.getCandidates().stream().map(IdentityLink::getUserId).collect(Collectors.toList());
-        String startUserId = "" + execution.getVariable("creator");
-        List<String> candidateUsers = addApproveInfo(startUserId, propertiesDTO);
+        List<String> candidateUsers = task.getCandidates().stream().map(IdentityLink::getUserId).collect(Collectors.toList());
+        String assignee = task.getAssignee();
+        if(StrUtil.isNotBlank(assignee)){
+            candidateUsers= Arrays.asList(assignee.split(","));
+        }
+        if(CollectionUtil.isEmpty(candidateUsers)){
+            String startUserId = "" + execution.getVariable("creator");
+            candidateUsers = addApproveInfo(startUserId, propertiesDTO);
+        }
+        // 将集合变量设置到流程实例中
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(candidateUsers);
         if(CollectionUtil.isEmpty(userList)){
-            throw new ServiceException(ApiError.USER_NOT_EXIST);
+            throw new ServiceException(ApiError.USER_NOT_EXIST_PARAM, JSONUtil.toJsonStr(candidateUsers));
         }
         Map<String, FindUserDTO> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, e -> e ));
         String copyUser = propertiesDTO.getCopyUser();
@@ -716,45 +725,13 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             if(null == findUserDTO){
                 return;
             }
-            DictBasicEnum reviewSetting = processDefinition.getReviewSetting();
-            Optional<ProcessTaskManagementEntity> processTaskManagement = Optional.empty();
             ProcessTaskManagementEntity insertTask = new ProcessTaskManagementEntity(processInstanceId, activityId, task.getId(), processStartTime, ApproveStatusEnum.APPROVE_ING, propertiesDTO, findUserDTO, executionId, activityName);
             ProcessTaskManagementEntity taskManagementEntity = processTaskManagementService.saveProcessTask(insertTask);
-
             if (StrUtil.isNotBlank(copyUser)){
                 List<String> ccUserIds = Arrays.asList(copyUser.split(","));
                 List<FindUserDTO> ccUserList = sysUserFeign.getUserListByUserIds(ccUserIds);
                 processTaskCcService.saveCcUser(task.getId(), ccUserList, taskManagementEntity.getId());
             }
-
-//            // 审核人配置
-//            if (DictBasicEnum.ADJACENT_DEDUPE.equals(reviewSetting)) {
-//                // 相邻节点去重
-//                // 查询当前节点的上一个节点
-//                LinkedHashMap<String, List<ProcessTaskManagementEntity>> processTaskManagementList = processTaskManagementService.listHisByProcessInstanceId(processInstanceId, MathUtil.ONE);
-//                if(CollectionUtil.isNotEmpty(processTaskManagementList)){
-//                    processTaskManagement = processTaskManagementList.entrySet().stream()
-//                            .findFirst()
-//                            .get()
-//                            .getValue().stream().filter(item -> item.getCurApproveId().equals(userId))
-//                            .findFirst();
-//                }
-//            }else if(DictBasicEnum.GLOBAL_DEDUPE.equals(reviewSetting)) {
-//                // 全局去重
-//                // 查询已完成审核节点
-//                LinkedHashMap<String, List<ProcessTaskManagementEntity>> processTaskManagementList = processTaskManagementService.listHisByProcessInstanceId(processInstanceId, null);
-//                if(CollectionUtil.isNotEmpty(processTaskManagementList)){
-//                    processTaskManagement = processTaskManagementList.values().stream().flatMap(List::stream)
-//                            .filter(item -> item.getCurApproveId().equals(userId))
-//                            .findFirst();
-//                }
-//            }
-//            if (processTaskManagement.isPresent()) {
-//                // 审核人已存在，自动审核通过
-//                taskService.createComment(task.getId(), processInstanceId, "审核人重复,审核自动通过");
-//                taskService.complete(task.getId());
-//                updateApprove(processTaskManagement.get().getId(), ApproveTypeEnum.PASS, insertTask.getId(), processInstanceId, "审核人重复,审核自动通过");
-//            }
         });
     }
 

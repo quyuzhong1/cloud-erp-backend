@@ -1,32 +1,30 @@
 package com.erp.server.workflow.listeners;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.erp.server.workflow.service.ProcessManagementService;
 import lombok.extern.slf4j.Slf4j;
+import org.camunda.bpm.engine.RuntimeService;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.DelegateTask;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
 import org.camunda.bpm.engine.delegate.TaskListener;
-import org.camunda.bpm.engine.impl.core.model.PropertyMapKey;
+import org.camunda.bpm.engine.impl.core.variable.scope.VariableStore;
 import org.camunda.bpm.engine.impl.history.event.HistoryEvent;
 import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
+import org.camunda.bpm.engine.impl.pvm.PvmActivity;
 import org.camunda.bpm.engine.impl.pvm.runtime.ActivityInstanceState;
-import org.camunda.bpm.engine.repository.ProcessDefinition;
-import org.camunda.bpm.engine.repository.ProcessDefinitionQuery;
-import org.camunda.bpm.engine.runtime.ActivityInstance;
-import org.camunda.bpm.engine.runtime.ProcessInstance;
-import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.model.bpmn.instance.FlowElement;
+import org.camunda.bpm.model.bpmn.instance.LoopCharacteristics;
+import org.camunda.bpm.model.bpmn.instance.MultiInstanceLoopCharacteristics;
+import org.camunda.bpm.model.bpmn.instance.UserTask;
 import org.camunda.bpm.spring.boot.starter.event.ExecutionEvent;
 import org.camunda.bpm.spring.boot.starter.event.TaskEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -39,6 +37,8 @@ public class CamundaGlobalListener {
 
   @Resource
   private ProcessManagementService processManagementService;
+  @Resource
+  private RuntimeService runtimeService;
 
   /**
    * This event is triggered when a task instance is created, assigned, completed, deleted or
@@ -86,7 +86,6 @@ public class CamundaGlobalListener {
   @EventListener
   public void onExecutionEvent(DelegateExecution executionDelegate) {
     log.info("Handle mutable execution event: {}",  executionDelegate.toString());
-    String businessKey = executionDelegate.getBusinessKey();
     String key = ((ExecutionEntity) executionDelegate).getProcessDefinition().getKey();
     if(key.startsWith("Process_")){
       log.warn("旧流程不需要走监听器 key = {}", key);
@@ -95,18 +94,57 @@ public class CamundaGlobalListener {
     int activityInstanceState = ((ExecutionEntity) executionDelegate).getActivityInstanceState();
     String type = (String) ((ExecutionEntity) executionDelegate).getEventSource().getProperties().toMap().get("type");
     List<String> endTypeList = Arrays.asList("endEvent", "noneEndEvent");
+    // && ActivityInstanceState.STARTING.getStateCode() == activityInstanceState
     if (ExecutionListener.EVENTNAME_START.equals(executionDelegate.getEventName()) && ActivityInstanceState.STARTING.getStateCode() == activityInstanceState) {
       // 任务创建时的逻辑处理
       log.info("CamundaGlobalListener onTaskEvent Task created: {}", executionDelegate.getCurrentActivityName());
-      processManagementService.startExecutionHandle(executionDelegate);
-    }else if(ExecutionListener.EVENTNAME_END.equals(executionDelegate.getEventName())){
-      if ((ActivityInstanceState.CANCELED.getStateCode() == activityInstanceState && ObjectUtil.isEmpty(type)) || endTypeList.contains(type)){
-        log.info("CamundaGlobalListener onTaskEvent Task completed: {} {} {} {}", executionDelegate.getEventName(), type, activityInstanceState,executionDelegate.getCurrentActivityName());
-        if(ActivityInstanceState.ENDING.getStateCode() == activityInstanceState){
+//      processManagementService.getCandidateByExecution(executionDelegate);
+    }else if(ExecutionListener.EVENTNAME_END.equals(executionDelegate.getEventName())) {
+      if ((ActivityInstanceState.CANCELED.getStateCode() == activityInstanceState && ObjectUtil.isEmpty(type)) || endTypeList.contains(type)) {
+        log.info("CamundaGlobalListener onTaskEvent Task completed: {} {} {} {}", executionDelegate.getEventName(), type, activityInstanceState, executionDelegate.getCurrentActivityName());
+        if (ActivityInstanceState.ENDING.getStateCode() == activityInstanceState) {
           log.info("CamundaGlobalListener onTaskEvent Task completed: {}", executionDelegate.getCurrentActivityName());
         }
         // 任务完成时的逻辑处理
         processManagementService.endExecutionHandle(executionDelegate.getProcessInstanceId());
+      }
+
+      Object nrOfInstancesObj = executionDelegate.getVariable("nrOfInstances");
+      Object loopCounterObj = executionDelegate.getVariable("loopCounter");
+      if(ObjectUtil.isEmpty(nrOfInstancesObj) || ObjectUtil.isEmpty(loopCounterObj)){
+        executionDelegate.removeVariable("mulUserList");
+        executionDelegate.removeVariable("userList");
+      }else {
+        int nrOfInstances = (int) nrOfInstancesObj;
+        int loopCounter = (int) loopCounterObj;
+        if (nrOfInstances == loopCounter + 1) {
+          executionDelegate.removeVariable("mulUserList");
+          executionDelegate.removeVariable("userList");
+        }
+      }
+
+
+    }
+    // 获取多实例活动的属性和变量
+
+      // 执行take对下个节点赋值变量
+    if (executionDelegate.getEventName().equals(ExecutionListener.EVENTNAME_TAKE)) {
+      PvmActivity destination = ((ExecutionEntity) executionDelegate).getTransition().getDestination();
+      if(null == destination){
+        return;
+      }
+      Map<String, Object> nextActPropertiesMap = destination.getProperties().toMap();
+      String nextActType = (String) nextActPropertiesMap.get("type");
+      if (StrUtil.isBlank(nextActType) || !(StrUtil.equals(nextActType,"userTask") || StrUtil.equals(nextActType,"multiInstanceBody"))){
+        return;
+      }
+      Boolean isMultiInstance = null != nextActPropertiesMap.get("isMultiInstance") ? Boolean.valueOf(nextActPropertiesMap.get("isMultiInstance").toString()) : false;
+      String startUserId = (String) executionDelegate.getVariable("creator");
+      List<String> candidateUsers = processManagementService.getCandidateByAct(destination, executionDelegate.getProcessDefinitionId(),startUserId);
+      if(isMultiInstance || StrUtil.equals(nextActType, "multiInstanceBody")){
+        executionDelegate.setVariable("mulUserList", candidateUsers);
+      }else {
+        executionDelegate.setVariable("userList", candidateUsers);
       }
     }
   }
