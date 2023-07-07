@@ -224,17 +224,10 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     @Override
     public Boolean addOften(WorkOptionDTO.AddOftenDTO dto) {
         LoginUser userInfo = commonService.getUserInfo();
-        List<WorkOptionDTO.FrequentlyViewDTO> frequentlyViewDTOS = baseMapper.listFrequentlyView(userInfo.getUid());
-        List<WorkOptionDTO.FrequentlyViewDTO> collect = frequentlyViewDTOS.stream().filter(req -> req.getModuleStatusId().equals(dto.getWorkMenuId())).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(collect)) {
-            throw new ServiceException(ApiError.ERROR_940022);
-        }
         WorkOptionEntity workOptionEntity = new WorkOptionEntity();
         workOptionEntity.setOptionUserId(userInfo.getUid());
         workOptionEntity.setOptionUserMame(userInfo.getUserName());
-        workOptionEntity.setWorkMenuId(dto.getWorkMenuId());
         workOptionEntity.setModuleUrl(dto.getModuleUrl());
-        workOptionEntity.setModuleParam(dto.getModuleParam());
         workOptionEntity.setType(dto.getType());
         workOptionEntity.setModuleName(dto.getModuleName());
         return this.save(workOptionEntity);
