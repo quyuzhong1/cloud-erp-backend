@@ -119,15 +119,11 @@ public class CamundaGlobalListener {
         int loopCounter = (int) loopCounterObj;
         if (nrOfInstances == loopCounter + 1) {
           executionDelegate.removeVariable("mulUserList");
-          executionDelegate.removeVariable("userList");
         }
       }
-
-
     }
     // 获取多实例活动的属性和变量
-
-      // 执行take对下个节点赋值变量
+    // 执行take对下个节点赋值变量
     if (executionDelegate.getEventName().equals(ExecutionListener.EVENTNAME_TAKE)) {
       PvmActivity destination = ((ExecutionEntity) executionDelegate).getTransition().getDestination();
       if(null == destination){
