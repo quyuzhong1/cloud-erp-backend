@@ -8,6 +8,7 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
+ * ERP直接调拨单推送马帮出入库传输实体
  * @CreateTime: 2023-06-28  12:29
  * @Author: zhangchunlin
  */

@@ -12,6 +12,7 @@ import com.erp.model.dmp.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.mabang.MabangInOutStockDTO;
 import com.erp.model.dmp.entity.DmpSyncTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.wms.enums.inventory.InventoryInOutEnum;
 import com.erp.server.dmp.push.service.mabang.MabangInOutStockService;
 import com.erp.server.dmp.service.DmpSyncTaskService;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import java.util.Objects;
 
 /**
+ * DMP接收同步任务推送马帮出入库
  * @CreateTime: 2023-06-28  14:45
  * @Author: zhangchunlin
  */
@@ -45,12 +47,12 @@ public class DmpMabangInOutStockConsume implements RocketMQListener<DmpSyncMqDTO
         MabangInOutStockDTO mabangInOutStockDTO = JSONObject.parseObject(dtoDmpSyncMqDTO.getMqData(), MabangInOutStockDTO.class);
         // erp单号
         String erpSourceCode = mabangInOutStockDTO.getErpSourceCode();
-        log.info("监听到DMP出入库，erp单号【{}】，内容：{}", erpSourceCode, JSONObject.toJSONString(dtoDmpSyncMqDTO));
+        log.info("监听到DMP出入库，erp单号【{}】，同步内容：{}", erpSourceCode, JSONObject.toJSONString(dtoDmpSyncMqDTO));
 
         String syncTaskId = dtoDmpSyncMqDTO.getDmpSyncTaskId();
         DmpSyncTaskEntity dmpSyncTaskEntity = dmpSyncTaskService.getById(syncTaskId);
         if(Objects.isNull(dmpSyncTaskEntity)) {
-            log.info("未查询到同步数据，同步任务数据id:{}", syncTaskId);
+            log.info("未查询到同步数据，同步任务数据id:{}，待同步内容：{}", syncTaskId, dtoDmpSyncMqDTO.getMqData());
             this.sendNotice(syncTaskId, erpSourceCode);
             return;
         }
@@ -63,11 +65,10 @@ public class DmpMabangInOutStockConsume implements RocketMQListener<DmpSyncMqDTO
             log.info("ERP【{}】同步到马帮已经同步，不处理", sourceTypeName);
             return;
         }
-        if(Objects.equals(mabangInOutStockDTO.getType(), "in")) {
-            mabangInOutStockService.sendToMabangInStock(dmpSyncTaskEntity, mabangInOutStockDTO );
-        } else if(Objects.equals(mabangInOutStockDTO.getType(), "out")) {
-            mabangInOutStockService.sendToMabangOutStock(dmpSyncTaskEntity, mabangInOutStockDTO );
-        }
+
+        // 推送马帮手工出入库
+        InventoryInOutEnum inventoryInOutEnum = InventoryInOutEnum.getByCode(mabangInOutStockDTO.getType());
+        mabangInOutStockService.sendToMabangInOutStock(dmpSyncTaskEntity, mabangInOutStockDTO, inventoryInOutEnum);
     }
 
     /**

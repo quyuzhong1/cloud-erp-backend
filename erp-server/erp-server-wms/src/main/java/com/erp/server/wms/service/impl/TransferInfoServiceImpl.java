@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -404,6 +405,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             list.forEach(obj->{
                 // 直接调拨单发送马帮出入库
                 if(Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_OTHER.getCode())) {
+                    log.info("审核直接调拨单【{}】是非马帮平台的，需要同步到马帮平台出入库，直接调拨单参数：{}", obj.getCode(), JSONObject.toJSONString(obj));
                     syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
                 }
             });
@@ -447,6 +449,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         list.forEach(obj->{
             // 直接调拨单发送马帮出入库
             if(Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_OTHER.getCode())) {
+                log.info("反审核直接调拨单【{}】是非马帮平台的，需要同步到马帮平台出入库，直接调拨单参数：{}", obj.getCode(), JSONObject.toJSONString(obj));
                 syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode());
             }
         });
