@@ -78,7 +78,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
     public void pullDataSave(RequestDTO dto) {
         List<DeliveryEntity> pullList = this.pullData(dto);
         if (CollUtil.isEmpty(pullList)) {
-            log.info("拉取马帮发货单列表数据为空");
+            log.info("拉取马帮发货单列表数据为空，拉取的条件：{}", JSONObject.toJSONString(dto));
             return;
         }
         log.info("本次拉取到马帮发货单数据共{}条",pullList.size());
@@ -101,6 +101,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
             DeliveryEntity mongoDatum = mongoData.get(0);
             // 比较数据是否相同（已经拉取过）
             if (mongoDatum.toString().equals(entity.toString())) {
+                log.info("发货单号：{}本次拉取数据相同，不做更新", mongoDatum.getDelivery_no());
                 continue;
             }
             pushToMqList.add(entity);
@@ -112,6 +113,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
 
         // 拉取新数据存储到mongodb中
         if(CollectionUtil.isNotEmpty(insertList)){
+            log.info("本次拉取到马帮发货单数据没有需要新增的数据");
             mongoService.saveMongoDataMult(insertList, MongoTableNameContant.ORIGINAL_MABANG_DELIVERY);
         }
 
@@ -193,7 +195,7 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
     public  DmpFbaDeliveryEntity initDeliveryEntity(DeliveryEntity deliveryMongo){
         // 只取待配货和作废的单据
         if(deliveryMongo.getDelivery_status().intValue() != FbaDeliveryStatusEnum.WAIT_DELIVERY.getCode() && deliveryMongo.getDelivery_status().intValue() != FbaDeliveryStatusEnum.INVALID.getCode()) {
-            log.info("马帮FBA发货单产品信息状态不为待配货，作废状态，不需要推送，FBA发货单信息：{}", JSONObject.toJSONString(deliveryMongo));
+            log.info("马帮FBA发货单【{}】信息状态不为待配货，作废状态，不需要推送，FBA发货单信息：{}", deliveryMongo.getDelivery_no(), JSONObject.toJSONString(deliveryMongo));
             return null;
         }
 
