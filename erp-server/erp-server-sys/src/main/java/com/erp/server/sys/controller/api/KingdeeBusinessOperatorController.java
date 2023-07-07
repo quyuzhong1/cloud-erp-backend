@@ -34,9 +34,8 @@ public class KingdeeBusinessOperatorController extends BaseController {
      */
     @PostMapping("/import")
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        //Boolean result = kingdeeBusinessOperatorService.importFile(excelFile, response);
-        // return result ? success() : failure();
-        return success();
+        Boolean result = kingdeeBusinessOperatorService.importFile(excelFile, response);
+        return result ? success() : failure();
     }
 
 }

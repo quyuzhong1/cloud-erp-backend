@@ -42,7 +42,7 @@ public class OtherOutstockCustomerDTO implements Serializable {
         /**
          * 联系电话
          */
-        @Size(max = 20,message = "联系电话不能大于20字符")
+        @Size(max = 50,message = "联系电话不能大于50字符")
         private String telNumber;
     }
 

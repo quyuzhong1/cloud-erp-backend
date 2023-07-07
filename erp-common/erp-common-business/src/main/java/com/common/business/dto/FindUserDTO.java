@@ -18,6 +18,9 @@ public class FindUserDTO implements Serializable {
 
     private String code;
 
+
+    private String syncKingdeeId;
+
     private String userName;
 
     private String realName;

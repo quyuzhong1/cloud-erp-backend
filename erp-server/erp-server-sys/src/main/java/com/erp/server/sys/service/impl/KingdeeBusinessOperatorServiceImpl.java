@@ -1,10 +1,22 @@
 package com.erp.server.sys.service.impl;
 
+import com.alibaba.excel.EasyExcel;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.service.SuperServiceImpl;
+import com.common.core.utils.ExcelUtil;
+import com.erp.model.sys.dto.excel.KingdeeBusinessOperatorImportExcelDTO;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
+import com.erp.server.sys.listener.KingdeeBusinessOperatorExcelListener;
 import com.erp.server.sys.mapper.KingdeeBusinessOperatorMapper;
 import com.erp.server.sys.service.KingdeeBusinessOperatorService;
-import com.common.business.service.SuperServiceImpl;
+import com.erp.server.sys.service.SysUserInfoService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -15,6 +27,38 @@ import org.springframework.stereotype.Service;
  * @since 2023-07-07
  */
 @Service
+@Slf4j
 public class KingdeeBusinessOperatorServiceImpl extends SuperServiceImpl<KingdeeBusinessOperatorMapper, KingdeeBusinessOperatorEntity> implements KingdeeBusinessOperatorService {
 
+    @Resource
+    private SysUserInfoService sysUserInfoService;
+    /**
+     * 导入数据
+     *
+     * @param excelFile
+     * @param response
+     * @return java.lang.Boolean
+     * @author yl
+     * @date 2023-07-07 16:49
+     */
+    @Override
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+        List<KingdeeBusinessOperatorEntity> kingdeeBusinessOperatorList = this.list();
+        //用户信息
+        List<FindUserDTO> userList = sysUserInfoService.getAllUserList();
+        KingdeeBusinessOperatorExcelListener excelListener=new KingdeeBusinessOperatorExcelListener(this,userList,kingdeeBusinessOperatorList);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), KingdeeBusinessOperatorImportExcelDTO.class, excelListener).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("金蝶业务员信息导入错误！>>>>>{}", e);
+            return Boolean.FALSE;
+        }
+        List<KingdeeBusinessOperatorImportExcelDTO> errorList = excelListener.getErrorList();
+        if (errorList.size() > 0) {
+            String fileName = "金蝶业务员错误信息";
+            ExcelUtil.export(fileName, "kingdeeBusinessOperatorError", errorList, KingdeeBusinessOperatorImportExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
 }

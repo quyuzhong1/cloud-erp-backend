@@ -53,6 +53,13 @@ public class KingdeeBusinessOperatorEntity extends BaseEntity<KingdeeBusinessOpe
     @TableField("kingdee_type")
     private String kingdeeType;
 
+
+    /**
+     * 金蝶的业务员类型
+     */
+    @TableField("type_name")
+    private String typeName;
+
     /**
      * 金蝶的的任刚编码
      */
@@ -66,10 +73,16 @@ public class KingdeeBusinessOperatorEntity extends BaseEntity<KingdeeBusinessOpe
     private String kingdeeUserCode;
 
     /**
+     * 金蝶的用户编码
+     */
+    @TableField("kingdee_user_id")
+    private String kingdeeUserId;
+
+    /**
      * 业务员名称
      */
-    @TableField("king_user_name")
-    private String kingUserName;
+    @TableField("kingdee_user_name")
+    private String kingdeeUserName;
 
     /**
      * 用户id

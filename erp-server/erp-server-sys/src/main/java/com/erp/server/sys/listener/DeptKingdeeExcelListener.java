@@ -121,9 +121,9 @@ public class DeptKingdeeExcelListener extends AnalysisEventListener<DeptKingdeeI
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-        if (CollectionUtils.isNotEmpty(addOrUpdateList)) {
-            deptKingdeeService.saveOrUpdateBatch(addOrUpdateList);
-        }
+//        if (CollectionUtils.isNotEmpty(addOrUpdateList)) {
+//            deptKingdeeService.saveOrUpdateBatch(addOrUpdateList);
+//        }
         if (CollectionUtils.isNotEmpty(addDeptList)) {
             sysDepartmentService.saveBatch(addDeptList);
         }
