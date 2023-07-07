@@ -46,7 +46,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -1136,25 +1135,30 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             // 客户编码
             String code = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(0)));
 
-            /*
             LambdaQueryWrapper<CustomerInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(CustomerInfoEntity::getCode, code);
             queryWrapper.last("LIMIT 1");
-            CustomerInfoEntity customerInfoEntity = this.baseMapper.selectOne(queryWrapper);
-             */
+            CustomerInfoEntity checkCustomerInfoEntity = this.baseMapper.selectOne(queryWrapper);
+            if(Objects.nonNull(checkCustomerInfoEntity)) {
+                log.info("已经存在客户编码【{}】，本次不导入", code);
+                continue;
+            }
+
             CustomerInfoEntity customerInfoEntity = new CustomerInfoEntity();
 
             // 基本信息
             customerInfoEntity.setCode(code);
             // 使用组织
-            String useOrgName = StrUtils.null2EmptyWithTrim(row.getCell(2).getStringCellValue());
+            String useOrgName = ExcelUtil.convertCellValueToString(row.getCell(2));
             customerInfoEntity.setUseOrgName(useOrgName);
             // 使用组织id需根据名称获取
             if(!accountCompanyNameMap.containsKey(useOrgName)) {
-                throw new ServiceException(StrUtil.format("第【{}】行未找到组织【{}】", noticeRow, useOrgName));
+              throw new ServiceException(StrUtil.format("第【{}】行未找到组织【{}】", noticeRow, useOrgName));
             }
             // 名称不会重复
-            customerInfoEntity.setUseOrgId(accountCompanyNameMap.get(useOrgName).get(0).getId());
+            if(Objects.nonNull(accountCompanyNameMap.get(useOrgName))) {
+                customerInfoEntity.setUseOrgId(accountCompanyNameMap.get(useOrgName).get(0).getId());
+            }
 
             // 客户分组（单独的表需提前维护customer_group），分组id需要根据名称获取
             String groupName = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(3)));
@@ -1167,10 +1171,13 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             // 国家
             String countryName = ExcelUtil.convertCellValueToString(row.getCell(4));
             if(!countryNameMap.containsKey(countryName)) {
-                throw new ServiceException(StrUtil.format("第【{}】行未找到国家【{}】", noticeRow, countryName));
+               throw new ServiceException(StrUtil.format("第【{}】行未找到国家【{}】", noticeRow, countryName));
             }
             // 国家id需根据国家名称获取
-            customerInfoEntity.setCountryId(countryNameMap.get(countryName).get(0).getId());
+            customerInfoEntity.setCountryId("");
+            if(countryNameMap.containsKey(countryName)) {
+                customerInfoEntity.setCountryId(countryNameMap.get(countryName).get(0).getId());
+            }
             // 区域id需根据国家id获取
             customerInfoEntity.setAreaId(customerInfoEntity.getCountryId());
             // 省份
@@ -1209,7 +1216,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             // 平台类型
             String platformTypeName = ExcelUtil.convertCellValueToString(row.getCell(10));
             if(!platformNameMap.containsKey(platformTypeName)) {
-                throw new ServiceException(StrUtil.format("第【{}】行未找到平台类型【{}】", noticeRow, platformTypeName));
+               throw new ServiceException(StrUtil.format("第【{}】行未找到平台类型【{}】", noticeRow, platformTypeName));
             }
             customerInfoEntity.setPlatformType(platformNameMap.get(platformTypeName).getValue());
             // 公司类别
@@ -1231,13 +1238,13 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             // 结算币别
             String currencyName = ExcelUtil.convertCellValueToString(row.getCell(15));
             if(StrUtils.isEmpty(currencyName) || !currencyNameMap.containsKey(currencyName)) {
-                throw new ServiceException(StrUtil.format("第【{}】行币别为空或未找到结算币别【{}】", noticeRow, currencyName));
+              throw new ServiceException(StrUtil.format("第【{}】行币别为空或未找到结算币别【{}】", noticeRow, currencyName));
             }
             customerInfoEntity.setCurrency(currencyNameMap.get(currencyName).getId());
             // 收款条件
             String conditionDictName = ExcelUtil.convertCellValueToString(row.getCell(16));
             if(StrUtils.isEmpty(conditionDictName) || !collectionTermNameMap.containsKey(conditionDictName)) {
-                throw new ServiceException(StrUtil.format("第【{}】行收款条件为空或未找到收款条件【{}】", noticeRow, conditionDictName));
+              throw new ServiceException(StrUtil.format("第【{}】行收款条件为空或未找到收款条件【{}】", noticeRow, conditionDictName));
             }
             customerInfoEntity.setConditionDict(collectionTermNameMap.get(conditionDictName).getValue());
 
@@ -1252,9 +1259,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             customerInfoEntity.setCreateTime(LocalDateTime.now());
             customerInfoEntity.setUpdateTime(LocalDateTime.now());
             customerInfoEntity.setCreateUserId("");
-            customerInfoEntity.setCreateUserName("");
+            customerInfoEntity.setCreateUserName("admin");
             customerInfoEntity.setUpdateUserId("");
-            customerInfoEntity.setUpdateUserName("");
+            customerInfoEntity.setUpdateUserName("admin");
 
             if(!customerBaseMap.containsKey(code)) {
                 super.save(customerInfoEntity);
@@ -1332,7 +1339,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     public void importCustomerContact(String customerId, XSSFRow row) {
         // 联系人信息
         // 联系人名称
-        String person = StrUtils.null2EmptyWithTrim(row.getCell(19).getStringCellValue());
+        String person = ExcelUtil.convertCellValueToString(row.getCell(19));
         if(StrUtils.isEmpty(person)) {
             return;
         }
@@ -1382,10 +1389,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         // 详细地址
         String address = ExcelUtil.convertCellValueToString(row.getCell(26));
         // 联系人
-        String addressPerson = StrUtils.null2EmptyWithTrim(row.getCell(27).getStringCellValue());
-        if((StrUtils.isEmpty(address) && StrUtils.isNotEmpty(addressPerson)) || (StrUtils.isNotEmpty(address) && StrUtils.isEmpty(addressPerson)) ) {
-            throw new ServiceException("联系人和联系地址不允许一个为空，一个不为空");
-        }
+        String addressPerson = ExcelUtil.convertCellValueToString(row.getCell(27));
         if(StrUtils.isEmpty(address) && StrUtils.isEmpty(addressPerson)) {
             return;
         }
@@ -1494,20 +1498,26 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             return;
         }
         if(StrUtils.isNotEmpty(deptName) && !deptNameMap.containsKey(deptName)) {
-            throw new ServiceException(StrUtil.format("第【{}】行未找到销售部门【{}】", noticeRow, deptName));
+           throw new ServiceException(StrUtil.format("第【{}】行未找到销售部门【{}】", noticeRow, deptName));
         }
         // 销售员信息
         CustomerSellerEntity customerSellerEntity = new CustomerSellerEntity();
         customerSellerEntity.setMainId(mainId);
-        customerSellerEntity.setDeptId(deptNameMap.get(deptName).get(0).getDeptId());
+        customerSellerEntity.setDeptId("");
+        if(Objects.nonNull(deptNameMap.get(deptName))) {
+            customerSellerEntity.setDeptId(deptNameMap.get(deptName).get(0).getDeptId());
+        }
         // 销售员
         String sellerName = ExcelUtil.convertCellValueToString(row.getCell(41));
         if(StrUtils.isNotEmpty(sellerName) && !userNameMap.containsKey(sellerName)) {
-            throw new ServiceException(StrUtil.format("第【{}】行未找到销售员【{}】", noticeRow, sellerName));
+           throw new ServiceException(StrUtil.format("第【{}】行未找到销售员【{}】", noticeRow, sellerName));
         }
         customerSellerEntity.setSellerName(sellerName);
         // 需转换成销售员id
-        customerSellerEntity.setSellerId(userNameMap.get(sellerName).get(0).getUserId());
+        customerSellerEntity.setSellerId("");
+        if(userNameMap.containsKey(sellerName)) {
+            customerSellerEntity.setSellerId(userNameMap.get(sellerName).get(0).getUserId());
+        }
         // 开始日期
         String startDateStr = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(42)));
         if(StrUtils.isNotEmpty(startDateStr) && startDateStr.length() == 10) {

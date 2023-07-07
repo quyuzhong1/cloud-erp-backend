@@ -42,11 +42,11 @@ public class ProcessBusinessServiceImpl extends SuperServiceImpl<ProcessBusiness
     }
 
     @Override
-    public ProcessBusinessEntity getProcessBusiness(String businessKey, String condition) {
+    public ProcessBusinessEntity getProcessBusiness(String businessKey, String condition, Boolean disabled) {
         ProcessBusinessEntity processBusiness = lambdaQuery()
                 .eq(ProcessBusinessEntity::getBusinessKey, businessKey)
                 .eq(StrUtil.isNotBlank(condition), ProcessBusinessEntity::getStartCondition, condition)
-                .eq(ProcessBusinessEntity::getDisabled, Boolean.FALSE)
+                .eq(null != disabled, ProcessBusinessEntity::getDisabled, disabled)
                 .orderByDesc(ProcessBusinessEntity::getUpdateTime)
                 .last("limit 1")
                 .one();
@@ -56,7 +56,7 @@ public class ProcessBusinessServiceImpl extends SuperServiceImpl<ProcessBusiness
     @Override
     public void addOrUpdate(ProcessDefinitionDTO.AddOrUpdateDTO dto) {
 //        ProcessBusinessEntity oldBusinessEntity = getByDefinitionId(dto.getId());
-        ProcessBusinessEntity oldBusinessEntity = getProcessBusiness(dto.getBusinessKey(),"");
+        ProcessBusinessEntity oldBusinessEntity = getProcessBusiness(dto.getBusinessKey(),"", null);
 //        if(business != null) {
 //            throw new ServiceException(ApiError.PROCESS_BUSINESS_KEY_EXIST);
 //        }

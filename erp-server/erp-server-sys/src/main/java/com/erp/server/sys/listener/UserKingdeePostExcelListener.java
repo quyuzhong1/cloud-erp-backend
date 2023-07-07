@@ -75,8 +75,7 @@ public class UserKingdeePostExcelListener extends AnalysisEventListener<UserKing
         }
         UserKingdeePostEntity post = userKingdeePostList.stream().filter(p -> p.getUserId().equals(user.getUserId())).findFirst().orElse(new UserKingdeePostEntity());
         post.setKingdeePostCode(excelDTO.getKingdeePostCode());
-        post.setKingdeeUserCode(excelDTO.getKingdeeUserCode());
-        post.setUseOrgName(excelDTO.getUseOrgName());
+        post.setUseOrgId(excelDTO.getUseOrgId());
         post.setPostName(excelDTO.getPostName());
         post.setUserName(userName);
         post.setUserId(user.getUserId());

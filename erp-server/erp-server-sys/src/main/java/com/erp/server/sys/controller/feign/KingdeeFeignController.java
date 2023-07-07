@@ -1,0 +1,48 @@
+package com.erp.server.sys.controller.feign;
+
+
+import com.common.core.controller.BaseController;
+import com.erp.model.sys.dto.DeptKingdeeDTO;
+import com.erp.model.sys.dto.KingdeePostDTO;
+import com.erp.model.sys.entity.DeptKingdeeEntity;
+import com.erp.server.sys.service.DeptKingdeeService;
+import com.erp.server.sys.service.UserKingdeePostService;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
+
+/**
+ * <p>
+ * 前端控制器
+ * </p>
+ *
+ * @author Lambda
+ * @since 2023-07-07
+ */
+@RestController
+@RequestMapping("/feign/kingdee")
+public class KingdeeFeignController extends BaseController {
+
+
+    @Resource
+    private DeptKingdeeService deptKingdeeService;
+
+    @Resource
+    private UserKingdeePostService userKingdeePostService;
+
+    @PostMapping("/getInfo")
+    public DeptKingdeeEntity getInfo(@RequestBody DeptKingdeeDTO.FindDeptKingdeeDTO dto) {
+        return deptKingdeeService.getInfo(dto);
+    }
+
+    @PostMapping("/getUserKingdeePost")
+    public KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePost(@RequestBody KingdeePostDTO.FindUserKingdeePostInfoDTO dto) {
+        KingdeePostDTO.UserKingdeePostInfoDTO result = userKingdeePostService.getUserKingdeePost(dto);
+        return result;
+    }
+
+
+}

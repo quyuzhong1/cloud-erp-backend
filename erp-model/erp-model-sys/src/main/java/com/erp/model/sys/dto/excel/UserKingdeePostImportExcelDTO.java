@@ -25,7 +25,7 @@ public class UserKingdeePostImportExcelDTO implements Serializable {
     @ColumnWidth(25)
     @ExcelProperty(value = "使用组织", index = 1)
     @FieldValid(fieldName = "使用组织",isNotBlank = true,maxLength =50 )
-    private String useOrgName;
+    private String useOrgId;
 
 
     /**
@@ -59,8 +59,8 @@ public class UserKingdeePostImportExcelDTO implements Serializable {
      * 员工岗位名
      */
     @ColumnWidth(25)
-    @ExcelProperty(value = "员工金蝶岗位编码", index = 7)
-    @FieldValid(fieldName = "员工金蝶岗位编码",isNotBlank = true,maxLength =50 )
+    @ExcelProperty(value = "员工金蝶岗位名称", index = 7)
+    @FieldValid(fieldName = "员工金蝶岗位名称",isNotBlank = true,maxLength =50 )
     private String postName;
 
 

@@ -24,7 +24,7 @@ public class KingdeePoImportExcelDTO {
     private String  code;
 
     @ExcelProperty(value = "*(基本信息)采购日期" )
-    @FieldValid(fieldName = "采购日期", isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.DATE_)
+    @FieldValid(fieldName = "采购日期", isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.DATE)
     private String  billDateStr;
 
     @ExcelProperty(value = "*(基本信息)供应商#编码" )
@@ -36,11 +36,11 @@ public class KingdeePoImportExcelDTO {
     private String  purchaseOrgCode;
 
     @ExcelProperty(value = "(基本信息)采购部门#编码" )
-    @FieldValid(fieldName = "采购部门", isNotBlank = true)
+    @FieldValid(fieldName = "采购部门")
     private String  purchaseDeptCode;
 
     @ExcelProperty(value = "(基本信息)采购员#编码" )
-    @FieldValid(fieldName = "采购员", isNotBlank = true)
+    @FieldValid(fieldName = "采购员")
     private String  purchaseUserCode;
 
     @ExcelProperty(value = "(基本信息)供货方联系人#名称" )
@@ -56,7 +56,7 @@ public class KingdeePoImportExcelDTO {
     private String  approveUserCode;
 
     @ExcelProperty(value = "(基本信息)审核日期" )
-    @FieldValid(fieldName = "审核日期",formatPattern = FieldFormatPatternTypeEnum.DATE_)
+    @FieldValid(fieldName = "审核日期",formatPattern = FieldFormatPatternTypeEnum.DATE)
     private String  approveTimeStr;
 
     @ExcelProperty(value = "(基本信息)新品首批" )
@@ -76,7 +76,7 @@ public class KingdeePoImportExcelDTO {
     private String  qty;
 
     @ExcelProperty(value = "(明细信息)交货日期" )
-    @FieldValid(fieldName = "交货日期",formatPattern = FieldFormatPatternTypeEnum.DATETIME_)
+    @FieldValid(fieldName = "交货日期")
     private String  planDeliveryDateStr;
 
     @ExcelProperty(value = "(明细信息)含税单价" )
