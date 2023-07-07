@@ -40,12 +40,12 @@ public class InstockForcastDetailServiceImpl extends SuperServiceImpl<InstockFor
     public List<InstockForcastDetailEntity> add(InstockForcastDTO.AddDTO dto, String id) {
         List<InstockForcastDetailDTO.AddDTO> details = dto.getDetails();
         Map<String, List<InstockForcastDetailDTO.AddDTO>> map = details.stream().collect(Collectors.groupingBy(InstockForcastDetailDTO.AddDTO::getSkuId));
-        for (Map.Entry<String, List<InstockForcastDetailDTO.AddDTO>> entry : map.entrySet()) {
-            List<InstockForcastDetailDTO.AddDTO> value = entry.getValue();
-            if (value.size() > 1) {
-                throw new ServiceException(ApiError.ERROR_1024.code, "sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复"));
-            }
-        }
+//        for (Map.Entry<String, List<InstockForcastDetailDTO.AddDTO>> entry : map.entrySet()) {
+//            List<InstockForcastDetailDTO.AddDTO> value = entry.getValue();
+//            if (value.size() > 1) {
+//                throw new ServiceException(ApiError.ERROR_1024.code, "sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复"));
+//            }
+//        }
         // 获取产品信息
         List<String> skuIdList = details.stream().map(InstockForcastDetailDTO.AddDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
