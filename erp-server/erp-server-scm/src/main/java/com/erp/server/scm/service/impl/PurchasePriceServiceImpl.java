@@ -208,6 +208,15 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         viewDTO.setAttachmentUrlList(attachmentUrlList);
         //获取明细信息
         List<PurchasePriceDetailDTO.ViewDTO> purchasePriceDetailList = priceDetailService.getByPurchasePriceId(id);
+
+
+        List<String> skuIds = purchasePriceDetailList.stream().map(PurchasePriceDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(skuIds);
+        purchasePriceDetailList.forEach(req -> {
+            SkuVO skuVO = skuNoList.stream().filter(obj -> obj.getSkuId().equals(req.getSkuId())).findFirst().orElse(new SkuVO());
+            req.setProductName(skuVO.getSkuName());
+        });
+
         viewDTO.setPurchasePriceDetailList(purchasePriceDetailList);
 
         return viewDTO;
@@ -564,7 +573,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             //币种信息
             List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
             for (PurchasePriceDTO.PagingViewDTO item : list) {
-                SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(null);
+                SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
                 item.setProductName(skuVO.getSkuName());
                 boolean contains = flagList.contains(item.getId());
                 ApproveStatusEnum approveStatusEnum = item.getApproveStatus();

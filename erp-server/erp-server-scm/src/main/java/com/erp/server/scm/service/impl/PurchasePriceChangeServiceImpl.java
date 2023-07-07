@@ -21,10 +21,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.scm.dto.AttachmentDTO;
-import com.erp.model.scm.dto.PurchasePriceChangeDTO;
-import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
-import com.erp.model.scm.dto.PurchasePriceDetailDTO;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
@@ -32,6 +30,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.constant.ScmConstant;
@@ -94,6 +93,9 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Resource
     private WorkflowFeign workflowFeign;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     /**
      * 添加采购价目变更
@@ -284,6 +286,12 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         viewDTO.setAttachmentUrlList(attachmentUrlList);
         //获取明细信息
         List<PurchasePriceChangeDetailDTO.ViewDTO> purchasePriceDetailList = purchasePriceChangeDetailService.getByPriceChangeId(id);
+        List<String> skuIds = purchasePriceDetailList.stream().map(PurchasePriceChangeDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(skuIds);
+        purchasePriceDetailList.forEach(req -> {
+            SkuVO skuVO = skuNoList.stream().filter(obj -> obj.getSkuId().equals(req.getSkuId())).findFirst().orElse(new SkuVO());
+            req.setProductName(skuVO.getSkuName());
+        });
         viewDTO.setPurchasePriceChangeDetailList(purchasePriceDetailList);
         return viewDTO;
     }
@@ -620,15 +628,16 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         IPage pageData = baseMapper.paging(query, params, statusList);
         List<PurchasePriceChangeDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
-
+            List<String> skuIds = list.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+            List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(skuIds);
             List<String> flagIdList = new ArrayList<>(10);
-
             List<String> currencyIdList = list.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
             //币种信息
             List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
             for (PurchasePriceChangeDTO.PagingViewDTO item : list) {
                 boolean contains = flagIdList.contains(item.getId());
-
+                SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
+                item.setProductName(skuVO.getSkuName());
                 ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
                 item.setApproveStatusCode(approveStatusEnum.getStatus());
                 item.setApproveStatusName(approveStatusEnum.getName());
