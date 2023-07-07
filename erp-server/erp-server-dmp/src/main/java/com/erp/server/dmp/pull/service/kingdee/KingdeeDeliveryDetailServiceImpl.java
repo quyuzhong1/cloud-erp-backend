@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.constant.CommonConstants;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.EnumTimePattern;
 import com.common.message.constant.RocketMqTopic;
@@ -146,16 +147,13 @@ public class KingdeeDeliveryDetailServiceImpl implements IReportSaveService<King
      */
     private List<KingdeeDeliveryDetailEntity> listWantToMqSoOutstock(List<KingdeeDeliveryDetailEntity> pushToMqList) {
         List<KingdeeDeliveryDetailEntity> wantList = new ArrayList<>(pushToMqList.size());
-
-        Map<SettingEnum, String> map = settingService.getMap(SettingEnum.KD_TO_ERP_FILTER);
-        // B2C 销售出库单
-        String fBillTypeID = map.get(SettingEnum.KD_TO_ERP_B2C_SO_OUTSTOCK_BILL_TYPE);
+        String dataSources = CommonConstants.SYSTEM;
         for (KingdeeDeliveryDetailEntity item : pushToMqList) {
-            // 跳过非唯迹订单
+            // 跳过非唯迹订单 和本身的自研ERP
             if (StrUtil.isEmpty(item.getFSaleOrgId()) ||
                     ApiKingdeeOrganizationEnum.ORGANIZATION_YZS.getCode().equals(item.getFSaleOrgId()) ||
                     ApiKingdeeOrganizationEnum.ORGANIZATION_XX.getCode().equals(item.getFSaleOrgId()) ||
-                    !fBillTypeID.equals(item.getFBillTypeID())
+                    dataSources.equals(item.getDataSources())
             ) {
                 continue;
             }
