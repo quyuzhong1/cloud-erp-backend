@@ -116,7 +116,6 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
         return this.getOne(queryWrapper);
     }
 
-
     /**
      * 根据sku id 集合 获取到产品包装信息
      *
