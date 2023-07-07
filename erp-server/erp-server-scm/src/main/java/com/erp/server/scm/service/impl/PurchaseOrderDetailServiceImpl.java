@@ -92,8 +92,8 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         if (CollectionUtils.isEmpty(details)) {
             return;
         }
-        //验证报价信息 TODO
-        //checkPurchasePrice(details,purchaseOrderId);
+        //验证报价信息
+        checkPurchasePrice(details,purchaseOrderId);
 
         List<PurchaseOrderDetailEntity> list = BeanMapperUtils.copyList(PurchaseOrderDetailEntity.class, details);
         //处理明细中的数据id
