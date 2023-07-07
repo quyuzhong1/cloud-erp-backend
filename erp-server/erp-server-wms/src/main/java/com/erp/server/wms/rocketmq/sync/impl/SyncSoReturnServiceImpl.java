@@ -79,7 +79,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             return;
         }*/
         //不同步MWS同步到金蝶的数据
-        if (kingdeeReturnOrderEntity.getFBillNo().contains(BusinessNoConstant.XSTH) && kingdeeReturnOrderEntity.getFBillNo().length() == 15) {
+        if (kingdeeReturnOrderEntity.getFBillNo().contains(BusinessNoConstant.XSTH) || kingdeeReturnOrderEntity.getFBillNo().length() == 15) {
             return;
         }
 
