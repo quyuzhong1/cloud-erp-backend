@@ -173,7 +173,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         } catch (Exception e) {
             log.error("未查询到有效数据，apiPlatformId = {}，id = {}，number = {}，firstOrgId = {}",apiPlatformId,id,number,kingDeeCreateOrgDTO.getFirstOrgId());
             //根据二级创建组织查询
-            createOrgId = ObjectUtils.isEmpty(kingDeeCreateOrgDTO.getSecondOrgId()) ? createOrgId : kingDeeCreateOrgDTO.getFirstOrgId();
+            createOrgId = ObjectUtils.isEmpty(kingDeeCreateOrgDTO.getSecondOrgId()) ? createOrgId : kingDeeCreateOrgDTO.getSecondOrgId();
             model = handleViewJson(apiUtils, id, number, createOrgId);
         }
         return model;
@@ -576,6 +576,11 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         if (ApiFieldTypeEnum.FIELD_VALUE_COPY.getCode().equals(cfgApiFieldMapDTO.getFieldType())) {
             Object value = map.get(cfgApiFieldMapDTO.getSelfField());
             String format = "";
+
+            //当传入的值是空时取默认
+            if (ObjectUtils.isEmpty(value) || StringUtils.isBlank(String.valueOf(value))) {
+                value = cfgApiFieldMapDTO.getDefaultValue();
+            }
             if (value instanceof LocalDateTime) {
                 LocalDateTime value1 = (LocalDateTime) value;
                 format = value1.format(DateTimeFormatter.ofPattern(DateUtil.fmt));
