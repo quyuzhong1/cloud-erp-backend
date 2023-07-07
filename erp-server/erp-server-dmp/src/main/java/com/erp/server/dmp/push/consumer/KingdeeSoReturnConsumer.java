@@ -110,7 +110,8 @@ public class KingdeeSoReturnConsumer implements RocketMQListener<Map<String, Obj
                 "F_ulz_KHSKU," +
                 "FAllAmount," +
                 "FReturnType," +
-                "FSOEntryId";
+                "FSOEntryId," +
+                "F_ULZ_data_sources";
 
         System.out.println(filterStr);
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);

@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.core.constant.CommonConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
@@ -79,7 +80,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             return;
         }*/
         //不同步MWS同步到金蝶的数据
-        if (kingdeeReturnOrderEntity.getFBillNo().contains(BusinessNoConstant.XSTH) || kingdeeReturnOrderEntity.getFBillNo().length() == 15) {
+        if (CommonConstants.SYSTEM.equals(kingdeeReturnOrderEntity.getFULZDataSources())) {
             return;
         }
 

@@ -236,7 +236,8 @@ public class KingdeeReturnOrderInfoImpl implements IReportSaveService<KingdeeRet
                 "F_ulz_KHSKU," +
                 "FAllAmount," +
                 "FReturnType," +
-                "FSOEntryId";
+                "FSOEntryId," +
+                "F_ULZ_data_sources";
 
         Boolean dataSign = true;
         //当前页数
