@@ -11,9 +11,11 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.DeptKingdeeEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
@@ -47,6 +49,9 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private KingdeeFeign kingdeeFeign;
 
     @Resource
     private CustomerInfoService customerInfoService;
@@ -92,7 +97,6 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         //编码
         resultMap.put("code", entity.getCode());
 
-
         //交货方式
         resultMap.put("deliveryMode", entity.getDeliveryMode());
         //单据类型
@@ -102,30 +106,44 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         //是否收取运费
         resultMap.put("isCollectShippingFee", entity.getIsCollectShippingFee());
 
+        //销售组织
+        String salesOrgId = entity.getSalesOrgId();
 
+
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
+        //销售组织的金蝶code
+        String salesOrgCode = orgList.stream().filter(o -> o.getId().equals(salesOrgId)).
+                map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
+
+        //部门id
         String salesDeptId = entity.getSalesDeptId();
         //销售员
         String sellerId = entity.getSellerId();
         //获取部门id
         if (StringUtils.isNotBlank(salesDeptId)) {
-            SysDepartmentDTO departmentDTO = sysUserFeign.getUserDeptById(salesDeptId);
+            DeptKingdeeDTO.FindDeptKingdeeDTO findDeptKingdee = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+            findDeptKingdee.setDeptId(salesDeptId);
+            findDeptKingdee.setOrgCode(salesOrgCode);
+            DeptKingdeeEntity deptKingdee = kingdeeFeign.getKingdee(findDeptKingdee);
             //销售部门
-            if (!Objects.isNull(departmentDTO)) {
-                resultMap.put("deptCode", departmentDTO.getCode());
+            if (!Objects.isNull(deptKingdee)) {
+                resultMap.put("deptCode", deptKingdee.getKingdeeDeptCode());
             }
         }
         //获取员工
         if (StringUtils.isNotBlank(sellerId)) {
+            KingdeePostDTO.FindUserKingdeePostInfoDTO getUserKingdeePost = new KingdeePostDTO.FindUserKingdeePostInfoDTO();
+            getUserKingdeePost.setOrgCode(salesOrgCode);
+            getUserKingdeePost.setUserId(sellerId);
             //获取员工 岗位信息
-            KingdeePostDTO.UserKingdeePostInfoDTO userDTO = sysUserFeign.getUserKingdeePostByUserId(sellerId);
+            KingdeePostDTO.UserKingdeePostInfoDTO userDTO = kingdeeFeign.getUserKingdeePost(getUserKingdeePost);
             //销售员
             if (!Objects.isNull(userDTO)) {
                 resultMap.put("sellerCode", userDTO.getKingdeePostCode());
                 resultMap.put("seller", userDTO.getUserName());
             }
         }
-        //销售组织
-        String salesOrgId = entity.getSalesOrgId();
+
         String currency = entity.getCurrency();
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(currency));
         //结算币别
@@ -153,16 +171,14 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         orgIdList.add(warehouseOrgId);
         orgIdList.add(salesOrgId);
         String warehouseOrgCode = "";
-        if (CollectionUtils.isNotEmpty(orgIdList)) {
-            List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
-            String salesOrgCode = orgList.stream().filter(o -> o.getId().equals(salesOrgId)).
-                    map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
-            if (StringUtils.isNotBlank(salesOrgCode)) {
-                resultMap.put("salesOrgCode", salesOrgCode);
-            }
-            warehouseOrgCode = orgList.stream().filter(o -> o.getId().equals(warehouseOrgId)).
-                    map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("100");
+
+
+        if (StringUtils.isNotBlank(salesOrgCode)) {
+            resultMap.put("salesOrgCode", salesOrgCode);
         }
+        warehouseOrgCode = orgList.stream().filter(o -> o.getId().equals(warehouseOrgId)).
+                map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("100");
+
         //客户
         String customerId = entity.getCustomerId();
         if (StringUtils.isNotBlank(customerId)) {

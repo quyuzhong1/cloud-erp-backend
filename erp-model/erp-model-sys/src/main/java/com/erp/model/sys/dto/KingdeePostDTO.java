@@ -49,5 +49,17 @@ public class KingdeePostDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class FindUserKingdeePostInfoDTO {
+
+        private String userId;
+
+        private String orgCode;
+
+
+
+    }
+
 
 }

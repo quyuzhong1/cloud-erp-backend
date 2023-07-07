@@ -1166,7 +1166,7 @@
         pdi.spu_no AS spu_no
         FROM project_task pt
         left join product_info pdi on pt.product_id = pdi.id AND pdi.is_deleted = FALSE
-        where  pdi.approval_status != 5
+        where  pdi.approval_status != 5 and pt.is_deleted=false
         <if test="params.searchCategory != null and (params.searchCategory == 1 or params.searchCategory == 3 or params.searchCategory == 5 or params.searchCategory == 7) ">
             <if test="params.groupFlag != null  and params.groupFlag != ''">
                 AND pt.product_id = #{params.groupFlag}
