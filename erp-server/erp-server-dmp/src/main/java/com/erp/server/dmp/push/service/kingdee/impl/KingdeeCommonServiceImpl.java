@@ -173,19 +173,12 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         } catch (Exception e) {
             log.error("未查询到有效数据，apiPlatformId = {}，id = {}，number = {}，firstOrgId = {}",apiPlatformId,id,number,kingDeeCreateOrgDTO.getFirstOrgId());
             //根据二级创建组织查询
-            createOrgId = ObjectUtils.isEmpty(kingDeeCreateOrgDTO.getSecondOrgId()) ? createOrgId : kingDeeCreateOrgDTO.getFirstOrgId();
+            createOrgId = ObjectUtils.isEmpty(kingDeeCreateOrgDTO.getSecondOrgId()) ? createOrgId : kingDeeCreateOrgDTO.getSecondOrgId();
             model = handleViewJson(apiUtils, id, number, createOrgId);
         }
         return model;
     }
 
-    public static void main(String[] args) {
-        CfgApiAuthDTO.KingDeeCreateOrgDTO kingDeeCreateOrgDTO = new CfgApiAuthDTO.KingDeeCreateOrgDTO();
-        kingDeeCreateOrgDTO.setFirstOrgId(1);
-        kingDeeCreateOrgDTO.setSecondOrgId(2);
-        String s = JSONUtil.toJsonStr(kingDeeCreateOrgDTO);
-        System.out.println(s);
-    }
 
     @Override
     public JSONObject queryGroupInfo(KingdeeApiUtils apiUtils, String id, String code) {
