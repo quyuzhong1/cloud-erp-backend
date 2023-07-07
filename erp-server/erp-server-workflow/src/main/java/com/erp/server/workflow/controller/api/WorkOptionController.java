@@ -60,6 +60,19 @@ public class WorkOptionController extends BaseController {
     }
 
     /**
+     * 新增常用模块
+     * @Author Luo_WG
+     * @Date 2023/7/7 16:28
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/addOften")
+    public ApiResult addOften(@RequestBody WorkOptionDTO.AddOftenDTO dto) {
+        Boolean flag = workOptionService.addOften(dto);
+        return flag == true ? success() : failure();
+    }
+
+    /**
      * 修改
      * @Author Luo_WG
      * @Date 2023/4/20 19:45

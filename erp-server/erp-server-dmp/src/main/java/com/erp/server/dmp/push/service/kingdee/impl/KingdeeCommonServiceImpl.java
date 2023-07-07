@@ -568,6 +568,10 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         //直接复制值
         if (ApiFieldTypeEnum.FIELD_VALUE_COPY.getCode().equals(cfgApiFieldMapDTO.getFieldType())) {
             Object value = map.get(cfgApiFieldMapDTO.getSelfField());
+            //当传入的值是空时取默认
+            if (ObjectUtils.isEmpty(value) || StringUtils.isBlank(String.valueOf(value))) {
+                value = cfgApiFieldMapDTO.getDefaultValue();
+            }
             String format = "";
             if (value instanceof LocalDateTime) {
                 LocalDateTime value1 = (LocalDateTime) value;
@@ -581,7 +585,6 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
                 LocalTime value1 = (LocalTime) value;
                 format = value1.format(DateTimeFormatter.ofPattern(DateUtil.fmt_hms));
             }
-
             KingdeeUtils.makeFieldJson(json, cfgApiFieldMapDTO.getApiField(), ".", StrUtil.isNotBlank(format) ? format : value);
             return;
         }

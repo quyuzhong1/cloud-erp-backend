@@ -1713,8 +1713,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         for (Map.Entry<String, List<PurchaseOrderDetailDTO.AddDTO>> entry : map.entrySet()) {
             List<PurchaseOrderDetailDTO.AddDTO> value = entry.getValue();
             if (value.size() > MathUtil.ONE) {
-                //TODO
-                //throw new ServiceException(new ApiResult(1, "sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复")));
+                throw new ServiceException(new ApiResult(1, "sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复")));
             }
         }
     }
