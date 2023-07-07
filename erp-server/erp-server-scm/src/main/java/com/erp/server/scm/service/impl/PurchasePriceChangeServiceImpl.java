@@ -287,7 +287,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         //获取明细信息
         List<PurchasePriceChangeDetailDTO.ViewDTO> purchasePriceDetailList = purchasePriceChangeDetailService.getByPriceChangeId(id);
         List<String> skuIds = purchasePriceDetailList.stream().map(PurchasePriceChangeDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(skuIds);
+        List<SkuVO> skuNoList = plmTaskFeign.getSkuInfoByIds(skuIds);
         purchasePriceDetailList.forEach(req -> {
             SkuVO skuVO = skuNoList.stream().filter(obj -> obj.getSkuId().equals(req.getSkuId())).findFirst().orElse(new SkuVO());
             req.setProductName(skuVO.getSkuName());
@@ -629,7 +629,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         List<PurchasePriceChangeDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             List<String> skuIds = list.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
-            List<SkuVO> skuNoList = plmTaskFeign.listBySkuNoList(skuIds);
+            List<SkuVO> skuNoList = plmTaskFeign.getSkuInfoByIds(skuIds);
             List<String> flagIdList = new ArrayList<>(10);
             List<String> currencyIdList = list.stream().map(PurchasePriceChangeDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
             //币种信息
