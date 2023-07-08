@@ -1,17 +1,17 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.server.sys.service.KingdeeBusinessOperatorService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -36,6 +36,16 @@ public class KingdeeBusinessOperatorController extends BaseController {
     public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = kingdeeBusinessOperatorService.importFile(excelFile, response);
         return result ? success() : failure();
+    }
+
+
+    /**
+     * 业务员列表
+     */
+    @PostMapping("/list")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> list (@RequestBody KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
+        List<BaseDropDownDTO.CommonDTO> list = kingdeeBusinessOperatorService.listInfo(dto);
+        return success(list);
     }
 
 }

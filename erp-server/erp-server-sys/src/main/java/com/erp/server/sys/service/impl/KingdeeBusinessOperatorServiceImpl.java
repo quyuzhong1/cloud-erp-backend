@@ -2,8 +2,10 @@ package com.erp.server.sys.service.impl;
 
 import com.alibaba.excel.EasyExcel;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.ExcelUtil;
+import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.excel.KingdeeBusinessOperatorImportExcelDTO;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.server.sys.listener.KingdeeBusinessOperatorExcelListener;
@@ -60,5 +62,34 @@ public class KingdeeBusinessOperatorServiceImpl extends SuperServiceImpl<Kingdee
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
+    }
+
+    /**
+     * 获取到对应的业务员
+     * @author yl
+     * @date 2023-07-08 10:56
+     * @param dto
+     * @return com.erp.model.sys.entity.KingdeeBusinessOperatorEntity
+     */
+    @Override
+    public KingdeeBusinessOperatorEntity find(KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO dto) {
+
+        return this.lambdaQuery().eq(KingdeeBusinessOperatorEntity::getErpUserId,dto.getUserId())
+                .eq(KingdeeBusinessOperatorEntity::getKingdeeOrgCode,dto.getOrgCode())
+                .eq(KingdeeBusinessOperatorEntity::getKingdeeType,dto.getBusinessOperatorType())
+                .last("LIMIT 1").getEntity();
+    }
+
+
+    /**
+     * 获取业务员列表
+     * @author yl
+     * @date 2023-07-08 11:33
+     * @param dto
+     * @return java.util.List<com.common.business.dto.base.BaseDropDownDTO.CommonDTO>
+     */
+    @Override
+    public List<BaseDropDownDTO.CommonDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
+        return baseMapper.listInfo(dto);
     }
 }

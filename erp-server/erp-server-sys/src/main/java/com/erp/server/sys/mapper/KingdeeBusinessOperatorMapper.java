@@ -1,8 +1,12 @@
 package com.erp.server.sys.mapper;
 
+import com.common.business.dto.base.BaseDropDownDTO;
+import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,4 +19,10 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface KingdeeBusinessOperatorMapper extends BaseMapper<KingdeeBusinessOperatorEntity> {
 
+    /**
+     * 获取到业务员信息
+     * @param dto
+     * @return
+     */
+    List<BaseDropDownDTO.CommonDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto);
 }
