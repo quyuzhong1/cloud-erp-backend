@@ -85,7 +85,7 @@ public class PurchasePriceDetailExcelListener extends AnalysisEventListener<Purc
                 addDTO.setTaxRate(purchasePriceDetailImportExcelDTO.getTaxRate());
                 addDTO.setSkuId(skuEntity.getSkuId());
                 addDTO.setSkuNo(skuEntity.getSkuNo());
-                addDTO.setProductName(skuEntity.getSpuName());
+                addDTO.setProductName(skuEntity.getSkuName());
                 successList.add(addDTO);
             }
         }
