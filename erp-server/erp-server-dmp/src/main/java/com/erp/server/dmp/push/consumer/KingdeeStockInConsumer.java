@@ -4,6 +4,7 @@ package com.erp.server.dmp.push.consumer;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.druid.support.json.JSONUtils;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -20,7 +21,10 @@ import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
+import com.google.gson.JsonObject;
 import com.kingdee.bos.webapi.entity.SaveParam;
+import com.kingdee.bos.webapi.entity.SaveResult;
+import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
@@ -42,18 +46,64 @@ public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Obje
     @Resource
     private KingdeeCommonService kingdeeCommonService;
 
+
+    private String formId;
     public static void main(String[] args) {
 
         Map<String, Object> resultMap = new LinkedHashMap<>();
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_INSTOCK.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "CGRK2645639"));
+        queryFilters.add(String.format("FBillNo = '%s'", "CGRK2542792"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FID,FInStockEntry_FEntryID";
+        String fieldKeys = "FID,FInStockEntry_FEntryID,FStockLocId.FF100014";
+        System.out.println(filterStr);
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
         System.out.println(queryList);
 
+
+        //模块类型
+        Integer type = ApiModuleTypeEnum.PURCHASE_STOCK_IN.getCode();
+        K3CloudApi client = new K3CloudApi();
+
+        JSONObject json = JSONUtil.parseObj("{\"" +
+                "FBillTypeID\":{\"FNumber\":\"RKD01_SYS\"},\"" +
+                "FBillNo\":\"CGRK23070700002\",\"" +
+                "FDate\":\"2023-07-07\",\"" +
+                "FStockOrgId\":{\"FNumber\":\"113\"},\"" +
+                "FPurchaseOrgId\":{\"FNumber\":\"113\"},\"" +
+                "FPurchaseDeptId\":{\"FNumber\":\"BM000004\"},\"" +
+                "FProviderContactID\":{\"FName\":\"\"},\"" +
+                "FPurchaserId\":{\"FName\":\"祝梦彬\",\"FNumber\":\"\"},\"" +
+                "FSupplyAddress\":\"中山市坦洲镇第三工业区滨河西路9号A幢\",\"" +
+                "FSupplierId\":{\"FNumber\":\"GYS23070600003\",\"FName\":\"中山芯思塑料制品有限公司\"},\"" +
+                "F_ulz_Combo\":2,\"" +
+                "FInStockEntry\":[{\"" +
+                "" +
+                "FMaterialId\":{\"FNumber\":\"YZJ2985\"},\"" +
+                "FRealQty\":100,\"" +
+                "FStockId\":{\"FNumber\":\"jp-jgsc\",\"FName\":\"加工商仓库\"},\"" +
+
+                "FNote\":\"\",\"" +
+                "FPriceBaseQty\":100,\"" +
+                "FUnitID\":{\"FNumber\":\"Pcs\"},\"" +
+                "FPriceUnitID\":{\"FNumber\":\"ge\"},\"" +
+                "FRemainInStockUnitId\":{\"FNumber\":\"Pcs\"},\"" +
+                "FPOOrderNo\":\"PO23070700001\",\"" +
+                "FStockLocId\":{\"FSTOCKLOCID__FF100014\":{\"FNumber\":\"VEN00016\"}},\"" +
+                "FRemainInStockQty\":100}]}");
+
+        //判断金蝶系统是否已存在该数据
+        SaveParam param = new SaveParam(json);
+        SaveResult result;
+        try {
+            result = client.save(KingdeePushModuleEnum.STK_INSTOCK.getCode(), param);
+            if (!result.isSuccessfully()) {
+                throw new RuntimeException("【保存】出错:" + JSONUtil.toJsonStr(result.getResult().getResponseStatus().getErrors()));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     @Override
