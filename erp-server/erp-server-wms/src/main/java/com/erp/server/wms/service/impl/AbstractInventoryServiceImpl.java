@@ -271,7 +271,8 @@ public abstract class AbstractInventoryServiceImpl {
         RLock rlock = rwLock.writeLock();// 获取写锁
         boolean isLock;
         try {
-            isLock = rlock.tryLock(5, TimeUnit.SECONDS);
+            // 设置最大等待锁时间
+            isLock = rlock.tryLock(10, TimeUnit.SECONDS);
             log.info("库存状态：【{}】，仓库：【{}】，组织：【{}】，SKU ID：【{}】，SKU编号：【{}】, 交易业务：【{}】，来源单据类型：【{}】, 单据id：【{}】，SKU编号：【{}】，是否获取到锁: {}", inventoryStatusEnum.getName(), warehouseId, orgId, skuId, skuNo, businessType.getName(), sourceTypeEnum.getName(), param.getSourceId(), param.getSkuNo(), isLock);
             if (!isLock) {
                 throw new ServiceException(ApiError.ERROR_1026);
@@ -349,7 +350,8 @@ public abstract class AbstractInventoryServiceImpl {
         RLock rlock = rwLock.writeLock();// 获取写锁
         boolean isLock;
         try {
-            isLock = rlock.tryLock(5, TimeUnit.SECONDS);
+            // 设置最大等待锁时间
+            isLock = rlock.tryLock(10, TimeUnit.SECONDS);
             log.info("库存状态：【{}】，仓库：【{}】，组织：【{}】，SKU ID：【{}】，SKU编号：【{}】, 交易业务：【{}】，来源单据：【{}】, 是否获取到锁: {}", inventoryStatusEnum.getName(), warehouseId, orgId, skuId, skuNo, businessType.getName(), sourceTypeEnum.getName(), isLock);
             if (!isLock) {
                 throw new ServiceException(ApiError.ERROR_1026);
@@ -410,6 +412,10 @@ public abstract class AbstractInventoryServiceImpl {
             // 更新库存表
             Integer afterInventoryQty = originQty - qty;
             log.info("seata事务id:{}", RootContext.getXID());
+            // 此处再次验证，防止变成负库存
+            if(afterInventoryQty < 0) {
+                throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), warehouseLocation, skuNo,  inventoryStatusName));
+            }
             int updateCnt =  inventoryService.updateQtyById(inventory.getId(), qty * -1, inventory.getVersion());
             if(updateCnt != 1) {
                 throw new ServiceException(ApiError.ERROR_1027);
