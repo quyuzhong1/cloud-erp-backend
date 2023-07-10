@@ -480,7 +480,16 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         }
     }
 
-
+    /**
+     * @description: 新增推送任务
+     * @author Will
+     * @date: 2023/7/10 19:14
+     * @param platformEntity
+     * @param businessId
+     * @param jsonData
+     * @param type
+     * @param status
+     */
     private void insertSyncTask (PlatformEntity platformEntity,String businessId,
                                  String jsonData, Integer type, Integer status) {
 
@@ -493,11 +502,13 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         List<ApiSyncTaskEntity> list = apiSyncTaskService.listByApiSyncTaskDTO(apiSyncTaskDTO);
 
         //发送成功则删除推送任务
-        if (ApiSendStatusEnum.FAILURE.getCode().equals(status)) {
-
+        if (ApiSendStatusEnum.SUCCESS.getCode().equals(status)) {
+            if (CollectionUtils.isNotEmpty(list)) {
+                apiSyncTaskService.removeById(list.get(0).getId());
+            }
+            return;
         }
         //发送失败则更新推送任务
-
         if (CollectionUtils.isEmpty(list)) {
             apiSyncTaskService.insert(apiSyncTaskDTO);
         } else {
