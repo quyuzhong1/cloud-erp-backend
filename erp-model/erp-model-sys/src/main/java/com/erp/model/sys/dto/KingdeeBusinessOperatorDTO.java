@@ -20,7 +20,7 @@ public class KingdeeBusinessOperatorDTO  {
         private String orgId;
 
         //业务员类型
-        private String businessOperatorType;
+        private String type;
 
     }
 

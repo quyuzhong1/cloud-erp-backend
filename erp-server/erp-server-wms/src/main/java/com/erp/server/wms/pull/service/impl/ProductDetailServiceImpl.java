@@ -8,6 +8,7 @@ import com.erp.server.wms.pull.service.ProductDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,6 +69,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @Author Luo_WG
      * @Date 2023/4/19 16:05
      **/
+    @Transactional(rollbackFor = Exception.class)
     public Boolean saveOrUpdateProductDetail(List<ProductDetailEntity> productDetailEntityList) {
         List<String> detailIds = productDetailEntityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = ListProductDetailByIds(detailIds);
@@ -79,18 +81,20 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductDetailEntity> existDetailEntityList = new ArrayList<>();
         for (ProductDetailEntity detailEntity : productDetailEntityList) {
             if (notExistIdList.contains(detailEntity.getId())) {
-                notExistDetailEntityList.add(detailEntity);
+//                notExistDetailEntityList.add(detailEntity);
+                this.save(detailEntity);
             }
             if (existIdList.contains(detailEntity.getId())) {
-                existDetailEntityList.add(detailEntity);
+//                existDetailEntityList.add(detailEntity);
+                baseMapper.updateAllById(detailEntity);
             }
         }
-        if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
-            this.saveBatch(notExistDetailEntityList);
-        }
-        if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
-            baseMapper.updateBatchSelective(existDetailEntityList);
-        }
+//        if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
+//            this.saveBatch(notExistDetailEntityList);
+//        }
+//        if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
+//            baseMapper.updateBatchSelective(existDetailEntityList);
+//        }
         return Boolean.TRUE;
     }
 }

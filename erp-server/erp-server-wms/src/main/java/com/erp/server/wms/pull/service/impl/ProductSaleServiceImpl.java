@@ -61,6 +61,7 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean saveOrUpdateProductSaleDetail(List<ProductSaleEntity> productSaleEntityList) {
         List<String> detailIds = productSaleEntityList.stream().map(ProductSaleEntity::getId).collect(Collectors.toList());
         List<ProductSaleEntity> detailEntityList = listProductSaleByIds(detailIds);
@@ -72,18 +73,20 @@ public class ProductSaleServiceImpl extends ServiceImpl<ProductSaleMapper, Produ
         List<ProductSaleEntity> existDetailEntityList = new ArrayList<>();
         for (ProductSaleEntity detailEntity : productSaleEntityList) {
             if (notExistIdList.contains(detailEntity.getId())) {
-                notExistDetailEntityList.add(detailEntity);
+//                notExistDetailEntityList.add(detailEntity);
+                this.save(detailEntity);
             }
             if (existIdList.contains(detailEntity.getId())) {
-                existDetailEntityList.add(detailEntity);
+//                existDetailEntityList.add(detailEntity);
+                baseMapper.updateAllById(detailEntity);
             }
         }
-        if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
-            this.saveBatch(notExistDetailEntityList);
-        }
-        if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
-            baseMapper.updateBatchSelective(existDetailEntityList);
-        }
+//        if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
+//            this.saveBatch(notExistDetailEntityList);
+//        }
+//        if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
+//            baseMapper.updateBatchSelective(existDetailEntityList);
+//        }
         return Boolean.TRUE;
     }
 

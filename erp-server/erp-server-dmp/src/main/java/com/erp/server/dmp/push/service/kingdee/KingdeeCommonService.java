@@ -218,3 +218,24 @@ public interface KingdeeCommonService {
      */
     String createkingdeeSoChange(Map<String, Object> paramMap);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -3,7 +3,14 @@
 <mapper namespace="com.erp.server.sys.mapper.KingdeeBusinessOperatorMapper">
 
     <select id="listInfo" resultType="com.common.business.dto.base.BaseDropDownDTO$CommonDTO">
-
+        SELECT
+        erp_user_id AS code,
+        kingdee_user_name AS value
+        FROM kingdee_business_operator kbo
+        INNER JOIN sys_accounting_company sac
+        ON sac.code=kbo.kingdee_org_code
+        WHERE kbo.kingdee_type=#{type}
+        AND sac.id=#{orgId}
     </select>
 
 </mapper>

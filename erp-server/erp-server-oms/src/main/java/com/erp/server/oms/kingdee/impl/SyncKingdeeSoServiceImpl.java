@@ -12,8 +12,9 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
-import com.erp.model.sys.dto.KingdeePostDTO;
+import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.entity.DeptKingdeeEntity;
+import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -21,6 +22,7 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.service.*;
 import com.google.common.collect.Lists;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -28,6 +30,7 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -87,6 +90,8 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
      * @date 2023-05-30 11:50
      */
     @Override
+    @GlobalTransactional
+    @Transactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(SoInfoEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
@@ -124,23 +129,24 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             DeptKingdeeDTO.FindDeptKingdeeDTO findDeptKingdee = new DeptKingdeeDTO.FindDeptKingdeeDTO();
             findDeptKingdee.setDeptId(salesDeptId);
             findDeptKingdee.setOrgCode(salesOrgCode);
-            DeptKingdeeEntity deptKingdee = kingdeeFeign.getKingdee(findDeptKingdee);
+            DeptKingdeeEntity deptKingdee = kingdeeFeign.getDeptKingdee(findDeptKingdee);
             //销售部门
             if (!Objects.isNull(deptKingdee)) {
                 resultMap.put("deptCode", deptKingdee.getKingdeeDeptCode());
             }
         }
-        //获取员工
+        //获取业务员信息
         if (StringUtils.isNotBlank(sellerId)) {
-            KingdeePostDTO.FindUserKingdeePostInfoDTO getUserKingdeePost = new KingdeePostDTO.FindUserKingdeePostInfoDTO();
-            getUserKingdeePost.setOrgCode(salesOrgCode);
-            getUserKingdeePost.setUserId(sellerId);
+            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+            findBusinessOperator.setOrgCode(salesOrgCode);
+            findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setBusinessOperatorType("");
             //获取员工 岗位信息
-            KingdeePostDTO.UserKingdeePostInfoDTO userDTO = kingdeeFeign.getUserKingdeePost(getUserKingdeePost);
+            KingdeeBusinessOperatorEntity  kingSellerInfo= kingdeeFeign.getBusinessOperator(findBusinessOperator);
             //销售员
-            if (!Objects.isNull(userDTO)) {
-                resultMap.put("sellerCode", userDTO.getKingdeePostCode());
-                resultMap.put("seller", userDTO.getUserName());
+            if (!Objects.isNull(kingSellerInfo)) {
+                resultMap.put("sellerCode", kingSellerInfo.getKingdeePostCode());
+                resultMap.put("seller", kingSellerInfo.getKingdeeUserName());
             }
         }
 

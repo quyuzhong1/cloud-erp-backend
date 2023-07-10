@@ -903,6 +903,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     public List<ProcessManagementDTO.CurApproveInfoDTO> batchCurApprover(ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList) {
+        if(CollectionUtil.isEmpty(dtoList)){
+           return Collections.emptyList();
+        }
         Map<String, ProcessManagementDTO.HistoryActivityDTO> paramMap = dtoList
                 .stream()
                 .distinct()

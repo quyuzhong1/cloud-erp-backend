@@ -20,7 +20,7 @@ import java.util.List;
 public interface KingdeeBusinessOperatorMapper extends BaseMapper<KingdeeBusinessOperatorEntity> {
 
     /**
-     * 获取到业务员信息
+     * 获取到金蝶业务员信息
      * @param dto
      * @return
      */

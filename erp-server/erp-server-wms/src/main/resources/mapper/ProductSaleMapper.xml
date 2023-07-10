@@ -15,27 +15,65 @@
     </sql>
     <update id="updateAllById">
         UPDATE product_sale
-            SET sku_id = #{skuId},
+        SET
+        <if test="skuId != null">
+            sku_id = #{skuId},
+        </if>
+        <if test="yearSaleQty != null">
             year_sale_qty = #{yearSaleQty},
+        </if>
+        <if test="yearSaleAmount != null">
             year_sale_amount = #{yearSaleAmount},
+        </if>
+        <if test="monthSaleQty != null">
             month_sale_qty = #{monthSaleQty},
+        </if>
+        <if test="monthSaleAmount != null">
             month_sale_amount = #{monthSaleAmount},
+        </if>
+        <if test="saleCountry != null">
             sale_country = #{saleCountry},
+        </if>
+        <if test="isFinishedImg != null">
             is_finished_img = #{isFinishedImg},
+        </if>
+        <if test="isFinishedVideo != null">
             is_finished_video = #{isFinishedVideo},
+        </if>
+        <if test="salesPlatform != null">
             sales_platform = #{salesPlatform},
+        </if>
+        <if test="isMarketable != null">
             is_marketable = #{isMarketable},
+        </if>
+        <if test="saleState != null">
             sale_state = #{saleState},
+        </if>
+        <if test="dataUrl != null">
             data_url = #{dataUrl},
+        </if>
+        <if test="createUserId != null">
             create_user_id = #{createUserId},
+        </if>
+        <if test="createUserName != null">
             create_user_name = #{createUserName},
+        </if>
+        <if test="createTime != null">
             create_time = #{createTime},
+        </if>
+        <if test="updateUserId != null">
             update_user_id = #{updateUserId},
+        </if>
+        <if test="updateUserName != null">
             update_user_name = #{updateUserName},
+        </if>
+        <if test="updateTime != null">
             update_time = #{updateTime},
+        </if>
+        <if test="version != null">
             VERSION = #{version}
-            WHERE
-                ID = #{id}
+        </if>
+        WHERE ID = #{id}
     </update>
     <update id="updateBatchSelective">
         <!--@mbg.generated-->
