@@ -431,7 +431,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         } catch (Exception e) {
             //反审核失败操作日志及定时任务
             log.error("反审核失败", e);
-            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), "反审核失败", e.getMessage(), type, ApiSendStatusEnum.FAILURE.getCode());
+            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), id,e.getMessage(), type, ApiSendStatusEnum.FAILURE.getCode());
             return Boolean.FALSE;
         }
         //反审核成功操作日志
@@ -483,12 +483,14 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     private void insertSyncTask (PlatformEntity platformEntity,String businessId,
                                  String jsonData, Integer type) {
 
+
         ApiSyncTaskDTO apiSyncTaskDTO = new ApiSyncTaskDTO();
         apiSyncTaskDTO.setApiPlatformId(platformEntity.getId());
         apiSyncTaskDTO.setModuleType(type);
         apiSyncTaskDTO.setRequestParamJson(jsonData);
         apiSyncTaskDTO.setBusinessId(businessId);
 
+        apiSyncTaskService.listByApiSyncTaskDTO(apiSyncTaskDTO);
     }
 
 

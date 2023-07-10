@@ -1,6 +1,10 @@
 package com.erp.server.dmp.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.dmp.dto.ApiSyncTaskDTO;
+import com.erp.model.dmp.entity.ApiSyncTaskEntity;
+
+import java.util.List;
 
 /**
  * @author Will
@@ -8,7 +12,7 @@ import com.erp.model.dmp.dto.ApiSyncTaskDTO;
  * @description: 推送任务业务接口
  * @date 2023/7/10 16:08
  */
-public interface ApiSyncTaskService {
+public interface ApiSyncTaskService extends IService<ApiSyncTaskEntity> {
     /**
      * @description: 新增推送任务
      * @author Will
@@ -17,4 +21,12 @@ public interface ApiSyncTaskService {
      * @return Boolean
      */
     Boolean insert(ApiSyncTaskDTO dto);
+    /**
+     * @description: 查询推送任务
+     * @author Will
+     * @date: 2023/7/10 17:26
+     * @param apiSyncTaskDTO
+     * @return List<ApiSyncTaskEntity>
+     */
+    List<ApiSyncTaskEntity> listByApiSyncTaskDTO(ApiSyncTaskDTO apiSyncTaskDTO);
 }
