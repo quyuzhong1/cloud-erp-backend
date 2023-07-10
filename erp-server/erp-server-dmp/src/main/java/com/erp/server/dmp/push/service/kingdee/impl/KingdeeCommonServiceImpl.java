@@ -20,6 +20,7 @@ import com.common.core.utils.date.DateUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.constant.CfgApiAuthContant;
 import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
+import com.erp.model.dmp.dto.ApiSyncTaskDTO;
 import com.erp.model.dmp.dto.CfgApiAuthDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.CfgApiAuthEntity;
@@ -94,6 +95,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Resource
     private OmsTaskFeign omsTaskFeign;
 
+    @Resource
+    private ApiSyncTaskService apiSyncTaskService;
 
 
     @Override
@@ -466,6 +469,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Transactional(rollbackFor = Exception.class)
     public void insertLogWriteBackSyncKingdeeStatus(PlatformEntity platformEntity, String businessId,
                                                     String jsonData, String msg, Integer type, Integer status) {
+        //新增任务
+        insertSyncTask(platformEntity,businessId,jsonData,type);
         //新增日志
         insertSyncLog(platformEntity, businessId, jsonData, msg, type, status);
         //更新金蝶同步状态
@@ -473,6 +478,19 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             this.updateBusinessSyncKingdeeStatus(type, businessId, SyncKingdeeStatusEnum.FAILED_SYNC.getCode(), "");
         }
     }
+
+
+    private void insertSyncTask (PlatformEntity platformEntity,String businessId,
+                                 String jsonData, Integer type) {
+
+        ApiSyncTaskDTO apiSyncTaskDTO = new ApiSyncTaskDTO();
+        apiSyncTaskDTO.setApiPlatformId(platformEntity.getId());
+        apiSyncTaskDTO.setModuleType(type);
+        apiSyncTaskDTO.setRequestParamJson(jsonData);
+        apiSyncTaskDTO.setBusinessId(businessId);
+
+    }
+
 
     @Override
     public void updateBusinessSyncKingdeeStatus(Integer code, String businessId, String status, String kingdeeId) {
