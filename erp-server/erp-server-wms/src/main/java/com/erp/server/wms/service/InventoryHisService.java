@@ -24,10 +24,10 @@ public interface InventoryHisService extends SuperService<InventoryHisEntity> {
     /**
      * 修改库存历史表数量
      * @param id
-     * @param qty（当日历史库存数量）
+     * @param afterQty（当日历史库存数量）
      * @return
      */
-    boolean updateQtyById(String id, Integer qty);
+    int updateQtyById(String id, Integer afterQty);
 
     /**
      * 新增或修改库存历史

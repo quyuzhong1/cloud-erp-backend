@@ -8,6 +8,6 @@
         update inventory_his
         set qty = #{qty}, version = version + 1,
         update_time = #{updateTime}, update_user_id = #{updateUserId}, update_user_name = #{updateUserName}
-        where id = #{id} and version = #{version} and is_deleted = false
+        where id = #{id} and is_deleted = false
     </update>
 </mapper>

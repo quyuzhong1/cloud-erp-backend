@@ -1,8 +1,8 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.SuperServiceImpl;
+import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ValidatorUtil;
@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
@@ -28,6 +29,12 @@ import java.util.Objects;
 @Service
 public class InventoryHisServiceImpl extends SuperServiceImpl<InventoryHisMapper, InventoryHisEntity> implements InventoryHisService {
 
+    @Autowired
+    private InventoryHisMapper inventoryHisMapper;
+
+    @Autowired
+    private CommonService commonService;
+
     @Override
     public InventoryHisEntity findInventory(String infoId, LocalDate billDate) {
         LambdaQueryWrapper<InventoryHisEntity> queryWrapper = new LambdaQueryWrapper();
@@ -38,10 +45,9 @@ public class InventoryHisServiceImpl extends SuperServiceImpl<InventoryHisMapper
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public boolean updateQtyById(String id, Integer qty) {
-        boolean flag = lambdaUpdate().setSql(StrUtil.format("{}={}+{}", "qty","qty", qty)).eq(InventoryHisEntity::getId, id).update();
-        return flag;
-        // return inventoryHisMapper.updateQtyById(id, qty, version, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
+    public int updateQtyById(String id, Integer afterQty) {
+        LoginUser loginUser =  commonService.getUserInfo();
+        return inventoryHisMapper.updateQtyById(id, afterQty, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -57,8 +63,8 @@ public class InventoryHisServiceImpl extends SuperServiceImpl<InventoryHisMapper
             boolean save = super.save(inventoryHis);
             ValidatorUtil.isTrue(save, ()->new ServiceException("库存数据保存失败"));
         } else {
-            boolean updateFlag = this.updateQtyById(inventoryHis.getId(), qty);
-            if(!updateFlag) {
+            int updateCnt = this.updateQtyById(inventoryHis.getId(), qty);
+            if(updateCnt != 1) {
                 throw new ServiceException(ApiError.ERROR_1027);
             }
         }
