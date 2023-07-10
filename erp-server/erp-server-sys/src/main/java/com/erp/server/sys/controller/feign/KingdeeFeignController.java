@@ -3,9 +3,12 @@ package com.erp.server.sys.controller.feign;
 
 import com.common.core.controller.BaseController;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
+import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.entity.DeptKingdeeEntity;
+import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.server.sys.service.DeptKingdeeService;
+import com.erp.server.sys.service.KingdeeBusinessOperatorService;
 import com.erp.server.sys.service.UserKingdeePostService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,6 +36,9 @@ public class KingdeeFeignController extends BaseController {
     @Resource
     private UserKingdeePostService userKingdeePostService;
 
+    @Resource
+    private KingdeeBusinessOperatorService kingdeeBusinessOperatorService;
+
     @PostMapping("/getInfo")
     public DeptKingdeeEntity getInfo(@RequestBody DeptKingdeeDTO.FindDeptKingdeeDTO dto) {
         return deptKingdeeService.getInfo(dto);
@@ -41,6 +47,12 @@ public class KingdeeFeignController extends BaseController {
     @PostMapping("/getUserKingdeePost")
     public KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePost(@RequestBody KingdeePostDTO.FindUserKingdeePostInfoDTO dto) {
         KingdeePostDTO.UserKingdeePostInfoDTO result = userKingdeePostService.getUserKingdeePost(dto);
+        return result;
+    }
+
+    @PostMapping("/getBusinessOperator")
+    public KingdeeBusinessOperatorEntity getUserKingdeePost(@RequestBody KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO dto) {
+        KingdeeBusinessOperatorEntity result = kingdeeBusinessOperatorService.find(dto);
         return result;
     }
 
