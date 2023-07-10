@@ -21,7 +21,7 @@ public class ScmSyncProductServiceImpl implements ScmSyncProductService {
 
     @Override
     public void syncProductInfoToScm(List<ProductInfoEntity> list) {
-        List<List<ProductInfoEntity>> partitionList = ListUtil.partition(list, 200);
+        List<List<ProductInfoEntity>> partitionList = ListUtil.partition(list, 50);
         // 异步推送到MQ
         partitionList.forEach(req -> {
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(),req, IdUtil.simpleUUID());
@@ -30,7 +30,7 @@ public class ScmSyncProductServiceImpl implements ScmSyncProductService {
 
     @Override
     public void syncProductSkuToScm(List<ProductDetailEntity> list) {
-        List<List<ProductDetailEntity>> partitionList = ListUtil.partition(list, 200);
+        List<List<ProductDetailEntity>> partitionList = ListUtil.partition(list, 50);
         // 异步推送到MQ
         partitionList.forEach(req -> {
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_SKU_TAG.getName(),req, IdUtil.simpleUUID());
