@@ -28,10 +28,9 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
      * 修改库存表数量
      * @param id
      * @param qty
-     * @param version
      * @return
      */
-    int updateQtyById(@Param(value = "id") String id, @Param(value = "qty") Integer qty, @Param(value = "version") Integer version,
+    int updateQtyById(@Param(value = "id") String id, @Param(value = "qty") Integer qty,
                       @Param(value = "updateTime") LocalDateTime updateTime, @Param(value = "updateUserId") String updateUserId, @Param(value = "updateUserName") String updateUserName);
 
 

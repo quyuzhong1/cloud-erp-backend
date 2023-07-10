@@ -1,23 +1,19 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DistributedLockEnum;
 import com.common.business.service.SuperServiceImpl;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.FieldConstant;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
-import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CfgUserRangeDTO;
@@ -37,7 +33,6 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.InventoryMapper;
-import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
@@ -50,9 +45,6 @@ import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.redisson.api.RLock;
-import org.redisson.api.RReadWriteLock;
-import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,12 +52,9 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
 import java.net.URLEncoder;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -79,13 +68,7 @@ import java.util.stream.Collectors;
 public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, InventoryEntity> implements InventoryService {
 
     @Autowired
-    private CommonService commonService;
-
-    @Autowired
     private InventoryMapper inventoryMapper;
-
-    @Autowired
-    private RedissonClient redisson;
 
     @Autowired
     private WarehouseService warehouseService;
@@ -120,45 +103,24 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     @Override
     public InventoryEntity findInventoryLock(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
         // 组织+仓库+库位+SKU+状态 确定唯一一条记录
-        // 此处使用读写锁，避免并发情况下读取的数据不一致，读跟读之间不冲突，读写或写写冲突，暂不考虑库位
+        // 去掉分布式读锁
         InventoryStatusEnum inventoryStatus = InventoryStatusEnum.getByCode(status);
-        String lockKey = StrUtil.format("{}:{}:{}:{}", DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), warehouseId, StrUtils.null2EmptyWithTrim(warehouseLocationId), skuId);
-        RReadWriteLock rwLock = redisson.getReadWriteLock(lockKey);
-        RLock rlock = rwLock.readLock();
-        boolean isLock;
-        try {
-            // 防止一直等待，加最大等待时间
-            isLock = rlock.tryLock(8, TimeUnit.SECONDS);
-            log.info("仓库：【{}】，SKU ID：【{}】，是否获取到锁: {}", warehouseId, skuId, isLock);
-            if (!isLock) {
-                throw new ServiceException(ApiError.ERROR_1026);
-            }
-            String qWarehouseLocationId = StrUtils.null2EmptyWithTrim(warehouseLocationId);
-            LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(InventoryEntity::getWarehouseId, warehouseId).eq(InventoryEntity::getOrgId, orgId)
-                    .eq(InventoryEntity::getSkuId, skuId)
-                    .eq(InventoryEntity::getDictInventoryStatus, status);
-            /**
-             * 不控制库位把库位条件置位空字符串（从空库位查询）；
-             * 其他控制库位的如果传了则从指定库位出，没传则从空库位出
-             */
-            if (Objects.equals(Boolean.FALSE, inventoryStatus.getControlLocation())) {
-                log.info("库存状态：【{}】不控制库位", inventoryStatus.getName());
-                qWarehouseLocationId = "";
-            }
-            queryWrapper.eq(InventoryEntity::getWarehouseLocation, qWarehouseLocationId).last("limit 1");
-            InventoryEntity inventory = baseMapper.selectOne(queryWrapper);
-            return inventory;
-        } catch (InterruptedException e) {
-            log.error("仓库id：【{}】，SKU编号：【{}】，获取锁异常", warehouseId, skuId, e);
-            throw new ServiceException(ApiError.ERROR_1026);
-        } finally {
-            //释放锁  锁是否存在，是当前执行线程的锁
-            if (rlock.isLocked() && rlock.isHeldByCurrentThread()) {
-                // 释放锁
-                rlock.unlock();
-            }
+        String qWarehouseLocationId = StrUtils.null2EmptyWithTrim(warehouseLocationId);
+        LambdaQueryWrapper<InventoryEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(InventoryEntity::getWarehouseId, warehouseId).eq(InventoryEntity::getOrgId, orgId)
+                .eq(InventoryEntity::getSkuId, skuId)
+                .eq(InventoryEntity::getDictInventoryStatus, status);
+        /**
+         * 不控制库位把库位条件置位空字符串（从空库位查询）；
+         * 其他控制库位的如果传了则从指定库位出，没传则从空库位出
+         */
+        if (Objects.equals(Boolean.FALSE, inventoryStatus.getControlLocation())) {
+            log.info("库存状态：【{}】不控制库位", inventoryStatus.getName());
+            qWarehouseLocationId = "";
         }
+        queryWrapper.eq(InventoryEntity::getWarehouseLocation, qWarehouseLocationId).last("limit 1");
+        InventoryEntity inventory = baseMapper.selectOne(queryWrapper);
+        return inventory;
     }
 
     /**
@@ -257,8 +219,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             log.info("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】在库存实时表中存在数据，修改数据", inventoryStatus, warehouseId, orgId, warehouseLocation, skuId, skuNo);
             originInventoryQty = inventory.getQty();
             // 更新实时库存表数量
-            int updateCnt = this.updateQtyById(inventory.getId(), qty, inventory.getVersion());
-            if (updateCnt != 1) {
+            boolean updateFlag = this.updateQtyById(inventory.getId(), qty);
+            if (!updateFlag) {
                 throw new ServiceException(ApiError.ERROR_1027);
             }
         }
@@ -363,9 +325,10 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public int updateQtyById(String id, Integer qty, Integer version) {
-        LoginUser loginUser = commonService.getUserInfo();
-        return inventoryMapper.updateQtyById(id, qty, version, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
+    public boolean updateQtyById(String id, Integer qty) {
+        boolean flag = lambdaUpdate().setSql(StrUtil.format("{}={}+{}", "qty","qty", qty)).eq(InventoryEntity::getId, id).update();
+        return flag;
+        //return inventoryMapper.updateQtyById(id, qty, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
     }
 
     @Override
