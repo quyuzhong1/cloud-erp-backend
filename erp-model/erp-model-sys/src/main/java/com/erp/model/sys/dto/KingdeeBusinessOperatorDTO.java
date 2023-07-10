@@ -16,10 +16,19 @@ public class KingdeeBusinessOperatorDTO  {
     @NoArgsConstructor
     public static class ListBusinessOperatorDTO{
 
-        //组织
+        /**
+         *  组织 id
+         */
+
         private String orgId;
 
-        //业务员类型
+        /**
+         *  业务员类型
+         *  XSY 销售员
+         *  CGY 采购员
+         *  WHY 仓管员
+         */
+
         private String type;
 
     }

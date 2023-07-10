@@ -14,9 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
- * <p>
- * 金蝶业务员 前端控制器
- * </p>
+ * 金蝶信息
  *
  * @author Lambda
  * @since 2023-07-07
