@@ -568,7 +568,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
         List<PurchasePriceChangeDetailDTO.ViewDTO> resultList = new ArrayList<>(viewList.size());
         for (PurchasePriceDetailDTO.ViewDTO item : viewList) {
-            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).findFirst().orElse(null);
+            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
             PurchasePriceChangeDetailDTO.ViewDTO result = new PurchasePriceChangeDetailDTO.ViewDTO();
             result.setOldCurrency(item.getCurrency());
             result.setOldTaxPrice(item.getTaxPrice());
