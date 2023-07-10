@@ -91,7 +91,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
      */
     @Override
     @GlobalTransactional
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(SoInfoEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
@@ -129,7 +129,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             DeptKingdeeDTO.FindDeptKingdeeDTO findDeptKingdee = new DeptKingdeeDTO.FindDeptKingdeeDTO();
             findDeptKingdee.setDeptId(salesDeptId);
             findDeptKingdee.setOrgCode(salesOrgCode);
-            DeptKingdeeEntity deptKingdee = kingdeeFeign.getKingdee(findDeptKingdee);
+            DeptKingdeeEntity deptKingdee = kingdeeFeign.getDeptKingdee(findDeptKingdee);
             //销售部门
             if (!Objects.isNull(deptKingdee)) {
                 resultMap.put("deptCode", deptKingdee.getKingdeeDeptCode());

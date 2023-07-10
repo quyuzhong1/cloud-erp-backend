@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface KingdeeFeign {
 
     @PostMapping("/feign/kingdee/getInfo")
-    DeptKingdeeEntity getKingdee(@RequestBody DeptKingdeeDTO.FindDeptKingdeeDTO dto);
+    DeptKingdeeEntity getDeptKingdee(@RequestBody DeptKingdeeDTO.FindDeptKingdeeDTO dto);
 
 
     @PostMapping("/feign/kingdee/getUserKingdeePost")
