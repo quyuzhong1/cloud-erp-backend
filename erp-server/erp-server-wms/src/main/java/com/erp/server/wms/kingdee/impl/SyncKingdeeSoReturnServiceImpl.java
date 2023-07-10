@@ -82,7 +82,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         //退货详情
         List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainId(entity.getSourceId());
         //销售单
-        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(entity.getSourceId());
+        SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
         //销售单明细
         List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(soInfoEntity.getId()));
         //仓库
@@ -189,6 +189,8 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
                 //仓库
                 map.put("warehouseCode", warehouseCode);
             }
+            //仓位
+            map.put("warehouseLocation", detailEntity.getWarehouseLocation());
             //退货日期
             map.put("billDate", entity.getBillDate());
             //备注
