@@ -71,10 +71,6 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
     public void syncDataToKingdee(PurchaseOrderEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
 
-        if (true) {
-            return;
-        }
-
         //业务id
         resultMap.put("id",entity.getId());
         //编码
