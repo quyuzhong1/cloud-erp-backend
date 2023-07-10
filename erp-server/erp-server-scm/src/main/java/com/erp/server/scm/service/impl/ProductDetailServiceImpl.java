@@ -46,18 +46,20 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductDetailEntity> existDetailEntityList = new ArrayList<>();
         for (ProductDetailEntity detailEntity : productDetailEntityList) {
             if (notExistIdList.contains(detailEntity.getId())) {
-                notExistDetailEntityList.add(detailEntity);
+//                notExistDetailEntityList.add(detailEntity);
+                this.save(detailEntity);
             }
             if (existIdList.contains(detailEntity.getId())) {
-                existDetailEntityList.add(detailEntity);
+//                existDetailEntityList.add(detailEntity);
+                baseMapper.updateByPrimaryKeySelective(detailEntity);
             }
         }
-        if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
-            this.saveBatch(notExistDetailEntityList);
-        }
-        if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
-            baseMapper.updateBatchSelective(existDetailEntityList);
-        }
+//        if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
+//            this.saveBatch(notExistDetailEntityList);
+//        }
+//        if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
+//            baseMapper.updateBatchSelective(existDetailEntityList);
+//        }
         return Boolean.TRUE;
     }
 }

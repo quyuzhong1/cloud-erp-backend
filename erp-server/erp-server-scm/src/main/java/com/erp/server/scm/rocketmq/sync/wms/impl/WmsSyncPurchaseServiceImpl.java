@@ -22,7 +22,7 @@ public class WmsSyncPurchaseServiceImpl implements WmsSyncPurchaseService {
 
     @Override
     public void syncPurchaseOrderToWms(List<PurchaseOrderEntity> list) {
-        List<List<PurchaseOrderEntity>> partitionList = ListUtil.partition(list, 200);
+        List<List<PurchaseOrderEntity>> partitionList = ListUtil.partition(list, 100);
         // 异步推送到MQ
         partitionList.forEach(req -> {
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(),req, IdUtil.simpleUUID());
@@ -31,7 +31,7 @@ public class WmsSyncPurchaseServiceImpl implements WmsSyncPurchaseService {
 
     @Override
     public void syncPurchaseOrderDetailToWms(List<PurchaseOrderDetailEntity> list) {
-        List<List<PurchaseOrderDetailEntity>> partitionList = ListUtil.partition(list, 200);
+        List<List<PurchaseOrderDetailEntity>> partitionList = ListUtil.partition(list, 100);
         // 异步推送到MQ
         partitionList.forEach(req -> {
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_DETAIL_TAG.getName(),req, IdUtil.simpleUUID());
@@ -40,7 +40,7 @@ public class WmsSyncPurchaseServiceImpl implements WmsSyncPurchaseService {
 
     @Override
     public void syncPurchaseOrderSupplierToWms(List<PurchaseOrderSupplierEntity> list) {
-        List<List<PurchaseOrderSupplierEntity>> partitionList = ListUtil.partition(list, 200);
+        List<List<PurchaseOrderSupplierEntity>> partitionList = ListUtil.partition(list, 100);
         // 异步推送到MQ
         partitionList.forEach(req -> {
             mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_SUPPLIER_TAG.getName(),req, IdUtil.simpleUUID());
