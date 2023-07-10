@@ -3,6 +3,7 @@ package com.erp.server.bi.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -36,4 +37,12 @@ public interface BiSettlementExchangeRateService  extends IService<BiSettlementE
      * @return Boolean
      */
     Boolean batchUpdateSettlementExchangeRate(List<Map<String, Object>> list);
+
+    /**
+     * 根据日期和原币种查询汇率
+     * @param date
+     * @param sourceCurrencyCode
+     * @return
+     */
+    List<BiSettlementExchangeRateEntity> findByCurrencyAndDate(LocalDate date, String sourceCurrencyCode);
 }
