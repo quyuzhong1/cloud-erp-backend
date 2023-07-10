@@ -270,10 +270,10 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         LocalDate localDate = LocalDate.now();
         for (PurchasePriceDetailEntity item : addList) {
             String skuId = item.getSkuId();
-            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
             if (skuVO != null) {
                 item.setSkuNo(skuVO.getSkuNo());
-                item.setProductName(skuVO.getSpuName());
+                item.setProductName(skuVO.getSkuName());
             }
             item.setPurchasePriceId(purchasePriceId);
             //失效时间
@@ -380,7 +380,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             PurchasePriceDetailEntity entity = new PurchasePriceDetailEntity();
             BeanMapper.copy(item, entity);
             String skuId = item.getSkuId();
-            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
             if (skuVO != null) {
                 entity.setSkuNo(skuVO.getSkuNo());
                 entity.setProductName(skuVO.getSpuName());
@@ -568,7 +568,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
 
         List<PurchasePriceChangeDetailDTO.ViewDTO> resultList = new ArrayList<>(viewList.size());
         for (PurchasePriceDetailDTO.ViewDTO item : viewList) {
-            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).findFirst().orElse(null);
+            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
             PurchasePriceChangeDetailDTO.ViewDTO result = new PurchasePriceChangeDetailDTO.ViewDTO();
             result.setOldCurrency(item.getCurrency());
             result.setOldTaxPrice(item.getTaxPrice());
@@ -598,8 +598,13 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     public List<PurchasePriceChangeDetailDTO.ViewDTO> getPriceChangeDetail(String purchasePriceId) {
 
         List<PurchasePriceDetailDTO.ViewDTO> list = this.getByPurchasePriceId(purchasePriceId);
+
+        List<String> skuIds = list.stream().map(PurchasePriceDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
         List<PurchasePriceChangeDetailDTO.ViewDTO> resultList = new ArrayList<>(list.size());
         for (PurchasePriceDetailDTO.ViewDTO item : list) {
+            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
             PurchasePriceChangeDetailDTO.ViewDTO result = new PurchasePriceChangeDetailDTO.ViewDTO();
             result.setMaxQty(item.getMaxQty());
             result.setMinQty(item.getMinQty());
@@ -608,7 +613,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             result.setOldCurrency(item.getCurrency());
             result.setSkuId(item.getSkuId());
             result.setSkuNo(item.getSkuNo());
-            result.setProductName(item.getProductName());
+            result.setProductName(skuVO.getSkuName());
             result.setPurchasePriceDetailId(item.getId());
             resultList.add(result);
         }
