@@ -7,10 +7,7 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -400,5 +397,14 @@ public class LocalDateUtil {
         return LocalDateTime.parse(timeStr, DateTimeFormatter.ofPattern(DateUtil.fmt));
 
     }
+
+    // 获取指定时间的指定格式
+    public static String formatTime(LocalDateTime time, String pattern) {
+        if (Objects.isNull(time)) {
+            return null;
+        }
+        return time.format(DateTimeFormatter.ofPattern(pattern));
+    }
+
 }
 

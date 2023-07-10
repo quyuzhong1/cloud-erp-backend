@@ -1,0 +1,68 @@
+package com.common.business.config;
+
+import cn.hutool.core.util.StrUtil;
+import com.common.business.constant.LuaScript;
+import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.core.utils.StrUtils;
+import com.common.core.utils.date.LocalDateUtil;
+import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
+import java.time.LocalDateTime;
+
+/**
+ * redis单号生成器
+ * @CreateTime: 2023-07-10  10:18
+ * @Author: zhangchunlin
+ */
+@Slf4j
+@Component
+public class DocNoGenHelper implements InitializingBean {
+
+    private static DefaultRedisScript<Long> redisScript;
+
+    private static RedisSerializer stringRedisSerializer = new StringRedisSerializer();
+
+    /**
+     * 单位秒
+     */
+    public static long ONE_DAY_CACHE_TIME = 24 * 60 * 60;
+
+    @Resource
+    private RedisTemplate<String,Object> redisTemplate;
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        redisScript = new DefaultRedisScript<>();
+        redisScript.setResultType(Long.class);
+        redisScript.setScriptText(LuaScript.GEN_DOC_NO_SCRIPT);
+    }
+
+    /**
+     * 按单据类型+日期获取递增单号
+     * 单据前缀+6位日期+5位顺序
+     * 注意事项：上线切换时需手工把最新的最大值放入到数据库
+     * @param businessNoTypeEnum
+     * @return
+     */
+    public String generateWithoutCustomerCode(BusinessNoTypeEnum businessNoTypeEnum){
+        String currentDateStr = LocalDateUtil.formatTime(LocalDateTime.now(), "yyMMdd");
+        //注意，不保证绝对有序，有可能中间某个单生成了单号，但是后面数据库报错不会回收
+        String docNoKey = BusinessNoTypeEnum.REDIS_GEN_KEY + ":" + businessNoTypeEnum.getName() +  ":" + currentDateStr;
+        Long currentIndex = redisTemplate.execute(redisScript, stringRedisSerializer, stringRedisSerializer, Lists.newArrayList(docNoKey),String.valueOf(1),String.valueOf(ONE_DAY_CACHE_TIME));
+        // 单据前缀+6位日期+5位顺序位
+        String docNo = StrUtil.format("{}{}{}",businessNoTypeEnum.getCode(), currentDateStr, StrUtils.leftPadding(String.valueOf(currentIndex),BusinessNoTypeEnum.FILL_0_DIGIT,"0"));
+        log.info("单据类型：【{}】生成的单号为【{}】", businessNoTypeEnum.getName(), docNo);
+        return docNo;
+    }
+
+
+
+}

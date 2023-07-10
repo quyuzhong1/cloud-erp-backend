@@ -1,7 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -27,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -73,6 +76,9 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
     @Autowired
     private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void generateByPurchaseOrder(InstockForcastDTO.AddDTO dto) {
@@ -85,7 +91,8 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         }
         InstockForcastEntity instockForcastEntity = new InstockForcastEntity();
         // 生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.RKYB, BusinessNoTypeEnum.CODE_RKYB.getCode()));
+        // String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.RKYB, BusinessNoTypeEnum.CODE_RKYB.getCode()));
+        String code =  docNoGenHelper.generateWithoutCustomerCode(BusinessNoTypeEnum.CODE_RKYB);
         // feign调用取不到登录人信息，已解决
         LoginUser loginUser = commonService.getUserInfo();
         instockForcastEntity.setCreateUserId(loginUser.getUid());

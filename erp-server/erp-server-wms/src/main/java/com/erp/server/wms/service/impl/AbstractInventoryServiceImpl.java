@@ -17,6 +17,7 @@ import com.erp.server.wms.config.InventoryHelper;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.utils.InventoryUtils;
 import com.google.common.base.Stopwatch;
+import io.seata.core.context.RootContext;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -391,6 +392,7 @@ public abstract class AbstractInventoryServiceImpl {
                     detailDeductQty = originDetailQty;
                 }
                 // 更新库存明细
+                log.info("seata事务id:{}", RootContext.getXID());
                 int updateCnt = inventoryDetailService.updateQtyById(inventoryDetailEntity.getId(), detailDeductQty * -1, inventoryDetailEntity.getVersion());
                 if(updateCnt != 1) {
                     throw new ServiceException(ApiError.ERROR_1027);
@@ -407,6 +409,7 @@ public abstract class AbstractInventoryServiceImpl {
             }
             // 更新库存表
             Integer afterInventoryQty = originQty - qty;
+            log.info("seata事务id:{}", RootContext.getXID());
             int updateCnt =  inventoryService.updateQtyById(inventory.getId(), qty * -1, inventory.getVersion());
             if(updateCnt != 1) {
                 throw new ServiceException(ApiError.ERROR_1027);
