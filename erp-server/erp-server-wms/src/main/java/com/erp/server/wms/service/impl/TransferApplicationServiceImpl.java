@@ -492,6 +492,11 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             throw  new ServiceException(ApiError.ERROR_99046);
         }
 
+        List<MachineInfoEntity> machineInfoEntityList = machineInfoService.listBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(machineInfoEntityList)) {
+            throw  new ServiceException(ApiError.ERROR_99046);
+        }
+
         log.info("调拨申请单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
 
         //取回流程 TODO

@@ -663,6 +663,7 @@ public enum ApiError implements Serializable {
     ERROR_99075(99075,"采购订单【{}】SKU【{}】已入库完成"),
     ERROR_99076(99076,"未找到仓库金蝶编号【{}】"),
     ERROR_99077(99077,"ERP已存在直接调拨单【{}】"),
+    ERROR_99078(99078,"调拨申请单已下推加工单，不支持反审核"),
 
 
 
