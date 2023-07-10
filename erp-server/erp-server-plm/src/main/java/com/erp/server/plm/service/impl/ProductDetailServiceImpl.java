@@ -2348,9 +2348,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (costEntity.getRetailPrice() == null) {
                 throw new ServiceException(ApiError.ERROR_95219);
             }
-            if (costEntity.getActualGpmCny() == null) {
-                throw new ServiceException(ApiError.ERROR_95220);
-            }
             if (costEntity.getMassCost() == null) {
                 throw new ServiceException(ApiError.ERROR_95221);
             }
