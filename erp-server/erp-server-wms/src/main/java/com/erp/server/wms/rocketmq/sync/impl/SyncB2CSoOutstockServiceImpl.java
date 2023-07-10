@@ -83,7 +83,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
         String code = entity.getFBillNo();
         String baseKey = RedisKeyConstant.KINGDEE_XSCK;
-        String redisKey = code + baseKey;
+        String redisKey = baseKey+code ;
 
         //根据仓库分组
         Map<String, List<KingdeeDeliveryDetailItemEntity>> map = kingdeeDetailList.stream().collect(Collectors.groupingBy(KingdeeDeliveryDetailItemEntity::getFStockNumber));
@@ -172,7 +172,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         InventorySourceTypeEnum sourceTypeEnum = InventorySourceTypeEnum.SO_OUTSTOCK;
         String code = entity.getFBillNo();
         String baseKey = RedisKeyConstant.KINGDEE_XSCK;
-        String redisKey = code + baseKey;
+        String redisKey =baseKey+code;
         String flagId = redisService.getCacheObject(redisKey);
         if (StringUtils.isBlank(flagId)) {
             flagId = soOutstockService.getByCode(code);
@@ -253,3 +253,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     }
 
 }
+
+
+
+
+
