@@ -102,7 +102,7 @@ public class DeptKingdeeExcelListener extends AnalysisEventListener<DeptKingdeeI
         //查看到对应的部门
         DeptKingdeeEntity dept = deptKingdeeList.stream().filter(p -> p.getKingdeeDeptCode().equals(excelDTO.getKingdeeDeptCode())).findFirst().orElse(new DeptKingdeeEntity());
         dept.setKingdeeDeptCode(excelDTO.getKingdeeDeptCode());
-        dept.setUseOrgId(excelDTO.getUseOrgId());
+        dept.setUseOrgCode(excelDTO.getUseOrgCode());
         dept.setUseOrgName(excelDTO.getUseOrgName());
         dept.setDeptId(id);
         dept.setKingdeeDeptName(deptName);

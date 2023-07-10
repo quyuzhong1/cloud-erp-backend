@@ -496,7 +496,7 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/group/condition/list")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "charge_id,charge_ids",
+            tableField = "charge_id",
             menuCode = "plm:task:expert:paging:all",
             tableAlias = "t"
     )
@@ -512,7 +512,7 @@ public class ProjectTaskController extends BaseController {
      */
     @PostMapping("/group/condition/assignToMe/list")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "charge_id,charge_ids",
+            tableField = "charge_id",
             menuCode = "plm:task:expert:paging:assignToMe",
             tableAlias = "t"
     )
@@ -543,7 +543,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "charge_id,charge_ids",
+            tableField = "charge_id",
             menuCode = "plm:task:expert:paging:all",
             tableAlias = "pt"
     )
@@ -560,7 +560,7 @@ public class ProjectTaskController extends BaseController {
      */
 
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "charge_id,charge_ids",
+            tableField = "charge_id",
             menuCode = "plm:task:expert:paging:assignToMe",
             tableAlias = "pt"
     )
@@ -592,7 +592,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "charge_id,charge_ids",
+            tableField = "charge_id",
             menuCode = "plm:task:expert:paging:assignToMe",
             tableAlias = "pt"
     )

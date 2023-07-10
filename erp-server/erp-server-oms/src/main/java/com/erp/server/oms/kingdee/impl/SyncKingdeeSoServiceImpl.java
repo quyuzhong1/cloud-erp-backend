@@ -11,10 +11,10 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
-import com.erp.model.sys.entity.DeptKingdeeEntity;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
+import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -126,21 +126,27 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         String sellerId = entity.getSellerId();
         //获取部门id
         if (StringUtils.isNotBlank(salesDeptId)) {
-            DeptKingdeeDTO.FindDeptKingdeeDTO findDeptKingdee = new DeptKingdeeDTO.FindDeptKingdeeDTO();
-            findDeptKingdee.setDeptId(salesDeptId);
-            findDeptKingdee.setOrgCode(salesOrgCode);
-            DeptKingdeeEntity deptKingdee = kingdeeFeign.getDeptKingdee(findDeptKingdee);
+//            DeptKingdeeDTO.FindDeptKingdeeDTO findDeptKingdee = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+//            findDeptKingdee.setDeptId(salesDeptId);
+//            findDeptKingdee.setOrgCode(salesOrgCode);
+//            DeptKingdeeEntity deptKingdee = kingdeeFeign.getDeptKingdee(findDeptKingdee);
             //销售部门
-            if (!Objects.isNull(deptKingdee)) {
-                resultMap.put("deptCode", deptKingdee.getKingdeeDeptCode());
+//            if (!Objects.isNull(deptKingdee)) {
+//                resultMap.put("deptCode", deptKingdee.getKingdeeDeptCode());
+//            }
+            SysDepartmentDTO departmentDTO = sysUserFeign.getUserDeptById(salesDeptId);
+            //销售部门
+            if (!Objects.isNull(departmentDTO)) {
+                resultMap.put("deptCode", departmentDTO.getCode());
             }
+
         }
         //获取业务员信息
         if (StringUtils.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgCode(salesOrgCode);
             findBusinessOperator.setUserId(sellerId);
-            findBusinessOperator.setBusinessOperatorType("");
+            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.YSY.getCode());
             //获取员工 岗位信息
             KingdeeBusinessOperatorEntity  kingSellerInfo= kingdeeFeign.getBusinessOperator(findBusinessOperator);
             //销售员

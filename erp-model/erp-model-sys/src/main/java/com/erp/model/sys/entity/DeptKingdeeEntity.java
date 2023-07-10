@@ -50,8 +50,8 @@ public class DeptKingdeeEntity extends BaseEntity<DeptKingdeeEntity> {
     /**
      * 使用组织(金蝶)
      */
-    @TableField("use_org_id")
-    private String useOrgId;
+    @TableField("use_org_code")
+    private String useOrgCode;
 
     /**
      * 使用组织名(金蝶)

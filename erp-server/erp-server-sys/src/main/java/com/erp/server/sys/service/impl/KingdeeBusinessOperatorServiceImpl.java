@@ -77,7 +77,7 @@ public class KingdeeBusinessOperatorServiceImpl extends SuperServiceImpl<Kingdee
         return this.lambdaQuery().eq(KingdeeBusinessOperatorEntity::getErpUserId,dto.getUserId())
                 .eq(KingdeeBusinessOperatorEntity::getKingdeeOrgCode,dto.getOrgCode())
                 .eq(KingdeeBusinessOperatorEntity::getKingdeeType,dto.getBusinessOperatorType())
-                .last("LIMIT 1").getEntity();
+                .last("LIMIT 1").one();
     }
 
 

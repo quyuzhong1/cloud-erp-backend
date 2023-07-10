@@ -45,7 +45,7 @@ public class DeptKingdeeImportExcelDTO implements Serializable {
     @ColumnWidth(25)
     @ExcelProperty(value = "使用组织", index = 4)
     @FieldValid(fieldName = "使用组织",isNotBlank = true,maxLength =50 )
-    private String useOrgId;
+    private String useOrgCode;
 
     /**
      * 使用组织

@@ -26,4 +26,12 @@ public interface DeptKingdeeService extends SuperService<DeptKingdeeEntity> {
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 
     DeptKingdeeEntity getInfo(DeptKingdeeDTO.FindDeptKingdeeDTO dto);
+
+
+
+
+
+
+
+
 }

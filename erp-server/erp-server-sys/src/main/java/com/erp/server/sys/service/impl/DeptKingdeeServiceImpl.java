@@ -59,6 +59,9 @@ public class DeptKingdeeServiceImpl extends SuperServiceImpl<DeptKingdeeMapper, 
 
     @Override
     public DeptKingdeeEntity getInfo(DeptKingdeeDTO.FindDeptKingdeeDTO dto) {
-        return null;
+
+        return this.lambdaQuery().eq(DeptKingdeeEntity::getUseOrgCode,dto.getOrgCode()).
+                eq(DeptKingdeeEntity::getDeptId,dto.getDeptId()).last("LIMIT 1")
+                .one();
     }
 }
