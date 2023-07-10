@@ -16,6 +16,11 @@ import javax.validation.constraints.NotBlank;
 public class ApiSyncTaskDTO {
 
     /**
+     * 主键id
+     */
+    private String id;
+
+    /**
      * 平台id
      */
     @NotBlank(message = "平台不能为空")

@@ -9,7 +9,6 @@ import com.erp.model.dmp.entity.ApiSyncTaskEntity;
 import com.erp.server.dmp.mapper.ApiSyncTaskMapper;
 import com.erp.server.dmp.service.ApiSyncTaskService;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
@@ -25,8 +24,14 @@ public class ApiSyncTaskServiceImpl extends ServiceImpl<ApiSyncTaskMapper, ApiSy
 
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean insert(ApiSyncTaskDTO dto) {
+        ApiSyncTaskEntity entity = new ApiSyncTaskEntity();
+        BeanMapperUtils.copy(dto,entity);
+        return this.save(entity);
+    }
+
+    @Override
+    public Boolean update(ApiSyncTaskDTO dto) {
         ApiSyncTaskEntity entity = new ApiSyncTaskEntity();
         BeanMapperUtils.copy(dto,entity);
         return this.save(entity);

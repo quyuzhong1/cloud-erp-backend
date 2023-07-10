@@ -23,6 +23,7 @@ import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
 import com.erp.model.dmp.dto.ApiSyncTaskDTO;
 import com.erp.model.dmp.dto.CfgApiAuthDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
+import com.erp.model.dmp.entity.ApiSyncTaskEntity;
 import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
@@ -470,7 +471,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     public void insertLogWriteBackSyncKingdeeStatus(PlatformEntity platformEntity, String businessId,
                                                     String jsonData, String msg, Integer type, Integer status) {
         //新增任务
-        insertSyncTask(platformEntity,businessId,jsonData,type);
+        insertSyncTask(platformEntity,businessId,jsonData,type, status);
         //新增日志
         insertSyncLog(platformEntity, businessId, jsonData, msg, type, status);
         //更新金蝶同步状态
@@ -481,8 +482,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
 
     private void insertSyncTask (PlatformEntity platformEntity,String businessId,
-                                 String jsonData, Integer type) {
-
+                                 String jsonData, Integer type, Integer status) {
 
         ApiSyncTaskDTO apiSyncTaskDTO = new ApiSyncTaskDTO();
         apiSyncTaskDTO.setApiPlatformId(platformEntity.getId());
@@ -490,7 +490,20 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         apiSyncTaskDTO.setRequestParamJson(jsonData);
         apiSyncTaskDTO.setBusinessId(businessId);
 
-        apiSyncTaskService.listByApiSyncTaskDTO(apiSyncTaskDTO);
+        List<ApiSyncTaskEntity> list = apiSyncTaskService.listByApiSyncTaskDTO(apiSyncTaskDTO);
+
+        //发送成功则删除推送任务
+        if (ApiSendStatusEnum.FAILURE.getCode().equals(status)) {
+
+        }
+        //发送失败则更新推送任务
+
+        if (CollectionUtils.isEmpty(list)) {
+            apiSyncTaskService.insert(apiSyncTaskDTO);
+        } else {
+            apiSyncTaskDTO.setId(list.get(0).getId());
+            apiSyncTaskService.update(apiSyncTaskDTO);
+        }
     }
 
 
