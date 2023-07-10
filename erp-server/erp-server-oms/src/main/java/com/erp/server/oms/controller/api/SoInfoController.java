@@ -59,7 +59,7 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:so:paging",
             tableAlias = "si"
     )
@@ -128,7 +128,7 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:so:submit",
             serviceClass = SoInfoService.class,
             keyIdName = "ids"
@@ -159,7 +159,7 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:so:view",
             serviceClass = SoInfoService.class,
             keyIdName = "id"
@@ -177,7 +177,7 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:so:update",
             serviceClass = SoInfoService.class,
             keyIdName = "id"
@@ -195,7 +195,7 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:so:update",
             serviceClass = SoInfoService.class,
             keyIdName = "id"
@@ -214,7 +214,7 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:so:approve",
             serviceClass = SoInfoService.class,
             keyIdName = "ids"
@@ -229,7 +229,7 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:so:disApprove",
             serviceClass = SoInfoService.class,
             keyIdName = "ids"
@@ -247,7 +247,7 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:so:cancelProcess",
             serviceClass = SoInfoService.class,
             keyIdName = "ids")
@@ -264,7 +264,7 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:so:delete",
             serviceClass = SoInfoService.class,
             keyIdName = "ids")
@@ -283,7 +283,7 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:so:invalid",
             serviceClass = SoInfoService.class,
             keyIdName = "ids")
@@ -326,7 +326,7 @@ public class SoInfoController extends BaseController {
      */
     @GetMapping("/exportSoContractPdf")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:so:exportSoContractPdf",
             serviceClass = SoInfoService.class,
             keyIdName = "id")
