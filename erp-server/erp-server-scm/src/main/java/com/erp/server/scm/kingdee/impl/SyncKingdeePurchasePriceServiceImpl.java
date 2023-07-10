@@ -83,11 +83,13 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
         //采购组织
         resultMap.put("purchaseOrgName",entity.getPurchaseOrgName());
 
-        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPricingUserId());
+        if (StringUtils.isNotBlank(entity.getPricingUserId())) {
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getPricingUserId());
 
-        if (ObjectUtils.isNotEmpty(findUserDTO)) {
-            //定价员
-            resultMap.put("pricingUserCode",findUserDTO.getCode());
+            if (ObjectUtils.isNotEmpty(findUserDTO)) {
+                //定价员
+                resultMap.put("pricingUserCode",findUserDTO.getCode());
+            }
         }
 
         //价目明细
