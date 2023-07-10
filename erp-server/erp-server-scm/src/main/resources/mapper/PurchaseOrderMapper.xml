@@ -197,7 +197,7 @@
                     </foreach>
                 </if>
                 <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
-                    and pa.approve_status in
+                    and po.approve_status in
                     <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
                         #{item}
                     </foreach>
