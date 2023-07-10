@@ -815,7 +815,6 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                 if (viewGenerateMachineInfo.getIsBody()) {
                     addDTO.setWorkType(viewGenerateMachineInfo.getWorkType());
                     addDTO.setWarehouseId(viewGenerateMachineInfo.getWarehouseId());
-                    addDTO.setType(viewGenerateMachineInfo.getWorkType());
                     dto.setSkuId(viewGenerateMachineInfo.getSkuId());
                     dto.setSkuNo(viewGenerateMachineInfo.getSkuNo());
                     dto.setQty(viewGenerateMachineInfo.getMachineQty());
