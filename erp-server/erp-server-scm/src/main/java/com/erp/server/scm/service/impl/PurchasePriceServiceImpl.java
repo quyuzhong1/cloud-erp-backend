@@ -621,9 +621,13 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             List<String> currencyIdList = viewList.stream().map(PurchasePriceDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
             //币种信息
             List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
+            List<String> skuIds = viewList.stream().map(PurchasePriceDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+            List<SkuVO> skuNoList = plmTaskFeign.getSkuInfoByIds(skuIds);
             for (PurchasePriceDTO.PagingViewDTO item : viewList) {
+                SkuVO skuVO = skuNoList.stream().filter(obj -> obj.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
                 PurchasePriceExportExcelDTO excelDTO = new PurchasePriceExportExcelDTO();
                 BeanMapper.copy(item, excelDTO);
+                excelDTO.setProductName(skuVO.getSkuName());
                 Integer minQty = item.getMinQty();
                 Integer maxQty = item.getMaxQty();
                 excelDTO.setQtySection(minQty + "-" + maxQty);
