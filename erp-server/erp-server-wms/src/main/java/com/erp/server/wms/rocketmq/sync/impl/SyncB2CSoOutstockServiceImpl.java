@@ -1,5 +1,6 @@
 package com.erp.server.wms.rocketmq.sync.impl;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -82,8 +83,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         }
 
         String code = entity.getFBillNo();
-        String baseKey = RedisKeyConstant.KINGDEE_XSCK;
-        String redisKey = code + baseKey;
+        String redisKey = StrUtil.format(RedisKeyConstant.KINGDEE_XSCK,code);
 
         //根据仓库分组
         Map<String, List<KingdeeDeliveryDetailItemEntity>> map = kingdeeDetailList.stream().collect(Collectors.groupingBy(KingdeeDeliveryDetailItemEntity::getFStockNumber));
@@ -171,8 +171,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         //销售出库单
         InventorySourceTypeEnum sourceTypeEnum = InventorySourceTypeEnum.SO_OUTSTOCK;
         String code = entity.getFBillNo();
-        String baseKey = RedisKeyConstant.KINGDEE_XSCK;
-        String redisKey = code + baseKey;
+        String redisKey = StrUtil.format(RedisKeyConstant.KINGDEE_XSCK,code);
         String flagId = redisService.getCacheObject(redisKey);
         if (StringUtils.isBlank(flagId)) {
             flagId = soOutstockService.getByCode(code);

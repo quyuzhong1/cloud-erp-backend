@@ -11,5 +11,5 @@ public class RedisKeyConstant {
     /**
      *  销售出库金蝶
      */
-    public static String KINGDEE_XSCK="_KINGDEE_XSCK";
+    public static String KINGDEE_XSCK="KINGDEE_XSCK:{}";
 }
