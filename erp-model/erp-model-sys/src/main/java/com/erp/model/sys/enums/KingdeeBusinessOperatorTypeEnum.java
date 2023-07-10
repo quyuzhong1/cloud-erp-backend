@@ -8,4 +8,17 @@ package com.erp.model.sys.enums;
  * @Created by yl
  */
 public enum KingdeeBusinessOperatorTypeEnum {
+
+    YSY("YSY", "销售员"),
+    CGY("CGY", "采购员"),
+    WHY("WHY", "仓管员"),
+    ;
+
+    private String code;
+    private String name;
+
+    KingdeeBusinessOperatorTypeEnum(String code, String name) {
+        this.code = code;
+        this.name = name;
+    }
 }
