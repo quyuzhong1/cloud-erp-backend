@@ -268,7 +268,7 @@
             pade.id as sourceDetailId,
             pade.sku_id as skuId,
             pade.sku_no as skuNo,
-            pade.qty as qty,
+            pade.qty as machineQty,
             ta.out_warehouse_id as warehouseId,
             ta.out_warehouse_name as warehouseName
         from transfer_application ta
