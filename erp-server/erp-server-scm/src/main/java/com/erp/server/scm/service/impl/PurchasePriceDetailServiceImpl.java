@@ -563,8 +563,13 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         viewDTO.setPurchaseOrgId(priceEntity.getPurchaseOrgId());
         viewDTO.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         List<PurchasePriceDetailDTO.ViewDTO> viewList = this.getByPurchasePriceId(purchasePriceId);
+        List<String> skuIds = viewList.stream().map(PurchasePriceDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+
+
         List<PurchasePriceChangeDetailDTO.ViewDTO> resultList = new ArrayList<>(viewList.size());
         for (PurchasePriceDetailDTO.ViewDTO item : viewList) {
+            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).findFirst().orElse(null);
             PurchasePriceChangeDetailDTO.ViewDTO result = new PurchasePriceChangeDetailDTO.ViewDTO();
             result.setOldCurrency(item.getCurrency());
             result.setOldTaxPrice(item.getTaxPrice());
@@ -572,7 +577,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             result.setPurchasePriceDetailId(item.getId());
             result.setMinQty(item.getMinQty());
             result.setMaxQty(item.getMaxQty());
-            result.setProductName(item.getProductName());
+            result.setProductName(skuVO.getSkuName());
             result.setSkuNo(item.getSkuNo());
             result.setSkuId(item.getSkuId());
             resultList.add(result);
