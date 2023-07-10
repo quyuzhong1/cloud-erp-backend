@@ -270,10 +270,10 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         LocalDate localDate = LocalDate.now();
         for (PurchasePriceDetailEntity item : addList) {
             String skuId = item.getSkuId();
-            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
             if (skuVO != null) {
                 item.setSkuNo(skuVO.getSkuNo());
-                item.setProductName(skuVO.getSpuName());
+                item.setProductName(skuVO.getSkuName());
             }
             item.setPurchasePriceId(purchasePriceId);
             //失效时间
@@ -380,7 +380,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             PurchasePriceDetailEntity entity = new PurchasePriceDetailEntity();
             BeanMapper.copy(item, entity);
             String skuId = item.getSkuId();
-            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
             if (skuVO != null) {
                 entity.setSkuNo(skuVO.getSkuNo());
                 entity.setProductName(skuVO.getSpuName());
