@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.ApiSyncTaskDTO;
 import com.erp.model.dmp.entity.ApiSyncTaskEntity;
+import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.server.dmp.mapper.ApiSyncTaskMapper;
 import com.erp.server.dmp.service.ApiSyncTaskService;
 import org.springframework.stereotype.Service;
@@ -46,7 +48,12 @@ public class ApiSyncTaskServiceImpl extends ServiceImpl<ApiSyncTaskMapper, ApiSy
             this.insert(apiSyncTaskDTO);
         } else {
             apiSyncTaskDTO.setId(list.get(0).getId());
-            apiSyncTaskDTO.setRetryCount(list.get(0).getRetryCount().intValue() + 1);
+            //推送成功重试次数置0
+            if (ApiSendStatusEnum.SUCCESS.getCode().equals(apiSyncTaskDTO.getStatus())) {
+                apiSyncTaskDTO.setRetryCount(MathUtil.ZERO);
+            } else {
+                apiSyncTaskDTO.setRetryCount(list.get(0).getRetryCount().intValue() + 1);
+            }
             this.update(apiSyncTaskDTO);
         }
         return Boolean.TRUE;
