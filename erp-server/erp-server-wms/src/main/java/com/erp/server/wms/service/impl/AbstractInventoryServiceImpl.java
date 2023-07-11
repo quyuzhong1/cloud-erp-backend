@@ -74,7 +74,7 @@ public abstract class AbstractInventoryServiceImpl {
     @Transactional(rollbackFor = Exception.class)
     public <T extends InventoryStockBaseDTO> void approve(List<T> paramList, List<TransactionRuleDTO> ruleList, InventoryBusinessTypeEnum businessType, Boolean byType) {
         Stopwatch stopwatch = Stopwatch.createStarted();
-        log.info("》》》库存交易按【{}】，入参：{}，业务类型：{}", Objects.equals(byType, Boolean.TRUE) ? "业务类型" : "自定义规则", JSONObject.toJSONString(paramList), businessType.getName());
+        log.warn("》》》库存交易按【{}】，入参：{}，业务类型：{}", Objects.equals(byType, Boolean.TRUE) ? "业务类型" : "自定义规则", JSONObject.toJSONString(paramList), businessType.getName());
         // 1.验证参数
         List<TransactionRuleDTO> transactionRuleParams;
         if(Objects.equals(byType,Boolean.TRUE)) {
@@ -88,7 +88,7 @@ public abstract class AbstractInventoryServiceImpl {
         String transactionNo = IdUtil.getSnowflake().nextIdStr();
         this.stockHandler(paramList, businessType, transactionRuleParams, transactionNo);
         stopwatch.stop();
-        log.info("结束库存交易，耗时【{}】秒", stopwatch.elapsed(TimeUnit.SECONDS));
+        log.warn("结束库存交易，耗时【{}】秒", stopwatch.elapsed(TimeUnit.SECONDS));
     }
 
     /**
@@ -126,7 +126,7 @@ public abstract class AbstractInventoryServiceImpl {
     @SneakyThrows
     public void unApprove(InventoryUnApproveDTO dto) {
         Stopwatch stopwatch = Stopwatch.createStarted();
-        log.info("库存交易反审核，单据类型：{}, 单据id：{}", dto.getSourceType().getName(), dto.getBillId());
+        log.warn("库存交易反审核，单据类型：{}, 单据id：{}", dto.getSourceType().getName(), dto.getBillId());
         // 根据单据类型和单据id查询出未反审核过的对应的交易流水，一个单据对应多个SKU， 按创建时间正序排序
         List<TransactionFlowEntity> txnFlows = transactionFlowService.getUnApprovedTxnFlows(dto.getSourceType().getCode(), dto.getBillId());
         ValidatorUtil.isTrue(CollUtil.isNotEmpty(txnFlows),()->new ServiceException(ApiError.ERROR_99040));
@@ -153,7 +153,7 @@ public abstract class AbstractInventoryServiceImpl {
             boolean isLock;
             try {
                 isLock = rlock.tryLock(5, TimeUnit.SECONDS);
-                log.info("反审核》》》，仓库：【{}】，组织：【{}】，SKU ID：【{}】，SKU编号：【{}】, 交易业务：【{}】，来源单据类型：【{}】, 单据id：【{}】，SKU编号：【{}】，是否获取到锁: {}", txnFlow.getWarehouseId(), txnFlow.getOrgId(), txnFlow.getSkuNo(), txnFlow.getSkuId(), inventoryBusinessType.getName(), InventorySourceTypeEnum.getByCode(txnFlow.getSourceType()).getName(), param.getSourceId(), param.getSkuNo(), isLock);
+                log.warn("反审核》》》，仓库：【{}】，组织：【{}】，SKU ID：【{}】，SKU编号：【{}】, 交易业务：【{}】，来源单据类型：【{}】, 单据id：【{}】，SKU编号：【{}】，是否获取到锁: {}", txnFlow.getWarehouseId(), txnFlow.getOrgId(), txnFlow.getSkuNo(), txnFlow.getSkuId(), inventoryBusinessType.getName(), InventorySourceTypeEnum.getByCode(txnFlow.getSourceType()).getName(), param.getSourceId(), param.getSkuNo(), isLock);
                 if (!isLock) {
                     throw new ServiceException(ApiError.ERROR_1026);
                 }
@@ -164,7 +164,7 @@ public abstract class AbstractInventoryServiceImpl {
                 InventoryDetailEntity inventoryDetail = inventoryDetailService.getById(txnFlow.getInventoryDetailId());
                 if(Objects.equals(inventoryModeCur, InventoryModeEnum.OUT_STOCK)) {
                     if(inventoryDetail.getQty() < txnFlow.getQty()) {
-                        log.info("反审核》》》，仓库：【{}】，组织：【{}】，SKU ID：【{}】，SKU编号：【{}】, 交易业务：【{}】，来源单据类型：【{}】, 单据id：【{}】，SKU编号：【{}】，原库存明细id：【{}】，原库存明细数量【{}】，原交易流水数量【{}】，不足以反审核", txnFlow.getWarehouseId(), txnFlow.getOrgId(), txnFlow.getSkuId(), txnFlow.getSkuNo(), txnFlow.getSkuId(), inventoryBusinessType.getName(), InventorySourceTypeEnum.getByCode(txnFlow.getSourceType()).getName(), param.getSourceId(), param.getSkuNo(), inventoryDetail.getQty(), txnFlow.getQty());
+                        log.warn("反审核》》》，仓库：【{}】，组织：【{}】，SKU ID：【{}】，SKU编号：【{}】, 交易业务：【{}】，来源单据类型：【{}】, 单据id：【{}】，SKU编号：【{}】，原库存明细id：【{}】，原库存明细数量【{}】，原交易流水数量【{}】，不足以反审核", txnFlow.getWarehouseId(), txnFlow.getOrgId(), txnFlow.getSkuId(), txnFlow.getSkuNo(), txnFlow.getSkuId(), inventoryBusinessType.getName(), InventorySourceTypeEnum.getByCode(txnFlow.getSourceType()).getName(), param.getSourceId(), param.getSkuNo(), inventoryDetail.getQty(), txnFlow.getQty());
                         throw new ServiceException("库存已被使用，无法反审核");
                     }
                 }
@@ -176,7 +176,7 @@ public abstract class AbstractInventoryServiceImpl {
                 } else {
                     // 检查库存数量是否足够反审核，否则会出现负库存数
                     if(inventory.getQty() < txnFlow.getQty()) {
-                        log.info("反审核》》》，仓库：{}，组织：{}，SKU ID：{}，SKU编号：{}, 交易业务：{}，来源单据类型：{}, 单据id：【{}】，SKU编号：【{}】，原库存明细id：【{}】，原库存数量【{}】，原交易流水数量【{}】，不足以反审核", txnFlow.getWarehouseId(), txnFlow.getOrgId(), txnFlow.getSkuNo(), txnFlow.getSkuId(), inventoryBusinessType.getName(), InventorySourceTypeEnum.getByCode(txnFlow.getSourceType()).getName(), param.getSourceId(), param.getSkuNo(), inventory.getQty(), txnFlow.getQty());
+                        log.warn("反审核》》》，仓库：{}，组织：{}，SKU ID：{}，SKU编号：{}, 交易业务：{}，来源单据类型：{}, 单据id：【{}】，SKU编号：【{}】，原库存明细id：【{}】，原库存数量【{}】，原交易流水数量【{}】，不足以反审核", txnFlow.getWarehouseId(), txnFlow.getOrgId(), txnFlow.getSkuNo(), txnFlow.getSkuId(), inventoryBusinessType.getName(), InventorySourceTypeEnum.getByCode(txnFlow.getSourceType()).getName(), param.getSourceId(), param.getSkuNo(), inventory.getQty(), txnFlow.getQty());
                         throw new ServiceException("库存已被使用，无法反审核");
                     }
                     transactionInventoryQty = transactionInventoryQty - operationQty;
@@ -215,7 +215,7 @@ public abstract class AbstractInventoryServiceImpl {
                     rlock.unlock();
                 }
             }
-            log.info("结束库存交易，耗时【{}】秒", stopwatch.elapsed(TimeUnit.SECONDS));
+            log.warn("结束库存交易，耗时【{}】秒", stopwatch.elapsed(TimeUnit.SECONDS));
         });
     }
 
@@ -246,7 +246,7 @@ public abstract class AbstractInventoryServiceImpl {
         String orgId = warehouseDetail.getOrgId();
         // 单据日期
         LocalDate billDate = param.getBillDate();
-        log.info("交易业务：【{}】，来源单据：【{}】，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走入库逻辑", businessType.getName(), sourceTypeEnum.getName(), param.getSourceId(), param.getSkuNo(), inventoryStatusEnum.getName());
+        log.warn("交易业务：【{}】，来源单据：【{}】，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走入库逻辑", businessType.getName(), sourceTypeEnum.getName(), param.getSourceId(), param.getSkuNo(), inventoryStatusEnum.getName());
         // 按照仓库+SKU进行锁定，暂不考虑库位，防止数据冲突
         String lockKey = StrUtil.format( "{}:{}:{}:{}", DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), warehouseId, StrUtils.null2EmptyWithTrim(warehouseLocation) ,skuId);
         RReadWriteLock rwLock = redisson.getReadWriteLock(lockKey);
@@ -255,12 +255,12 @@ public abstract class AbstractInventoryServiceImpl {
         try {
             // 设置最大等待锁时间
             isLock = rlock.tryLock(10, TimeUnit.SECONDS);
-            log.info("库存状态：【{}】，仓库：【{}】，组织：【{}】，SKU ID：【{}】，SKU编号：【{}】, 交易业务：【{}】，来源单据类型：【{}】, 单据id：【{}】，SKU编号：【{}】，是否获取到锁: {}", inventoryStatusEnum.getName(), warehouseId, orgId, skuId, skuNo, businessType.getName(), sourceTypeEnum.getName(), param.getSourceId(), param.getSkuNo(), isLock);
+            log.warn("库存状态：【{}】，仓库：【{}】，组织：【{}】，SKU ID：【{}】，SKU编号：【{}】, 交易业务：【{}】，来源单据类型：【{}】, 单据id：【{}】，SKU编号：【{}】，是否获取到锁: {}", inventoryStatusEnum.getName(), warehouseId, orgId, skuId, skuNo, businessType.getName(), sourceTypeEnum.getName(), param.getSourceId(), param.getSkuNo(), isLock);
             if (!isLock) {
                 throw new ServiceException(ApiError.ERROR_1026);
             }
-            log.info("库存状态：【{}】，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】", inventoryStatusEnum.getName(), businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
-            log.info("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】新增或修改库存", inventoryStatusEnum.getName(), warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName());
+            log.warn("库存状态：【{}】，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】", inventoryStatusEnum.getName(), businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
+            log.warn("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】新增或修改库存", inventoryStatusEnum.getName(), warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName());
 
             // 此处注意，入库传不传仓位都带仓位条件查询
             InventorySaveDTO inventorySaveDTO = inventoryService.addOrUpdate(warehouseId, orgId, warehouseLocation, skuId, skuNo, inventoryStatusEnum.getCode(), qty);
@@ -268,8 +268,8 @@ public abstract class AbstractInventoryServiceImpl {
             // 库存原数量
             Integer originInventoryQty = inventorySaveDTO.getQty();
             Integer afterInventoryQty = originInventoryQty + qty;
-            log.info("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】，实时库存原数量：【{}】，操作数量【{}】，操作后数量【{}】", inventoryStatusEnum.getName(), warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName(), originInventoryQty, qty, afterInventoryQty);
-            log.info("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：{}, 来源单据：{}, 业务类型：【{}】，状态【{}】，单据日期：【{}】,库存表id：【{}】，新增或修改库存明细数据", inventoryStatusEnum.getName(), warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName(), billDate, inventoryInfoId);
+            log.warn("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】，实时库存原数量：【{}】，操作数量【{}】，操作后数量【{}】", inventoryStatusEnum.getName(), warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName(), originInventoryQty, qty, afterInventoryQty);
+            log.warn("库存状态：【{}】，仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：{}, 来源单据：{}, 业务类型：【{}】，状态【{}】，单据日期：【{}】,库存表id：【{}】，新增或修改库存明细数据", inventoryStatusEnum.getName(), warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName(), billDate, inventoryInfoId);
             // 入库批次日期取单据日期
             String inventoryDetailId = inventoryDetailService.addOrUpdate(inventoryInfoId, billDate, qty);
             // 登记交易流水
@@ -277,7 +277,7 @@ public abstract class AbstractInventoryServiceImpl {
             transactionFlowDTO.setTransactionNo(transactionNo);
             transactionFlowService.add(transactionFlowDTO, businessType, tansactionRuleId, afterInventoryQty, InventoryModeEnum.IN_STOCK);
 
-            log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：{}, 来源单据：{}, 业务类型：【{}】，状态【{}】，单据日期：【{}】,库存表id：【{}】，新增或修改库存历史数据", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName(), billDate, inventoryInfoId);
+            log.warn("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：{}, 来源单据：{}, 业务类型：【{}】，状态【{}】，单据日期：【{}】,库存表id：【{}】，新增或修改库存历史数据", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName(), billDate, inventoryInfoId);
             // 创建/修改库存历史
             inventoryHisService.addOrUpdate(inventoryInfoId, param.getBillDate(), afterInventoryQty);
         } catch (Exception e) {
@@ -325,7 +325,7 @@ public abstract class AbstractInventoryServiceImpl {
         String orgId = warehouseDetail.getOrgId();
         // 单据日期
         LocalDate billDate = param.getBillDate();
-        log.info("交易业务：【{}】，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走出库逻辑", businessType.getName(), sourceTypeEnum.getName(), param.getSourceId(), inventoryStatusEnum.getName(), param.getSkuNo());
+        log.warn("交易业务：【{}】，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走出库逻辑", businessType.getName(), sourceTypeEnum.getName(), param.getSourceId(), inventoryStatusEnum.getName(), param.getSkuNo());
         // 按照仓库+SKU进行锁定，暂不考虑库位，防止数据冲突
         String lockKey = StrUtil.format( "{}:{}:{}:{}",DistributedLockEnum.WMS_INVENTORY_SKU.getCode(), warehouseId, StrUtils.null2EmptyWithTrim(warehouseLocation), skuId);
         RLock rLock = redisson.getLock(lockKey);
@@ -333,11 +333,11 @@ public abstract class AbstractInventoryServiceImpl {
         try {
             // 设置最大等待锁时间
             isLock = rLock.tryLock(10, TimeUnit.SECONDS);
-            log.info("库存状态：【{}】，仓库：【{}】，组织：【{}】，SKU ID：【{}】，SKU编号：【{}】, 交易业务：【{}】，来源单据：【{}】, 是否获取到锁: {}", inventoryStatusEnum.getName(), warehouseId, orgId, skuId, skuNo, businessType.getName(), sourceTypeEnum.getName(), isLock);
+            log.warn("库存状态：【{}】，仓库：【{}】，组织：【{}】，SKU ID：【{}】，SKU编号：【{}】, 交易业务：【{}】，来源单据：【{}】, 是否获取到锁: {}", inventoryStatusEnum.getName(), warehouseId, orgId, skuId, skuNo, businessType.getName(), sourceTypeEnum.getName(), isLock);
             if (!isLock) {
                 throw new ServiceException(ApiError.ERROR_1026);
             }
-            log.info("库存状态：【{}】，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】", inventoryStatusEnum.getName(), businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
+            log.warn("库存状态：【{}】，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】", inventoryStatusEnum.getName(), businessType.getName(), sourceTypeEnum.getName(), sourceId, billDate, param.getSkuNo());
             InventoryEntity inventory = inventoryService.findInventory(orgId, warehouseId, skuId, warehouseLocation, inventoryStatusEnum.getCode());
             String inventoryStatusName = Optional.ofNullable(inventoryStatusEnum).map(InventoryStatusEnum::getName).orElse("");
             if(Objects.isNull(inventory)) {
@@ -345,7 +345,7 @@ public abstract class AbstractInventoryServiceImpl {
                 throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), warehouseLocation, skuNo, inventoryStatusName));
             }
             Integer originQty = inventory.getQty();
-            log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，单据日期：【{}】，状态【{}】，库存原数量：【{}】，操作数量【{}】", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), param.getBillDate(), inventoryStatusEnum.getName(), originQty, qty);
+            log.warn("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，单据日期：【{}】，状态【{}】，库存原数量：【{}】，操作数量【{}】", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), param.getBillDate(), inventoryStatusEnum.getName(), originQty, qty);
             // 判断库存数量是否足够出库
             if(originQty < qty) {
                 throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), warehouseLocation, skuNo, inventoryStatusName));
@@ -398,11 +398,11 @@ public abstract class AbstractInventoryServiceImpl {
             // 此处再次验证，防止变成负库存
             InventoryEntity curInventory = inventoryService.getById(inventory.getId());
             if(curInventory.getQty() < 0) {
-                log.info("库存id:{}出库后的库存数量变为:{}，不允许出库", inventory.getId(), curInventory.getQty());
+                log.warn("库存id:{}出库后的库存数量变为:{}，不允许出库", inventory.getId(), curInventory.getQty());
                 throw new ServiceException(ApiError.ERROR_99035.code, StrUtil.format(ApiError.ERROR_99035.msg, warehouseDetail.getName(), warehouseLocation, skuNo,  inventoryStatusName));
             }
-            log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，单据日期：【{}】，状态【{}】，库存原数量：【{}】，操作数量【{}】，操作后数量【{}】", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), param.getBillDate(), inventoryStatusEnum.getName(), originQty, qty, afterInventoryQty);
-            log.info("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】，单据日期：【{}】,库存表id：【{}】，新增或修改库存历史数据", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName(), billDate, inventory.getId());
+            log.warn("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，单据日期：【{}】，状态【{}】，库存原数量：【{}】，操作数量【{}】，操作后数量【{}】", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), param.getBillDate(), inventoryStatusEnum.getName(), originQty, qty, afterInventoryQty);
+            log.warn("仓库【{}】，组织：【{}】，库位：【{}】，SKU：【{}】，SKU编号：【{}】, 来源单据：【{}】, 业务类型：【{}】，状态【{}】，单据日期：【{}】,库存表id：【{}】，新增或修改库存历史数据", warehouseId, orgId, param.getWarehouseLocation(),param.getSkuId(), param.getSkuNo(), sourceTypeEnum.getName(), businessType.getName(), inventoryStatusEnum.getName(), billDate, inventory.getId());
             // 创建/修改库存历史
             inventoryHisService.addOrUpdate(inventory.getId(), param.getBillDate(), afterInventoryQty);
         }  catch (Exception e) {
