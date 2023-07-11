@@ -199,7 +199,7 @@ public class PurchaseOrderController extends BaseController {
             serviceClass = PurchaseOrderService.class,
             keyIdName = "ids")
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = purchaseOrderService.submit(dto.getIds());
+        Boolean flag = purchaseOrderService.submit(dto.getIds(),Boolean.TRUE);
         return flag == true ? success() : failure();
     }
 

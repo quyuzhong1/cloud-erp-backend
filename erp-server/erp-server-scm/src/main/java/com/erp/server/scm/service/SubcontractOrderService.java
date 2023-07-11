@@ -10,7 +10,6 @@ import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -105,6 +104,16 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
     * @return
     */
     void approve(BaseApproveParamDTO dto);
+
+    /**
+     * @description: 结束审核
+     * @author Will
+     * @date: 2023/7/11 12:24
+     * @param dto
+     * @param list
+     * @return Boolean
+     */
+    Boolean approveEnd(BaseApproveParamDTO dto, List<SubcontractOrderEntity> list);
 
     /**
     * 反审核
@@ -218,13 +227,4 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @return java.lang.Boolean
      **/
     Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus,String syncKingdeeId,String syncOperate);
-    /**
-     * @description: 金蝶导入委外
-     * @author Will
-     * @date: 2023/7/6 10:45
-     * @param excelFile
-     * @param response
-     * @return Boolean
-     */
-    Boolean kingdeeImportFile(MultipartFile excelFile, HttpServletResponse response);
 }

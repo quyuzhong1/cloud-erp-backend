@@ -14,7 +14,6 @@ import com.erp.server.scm.service.SubcontractOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -362,20 +361,6 @@ public class SubcontractOrderController extends BaseController {
     public ApiResult<SubcontractChangeDTO.ViewDTO> viewSubcontractChange(@RequestParam("id") String id) {
         SubcontractChangeDTO.ViewDTO viewDTO = subcontractOrderService.viewSubcontractChange(id);
         return success(viewDTO);
-    }
-
-    /**
-     * 金蝶导入委外订单
-     * @author Will
-     * @date: 2023/7/5 14:59
-     * @param excelFile
-     * @param response
-     * @return ApiResult
-     */
-    @PostMapping("/kingdeeImportFile")
-    public ApiResult kingdeeImportFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean flag = subcontractOrderService.kingdeeImportFile(excelFile,response);
-        return flag == true ? success() : failure();
     }
 
 }

@@ -220,9 +220,19 @@ public class PurchaseOrderDTO implements Serializable {
     public static class SearchParamDTO extends SortDTO {
 
         /**
+         * 搜索类型
+         */
+        private String  searchType;
+
+        /**
          * 主键ids
          */
         private List<String> ids;
+
+        /**
+         * 当前登录人能审核的ids
+         */
+        private List<String> idList;
 
         /**
          * 采购订单编号

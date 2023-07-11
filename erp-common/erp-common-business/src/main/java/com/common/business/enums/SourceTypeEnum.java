@@ -20,6 +20,8 @@ public enum SourceTypeEnum {
     SALES_DEMAND("salesDemand", "备货申请","sales_demand"),
     PURCHASE_CHANGE("purchaseChange", "采购变更","purchase_change"),
     PURCHASE_PRICE("purchasePrice", "采购价目表","purchase_price"),
+    SUPPLIER("supplier", "供应商列表","supplier"),
+
 
     //WMS
     PO_INSTOCK("poInstock", "采购入库单","po_instock"),
@@ -34,7 +36,6 @@ public enum SourceTypeEnum {
     SO_DELIVERY_NOTICE("soDeliveryNotice", "销售发货通知单","so_delivery_notice"),
     TRANSFER_OUT("transferOut", "分布式调出单","transfer_out"),
     TRANSFER_INFO("transferInfo", "直接调拨单","transfer_info"),
-    SUPPLIER("supplier", "供应商列表","supplier"),
     MACHINE_INFO("machineInfo", "加工单","machine_info"),
 
     //OMS
