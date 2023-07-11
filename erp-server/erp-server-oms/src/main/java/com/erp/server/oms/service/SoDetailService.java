@@ -232,9 +232,8 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * 计算毛利成本
      * @param purchaseOrderDetailMap
      * @param item
-     * @param currency
      */
-    void calCost(Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap, SoDetailEntity item, String currency, Boolean isBrush);
+    void calCost(Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap, SoDetailEntity item, Boolean isBrush);
 
     /**
      * 更新成本毛利信息

@@ -22,6 +22,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
@@ -411,9 +412,10 @@ public class SoInfoController extends BaseController {
      * @return
      */
     @GetMapping("/brushData")
-    public ApiResult<Void> getSkuCostProfit(@RequestParam(value = "startDate")LocalDate startDate,
-                                            @RequestParam(value = "startDate")LocalDate endDate) {
-        soInfoService.brushCostData(startDate, endDate);
+    public ApiResult<Void> getSkuCostProfit(@RequestParam(value = "startDate")String startDate,
+                                            @RequestParam(value = "endDate")String endDate) {
+        soInfoService.brushCostData(LocalDate.parse(startDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")),
+                LocalDate.parse(endDate, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
        return success();
     }
 
