@@ -166,7 +166,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         if (entity.getCode().substring(0,2).equals("SP")) {
             resultEntity.setThirdPartySystem(ThirdPartySystemEnum.ENUM_MB.getCode());
         } else {
-            resultEntity.setThirdPartySystem(ThirdPartySystemEnum.ENUM_OTHER.getCode());
+            resultEntity.setThirdPartySystem(ThirdPartySystemEnum.ENUM_KINGDEE.getCode());
         }
         //审核状态
         if (KingdeeDocStatusEnum.APPROVED.getCode().equals(entity.getApproveStatus())) {

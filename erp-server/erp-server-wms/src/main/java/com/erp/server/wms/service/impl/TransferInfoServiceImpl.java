@@ -222,6 +222,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(old.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
+        //马帮直接调拨单不允许修改 TODO
+        if (ThirdPartySystemEnum.ENUM_MB.getCode().equals(dto.getCode())) {
+            throw new ServiceException(ApiError.ERROR_TRANSFER_MB_UPDATE);
+        }
 
         TransferInfoEntity entity = new TransferInfoEntity();
         BeanMapperUtils.copy(dto, entity);
@@ -328,6 +332,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
+        String codes = list.stream().filter(obj -> ThirdPartySystemEnum.ENUM_MB.getCode().equals(obj.getCode())).map(TransferInfoEntity::getCode).collect(Collectors.joining(","));
+        //马帮直接调拨单不允许删除 TODO
+        if (StringUtils.isNotBlank(codes)) {
+            throw new ServiceException(ApiError.ERROR_TRANSFER_MB_UPDATE,codes);
+        }
+
         log.info("直接调拨单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
         //删除明细数据
         transferInfoDetailService.removeByMainIds(ids);
@@ -404,7 +414,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //发送马帮（非马帮平台的才需要推送）
             list.forEach(obj->{
                 // 直接调拨单发送马帮出入库
-                if(Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_OTHER.getCode())) {
+                if(Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_KINGDEE.getCode())) {
                     log.info("审核直接调拨单【{}】是非马帮平台的，需要同步到马帮平台出入库，直接调拨单参数：{}", obj.getCode(), JSONObject.toJSONString(obj));
                     syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
                 }
@@ -448,7 +458,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //发送马帮（非马帮平台的才需要推送）
         list.forEach(obj->{
             // 直接调拨单发送马帮出入库
-            if(Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_OTHER.getCode())) {
+            if(Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_KINGDEE.getCode())) {
                 log.info("反审核直接调拨单【{}】是非马帮平台的，需要同步到马帮平台出入库，直接调拨单参数：{}", obj.getCode(), JSONObject.toJSONString(obj));
                 syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_DISAPPROVE.getCode());
             }

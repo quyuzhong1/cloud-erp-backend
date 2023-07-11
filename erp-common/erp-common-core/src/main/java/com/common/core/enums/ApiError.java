@@ -572,6 +572,8 @@ public enum ApiError implements Serializable {
     ERROR_98094(98094,"{}已生成交货单,不可变更仓库和供应商"),
     ERROR_98095(98095,"{}已生成入库单,不可变更仓库和供应商"),
     ERROR_SUB_PUSH_CHANGE(98096,"委外订单【{}】已下推委外变更单【{}】,不支持反审核"),
+    ERROR_TRANSFER_MB_UPDATE(98097,"马帮直接调拨单不允许修改"),
+    ERROR_TRANSFER_MB_DELETE(98098,"马帮直接调拨单【{}】不允许删除"),
 
 
 

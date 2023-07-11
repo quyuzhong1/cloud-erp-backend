@@ -9,7 +9,7 @@ package com.common.business.enums;
 public enum ThirdPartySystemEnum {
 
     ENUM_MB("mb", "马帮平台"),
-    ENUM_OTHER("other", "其他平台");
+    ENUM_KINGDEE("kingdee", "金蝶");
 
     private String code;
     private String msg;
