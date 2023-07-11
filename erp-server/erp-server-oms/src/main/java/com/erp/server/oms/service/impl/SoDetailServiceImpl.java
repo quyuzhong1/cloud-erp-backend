@@ -392,7 +392,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 String partialShipment = DeliveryStatusEnum.PARTIAL_SHIPMENT.getCode();
                 List<String> deliveryStatusList = Arrays.asList(unShipped, partialShipment);
                 List<SoDetailDTO.InfoDTO> waitDeliveryList = baseMapper.listSoDetailByDeliveryStatus(deliveryStatusList);
-                return waitDeliveryList.stream().map(SoDetailDTO.InfoDTO::getId).collect(Collectors.toList());
+                return waitDeliveryList.stream().map(SoDetailDTO.InfoDTO::getMainId).distinct().collect(Collectors.toList());
 
             //已发货
             case OmsConstant
@@ -400,7 +400,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 String completeShipment = DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode();
                 List<String> deliveryStatus = Arrays.asList(completeShipment);
                 List<SoDetailDTO.InfoDTO> deliveryList = baseMapper.listSoDetailByDeliveryStatus(deliveryStatus);
-                return deliveryList.stream().map(SoDetailDTO.InfoDTO::getId).collect(Collectors.toList());
+                return deliveryList.stream().map(SoDetailDTO.InfoDTO::getMainId).distinct().collect(Collectors.toList());
 
         }
 

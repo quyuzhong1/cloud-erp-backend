@@ -89,21 +89,29 @@
 
     <select id="listSoDetailByDeliveryStatus" resultType="com.erp.model.oms.dto.SoDetailDTO$InfoDTO">
         SELECT
-        sd.id,
-        sd.main_id,
-        sd.sku_id,
-        sd.sku_no,
-        sd.qty,
-        sd.is_gift,
-        sd.is_close,
-        sd.remark,
-        sd.delivery_status,
-        si.approve_status
-        FROM so_detail sd
-        INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
-        WHERE si.is_deleted=FALSE AND si.approve_status='approve'
+            tt.main_id,
+            tt.type AS deliveryStatus
+        FROM so_info si
+        INNER JOIN (
+            SELECT
+                sd.delivery_status AS type,
+                sd.main_id,
+                COUNT(sd.main_id) ,
+                t.skuQty AS skuQty
+            FROM so_detail sd
+            LEFT JOIN (
+                SELECT main_id, COUNT(main_id) skuQty FROM so_detail WHERE is_deleted = false AND is_close = false GROUP BY main_id
+            )t ON sd.main_id = t.main_id
+            WHERE sd.is_deleted = false AND sd.is_close = false
+            GROUP BY
+            sd.delivery_status,
+            sd.main_id,t.skuQty
+            order by sd.delivery_status
+        )tt on si.id = tt.main_id
+        WHERE si.is_deleted = false AND si.approve_status = 'approve'
+        AND CASE WHEN tt.type = 'completeShipment' THEN tt.skuQty = tt.count ELSE 1=1 END
         <if test="deliveryStatusList !=null  and deliveryStatusList.size>0">
-            AND sd.delivery_status IN
+            AND tt.type IN
             <foreach collection="deliveryStatusList" item="deliveryStatus" open="(" separator="," close=")">
                 #{deliveryStatus}
             </foreach>
