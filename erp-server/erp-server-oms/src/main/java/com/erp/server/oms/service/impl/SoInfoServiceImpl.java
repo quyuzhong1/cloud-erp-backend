@@ -57,7 +57,6 @@ import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -244,12 +243,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String symbol = currencyViewList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
         addEntity.setCurrencySymbol(symbol);
-
-        // 字典值获取
-        List<String> dictKeys = Lists.newArrayList(DictBasicEnum.RECEIVE_METHOD.getType(), DictBasicEnum.COLLECTION_TERMS.getType());
-        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
-        Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
-
+        addEntity.setTradeTermDict(dto.getTradeTerm());
         // 验证字典值
         checkDict(addEntity);
 
@@ -752,7 +746,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String symbol = currencyViewList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
         soInfo.setCurrencySymbol(symbol);
-
+        soInfo.setTradeTermDict(dto.getTradeTerm());
         // 验证字典值
         checkDict(soInfo);
 
@@ -1892,7 +1886,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     public void brushCostData(LocalDate startDate, LocalDate endDate) {
        // 查询需要重刷数据的创建时间范围
-        List<SoInfoEntity> soList =  lambdaQuery().ge(SoInfoEntity::getCreateTime, startDate).le(SoInfoEntity::getCreateTime,endDate.plusDays(1)).list();
+        List<SoInfoEntity> soList =  lambdaQuery().ge(SoInfoEntity::getCreateTime, startDate).le(SoInfoEntity::getCreateTime,endDate).list();
         if(CollUtil.isEmpty(soList)) {
             return;
         }
@@ -1909,7 +1903,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             for (SoDetailEntity item : detailList) {
                 // 计算毛利成本
-                soDetailService.calCost(purchaseOrderDetailMap, item, Boolean.TRUE);
+                soDetailService.calCost(purchaseOrderDetailMap, item, item.getCurrency(), Boolean.TRUE);
                 soDetailService.updateCost(item.getId(), item);
             }
 

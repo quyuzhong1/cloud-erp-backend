@@ -125,7 +125,7 @@
          SELECT
             approve_status,
 	        count(*)
-	     FROM   customer_info
+	     FROM   customer_info ci
 	     WHERE is_deleted=FALSE
 	     <if test="permissionSql!=null and permissionSql!=''">
              ${permissionSql}

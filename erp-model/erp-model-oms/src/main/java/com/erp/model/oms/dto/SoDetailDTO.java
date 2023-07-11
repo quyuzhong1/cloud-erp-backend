@@ -221,6 +221,11 @@ public class SoDetailDTO implements Serializable {
         private BigDecimal amount;
 
         /**
+         * 含税的销售金额
+         */
+        private BigDecimal taxAmount;
+
+        /**
          * 及时库存
          */
         private Integer curInventoryQty;
@@ -516,6 +521,11 @@ public class SoDetailDTO implements Serializable {
          * 销售金额
          */
         private BigDecimal amount;
+
+        /**
+         * 价税销售金额
+         */
+        private BigDecimal taxAmount;
 
         /**
          * 及时库存
