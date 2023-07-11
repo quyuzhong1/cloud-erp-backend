@@ -162,8 +162,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Resource
     private SoReturnReceiveDetailService soReturnReceiveDetailService;
 
-    @Resource
-    private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
 
     @Resource
     private SoOutstockDetailService soOutstockDetailService;
@@ -200,10 +198,30 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         bill.setId(billId);
         //处理相关数据
         HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill);
-        //检查质检数量
-        checkQcQty(dto.getQcInfo(), dto.getId(), dto.getPurchaseOrderId(), dto.getQcProduct().getSkuId());
 
+        //采购订单明细
         String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
+        String skuId = dto.getQcProduct().getSkuId();
+        List<PurchaseOrderDetailEntity> purOrderDetailList = Collections.emptyList();
+        //当采购订单明细id 为空的时候 sku id 不能为空
+        if (StringUtils.isBlank(purchaseOrderDetailId)) {
+            if (StringUtils.isBlank(skuId)) {
+                throw new ServiceException(ApiError.ERROR_95107);
+            }
+        } else {
+            List<String> podIds = Arrays.asList(purchaseOrderDetailId);
+            //获取到对应的 订单明细
+            purOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
+            skuId = purOrderDetailList.stream().filter(p -> p.getId().equals(purchaseOrderDetailId))
+                    .map(PurchaseOrderDetailEntity::getSkuId).findFirst().orElse("");
+        }
+        if (StringUtils.isBlank(skuId)) {
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
+
+        //检查质检数量
+        checkQcQty(dto.getQcInfo(), dto.getId(), dto.getPurchaseOrderId(), skuId, purOrderDetailList);
+
         //检查采购价目明细
         checkPurchaseOrderDetailId(dto.getPurchaseOrderId(), purchaseOrderDetailId);
 
@@ -226,11 +244,12 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 bill.setPurchaseOrderCode(purchaseOrder.getCode());
             }
         }
-        bill.setSourceDetailId(dto.getSourceDetailId());
+        String sourceDetailId = dto.getSourceDetailId();
+        bill.setSourceDetailId(sourceDetailId);
         Boolean result = this.saveOrUpdate(bill);
         if (result) {
             //质检产品 暂存
-            qcProductService.add(billId, dto.getQcProduct());
+            qcProductService.add(billId, dto.getQcProduct(), skuId);
             //质检信息 暂存
             qcResultService.add(billId, dto.getQcInfo());
             //质检报告 暂存
@@ -460,20 +479,34 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (Objects.isNull(bill)) {
             throw new ServiceException(ApiError.ERROR_99015);
         }
-
         //质检信息
         QcResultDTO.AddDTO qcInfo = dto.getQcInfo();
-
         //采购订单
         String purchaseOrderId = dto.getPurchaseOrderId();
-
         String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
         //检查采购价目明细
         checkPurchaseOrderDetailId(purchaseOrderId, purchaseOrderDetailId);
-
         Boolean isExist = StringUtils.isNotBlank(purchaseOrderId);
+        String skuId = dto.getQcProduct().getSkuId();
+        List<PurchaseOrderDetailEntity> purOrderDetailList = Collections.emptyList();
+        //当采购订单明细id 为空的时候 sku id 不能为空
+        if (StringUtils.isBlank(purchaseOrderDetailId)) {
+            if (StringUtils.isBlank(skuId)) {
+                throw new ServiceException(ApiError.ERROR_95107);
+            }
+        } else {
+            List<String> podIds = Arrays.asList(purchaseOrderDetailId);
+            //获取到对应的 订单明细
+            purOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
+            skuId = purOrderDetailList.stream().filter(p -> p.getId().equals(purchaseOrderDetailId))
+                    .map(PurchaseOrderDetailEntity::getSkuId).findFirst().orElse("");
+        }
+        if (StringUtils.isBlank(skuId)) {
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
+
         //检查质检数量
-        checkQcQty(qcInfo, dto.getId(), dto.getPurchaseOrderId(), dto.getQcProduct().getSkuId());
+        checkQcQty(qcInfo, dto.getId(), dto.getPurchaseOrderId(), skuId, purOrderDetailList);
         //质检单
         String billId = dto.getId();
         if (StringUtils.isBlank(billId)) {
@@ -506,7 +539,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         Boolean result = this.saveOrUpdate(bill);
         if (result) {
             //质检产品 暂存
-            qcProductService.add(billId, dto.getQcProduct());
+            qcProductService.add(billId, dto.getQcProduct(), skuId);
             //质检信息 暂存
             qcResultService.add(billId, qcInfo);
             //质检报告 暂存
@@ -538,7 +571,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * @param entity
      */
     private void HandleData(String qcUserId, String qcDeptId, QcInfoEntity entity) {
-
         //质检员
         if (StringUtils.isNotBlank(qcUserId)) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(qcUserId);
@@ -668,6 +700,16 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         bill.setId(billId);
         //处理相关数据
         HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill);
+        String skuId = dto.getQcProduct().getSkuId();
+        String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
+        //当采购订单明细id 不为空的时候
+        if (StringUtils.isNotBlank(purchaseOrderDetailId)) {
+            List<String> podIds = Arrays.asList(purchaseOrderDetailId);
+            //获取到对应的 订单明细
+          List<PurchaseOrderDetailEntity>  purOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
+            skuId = purOrderDetailList.stream().filter(p -> p.getId().equals(purchaseOrderDetailId))
+                    .map(PurchaseOrderDetailEntity::getSkuId).findFirst().orElse("");
+        }
         //采购订单
         String purchaseOrderId = dto.getPurchaseOrderId();
         if (StringUtils.isNotBlank(purchaseOrderId)) {
@@ -684,7 +726,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         Boolean result = this.saveOrUpdate(bill);
         if (result) {
             //质检产品 暂存
-            qcProductService.add(billId, dto.getQcProduct());
+            qcProductService.add(billId, dto.getQcProduct(),skuId);
             //质检信息 暂存
             qcResultService.add(billId, dto.getQcInfo());
             //质检报告 暂存
@@ -724,8 +766,27 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         qcInfo.setQcGoodQty(0);
         qcInfo.setQcQty(0);
         Boolean isExist = StringUtils.isNotBlank(purchaseOrderId);
+        String skuId = dto.getQcProduct().getSkuId();
+        List<PurchaseOrderDetailEntity> purOrderDetailList = Collections.emptyList();
+
+        //当采购订单明细id 为空的时候 sku id 不能为空
+        if (StringUtils.isBlank(purchaseOrderDetailId)) {
+            if (StringUtils.isBlank(skuId)) {
+                throw new ServiceException(ApiError.ERROR_95107);
+            }
+        } else {
+            List<String> podIds = Arrays.asList(purchaseOrderDetailId);
+            //获取到对应的 订单明细
+            purOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
+            skuId=purOrderDetailList.stream().filter(p->p.getId().equals(purchaseOrderDetailId))
+                    .map(PurchaseOrderDetailEntity::getSkuId).findFirst().orElse("");
+        }
+        if (StringUtils.isBlank(skuId)) {
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
+
         //检查质检数量
-        checkQcQty(qcInfo, dto.getId(), dto.getPurchaseOrderId(), dto.getQcProduct().getSkuId());
+        checkQcQty(qcInfo, dto.getId(), dto.getPurchaseOrderId(), skuId,purOrderDetailList);
 
         String code = bill.getCode();
         BeanMapper.copy(dto, bill);
@@ -749,7 +810,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         Boolean result = this.saveOrUpdate(bill);
         if (result) {
             //质检产品 暂存
-            qcProductService.add(id, dto.getQcProduct());
+            qcProductService.add(id, dto.getQcProduct(),skuId);
             //质检信息 暂存
             qcResultService.add(id, qcInfo);
             //质检报告 暂存
@@ -1714,7 +1775,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * @author yl
      * @date 2023-04-20 10:34
      */
-    private void checkQcQty(QcResultDTO.AddDTO qcInfo, String mainId, String purchaseOrderId, String skuId) {
+    private void checkQcQty(QcResultDTO.AddDTO qcInfo, String mainId, String purchaseOrderId, String skuId, List<PurchaseOrderDetailEntity> purOrderDetailList) {
         //校验质检不良+合格不能超过质检数量
         if (qcInfo != null) {
             Integer goodQty = qcInfo.getQcGoodQty() != null ? qcInfo.getQcGoodQty() : 0;
@@ -1729,13 +1790,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             if (goodQty + badQty > qcQty) {
                 throw new ServiceException(ApiError.ERROR_99016);
             }
-            //采购订单详情id
-            String orderDetailId = qcInfo.getPurchaseOrderDetailId();
-            //当采购订单不为空的时候
-            if (StringUtils.isNotBlank(orderDetailId)) {
-                List<String> podIds = Arrays.asList(orderDetailId);
-                //获取到对应的 订单明细
-                List<PurchaseOrderDetailEntity> purOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
+
+            //当采购订单详情不为空的时候
+            if (CollectionUtils.isNotEmpty(purOrderDetailList)) {
                 //采购的订单数量
                 Integer purchaseSkuQty = purOrderDetailList.stream().filter(p -> p.getSkuId().equals(skuId)).
                         mapToInt(PurchaseOrderDetailEntity::getPurchaseQty).sum();
