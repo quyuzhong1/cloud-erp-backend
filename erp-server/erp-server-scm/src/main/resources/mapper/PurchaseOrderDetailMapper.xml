@@ -156,7 +156,8 @@
                 row_number() over(partition by pod.sku_id order by po.purchase_date desc nulls last,po.update_time desc) as rn
                 from purchase_order_detail pod
                 inner join purchase_order po on pod.purchase_order_id = po.id and po.is_deleted = false
-                where po.approve_status = 'approve' and pod.sku_id in
+                where po.approve_status = 'approve'
+                and pod.is_deleted = false  and pod.sku_id in
                 <foreach collection="skuIds" item="id" open="(" separator="," close=")">
                     #{id}
                 </foreach>
