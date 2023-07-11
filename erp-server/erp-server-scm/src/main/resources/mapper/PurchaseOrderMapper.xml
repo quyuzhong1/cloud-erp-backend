@@ -75,6 +75,12 @@
             <if test="params.isFirstMassProduct != null ">
                 and po.is_first_mass_product = #{params.isFirstMassProduct}
             </if>
+            <if test="params.idList != null and params.idList.size > 0">
+                and po.id in
+                <foreach collection="params.idList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
             <if test="params.skuNoList != null and params.skuNoList.size > 0">
                 and pod.sku_no in
                 <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
@@ -183,6 +189,12 @@
                 </if>
                 <if test="params.isFirstMassProduct != null ">
                     and po.is_first_mass_product = #{params.isFirstMassProduct}
+                </if>
+                <if test="params.idList != null and params.idList.size > 0">
+                    and po.id in
+                    <foreach collection="params.idList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
                 </if>
                 <if test="params.skuNoList != null and params.skuNoList.size > 0">
                     and pod.sku_no in
