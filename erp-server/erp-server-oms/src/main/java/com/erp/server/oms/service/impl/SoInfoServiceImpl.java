@@ -243,7 +243,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String symbol = currencyViewList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
         addEntity.setCurrencySymbol(symbol);
-        addEntity.setTradeTermDict(dto.getTradeTerm());
+        addEntity.setTradeTerm(dto.getTradeTerm());
         // 验证字典值
         checkDict(addEntity);
 
@@ -661,7 +661,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         draftEntity.setWarehouseOrgName(warehouseOrgName);
         String draftStatus = BillApproveStatusEnum.DRAFT.getStatus();
         draftEntity.setApproveStatus(BillApproveStatusEnum.getByStatus(draftStatus));
-
+        draftEntity.setTradeTerm(dto.getTradeTerm());
         // 验证字典值
         checkDict(draftEntity);
 
@@ -746,7 +746,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String symbol = currencyViewList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
         soInfo.setCurrencySymbol(symbol);
-        soInfo.setTradeTermDict(dto.getTradeTerm());
+        soInfo.setTradeTerm(dto.getTradeTerm());
         // 验证字典值
         checkDict(soInfo);
 

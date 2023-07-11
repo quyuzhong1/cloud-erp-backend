@@ -31,8 +31,8 @@ public class ProductDetailExcelDTOTestTT {
     /**
      * 产品经理
      */
-    @FieldValid(fieldName = "产品经理", isNotBlank = true, maxLength = 20)
-    private String chargeId;
+    @FieldValid(fieldName = "产品经理", isNotBlank = true,maxLength = 20)
+    private String chargeName;
 
     /**
      * 销售方式
@@ -445,5 +445,10 @@ public class ProductDetailExcelDTOTestTT {
      */
     @FieldValid(fieldName = "单箱数量",formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
     private String boxQty;
+
+    /**
+     * 产品经理id
+     */
+    private String chargeId;
 }
 //77
