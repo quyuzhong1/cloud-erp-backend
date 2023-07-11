@@ -271,6 +271,11 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     @TableField("remark")
     private String remark;
 
+    /**
+     * 贸易条款
+     */
+    @TableField("trade_term")
+    private String tradeTerm;
 
     public static final String CODE = "code";
 
