@@ -62,4 +62,13 @@ public interface UserKingdeePostService extends SuperService<UserKingdeePostEnti
      * @return com.erp.model.sys.dto.KingdeePostDTO.UserKingdeePostInfoDTO
      */
     KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePost(KingdeePostDTO.FindUserKingdeePostInfoDTO dto);
+
+    /**
+     * 获取到岗位信息
+     * @author yl
+     * @date 2023-07-11 12:19
+     * @param dto
+     * @return com.erp.model.sys.dto.KingdeePostDTO.UserKingdeePostInfoDTO
+     */
+    KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePostInfoByPostCode(KingdeePostDTO.FindUserKingdeePostDTO dto);
 }

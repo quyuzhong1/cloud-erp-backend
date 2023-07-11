@@ -28,6 +28,13 @@ public interface KingdeeFeign {
     KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePost(@RequestBody KingdeePostDTO.FindUserKingdeePostInfoDTO  getUserKingdeePost);
 
     /**
+     * 获取到岗位信息 根据岗位code
+     * @param getUserKingdeePost
+     * @return
+     */
+    @PostMapping("/feign/kingdee/getUserKingdeePostByPostCode")
+    KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePostByPostCode(@RequestBody KingdeePostDTO.FindUserKingdeePostDTO  getUserKingdeePost);
+    /**
      * 获取到业务员信息
      * @param dto
      * @return

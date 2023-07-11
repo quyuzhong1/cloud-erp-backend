@@ -354,6 +354,12 @@ public class SoInfoDTO implements Serializable {
         private LocalDate requireDate;
 
         /**
+         * 单据日期
+         */
+        @NotNull(message = "单据日期不能为空", groups = {AddGroup.class})
+        private LocalDate billDate;
+
+        /**
          * 组织id
          */
         @NotBlank(message = "销售组织不能为空", groups = {AddGroup.class})
@@ -499,6 +505,11 @@ public class SoInfoDTO implements Serializable {
          * 附件url集合
          */
         private List<String> attachUrlList;
+
+        /**
+         * 贸易条款
+         */
+        private String tradeTerm;
 
         @Valid
         @Size(min = 1, message = "销售订单详情不能为空", groups = {AddGroup.class})
@@ -707,6 +718,10 @@ public class SoInfoDTO implements Serializable {
          */
         private List<String> attachUrlList;
 
+        /**
+         * 贸易条款
+         */
+        private String tradeTerm;
 
         /**
          * 订单产品详情
@@ -838,6 +853,12 @@ public class SoInfoDTO implements Serializable {
          */
         @NotNull(message = "要货日期不能为空")
         private LocalDate requireDate;
+
+        /**
+         * 单据日期
+         */
+        @NotNull(message = "单据日期不能为空")
+        private LocalDate billDate;
 
         /**
          * 组织id
@@ -982,6 +1003,11 @@ public class SoInfoDTO implements Serializable {
          * 附件url集合
          */
         private List<String> attachUrlList;
+
+        /**
+         * 贸易条款
+         */
+        private String tradeTerm;
 
         @Valid
         @Size(min = 1, message = "销售订单详情不能为空", groups = {AddGroup.class})

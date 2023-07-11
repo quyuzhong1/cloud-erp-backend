@@ -80,6 +80,12 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField("amount")
     private BigDecimal amount;
 
+   /**
+    * 金额含税
+    */
+   @TableField("tax_amount")
+   private BigDecimal taxAmount;
+
     /**
      * 币种
      */

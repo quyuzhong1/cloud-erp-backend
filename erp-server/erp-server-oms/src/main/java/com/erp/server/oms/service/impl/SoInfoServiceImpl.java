@@ -242,7 +242,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String symbol = currencyViewList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
         addEntity.setCurrencySymbol(symbol);
-
+        addEntity.setTradeTermDict(dto.getTradeTerm());
         // 字典值获取
         List<String> dictKeys = Lists.newArrayList(DictBasicEnum.RECEIVE_METHOD.getType(), DictBasicEnum.COLLECTION_TERMS.getType());
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
@@ -750,7 +750,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String symbol = currencyViewList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
         soInfo.setCurrencySymbol(symbol);
-
+        soInfo.setTradeTermDict(dto.getTradeTerm());
         // 验证字典值
         checkDict(soInfo);
 

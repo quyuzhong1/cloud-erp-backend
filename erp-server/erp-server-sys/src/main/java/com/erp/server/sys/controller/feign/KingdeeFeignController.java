@@ -39,20 +39,48 @@ public class KingdeeFeignController extends BaseController {
     @Resource
     private KingdeeBusinessOperatorService kingdeeBusinessOperatorService;
 
+    /**
+     * 获取部门信息
+     * @param dto
+     * @return
+     */
     @PostMapping("/getInfo")
     public DeptKingdeeEntity getInfo(@RequestBody DeptKingdeeDTO.FindDeptKingdeeDTO dto) {
         return deptKingdeeService.getInfo(dto);
     }
 
+
+    /**
+     *获取员工任刚信息
+     * @param dto
+     * @return
+     */
     @PostMapping("/getUserKingdeePost")
     public KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePost(@RequestBody KingdeePostDTO.FindUserKingdeePostInfoDTO dto) {
         KingdeePostDTO.UserKingdeePostInfoDTO result = userKingdeePostService.getUserKingdeePost(dto);
         return result;
     }
 
+    /**
+     * 获取到业务员信息
+     * @param dto
+     * @return
+     */
     @PostMapping("/getBusinessOperator")
     public KingdeeBusinessOperatorEntity getUserKingdeePost(@RequestBody KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO dto) {
         KingdeeBusinessOperatorEntity result = kingdeeBusinessOperatorService.find(dto);
+        return result;
+    }
+
+
+    /**
+     *获取员工任岗信息
+     * @param dto
+     * @return
+     */
+    @PostMapping("/getUserKingdeePostByPostCode")
+    public KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePostByInfo(@RequestBody KingdeePostDTO.FindUserKingdeePostDTO dto) {
+        KingdeePostDTO.UserKingdeePostInfoDTO result = userKingdeePostService.getUserKingdeePostInfoByPostCode(dto);
         return result;
     }
 

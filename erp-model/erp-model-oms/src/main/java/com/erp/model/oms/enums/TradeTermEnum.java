@@ -5,13 +5,12 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
-/**
- * 单据类型
- */
-public enum BillTypeEnum implements EnumMessage {
-    B2B("B2B", "B2B订单"),
-    B2C("B2C", "B2C订单"),
-    AFTER_SALES("AfterSale","【售后订单-补/换/赠】")
+public enum TradeTermEnum implements EnumMessage {
+    EXW("EXW", "EXW"),
+    FOB("FOB", "FOB"),
+    FCA("FCA", "FCA"),
+    DDP("DDP", "DDP"),
+
     ;
     /**
      * 类型
@@ -25,7 +24,7 @@ public enum BillTypeEnum implements EnumMessage {
     private String name;
 
 
-    BillTypeEnum(String code, String name) {
+    TradeTermEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -42,9 +41,9 @@ public enum BillTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (BillTypeEnum billTypeEnum : BillTypeEnum.values()) {
-            if (code.equals(billTypeEnum.getCode())) {
-                return billTypeEnum.getName();
+        for (TradeTermEnum tradeTermEnum : TradeTermEnum.values()) {
+            if (code.equals(tradeTermEnum.getCode())) {
+                return tradeTermEnum.getName();
             }
         }
         return "";

@@ -703,7 +703,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         String skuId = dto.getQcProduct().getSkuId();
         String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
         //当采购订单明细id 不为空的时候
-        if (StringUtils.isBlank(purchaseOrderDetailId)) {
+        if (StringUtils.isNotBlank(purchaseOrderDetailId)) {
             List<String> podIds = Arrays.asList(purchaseOrderDetailId);
             //获取到对应的 订单明细
           List<PurchaseOrderDetailEntity>  purOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);

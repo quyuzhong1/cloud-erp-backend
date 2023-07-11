@@ -55,6 +55,13 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     @TableField("require_date")
     private LocalDate requireDate;
 
+
+    /**
+     * 单据日期
+     */
+    @TableField("bill_date")
+    private LocalDate billDate;
+
     /**
      * 销售组织id
      */
@@ -264,6 +271,11 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     @TableField("remark")
     private String remark;
 
+    /**
+     * 贸易条款
+     */
+    @TableField("trade_term_dict")
+    private String tradeTermDict;
 
     public static final String CODE = "code";
 

@@ -2,6 +2,7 @@ package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
@@ -152,17 +153,48 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if (Objects.isNull(processInstance)) {
             throw new ServiceException(ApiError.ERROR_94004);
         }
+        ActivityInstance activityInstance = runtimeService.getActivityInstance(processInstance.getId());
         ExecutionEntity executionEntity = ((ProcessInstanceWithVariablesImpl) processInstance).getExecutionEntity();
         ActivityImpl activity = executionEntity.getActivity();
-        List<TaskEntity> tasks = executionEntity.getTasks();
+        String taskId;
+        String activityId;
+        if(ObjectUtil.isEmpty(activity)){
+            // 多实例节点 获取当前活动节点方法
+            ActivityInstance[] childActivityInstances = activityInstance.getChildActivityInstances();
+            if(ObjectUtil.isEmpty(childActivityInstances) || childActivityInstances.length == 0){
+                log.error("流程实例[{}]没有多实例子节点",processInstance.getId());
+                throw new ServiceException(ApiError.ERROR_94004);
+            }
+            activityId = childActivityInstances[0].getActivityId();
+            activityId = activityId.contains("#") ? activityId.substring(0, activityId.indexOf("#")) : activityId;
+            List<ExecutionEntity> executions = executionEntity.getExecutions();
+            if (CollectionUtil.isEmpty(executions)) {
+                log.error("流程实例[{}]没有多实例执行任务",processInstance.getId());
+                throw new ServiceException(ApiError.ERROR_94004);
+            }
+            List<ExecutionEntity> executionChild = executions.get(0).getExecutions();
+            if (CollectionUtil.isEmpty(executionChild)) {
+                log.error("流程实例[{}]没有多实例执行子任务",processInstance.getId());
+                throw new ServiceException(ApiError.ERROR_94004);
+            }
+            List<TaskEntity> tasks = executionChild.get(0).getTasks();
+            if (CollectionUtil.isEmpty(executionChild)) {
+                log.error("流程实例[{}]没有多实例执行任务列表为空",processInstance.getId());
+                throw new ServiceException(ApiError.ERROR_94004);
+            }
+            taskId = tasks.get(0).getId();
+        }else {
+            activityId = activity.getActivityId();
+            taskId = executionEntity.getTasks().get(0).getId();
+        }
         String processInstanceId = processInstance.getProcessInstanceId();
         // 保存审批节点数据
-        ProcessManagementEntity insertManagementEntity = new ProcessManagementEntity(processInstanceId, dto, activity.getActivityId(), processStartTime, processDefinition,processInstance.getProcessDefinitionId());
+        ProcessManagementEntity insertManagementEntity = new ProcessManagementEntity(processInstanceId, dto, activityId, processStartTime, processDefinition,processInstance.getProcessDefinitionId());
         if (!save(insertManagementEntity)) {
             // 保存流程数据失败
             throw new ServiceException(ApiError.ERROR_94004);
         }
-        return new ProcessManagementDTO.StartResultDTO(processDefinitionId, processInstanceId, tasks.get(0).getId(),processStartTime, dto.getBusinessId(), dto.getBusinessName());
+        return new ProcessManagementDTO.StartResultDTO(processDefinitionId, processInstanceId, taskId, processStartTime, dto.getBusinessId(), dto.getBusinessName());
     }
 
     /**

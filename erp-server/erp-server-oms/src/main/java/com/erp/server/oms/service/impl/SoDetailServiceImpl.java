@@ -317,7 +317,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 // 当可用即时库存数量小于销售数量时， 缺货数量=可用即时库存数量-(销售数量-发货通知单数量)；
                 Integer deliveryNoticeQty = soDeliveryNoticeList.stream().filter(f -> f.getSourceId().equals(item.getId())).
                         mapToInt(SoDeliveryNoticeDetailDTO.ListDTO::getDeliveryQty).sum();
-                scarceQty = curInventoryQty-(qty -deliveryNoticeQty);
+                scarceQty = curInventoryQty - (qty - deliveryNoticeQty);
                 scarceQty = scarceQty > 0 ? 0 : Math.abs(scarceQty);
             }
 
@@ -445,7 +445,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.getLatest(skuIdList);
         Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap = Maps.newHashMap();
-        if(CollUtil.isNotEmpty(purchaseOrderDetailEntityList)) {
+        if (CollUtil.isNotEmpty(purchaseOrderDetailEntityList)) {
             purchaseOrderDetailMap = purchaseOrderDetailEntityList.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getSkuId));
         }
         for (SoDetailEntity item : saveOrUpdateList) {
@@ -793,8 +793,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             result.setSkuNo(item.getSkuNo());
             String skuId = item.getSkuId();
             result.setSkuId(skuId);
-            result.setQty(item.getQty());
-            result.setAmount(item.getAmount());
+            Integer qty = item.getQty();
+            result.setQty(qty);
+
             BigDecimal taxRate = item.getTaxRate();
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
 
@@ -803,17 +804,20 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             BigDecimal price = item.getPrice();
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            result.setTaxPrice(MathUtil.multiply(price, multiplyTax));
+            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            result.setTaxPrice(taxPrice);
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().orElse(null);
             result.setDeclareModel("");
+            result.setAmount(MathUtil.multiply(taxPrice,qty));
             if (skuVO != null) {
                 result.setProductName(skuVO.getSkuName());
                 result.setUnit(skuVO.getUnitName());
+                result.setDeclareModel(skuVO.getSpuNo());
             } else {
                 result.setProductName("");
                 result.setUnit("");
-
+                result.setDeclareModel("");
             }
             resultList.add(result);
         }
@@ -881,7 +885,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             if (qty > curInventoryQty) {
                 Integer deliveryNoticeQty = soDeliveryNoticeList.stream().filter(f -> f.getSourceId().equals(item.getId())).
                         mapToInt(SoDeliveryNoticeDetailDTO.ListDTO::getDeliveryQty).sum();
-                scarceQty = curInventoryQty-(qty -deliveryNoticeQty);
+                scarceQty = curInventoryQty - (qty - deliveryNoticeQty);
                 scarceQty = scarceQty > 0 ? 0 : Math.abs(scarceQty);
 
             }
@@ -1073,7 +1077,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.getLatest(skuIdList);
         Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap = Maps.newHashMap();
-        if(CollUtil.isNotEmpty(purchaseOrderDetailEntityList)) {
+        if (CollUtil.isNotEmpty(purchaseOrderDetailEntityList)) {
             purchaseOrderDetailMap = purchaseOrderDetailEntityList.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getSkuId));
         }
         for (SoDetailEntity item : saveOrUpdateList) {
@@ -1113,7 +1117,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
-
 
 
     /**
