@@ -1910,6 +1910,27 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
     }
 
+    @Override
+    public void brushCostData(String id) {
+        SoInfoEntity soInfoEntity = super.getById(id);
+        Optional.ofNullable(soInfoEntity).orElseThrow(()->new ServiceException(ApiError.ERROR_92016));
+        List<SoDetailEntity>  detailList = soDetailService.listBaseByMainId(soInfoEntity.getId());
+        if(CollUtil.isEmpty(detailList)) {
+            return;
+        }
+        List<String> skuIdList = detailList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.getLatest(skuIdList);
+        Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap = Maps.newHashMap();
+        if(CollUtil.isNotEmpty(purchaseOrderDetailEntityList)) {
+            purchaseOrderDetailMap = purchaseOrderDetailEntityList.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getSkuId));
+        }
+        for (SoDetailEntity item : detailList) {
+            // 计算毛利成本
+            soDetailService.calCost(purchaseOrderDetailMap, item, Boolean.TRUE);
+            soDetailService.updateCost(item.getId(), item);
+        }
+    }
+
     private void checkDict(SoInfoEntity soInfoEntity) {
         // 字典值获取
         List<String> dictKeys = Lists.newArrayList(DictBasicEnum.RECEIVE_METHOD.getType(), DictBasicEnum.COLLECTION_TERMS.getType());
