@@ -375,14 +375,14 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 //待审核
                 String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
                 List<SoDetailDTO.InfoDTO> waitApproveList = baseMapper.listSoDetailByApprove(Arrays.asList(approveIngStatus));
-                return waitApproveList.stream().map(SoDetailDTO.InfoDTO::getId).collect(Collectors.toList());
+                return waitApproveList.stream().map(SoDetailDTO.InfoDTO::getMainId).distinct().collect(Collectors.toList());
 
             case OmsConstant
                     .REJECT:
                 //审核不通过
                 String reject = ApproveStatusEnum.REJECT.getStatus();
                 List<SoDetailDTO.InfoDTO> rejectList = baseMapper.listSoDetailByApprove(Arrays.asList(reject));
-                return rejectList.stream().map(SoDetailDTO.InfoDTO::getId).collect(Collectors.toList());
+                return rejectList.stream().map(SoDetailDTO.InfoDTO::getMainId).distinct().collect(Collectors.toList());
 
             //未发货
             case OmsConstant
