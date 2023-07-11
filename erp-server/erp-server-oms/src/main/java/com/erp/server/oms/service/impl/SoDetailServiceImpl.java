@@ -809,14 +809,15 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().orElse(null);
             result.setDeclareModel("");
-            result.setAmount(MathUtil.multiply(multiplyTax,qty));
+            result.setAmount(MathUtil.multiply(taxPrice,qty));
             if (skuVO != null) {
                 result.setProductName(skuVO.getSkuName());
                 result.setUnit(skuVO.getUnitName());
+                result.setDeclareModel(skuVO.getSpuNo());
             } else {
                 result.setProductName("");
                 result.setUnit("");
-
+                result.setDeclareModel("");
             }
             resultList.add(result);
         }
