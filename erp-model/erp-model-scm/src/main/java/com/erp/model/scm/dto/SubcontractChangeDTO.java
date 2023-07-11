@@ -386,10 +386,9 @@ public class SubcontractChangeDTO implements Serializable {
         private String changerId;
 
         /**
-        * 采购部门id
+        * 变更人部门id
         */
-        @NotBlank(message = "采购部门id不能为空")
-        @Size(max = 19,message = "采购部门id最大长度不能超过19位")
+        @Size(max = 19,message = "变更人部门id最大长度不能超过19位")
         private String deptId;
 
         /**

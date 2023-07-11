@@ -150,23 +150,12 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             SubcontractOrderDTO.PagingParamDTO searchParamDTO = new SubcontractOrderDTO.PagingParamDTO();
             searchParamDTO.setPermissionSql(param.getPermissionSql());
             SubcontractOrderDTO.TabListDTO resultDTO = new SubcontractOrderDTO.TabListDTO();
+            //搜索类型
+            searchParamDTO.setSearchType(item.getCode());
+            //列表Tab查询状态处理
+            Boolean isFlag = doOpHandleTableParam(searchParamDTO);
             Integer count = MathUtil.ZERO;
-            if (PurchaseListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(searchParamDTO);
-            }
-            if (PurchaseListTypeEnum.TO_BE_CREATE.getCode().equals(item.getCode())) {
-                searchParamDTO.setArrivalStatusList(Arrays.asList(ArrivalStatusEnum.NON_ARRIVAL.getCode(), ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode()));
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(searchParamDTO);
-            }
-            if (PurchaseListTypeEnum.CREATED.getCode().equals(item.getCode())) {
-                searchParamDTO.setArrivalStatusList(Arrays.asList(ArrivalStatusEnum.ARRIVED.getCode()));
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(searchParamDTO);
-            }
-            if (PurchaseListTypeEnum.REJECT.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+            if (isFlag) {
                 count = this.baseMapper.listCount(searchParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
@@ -1224,7 +1213,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
             //需要审核的业务ids
             List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_ORDER.getCode());
-            if (org.apache.commons.collections4.CollectionUtils.isEmpty(businessIds)) {
+            if (CollectionUtils.isEmpty(businessIds)) {
                 return Boolean.FALSE;
             }
             params.setIdList(businessIds);

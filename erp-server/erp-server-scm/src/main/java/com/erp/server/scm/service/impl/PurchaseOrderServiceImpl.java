@@ -756,23 +756,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             PurchaseOrderDTO.SearchParamDTO searchParamDTO = new PurchaseOrderDTO.SearchParamDTO();
             searchParamDTO.setPermissionSql(dto.getPermissionSql());
             ListStatusCountDTO.PurchaseOrderCountDTO resultDTO = new ListStatusCountDTO.PurchaseOrderCountDTO();
+            //搜索类型
+            searchParamDTO.setSearchType(item.getCode());
+            //列表Tab查询状态处理
+            Boolean isFlag = doOpHandleTableParam(searchParamDTO);
             Integer count = MathUtil.ZERO;
-            if (PurchaseListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(searchParamDTO);
-            }
-            if (PurchaseListTypeEnum.TO_BE_CREATE.getCode().equals(item.getCode())) {
-                searchParamDTO.setArrivalStatusList(Arrays.asList(ArrivalStatusEnum.NON_ARRIVAL.getCode(), ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode()));
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(searchParamDTO);
-            }
-            if (PurchaseListTypeEnum.CREATED.getCode().equals(item.getCode())) {
-                searchParamDTO.setArrivalStatusList(Arrays.asList(ArrivalStatusEnum.ARRIVED.getCode()));
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(searchParamDTO);
-            }
-            if (PurchaseListTypeEnum.REJECT.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+            if (isFlag) {
                 count = this.baseMapper.listCount(searchParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);

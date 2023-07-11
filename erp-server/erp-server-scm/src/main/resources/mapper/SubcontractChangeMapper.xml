@@ -69,9 +69,6 @@
         left join supplier s  on scd.supplier_id = s.id and s.is_deleted = false
         <where>
             sc.is_deleted = false and scd.parent_id = ''
-            <if test="params.searchType != null and params.searchType != ''">
-                and sc.approve_status like concat('%',#{params.searchType},'%')
-            </if>
             <if test="params.code != null and params.code != ''">
                 and sc.code like concat('%',#{params.code},'%')
             </if>
