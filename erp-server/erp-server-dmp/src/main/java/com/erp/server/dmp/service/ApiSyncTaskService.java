@@ -37,4 +37,13 @@ public interface ApiSyncTaskService extends IService<ApiSyncTaskEntity> {
      * @return Boolean
      */
     Boolean update(ApiSyncTaskDTO apiSyncTaskDTO);
+
+    /**
+     * @description: 新增或修改
+     * @author Will
+     * @date: 2023/7/11 10:05
+     * @param apiSyncTaskDTO
+     * @return Boolean
+     */
+    Boolean addOrUpdateApiSyncTask (ApiSyncTaskDTO apiSyncTaskDTO);
 }

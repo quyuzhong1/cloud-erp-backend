@@ -90,6 +90,12 @@ public class ApiSyncTaskEntity implements Serializable {
     private String businessId;
 
     /**
+     * 发送状态（1发送成功，2发送失败）
+     */
+    @TableField(value = "status")
+    private Integer status;
+
+    /**
      * API请求参数
      */
     @TableField(value = "request_param_json")

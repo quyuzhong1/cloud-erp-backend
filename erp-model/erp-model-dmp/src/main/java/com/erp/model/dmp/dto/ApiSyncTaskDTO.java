@@ -27,9 +27,21 @@ public class ApiSyncTaskDTO {
     private String apiPlatformId;
 
     /**
+     * 平台名称
+     */
+    @NotBlank(message = "平台名称不能为空")
+    private String apiPlatform;
+
+    /**
      * 授权id
      */
     private String apiAuthId;
+
+    /**
+     * 推送状态
+     */
+    @NotBlank(message = "推送状态不能为空")
+    private Integer status;
 
     /**
      * 模块类型 ApiModuleTypeEnum枚举

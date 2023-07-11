@@ -23,7 +23,6 @@ import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
 import com.erp.model.dmp.dto.ApiSyncTaskDTO;
 import com.erp.model.dmp.dto.CfgApiAuthDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
-import com.erp.model.dmp.entity.ApiSyncTaskEntity;
 import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
@@ -495,26 +494,12 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
 
         ApiSyncTaskDTO apiSyncTaskDTO = new ApiSyncTaskDTO();
         apiSyncTaskDTO.setApiPlatformId(platformEntity.getId());
+        apiSyncTaskDTO.setApiPlatform(platformEntity.getName());
         apiSyncTaskDTO.setModuleType(type);
         apiSyncTaskDTO.setRequestParamJson(jsonData);
         apiSyncTaskDTO.setBusinessId(businessId);
-
-        List<ApiSyncTaskEntity> list = apiSyncTaskService.listByApiSyncTaskDTO(apiSyncTaskDTO);
-
-        //发送成功则删除推送任务
-        if (ApiSendStatusEnum.SUCCESS.getCode().equals(status)) {
-            if (CollectionUtils.isNotEmpty(list)) {
-                apiSyncTaskService.removeById(list.get(0).getId());
-            }
-            return;
-        }
-        //发送失败则更新推送任务
-        if (CollectionUtils.isEmpty(list)) {
-            apiSyncTaskService.insert(apiSyncTaskDTO);
-        } else {
-            apiSyncTaskDTO.setId(list.get(0).getId());
-            apiSyncTaskService.update(apiSyncTaskDTO);
-        }
+        apiSyncTaskDTO.setStatus(status);
+        apiSyncTaskService.addOrUpdateApiSyncTask(apiSyncTaskDTO);
     }
 
 
