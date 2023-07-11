@@ -66,6 +66,7 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
             id = IdWorker.getIdStr();
         }
         qcProductEntity.setMainId(billId);
+        qcProductEntity.setSkuId(skuId);
         qcProductEntity.setId(id);
         List<SkuVO> skuVOList = plmTaskFeign.getSkuInfoByIds(Arrays.asList(skuId));
 
