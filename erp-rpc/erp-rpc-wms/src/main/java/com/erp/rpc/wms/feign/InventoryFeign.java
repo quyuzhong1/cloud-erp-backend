@@ -27,43 +27,6 @@ public interface InventoryFeign {
 
 
     /**
-     * 出入库业务，按业务类型
-     * @param dto
-     */
-    @PostMapping("/feign/inventory/approveInOutStockByType")
-    void approveInOutStockByType(@RequestBody @Validated InventoryInOutStockDTO dto);
-
-    /**
-     * 调拨业务，按业务类型
-     * @param dto
-     */
-    @PostMapping("/feign/inventory/approveTransferByType")
-    void approveTransferByType(@RequestBody @Validated InventoryTransferDTO dto);
-
-    /**
-     * 调拨业务，自定义规则
-     * @param dto
-     */
-    @PostMapping("/feign/inventory/approveByRule")
-    void approveByRule(@RequestBody @Validated InventoryTransferRuleDTO dto);
-
-    /**
-     * 出入库业务，自定义规则
-     *
-     * @param dto
-     */
-    @PostMapping("/feign/inventory/approveInOutStockByRule")
-    void approveInOutStockByRule(@RequestBody @Validated InventoryInOutStockRuleDTO dto);
-
-    /**
-     * 反审核
-     * @param dto
-     */
-    @PostMapping("/feign/inventory/unApprove")
-    void unApprove(@RequestBody @Validated InventoryUnApproveDTO dto);
-
-
-    /**
      * 根据采购订单生成入库预报单
      * @param dto
      */
@@ -98,12 +61,6 @@ public interface InventoryFeign {
     @PostMapping(value = "/feign/instockForcast/poChange")
     void poChange(@RequestBody @Valid InstockForcastDTO.PoChangeDTO dto);
 
-    /**
-     * 批量反审核
-     * @param dto
-     */
-    @PostMapping("/feign/inventory/batchUnApprove")
-    void batchUnApprove(@RequestBody @Validated InventoryBatchUnApproveDTO dto);
 
     /**
      * 获取sku 库存状态数量（调用方传输状态）特别注意：如果库位没传或者为空，则库位字段会赋值为空查询
