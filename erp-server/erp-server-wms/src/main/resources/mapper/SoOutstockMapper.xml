@@ -36,7 +36,7 @@
         ON so.id=sod.main_id AND sod.is_deleted=FALSE
         WHERE so.is_deleted=FALSE AND so.source_type!=#{params.neSourceType}
         <if test="params.skuNoList !=null and params.skuNoList.size>0">
-            AND sod.sku_no  AND source_type!=#{params.neSourceType}
+            AND sod.sku_no IN
             <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
                 #{skuNo}
             </foreach>
