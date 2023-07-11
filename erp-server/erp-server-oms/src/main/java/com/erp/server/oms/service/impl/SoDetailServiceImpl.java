@@ -22,7 +22,6 @@ import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
@@ -788,8 +787,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             result.setSkuNo(item.getSkuNo());
             String skuId = item.getSkuId();
             result.setSkuId(skuId);
-            result.setQty(item.getQty());
-            result.setAmount(item.getAmount());
+            Integer qty = item.getQty();
+            result.setQty(qty);
+
             BigDecimal taxRate = item.getTaxRate();
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
 
@@ -798,17 +798,20 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             BigDecimal price = item.getPrice();
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            result.setTaxPrice(MathUtil.multiply(price, multiplyTax));
+            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            result.setTaxPrice(taxPrice);
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().orElse(null);
             result.setDeclareModel("");
+            result.setAmount(MathUtil.multiply(taxPrice,qty));
             if (skuVO != null) {
                 result.setProductName(skuVO.getSkuName());
                 result.setUnit(skuVO.getUnitName());
+                result.setDeclareModel(skuVO.getSpuNo());
             } else {
                 result.setProductName("");
                 result.setUnit("");
-
+                result.setDeclareModel("");
             }
             resultList.add(result);
         }
