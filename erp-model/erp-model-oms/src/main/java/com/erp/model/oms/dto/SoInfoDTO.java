@@ -720,6 +720,10 @@ public class SoInfoDTO implements Serializable {
          */
         private List<String> attachUrlList;
 
+        /**
+         * 贸易条款
+         */
+        private String tradeTerm;
 
         /**
          * 订单产品详情
