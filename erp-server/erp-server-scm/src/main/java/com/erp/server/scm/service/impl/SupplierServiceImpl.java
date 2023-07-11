@@ -890,6 +890,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         }
         view.setPayMethodId(entity.getPayMethodId());
         view.setPayCurrency(entity.getPayCurrency());
+        view.setPaymentCondition(entity.getPaymentCondition());
         return view;
     }
 

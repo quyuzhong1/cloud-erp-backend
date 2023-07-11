@@ -68,6 +68,12 @@ public class PurchaseOrderSupplierEntity extends BaseEntity<PurchaseOrderSupplie
     @TableField("contact_tel_number")
     private String contactTelNumber;
 
+    /**
+     * 付款条件
+     */
+    @TableField("payment_condition")
+    private String paymentCondition;
+
 
     public static final String PURCHASE_ORDER_ID = "purchase_order_id";
 
