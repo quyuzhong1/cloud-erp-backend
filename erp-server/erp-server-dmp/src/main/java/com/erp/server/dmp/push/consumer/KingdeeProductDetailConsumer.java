@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -56,9 +55,8 @@ public class KingdeeProductDetailConsumer implements RocketMQListener<Map<String
         System.out.println(queryList);
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void onMessage(Map<String, Object> map) {
+        @Override
+        public void onMessage(Map<String, Object> map) {
         //同步模块类型
         Integer type = ApiModuleTypeEnum.PRODUCT_DETAIL.getCode();
         //业务id
