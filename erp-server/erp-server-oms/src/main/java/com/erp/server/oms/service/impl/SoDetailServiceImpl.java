@@ -65,7 +65,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -318,7 +317,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 // 当可用即时库存数量小于销售数量时， 缺货数量=可用即时库存数量-(销售数量-发货通知单数量)；
                 Integer deliveryNoticeQty = soDeliveryNoticeList.stream().filter(f -> f.getSourceId().equals(item.getId())).
                         mapToInt(SoDeliveryNoticeDetailDTO.ListDTO::getDeliveryQty).sum();
-                scarceQty = curInventoryQty-(qty -deliveryNoticeQty);
+                scarceQty = curInventoryQty - (qty - deliveryNoticeQty);
                 scarceQty = scarceQty > 0 ? 0 : Math.abs(scarceQty);
             }
 
@@ -446,7 +445,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.getLatest(skuIdList);
         Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap = Maps.newHashMap();
-        if(CollUtil.isNotEmpty(purchaseOrderDetailEntityList)) {
+        if (CollUtil.isNotEmpty(purchaseOrderDetailEntityList)) {
             purchaseOrderDetailMap = purchaseOrderDetailEntityList.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getSkuId));
         }
         for (SoDetailEntity item : saveOrUpdateList) {
@@ -482,7 +481,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             item.setCurrencySymbol(symbol);
 
             // 计算毛利成本
-            calCost(purchaseOrderDetailMap, item, Boolean.FALSE);
+            calCost(purchaseOrderDetailMap, item, currency);
         }
         //这是删除
         List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
@@ -810,15 +809,14 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().orElse(null);
             result.setDeclareModel("");
-            result.setAmount(MathUtil.multiply(taxPrice,qty));
+            result.setAmount(MathUtil.multiply(multiplyTax,qty));
             if (skuVO != null) {
                 result.setProductName(skuVO.getSkuName());
                 result.setUnit(skuVO.getUnitName());
-                result.setDeclareModel(skuVO.getSpuNo());
             } else {
                 result.setProductName("");
                 result.setUnit("");
-                result.setDeclareModel("");
+
             }
             resultList.add(result);
         }
@@ -886,7 +884,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             if (qty > curInventoryQty) {
                 Integer deliveryNoticeQty = soDeliveryNoticeList.stream().filter(f -> f.getSourceId().equals(item.getId())).
                         mapToInt(SoDeliveryNoticeDetailDTO.ListDTO::getDeliveryQty).sum();
-                scarceQty = curInventoryQty-(qty -deliveryNoticeQty);
+                scarceQty = curInventoryQty - (qty - deliveryNoticeQty);
                 scarceQty = scarceQty > 0 ? 0 : Math.abs(scarceQty);
 
             }
@@ -1078,7 +1076,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.getLatest(skuIdList);
         Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap = Maps.newHashMap();
-        if(CollUtil.isNotEmpty(purchaseOrderDetailEntityList)) {
+        if (CollUtil.isNotEmpty(purchaseOrderDetailEntityList)) {
             purchaseOrderDetailMap = purchaseOrderDetailEntityList.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getSkuId));
         }
         for (SoDetailEntity item : saveOrUpdateList) {
@@ -1114,11 +1112,10 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             item.setCurrencySymbol(symbol);
 
             // 计算毛利成本
-            calCost(purchaseOrderDetailMap, item, Boolean.FALSE);
+            calCost(purchaseOrderDetailMap, item, currency);
         }
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
-
 
 
     /**
@@ -1168,9 +1165,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * 计算毛利成本
      * @param purchaseOrderDetailMap
      * @param item
+     * @param currency
      */
-    @Override
-    public void calCost(Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap, SoDetailEntity item,  Boolean isBrush) {
+    private void calCost(Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap, SoDetailEntity item, String currency) {
         PurchaseOrderDetailEntity purchaseOrderDetailEntity = null;
         if(purchaseOrderDetailMap.containsKey(item.getSkuId())) {
             purchaseOrderDetailEntity = purchaseOrderDetailMap.get(item.getSkuId()).get(0);
@@ -1183,9 +1180,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         // 最新的采购单价币制转换（非人民币）
         if(Objects.nonNull(purchasePrice) &&
                 purchasePrice.compareTo(BigDecimal.ZERO) == 1 &&
-                !Objects.equals(purchaseOrderDetailEntity.getCurrency(), "CNY")) {
-            String purchaseDate = purchaseOrderDetailEntity.getPurchaseDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            BigDecimal rate =  dmpTaskFeign.getRate(purchaseDate, purchaseOrderDetailEntity.getCurrency());
+                !Objects.equals(currency, "CNY")) {
+            BigDecimal rate =  dmpTaskFeign.getRate(purchaseOrderDetailEntity.getPurchaseDate(), purchaseOrderDetailEntity.getCurrency());
             log.info("找到的最新的采购订单:{} 的币制：{}，采购订单日期：{}，转换后汇率：{}", purchaseOrderDetailEntity.getPurchaseOrderId(), purchaseOrderDetailEntity.getCurrency(), rate);
             // 未找到汇率直接返回
             if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
@@ -1201,12 +1197,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         if(Objects.nonNull(saleAmount) &&
                 saleAmount.compareTo(BigDecimal.ZERO) == 1 &&
                 !Objects.equals(item.getCurrency(), "CNY")) {
-            LocalDate calDate = LocalDate.now();
-            if(Objects.equals(isBrush, Boolean.TRUE)) {
-                calDate = item.getCreateTime().toLocalDate();
-            }
-            String currentDate = calDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            BigDecimal rate =  dmpTaskFeign.getRate(currentDate, item.getCurrency());
+            BigDecimal rate =  dmpTaskFeign.getRate(LocalDate.now(), item.getCurrency());
             log.info("提交的币制：{}，转换后汇率：{}", item.getCurrency(), rate);
             if(Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
                 saleAmount = BigDecimal.ZERO;
@@ -1217,16 +1208,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
 
         SoUtils.updateSoDetailCost(item, purchasePrice, saleAmount);
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public void updateCost(String id, SoDetailEntity item) {
-        lambdaUpdate().set(SoDetailEntity::getPurchasePrice, item.getPurchasePrice())
-                .set(SoDetailEntity::getSaleCost, item.getSaleCost())
-                .set(SoDetailEntity::getSaleProfit, item.getSaleProfit())
-                .set(SoDetailEntity::getSaleProfitRate, item.getSaleProfitRate())
-                .eq(SoDetailEntity::getId, id).update();
     }
 
 }

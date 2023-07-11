@@ -938,7 +938,7 @@ public class SoDetailDTO implements Serializable {
 
 
         /**
-         * 金额
+         * 含税金额
          */
         private BigDecimal amount;
     }

@@ -11,14 +11,18 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
+import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.service.*;
 import com.google.common.collect.Lists;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -26,6 +30,7 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -47,6 +52,9 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private KingdeeFeign kingdeeFeign;
 
     @Resource
     private CustomerInfoService customerInfoService;
@@ -82,6 +90,8 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
      * @date 2023-05-30 11:50
      */
     @Override
+    @GlobalTransactional
+    @Transactional(rollbackFor = Exception.class)
     public void syncDataToKingdee(SoInfoEntity entity, String operate) {
         Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
@@ -92,40 +102,56 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         //编码
         resultMap.put("code", entity.getCode());
 
-
         //交货方式
         resultMap.put("deliveryMode", entity.getDeliveryMode());
         //单据类型
         resultMap.put("orderType", entity.getOrderType());
+        LocalDate createDate = entity.getCreateTime().toLocalDate();
+        LocalDate billDate = entity.getBillDate();
+        if (billDate != null) {
+            createDate = billDate;
+        }
         //创建日期
-        resultMap.put("createDate", entity.getCreateTime().toLocalDate());
+        resultMap.put("createDate", createDate);
         //是否收取运费
         resultMap.put("isCollectShippingFee", entity.getIsCollectShippingFee());
 
+        //销售组织
+        String salesOrgId = entity.getSalesOrgId();
 
+
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
+        //销售组织的金蝶code
+        String salesOrgCode = orgList.stream().filter(o -> o.getId().equals(salesOrgId)).
+                map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
+
+        //部门id
         String salesDeptId = entity.getSalesDeptId();
         //销售员
         String sellerId = entity.getSellerId();
-        //获取部门id
-        if (StringUtils.isNotBlank(salesDeptId)) {
-            SysDepartmentDTO departmentDTO = sysUserFeign.getUserDeptById(salesDeptId);
-            //销售部门
-            if (!Objects.isNull(departmentDTO)) {
-                resultMap.put("deptCode", departmentDTO.getCode());
-            }
-        }
-        //获取员工
+        //获取业务员信息
         if (StringUtils.isNotBlank(sellerId)) {
+            KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
+            findBusinessOperator.setOrgCode(salesOrgCode);
+            findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.YSY.getCode());
             //获取员工 岗位信息
-            KingdeePostDTO.UserKingdeePostInfoDTO userDTO = sysUserFeign.getUserKingdeePostByUserId(sellerId);
+            KingdeeBusinessOperatorEntity kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
             //销售员
-            if (!Objects.isNull(userDTO)) {
-                resultMap.put("sellerCode", userDTO.getKingdeePostCode());
-                resultMap.put("seller", userDTO.getUserName());
+            if (!Objects.isNull(kingSellerInfo)) {
+                resultMap.put("sellerCode", kingSellerInfo.getKingdeePostCode());
+                resultMap.put("seller", kingSellerInfo.getKingdeeUserName());
+
+                KingdeePostDTO.FindUserKingdeePostDTO findUserPostKingdee = new KingdeePostDTO.FindUserKingdeePostDTO();
+                findUserPostKingdee.setKingdeePostCode(kingSellerInfo.getKingdeePostCode());
+                findUserPostKingdee.setOrgCode(salesOrgCode);
+                KingdeePostDTO.UserKingdeePostInfoDTO kingdeePost = kingdeeFeign.getUserKingdeePostByPostCode(findUserPostKingdee);
+                if (kingdeePost != null) {
+                    resultMap.put("deptCode", kingdeePost.getKingdeeDeptCode());
+                }
+
             }
         }
-        //销售组织
-        String salesOrgId = entity.getSalesOrgId();
         String currency = entity.getCurrency();
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(currency));
         //结算币别
@@ -153,16 +179,14 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         orgIdList.add(warehouseOrgId);
         orgIdList.add(salesOrgId);
         String warehouseOrgCode = "";
-        if (CollectionUtils.isNotEmpty(orgIdList)) {
-            List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
-            String salesOrgCode = orgList.stream().filter(o -> o.getId().equals(salesOrgId)).
-                    map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("");
-            if (StringUtils.isNotBlank(salesOrgCode)) {
-                resultMap.put("salesOrgCode", salesOrgCode);
-            }
-            warehouseOrgCode = orgList.stream().filter(o -> o.getId().equals(warehouseOrgId)).
-                    map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("100");
+
+
+        if (StringUtils.isNotBlank(salesOrgCode)) {
+            resultMap.put("salesOrgCode", salesOrgCode);
         }
+        warehouseOrgCode = orgList.stream().filter(o -> o.getId().equals(warehouseOrgId)).
+                map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse("100");
+
         //客户
         String customerId = entity.getCustomerId();
         if (StringUtils.isNotBlank(customerId)) {

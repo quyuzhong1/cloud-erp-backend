@@ -34,6 +34,13 @@ public class KingdeePostDTO implements Serializable {
         //金蝶员工岗位编号
         private String kingdeePostCode;
 
+        //金蝶部门code
+        private String kingdeeDeptCode;
+
+
+        //金蝶部门名称
+        private String kingdeeDeptName;
+
 
         //金蝶岗位名称
         private String postName;
@@ -45,6 +52,28 @@ public class KingdeePostDTO implements Serializable {
         private String useOrgName;
 
 
+
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class FindUserKingdeePostInfoDTO {
+
+        private String userId;
+
+        private String orgCode;
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class FindUserKingdeePostDTO {
+
+        private String orgCode;
+
+        private String kingdeePostCode;
 
 
     }
