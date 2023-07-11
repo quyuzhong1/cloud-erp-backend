@@ -46,7 +46,7 @@ public class KingdeePostDTO implements Serializable {
         private String postName;
 
         //使用组织
-        private String useOrgId;
+        private String useOrgCode;
 
         //使用组织
         private String useOrgName;

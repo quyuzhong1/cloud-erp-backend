@@ -300,4 +300,10 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @param endDate
      */
     void brushCostData(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 重刷销售订单毛利成本数据
+     * @param id
+     */
+    void brushCostData(String id);
 }

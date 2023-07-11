@@ -1,10 +1,14 @@
 package com.erp.server.oms.controller.feign;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.server.oms.service.CustomerAddressService;
 import com.erp.server.oms.service.CustomerInfoService;
+import com.erp.server.oms.service.CustomerSellerService;
+import com.erp.server.oms.service.DictBasicService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,6 +26,12 @@ public class CustomerFeignController {
 
     @Resource
     private CustomerAddressService customerAddressService;
+
+    @Resource
+    private CustomerSellerService customerSellerService;
+
+    @Resource
+    private DictBasicService dictBasicService;
 
     /**
      * 获取所有客户信息
@@ -59,6 +69,30 @@ public class CustomerFeignController {
     @PostMapping("/approve")
     public Boolean approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         return customerInfoService.approve(dto);
+    }
+
+    /**
+     * 售货员信息
+     * @author yl
+     * @date 2023-05-15 10:10
+     * @param mainId
+     * @return java.util.List<com.erp.model.oms.dto.SellerDTO.ViewDTO>
+     */
+    @PostMapping("/listSellerByMainId")
+    public List<SellerDTO.ViewDTO> listSellerByMainId(@RequestBody String mainId) {
+        return customerSellerService.listByMainId(mainId);
+    }
+
+    /**
+     * 根据key 获取字典数据
+     * @author yl
+     * @date 2023-03-17 14:16
+     * @param Key
+     * @return java.util.List<com.erp.model.scm.dto.DictBasicDTO>
+     */
+    @PostMapping("/getDictBasicByKey")
+    public List<DictBasicDTO.ViewDTO> getDictBasicByKey(@RequestBody String Key) {
+        return dictBasicService.getByKey(Key);
     }
 
 }

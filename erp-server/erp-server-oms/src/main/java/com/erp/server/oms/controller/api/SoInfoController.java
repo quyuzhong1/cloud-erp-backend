@@ -419,4 +419,15 @@ public class SoInfoController extends BaseController {
        return success();
     }
 
+    /**
+     * 补录销售订单毛利历史数据（根据id）
+     * @param id
+     * @return
+     */
+    @GetMapping("/brushById")
+    public ApiResult<Void> brushById(@RequestParam(value = "id")String id) {
+        soInfoService.brushCostData(id);
+        return success();
+    }
+
 }
