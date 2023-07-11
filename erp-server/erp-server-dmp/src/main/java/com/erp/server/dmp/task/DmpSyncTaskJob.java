@@ -1,6 +1,7 @@
 package com.erp.server.dmp.task;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.SourceTypeEnum;
@@ -46,29 +47,32 @@ public class DmpSyncTaskJob {
     @XxlJob("DmpSyncTaskJob")
     public ReturnT<String> dmpSyncTaskJob() {
         XxlJobHelper.log("DmpSyncTaskJob start");
+        String jobParam = XxlJobHelper.getJobParam();
+        Integer diffMinute = StrUtil.isNotBlank(jobParam) ? Integer.valueOf(jobParam) : 60;
         // 查询DMP同步数据
         List<DmpSyncTaskEntity> recordEntityList = dmpSyncTaskService.lambdaQuery()
                 .in(DmpSyncTaskEntity::getStatus, Arrays.asList(SyncKingdeeStatusEnum.FAILED_SYNC.getCode(),SyncKingdeeStatusEnum.TO_BE_SYNC.getCode()))
-                .le(DmpSyncTaskEntity::getUpdateTime, LocalDateTime.now().minusHours(1))
+                .le(DmpSyncTaskEntity::getUpdateTime, LocalDateTime.now().minusMinutes(diffMinute))
                 .list();
-
+        XxlJobHelper.log("DmpSyncTaskJob 查询到{}条待推送数据", recordEntityList.size());
         // 按修改时间升序
-        if(CollUtil.isNotEmpty(recordEntityList)) {
-            recordEntityList.sort(Comparator.comparing(DmpSyncTaskEntity::getUpdateTime));
-            for (DmpSyncTaskEntity recordEntity : recordEntityList) {
-                try {
-                   // 发送推送同步任务消息
-                    DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(recordEntity.getId(), recordEntity.getMqData());
-                    SendResult result = mqProducerService.syncClassMsg(recordEntity.getMqTopic(), recordEntity.getMqTag(),
-                            dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
-                    if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                        throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-                    }
-                }catch (Exception e){
-                    String sourceTypeName = SourceTypeEnum.getName(recordEntity.getSourceType());
-                    log.error("从{}推送{}到{}发送消息异常", recordEntity.getSourcePlatformName(), sourceTypeName, recordEntity.getTargetPlatformName(), e);
-                    XxlJobHelper.log("从{}推送{}到{}发送消息异常", recordEntity.getSourcePlatformName(), recordEntity.getSourceType(), recordEntity.getTargetPlatformName(),  e);
+        if(CollectionUtil.isEmpty(recordEntityList)) {
+            return ReturnT.SUCCESS;
+        }
+        recordEntityList.sort(Comparator.comparing(DmpSyncTaskEntity::getUpdateTime));
+        for (DmpSyncTaskEntity recordEntity : recordEntityList) {
+            try {
+               // 发送推送同步任务消息
+                DmpSyncMqDTO dmpSyncMqDTO = new DmpSyncMqDTO(recordEntity.getId(), recordEntity.getMqData());
+                SendResult result = mqProducerService.syncClassMsg(recordEntity.getMqTopic(), recordEntity.getMqTag(),
+                        dmpSyncMqDTO, StrUtil.uuid().toLowerCase());
+                if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                    throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
                 }
+            }catch (Exception e){
+                String sourceTypeName = SourceTypeEnum.getName(recordEntity.getSourceType());
+                log.error("从{}推送{}到{}发送消息异常", recordEntity.getSourcePlatformName(), sourceTypeName, recordEntity.getTargetPlatformName(), e);
+                XxlJobHelper.log("从{}推送{}到{}发送消息异常", recordEntity.getSourcePlatformName(), recordEntity.getSourceType(), recordEntity.getTargetPlatformName(),  e);
             }
         }
         XxlJobHelper.log("DmpSyncTaskJob end");
