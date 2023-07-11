@@ -1,9 +1,9 @@
 package com.erp.server.sys.service;
 
-import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.dto.FindUserDTO;
+import com.common.business.service.SuperService;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
-import com.common.business.service.SuperService;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -48,5 +48,5 @@ public interface KingdeeBusinessOperatorService extends SuperService<KingdeeBusi
      * @param dto
      * @return java.util.List<com.common.business.dto.base.BaseDropDownDTO.CommonDTO>
      */
-    List<BaseDropDownDTO.CommonDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto);
+    List<FindUserDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto);
 }

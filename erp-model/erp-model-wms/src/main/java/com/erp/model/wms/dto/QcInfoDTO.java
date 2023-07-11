@@ -58,7 +58,6 @@ public class QcInfoDTO implements Serializable {
         /**
          * 采购订单id
          */
-        //@NotBlank(message = "采购订单id不能为空")
         private String purchaseOrderId;
 
         /**

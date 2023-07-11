@@ -2,7 +2,6 @@ package com.erp.server.sys.service.impl;
 
 import com.alibaba.excel.EasyExcel;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
@@ -10,6 +9,7 @@ import com.erp.model.sys.dto.excel.KingdeeBusinessOperatorImportExcelDTO;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.server.sys.listener.KingdeeBusinessOperatorExcelListener;
 import com.erp.server.sys.mapper.KingdeeBusinessOperatorMapper;
+import com.erp.server.sys.service.CommonService;
 import com.erp.server.sys.service.KingdeeBusinessOperatorService;
 import com.erp.server.sys.service.SysUserInfoService;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -34,6 +36,11 @@ public class KingdeeBusinessOperatorServiceImpl extends SuperServiceImpl<Kingdee
 
     @Resource
     private SysUserInfoService sysUserInfoService;
+
+
+    @Resource
+    private CommonService commonService;
+
     /**
      * 导入数据
      *
@@ -48,7 +55,7 @@ public class KingdeeBusinessOperatorServiceImpl extends SuperServiceImpl<Kingdee
         List<KingdeeBusinessOperatorEntity> kingdeeBusinessOperatorList = this.list();
         //用户信息
         List<FindUserDTO> userList = sysUserInfoService.getAllUserList();
-        KingdeeBusinessOperatorExcelListener excelListener=new KingdeeBusinessOperatorExcelListener(this,userList,kingdeeBusinessOperatorList);
+        KingdeeBusinessOperatorExcelListener excelListener = new KingdeeBusinessOperatorExcelListener(this, userList, kingdeeBusinessOperatorList);
         try {
             EasyExcel.read(excelFile.getInputStream(), KingdeeBusinessOperatorImportExcelDTO.class, excelListener).sheet(0).doRead();
         } catch (Exception e) {
@@ -66,30 +73,45 @@ public class KingdeeBusinessOperatorServiceImpl extends SuperServiceImpl<Kingdee
 
     /**
      * 获取到对应的业务员
-     * @author yl
-     * @date 2023-07-08 10:56
+     *
      * @param dto
      * @return com.erp.model.sys.entity.KingdeeBusinessOperatorEntity
+     * @author yl
+     * @date 2023-07-08 10:56
      */
     @Override
     public KingdeeBusinessOperatorEntity find(KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO dto) {
 
-        return this.lambdaQuery().eq(KingdeeBusinessOperatorEntity::getErpUserId,dto.getUserId())
-                .eq(KingdeeBusinessOperatorEntity::getKingdeeOrgCode,dto.getOrgCode())
-                .eq(KingdeeBusinessOperatorEntity::getKingdeeType,dto.getBusinessOperatorType())
+        return this.lambdaQuery().eq(KingdeeBusinessOperatorEntity::getErpUserId, dto.getUserId())
+                .eq(KingdeeBusinessOperatorEntity::getKingdeeOrgCode, dto.getOrgCode())
+                .eq(KingdeeBusinessOperatorEntity::getKingdeeType, dto.getBusinessOperatorType())
                 .last("LIMIT 1").one();
     }
 
 
     /**
      * 获取业务员列表
-     * @author yl
-     * @date 2023-07-08 11:33
+     *
      * @param dto
      * @return java.util.List<com.common.business.dto.base.BaseDropDownDTO.CommonDTO>
+     * @author yl
+     * @date 2023-07-08 11:33
      */
     @Override
-    public List<BaseDropDownDTO.CommonDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
-        return baseMapper.listInfo(dto);
+    public List<FindUserDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
+        List<FindUserDTO> resultList = new ArrayList<>(10);
+        List<FindUserDTO> dbList = baseMapper.listInfo(dto);
+        String userId = commonService.getUserInfo().getUid();
+        FindUserDTO findUser = dbList.stream().filter(d -> d.getUserId().equals(userId)).findFirst().orElse(null);
+        if (findUser != null) {
+            findUser.setIsMyState(1);
+            resultList.add(findUser);
+        } else {
+            dbList.forEach(d -> d.setIsMyState(0));
+        }
+        List<FindUserDTO> wantList = dbList.stream().filter(d -> !userId.equals(d.getUserId())).collect(Collectors.toList());
+        resultList.addAll(wantList);
+        return resultList;
+
     }
 }

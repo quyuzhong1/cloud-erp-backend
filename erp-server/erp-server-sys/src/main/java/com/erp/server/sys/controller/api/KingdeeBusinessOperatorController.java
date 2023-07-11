@@ -1,6 +1,7 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -41,8 +42,8 @@ public class KingdeeBusinessOperatorController extends BaseController {
      * 业务员列表
      */
     @PostMapping("/list")
-    public ApiResult<List<BaseDropDownDTO.CommonDTO>> list (@RequestBody KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
-        List<BaseDropDownDTO.CommonDTO> list = kingdeeBusinessOperatorService.listInfo(dto);
+    public ApiResult<List<FindUserDTO>> list (@RequestBody KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
+        List<FindUserDTO> list = kingdeeBusinessOperatorService.listInfo(dto);
         return success(list);
     }
 

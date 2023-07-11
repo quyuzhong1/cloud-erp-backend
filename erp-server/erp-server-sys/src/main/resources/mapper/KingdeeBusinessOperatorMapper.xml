@@ -2,15 +2,20 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.sys.mapper.KingdeeBusinessOperatorMapper">
 
-    <select id="listInfo" resultType="com.common.business.dto.base.BaseDropDownDTO$CommonDTO">
+    <select id="listInfo" resultType="com.common.business.dto.FindUserDTO">
         SELECT
-        erp_user_id AS code,
-        kingdee_user_name AS value
+        kbo.kingdee_user_code AS code,
+        kbo.erp_user_id AS userId,
+        kbo.kingdee_user_name AS userName
         FROM kingdee_business_operator kbo
         INNER JOIN sys_accounting_company sac
         ON sac.code=kbo.kingdee_org_code
+        INNER JOIN sys_user_info su
+        ON su.uid=kbo.erp_user_id
         WHERE kbo.kingdee_type=#{type}
         AND sac.id=#{orgId}
+        AND su.delete_state=1
+        AND su.user_state=1
     </select>
 
 </mapper>
