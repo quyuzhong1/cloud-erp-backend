@@ -9,7 +9,10 @@ import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -56,4 +59,13 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/updateSyncInfo")
     void updateSyncInfo(@RequestBody DmpSyncMqDTO.ParamDTO paramDTO);
+
+    /**
+     * 获取汇率
+     * @param date
+     * @param sourceCurrencyCode
+     * @return
+     */
+    @PostMapping("feign/getRate")
+    BigDecimal getRate(@RequestParam(value = "date") LocalDate date, @RequestParam(value = "sourceCurrencyCode") String sourceCurrencyCode);
 }

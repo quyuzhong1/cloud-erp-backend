@@ -183,6 +183,12 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     @TableField(exist = false)
     private String purchaseApplicationId;
 
+    /**
+     * 采购申请id(无需传值，后端使用)
+     */
+    @TableField(exist = false)
+    private LocalDate purchaseDate;
+
 
     public static final String PURCHASE_ORDER_ID = "purchase_order_id";
 

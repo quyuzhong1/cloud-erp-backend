@@ -104,6 +104,8 @@
     <select id="getLatest" resultType="com.erp.model.scm.entity.PurchaseOrderDetailEntity">
         select
             ID,
+            purchase_order_id,
+            purchase_date,
             sku_id,
             sku_no,
             product_name,
@@ -127,6 +129,8 @@
             source_detail_id
         from (
                 select
+                pod.purchase_order_id,
+                po.purchase_date,
                 pod.id,
                 pod.sku_id ,
                 pod.sku_no,

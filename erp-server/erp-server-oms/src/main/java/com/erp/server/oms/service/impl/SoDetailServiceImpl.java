@@ -33,6 +33,7 @@ import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.ReturnReasonEnum;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
@@ -63,6 +64,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -107,6 +109,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
     @Autowired
     private ScmTaskFeign scmTaskFeign;
+
+    @Autowired
+    private DmpTaskFeign dmpTaskFeign;
 
     /**
      * 根据退货单详情表id查询退货单
@@ -475,7 +480,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
             item.setCurrencySymbol(symbol);
 
-            SoUtils.updateSoDetailCost(item, purchaseOrderDetailMap);
+            // 计算毛利成本
+            calCost(purchaseOrderDetailMap, item, currency);
         }
         //这是删除
         List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
@@ -1102,7 +1108,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
             item.setCurrencySymbol(symbol);
 
-            SoUtils.updateSoDetailCost(item, purchaseOrderDetailMap);
+            // 计算毛利成本
+            calCost(purchaseOrderDetailMap, item, currency);
         }
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
@@ -1150,6 +1157,55 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             availableQty = curInventoryQty;
         }
         return availableQty;
+    }
+
+    /**
+     * 计算毛利成本
+     * @param purchaseOrderDetailMap
+     * @param item
+     * @param currency
+     */
+    private void calCost(Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap, SoDetailEntity item, String currency) {
+        PurchaseOrderDetailEntity purchaseOrderDetailEntity = null;
+        if(purchaseOrderDetailMap.containsKey(item.getSkuId())) {
+            purchaseOrderDetailEntity = purchaseOrderDetailMap.get(item.getSkuId()).get(0);
+        }
+        BigDecimal purchasePrice = BigDecimal.ZERO;
+        if(Objects.nonNull(purchaseOrderDetailEntity)) {
+            purchasePrice = purchaseOrderDetailEntity.getTaxPrice();
+        }
+
+        // 最新的采购单价币制转换（非人民币）
+        if(Objects.nonNull(purchasePrice) &&
+                purchasePrice.compareTo(BigDecimal.ZERO) == 1 &&
+                !Objects.equals(currency, "CNY")) {
+            BigDecimal rate =  dmpTaskFeign.getRate(purchaseOrderDetailEntity.getPurchaseDate(), purchaseOrderDetailEntity.getCurrency());
+            log.info("找到的最新的采购订单:{} 的币制：{}，采购订单日期：{}，转换后汇率：{}", purchaseOrderDetailEntity.getPurchaseOrderId(), purchaseOrderDetailEntity.getCurrency(), rate);
+            // 未找到汇率直接返回
+            if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
+                purchasePrice = BigDecimal.ZERO;
+            } else {
+                // 转换成人民币采购单价
+                purchasePrice = rate.multiply(purchasePrice).setScale(4, BigDecimal.ROUND_HALF_UP);
+            }
+        }
+
+        // 销售金额转换
+        BigDecimal saleAmount = item.getAmount();
+        if(Objects.nonNull(saleAmount) &&
+                saleAmount.compareTo(BigDecimal.ZERO) == 1 &&
+                !Objects.equals(item.getCurrency(), "CNY")) {
+            BigDecimal rate =  dmpTaskFeign.getRate(LocalDate.now(), item.getCurrency());
+            log.info("提交的币制：{}，转换后汇率：{}", item.getCurrency(), rate);
+            if(Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
+                saleAmount = BigDecimal.ZERO;
+            } else {
+                // 转换成人民币销售金额
+                saleAmount = rate.multiply(saleAmount).setScale(4, BigDecimal.ROUND_HALF_UP);
+            }
+        }
+
+        SoUtils.updateSoDetailCost(item, purchasePrice, saleAmount);
     }
 
 }

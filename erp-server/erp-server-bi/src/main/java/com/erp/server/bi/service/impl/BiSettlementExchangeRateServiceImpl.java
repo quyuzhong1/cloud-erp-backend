@@ -170,13 +170,6 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         return this.batchAddSettlementExchangeRate(list);
     }
 
-    @Override
-    public List<BiSettlementExchangeRateEntity> findByCurrencyAndDate(LocalDate date, String sourceCurrencyCode) {
-        lambdaQuery().eq(BiSettlementExchangeRateEntity::getSourceCurrencyCode, sourceCurrencyCode);
-        return null;
-    }
-
-
     /**
      * @return true重叠。false不重叠
      */

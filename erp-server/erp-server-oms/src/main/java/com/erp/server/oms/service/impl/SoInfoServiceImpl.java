@@ -1843,10 +1843,45 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         skuCostProfitResult.setSaleCost(BigDecimal.ZERO);
         skuCostProfitResult.setSaleProfit(BigDecimal.ZERO);
         skuCostProfitResult.setSaleProfitRate(BigDecimal.ZERO);
+        BigDecimal purchasePrice = BigDecimal.ZERO;
         // 获取采购单价
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.getLatest(Arrays.asList(costParam.getSkuId()));
+        PurchaseOrderDetailEntity purchaseOrderDetailEntity = CollUtil.isNotEmpty(purchaseOrderDetailEntityList) ? purchaseOrderDetailEntityList.get(0) : null;
+        if(Objects.nonNull(purchaseOrderDetailEntity)) {
+            purchasePrice = purchaseOrderDetailEntity.getTaxPrice();
+            skuCostProfitResult.setPurchasePrice(purchasePrice);
+        }
+        log.info("提交的币制：{}", costParam.getCurrency());
+        // 最新的采购单价币制转换（非人民币）
+        if(Objects.nonNull(skuCostProfitResult.getPurchasePrice()) &&
+                skuCostProfitResult.getPurchasePrice().compareTo(BigDecimal.ZERO) == 1 &&
+                !Objects.equals(purchaseOrderDetailEntity.getCurrency(), "CNY")) {
+            BigDecimal rate =  dmpTaskFeign.getRate(purchaseOrderDetailEntity.getPurchaseDate(), purchaseOrderDetailEntity.getCurrency());
+            log.info("找到的最新的采购订单:{} 的币制：{}，采购订单日期：{}，转换后汇率：{}", purchaseOrderDetailEntity.getPurchaseOrderId(), purchaseOrderDetailEntity.getCurrency(), rate);
+            // 未找到汇率直接返回
+            if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
+                skuCostProfitResult.setPurchasePrice(BigDecimal.ZERO);
+                return skuCostProfitResult;
+            } else {
+                // 转换成人民币采购单价
+                purchasePrice = rate.multiply(skuCostProfitResult.getPurchasePrice()).setScale(4, BigDecimal.ROUND_HALF_UP);
+            }
+        }
+        // 销售金额转换
+        if(Objects.nonNull(costParam.getSaleAmount()) &&
+                costParam.getSaleAmount().compareTo(BigDecimal.ZERO) == 1 &&
+                !Objects.equals(costParam.getCurrency(), "CNY")) {
+            BigDecimal rate =  dmpTaskFeign.getRate(LocalDate.now(), costParam.getCurrency());
+            log.info("提交的币制：{}，转换后汇率：{}", costParam.getCurrency(), rate);
+            if(Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
+                costParam.setSaleAmount(BigDecimal.ZERO);
+            } else {
+                // 转换成人民币销售金额
+                costParam.setSaleAmount(rate.multiply(costParam.getSaleAmount()).setScale(4, BigDecimal.ROUND_HALF_UP));
+            }
+        }
         // 计算成本毛利信息
-        skuCostProfitResult = SoUtils.calCostProfit(CollUtil.isNotEmpty(purchaseOrderDetailEntityList) ? purchaseOrderDetailEntityList.get(0) : null , costParam, skuCostProfitResult);
+        skuCostProfitResult = SoUtils.calCostProfit(purchasePrice , costParam, skuCostProfitResult);
         return skuCostProfitResult;
     }
 

@@ -46,6 +46,12 @@ public class SkuCostProfitDTO implements Serializable {
         @NotNull(message = "税率不能为空")
         private BigDecimal taxRate;
 
+        /**
+         * 币制
+         */
+        @NotEmpty(message = "币制不能为空")
+        private String currency;
+
     }
 
 
