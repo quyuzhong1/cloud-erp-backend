@@ -11,6 +11,7 @@ import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -292,4 +293,11 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return
      */
     SkuCostProfitDTO.SkuCostProfitResult getSkuCostProfit(SkuCostProfitDTO.SkuCostProfitParam costParam);
+
+    /**
+     * 重刷销售订单毛利成本数据
+     * @param startDate
+     * @param endDate
+     */
+    void brushCostData(LocalDate startDate, LocalDate endDate);
 }

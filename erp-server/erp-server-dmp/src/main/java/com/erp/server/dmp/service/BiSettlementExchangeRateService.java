@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.erp.model.dmp.entity.BiSettlementExchangeRateEntity;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
 /**
  * @author Will
@@ -20,5 +19,5 @@ public interface BiSettlementExchangeRateService  extends IService<BiSettlementE
      * @param sourceCurrencyCode
      * @return
      */
-    BigDecimal findByCurrencyAndDate(LocalDate date, String sourceCurrencyCode);
+    BigDecimal findByCurrencyAndDate(String date, String sourceCurrencyCode);
 }

@@ -65,6 +65,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -481,7 +482,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             item.setCurrencySymbol(symbol);
 
             // 计算毛利成本
-            calCost(purchaseOrderDetailMap, item, currency);
+            calCost(purchaseOrderDetailMap, item, currency, Boolean.FALSE);
         }
         //这是删除
         List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
@@ -1113,7 +1114,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             item.setCurrencySymbol(symbol);
 
             // 计算毛利成本
-            calCost(purchaseOrderDetailMap, item, currency);
+            calCost(purchaseOrderDetailMap, item, currency, Boolean.FALSE);
         }
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
@@ -1168,7 +1169,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * @param item
      * @param currency
      */
-    private void calCost(Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap, SoDetailEntity item, String currency) {
+    @Override
+    public void calCost(Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap, SoDetailEntity item, String currency, Boolean isBrush) {
         PurchaseOrderDetailEntity purchaseOrderDetailEntity = null;
         if(purchaseOrderDetailMap.containsKey(item.getSkuId())) {
             purchaseOrderDetailEntity = purchaseOrderDetailMap.get(item.getSkuId()).get(0);
@@ -1182,7 +1184,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         if(Objects.nonNull(purchasePrice) &&
                 purchasePrice.compareTo(BigDecimal.ZERO) == 1 &&
                 !Objects.equals(currency, "CNY")) {
-            BigDecimal rate =  dmpTaskFeign.getRate(purchaseOrderDetailEntity.getPurchaseDate(), purchaseOrderDetailEntity.getCurrency());
+            String purchaseDate = purchaseOrderDetailEntity.getPurchaseDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            BigDecimal rate =  dmpTaskFeign.getRate(purchaseDate, purchaseOrderDetailEntity.getCurrency());
             log.info("找到的最新的采购订单:{} 的币制：{}，采购订单日期：{}，转换后汇率：{}", purchaseOrderDetailEntity.getPurchaseOrderId(), purchaseOrderDetailEntity.getCurrency(), rate);
             // 未找到汇率直接返回
             if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
@@ -1198,7 +1201,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         if(Objects.nonNull(saleAmount) &&
                 saleAmount.compareTo(BigDecimal.ZERO) == 1 &&
                 !Objects.equals(item.getCurrency(), "CNY")) {
-            BigDecimal rate =  dmpTaskFeign.getRate(LocalDate.now(), item.getCurrency());
+            LocalDate calDate = LocalDate.now();
+            if(Objects.equals(isBrush, Boolean.TRUE)) {
+                calDate = item.getCreateTime().toLocalDate();
+            }
+            String currentDate = calDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            BigDecimal rate =  dmpTaskFeign.getRate(currentDate, item.getCurrency());
             log.info("提交的币制：{}，转换后汇率：{}", item.getCurrency(), rate);
             if(Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
                 saleAmount = BigDecimal.ZERO;
@@ -1209,6 +1217,16 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
 
         SoUtils.updateSoDetailCost(item, purchasePrice, saleAmount);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void updateCost(String id, SoDetailEntity item) {
+        lambdaUpdate().set(SoDetailEntity::getPurchasePrice, item.getPurchasePrice())
+                .set(SoDetailEntity::getSaleCost, item.getSaleCost())
+                .set(SoDetailEntity::getSaleProfit, item.getSaleProfit())
+                .set(SoDetailEntity::getSaleProfitRate, item.getSaleProfitRate())
+                .eq(SoDetailEntity::getId, id).update();
     }
 
 }

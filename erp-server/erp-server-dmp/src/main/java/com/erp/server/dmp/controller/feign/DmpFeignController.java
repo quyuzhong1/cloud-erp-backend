@@ -115,7 +115,7 @@ public class DmpFeignController extends BaseController {
      * @return
      */
     @PostMapping("/getRate")
-    public BigDecimal getRate(@RequestParam(value = "date") LocalDate date, @RequestParam(value = "sourceCurrencyCode") String sourceCurrencyCode){
+    public BigDecimal getRate(@RequestParam(value = "date") String date, @RequestParam(value = "sourceCurrencyCode") String sourceCurrencyCode){
         return biSettlementExchangeRateService.findByCurrencyAndDate(date, sourceCurrencyCode);
     }
 

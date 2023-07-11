@@ -69,6 +69,7 @@ import com.erp.server.oms.mapper.SoInfoMapper;
 import com.erp.server.oms.service.*;
 import com.erp.server.oms.utils.SoUtils;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -85,6 +86,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -1856,7 +1858,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if(Objects.nonNull(skuCostProfitResult.getPurchasePrice()) &&
                 skuCostProfitResult.getPurchasePrice().compareTo(BigDecimal.ZERO) == 1 &&
                 !Objects.equals(purchaseOrderDetailEntity.getCurrency(), "CNY")) {
-            BigDecimal rate =  dmpTaskFeign.getRate(purchaseOrderDetailEntity.getPurchaseDate(), purchaseOrderDetailEntity.getCurrency());
+            String purchaseDate = purchaseOrderDetailEntity.getPurchaseDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            BigDecimal rate =  dmpTaskFeign.getRate(purchaseDate, purchaseOrderDetailEntity.getCurrency());
             log.info("找到的最新的采购订单:{} 的币制：{}，采购订单日期：{}，转换后汇率：{}", purchaseOrderDetailEntity.getPurchaseOrderId(), purchaseOrderDetailEntity.getCurrency(), rate);
             // 未找到汇率直接返回
             if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
@@ -1871,7 +1874,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if(Objects.nonNull(costParam.getSaleAmount()) &&
                 costParam.getSaleAmount().compareTo(BigDecimal.ZERO) == 1 &&
                 !Objects.equals(costParam.getCurrency(), "CNY")) {
-            BigDecimal rate =  dmpTaskFeign.getRate(LocalDate.now(), costParam.getCurrency());
+            BigDecimal rate =  dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), costParam.getCurrency());
             log.info("提交的币制：{}，转换后汇率：{}", costParam.getCurrency(), rate);
             if(Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
                 costParam.setSaleAmount(BigDecimal.ZERO);
@@ -1883,6 +1886,34 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         // 计算成本毛利信息
         skuCostProfitResult = SoUtils.calCostProfit(purchasePrice , costParam, skuCostProfitResult);
         return skuCostProfitResult;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void brushCostData(LocalDate startDate, LocalDate endDate) {
+       // 查询需要重刷数据的创建时间范围
+        List<SoInfoEntity> soList =  lambdaQuery().ge(SoInfoEntity::getCreateTime, startDate).le(SoInfoEntity::getCreateTime,endDate).list();
+        if(CollUtil.isEmpty(soList)) {
+            return;
+        }
+        for(SoInfoEntity soInfoEntity : soList) {
+            List<SoDetailEntity>  detailList = soDetailService.listBaseByMainId(soInfoEntity.getId());
+            if(CollUtil.isEmpty(detailList)) {
+                continue;
+            }
+            List<String> skuIdList = detailList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
+            List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.getLatest(skuIdList);
+            Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap = Maps.newHashMap();
+            if(CollUtil.isNotEmpty(purchaseOrderDetailEntityList)) {
+                purchaseOrderDetailMap = purchaseOrderDetailEntityList.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getSkuId));
+            }
+            for (SoDetailEntity item : detailList) {
+                // 计算毛利成本
+                soDetailService.calCost(purchaseOrderDetailMap, item, item.getCurrency(), Boolean.TRUE);
+                soDetailService.updateCost(item.getId(), item);
+            }
+
+        }
     }
 
     private void checkDict(SoInfoEntity soInfoEntity) {
