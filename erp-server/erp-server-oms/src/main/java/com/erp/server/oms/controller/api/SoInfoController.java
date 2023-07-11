@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -401,6 +402,19 @@ public class SoInfoController extends BaseController {
     @PostMapping("/getSkuCostProfit")
     public ApiResult<SkuCostProfitDTO.SkuCostProfitResult> getSkuCostProfit(@RequestBody @Validated SkuCostProfitDTO.SkuCostProfitParam costParam) {
         return success(soInfoService.getSkuCostProfit(costParam));
+    }
+
+    /**
+     * 补录销售订单毛利历史数据
+     * @param startDate
+     * @param endDate
+     * @return
+     */
+    @GetMapping("/brushData")
+    public ApiResult<Void> getSkuCostProfit(@RequestParam(value = "startDate")LocalDate startDate,
+                                            @RequestParam(value = "startDate")LocalDate endDate) {
+        soInfoService.brushCostData(startDate, endDate);
+       return success();
     }
 
 }
