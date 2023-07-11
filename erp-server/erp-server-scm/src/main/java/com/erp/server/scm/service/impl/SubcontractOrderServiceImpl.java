@@ -1262,6 +1262,18 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
         }
 
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(ApiError.ERROR_500);
+            }
+        }
         // 属性赋值
         for(SubcontractOrderDTO.ListDTO data : list) {
 
@@ -1282,7 +1294,14 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             data.setArrivalStatusName(ArrivalStatusEnum.getNameByCode(data.getArrivalStatus()));
+
+            //最新审核人
+            if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                data.setApproveUserName(curApprove);
+            }
         }
+
     }
 
     /**

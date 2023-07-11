@@ -1168,11 +1168,24 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<String> skuIds = records.stream().map(PurchaseOrderDTO.ListDTO::getSkuId).collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        records.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.PURCHASE_ORDER.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(ApiError.ERROR_500);
+            }
+        }
+
         //关联信息
         List<PurchaseApplicationRefPoEntity> refList = purchaseApplicationRefPoService.listByPurchaseOrderIds(purchaseOrderIds);
         // 采购申请单id集合
         List<String> purchaseApplicationIds = Lists.newArrayList();
-        records.forEach(obj -> {
+        for (PurchaseOrderDTO.ListDTO obj : records) {
             //已收货数量
             Integer receiveQty = MathUtil.ZERO;
             //有效收货数量
@@ -1231,7 +1244,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 }
 
             }
-        });
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(obj.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                obj.setApproveUserName(curApprove);
+            }
+        };
 
         if(CollUtil.isNotEmpty(purchaseApplicationIds)) {
            List<PurchaseApplicationEntity> purchaseApplicationList = purchaseApplicationService.listByIds(purchaseApplicationIds);
