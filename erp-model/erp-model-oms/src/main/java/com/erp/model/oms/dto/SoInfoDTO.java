@@ -475,13 +475,11 @@ public class SoInfoDTO implements Serializable {
         /**
          * 收款日期
          */
-        @NotNull(message = "收款日期不能为空", groups = {AddGroup.class})
         private LocalDate receiveDate;
 
         /**
          * 收款金额
          */
-        @NotNull(message = "收款金额不能为空", groups = {AddGroup.class})
         @Digits(integer = 16,fraction = 4,message = "收款金额整数位最大12位，小数位不能大于4位", groups = {AddGroup.class})
         private BigDecimal receiveAmount;
 
@@ -689,6 +687,12 @@ public class SoInfoDTO implements Serializable {
          * 收款日期
          */
         private LocalDate receiveDate;
+
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+
 
         /**
          * 收款金额
@@ -974,13 +978,11 @@ public class SoInfoDTO implements Serializable {
         /**
          * 收款日期
          */
-        @NotNull(message = "收款日期不能为空")
         private LocalDate receiveDate;
 
         /**
          * 收款金额
          */
-        @NotNull(message = "收款金额不能为空")
         @Digits(integer = 16,fraction = 4,message = "收款金额整数位最大12位，小数位不能大于4位")
         private BigDecimal receiveAmount;
 
