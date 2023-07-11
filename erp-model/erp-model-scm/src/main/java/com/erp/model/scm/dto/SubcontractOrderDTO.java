@@ -62,6 +62,11 @@ public class SubcontractOrderDTO implements Serializable {
          private String code;
 
          /**
+          * 当前登录人能审核的ids
+          */
+         private List<String> idList;
+
+         /**
           * sku编码
           */
          private List<String> skuNoList;

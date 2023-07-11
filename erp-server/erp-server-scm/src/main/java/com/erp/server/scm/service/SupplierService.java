@@ -112,6 +112,16 @@ public interface SupplierService extends SuperService<SupplierEntity> {
      */
     Boolean approve(BaseApproveParamDTO dto);
 
+    /**
+     * @description: 结束审核
+     * @author Will
+     * @date: 2023/7/11 12:02
+     * @param dto
+     * @param list
+     * @return Boolean
+     */
+    Boolean approveEnd(BaseApproveParamDTO dto, List<SupplierEntity> list);
+
 
     /**
      * 更改供应商更改状态

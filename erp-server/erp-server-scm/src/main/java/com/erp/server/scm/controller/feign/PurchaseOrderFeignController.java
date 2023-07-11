@@ -5,7 +5,10 @@ import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.server.scm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.Collections;
@@ -240,7 +243,7 @@ public class PurchaseOrderFeignController {
     }
 
     /**
-     * @description:
+     * @description: 自动提交审核采购订单
      * @author Will
      * @date: 2023/6/15 18:50
      * @param poIds

@@ -72,6 +72,17 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param baseApproveParamDTO
      */
     Boolean approve(BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * @description: 结束审核
+     * @author Will
+     * @date: 2023/7/11 14:21
+     * @param dto
+     * @param list
+     * @return Boolean
+     */
+    Boolean approveEnd(BaseApproveParamDTO dto, List<PurchaseOrderEntity> list);
+
     /**
      * @description: 批量反审核
      * @author Will
@@ -132,7 +143,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param ids
      * @return Boolean
      */
-    Boolean submit(List<String> ids);
+    Boolean submit(List<String> ids,Boolean isStartProcess);
     /**
      * @description: 新增并提交
      * @author Will

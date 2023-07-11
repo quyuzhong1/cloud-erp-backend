@@ -2,12 +2,9 @@ package com.erp.server.scm.service.impl;
 
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.enums.SourceTypeEnum;
-import com.erp.model.scm.entity.PurchasePriceChangeEntity;
-import com.erp.model.scm.entity.PurchasePriceEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.workflow.dto.EndProcessDTO;
-import com.erp.server.scm.service.PurchasePriceChangeService;
-import com.erp.server.scm.service.PurchasePriceService;
-import com.erp.server.scm.service.WorkflowProcessService;
+import com.erp.server.scm.service.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -29,6 +26,16 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     @Resource
     private PurchasePriceChangeService purchasePriceChangeService;
 
+    @Resource
+    private SupplierService supplierService;
+
+    @Resource
+    private PurchaseOrderService purchaseOrderService;
+
+    @Resource
+    private SubcontractOrderService subcontractOrderService;
+
+
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
@@ -40,6 +47,18 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
             case PURCHASE_PRICE_CHANGE:
                 //采购调价
                 purchasePriceChangeApproveEnd(dto);
+                break;
+            case SUPPLIER:
+                //供应商
+                supplierApproveEnd(dto);
+                break;
+            case PURCHASE_ORDER:
+                //采购订单
+                purchaseOrderApproveEnd(dto);
+                break;
+            case SUBCONTRACT_ORDER:
+                //委外订单
+                subcontractOrderApproveEnd(dto);
                 break;
             default:
                 break;
@@ -77,5 +96,53 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
         baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
         return purchasePriceChangeService.approveEnd(baseApproveParamDTO,list);
+    }
+
+    /**
+     * @description: 供应商审核结束
+     * @author Will
+     * @date: 2023/7/11 12:13
+     * @param dto
+     * @return Boolean
+     */
+    private Boolean supplierApproveEnd(EndProcessDTO dto) {
+        //供应商
+        List<SupplierEntity> list = supplierService.listByIds(Arrays.asList(dto.getBusinessId()));
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
+        baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
+        return supplierService.approveEnd(baseApproveParamDTO,list);
+    }
+
+    /**
+     * @description: 采购订单结束审核
+     * @author Will
+     * @date: 2023/7/11 14:06
+     * @param dto
+     * @return Boolean
+     */
+    private Boolean purchaseOrderApproveEnd(EndProcessDTO dto) {
+        //供应商
+        List<PurchaseOrderEntity> list = purchaseOrderService.listByIds(Arrays.asList(dto.getBusinessId()));
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
+        baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
+        return purchaseOrderService.approveEnd(baseApproveParamDTO,list);
+    }
+
+    /**
+     * @description: 委外订单结束审核
+     * @author Will
+     * @date: 2023/7/11 14:06
+     * @param dto
+     * @return Boolean
+     */
+    private Boolean subcontractOrderApproveEnd(EndProcessDTO dto) {
+        //供应商
+        List<SubcontractOrderEntity> list = subcontractOrderService.listByIds(Arrays.asList(dto.getBusinessId()));
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
+        baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
+        return subcontractOrderService.approveEnd(baseApproveParamDTO,list);
     }
 }
