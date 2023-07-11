@@ -53,7 +53,7 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FBillNo = '%s'", ""));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FCONTACTID";
+        String fieldKeys = "FIsUsed";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 2);
         System.out.println(queryList);
     }

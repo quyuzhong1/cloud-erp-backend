@@ -344,7 +344,7 @@ public class ProductDetailExcelDTOTestTT {
      * 报关申报价（$）
      */
     @FieldValid(fieldName = "报关申报价（$）",formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
-    private String declarePriceStr;
+    private String declarePrice;
 
     /**
      * 报关中文名
