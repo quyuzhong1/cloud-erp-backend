@@ -144,9 +144,8 @@
     <select id="listApproveCount" resultType="com.erp.model.oms.dto.SoDetailDTO$TypeCountDTO">
         SELECT
         si.approve_status AS type,
-        count(sd.id)
-        FROM so_detail sd
-        INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
+        count(si.id)
+        FROM so_info si
         WHERE si.is_deleted=FALSE
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
@@ -156,14 +155,29 @@
 
     <select id="listDeliveryCount" resultType="com.erp.model.oms.dto.SoDetailDTO$TypeCountDTO">
         SELECT
-        sd.delivery_status AS type,
-        count(sd.id)
-        FROM so_detail sd
-        INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
-        WHERE si.is_deleted=FALSE AND si.approve_status='approve'
+            tt.type,
+            SUM(CASE WHEN type = 'completeShipment' AND tt.count = tt.skuQty OR (type != 'completeShipment') THEN 1 ELSE 0 END) AS count
+        FROM so_info si
+        INNER JOIN (
+            SELECT
+                sd.delivery_status AS type,
+                sd.main_id,
+                COUNT(sd.main_id) ,
+                t.skuQty AS skuQty
+            FROM so_detail sd
+            LEFT JOIN (
+                SELECT main_id, COUNT(main_id) skuQty FROM so_detail WHERE is_deleted = FALSE AND is_close = FALSE GROUP BY main_id
+            )t ON sd.main_id = t.main_id
+            WHERE sd.is_deleted = FALSE AND sd.is_close = FALSE
+            GROUP BY
+            sd.delivery_status,
+            sd.main_id,t.skuQty
+            order by sd.delivery_status
+        )tt ON si.id = tt.main_id
+        WHERE si.is_deleted = FALSE AND si.approve_status = 'approve'
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
-        GROUP BY sd.delivery_status
+        GROUP BY tt."type"
     </select>
 </mapper>

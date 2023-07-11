@@ -5,6 +5,7 @@ import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.validator.AddGroup;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.TradeTermEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -507,8 +508,9 @@ public class SoInfoDTO implements Serializable {
         private List<String> attachUrlList;
 
         /**
-         * 贸易条款
+         * 贸易条款：oms/common/enumDropDown?type=TradeTermEnum
          */
+        @StateEnumValue(clazz = TradeTermEnum.class, message = "贸易条款有误", groups = {AddGroup.class})
         private String tradeTerm;
 
         @Valid
@@ -1005,7 +1007,7 @@ public class SoInfoDTO implements Serializable {
         private List<String> attachUrlList;
 
         /**
-         * 贸易条款
+         * 贸易条款：oms/common/enumDropDown?type=TradeTermEnum
          */
         private String tradeTerm;
 

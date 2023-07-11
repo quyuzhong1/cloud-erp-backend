@@ -168,6 +168,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         int waitDeliveryCount = deliveryCountList.stream().filter(s -> !completeShipment.equals(s.getType())).
                 mapToInt(SoDetailDTO.TypeCountDTO::getCount).sum();
         waitDelivery.setCount(waitDeliveryCount);
+
+
         result.add(waitDelivery);
 
         //不通过
