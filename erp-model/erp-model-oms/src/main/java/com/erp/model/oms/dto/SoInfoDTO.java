@@ -558,6 +558,11 @@ public class SoInfoDTO implements Serializable {
         private LocalDate requireDate;
 
         /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+
+        /**
          * 组织id
          */
         private String salesOrgId;
