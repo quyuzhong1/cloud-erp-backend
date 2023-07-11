@@ -6,10 +6,12 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -225,4 +227,19 @@ public interface SoDetailService extends SuperService<SoDetailEntity> {
      * @return java.util.List<com.erp.model.oms.entity.SoDetailEntity>
      */
     List<SoDetailEntity> listByIdsSeq(List<String> soDetailIdList);
+
+    /**
+     * 计算毛利成本
+     * @param purchaseOrderDetailMap
+     * @param item
+     * @param currency
+     */
+    void calCost(Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap, SoDetailEntity item, String currency, Boolean isBrush);
+
+    /**
+     * 更新成本毛利信息
+     * @param id
+     * @param item
+     */
+    void updateCost(String id, SoDetailEntity item);
 }
