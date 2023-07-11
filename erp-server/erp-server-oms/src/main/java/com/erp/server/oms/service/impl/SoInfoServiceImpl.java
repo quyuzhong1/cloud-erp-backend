@@ -1890,6 +1890,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if(CollUtil.isEmpty(soList)) {
             return;
         }
+        log.warn("共查询到销售订单数据{}条", soList.size());
         for(SoInfoEntity soInfoEntity : soList) {
             List<SoDetailEntity>  detailList = soDetailService.listBaseByMainId(soInfoEntity.getId());
             if(CollUtil.isEmpty(detailList)) {
@@ -1901,6 +1902,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if(CollUtil.isNotEmpty(purchaseOrderDetailEntityList)) {
                 purchaseOrderDetailMap = purchaseOrderDetailEntityList.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getSkuId));
             }
+            log.warn("开始计算销售订单【{}】成本毛利数据", soInfoEntity.getCode());
             for (SoDetailEntity item : detailList) {
                 // 计算毛利成本
                 soDetailService.calCost(purchaseOrderDetailMap, item, Boolean.TRUE);
