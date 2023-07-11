@@ -78,6 +78,12 @@
             <if test="params.invalidStatus != null ">
                 and so.invalid_status = #{params.invalidStatus}
             </if>
+            <if test="params.idList != null and params.idList.size > 0">
+                and so.id in
+                <foreach collection="params.idList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
             <if test="params.skuNoList != null and params.skuNoList.size > 0">
                 and sod.sku_no in
                 <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
@@ -189,6 +195,12 @@
                 </if>
                 <if test="params.invalidStatus != null ">
                     and so.invalid_status = #{params.invalidStatus}
+                </if>
+                <if test="params.idList != null and params.idList.size > 0">
+                    and so.id in
+                    <foreach collection="params.idList" item="item" open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
                 </if>
                 <if test="params.skuNoList != null and params.skuNoList.size > 0">
                     and sod.sku_no in
