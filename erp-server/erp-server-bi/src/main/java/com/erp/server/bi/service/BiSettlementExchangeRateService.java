@@ -37,12 +37,4 @@ public interface BiSettlementExchangeRateService  extends IService<BiSettlementE
      * @return Boolean
      */
     Boolean batchUpdateSettlementExchangeRate(List<Map<String, Object>> list);
-
-    /**
-     * 根据日期和原币种查询汇率
-     * @param date
-     * @param sourceCurrencyCode
-     * @return
-     */
-    List<BiSettlementExchangeRateEntity> findByCurrencyAndDate(LocalDate date, String sourceCurrencyCode);
 }

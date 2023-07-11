@@ -12,17 +12,18 @@ import com.erp.model.dmp.entity.DmpShopInfoEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
+import com.erp.server.dmp.service.BiSettlementExchangeRateService;
 import com.erp.server.dmp.service.DmpShopInfoService;
 import com.erp.server.dmp.service.DmpSyncTaskService;
 import com.erp.server.dmp.service.PlatformService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -47,6 +48,9 @@ public class DmpFeignController extends BaseController {
 
     @Resource
     private PlatformService platformService;
+
+    @Autowired
+    private BiSettlementExchangeRateService biSettlementExchangeRateService;
 
 
     @PostMapping("/getShopById")
@@ -102,6 +106,17 @@ public class DmpFeignController extends BaseController {
     @PostMapping("/listShop")
     public List<DmpShopInfoEntity> listShop(){
         return dmpShopInfoService.list();
+    }
+
+    /**
+     * 获取汇率
+     * @param date
+     * @param sourceCurrencyCode
+     * @return
+     */
+    @PostMapping("/getRate")
+    public BigDecimal getRate(@RequestParam(value = "date") LocalDate date, @RequestParam(value = "sourceCurrencyCode") String sourceCurrencyCode){
+        return biSettlementExchangeRateService.findByCurrencyAndDate(date, sourceCurrencyCode);
     }
 
 }
