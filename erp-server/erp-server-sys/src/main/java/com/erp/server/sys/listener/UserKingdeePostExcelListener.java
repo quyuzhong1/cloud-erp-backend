@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @author Lambda
@@ -64,21 +63,28 @@ public class UserKingdeePostExcelListener extends AnalysisEventListener<UserKing
         //用户名
         String userName = excelDTO.getUserName();
         FindUserDTO user = userList.stream().filter(u -> u.getRealName().equals(userName)).findFirst().orElse(null);
-        if (Objects.isNull(user)) {
-            errorMsgList.add("用户不存在ERP");
-        }
+//        if (Objects.isNull(user)) {
+//            errorMsgList.add("用户不存在ERP");
+//        }
         //存在错误数据则直接返回 因为 这里可能给一个错误的 日期格式
         if (errorMsgList.size() > 0) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
             return;
         }
-        UserKingdeePostEntity post = userKingdeePostList.stream().filter(p -> p.getUserId().equals(user.getUserId())).findFirst().orElse(new UserKingdeePostEntity());
+        UserKingdeePostEntity post = userKingdeePostList.stream().
+                filter(p -> p.getUseOrgCode().equals(excelDTO.getUseOrgCode())&&
+                        p.getKingdeePostCode().equals(excelDTO.getKingdeePostCode())).
+                findFirst().orElse(new UserKingdeePostEntity());
+        post.setKingdeeUserCode(excelDTO.getKingdeeUserCode());
         post.setKingdeePostCode(excelDTO.getKingdeePostCode());
-        post.setUseOrgId(excelDTO.getUseOrgId());
+        post.setUseOrgCode(excelDTO.getUseOrgCode());
+        post.setUseOrgName(excelDTO.getUseOrgName());
         post.setPostName(excelDTO.getPostName());
         post.setUserName(userName);
-        post.setUserId(user.getUserId());
+        post.setUserId(user!=null?user.getUserId():"");
+        post.setKingdeeDeptCode(excelDTO.getKingdeeDeptCode());
+        post.setKingdeeDeptName(excelDTO.getKingdeeDeptName());
         addOrUpdateList.add(post);
     }
 

@@ -717,6 +717,6 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
 
     @Override
     public List<SoChangeDetailEntity> listDetailDbByMainId(String mainId) {
-        return this.lambdaQuery().eq(SoChangeDetailEntity::getMainId, mainId).orderByDesc(SoChangeDetailEntity::getId).list();
+        return this.lambdaQuery().eq(SoChangeDetailEntity::getMainId, mainId).orderByAsc(SoChangeDetailEntity::getId).list();
     }
 }

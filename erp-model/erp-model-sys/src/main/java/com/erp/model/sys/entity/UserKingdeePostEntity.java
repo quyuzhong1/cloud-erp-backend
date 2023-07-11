@@ -56,14 +56,26 @@ public class UserKingdeePostEntity extends BaseEntity<UserKingdeePostEntity> {
     /**
      * 使用组织
      */
-    @TableField("use_org_id")
-    private String useOrgId;
+    @TableField("use_org_code")
+    private String useOrgCode;
 
     /**
      * 使用组织名
      */
     @TableField("use_org_name")
     private String useOrgName;
+
+    /**
+     * 金蝶部门code
+     */
+    @TableField("kingdee_dept_code")
+    private String kingdeeDeptCode;
+
+    /**
+     * 金蝶部门名称
+     */
+    @TableField("kingdee_dept_name")
+    private String kingdeeDeptName;
 
 
     public static final String KINGDEE_USER_CODE = "kingdee_user_code";

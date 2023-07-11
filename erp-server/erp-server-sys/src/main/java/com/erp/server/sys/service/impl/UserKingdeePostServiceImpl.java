@@ -127,7 +127,7 @@ public class UserKingdeePostServiceImpl extends SuperServiceImpl<UserKingdeePost
     public KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePost(KingdeePostDTO.FindUserKingdeePostInfoDTO dto) {
         LambdaQueryWrapper<UserKingdeePostEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(UserKingdeePostEntity::getUserId, dto.getUserId());
-        queryWrapper.eq(UserKingdeePostEntity::getUseOrgId, dto.getOrgCode());
+        queryWrapper.eq(UserKingdeePostEntity::getUseOrgCode, dto.getOrgCode());
         queryWrapper.last("LIMIT 1");
         UserKingdeePostEntity entity = this.getOne(queryWrapper);
         KingdeePostDTO.UserKingdeePostInfoDTO result = new KingdeePostDTO.UserKingdeePostInfoDTO();

@@ -22,7 +22,6 @@ import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
@@ -1022,7 +1021,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
     @Override
     public List<SoDetailEntity> listBaseByMainId(String mainId) {
-        return this.lambdaQuery().eq(SoDetailEntity::getMainId, mainId).orderByDesc(SoDetailEntity::getId).list();
+        return this.lambdaQuery().eq(SoDetailEntity::getMainId, mainId).orderByAsc(SoDetailEntity::getId).list();
 
     }
 
