@@ -83,8 +83,8 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
    /**
     * 金额含税
     */
-   @TableField("amountTax")
-   private BigDecimal amountTax;
+   @TableField("tax_amount")
+   private BigDecimal taxAmount;
 
     /**
      * 币种

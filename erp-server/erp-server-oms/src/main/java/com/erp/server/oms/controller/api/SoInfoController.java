@@ -325,11 +325,11 @@ public class SoInfoController extends BaseController {
      * @date 2023-05-18 12:01
      */
     @GetMapping("/exportSoContractPdf")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id,seller_id",
-            menuCode = "oms:so:exportSoContractPdf",
-            serviceClass = SoInfoService.class,
-            keyIdName = "id")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id,seller_id",
+//            menuCode = "oms:so:exportSoContractPdf",
+//            serviceClass = SoInfoService.class,
+//            keyIdName = "id")
     public ApiResult<SoInfoDTO.ExportPdfDTO> exportSoContractPdf(@RequestParam("id") String id) {
         SoInfoDTO.ExportPdfDTO result = soInfoService.exportSoContractPdf(id);
         return success(result);
