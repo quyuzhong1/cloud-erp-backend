@@ -74,7 +74,7 @@
             DAY' ) > si.require_date
         </if>
         <if test="detailIdList!=null and detailIdList.size>0">
-            AND sod.id IN
+            AND si.id IN
             <foreach collection="detailIdList" item="detailId" open="(" separator="," close=")">
                 #{detailId}
             </foreach>
@@ -168,7 +168,7 @@
                     DAY' ) > si.require_date
                 </if>
                 <if test="detailIdList!=null and detailIdList.size>0">
-                    AND sod.id IN
+                    AND si.id IN
                     <foreach collection="detailIdList" item="detailId" open="(" separator="," close=")">
                         #{detailId}
                     </foreach>
