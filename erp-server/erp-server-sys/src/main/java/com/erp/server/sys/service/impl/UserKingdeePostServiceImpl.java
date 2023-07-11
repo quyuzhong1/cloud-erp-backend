@@ -135,6 +135,28 @@ public class UserKingdeePostServiceImpl extends SuperServiceImpl<UserKingdeePost
         return result;
     }
 
+
+    /**
+     * 获取到岗位信息
+     *
+     * @param dto
+     * @return com.erp.model.sys.dto.KingdeePostDTO.UserKingdeePostInfoDTO
+     * @author yl
+     * @date 2023-07-11 12:19
+     */
+    @Override
+    public KingdeePostDTO.UserKingdeePostInfoDTO getUserKingdeePostInfoByPostCode(KingdeePostDTO.FindUserKingdeePostDTO dto) {
+        UserKingdeePostEntity postEntity = this.lambdaQuery().eq(UserKingdeePostEntity::getUseOrgCode, dto.getOrgCode()).
+                eq(UserKingdeePostEntity::getKingdeePostCode, dto.getKingdeePostCode()).
+                last("LIMIT 1").one();
+        if (postEntity != null) {
+            KingdeePostDTO.UserKingdeePostInfoDTO result = new KingdeePostDTO.UserKingdeePostInfoDTO();
+            BeanMapper.copy(postEntity, result);
+            return result;
+        }
+        return null;
+    }
+
     private UserKingdeePostEntity getByUserId(String userId) {
         LambdaQueryWrapper<UserKingdeePostEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(UserKingdeePostEntity::getUserId, userId);

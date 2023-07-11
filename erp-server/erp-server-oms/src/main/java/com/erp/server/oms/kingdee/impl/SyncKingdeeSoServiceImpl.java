@@ -12,7 +12,7 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -106,8 +106,13 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         resultMap.put("deliveryMode", entity.getDeliveryMode());
         //单据类型
         resultMap.put("orderType", entity.getOrderType());
+        LocalDate createDate = entity.getCreateTime().toLocalDate();
+        LocalDate billDate = entity.getBillDate();
+        if (billDate != null) {
+            createDate = billDate;
+        }
         //创建日期
-        resultMap.put("createDate", entity.getCreateTime().toLocalDate());
+        resultMap.put("createDate", createDate);
         //是否收取运费
         resultMap.put("isCollectShippingFee", entity.getIsCollectShippingFee());
 
@@ -124,23 +129,6 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         String salesDeptId = entity.getSalesDeptId();
         //销售员
         String sellerId = entity.getSellerId();
-        //获取部门id
-        if (StringUtils.isNotBlank(salesDeptId)) {
-//            DeptKingdeeDTO.FindDeptKingdeeDTO findDeptKingdee = new DeptKingdeeDTO.FindDeptKingdeeDTO();
-//            findDeptKingdee.setDeptId(salesDeptId);
-//            findDeptKingdee.setOrgCode(salesOrgCode);
-//            DeptKingdeeEntity deptKingdee = kingdeeFeign.getDeptKingdee(findDeptKingdee);
-            //销售部门
-//            if (!Objects.isNull(deptKingdee)) {
-//                resultMap.put("deptCode", deptKingdee.getKingdeeDeptCode());
-//            }
-            SysDepartmentDTO departmentDTO = sysUserFeign.getUserDeptById(salesDeptId);
-            //销售部门
-            if (!Objects.isNull(departmentDTO)) {
-                resultMap.put("deptCode", departmentDTO.getCode());
-            }
-
-        }
         //获取业务员信息
         if (StringUtils.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
@@ -148,14 +136,22 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             findBusinessOperator.setUserId(sellerId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.YSY.getCode());
             //获取员工 岗位信息
-            KingdeeBusinessOperatorEntity  kingSellerInfo= kingdeeFeign.getBusinessOperator(findBusinessOperator);
+            KingdeeBusinessOperatorEntity kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
             //销售员
             if (!Objects.isNull(kingSellerInfo)) {
                 resultMap.put("sellerCode", kingSellerInfo.getKingdeePostCode());
                 resultMap.put("seller", kingSellerInfo.getKingdeeUserName());
+
+                KingdeePostDTO.FindUserKingdeePostDTO findUserPostKingdee = new KingdeePostDTO.FindUserKingdeePostDTO();
+                findUserPostKingdee.setKingdeePostCode(kingSellerInfo.getKingdeePostCode());
+                findUserPostKingdee.setOrgCode(salesOrgCode);
+                KingdeePostDTO.UserKingdeePostInfoDTO kingdeePost = kingdeeFeign.getUserKingdeePostByPostCode(findUserPostKingdee);
+                if (kingdeePost != null) {
+                    resultMap.put("deptCode", kingdeePost.getKingdeeDeptCode());
+                }
+
             }
         }
-
         String currency = entity.getCurrency();
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(currency));
         //结算币别

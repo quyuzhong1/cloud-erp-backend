@@ -55,6 +55,13 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     @TableField("require_date")
     private LocalDate requireDate;
 
+
+    /**
+     * 单据日期
+     */
+    @TableField("bill_date")
+    private LocalDate billDate;
+
     /**
      * 销售组织id
      */
