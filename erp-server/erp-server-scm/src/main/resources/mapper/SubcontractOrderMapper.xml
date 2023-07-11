@@ -66,9 +66,6 @@
         inner join subcontract_order_detail sod on so.id = sod.main_id and sod.is_deleted = false
         <where>
             so.is_deleted = false and sod.parent_id = ''
-            <if test="params.searchType != null and params.searchType != ''">
-                and so.approve_status like concat('%',#{params.searchType},'%')
-            </if>
             <if test="params.code != null and params.code != ''">
                 and so.code like concat('%',#{params.code},'%')
             </if>

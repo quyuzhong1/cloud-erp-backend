@@ -107,9 +107,15 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
 
     @Override
     public PagingVO<SubcontractChangeDTO.ListDTO> paging(PagingDTO<SubcontractChangeDTO.PagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        SubcontractChangeDTO.PagingParamDTO params = pagingParamDTO.getParams();
+        params.setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        IPage<SubcontractChangeDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        //列表Tab查询状态处理
+        Boolean isFlag = doOpHandleTableParam(params);
+        if (!isFlag) {
+            return new PagingVO(new Page());
+        }
+        IPage<SubcontractChangeDTO.ListDTO> pageData = this.baseMapper.paging(query, params);
         if(CollUtil.isEmpty(pageData.getRecords())) {
            return new PagingVO(pageData);
         }
@@ -126,17 +132,12 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             SubcontractChangeDTO.PagingParamDTO searchParamDTO = new SubcontractChangeDTO.PagingParamDTO();
             searchParamDTO.setPermissionSql(param.getPermissionSql());
             SubcontractChangeDTO.TabListDTO resultDTO = new SubcontractChangeDTO.TabListDTO();
+            //搜索类型
+            searchParamDTO.setSearchType(item.getCode());
+            //列表Tab查询状态处理
+            Boolean isFlag = doOpHandleTableParam(searchParamDTO);
             Integer count = MathUtil.ZERO;
-            if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(searchParamDTO);
-            }
-            if (PageListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(searchParamDTO);
-            }
-            if (PageListTypeEnum.REJECT.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+            if (isFlag) {
                 count = this.baseMapper.listCount(searchParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO :count);
@@ -144,6 +145,26 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
             list.add(resultDTO);
         }
         return list;
+    }
+
+    private Boolean doOpHandleTableParam (SubcontractChangeDTO.PagingParamDTO params) {
+        List<String> approveStatusList = new ArrayList<>(1);
+        //待我审核
+        if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(params.getSearchType())) {
+            approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+        }
+        //已审核
+        if (PageListTypeEnum.APPROVE.getCode().equals(params.getSearchType())) {
+            approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
+        }
+        //不通过
+        if (PageListTypeEnum.REJECT.getCode().equals(params.getSearchType())) {
+            approveStatusList.add(ApproveStatusEnum.REJECT.getStatus());
+        }
+        if (CollectionUtils.isNotEmpty(approveStatusList)) {
+            params.setApproveStatusList(approveStatusList);
+        }
+        return Boolean.TRUE;
     }
 
     @Override
