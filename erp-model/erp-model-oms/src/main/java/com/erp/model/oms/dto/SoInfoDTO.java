@@ -506,6 +506,11 @@ public class SoInfoDTO implements Serializable {
          */
         private List<String> attachUrlList;
 
+        /**
+         * 贸易条款
+         */
+        private String tradeTerm;
+
         @Valid
         @Size(min = 1, message = "销售订单详情不能为空", groups = {AddGroup.class})
         private List<SoDetailDTO.AddDTO> detailList;
@@ -713,6 +718,10 @@ public class SoInfoDTO implements Serializable {
          */
         private List<String> attachUrlList;
 
+        /**
+         * 贸易条款
+         */
+        private String tradeTerm;
 
         /**
          * 订单产品详情
@@ -994,6 +1003,11 @@ public class SoInfoDTO implements Serializable {
          * 附件url集合
          */
         private List<String> attachUrlList;
+
+        /**
+         * 贸易条款
+         */
+        private String tradeTerm;
 
         @Valid
         @Size(min = 1, message = "销售订单详情不能为空", groups = {AddGroup.class})
