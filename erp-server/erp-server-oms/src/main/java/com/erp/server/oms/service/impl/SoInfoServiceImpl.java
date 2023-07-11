@@ -1892,7 +1892,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     public void brushCostData(LocalDate startDate, LocalDate endDate) {
        // 查询需要重刷数据的创建时间范围
-        List<SoInfoEntity> soList =  lambdaQuery().ge(SoInfoEntity::getCreateTime, startDate).le(SoInfoEntity::getCreateTime,endDate).list();
+        List<SoInfoEntity> soList =  lambdaQuery().ge(SoInfoEntity::getCreateTime, startDate).le(SoInfoEntity::getCreateTime,endDate.plusDays(1)).list();
         if(CollUtil.isEmpty(soList)) {
             return;
         }
@@ -1909,7 +1909,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             for (SoDetailEntity item : detailList) {
                 // 计算毛利成本
-                soDetailService.calCost(purchaseOrderDetailMap, item, item.getCurrency(), Boolean.TRUE);
+                soDetailService.calCost(purchaseOrderDetailMap, item, Boolean.TRUE);
                 soDetailService.updateCost(item.getId(), item);
             }
 

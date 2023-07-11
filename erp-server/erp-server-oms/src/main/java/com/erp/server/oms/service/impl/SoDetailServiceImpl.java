@@ -482,7 +482,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             item.setCurrencySymbol(symbol);
 
             // 计算毛利成本
-            calCost(purchaseOrderDetailMap, item, currency, Boolean.FALSE);
+            calCost(purchaseOrderDetailMap, item, Boolean.FALSE);
         }
         //这是删除
         List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
@@ -1114,7 +1114,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             item.setCurrencySymbol(symbol);
 
             // 计算毛利成本
-            calCost(purchaseOrderDetailMap, item, currency, Boolean.FALSE);
+            calCost(purchaseOrderDetailMap, item, Boolean.FALSE);
         }
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
@@ -1167,10 +1167,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * 计算毛利成本
      * @param purchaseOrderDetailMap
      * @param item
-     * @param currency
      */
     @Override
-    public void calCost(Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap, SoDetailEntity item, String currency, Boolean isBrush) {
+    public void calCost(Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap, SoDetailEntity item,  Boolean isBrush) {
         PurchaseOrderDetailEntity purchaseOrderDetailEntity = null;
         if(purchaseOrderDetailMap.containsKey(item.getSkuId())) {
             purchaseOrderDetailEntity = purchaseOrderDetailMap.get(item.getSkuId()).get(0);
@@ -1183,7 +1182,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         // 最新的采购单价币制转换（非人民币）
         if(Objects.nonNull(purchasePrice) &&
                 purchasePrice.compareTo(BigDecimal.ZERO) == 1 &&
-                !Objects.equals(currency, "CNY")) {
+                !Objects.equals(purchaseOrderDetailEntity.getCurrency(), "CNY")) {
             String purchaseDate = purchaseOrderDetailEntity.getPurchaseDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             BigDecimal rate =  dmpTaskFeign.getRate(purchaseDate, purchaseOrderDetailEntity.getCurrency());
             log.info("找到的最新的采购订单:{} 的币制：{}，采购订单日期：{}，转换后汇率：{}", purchaseOrderDetailEntity.getPurchaseOrderId(), purchaseOrderDetailEntity.getCurrency(), rate);
