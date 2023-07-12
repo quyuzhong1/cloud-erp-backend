@@ -8,6 +8,7 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.CustomerSellerEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.CustomerSellerMapper;
 import com.erp.server.oms.service.CustomerSellerService;
@@ -16,6 +17,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
@@ -188,6 +190,33 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
         }
     }
 
+    /**
+     * 添加销售员
+     *
+     * @param mainId
+     * @param dto
+     * @param
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void saveSeller(String mainId, SysDepartmentUserNumberDTO dto) {
+        List<CustomerSellerEntity> customerSellerList = this.listBaseByMainId(mainId);
+        //修改时间
+        if (CollectionUtils.isNotEmpty(customerSellerList)) {
+            CustomerSellerEntity  lastSeller= customerSellerList.get(customerSellerList.size()-1);
+            lastSeller.setEndDate(LocalDate.now());
+            this.updateById(lastSeller);
+        }
+
+        CustomerSellerEntity customerSeller = new CustomerSellerEntity();
+        customerSeller.setSellerName(dto.getUserName());
+        customerSeller.setMainId(mainId);
+        customerSeller.setDeptId(dto.getDepartmentId());
+        customerSeller.setStartDate(LocalDate.now());
+        this.save(customerSeller);
+
+    }
+
 
     /**
      * 获取删除字段的信息
@@ -206,6 +235,6 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
     }
 
     private List<CustomerSellerEntity> listBaseByMainId(String mainId) {
-        return this.lambdaQuery().eq(CustomerSellerEntity::getMainId, mainId).orderByDesc(CustomerSellerEntity::getId).list();
+        return this.lambdaQuery().eq(CustomerSellerEntity::getMainId, mainId).orderByAsc(CustomerSellerEntity::getId).list();
     }
 }

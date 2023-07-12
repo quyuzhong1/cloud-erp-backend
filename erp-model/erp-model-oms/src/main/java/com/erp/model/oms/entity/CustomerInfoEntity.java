@@ -165,6 +165,19 @@ public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
     @TableField("occupy_status")
     private Boolean occupyStatus;
 
+
+    /**
+     * 销售员id
+     */
+    @TableField("seller_id")
+    private String sellerId;
+
+    /**
+     * 销售员
+     */
+    @TableField("seller_name")
+    private String sellerName;
+
     /**
      * 条件字典 oms_dict 获取
      */

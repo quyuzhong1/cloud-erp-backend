@@ -3,6 +3,7 @@ package com.erp.server.oms.service;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SellerDTO;
 import com.erp.model.oms.entity.CustomerSellerEntity;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 
 import java.util.List;
 
@@ -56,4 +57,12 @@ public interface CustomerSellerService extends SuperService<CustomerSellerEntity
      * @return void
      */
     void updateBatchSeller(String mainId, List<SellerDTO.ViewDTO> sellerList);
+
+
+    /**
+     * 添加销售员
+     * @param deptUser
+
+     */
+    void saveSeller(String mainId, SysDepartmentUserNumberDTO deptUser);
 }

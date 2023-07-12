@@ -160,9 +160,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         //检查默认发票 银行账号
         List<InvoiceDTO.AddDTO> invoiceList = dto.getInvoiceList();
         customerInvoiceService.checkIsDefault(invoiceList);
-        //销售员信息
-        List<SellerDTO.AddDTO> sellerList = dto.getSellerList();
-        customerSellerService.checkDate(sellerList);
+
 
         //id
         String id = IdWorker.getIdStr();
@@ -187,6 +185,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CUST, BusinessNoTypeEnum.CODE_CUST.getCode()));
         addEntity.setCode(code);
+        //销售员
+        String sellerId = dto.getSellerId();
+        SysDepartmentUserNumberDTO userDept = sysUserFeign.getDeptByUserId(sellerId);
+        addEntity.setSellerName(userDept.getUserName());
         //对应组织
         String innerOrgId = dto.getInnerOrgId();
 
@@ -225,7 +227,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             customerInvoiceService.saveBatchInvoice(id, invoiceList);
 
             //批量销售员信息
-            customerSellerService.saveBatchSeller(id, sellerList);
+            customerSellerService.saveSeller(id, userDept);
 
             return id;
 
@@ -457,6 +459,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<CustomerContactDTO.ViewDTO> contactList = customerContactService.listByMainId(id);
         view.setContactList(contactList);
 
+
         //地址信息
         List<CustomerAddressDTO.ViewDTO> addressList = customerAddressService.listByMainId(id);
         view.setAddressList(addressList);
@@ -508,17 +511,14 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<InvoiceDTO.AddDTO> invoiceAddList = BeanMapper.copyList(invoiceList, InvoiceDTO.AddDTO.class);
         customerInvoiceService.checkIsDefault(invoiceAddList);
 
-        //销售员信息
-        List<SellerDTO.ViewDTO> sellerList = dto.getSellerList();
-        List<SellerDTO.AddDTO> sellerAddList = BeanMapper.copyList(sellerList, SellerDTO.AddDTO.class);
-        customerSellerService.checkDate(sellerAddList);
-
         String code = customer.getCode();
 
         //旧的
         CustomerInfoEntity old = new CustomerInfoEntity();
-        BeanMapper.copy(customer, old);
 
+        BeanMapper.copy(customer, old);
+        //旧销售员
+        String oldSellerId = old.getSellerId();
         BeanMapper.copy(dto, customer);
 
         //分组id
@@ -574,9 +574,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //批量修改发票信息
             customerInvoiceService.updateBatchInvoice(id, dto.getInvoiceList());
 
-            //批量修改销售员信息
-            customerSellerService.updateBatchSeller(id, dto.getSellerList());
-
+            //当不相当的时候更信息
+            if (!dto.getSellerId().equals(oldSellerId)) {
+                SysDepartmentUserNumberDTO deptUser = sysUserFeign.getDeptByUserId(dto.getSellerId());
+                customerSellerService.saveSeller(id,deptUser);
+            }
             return id;
         }
 
@@ -1094,41 +1096,41 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         int rows = sheet.getPhysicalNumberOfRows();
 
         // 组织
-        List<BaseIdDTO> accountingCompanyList =  sysUserFeign.listAccountingCompany();
+        List<BaseIdDTO> accountingCompanyList = sysUserFeign.listAccountingCompany();
         Map<String, List<BaseIdDTO>> accountCompanyNameMap = accountingCompanyList.stream().collect(Collectors.groupingBy(BaseIdDTO::getName));
         // 客户分组
         List<CustomerGroupEntity> customerGroupEntityList = customerGroupService.list();
-        Map<String, List<CustomerGroupEntity>> customerGroupNameMap =  customerGroupEntityList.stream().filter(r->StrUtils.isNotEmpty(r.getName())).collect(Collectors.groupingBy(CustomerGroupEntity::getName));
+        Map<String, List<CustomerGroupEntity>> customerGroupNameMap = customerGroupEntityList.stream().filter(r -> StrUtils.isNotEmpty(r.getName())).collect(Collectors.groupingBy(CustomerGroupEntity::getName));
         // 国家
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
-        Map<String, List<DictCountryDTO.ListDTO>> countryNameMap =  countryList.stream().collect(Collectors.groupingBy(DictCountryDTO.ListDTO::getNameCn));
+        Map<String, List<DictCountryDTO.ListDTO>> countryNameMap = countryList.stream().collect(Collectors.groupingBy(DictCountryDTO.ListDTO::getNameCn));
         // 平台类型
         List<DictBasicDTO.ViewDTO> platFormList = dictBasicService.getByKey(DictBasicEnum.PLATFORM.getType());
-        Map<String,DictBasicDTO.ViewDTO> platformNameMap = platFormList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
+        Map<String, DictBasicDTO.ViewDTO> platformNameMap = platFormList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
         // 客户类别
         List<DictBasicDTO.ViewDTO> customerCategoryList = dictBasicService.getByKey("customerCompanyCategory");
-        Map<String,DictBasicDTO.ViewDTO> customerCategoryNameMap = customerCategoryList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
+        Map<String, DictBasicDTO.ViewDTO> customerCategoryNameMap = customerCategoryList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
         // 结算方式
         List<DictBasicDTO.ViewDTO> settleModeList = dictBasicService.getByKey("settleMode");
-        Map<String,DictBasicDTO.ViewDTO> settleModeNameMap = settleModeList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
+        Map<String, DictBasicDTO.ViewDTO> settleModeNameMap = settleModeList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
         // 币别
         List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
-        Map<String,DictCurrencyEntity> currencyNameMap = currencyList.stream().collect(Collectors.toMap(DictCurrencyEntity::getName, Function.identity()));
+        Map<String, DictCurrencyEntity> currencyNameMap = currencyList.stream().collect(Collectors.toMap(DictCurrencyEntity::getName, Function.identity()));
         // 收款条件
         List<DictBasicDTO.ViewDTO> collectionTermList = dictBasicService.getByKey(DictBasicEnum.COLLECTION_TERMS.getType());
-        Map<String,DictBasicDTO.ViewDTO> collectionTermNameMap = collectionTermList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
+        Map<String, DictBasicDTO.ViewDTO> collectionTermNameMap = collectionTermList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, Function.identity()));
         // 部门
         List<SysUserDeptDTO> userDeptList = sysUserFeign.getUserDeptList();
-        Map<String,List<SysUserDeptDTO>> deptNameMap = userDeptList.stream().filter(r->StrUtils.isNotEmpty(r.getDeptName())).collect(Collectors.groupingBy(SysUserDeptDTO::getDeptName));
+        Map<String, List<SysUserDeptDTO>> deptNameMap = userDeptList.stream().filter(r -> StrUtils.isNotEmpty(r.getDeptName())).collect(Collectors.groupingBy(SysUserDeptDTO::getDeptName));
         // 人员
         List<FindUserDTO> userList = sysUserFeign.getUserList();
-        Map<String,List<FindUserDTO>> userNameMap = userList.stream().collect(Collectors.groupingBy(FindUserDTO::getUserName));
+        Map<String, List<FindUserDTO>> userNameMap = userList.stream().collect(Collectors.groupingBy(FindUserDTO::getUserName));
 
         wb.setMissingCellPolicy(Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
 
         // 一个客户会存在多行数据
         Map<String, CustomerInfoEntity> customerBaseMap = Maps.newHashMap();
-        for(int i = 2;i < rows;i++) {
+        for (int i = 2; i < rows; i++) {
             int noticeRow = i + 1;
             XSSFRow row = sheet.getRow(i);
 
@@ -1139,7 +1141,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             queryWrapper.eq(CustomerInfoEntity::getCode, code);
             queryWrapper.last("LIMIT 1");
             CustomerInfoEntity checkCustomerInfoEntity = this.baseMapper.selectOne(queryWrapper);
-            if(Objects.nonNull(checkCustomerInfoEntity)) {
+            if (Objects.nonNull(checkCustomerInfoEntity)) {
                 log.info("已经存在客户编码【{}】，本次不导入", code);
                 continue;
             }
@@ -1152,30 +1154,30 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             String useOrgName = ExcelUtil.convertCellValueToString(row.getCell(2));
             customerInfoEntity.setUseOrgName(useOrgName);
             // 使用组织id需根据名称获取
-            if(!accountCompanyNameMap.containsKey(useOrgName)) {
-              throw new ServiceException(StrUtil.format("第【{}】行未找到组织【{}】", noticeRow, useOrgName));
+            if (!accountCompanyNameMap.containsKey(useOrgName)) {
+                throw new ServiceException(StrUtil.format("第【{}】行未找到组织【{}】", noticeRow, useOrgName));
             }
             // 名称不会重复
-            if(Objects.nonNull(accountCompanyNameMap.get(useOrgName))) {
+            if (Objects.nonNull(accountCompanyNameMap.get(useOrgName))) {
                 customerInfoEntity.setUseOrgId(accountCompanyNameMap.get(useOrgName).get(0).getId());
             }
 
             // 客户分组（单独的表需提前维护customer_group），分组id需要根据名称获取
             String groupName = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(3)));
             // 客户分组id需根据客户分组名称获取
-            if(StrUtils.isNotEmpty(groupName) && customerGroupNameMap.containsKey(groupName)) {
+            if (StrUtils.isNotEmpty(groupName) && customerGroupNameMap.containsKey(groupName)) {
                 customerInfoEntity.setGroupName(groupName);
                 customerInfoEntity.setGroupId(customerGroupNameMap.get(groupName).get(0).getId());
             }
 
             // 国家
             String countryName = ExcelUtil.convertCellValueToString(row.getCell(4));
-            if(!countryNameMap.containsKey(countryName)) {
-               throw new ServiceException(StrUtil.format("第【{}】行未找到国家【{}】", noticeRow, countryName));
+            if (!countryNameMap.containsKey(countryName)) {
+                throw new ServiceException(StrUtil.format("第【{}】行未找到国家【{}】", noticeRow, countryName));
             }
             // 国家id需根据国家名称获取
             customerInfoEntity.setCountryId("");
-            if(countryNameMap.containsKey(countryName)) {
+            if (countryNameMap.containsKey(countryName)) {
                 customerInfoEntity.setCountryId(countryNameMap.get(countryName).get(0).getId());
             }
             // 区域id需根据国家id获取
@@ -1184,11 +1186,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             String provinceName = ExcelUtil.convertCellValueToString(row.getCell(6));
             // 省份id需要根据名称获取
             DictCityDTO.ListDTO provinceDTO = null;
-            if(StrUtils.isNotEmpty(provinceName)) {
+            if (StrUtils.isNotEmpty(provinceName)) {
                 List<DictCityDTO.ListDTO> provinceList = sysUserFeign.getProvincesByCountryCode(customerInfoEntity.getCountryId());
-                if(CollUtil.isNotEmpty(provinceList)) {
-                    provinceDTO =   provinceList.stream().filter(r-> Objects.equals(r.getName(), provinceName)).findFirst().orElse(null);
-                    if(Objects.nonNull(provinceDTO)) {
+                if (CollUtil.isNotEmpty(provinceList)) {
+                    provinceDTO = provinceList.stream().filter(r -> Objects.equals(r.getName(), provinceName)).findFirst().orElse(null);
+                    if (Objects.nonNull(provinceDTO)) {
                         customerInfoEntity.setProvinceId(provinceDTO.getId());
                     }
                 }
@@ -1197,12 +1199,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             // 城市
             DictCityDTO.ListDTO cityDTO = null;
             String cityName = ExcelUtil.convertCellValueToString(row.getCell(7));
-            if(StrUtils.isNotEmpty(cityName) && Objects.nonNull(provinceDTO)) {
-                List<DictCityDTO.ListDTO> cityList =  provinceDTO.getChildrenList();
-                if(CollUtil.isNotEmpty(cityList)) {
-                    cityDTO =  cityList.stream().filter(r-> Objects.equals(r.getName(), cityName)).findFirst().orElse(null);
+            if (StrUtils.isNotEmpty(cityName) && Objects.nonNull(provinceDTO)) {
+                List<DictCityDTO.ListDTO> cityList = provinceDTO.getChildrenList();
+                if (CollUtil.isNotEmpty(cityList)) {
+                    cityDTO = cityList.stream().filter(r -> Objects.equals(r.getName(), cityName)).findFirst().orElse(null);
                 }
-                if(Objects.nonNull(cityDTO)) {
+                if (Objects.nonNull(cityDTO)) {
                     customerInfoEntity.setCityId(cityDTO.getId());
                 }
             }
@@ -1215,13 +1217,13 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             customerInfoEntity.setShortName(shortName);
             // 平台类型
             String platformTypeName = ExcelUtil.convertCellValueToString(row.getCell(10));
-            if(!platformNameMap.containsKey(platformTypeName)) {
-               throw new ServiceException(StrUtil.format("第【{}】行未找到平台类型【{}】", noticeRow, platformTypeName));
+            if (!platformNameMap.containsKey(platformTypeName)) {
+                throw new ServiceException(StrUtil.format("第【{}】行未找到平台类型【{}】", noticeRow, platformTypeName));
             }
             customerInfoEntity.setPlatformType(platformNameMap.get(platformTypeName).getValue());
             // 公司类别
             String companyCategoryName = ExcelUtil.convertCellValueToString(row.getCell(11));
-            if(StrUtils.isNotEmpty(companyCategoryName) && customerCategoryNameMap.containsKey(companyCategoryName)) {
+            if (StrUtils.isNotEmpty(companyCategoryName) && customerCategoryNameMap.containsKey(companyCategoryName)) {
                 customerInfoEntity.setCompanyCategoryDict(customerCategoryNameMap.get(companyCategoryName).getValue());
             }
 
@@ -1232,26 +1234,26 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             customerInfoEntity.setPayCode("");
             // 结算方式
             String settleDictName = ExcelUtil.convertCellValueToString(row.getCell(14));
-            if(StrUtils.isNotEmpty(settleDictName) && settleModeNameMap.containsKey(settleDictName)) {
+            if (StrUtils.isNotEmpty(settleDictName) && settleModeNameMap.containsKey(settleDictName)) {
                 customerInfoEntity.setSettleDict(settleModeNameMap.get(settleDictName).getValue());
             }
             // 结算币别
             String currencyName = ExcelUtil.convertCellValueToString(row.getCell(15));
-            if(StrUtils.isEmpty(currencyName) || !currencyNameMap.containsKey(currencyName)) {
-              throw new ServiceException(StrUtil.format("第【{}】行币别为空或未找到结算币别【{}】", noticeRow, currencyName));
+            if (StrUtils.isEmpty(currencyName) || !currencyNameMap.containsKey(currencyName)) {
+                throw new ServiceException(StrUtil.format("第【{}】行币别为空或未找到结算币别【{}】", noticeRow, currencyName));
             }
             customerInfoEntity.setCurrency(currencyNameMap.get(currencyName).getId());
             // 收款条件
             String conditionDictName = ExcelUtil.convertCellValueToString(row.getCell(16));
-            if(StrUtils.isEmpty(conditionDictName) || !collectionTermNameMap.containsKey(conditionDictName)) {
-              throw new ServiceException(StrUtil.format("第【{}】行收款条件为空或未找到收款条件【{}】", noticeRow, conditionDictName));
+            if (StrUtils.isEmpty(conditionDictName) || !collectionTermNameMap.containsKey(conditionDictName)) {
+                throw new ServiceException(StrUtil.format("第【{}】行收款条件为空或未找到收款条件【{}】", noticeRow, conditionDictName));
             }
             customerInfoEntity.setConditionDict(collectionTermNameMap.get(conditionDictName).getValue());
 
             // 无附件
 
             // 备注
-            String remark =  ExcelUtil.convertCellValueToString(row.getCell(18));
+            String remark = ExcelUtil.convertCellValueToString(row.getCell(18));
             customerInfoEntity.setRemark(remark);
             // 审核状态
             customerInfoEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
@@ -1263,7 +1265,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             customerInfoEntity.setUpdateUserId("");
             customerInfoEntity.setUpdateUserName("admin");
 
-            if(!customerBaseMap.containsKey(code)) {
+            if (!customerBaseMap.containsKey(code)) {
                 super.save(customerInfoEntity);
                 customerBaseMap.put(code, customerInfoEntity);
             } else {
@@ -1292,7 +1294,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if (CollectionUtils.isEmpty(kingdeeCustomerIds)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(CustomerInfoEntity::getSyncKingdeeId,kingdeeCustomerIds).list();
+        return this.lambdaQuery().in(CustomerInfoEntity::getSyncKingdeeId, kingdeeCustomerIds).list();
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -1303,7 +1305,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         // 读取数据集
         int rows = sheet.getPhysicalNumberOfRows();
 
-        for(int i = 2;i < rows;i++) {
+        for (int i = 2; i < rows; i++) {
             XSSFRow row = sheet.getRow(i);
 
             // 客户名称
@@ -1313,12 +1315,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             LambdaQueryWrapper<CustomerInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(CustomerInfoEntity::getName, customerName);
             queryWrapper.last("LIMIT 1");
-            CustomerInfoEntity customerInfoEntity =super.getOne(queryWrapper);
-            if(Objects.isNull(customerInfoEntity)) {
+            CustomerInfoEntity customerInfoEntity = super.getOne(queryWrapper);
+            if (Objects.isNull(customerInfoEntity)) {
                 log.info("未找到客户【{}】", customerName);
                 continue;
             }
-            if(StrUtils.isNotEmpty(customerInfoEntity.getSyncKingdeeId())) {
+            if (StrUtils.isNotEmpty(customerInfoEntity.getSyncKingdeeId())) {
                 log.info("客户【{}】已经存在金蝶id，不处理", customerName);
                 continue;
             }
@@ -1333,6 +1335,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
     /**
      * 客户联系人信息
+     *
      * @param customerId
      * @param row
      */
@@ -1340,7 +1343,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         // 联系人信息
         // 联系人名称
         String person = ExcelUtil.convertCellValueToString(row.getCell(19));
-        if(StrUtils.isEmpty(person)) {
+        if (StrUtils.isEmpty(person)) {
             return;
         }
 
@@ -1356,19 +1359,19 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String telNumber = ExcelUtil.convertCellValueToString(row.getCell(21));
         customerContactEntity.setTelNumber(telNumber);
         // 邮箱
-        String email  = ExcelUtil.convertCellValueToString(row.getCell(22));
+        String email = ExcelUtil.convertCellValueToString(row.getCell(22));
         customerContactEntity.setEmail(email);
         // 默认联系人
         String isDefaultName = ExcelUtil.convertCellValueToString(row.getCell(23));
         customerContactEntity.setIsDefault(Boolean.FALSE);
-        if(Objects.equals(isDefaultName, "是") || Objects.equals(isDefaultName, "默认")  ) {
+        if (Objects.equals(isDefaultName, "是") || Objects.equals(isDefaultName, "默认")) {
             customerContactEntity.setIsDefault(Boolean.TRUE);
         }
 
         // 是否启用
         String isDisableName = ExcelUtil.convertCellValueToString(row.getCell(24));
         customerContactEntity.setDisabled(Boolean.FALSE);
-        if(Objects.equals(isDisableName, "是") || Objects.equals(isDisableName, "禁用")  ) {
+        if (Objects.equals(isDisableName, "是") || Objects.equals(isDisableName, "禁用")) {
             customerContactEntity.setDisabled(Boolean.TRUE);
         }
 
@@ -1381,6 +1384,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
     /**
      * 客户地址信息
+     *
      * @param customerId
      * @param row
      */
@@ -1390,7 +1394,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String address = ExcelUtil.convertCellValueToString(row.getCell(26));
         // 联系人
         String addressPerson = ExcelUtil.convertCellValueToString(row.getCell(27));
-        if(StrUtils.isEmpty(address) && StrUtils.isEmpty(addressPerson)) {
+        if (StrUtils.isEmpty(address) && StrUtils.isEmpty(addressPerson)) {
             return;
         }
 
@@ -1402,7 +1406,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         customerAddressEntity.setPerson(addressPerson);
         // 地址类型
         String addressTypeName = ExcelUtil.convertCellValueToString(row.getCell(28));
-        if(StrUtils.isNotEmpty(addressTypeName)) {
+        if (StrUtils.isNotEmpty(addressTypeName)) {
             customerAddressEntity.setType(AddressTypeEnum.getCodeByName(addressTypeName));
         }
         // 电话
@@ -1414,13 +1418,13 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         // 默认地址
         String isDefaultAddress = ExcelUtil.convertCellValueToString(row.getCell(31));
         customerAddressEntity.setIsDefault(Boolean.FALSE);
-        if(Objects.equals(isDefaultAddress, "是") || Objects.equals(isDefaultAddress, "默认")  ) {
+        if (Objects.equals(isDefaultAddress, "是") || Objects.equals(isDefaultAddress, "默认")) {
             customerAddressEntity.setIsDefault(Boolean.TRUE);
         }
         // 是否启用
         String isDisableAddress = ExcelUtil.convertCellValueToString(row.getCell(32));
         customerAddressEntity.setDisabled(Boolean.FALSE);
-        if(Objects.equals(isDisableAddress, "是") || Objects.equals(isDisableAddress, "禁用")  ) {
+        if (Objects.equals(isDisableAddress, "是") || Objects.equals(isDisableAddress, "禁用")) {
             customerAddressEntity.setDisabled(Boolean.TRUE);
         }
 
@@ -1439,6 +1443,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
     /**
      * 客户发票信息
+     *
      * @param mainId
      * @param row
      */
@@ -1446,7 +1451,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         // 发票信息
         // 发票抬头
         String invoiceHead = ExcelUtil.convertCellValueToString(row.getCell(34));
-        if(StrUtils.isEmpty(invoiceHead)) {
+        if (StrUtils.isEmpty(invoiceHead)) {
             return;
         }
         CustomerInvoiceEntity customerInvoiceEntity = new CustomerInvoiceEntity();
@@ -1464,7 +1469,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         // 是否默认银行
         String isDefaultBank = ExcelUtil.convertCellValueToString(row.getCell(38));
         customerInvoiceEntity.setIsDefault(Boolean.FALSE);
-        if(Objects.equals(isDefaultBank, "是") || Objects.equals(isDefaultBank, "默认")  ) {
+        if (Objects.equals(isDefaultBank, "是") || Objects.equals(isDefaultBank, "默认")) {
             customerInvoiceEntity.setIsDefault(Boolean.TRUE);
         }
 
@@ -1482,6 +1487,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
     /**
      * 新增客户销售员信息
+     *
      * @param mainId
      * @param row
      * @param noticeRow
@@ -1490,38 +1496,38 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
      */
     public void importCustomerSale(String mainId, XSSFRow row,
                                    Integer noticeRow,
-                                   Map<String,List<SysUserDeptDTO>> deptNameMap,
-                                   Map<String,List<FindUserDTO>> userNameMap) {
+                                   Map<String, List<SysUserDeptDTO>> deptNameMap,
+                                   Map<String, List<FindUserDTO>> userNameMap) {
         // 销售部门
         String deptName = ExcelUtil.convertCellValueToString(row.getCell(40));
-        if(StrUtils.isEmpty(deptName)) {
+        if (StrUtils.isEmpty(deptName)) {
             return;
         }
-        if(StrUtils.isNotEmpty(deptName) && !deptNameMap.containsKey(deptName)) {
-           throw new ServiceException(StrUtil.format("第【{}】行未找到销售部门【{}】", noticeRow, deptName));
+        if (StrUtils.isNotEmpty(deptName) && !deptNameMap.containsKey(deptName)) {
+            throw new ServiceException(StrUtil.format("第【{}】行未找到销售部门【{}】", noticeRow, deptName));
         }
         // 销售员信息
         CustomerSellerEntity customerSellerEntity = new CustomerSellerEntity();
         customerSellerEntity.setMainId(mainId);
         customerSellerEntity.setDeptId("");
-        if(Objects.nonNull(deptNameMap.get(deptName))) {
+        if (Objects.nonNull(deptNameMap.get(deptName))) {
             customerSellerEntity.setDeptId(deptNameMap.get(deptName).get(0).getDeptId());
         }
         // 销售员
         String sellerName = ExcelUtil.convertCellValueToString(row.getCell(41));
-        if(StrUtils.isNotEmpty(sellerName) && !userNameMap.containsKey(sellerName)) {
-           throw new ServiceException(StrUtil.format("第【{}】行未找到销售员【{}】", noticeRow, sellerName));
+        if (StrUtils.isNotEmpty(sellerName) && !userNameMap.containsKey(sellerName)) {
+            throw new ServiceException(StrUtil.format("第【{}】行未找到销售员【{}】", noticeRow, sellerName));
         }
         customerSellerEntity.setSellerName(sellerName);
         // 需转换成销售员id
         customerSellerEntity.setSellerId("");
-        if(userNameMap.containsKey(sellerName)) {
+        if (userNameMap.containsKey(sellerName)) {
             customerSellerEntity.setSellerId(userNameMap.get(sellerName).get(0).getUserId());
         }
         // 开始日期
         String startDateStr = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(42)));
-        if(StrUtils.isNotEmpty(startDateStr) && startDateStr.length() == 10) {
-            if(startDateStr.contains("-") ) {
+        if (StrUtils.isNotEmpty(startDateStr) && startDateStr.length() == 10) {
+            if (startDateStr.contains("-")) {
                 LocalDate startDate = LocalDate.parse(startDateStr);
                 customerSellerEntity.setStartDate(startDate);
             } else if (startDateStr.contains("/")) {
@@ -1531,7 +1537,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         // 结束日期
         String endDateStr = StrUtils.null2EmptyWithTrim(ExcelUtil.convertCellValueToString(row.getCell(43)));
-        if(StrUtils.isNotEmpty(endDateStr) && endDateStr.length() == 10) {
+        if (StrUtils.isNotEmpty(endDateStr) && endDateStr.length() == 10) {
             if (endDateStr.contains("-")) {
                 LocalDate endDate = LocalDate.parse(endDateStr);
                 customerSellerEntity.setEndDate(endDate);
