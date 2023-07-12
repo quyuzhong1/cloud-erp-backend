@@ -39,6 +39,9 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     @Resource
     private SoOutstockService soOutstockService;
 
+    @Resource
+    private SoReturnInstockService soReturnInstockService;
+
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
         //模块类型编码
@@ -78,6 +81,9 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         if (ApiModuleTypeEnum.SO_OUTSTOCK.getCode().toString().equals(code)) {
             soOutstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
         }
-
+        //销售退货入库单
+        if (ApiModuleTypeEnum.SO_RETURN.getCode().toString().equals(code)) {
+            soReturnInstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
+        }
     }
 }
