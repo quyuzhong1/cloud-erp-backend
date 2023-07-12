@@ -6,6 +6,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.SellerDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.CustomerSellerEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
@@ -21,10 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -216,6 +214,74 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
         customerSeller.setStartDate(LocalDate.now());
         this.save(customerSeller);
 
+    }
+
+
+    /**
+     * 审核通过后批量添加销售员历史信息
+     *
+     * @param list
+     * @return void
+     * @author yl
+     * @date 2023-07-12 18:01
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchSellerHistory(List<CustomerInfoEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //销售员
+        List<String> sellerIdList = list.stream().map(CustomerInfoEntity::getSellerId).collect(Collectors.toList());
+        List<SysDepartmentUserNumberDTO> deptUserList = sysUserFeign.listDeptUserByUserIdList(sellerIdList);
+        //主表信息
+        List<String> mainIdList = list.stream().map(CustomerInfoEntity::getSellerId).collect(Collectors.toList());
+        //数据库存在的
+        List<CustomerSellerEntity> dbSellerList = this.listByMainIdList(mainIdList);
+        List<CustomerSellerEntity> batchAddList = new ArrayList<>(10);
+        //更改的
+        List<CustomerSellerEntity> batchUpdateList = new ArrayList<>(10);
+
+        //添加的
+        for (CustomerInfoEntity item : list) {
+            String mainId = item.getId();
+            SysDepartmentUserNumberDTO deptUser = deptUserList.stream().filter(d -> d.getUserId().equals(item.getSellerId())).
+                    findFirst().orElse(null);
+            CustomerSellerEntity addSeller = new CustomerSellerEntity();
+            if (deptUser != null) {
+                addSeller.setSellerName(deptUser.getUserName());
+                addSeller.setDeptId(deptUser.getDepartmentId());
+            }
+            addSeller.setSellerId(item.getSellerId());
+            addSeller.setMainId(mainId);
+            addSeller.setStartDate(LocalDate.now());
+            batchAddList.add(addSeller);
+            //存在的销售员 就要修改
+            List<CustomerSellerEntity> existSellerList = dbSellerList.stream().filter(s -> s.getMainId().equals(mainId)).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(existSellerList)) {
+                existSellerList.sort(Comparator.comparing(CustomerSellerEntity::getId).reversed());
+                batchUpdateList.add(existSellerList.get(0));
+            }
+        }
+        //批量添加
+        if (CollectionUtils.isNotEmpty(batchAddList)) {
+            this.saveBatch(batchAddList);
+        }
+
+        //批量修改
+        if (CollectionUtils.isNotEmpty(batchUpdateList)) {
+            batchUpdateList.forEach(b->b.setEndDate(LocalDate.now()));
+            this.updateBatchById(batchUpdateList);
+        }
+
+
+    }
+
+    public List<CustomerSellerEntity> listByMainIdList(List<String> mainIdList) {
+        if (CollectionUtils.isEmpty(mainIdList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(CustomerSellerEntity::getMainId, mainIdList).list();
     }
 
 

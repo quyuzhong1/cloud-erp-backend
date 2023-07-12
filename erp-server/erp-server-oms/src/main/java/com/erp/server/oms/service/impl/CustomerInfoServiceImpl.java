@@ -226,8 +226,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //批量保存发票信息
             customerInvoiceService.saveBatchInvoice(id, invoiceList);
 
-            //批量销售员信息
-            customerSellerService.saveSeller(id, userDept);
 
             return id;
 
@@ -574,11 +572,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //批量修改发票信息
             customerInvoiceService.updateBatchInvoice(id, dto.getInvoiceList());
 
-            //当不相当的时候更信息
-            if (!dto.getSellerId().equals(oldSellerId)) {
-                SysDepartmentUserNumberDTO deptUser = sysUserFeign.getDeptByUserId(dto.getSellerId());
-                customerSellerService.saveSeller(id,deptUser);
-            }
             return id;
         }
 
@@ -670,6 +663,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 //审核通过发送金蝶
                 contactEntities.forEach(obj -> syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
             }
+            //批量保存销售员信息
+            customerSellerService.batchSellerHistory(list);
+
         }
         return Boolean.TRUE;
     }
