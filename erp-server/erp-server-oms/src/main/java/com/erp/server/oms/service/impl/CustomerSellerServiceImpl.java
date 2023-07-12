@@ -235,7 +235,7 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
         List<String> sellerIdList = list.stream().map(CustomerInfoEntity::getSellerId).collect(Collectors.toList());
         List<SysDepartmentUserNumberDTO> deptUserList = sysUserFeign.listDeptUserByUserIdList(sellerIdList);
         //主表信息
-        List<String> mainIdList = list.stream().map(CustomerInfoEntity::getSellerId).collect(Collectors.toList());
+        List<String> mainIdList = list.stream().map(CustomerInfoEntity::getId).collect(Collectors.toList());
         //数据库存在的
         List<CustomerSellerEntity> dbSellerList = this.listByMainIdList(mainIdList);
         List<CustomerSellerEntity> batchAddList = new ArrayList<>(10);
