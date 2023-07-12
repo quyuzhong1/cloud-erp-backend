@@ -17,7 +17,7 @@
         sod.sku_id,sod.sku_no,
         sod.qty,sod.amount,
         sod.currency,
-        sod.currency_symbol，
+        sod.currency_symbol,
         sod.tax_rate
         FROM so_info si
         LEFT JOIN so_detail sod
