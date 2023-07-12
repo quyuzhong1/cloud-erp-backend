@@ -198,7 +198,7 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
     private void updateKingdeeDetailId (JSONArray jsonArray) {
         //更新业务单据状态
         Map<String,Object> params = new HashMap<>(MathUtil.THREE);
-        params.put("code",ApiModuleTypeEnum.SUBCONTRACT_ORDER.getCode().toString());
+        params.put("code",ApiModuleTypeEnum.PURCHASE_ORDER.getCode().toString());
         params.put("details",jsonArray);
         scmTaskFeign.updateBusinessSyncKingdeeStatus(params);
     }
