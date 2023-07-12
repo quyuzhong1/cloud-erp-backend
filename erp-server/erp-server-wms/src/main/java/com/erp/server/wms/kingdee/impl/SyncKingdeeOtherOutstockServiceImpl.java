@@ -135,6 +135,16 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
                 //调出仓库
                 jsonObject.set("warehouseCode", warehouseCode);
             }
+            if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+                //库存组织编码
+                String inventoryOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInventoryOrgId()))
+                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+                jsonObject.set("inventoryOrgCode", inventoryOrgCode);
+                //收料组织编码
+                String receiveOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId()))
+                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+                jsonObject.set("receiveOrgCode", receiveOrgCode);
+            }
             //仓位
             jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
             //备注
