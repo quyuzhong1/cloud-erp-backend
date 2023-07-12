@@ -234,6 +234,7 @@ public class SoReturnInstockDTO {
         /**
          * 入库日期
          */
+        @NotNull(message = "入库日期不能为空")
         private LocalDate billDate;
         /**
          * 仓库id
@@ -267,6 +268,7 @@ public class SoReturnInstockDTO {
         /**
          * 入库日期
          */
+        @NotNull(message = "入库日期不能为空")
         private LocalDate billDate;
         /**
          * 仓库id
@@ -421,6 +423,10 @@ public class SoReturnInstockDTO {
          * 主表id
          */
         private String mainId;
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
         /**
          * 来源id
          */

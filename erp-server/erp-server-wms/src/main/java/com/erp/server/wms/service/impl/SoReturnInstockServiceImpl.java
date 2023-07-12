@@ -381,6 +381,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         viewDTO.setCustomerName(customerInfoEntity.getName());
+
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(viewDTO.getWarehouseId()));
+        WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(viewDTO.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+        if (ObjectUtils.isNotEmpty(updateDTO)) {
+            viewDTO.setInventoryOrgId(updateDTO.getOrgId());
+            viewDTO.setInventoryOrgName(updateDTO.getName());
+        }
         //退货单id
         List<SoReturnEntity> returnEntityList = soReturnFeign.listByIds(Arrays.asList(viewDTO.getSourceId()));
         //销售单id
@@ -733,6 +740,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             dto.setSourceId(id);
             List<SoReturnInstockDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnInstockDTO.GenerateSoReturnInstockView view : viewList) {
+                dto.setBillDate(view.getBillDate());
                 SoReturnInstockDetailDTO.Add detailAddDTO = new SoReturnInstockDetailDTO.Add();
                 detailAddDTO.setRealQty(view.getRealQty());
                 detailAddDTO.setReceiveQty(view.getReceiveQty());

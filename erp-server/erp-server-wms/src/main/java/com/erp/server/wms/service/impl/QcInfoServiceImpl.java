@@ -70,6 +70,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -1640,6 +1641,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             if (CollectionUtils.isNotEmpty(warehouseList)) {
                 view.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
             }
+            view.setBillDate(LocalDate.now());
         }
         return list;
     }
