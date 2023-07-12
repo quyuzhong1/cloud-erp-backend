@@ -47,9 +47,9 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         KingdeeApiUtils apiUtils = new KingdeeApiUtils("BD_Customer");
         LinkedList<String> queryFilters = new LinkedList<>();
         // queryFilters.add(String.format("FNumber = '%s'", "CUST23060900001"));
-        queryFilters.add(StrUtil.format("FNumber in ({})", "'CUST0257'"));
+        queryFilters.add(StrUtil.format("FNumber in ({})", "'CUST5188'"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FCUSTID,FName,FIsUsed,FForbidStatus";
+        String fieldKeys = "FCUSTID,FForbidStatus";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);
         System.out.println(queryList);
        /* JSONObject entries = apiUtils.customerGroupDelete("");*/
@@ -107,7 +107,7 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
         //查找到数据后，判断其审核状态
         String documentStatus = (String)model.get("DocumentStatus");
         String id = String.valueOf(model.get("Id")) ;
-        Boolean disabled = Boolean.valueOf(model.get("disabled").toString()) ;
+        String forbidStatus = String.valueOf(model.get("FForbidStatus")) ;
         Boolean flag = Boolean.FALSE;
 
         //操作项
@@ -139,11 +139,10 @@ public class KingdeeCustomerConsumer implements RocketMQListener<Map<String, Obj
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
-            if (disabled) {
-
+            if ((forbidStatus.equals("B") && Boolean.valueOf(map.get("disabled").toString()) == Boolean.FALSE) || (forbidStatus.equals("A") && Boolean.valueOf(map.get("disabled").toString()))) {
+                //启用、禁用
+                excuteOperation(apiUtils,platformEntity,map,type);
             }
-            //启用、禁用
-            excuteOperation(apiUtils,platformEntity,map,type);
         }
     }
 
