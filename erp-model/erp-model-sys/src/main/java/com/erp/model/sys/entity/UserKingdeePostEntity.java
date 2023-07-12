@@ -20,7 +20,7 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("user_kingdee_post")
+@TableName("kingdee_user_post")
 public class UserKingdeePostEntity extends BaseEntity<UserKingdeePostEntity> {
 
     /**

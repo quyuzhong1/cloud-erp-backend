@@ -20,7 +20,7 @@ import java.io.Serializable;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("dept_kingdee")
+@TableName("kingdee_dept")
 public class DeptKingdeeEntity extends BaseEntity<DeptKingdeeEntity> {
 
     /**
@@ -58,6 +58,12 @@ public class DeptKingdeeEntity extends BaseEntity<DeptKingdeeEntity> {
      */
     @TableField("use_org_name")
     private String useOrgName;
+
+    /**
+     * 组织id(对应自研系统核算公司id)
+     */
+    @TableField("use_org_id")
+    private String useOrgId;
 
 
     public static final String DEPT_ID = "dept_id";
