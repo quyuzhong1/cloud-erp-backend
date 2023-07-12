@@ -2,7 +2,9 @@ package com.erp.server.oms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SellerDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.CustomerSellerEntity;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 
 import java.util.List;
 
@@ -56,4 +58,21 @@ public interface CustomerSellerService extends SuperService<CustomerSellerEntity
      * @return void
      */
     void updateBatchSeller(String mainId, List<SellerDTO.ViewDTO> sellerList);
+
+
+    /**
+     * 添加销售员
+     * @param deptUser
+
+     */
+    void saveSeller(String mainId, SysDepartmentUserNumberDTO deptUser);
+
+    /**
+     * 审核通过后批量添加销售员历史信息
+     * @author yl
+     * @date 2023-07-12 18:01
+     * @param list
+     * @return void
+     */
+    void batchSellerHistory(List<CustomerInfoEntity> list);
 }

@@ -63,13 +63,6 @@ public class KingdeeBusinessOperatorImportExcelDTO implements Serializable {
     @FieldValid(fieldName = "业务组织名",isNotBlank = true,maxLength =50 )
     private String kingdeeOrgName;
 
-    /**
-     * 业务员岗位编码
-     */
-    @ColumnWidth(25)
-    @ExcelProperty(value = "业务员岗位编码", index = 11)
-    @FieldValid(fieldName = "业务员岗位编码",isNotBlank = true,maxLength =30 )
-    private String kingdeePostCode;
 
     /**
      * 业务员名称
@@ -86,6 +79,15 @@ public class KingdeeBusinessOperatorImportExcelDTO implements Serializable {
     @ExcelProperty(value = "业务员code", index = 13)
     @FieldValid(fieldName = "业务员code",isNotBlank = true,maxLength =30 )
     private String kingdeeUserCode;
+
+
+    /**
+     * 业务员岗位编码
+     */
+    @ColumnWidth(25)
+    @ExcelProperty(value = "业务员岗位编码", index = 14)
+    @FieldValid(fieldName = "业务员岗位编码",isNotBlank = true,maxLength =30 )
+    private String kingdeePostCode;
 
     /**
      * 是否禁用

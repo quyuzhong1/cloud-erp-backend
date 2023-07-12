@@ -369,6 +369,21 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
 
     }
 
+
+    /**
+     * 根据id 集合获取到所有部门信息
+     *
+     * @param deptIdList
+     * @return
+     */
+    @Override
+    public List<SysDepartmentEntity> listByIdList(List<String> deptIdList) {
+        if (CollectionUtils.isEmpty(deptIdList)) {
+            return Collections.emptyList();
+        }
+        return this.listByIds(deptIdList);
+    }
+
     @Override
     public List<SysUserDeptDTO> getByDeptNames(List<String> deptNames) {
         return this.baseMapper.getByDeptNames(deptNames);

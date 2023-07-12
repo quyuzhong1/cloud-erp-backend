@@ -47,7 +47,7 @@ public class CustomerInfoController extends BaseController {
      */
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:customer:paging",
             tableAlias = "ci"
     )
@@ -64,7 +64,7 @@ public class CustomerInfoController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:customer:paging",
             tableAlias = "ci"
     )
@@ -94,7 +94,7 @@ public class CustomerInfoController extends BaseController {
      */
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:customer:submit",
             serviceClass = CustomerInfoService.class,
             keyIdName = "ids"
@@ -125,7 +125,7 @@ public class CustomerInfoController extends BaseController {
      */
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:customer:view",
             serviceClass = CustomerInfoService.class,
             keyIdName = "id"
@@ -143,7 +143,7 @@ public class CustomerInfoController extends BaseController {
      */
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:customer:update",
             serviceClass = CustomerInfoService.class,
             keyIdName = "id"
@@ -161,7 +161,7 @@ public class CustomerInfoController extends BaseController {
      */
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:customer:update",
             serviceClass = CustomerInfoService.class,
             keyIdName = "id"
@@ -179,7 +179,7 @@ public class CustomerInfoController extends BaseController {
      */
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:customer:approve",
             serviceClass = CustomerInfoService.class,
             keyIdName = "ids"
@@ -194,7 +194,7 @@ public class CustomerInfoController extends BaseController {
      */
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:customer:disApprove",
             serviceClass = CustomerInfoService.class,
             keyIdName = "ids"
@@ -213,7 +213,7 @@ public class CustomerInfoController extends BaseController {
      */
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:customer:cancelProcess",
             serviceClass = CustomerInfoService.class,
             keyIdName = "ids")
@@ -231,7 +231,7 @@ public class CustomerInfoController extends BaseController {
      */
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "purchase_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:customer:delete",
             serviceClass = CustomerInfoService.class,
             keyIdName = "ids"
@@ -274,7 +274,7 @@ public class CustomerInfoController extends BaseController {
      */
     @PostMapping("/listEnable")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "create_user_id,seller_id",
             menuCode = "oms:customer:paging",
             tableAlias = "customer_info"
     )

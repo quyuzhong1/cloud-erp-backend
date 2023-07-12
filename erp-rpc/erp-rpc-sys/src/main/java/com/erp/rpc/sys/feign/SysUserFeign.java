@@ -155,6 +155,12 @@ public interface SysUserFeign {
     SysDepartmentDTO getUserDeptById(@RequestBody String deptId);
 
     /**
+     *  根据部门id查询部门
+     */
+    @PostMapping("feign/dept/listDepartByIds")
+    List<SysDepartmentEntity> listDeptByIds(@RequestBody List<String> deptIdList);
+
+    /**
      *  根据部门金蝶Code查询部门
      */
     @PostMapping("feign/user/getUserDeptByCode")

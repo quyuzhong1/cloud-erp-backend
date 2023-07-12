@@ -106,5 +106,12 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
      * @throws IOException
      */
     void importDeptKingdee(MultipartFile file) throws IOException;
+
+    /**
+     * 根据id 集合获取到所有部门信息
+     * @param deptIdList
+     * @return
+     */
+    List<SysDepartmentEntity> listByIdList(List<String> deptIdList);
 }
 

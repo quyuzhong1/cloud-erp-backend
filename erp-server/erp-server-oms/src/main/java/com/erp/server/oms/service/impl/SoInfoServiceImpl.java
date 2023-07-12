@@ -1703,7 +1703,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isEmpty(addressIds)) {
             return 0;
         }
-        return this.lambdaQuery().in(SoInfoEntity::getReceiveAddressId).count();
+        return this.lambdaQuery().in(SoInfoEntity::getReceiveAddressId,addressIds).count();
     }
 
 

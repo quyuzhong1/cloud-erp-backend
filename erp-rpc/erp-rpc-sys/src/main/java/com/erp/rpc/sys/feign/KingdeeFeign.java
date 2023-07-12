@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 @FeignClient(name = "erp-sys", contextId = "kingdee")
 public interface KingdeeFeign {
 
-    @PostMapping("/feign/kingdee/getInfo")
+    @PostMapping("/feign/kingdee/getDeptInfo")
     DeptKingdeeEntity getDeptKingdee(@RequestBody DeptKingdeeDTO.FindDeptKingdeeDTO dto);
 
 

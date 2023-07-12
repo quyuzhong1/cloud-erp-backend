@@ -161,9 +161,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         //检查默认发票 银行账号
         List<InvoiceDTO.AddDTO> invoiceList = dto.getInvoiceList();
         customerInvoiceService.checkIsDefault(invoiceList);
-        //销售员信息
-        List<SellerDTO.AddDTO> sellerList = dto.getSellerList();
-        customerSellerService.checkDate(sellerList);
+
 
         //id
         String id = IdWorker.getIdStr();
@@ -188,6 +186,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         //生成单号
         String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CUST, BusinessNoTypeEnum.CODE_CUST.getCode()));
         addEntity.setCode(code);
+        //销售员
+        String sellerId = dto.getSellerId();
+        SysDepartmentUserNumberDTO userDept = sysUserFeign.getDeptByUserId(sellerId);
+        addEntity.setSellerName(userDept.getUserName());
         //对应组织
         String innerOrgId = dto.getInnerOrgId();
 
@@ -225,8 +227,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             //批量保存发票信息
             customerInvoiceService.saveBatchInvoice(id, invoiceList);
 
-            //批量销售员信息
-            customerSellerService.saveBatchSeller(id, sellerList);
 
             return id;
 
@@ -458,6 +458,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<CustomerContactDTO.ViewDTO> contactList = customerContactService.listByMainId(id);
         view.setContactList(contactList);
 
+
         //地址信息
         List<CustomerAddressDTO.ViewDTO> addressList = customerAddressService.listByMainId(id);
         view.setAddressList(addressList);
@@ -509,17 +510,14 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<InvoiceDTO.AddDTO> invoiceAddList = BeanMapper.copyList(invoiceList, InvoiceDTO.AddDTO.class);
         customerInvoiceService.checkIsDefault(invoiceAddList);
 
-        //销售员信息
-        List<SellerDTO.ViewDTO> sellerList = dto.getSellerList();
-        List<SellerDTO.AddDTO> sellerAddList = BeanMapper.copyList(sellerList, SellerDTO.AddDTO.class);
-        customerSellerService.checkDate(sellerAddList);
-
         String code = customer.getCode();
 
         //旧的
         CustomerInfoEntity old = new CustomerInfoEntity();
-        BeanMapper.copy(customer, old);
 
+        BeanMapper.copy(customer, old);
+        //旧销售员
+        String oldSellerId = old.getSellerId();
         BeanMapper.copy(dto, customer);
 
         //分组id
@@ -574,9 +572,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
             //批量修改发票信息
             customerInvoiceService.updateBatchInvoice(id, dto.getInvoiceList());
-
-            //批量修改销售员信息
-            customerSellerService.updateBatchSeller(id, dto.getSellerList());
 
             return id;
         }
@@ -669,6 +664,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 //审核通过发送金蝶
                 contactEntities.forEach(obj -> syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
             }
+            //批量保存销售员信息
+            customerSellerService.batchSellerHistory(list);
+
         }
         return Boolean.TRUE;
     }

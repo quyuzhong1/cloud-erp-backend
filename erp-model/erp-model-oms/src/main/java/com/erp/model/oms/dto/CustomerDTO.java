@@ -303,6 +303,9 @@ public class CustomerDTO implements Serializable {
         @NotBlank(message = "收款条件不能为空")
         private String conditionDict;
 
+        @NotBlank(message = "销售员不能为空")
+        private String sellerId;
+
         /**
          * 附件名集合
          */
@@ -333,11 +336,7 @@ public class CustomerDTO implements Serializable {
         @Valid
         private List<InvoiceDTO.AddDTO> invoiceList;
 
-        /**
-         * 销售员信息
-         */
-        @Valid
-        private List<SellerDTO.AddDTO> sellerList;
+
 
     }
 
@@ -436,6 +435,11 @@ public class CustomerDTO implements Serializable {
          * 客户简称
          */
         private String shortName;
+
+        /**
+         * 销售员id
+         */
+        private String sellerId;
 
         /**
          * 付款方
@@ -594,6 +598,8 @@ public class CustomerDTO implements Serializable {
          */
         private String shortName;
 
+        @NotBlank(message = "销售员不能为空")
+        private String sellerId;
         /**
          * 付款方
          */
