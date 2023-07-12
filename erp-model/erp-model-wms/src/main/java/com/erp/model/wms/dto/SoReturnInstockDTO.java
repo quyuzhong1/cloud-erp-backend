@@ -404,6 +404,14 @@ public class SoReturnInstockDTO {
          */
         private LocalDateTime approveTime;
         /**
+         * 创建人
+         */
+        private String createUserName;
+        /**
+         * 创建时间
+         */
+        private String createTime;
+        /**
          * 明细信息
          */
         private List<SoReturnInstockDetailDTO.View> detailList;
