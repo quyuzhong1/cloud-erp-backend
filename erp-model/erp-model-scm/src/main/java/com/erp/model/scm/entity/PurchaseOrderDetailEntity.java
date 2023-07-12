@@ -166,6 +166,12 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
     private String warehouseLocation;
 
     /**
+     * 金蝶详情Id
+     */
+    @TableField("Kingdee_detail_id")
+    private String KingdeeDetailId;
+
+    /**
      * 委外到货状态
      */
     @TableField(exist = false)

@@ -395,6 +395,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
             customerName = customerInfo.getName();
         }
+        List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(Arrays.asList(soInfo.getId()));
+
+        List<ProcessTaskManagementEntity> collect = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(soInfo.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE)).collect(Collectors.toList());
+        List<String> curApproveName = collect.stream().map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
+        String userName = StringUtils.join(curApproveName, ",");
+        view.setApproveUserName(userName);
+        if (CollectionUtils.isNotEmpty(collect)) {
+            view.setApproveTime(collect.get(MathUtil.ZERO).getApproveTime());
+        }
         view.setCustomerName(customerName);
         String warehouseId = view.getWarehouseId();
         BillApproveStatusEnum approveStatus = view.getApproveStatus();

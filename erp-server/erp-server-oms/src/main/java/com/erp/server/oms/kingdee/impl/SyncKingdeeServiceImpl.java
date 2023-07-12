@@ -29,9 +29,6 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     private SoChangeService soChangeService;
 
     @Resource
-    private SoReturnService soReturnService;
-
-    @Resource
     private CustomerContactService customerContactService;
 
     @Override
@@ -52,10 +49,6 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //客户分组
         if (ApiModuleTypeEnum.CUSTOMER_GROUP.getCode().toString().equals(code)) {
             customerGroupService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
-        }
-        //销售退货
-        if (ApiModuleTypeEnum.SO_RETURN.getCode().toString().equals(code)) {
-            soReturnService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId, null);
         }
         //销售订单
         if (ApiModuleTypeEnum.SO_INFO.getCode().toString().equals(code)) {
