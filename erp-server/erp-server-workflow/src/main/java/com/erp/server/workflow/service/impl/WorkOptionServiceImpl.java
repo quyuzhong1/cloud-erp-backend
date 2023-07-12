@@ -41,6 +41,7 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.wms.feign.SupplierFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.workflow.mapper.WorkOptionMapper;
 import com.erp.server.workflow.service.*;
@@ -105,6 +106,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     @Resource
     private CustomerFeign customerFeign;
+
+    @Resource
+    private SupplierFeign supplierFeign;
 
     @Resource
     private ProcessManagementService processManagementService;
@@ -601,6 +605,12 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 break;
             case PURCHASE_PRICE:
                 scmTaskFeign.purchasePriceApprove(baseApproveParamDTO);
+                break;
+            case SUPPLIER:
+                supplierFeign.supplierApprove(baseApproveParamDTO);
+                break;
+            case SUBCONTRACT_ORDER:
+                scmTaskFeign.subcontractOrderApprove(baseApproveParamDTO);
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);

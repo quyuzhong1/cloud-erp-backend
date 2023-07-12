@@ -1,5 +1,6 @@
 package com.erp.server.scm.controller.feign;
 
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.core.controller.BaseController;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.server.scm.service.SupplierService;
@@ -34,5 +35,16 @@ public class SupplierFeignController extends BaseController {
         return supplierService.getSupplierSimpleInfo(ids);
     }
 
+    /**
+     * 审核 供应商
+     * @Author Luo_WG
+     * @Date 2023/7/12 12:31
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/supplierApprove")
+    public Boolean supplierApprove(@RequestBody BaseApproveParamDTO dto) {
+        return supplierService.approve(dto);
+    }
 
 }
