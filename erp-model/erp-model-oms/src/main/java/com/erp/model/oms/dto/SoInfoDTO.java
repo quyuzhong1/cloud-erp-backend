@@ -7,6 +7,7 @@ import com.common.core.anno.StateEnumValue;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.TradeTermEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -229,11 +230,6 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal price;
 
         /**
-         * 含税销售单价
-         */
-        private BigDecimal taxPrice;
-
-        /**
          * 税率
          */
         private BigDecimal taxRate;
@@ -434,6 +430,13 @@ public class SoInfoDTO implements Serializable {
          */
         @PositiveOrZero(message = "运费不能为负数", groups = {AddGroup.class})
         private BigDecimal shippingFee;
+
+        /**
+         * 报关费
+         */
+        @PositiveOrZero(message = "报关费不能为负数", groups = {AddGroup.class})
+        private BigDecimal customsFee;
+
 
         /**
          * 客户id
@@ -964,6 +967,12 @@ public class SoInfoDTO implements Serializable {
          */
         @PositiveOrZero(message = "银行手续费不能为负数", groups = {AddGroup.class})
         private BigDecimal shippingFee;
+
+        /**
+         * 报关费
+         */
+        @PositiveOrZero(message = "报关费不能为负数", groups = {AddGroup.class})
+        private BigDecimal customsFee;
 
         /**
          * 客户id
@@ -1596,4 +1605,27 @@ public class SoInfoDTO implements Serializable {
          */
         private String remark;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PagingTotalDTO {
+
+        /**
+         * 合计数量
+         */
+        private Integer totalQty;
+
+        /**
+         * 合计金额
+         */
+        private BigDecimal totalAmount;
+
+        /**
+         * 合计含税金额
+         */
+        private BigDecimal totalTaxAmount;
+
+    }
+
 }

@@ -68,7 +68,14 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     SoInfoDTO.ViewDTO view(String id);
 
     PagingVO<SoInfoDTO.PagingViewDTO> paging(PagingDTO<SoInfoDTO.PagingParamDTO> dto);
-
+    /**
+     * @description: 列表查询总数
+     * @author Will
+     * @date: 2023/7/12 16:05
+     * @param dto
+     * @return PagingTotalDTO
+     */
+    SoInfoDTO.PagingTotalDTO pagingTotal(SoInfoDTO.PagingParamDTO dto);
 
     /**
      * 暂存数据
@@ -306,4 +313,5 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @param id
      */
     void brushCostData(String id);
+
 }

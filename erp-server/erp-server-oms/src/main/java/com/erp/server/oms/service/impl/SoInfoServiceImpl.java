@@ -601,16 +601,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             BigDecimal taxRate = item.getTaxRate();
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
 
-            //销售单价
-            BigDecimal price=item.getPrice();
-            //含税单价=销售单价*（税率+1）
-            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            //含税单价
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
-            item.setTaxPrice(taxPrice);
-            BigDecimal taxAmount = MathUtil.multiply(taxPrice, qty);
-            item.setTaxAmount(taxAmount);
-
             if (contains) {
                 item.setCode("");
                 item.setOrderTypeName("");
@@ -627,6 +617,23 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             flagList.add(item.getId());
         }
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public SoInfoDTO.PagingTotalDTO pagingTotal(SoInfoDTO.PagingParamDTO dto) {
+
+        List<String> paramDetailIds = soDetailService.listParamDetailIdsBySearchType(dto.getSearchType());
+
+        if (Objects.isNull(paramDetailIds)) {
+            paramDetailIds = Collections.emptyList();
+        } else {
+            if (paramDetailIds.size() == 0) {
+                SoInfoDTO.PagingTotalDTO pagingTotalDTO = new SoInfoDTO.PagingTotalDTO(MathUtil.ZERO,BigDecimal.ZERO,BigDecimal.ZERO);
+                return pagingTotalDTO;
+            }
+        }
+        SoInfoDTO.PagingTotalDTO pagingTotalDTO = baseMapper.pagingTotal(dto, paramDetailIds);
+        return pagingTotalDTO;
     }
 
     /**
