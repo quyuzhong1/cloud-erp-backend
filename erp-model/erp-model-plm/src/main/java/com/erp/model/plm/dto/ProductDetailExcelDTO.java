@@ -457,6 +457,11 @@ public class ProductDetailExcelDTO {
     private String boxQty;
 
     /**
+     * 错误信息
+     */
+    private String errorMsg;
+
+    /**
      * 产品类别id
      */
     private String categoryId;
