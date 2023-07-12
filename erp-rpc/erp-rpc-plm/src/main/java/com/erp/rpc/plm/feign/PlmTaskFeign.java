@@ -261,4 +261,12 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/bom/listBomByParentSkuNos")
     List<BomInfoEntity> listBomByParentSkuNos(List<String> skuNos);
+
+
+    /**
+     * 获取不参与库存操作的sku
+     * @return
+     */
+    @PostMapping("/feign/product/getNoInventorySku")
+    List<SkuVO> getNoInventorySku( );
 }

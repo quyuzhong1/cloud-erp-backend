@@ -45,9 +45,9 @@ public class InventoryHisServiceImpl extends SuperServiceImpl<InventoryHisMapper
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public int updateQtyById(String id, Integer qty, Integer version) {
+    public int updateQtyById(String id, Integer qty) {
         LoginUser loginUser =  commonService.getUserInfo();
-        return inventoryHisMapper.updateQtyById(id, qty, version, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
+        return inventoryHisMapper.updateQtyById(id, qty, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -63,7 +63,7 @@ public class InventoryHisServiceImpl extends SuperServiceImpl<InventoryHisMapper
             boolean save = super.save(inventoryHis);
             ValidatorUtil.isTrue(save, ()->new ServiceException("库存数据保存失败"));
         } else {
-            int updateCnt = this.updateQtyById(inventoryHis.getId(), qty, inventoryHis.getVersion());
+            int updateCnt = this.updateQtyById(inventoryHis.getId(), qty);
             if(updateCnt != 1) {
                 throw new ServiceException(ApiError.ERROR_1027);
             }

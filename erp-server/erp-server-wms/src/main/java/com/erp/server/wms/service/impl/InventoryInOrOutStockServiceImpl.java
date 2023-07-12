@@ -88,6 +88,7 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
     @Transactional(rollbackFor = Exception.class)
     @Override
     public <T extends InventoryStockBaseDTO> void stockHandler(List<T> paramLis, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams, String transactionNo) {
+
         for(InventoryStockBaseDTO baseParam : paramLis) {
             InOutStockDTO param = (InOutStockDTO)baseParam;
             if(Objects.nonNull(param.getWarehouseLocation())) {
@@ -104,16 +105,18 @@ public class InventoryInOrOutStockServiceImpl extends AbstractInventoryServiceIm
         if(CollUtil.isEmpty(transactionRuleParams)) {
             throw new ServiceException(ApiError.ERROR_99034.code, StrUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
         }
-        log.info("从配置读取库存交易规则，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】,交易配置信息：【{}】", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getBillDate(), param.getSkuNo(), JSONObject.toJSONString(transactionRuleParams));
+        log.warn("从配置读取库存交易规则，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】,交易配置信息：【{}】", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getBillDate(), param.getSkuNo(), JSONObject.toJSONString(transactionRuleParams));
         for(TransactionRuleDTO transactionRule : transactionRuleParams) {
             InventoryUtils.checkTransRule(transactionRule);
             // 可能某个业务类型在同一个仓库即需要做入也需要做出，分别调用逻辑
             InOutStockCoreDTO inOutStockCoreDTO = InventoryUtils.wrapCoreParam(param, InventoryOperationModeEnum.APPROVE);
             InventoryModeEnum inventoryModeEnum = transactionRule.getTransactionMode();
             InventoryStatusEnum inventoryStatusEnum = transactionRule.getInventoryStatus();
-            if(Objects.equals(InventoryModeEnum.IN_STOCK, inventoryModeEnum)) { // 入库
+            // 入库
+            if(Objects.equals(InventoryModeEnum.IN_STOCK, inventoryModeEnum)) {
                 this.inStockCore(inOutStockCoreDTO, businessType, inventoryStatusEnum, transactionRule.getId(), transactionNo);
-            } else if (Objects.equals(InventoryModeEnum.OUT_STOCK, inventoryModeEnum)) { // 出库
+            } else if (Objects.equals(InventoryModeEnum.OUT_STOCK, inventoryModeEnum)) {
+                // 出库
                 this.outStockCore(inOutStockCoreDTO, businessType, inventoryStatusEnum,  transactionRule.getId(), transactionNo);
             }
         }
