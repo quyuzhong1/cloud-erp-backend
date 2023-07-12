@@ -6,8 +6,8 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.ThirdPartySystemEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
@@ -62,8 +62,8 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
 
     @Override
     public void syncDataToKingdee(TransferInfoEntity entity, String operate) {
-        //第三方拉取数据无推送
-        if (SourceTypeEnum.STK_TRANSFERDIRECT.getCode().equals(entity.getSourceType())) {
+        //第三方马帮拉取数据无推送
+        if (ThirdPartySystemEnum.ENUM_MB.getCode().equals(entity.getThirdPartySystem())) {
             return;
         }
         Map<String, Object> resultMap = new HashMap<>();
