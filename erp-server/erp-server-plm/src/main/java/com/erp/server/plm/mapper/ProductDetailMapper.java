@@ -130,6 +130,12 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @return java.lang.Boolean
      **/
     Boolean updateFiledBatch(@Param("ids") List<String> ids, @Param("tableName") String tableName, @Param("filedName") String filedName, @Param("values") Object values, @Param("keyName") String keyName);
+
+    /**
+     * 获取不参与库存操作的sku
+     * @return
+     */
+    List<SkuVO> getNoInventorySku();
 }
 
 

@@ -45,9 +45,9 @@ public class InventoryHisServiceImpl extends SuperServiceImpl<InventoryHisMapper
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public int updateQtyById(String id, Integer afterQty) {
+    public int updateQtyById(String id, Integer qty) {
         LoginUser loginUser =  commonService.getUserInfo();
-        return inventoryHisMapper.updateQtyById(id, afterQty, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
+        return inventoryHisMapper.updateQtyById(id, qty, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
     }
 
     @Transactional(rollbackFor = Exception.class)

@@ -539,4 +539,11 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      **/
     ProductNoSpecDetailAllDTO getNoSpecDetailBySkuId(String skuId);
 
+
+    /**
+     * 获取不参与库存操作的sku
+     * @return
+     */
+    List<SkuVO> getNoInventorySku();
+
 }

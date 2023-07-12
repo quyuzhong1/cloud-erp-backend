@@ -533,6 +533,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return productNoSpecDetailAllDTO;
     }
 
+    @Override
+    public List<SkuVO> getNoInventorySku() {
+        return this.baseMapper.getNoInventorySku();
+    }
+
     /**
      * @param productId:产品信息表id
      * @return java.util.List<com.erp.model.plm.dto.ProductManyDetailDTO>

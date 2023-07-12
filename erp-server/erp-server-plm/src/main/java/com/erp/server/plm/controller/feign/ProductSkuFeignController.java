@@ -241,4 +241,15 @@ public class ProductSkuFeignController {
         }
         return productDetailService.updateOccupyStatus(skuIds);
     }
+
+
+    /**
+     * 获取不参与库存操作的sku
+     * @return
+     */
+    @PostMapping("/getNoInventorySku")
+    public List<SkuVO> getNoInventorySku( ) {
+        return productDetailService.getNoInventorySku();
+    }
+
 }

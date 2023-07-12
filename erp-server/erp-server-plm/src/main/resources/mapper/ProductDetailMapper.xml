@@ -751,6 +751,11 @@
             sync_kingdee_id
         FROM product_detail
     </select>
+    <select id="getNoInventorySku" resultType="com.erp.model.plm.vo.SkuVO">
+        select pd.id as sku_id,pd.sku_no from product_info pi
+        inner join product_detail pd on pd.product_id = pi.id
+        where pi.property in('费用', '服务') and pi.is_deleted = false and pd.is_deleted = false
+    </select>
 
     <update id="updateFiledBatch" >
         UPDATE ${tableName} SET

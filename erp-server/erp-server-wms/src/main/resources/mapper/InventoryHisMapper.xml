@@ -6,7 +6,7 @@
 
     <update id="updateQtyById">
         update inventory_his
-        set qty = #{qty}, version = version + 1,
+        set qty = qty + #{qty}, version = version + 1,
         update_time = #{updateTime}, update_user_id = #{updateUserId}, update_user_name = #{updateUserName}
         where id = #{id} and is_deleted = false
     </update>
