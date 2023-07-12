@@ -10,11 +10,13 @@ import com.common.business.enums.SyncKingdeeStatusEnum;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.DeptKingdeeEntity;
 import com.erp.model.wms.entity.OtherOutstockDetailEntity;
 import com.erp.model.wms.entity.OtherOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeOtherOutstockService;
 import com.erp.server.wms.service.OtherOutstockDetailService;
@@ -51,6 +53,9 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
 
     @Resource
     private WarehouseService warehouseService;
+
+    @Resource
+    private KingdeeFeign kingdeeFeign;
 
 
     @Override
@@ -105,9 +110,12 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
 
         //部门
         if  (StringUtils.isNotBlank(entity.getDeptId())) {
-            SysDepartmentDTO sysDepartmentDTO = sysUserFeign.getUserDeptById(entity.getDeptId());
-            if (ObjectUtils.isNotEmpty(sysDepartmentDTO)) {
-                resultMap.put("deptCode", sysDepartmentDTO.getCode());
+            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+            dto.setDeptId(entity.getDeptId());
+            dto.setOrgId(entity.getReceiveOrgId());
+            DeptKingdeeEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
+            if (ObjectUtils.isNotEmpty(deptKingdee)) {
+                resultMap.put("deptCode", deptKingdee.getKingdeeDeptCode());
             }
         }
 
