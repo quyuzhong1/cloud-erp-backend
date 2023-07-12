@@ -54,6 +54,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,6 +72,7 @@ import java.util.stream.Collectors;
  * @author will
  * @since 2023-05-10
  */
+@RefreshScope
 @Slf4j
 @Service
 public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper, TransferInfoEntity> implements TransferInfoService {
@@ -110,6 +113,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Autowired
     private SyncMabangTransferService syncMabangTransferService;
 
+    @Value("${transfer-sync-to-mb: true}")
+    private Boolean transferSyncToMb;
 
 
     @Override
@@ -412,13 +417,16 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //发送金蝶
             list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
             //发送马帮（非马帮平台的才需要推送）
-            list.forEach(obj->{
-                // 直接调拨单发送马帮出入库
-                if(Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_KINGDEE.getCode())) {
-                    log.info("审核直接调拨单【{}】是非马帮平台的，需要同步到马帮平台出入库，直接调拨单参数：{}", obj.getCode(), JSONObject.toJSONString(obj));
-                    syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
-                }
-            });
+            // TODO 正式上线时需注释掉
+            if(Objects.equals(transferSyncToMb, Boolean.TRUE)) {
+                list.forEach(obj->{
+                    // 直接调拨单发送马帮出入库
+                    if(Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_KINGDEE.getCode())) {
+                        log.info("审核直接调拨单【{}】是非马帮平台的，需要同步到马帮平台出入库，直接调拨单参数：{}", obj.getCode(), JSONObject.toJSONString(obj));
+                        syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
+                    }
+                });
+            }
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("直接调拨单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
             //中止当前审核流程
