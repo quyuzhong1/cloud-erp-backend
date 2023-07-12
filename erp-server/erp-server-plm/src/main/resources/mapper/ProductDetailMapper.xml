@@ -438,7 +438,7 @@
         pi.function_desc,
         pi.usage_desc,
         to_char(pd.plan_listing_time, 'YYYY/MM/dd') AS planListingTime ,
-        CASE WHEN ps.pirate_risk = 1 THEN '是' ELSE '否' END pirateRisk,
+        CASE WHEN pi.pirate_risk = 1 THEN '是' ELSE '否' END pirateRisk,
         pd.unit_name,
         pi.materials,
         pc.project_approval_cost,

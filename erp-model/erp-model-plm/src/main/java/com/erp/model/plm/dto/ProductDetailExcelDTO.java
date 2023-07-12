@@ -196,31 +196,31 @@ public class ProductDetailExcelDTO {
     /**
      * MOQ(最小起订量)
      */
-    @FieldValid(fieldName = "MOQ(最小起订量)",formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
+    @FieldValid(fieldName = "MOQ(最小起订量)",formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String moq;
 
     /**
      * 试产数量
      */
-    @FieldValid(fieldName = "试产数量",formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "试产数量",formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String trialProductionQty;
 
     /**
      * 首批量产数量
      */
-    @FieldValid(fieldName = "首批量产数量",formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
+    @FieldValid(fieldName = "首批量产数量",formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String firstMassQty;
 
     /**
      * 计划首批下单量
      */
-    @FieldValid(fieldName = "计划首批下单量",formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
+    @FieldValid(fieldName = "计划首批下单量",formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String planOrderQty;
 
     /**
      * 实际首批到货量
      */
-    @FieldValid(fieldName = "实际首批到货量",formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
+    @FieldValid(fieldName = "实际首批到货量",formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String actualArrivalQty;
 
     /**
@@ -244,7 +244,7 @@ public class ProductDetailExcelDTO {
     /**
      * 交货周期(天)
      */
-    @FieldValid(fieldName = "交货周期(天)",formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
+    @FieldValid(fieldName = "交货周期(天)",formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String deliveryCycle;
 
     /**
@@ -271,7 +271,7 @@ public class ProductDetailExcelDTO {
     /**
      * 年目标销量
      */
-    @FieldValid(fieldName = "年目标销售量", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
+    @FieldValid(fieldName = "年目标销售量", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String yearSaleQty;
 
     /**
@@ -283,7 +283,7 @@ public class ProductDetailExcelDTO {
     /**
      * 目标月销售量
      */
-    @FieldValid(fieldName = "目标月销售量", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
+    @FieldValid(fieldName = "目标月销售量", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String monthSaleQty;
 
     /**
@@ -295,7 +295,7 @@ public class ProductDetailExcelDTO {
     /**
      * 首季度目标销量
      */
-    @FieldValid(fieldName = "首季度目标销量", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
+    @FieldValid(fieldName = "首季度目标销量", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
     private String targetSalesQty;
 
     /**
@@ -429,7 +429,7 @@ public class ProductDetailExcelDTO {
     /**
      * 箱规(高)
      */
-    @FieldValid(fieldName = "箱规(高)",formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "箱规(高)")
     private String boxSizeHigh;
 
     /**

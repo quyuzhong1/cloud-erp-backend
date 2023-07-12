@@ -1904,7 +1904,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
             // 销售平台
             if (StrUtils.isNotEmpty(req.getSalesPlatform())) {
-                req.setSalesPlatform(SalesPlatformEnum.getByCode(req.getSalesPlatform()).getName());
+                req.setSalesPlatform(ProductSalesPlatformEnum.getByCode(req.getSalesPlatform()).getName());
             }
 
             // 一级供应商名称
