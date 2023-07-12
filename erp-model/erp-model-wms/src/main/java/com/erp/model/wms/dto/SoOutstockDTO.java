@@ -176,6 +176,11 @@ public class SoOutstockDTO implements Serializable {
          */
         private LocalDate packDate;
 
+        /**
+         * 运输单号
+         */
+        private String trackNo;
+
 
         /**
          * sku id
@@ -805,6 +810,22 @@ public class SoOutstockDTO implements Serializable {
         @Size(min = 1, message = "销售出库详情不能为空")
         private List<SoOutstockDetailDTO.UpdateDTO> detailList;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingUpdateDTO {
+
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 运输单号
+         */
+        private String trackNo;
     }
 
     @Data
