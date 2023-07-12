@@ -82,6 +82,11 @@ public class TransferInfoDetailDTO implements Serializable {
         private String productName;
 
         /**
+         * spu编号
+         */
+        private String spuNo;
+
+        /**
          * 单位
          */
         private String unit;
@@ -91,6 +96,15 @@ public class TransferInfoDetailDTO implements Serializable {
          */
         private Integer curInventoryQty;
 
+        /**
+         * 调出仓位
+         */
+        private String outWarehouseLocation;
+
+        /**
+         * 调入仓位
+         */
+        private String inWarehouseLocation;
     }
 
 }

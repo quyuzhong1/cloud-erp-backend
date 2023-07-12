@@ -315,12 +315,15 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         for (TransferInfoDetailDTO.ViewDTO viewDetailDTO : viewDetailList) {
             //产品名称
             if (CollectionUtils.isNotEmpty(skuList)) {
-                String productName = skuList.stream().filter(e -> e.getSkuId().equals(viewDetailDTO.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
-                viewDetailDTO.setProductName(productName);
+                SkuVO skuVO = skuList.stream().filter(e -> e.getSkuId().equals(viewDetailDTO.getSkuId())).findFirst().orElse(new SkuVO());
+                viewDetailDTO.setProductName(skuVO.getSkuName());
+                viewDetailDTO.setSpuNo(skuVO.getSpuNo());
             }
             //根据组织、仓库、sku查询可用库存
             Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDTO.getOutWarehouseId(), viewDetailDTO.getSkuId());
             viewDetailDTO.setCurInventoryQty(curInventoryQty);
+            viewDetailDTO.setInWarehouseLocation(viewDetailDTO.getInWarehouseLocation());
+            viewDetailDTO.setOutWarehouseLocation(viewDetailDTO.getOutWarehouseLocation());
         }
         viewDTO.setDetailList(viewDetailList);
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
