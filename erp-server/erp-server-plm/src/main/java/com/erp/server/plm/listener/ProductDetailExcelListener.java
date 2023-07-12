@@ -289,17 +289,15 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productInfoDTO.setNameEn(dto.getNameEn());
         //sku信息
         BeanMapper.copy(dto, productSkuBaseInfoDTO);
-        if (StringUtils.isNotBlank(dto.getPlanListingTimeStr())) {
-            productSkuBaseInfoDTO.setPlanListingTime(LocalDate.parse(dto.getPlanListingTimeStr(), dateTimeFormatter));
+        if (StringUtils.isNotBlank(dto.getPlanListingTime())) {
+            productSkuBaseInfoDTO.setPlanListingTime(LocalDate.parse(dto.getPlanListingTime(), dateTimeFormatter));
         }
         productSkuBaseInfoDTO.setProductState(2);
         productSkuBaseInfoDTO.setProductId("");
         productSkuBaseInfoDTO.setUnitId(productUnitEntity.getId());
         productSkuBaseInfoDTO.setUnitName(productUnitEntity.getName());
         productSkuBaseInfoDTO.setProductState(ProductDetailStateEnum.getCodeByName(productState));
-        if (StringUtils.isNotBlank(dto.getFirstMassProductDateStr())) {
-            productSkuBaseInfoDTO.setFirstMassProductDate(LocalDate.parse(dto.getFirstMassProductDateStr(), dateTimeFormatter));
-        }
+
         //spu/sku基础信息
         ProductBaseInfoDTO productBaseInfoDTO = new ProductBaseInfoDTO();
         productBaseInfoDTO.setProductSpuBaseInfoDTO(productInfoDTO);
@@ -314,19 +312,19 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         //采购信息信息
         ProductPurchaseDTO productPurchaseDTO = new ProductPurchaseDTO();
         productPurchaseDTO.setEan(dto.getEan());
-        productPurchaseDTO.setPlanOrderQty(MathUtil.valueOfLong(dto.getPlanOrderQtyStr()));
+        productPurchaseDTO.setPlanOrderQty(MathUtil.valueOfLong(dto.getPlanOrderQty()));
 
-        if (StringUtils.isNotBlank(dto.getPlaceOrderTimeStr())) {
-            productPurchaseDTO.setPlaceOrderTime(LocalDate.parse(dto.getPlaceOrderTimeStr(), dateTimeFormatter));
+        if (StringUtils.isNotBlank(dto.getPlaceOrderTime())) {
+            productPurchaseDTO.setPlaceOrderTime(LocalDate.parse(dto.getPlaceOrderTime(), dateTimeFormatter));
         }
-        if (StringUtils.isNotBlank(dto.getPlanArrivalTimeStr())) {
-            productPurchaseDTO.setPlanArrivalTime(LocalDate.parse(dto.getPlanArrivalTimeStr(), dateTimeFormatter));
+        if (StringUtils.isNotBlank(dto.getPlanArrivalTime())) {
+            productPurchaseDTO.setPlanArrivalTime(LocalDate.parse(dto.getPlanArrivalTime(), dateTimeFormatter));
         }
 
-        productPurchaseDTO.setMoq(MathUtil.valueOfInteger(dto.getMoqStr()));
-        productPurchaseDTO.setDeliveryCycle(MathUtil.valueOf(dto.getDeliveryCycleStr()));
-        if (StringUtils.isNotBlank(dto.getActualArrivalTimeStr())) {
-            productPurchaseDTO.setActualArrivalTime(LocalDate.parse(dto.getActualArrivalTimeStr(), dateTimeFormatter));
+        productPurchaseDTO.setMoq(MathUtil.valueOfInteger(dto.getMoq()));
+        productPurchaseDTO.setDeliveryCycle(MathUtil.valueOf(dto.getDeliveryCycle()));
+        if (StringUtils.isNotBlank(dto.getActualArrivalTime())) {
+            productPurchaseDTO.setActualArrivalTime(LocalDate.parse(dto.getActualArrivalTime(), dateTimeFormatter));
         }
 
         productPurchaseDTO.setArrivalState(purchaseState);
@@ -335,21 +333,17 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         }
         productPurchaseDTO.setMainSupplier(dto.getMainSupplier());
         productPurchaseDTO.setSecondSupplier(dto.getSecondSupplier());
-        productPurchaseDTO.setActualArrivalQty(MathUtil.valueOfLong(dto.getActualArrivalQtyStr()));
+        productPurchaseDTO.setActualArrivalQty(MathUtil.valueOfLong(dto.getActualArrivalQty()));
         productNoSpecDTO.setProductPurchaseDTO(productPurchaseDTO);
 
         //产品销售信息
         ProductSaleDTO productSaleDTO = new ProductSaleDTO();
-        productSaleDTO.setYearSaleQty(MathUtil.valueOfLong(dto.getYearSaleQtyStr()));
-        productSaleDTO.setYearSaleAmount(MathUtil.valueOf(dto.getYearSaleAmountStr()));
-        productSaleDTO.setMonthSaleQty(MathUtil.valueOfLong(dto.getMonthSaleQtyStr()));
-        productSaleDTO.setMonthSaleAmount(MathUtil.valueOf(dto.getMonthSaleAmountStr()));
-        if (StringUtils.isNotBlank(dto.getDelistingTimeStr())) {
-            productSaleDTO.setDelistingTime(LocalDate.parse(dto.getDelistingTimeStr(), dateTimeFormatter));
-        }
-
-        if (StringUtils.isNotBlank(dto.getListingTimeStr())) {
-            productSaleDTO.setListingTime(LocalDate.parse(dto.getListingTimeStr(), dateTimeFormatter));
+        productSaleDTO.setYearSaleQty(MathUtil.valueOfLong(dto.getYearSaleQty()));
+        productSaleDTO.setYearSaleAmount(MathUtil.valueOf(dto.getYearSaleAmount()));
+        productSaleDTO.setMonthSaleQty(MathUtil.valueOfLong(dto.getMonthSaleQty()));
+        productSaleDTO.setMonthSaleAmount(MathUtil.valueOf(dto.getMonthSaleAmount()));
+        if (StringUtils.isNotBlank(dto.getDelistingTime())) {
+            productSaleDTO.setDelistingTime(LocalDate.parse(dto.getDelistingTime(), dateTimeFormatter));
         }
 
         if (StringUtils.isNotBlank(saleCountryStr)) {
@@ -379,7 +373,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         List<String> productPropertyNames = declarePropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
         productLogisticsDTO.setProductProperty(StringUtils.join(productPropertyNames, ","));
         productLogisticsDTO.setProductPropertyId(StringUtils.join(productPropertyIds, ","));
-        productLogisticsDTO.setDeclarePrice(MathUtil.valueOf(dto.getDeclarePriceStr()));
+        productLogisticsDTO.setDeclarePrice(MathUtil.valueOf(dto.getDeclarePrice()));
         productNoSpecDTO.setProductLogisticsDTO(productLogisticsDTO);
 
         //产品包装信息
@@ -387,12 +381,12 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         BeanMapper.copy(dto, productPackDTO);
         String productSize = "";
         String boxSize ="";
-        String productSizeLength = dto.getProductSizeLengthStr();
-        String productSizeWide = dto.getProductSizeWideStr();
-        String productSizeHigh = dto.getProductSizeHighStr();
-        String boxSizeLength = dto.getBoxSizeLengthStr();
-        String boxSizeWide = dto.getBoxSizeWideStr();
-        String boxSizeHigh = dto.getBoxSizeHighStr();
+        String productSizeLength = dto.getProductSizeLength();
+        String productSizeWide = dto.getProductSizeWide();
+        String productSizeHigh = dto.getProductSizeHigh();
+        String boxSizeLength = dto.getBoxSizeLength();
+        String boxSizeWide = dto.getBoxSizeWide();
+        String boxSizeHigh = dto.getBoxSizeHigh();
 
         if (StringUtils.isNotBlank(productSizeLength)) {
             productSize = productSizeLength;
@@ -414,11 +408,11 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         if (StringUtils.isNotBlank(boxSizeHigh)) {
             boxSize = boxSize.concat("X").concat(boxSizeHigh);
         }
-        productPackDTO.setGrossWeight(MathUtil.valueOf(dto.getGrossWeightStr()));
-        productPackDTO.setNetWeight(MathUtil.valueOf(dto.getNetWeightStr()));
+        productPackDTO.setGrossWeight(MathUtil.valueOf(dto.getGrossWeight()));
+        productPackDTO.setNetWeight(MathUtil.valueOf(dto.getNetWeight()));
         productPackDTO.setBoxSize(boxSize);
-        productPackDTO.setBoxQty(MathUtil.valueOf(dto.getBoxQtyStr()));
-        productPackDTO.setBoxWeight(MathUtil.valueOf(dto.getBoxWeightStr()));
+        productPackDTO.setBoxQty(MathUtil.valueOf(dto.getBoxQty()));
+        productPackDTO.setBoxWeight(MathUtil.valueOf(dto.getBoxWeight()));
         productNoSpecDTO.setProductPackDTO(productPackDTO);
 
         /*//产品证书信息
