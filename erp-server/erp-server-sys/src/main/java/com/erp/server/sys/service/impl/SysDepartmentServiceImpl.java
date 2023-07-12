@@ -16,7 +16,6 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.server.sys.mapper.SysDepartmentMapper;
-import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysDeptService;
 import com.erp.server.sys.service.SysCodeService;
 import com.erp.server.sys.service.SysDepartmentService;
 import com.erp.server.sys.service.SysDepartmentUserService;
@@ -44,8 +43,8 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     @Autowired
     private SysDepartmentUserService sysDepartmentUserService;
 
-    @Autowired
-    private SyncKingdeeSysDeptService syncKingdeeSysDeptService;
+    //@Autowired
+    //private SyncKingdeeSysDeptService syncKingdeeSysDeptService;
 
     @Autowired
     private SysCodeService sysCodeService;
@@ -74,7 +73,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         this.saveOrUpdate(sysDepartment);
 
         //金蝶推送
-        syncKingdeeSysDeptService.syncDataToKingdee(sysDepartment, SyncKingdeeOperateEnum.OPERATE_ADD.getCode());
+        //syncKingdeeSysDeptService.syncDataToKingdee(sysDepartment, SyncKingdeeOperateEnum.OPERATE_ADD.getCode());
     }
 
     @Override
@@ -95,7 +94,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             sysDepartmentUserService.removeByDepartmentIds(ids);
             if (CollectionUtils.isNotEmpty(list)) {
                 //金蝶删除
-                list.forEach(obj -> syncKingdeeSysDeptService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
+                //list.forEach(obj -> syncKingdeeSysDeptService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_DELETE.getCode()));
             }
         }
     }
