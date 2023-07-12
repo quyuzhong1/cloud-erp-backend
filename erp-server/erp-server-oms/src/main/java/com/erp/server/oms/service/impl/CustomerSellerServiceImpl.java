@@ -203,13 +203,14 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
         List<CustomerSellerEntity> customerSellerList = this.listBaseByMainId(mainId);
         //修改时间
         if (CollectionUtils.isNotEmpty(customerSellerList)) {
-            CustomerSellerEntity  lastSeller= customerSellerList.get(customerSellerList.size()-1);
+            CustomerSellerEntity lastSeller = customerSellerList.get(customerSellerList.size() - 1);
             lastSeller.setEndDate(LocalDate.now());
             this.updateById(lastSeller);
         }
 
         CustomerSellerEntity customerSeller = new CustomerSellerEntity();
         customerSeller.setSellerName(dto.getUserName());
+        customerSeller.setSellerId(dto.getUserId());
         customerSeller.setMainId(mainId);
         customerSeller.setDeptId(dto.getDepartmentId());
         customerSeller.setStartDate(LocalDate.now());
