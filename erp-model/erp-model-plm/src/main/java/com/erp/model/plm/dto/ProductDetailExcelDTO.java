@@ -167,7 +167,7 @@ public class ProductDetailExcelDTO {
     /**
      *税率
      */
-    @FieldValid(fieldName = "税率", isNotBlank = true)
+    @FieldValid(fieldName = "税率", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
     private String taxRate;
 
     /**

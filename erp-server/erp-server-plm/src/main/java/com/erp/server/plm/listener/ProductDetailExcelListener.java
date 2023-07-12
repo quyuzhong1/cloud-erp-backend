@@ -6,7 +6,9 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
+import com.common.core.anno.FieldValid;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
@@ -22,6 +24,7 @@ import com.erp.server.plm.service.ProductDetailService;
 import com.erp.server.plm.service.ProductUnitService;
 import org.apache.commons.lang.StringUtils;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -136,15 +139,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                 saleCountryStr = saleCountryStr + productCountry.getId() + ",";
             }
         }
-        //存在侵权风险
-        String pirateRisk = dto.getPirateRisk();
-        if(StringUtils.isNotBlank(pirateRisk)){
-            if(pirateRisk.equals("是")){
-                productInfoDTO.setPirateRisk(1);
-            } else {
-                productInfoDTO.setPirateRisk(2);
-            }
-        }
+
         List<FindUserDTO> resultList = sysUserFeign.getUserList();
         List<FindUserDTO> chargeNameList = new ArrayList<>();
         if (StringUtils.isNotBlank(dto.getChargeName())) {
@@ -249,6 +244,30 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
             productInfoDTO.setCategoryId(secondaryCategoryEntity.getId());
         }
 
+        //存在侵权风险
+        String pirateRisk = dto.getPirateRisk();
+        if(StringUtils.isNotBlank(pirateRisk)){
+            if(pirateRisk.equals("是")){
+                productInfoDTO.setPirateRisk(1);
+            } else {
+                productInfoDTO.setPirateRisk(2);
+            }
+        }
+        //是否客户定制
+        String isCustomized = dto.getIsCustomized();
+        if(StringUtils.isNotBlank(isCustomized)){
+            if(isCustomized.equals("是")){
+                productInfoDTO.setIsCustomized(1);
+            } else {
+                productInfoDTO.setIsCustomized(0);
+            }
+        }
+
+        ProductSalesPlatformEnum productSalesPlatformEnum = ProductSalesPlatformEnum.getByName(dto.getSalesPlatform());
+        if (productSalesPlatformEnum == null) {
+            errorMsgList.add("销售平台有误，请输入【全平台】或【亚马逊定制】");
+        }
+
 
         if (errorMsgList.size() > 0) {
             for (int i = 0; i < errorMsgList.size(); i++) {
@@ -287,12 +306,16 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         productInfoDTO.setProperty(productProperty.getValue());
         productInfoDTO.setPropertyId(productProperty.getId());
         productInfoDTO.setNameEn(dto.getNameEn());
+        productInfoDTO.setGrade(dto.getGrade());
+        productInfoDTO.setSalesChannel(dto.getSalesChannel());
+        productInfoDTO.setMoldCost(MathUtil.valueOf(dto.getMoldCost()));
+        productInfoDTO.setEntrustedDevelopCost(MathUtil.valueOf(dto.getEntrustedDevelopCost()));
+
         //sku信息
         BeanMapper.copy(dto, productSkuBaseInfoDTO);
         if (StringUtils.isNotBlank(dto.getPlanListingTime())) {
             productSkuBaseInfoDTO.setPlanListingTime(LocalDate.parse(dto.getPlanListingTime(), dateTimeFormatter));
         }
-        productSkuBaseInfoDTO.setProductState(2);
         productSkuBaseInfoDTO.setProductId("");
         productSkuBaseInfoDTO.setUnitId(productUnitEntity.getId());
         productSkuBaseInfoDTO.setUnitName(productUnitEntity.getName());
@@ -306,50 +329,138 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
 
         //产品成本信息表
         ProductCostDTO productCostDTO = new ProductCostDTO();
-        BeanMapper.copy(dto, productCostDTO);
+        /**
+         * 预计立项成本(￥)
+         */
+        productCostDTO.setProjectApprovalCost(MathUtil.valueOf(dto.getProjectApprovalCost()));
+        /**
+         * 实际量产成本(￥)
+         */
+        productCostDTO.setMassCost(MathUtil.valueOf(dto.getMassCost()));
+        /**
+         * 预计项目成本(￥)
+         */
+        productCostDTO.setProjectCost(MathUtil.valueOf(dto.getProjectCost()));
+        /**
+         *税率
+         */
+        productCostDTO.setTaxRate(MathUtil.valueOf(dto.getTaxRate()));
+        /**
+         *目标含税成本(￥)
+         */
+        productCostDTO.setTargetTaxCost(MathUtil.valueOf(dto.getTargetTaxCost()));
+        /**
+         *目标不含税成本(￥)
+         */
+        productCostDTO.setTargetNoTaxCost(MathUtil.valueOf(dto.getTargetNoTaxCost()));
+        /**
+         *标准零售价(￥)
+         */
+        productCostDTO.setRetailPrice(MathUtil.valueOf(dto.getRetailPrice()));
         productNoSpecDTO.setProductCostDTO(productCostDTO);
 
         //采购信息信息
         ProductPurchaseDTO productPurchaseDTO = new ProductPurchaseDTO();
+        /**
+         * ean码
+         */
         productPurchaseDTO.setEan(dto.getEan());
+        /**
+         * MOQ(最小起订量)
+         */
+        productPurchaseDTO.setMoq(MathUtil.valueOfInteger(dto.getMoq()));
+        /**
+         * 试产数量
+         */
+        productPurchaseDTO.setTrialProductionQty(MathUtil.valueOfLong(dto.getTrialProductionQty()));
+        /**
+         * 首批量产数量
+         */
+        productPurchaseDTO.setFirstMassQty(MathUtil.valueOfLong(dto.getFirstMassQty()));
+        /**
+         * 计划首批下单量
+         */
         productPurchaseDTO.setPlanOrderQty(MathUtil.valueOfLong(dto.getPlanOrderQty()));
-
-        if (StringUtils.isNotBlank(dto.getPlaceOrderTime())) {
-            productPurchaseDTO.setPlaceOrderTime(LocalDate.parse(dto.getPlaceOrderTime(), dateTimeFormatter));
-        }
+        /**
+         * 实际首批到货量
+         */
+        productPurchaseDTO.setActualArrivalQty(MathUtil.valueOfLong(dto.getActualArrivalQty()));
+        /**
+         * 预计首批到货时间
+         */
         if (StringUtils.isNotBlank(dto.getPlanArrivalTime())) {
             productPurchaseDTO.setPlanArrivalTime(LocalDate.parse(dto.getPlanArrivalTime(), dateTimeFormatter));
         }
-
-        productPurchaseDTO.setMoq(MathUtil.valueOfInteger(dto.getMoq()));
-        productPurchaseDTO.setDeliveryCycle(MathUtil.valueOf(dto.getDeliveryCycle()));
+        /**
+         * 实际首批到货时间
+         */
         if (StringUtils.isNotBlank(dto.getActualArrivalTime())) {
             productPurchaseDTO.setActualArrivalTime(LocalDate.parse(dto.getActualArrivalTime(), dateTimeFormatter));
         }
-
-        productPurchaseDTO.setArrivalState(purchaseState);
+        /**
+         * 首批下单时间
+         */
+        if (StringUtils.isNotBlank(dto.getPlaceOrderTime())) {
+            productPurchaseDTO.setPlaceOrderTime(LocalDate.parse(dto.getPlaceOrderTime(), dateTimeFormatter));
+        }
+        /**
+         * 交货周期(天)
+         */
+        productPurchaseDTO.setDeliveryCycle(MathUtil.valueOf(dto.getDeliveryCycle()));
+        /**
+         * 采购员
+         */
         if (purchaseUserList.size() > 0) {
             productPurchaseDTO.setPurchaseUserId(purchaseUserList.get(0).getUserId());
         }
+        /**
+         * 首批到货状态
+         */
+        productPurchaseDTO.setArrivalState(purchaseState);
+        /**
+         * 一级供应商
+         */
         productPurchaseDTO.setMainSupplier(dto.getMainSupplier());
+
+        /**
+         * 二级供应商
+         */
         productPurchaseDTO.setSecondSupplier(dto.getSecondSupplier());
-        productPurchaseDTO.setActualArrivalQty(MathUtil.valueOfLong(dto.getActualArrivalQty()));
         productNoSpecDTO.setProductPurchaseDTO(productPurchaseDTO);
 
         //产品销售信息
         ProductSaleDTO productSaleDTO = new ProductSaleDTO();
-        productSaleDTO.setYearSaleQty(MathUtil.valueOfLong(dto.getYearSaleQty()));
-        productSaleDTO.setYearSaleAmount(MathUtil.valueOf(dto.getYearSaleAmount()));
-        productSaleDTO.setMonthSaleQty(MathUtil.valueOfLong(dto.getMonthSaleQty()));
-        productSaleDTO.setMonthSaleAmount(MathUtil.valueOf(dto.getMonthSaleAmount()));
-        if (StringUtils.isNotBlank(dto.getDelistingTime())) {
-            productSaleDTO.setDelistingTime(LocalDate.parse(dto.getDelistingTime(), dateTimeFormatter));
-        }
 
+        /**
+         * 年目标销量
+         */
+        productSaleDTO.setYearSaleQty(MathUtil.valueOfLong(dto.getYearSaleQty()));
+
+        /**
+         * 年目标销售额（￥）
+         */
+        productSaleDTO.setYearSaleAmount(MathUtil.valueOf(dto.getYearSaleAmount()));
+        /**
+         * 目标月销售量
+         */
+        productSaleDTO.setMonthSaleQty(MathUtil.valueOfLong(dto.getMonthSaleQty()));
+        /**
+         * 目标月销售额（￥）
+         */
+        productSaleDTO.setMonthSaleAmount(MathUtil.valueOf(dto.getMonthSaleAmount()));
+        /**
+         * 首季度目标销量
+         */
+        productSaleDTO.setTargetSalesQty(MathUtil.valueOf(dto.getTargetSalesQty()));
+        /**
+         * 销售国家
+         */
         if (StringUtils.isNotBlank(saleCountryStr)) {
             productSaleDTO.setSaleCountry(saleCountryStr.substring(0,saleCountryStr.length()-1));
         }
-        productSaleDTO.setSaleState(saleState);
+        /**
+         * 图片是否完成
+         */
         if (StringUtils.isNotBlank(isFinishedImg)) {
             if (isFinishedImg.equals("是")) {
                 productSaleDTO.setIsFinishedImg(1);
@@ -357,6 +468,9 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                 productSaleDTO.setIsFinishedImg(2);
             }
         }
+        /**
+         * 视频是否完成
+         */
         if (StringUtils.isNotBlank(isFinishedVideo)) {
             if (isFinishedVideo.equals("是")) {
                 productSaleDTO.setIsFinishedVideo(1);
@@ -364,16 +478,86 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
                 productSaleDTO.setIsFinishedVideo(2);
             }
         }
+        /**
+         * 退市时间
+         */
+        if (StringUtils.isNotBlank(dto.getDelistingTime())) {
+            productSaleDTO.setDelistingTime(LocalDate.parse(dto.getDelistingTime(), dateTimeFormatter));
+        }
+        /**
+         * 销售状态
+         */
+        productSaleDTO.setSaleState(saleState);
+
+
+        /**
+         * 产品上市(含培训)资料链接
+         */
+        productSaleDTO.setDataUrl(dto.getDataUrl());
+
+        /**
+         * 是否可销售
+         */
+        String isMarketable = dto.getIsMarketable();
+        if(StringUtils.isNotBlank(isMarketable)){
+            if(isMarketable.equals("是")){
+                productSaleDTO.setIsMarketable(1);
+            } else {
+                productSaleDTO.setIsMarketable(0);
+            }
+        }
+        /**
+         * 销售平台
+         */
+        productSaleDTO.setSalesPlatform(productSalesPlatformEnum.getCode());
         productNoSpecDTO.setProductSaleDTO(productSaleDTO);
 
         //产品物流信息
         ProductLogisticsDTO productLogisticsDTO = new ProductLogisticsDTO();
         BeanMapper.copy(dto, productLogisticsDTO);
+        /**
+         * 报关产品属性
+         */
         List<String> productPropertyIds = declarePropertyList.stream().map(BasicDictEntity::getId).collect(Collectors.toList());
         List<String> productPropertyNames = declarePropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
         productLogisticsDTO.setProductProperty(StringUtils.join(productPropertyNames, ","));
         productLogisticsDTO.setProductPropertyId(StringUtils.join(productPropertyIds, ","));
+        /**
+         * 报关申报价（$）
+         */
         productLogisticsDTO.setDeclarePrice(MathUtil.valueOf(dto.getDeclarePrice()));
+        /**
+         * 报关中文名
+         */
+        productLogisticsDTO.setDeclareChineseName(dto.getDeclareChineseName());
+        /**
+         * 报关英文名
+         */
+        productLogisticsDTO.setDeclareEnglishName(dto.getDeclareEnglishName());
+        /**
+         * 中国海关编码
+         */
+        productLogisticsDTO.setCustomsCode(dto.getCustomsCode());
+        /**
+         * 报关型号
+         */
+        productLogisticsDTO.setDeclareModel(dto.getDeclareModel());
+        /**
+         * 报关单位
+         */
+        productLogisticsDTO.setDeclareUnit(dto.getDeclareUnit());
+        /**
+         * 申报要素
+         */
+        productLogisticsDTO.setDeclareElement(dto.getDeclareElement());
+        /**
+         * 英文材质
+         */
+        productLogisticsDTO.setEnglishMaterial(dto.getEnglishMaterial());
+        /**
+         * 英文用途
+         */
+        productLogisticsDTO.setEnglishUsage(dto.getEnglishUsage());
         productNoSpecDTO.setProductLogisticsDTO(productLogisticsDTO);
 
         //产品包装信息
@@ -387,32 +571,60 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
         String boxSizeLength = dto.getBoxSizeLength();
         String boxSizeWide = dto.getBoxSizeWide();
         String boxSizeHigh = dto.getBoxSizeHigh();
-
+        /**
+         * 产品尺寸(长)
+         */
         if (StringUtils.isNotBlank(productSizeLength)) {
             productSize = productSizeLength;
         }
+        /**
+         * 产品尺寸(宽)
+         */
         if (StringUtils.isNotBlank(productSizeWide)) {
             productSize = productSize.concat("X").concat(productSizeWide);
         }
+        /**
+         * 产品尺寸(高)
+         */
         if (StringUtils.isNotBlank(productSizeHigh)) {
             productSize = productSize.concat("X").concat(productSizeHigh);
         }
         productPackDTO.setProductSize(productSize);
-
+        /**
+         * 箱规(长)
+         */
         if (StringUtils.isNotBlank(boxSizeLength)) {
             boxSize = boxSizeLength;
         }
+        /**
+         * 箱规(宽)
+         */
         if (StringUtils.isNotBlank(boxSizeWide)) {
             boxSize = boxSize.concat("X").concat(boxSizeWide);
         }
+        /**
+         * 箱规(高)
+         */
         if (StringUtils.isNotBlank(boxSizeHigh)) {
             boxSize = boxSize.concat("X").concat(boxSizeHigh);
         }
-        productPackDTO.setGrossWeight(MathUtil.valueOf(dto.getGrossWeight()));
-        productPackDTO.setNetWeight(MathUtil.valueOf(dto.getNetWeight()));
         productPackDTO.setBoxSize(boxSize);
-        productPackDTO.setBoxQty(MathUtil.valueOf(dto.getBoxQty()));
+        /**
+         * 毛重
+         */
+        productPackDTO.setGrossWeight(MathUtil.valueOf(dto.getGrossWeight()));
+        /**
+         * 净重
+         */
+        productPackDTO.setNetWeight(MathUtil.valueOf(dto.getNetWeight()));
+        /**
+         * 单箱重量
+         */
         productPackDTO.setBoxWeight(MathUtil.valueOf(dto.getBoxWeight()));
+        /**
+         * 单箱数量
+         */
+        productPackDTO.setBoxQty(MathUtil.valueOf(dto.getBoxQty()));
         productNoSpecDTO.setProductPackDTO(productPackDTO);
 
         /*//产品证书信息

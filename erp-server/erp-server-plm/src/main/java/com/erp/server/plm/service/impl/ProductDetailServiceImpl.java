@@ -1889,15 +1889,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             }
 
-            String[] chargeIds = req.getChargeId().split(",");
-            List<FindUserDTO> userListByUserIds = sysUserFeign.getUserListByUserIds(Arrays.asList(chargeIds));
-            List<String> chargeNames = userListByUserIds.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
-            req.setChargeName(StringUtils.join(chargeNames, ","));
+            if (StringUtils.isNotBlank(req.getChargeId())) {
+                String[] chargeIds = req.getChargeId().split(",");
+                List<FindUserDTO> userListByUserIds = sysUserFeign.getUserListByUserIds(Arrays.asList(chargeIds));
+                List<String> chargeNames = userListByUserIds.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
+                req.setChargeName(StringUtils.join(chargeNames, ","));
 
-            String[] productPropertyIds = req.getProductPropertyId().split(",");
-            List<BasicDictEntity> productPropertyList = basicDictService.listByIds(Arrays.asList(productPropertyIds));
-            List<String> productProperty = productPropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
-            req.setProductProperty(StringUtils.join(productProperty, ","));
+            }
+
+            if (StringUtils.isNotBlank(req.getProductPropertyId())) {
+                String[] productPropertyIds = req.getProductPropertyId().split(",");
+                List<BasicDictEntity> productPropertyList = basicDictService.listByIds(Arrays.asList(productPropertyIds));
+                List<String> productProperty = productPropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+                req.setProductProperty(StringUtils.join(productProperty, ","));
+
+            }
 
             // 一级供应商名称
             if (StrUtils.isNotEmpty(req.getMainSupplier()) && supplierMap.containsKey(req.getMainSupplier())) {
