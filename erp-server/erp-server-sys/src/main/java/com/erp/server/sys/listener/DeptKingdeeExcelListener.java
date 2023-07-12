@@ -2,12 +2,11 @@ package com.erp.server.sys.listener;
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.sys.dto.excel.DeptKingdeeImportExcelDTO;
 import com.erp.model.sys.entity.DeptKingdeeEntity;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.service.DeptKingdeeService;
 import com.erp.server.sys.service.SysDepartmentService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -31,6 +30,8 @@ public class DeptKingdeeExcelListener extends AnalysisEventListener<DeptKingdeeI
 
     private List<SysDepartmentEntity> deptList;
 
+    private List<SysAccountingCompanyEntity> sysAccountingCompanyList;
+
     //添加的
     private List<SysDepartmentEntity> addDeptList;
 
@@ -43,13 +44,14 @@ public class DeptKingdeeExcelListener extends AnalysisEventListener<DeptKingdeeI
     private List<DeptKingdeeImportExcelDTO> errorList = new ArrayList<>();
 
 
-    public DeptKingdeeExcelListener(DeptKingdeeService deptKingdeeService, List<SysDepartmentEntity> deptList, List<DeptKingdeeEntity> deptKingdeeList, SysDepartmentService sysDepartmentService) {
+    public DeptKingdeeExcelListener(DeptKingdeeService deptKingdeeService, List<SysDepartmentEntity> deptList, List<DeptKingdeeEntity> deptKingdeeList, SysDepartmentService sysDepartmentService, List<SysAccountingCompanyEntity> accountingCompanyList) {
         this.deptKingdeeService = deptKingdeeService;
         this.deptList = deptList;
         this.deptKingdeeService = deptKingdeeService;
         this.sysDepartmentService = sysDepartmentService;
         this.deptKingdeeList = deptKingdeeList;
         addDeptList = new ArrayList<>(10);
+        this.sysAccountingCompanyList = accountingCompanyList;
     }
 
     /**
@@ -75,17 +77,7 @@ public class DeptKingdeeExcelListener extends AnalysisEventListener<DeptKingdeeI
         SysDepartmentEntity deptInfo = deptList.stream().filter(u -> u.getName().equals(deptName)).findFirst().orElse(null);
         String id = "";
         //就要加的一个部门
-        if (Objects.isNull(deptInfo)) {
-            SysDepartmentEntity addSysDept = new SysDepartmentEntity();
-            addSysDept.setCode(excelDTO.getKingdeeDeptCode());
-            addSysDept.setName(deptName);
-            addSysDept.setSyncKingdeeId(excelDTO.getSyncKingdeeId());
-            addSysDept.setSyncKingdeeStatus("3");
-            addSysDept.setType(SysConstant.DEPARTMENT_TYPE);
-            id = IdWorker.getIdStr();
-            addSysDept.setId(id);
-            addDeptList.add(addSysDept);
-        } else {
+        if (!Objects.isNull(deptInfo)) {
             id = deptInfo.getId();
         }
         if (StringUtils.isBlank(id)) {
@@ -100,13 +92,18 @@ public class DeptKingdeeExcelListener extends AnalysisEventListener<DeptKingdeeI
 
 
         //查看到对应的部门
-        DeptKingdeeEntity dept = deptKingdeeList.stream().filter(p -> p.getKingdeeDeptCode().equals(excelDTO.getKingdeeDeptCode())).findFirst().orElse(new DeptKingdeeEntity());
+        DeptKingdeeEntity dept = deptKingdeeList.stream().filter(p -> p.getKingdeeDeptCode().equals(excelDTO.getKingdeeDeptCode()) &&
+                excelDTO.getUseOrgCode().equals(p.getUseOrgCode())
+        ).findFirst().orElse(new DeptKingdeeEntity());
+        String useOrgId = sysAccountingCompanyList.stream().filter(a -> a.getCode().equals(excelDTO.getUseOrgCode())).
+                map(SysAccountingCompanyEntity::getId).findFirst().orElse("");
         dept.setKingdeeDeptCode(excelDTO.getKingdeeDeptCode());
         dept.setUseOrgCode(excelDTO.getUseOrgCode());
         dept.setUseOrgName(excelDTO.getUseOrgName());
         dept.setDeptId(id);
         dept.setKingdeeDeptName(deptName);
         dept.setDeptName(deptName);
+        dept.setUseOrgId(useOrgId);
         addOrUpdateList.add(dept);
     }
 
@@ -121,11 +118,8 @@ public class DeptKingdeeExcelListener extends AnalysisEventListener<DeptKingdeeI
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-//        if (CollectionUtils.isNotEmpty(addOrUpdateList)) {
-//            deptKingdeeService.saveOrUpdateBatch(addOrUpdateList);
-//        }
-        if (CollectionUtils.isNotEmpty(addDeptList)) {
-            sysDepartmentService.saveBatch(addDeptList);
+        if (CollectionUtils.isNotEmpty(addOrUpdateList)) {
+            deptKingdeeService.saveOrUpdateBatch(addOrUpdateList);
         }
 
     }
