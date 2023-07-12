@@ -49,6 +49,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -472,6 +473,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
+        //销售部门id
+        List<String> salesDeptIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getSalesDeptId).distinct().collect(Collectors.toList());
+        List<SysDepartmentEntity> departmentList = sysUserFeign.listDeptByIds(salesDeptIdList);
         //销售订单id集合
         List<String> soIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getId).collect(Collectors.toList());
         //发货通知单的
@@ -506,11 +510,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(soIdList);
         for (SoInfoDTO.PagingViewDTO item : list) {
-            List<String> curApproveName = processTaskManagementEntities.stream().filter(req ->req.getBusinessId().equals(item.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
+            List<String> curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(item.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
             String userName = StringUtils.join(curApproveName, ",");
             item.setApproveUserName(userName);
             boolean contains = flagList.contains(item.getId());
             String warehouseId = item.getWarehouseId();
+            String salesDeptId = item.getSalesDeptId();
+            String deptName = departmentList.stream().filter(d -> d.getId().equals(salesDeptId)).
+                    map(SysDepartmentEntity::getName).findFirst().orElse("");
+            item.setSalesDeptName(deptName);
             BillApproveStatusEnum billApproveStatus = item.getApproveStatus();
             item.setApproveStatusName(billApproveStatus.getName());
             String type = item.getOrderType();
@@ -589,6 +597,19 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setProductName(sku.getSkuName());
                 item.setUnit(sku.getUnitName());
             }
+            //税率
+            BigDecimal taxRate = item.getTaxRate();
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+
+            //销售单价
+            BigDecimal price=item.getPrice();
+            //含税单价=销售单价*（税率+1）
+            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
+            //含税单价
+            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            item.setTaxPrice(taxPrice);
+            BigDecimal taxAmount = MathUtil.multiply(taxPrice, qty);
+            item.setTaxAmount(taxAmount);
 
             if (contains) {
                 item.setCode("");
@@ -1010,7 +1031,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         //撤销现有流程
         LoginUser userInfo = commonService.getUserInfo();
-        ids.forEach(obj ->{
+        ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
             revokeDTO.setBusinessId(obj);
             revokeDTO.setBusinessKey(SourceTypeEnum.SO_INFO.getCode());
@@ -1345,8 +1366,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         SoInfoDTO.ExportPdfDTO result = new SoInfoDTO.ExportPdfDTO();
         SoInfoDTO.CustomerDTO customer = this.getSoCustomer(id);
 
-        Boolean invalidStatus=customer.getInvalidStatus();
-        if(invalidStatus!=null&&invalidStatus){
+        Boolean invalidStatus = customer.getInvalidStatus();
+        if (invalidStatus != null && invalidStatus) {
             throw new ServiceException(ApiError.ERROR_92022);
         }
 
@@ -1355,7 +1376,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String approve = ApproveStatusEnum.APPROVE.getStatus();
         String approveIng = ApproveStatusEnum.APPROVE_ING.getStatus();
         String waitSubmit = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        List<String> statusList = Arrays.asList(approve, approveIng,waitSubmit);
+        List<String> statusList = Arrays.asList(approve, approveIng, waitSubmit);
         if (!statusList.contains(approveStatus)) {
             throw new ServiceException(ApiError.ERROR_92022);
         }
@@ -1732,15 +1753,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (Objects.isNull(soInfo)) {
             throw new ServiceException(ApiError.ERROR_92003);
         }
-        Boolean invalidStatus=soInfo.getInvalidStatus();
-        if(invalidStatus!=null&&invalidStatus){
+        Boolean invalidStatus = soInfo.getInvalidStatus();
+        if (invalidStatus != null && invalidStatus) {
             throw new ServiceException(ApiError.ERROR_92022);
         }
         String approveStatus = soInfo.getApproveStatus().getStatus();
         String approve = ApproveStatusEnum.APPROVE.getStatus();
         String approveIng = ApproveStatusEnum.APPROVE_ING.getStatus();
         String waitSubmit = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        List<String> statusList = Arrays.asList(approve, approveIng,waitSubmit);
+        List<String> statusList = Arrays.asList(approve, approveIng, waitSubmit);
         if (!statusList.contains(approveStatus)) {
             throw new ServiceException(ApiError.ERROR_92022);
         }
@@ -1852,17 +1873,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         // 获取采购单价
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.getLatest(Arrays.asList(costParam.getSkuId()));
         PurchaseOrderDetailEntity purchaseOrderDetailEntity = CollUtil.isNotEmpty(purchaseOrderDetailEntityList) ? purchaseOrderDetailEntityList.get(0) : null;
-        if(Objects.nonNull(purchaseOrderDetailEntity)) {
+        if (Objects.nonNull(purchaseOrderDetailEntity)) {
             purchasePrice = purchaseOrderDetailEntity.getTaxPrice();
             skuCostProfitResult.setPurchasePrice(purchasePrice);
         }
         log.info("提交的币制：{}", costParam.getCurrency());
         // 最新的采购单价币制转换（非人民币）
-        if(Objects.nonNull(skuCostProfitResult.getPurchasePrice()) &&
+        if (Objects.nonNull(skuCostProfitResult.getPurchasePrice()) &&
                 skuCostProfitResult.getPurchasePrice().compareTo(BigDecimal.ZERO) == 1 &&
                 !Objects.equals(purchaseOrderDetailEntity.getCurrency(), "CNY")) {
             String purchaseDate = purchaseOrderDetailEntity.getPurchaseDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            BigDecimal rate =  dmpTaskFeign.getRate(purchaseDate, purchaseOrderDetailEntity.getCurrency());
+            BigDecimal rate = dmpTaskFeign.getRate(purchaseDate, purchaseOrderDetailEntity.getCurrency());
             log.info("找到的最新的采购订单:{} 的币制：{}，采购订单日期：{}，转换后汇率：{}", purchaseOrderDetailEntity.getPurchaseOrderId(), purchaseOrderDetailEntity.getCurrency(), rate);
             // 未找到汇率直接返回
             if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
@@ -1874,12 +1895,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
         }
         // 销售金额转换
-        if(Objects.nonNull(costParam.getSaleAmount()) &&
+        if (Objects.nonNull(costParam.getSaleAmount()) &&
                 costParam.getSaleAmount().compareTo(BigDecimal.ZERO) == 1 &&
                 !Objects.equals(costParam.getCurrency(), "CNY")) {
-            BigDecimal rate =  dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), costParam.getCurrency());
+            BigDecimal rate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), costParam.getCurrency());
             log.info("提交的币制：{}，转换后汇率：{}", costParam.getCurrency(), rate);
-            if(Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
+            if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
                 costParam.setSaleAmount(BigDecimal.ZERO);
             } else {
                 // 转换成人民币销售金额
@@ -1887,28 +1908,28 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
         }
         // 计算成本毛利信息
-        skuCostProfitResult = SoUtils.calCostProfit(purchasePrice , costParam, skuCostProfitResult);
+        skuCostProfitResult = SoUtils.calCostProfit(purchasePrice, costParam, skuCostProfitResult);
         return skuCostProfitResult;
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void brushCostData(LocalDate startDate, LocalDate endDate) {
-       // 查询需要重刷数据的创建时间范围
-        List<SoInfoEntity> soList =  lambdaQuery().ge(SoInfoEntity::getCreateTime, startDate).le(SoInfoEntity::getCreateTime,endDate.plusDays(1)).list();
-        if(CollUtil.isEmpty(soList)) {
+        // 查询需要重刷数据的创建时间范围
+        List<SoInfoEntity> soList = lambdaQuery().ge(SoInfoEntity::getCreateTime, startDate).le(SoInfoEntity::getCreateTime, endDate.plusDays(1)).list();
+        if (CollUtil.isEmpty(soList)) {
             return;
         }
         log.warn("共查询到销售订单数据{}条", soList.size());
-        for(SoInfoEntity soInfoEntity : soList) {
-            List<SoDetailEntity>  detailList = soDetailService.listBaseByMainId(soInfoEntity.getId());
-            if(CollUtil.isEmpty(detailList)) {
+        for (SoInfoEntity soInfoEntity : soList) {
+            List<SoDetailEntity> detailList = soDetailService.listBaseByMainId(soInfoEntity.getId());
+            if (CollUtil.isEmpty(detailList)) {
                 continue;
             }
             List<String> skuIdList = detailList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
             List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.getLatest(skuIdList);
             Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap = Maps.newHashMap();
-            if(CollUtil.isNotEmpty(purchaseOrderDetailEntityList)) {
+            if (CollUtil.isNotEmpty(purchaseOrderDetailEntityList)) {
                 purchaseOrderDetailMap = purchaseOrderDetailEntityList.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getSkuId));
             }
             log.warn("开始计算销售订单【{}】成本毛利数据", soInfoEntity.getCode());
@@ -1924,15 +1945,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     public void brushCostData(String id) {
         SoInfoEntity soInfoEntity = super.getById(id);
-        Optional.ofNullable(soInfoEntity).orElseThrow(()->new ServiceException(ApiError.ERROR_92016));
-        List<SoDetailEntity>  detailList = soDetailService.listBaseByMainId(soInfoEntity.getId());
-        if(CollUtil.isEmpty(detailList)) {
+        Optional.ofNullable(soInfoEntity).orElseThrow(() -> new ServiceException(ApiError.ERROR_92016));
+        List<SoDetailEntity> detailList = soDetailService.listBaseByMainId(soInfoEntity.getId());
+        if (CollUtil.isEmpty(detailList)) {
             return;
         }
         List<String> skuIdList = detailList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = scmTaskFeign.getLatest(skuIdList);
         Map<String, List<PurchaseOrderDetailEntity>> purchaseOrderDetailMap = Maps.newHashMap();
-        if(CollUtil.isNotEmpty(purchaseOrderDetailEntityList)) {
+        if (CollUtil.isNotEmpty(purchaseOrderDetailEntityList)) {
             purchaseOrderDetailMap = purchaseOrderDetailEntityList.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getSkuId));
         }
         for (SoDetailEntity item : detailList) {

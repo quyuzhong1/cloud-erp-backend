@@ -4,6 +4,7 @@ import com.common.core.controller.BaseController;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.server.sys.service.SysDepartmentService;
 import com.erp.server.sys.service.SysDepartmentUserService;
 import org.springframework.web.bind.annotation.*;
@@ -31,6 +32,12 @@ public class SysDeptFeignController extends BaseController {
     @PostMapping("/getDeptIdList")
     public List<String> getMarketingCenterDeptIds(@RequestBody String deptName) {
         return departmentService.getDeptIds(deptName);
+    }
+
+
+    @PostMapping("/listDepartByIds")
+    public List<SysDepartmentEntity> getMarketingCenterDeptIds(@RequestBody List<String> deptIdList) {
+        return departmentService.listByIdList(deptIdList);
     }
 
     @GetMapping("/getDeptList")

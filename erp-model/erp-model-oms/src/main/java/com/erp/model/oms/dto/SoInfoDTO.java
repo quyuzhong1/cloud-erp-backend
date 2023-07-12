@@ -127,6 +127,17 @@ public class SoInfoDTO implements Serializable {
 
 
         /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+
+        /**
+         * 销售部门名称
+         */
+        private String salesDeptName;
+
+
+        /**
          * 销售员
          */
         private String sellerName;
@@ -211,10 +222,31 @@ public class SoInfoDTO implements Serializable {
          */
         private LocalDate requireDate;
 
+
+        /**
+         * 销售单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 含税销售单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
         /**
          * 销售金额
          */
         private BigDecimal amount;
+
+        /**
+         * 含税销售金额
+         */
+        private BigDecimal taxAmount;
 
         /**
          * 最新审核人

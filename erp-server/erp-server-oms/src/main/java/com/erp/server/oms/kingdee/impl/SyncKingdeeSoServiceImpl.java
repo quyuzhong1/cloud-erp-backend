@@ -11,8 +11,9 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
-import com.erp.model.sys.dto.KingdeePostDTO;
+import com.erp.model.sys.entity.DeptKingdeeEntity;
 import com.erp.model.sys.entity.KingdeeBusinessOperatorEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -127,6 +128,15 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
 
         //部门id
         String salesDeptId = entity.getSalesDeptId();
+        DeptKingdeeDTO.FindDeptKingdeeDTO findDeptKingdee = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+        findDeptKingdee.setOrgCode(salesOrgCode);
+        findDeptKingdee.setDeptId(salesDeptId);
+        DeptKingdeeEntity kingdeePost = kingdeeFeign.getDeptKingdee(findDeptKingdee);
+        if (kingdeePost != null) {
+            resultMap.put("deptCode", kingdeePost.getKingdeeDeptCode());
+        }
+
+
         //销售员
         String sellerId = entity.getSellerId();
         //获取业务员信息
@@ -141,15 +151,6 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             if (!Objects.isNull(kingSellerInfo)) {
                 resultMap.put("sellerCode", kingSellerInfo.getKingdeePostCode());
                 resultMap.put("seller", kingSellerInfo.getKingdeeUserName());
-
-                KingdeePostDTO.FindUserKingdeePostDTO findUserPostKingdee = new KingdeePostDTO.FindUserKingdeePostDTO();
-                findUserPostKingdee.setKingdeePostCode(kingSellerInfo.getKingdeePostCode());
-                findUserPostKingdee.setOrgCode(salesOrgCode);
-                KingdeePostDTO.UserKingdeePostInfoDTO kingdeePost = kingdeeFeign.getUserKingdeePostByPostCode(findUserPostKingdee);
-                if (kingdeePost != null) {
-                    resultMap.put("deptCode", kingdeePost.getKingdeeDeptCode());
-                }
-
             }
         }
         String currency = entity.getCurrency();
