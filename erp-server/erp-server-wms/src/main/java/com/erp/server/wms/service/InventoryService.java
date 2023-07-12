@@ -136,10 +136,9 @@ public interface InventoryService extends SuperService<InventoryEntity> {
      * 修改库存表数量
      * @param id
      * @param qty
-     * @param version
      * @return
      */
-    int updateQtyById(String id, Integer qty, Integer version);
+    boolean  updateQtyById(String id, Integer qty);
 
     /**
      * @description: 查询拣货数据

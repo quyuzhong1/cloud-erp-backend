@@ -114,7 +114,7 @@ public abstract class AbstractInventoryServiceImpl {
      * @param transactionNo
      */
     public abstract <T extends InventoryStockBaseDTO> void singleHandler(T baseParam,  InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams,
-                               String transactionNo);
+                                                                         String transactionNo);
 
     /**
      * 反审核
@@ -298,7 +298,7 @@ public abstract class AbstractInventoryServiceImpl {
      */
     @SneakyThrows
     public  void outStockCore (InOutStockCoreDTO param, InventoryBusinessTypeEnum businessType, InventoryStatusEnum inventoryStatusEnum, String tansactionRuleId,
-                              String transactionNo) {
+                               String transactionNo) {
         // 仓库
         String warehouseId = param.getWarehouseId();
         // SKU

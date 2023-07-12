@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -406,14 +407,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //发送金蝶
             list.forEach(obj -> syncKingdeeTransferInfoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
             //发送马帮（非马帮平台的才需要推送）
-<<<<<<< HEAD
-            list.forEach(obj->{
-                // 直接调拨单发送马帮出入库
-                if(Objects.equals(obj.getThirdPartySystem(), ThirdPartySystemEnum.ENUM_OTHER.getCode())) {
-                    syncMabangTransferService.syncDataToMabang(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode());
-                }
-            });
-=======
             // TODO 正式上线时需注释掉
             if(Objects.equals(transferSyncToMb, Boolean.TRUE)) {
                 list.forEach(obj->{
@@ -424,7 +417,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                     }
                 });
             }
->>>>>>> 2d27a68... 直接调拨单推送到马帮增加开关
         } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
             log.info("直接调拨单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
             //中止当前审核流程

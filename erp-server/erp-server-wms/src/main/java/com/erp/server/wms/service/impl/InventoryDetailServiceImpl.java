@@ -1,23 +1,20 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.SuperServiceImpl;
-import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.wms.entity.InventoryDetailEntity;
 import com.erp.server.wms.mapper.InventoryDetailMapper;
-import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.InventoryDetailService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -33,17 +30,11 @@ import java.util.stream.Collectors;
 @Service
 public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetailMapper, InventoryDetailEntity> implements InventoryDetailService {
 
-    @Autowired
-    private InventoryDetailMapper inventoryDetailMapper;
-
-    @Autowired
-    private CommonService commonService;
-
     @Override
     public InventoryDetailEntity findOneDetail(String inventoryInfoId, LocalDate instockBatchDate) {
         LambdaQueryWrapper<InventoryDetailEntity> queryWrapper = new LambdaQueryWrapper();
         queryWrapper.eq(InventoryDetailEntity::getInfoId, inventoryInfoId)
-        .eq(InventoryDetailEntity::getInstockBatchDate, instockBatchDate).last("limit 1");
+                .eq(InventoryDetailEntity::getInstockBatchDate, instockBatchDate).last("limit 1");
         return baseMapper.selectOne(queryWrapper);
     }
 
@@ -60,9 +51,10 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public int updateQtyById(String id, Integer qty, Integer version) {
-        LoginUser loginUser = commonService.getUserInfo();
-        return inventoryDetailMapper.updateQtyById(id, qty, version, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
+    public boolean updateQtyById(String id, Integer qty) {
+        boolean flag = lambdaUpdate().setSql(StrUtil.format("{}={}+{}", "qty","qty", qty)).eq(InventoryDetailEntity::getId, id).update();
+        return flag;
+        // return inventoryDetailMapper.updateQtyById(id, qty, version, LocalDateTime.now(), loginUser.getUid(), loginUser.getUserName());
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -84,8 +76,8 @@ public class InventoryDetailServiceImpl extends SuperServiceImpl<InventoryDetail
             Integer afterInventoryDetailQty = originInventoryDetailQty + qty;
             log.info("单据日期：【{}】,库存表id：【{}】，原库存明细数量：【{}】，操作数量：【{}】，操作后库存明细数量：【{}】，修改库存明细数据", inventoryInfoId, billDate, originInventoryDetailQty, qty, afterInventoryDetailQty);
             // 更新库存明细数量
-            int updateCnt = this.updateQtyById(inventoryDetail.getId(), qty, inventoryDetail.getVersion());
-            if(updateCnt != 1) {
+            boolean updateFlag = this.updateQtyById(inventoryDetail.getId(), qty);
+            if(!updateFlag) {
                 throw new ServiceException(ApiError.ERROR_1027);
             }
         }

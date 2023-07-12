@@ -33,10 +33,9 @@ public interface InventoryDetailService  extends SuperService<InventoryDetailEnt
      * 修改库存明细表数量
      * @param id
      * @param qty（操作的数量，如果是扣减需传负数）
-     * @param version
      * @return
      */
-    int updateQtyById(String id, Integer qty, Integer version);
+    boolean updateQtyById(String id, Integer qty);
 
     /**
      * 新增或修改库存明细
