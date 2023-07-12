@@ -59,7 +59,7 @@ public class DmpBomServiceImpl extends SuperServiceImpl<DmpBomMapper, DmpBomEnti
         }
         this.saveBatch(bomEntityList);
         // 预警
-        if("machining".equals(ext.getRelationType())){
+        if("machining".equals(ext.getRelationType()) && CollectionUtil.isEmpty(bomList)){
             // 预警
             WarnMsgInfoDTO warnMsgInfo = getWarnMsgInfoDTO(ext, bomList);
             mqProducerService.sendWarnMsg(warnMsgInfo);
