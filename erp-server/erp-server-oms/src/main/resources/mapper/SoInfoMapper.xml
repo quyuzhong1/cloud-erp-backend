@@ -173,7 +173,6 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        ORDER BY si.create_time DESC,sod.id  ASC
     </select>
 
     <select id="listExport" resultType="com.erp.model.oms.dto.SoInfoDTO$PagingViewDTO">
