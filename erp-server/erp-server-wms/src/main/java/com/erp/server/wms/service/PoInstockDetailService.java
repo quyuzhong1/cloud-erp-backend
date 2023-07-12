@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.PoInstockDetailDTO;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
@@ -72,5 +73,15 @@ public interface PoInstockDetailService extends SuperService<PoInstockDetailEnti
      * @return List<PurchaseStockInDetailEntity> 
      */
     List<PoInstockDetailEntity> listDetailByPodIds(List<String> podIds);
+
+
+    /**
+     * 更新金蝶明细id
+     * @Author Luo_WG
+     * @Date 2023/7/12 14:20
+     * @param list
+     * @return void
+     **/
+    void updateKingdeeDetailId(JSONArray list);
 
 }

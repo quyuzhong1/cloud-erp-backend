@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
+import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -18,6 +19,7 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
@@ -46,6 +48,9 @@ public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Obje
     @Resource
     private KingdeeCommonService kingdeeCommonService;
 
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
+
 
     private String formId;
     public static void main(String[] args) {
@@ -54,44 +59,94 @@ public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Obje
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_INSTOCK.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "CGRK2542792"));
+        queryFilters.add(String.format("FBillNo = '%s'", "CGRK2701678"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FID,FInStockEntry_FEntryID,FStockLocId.FF100014";
+        String fieldKeys = "FParentRowId,FInStockEntry_FEntryID,FSRCBILLTYPEID,FSRCBillNo,FSRCRowId,FMaterialId.FNumber,FPOOrderNo,FPOORDERENTRYID,FInStockEntry_Link_FSBillId";
         System.out.println(filterStr);
-        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,1);
-        System.out.println(queryList);
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,3);
+        for (Map<String, Object> map : queryList) {
+            System.out.println(map);
+        }
+        queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FBillNo = '%s'", "CGRK23071200003"));
+        filterStr = String.join(" and ", queryFilters);
+        fieldKeys = "FParentRowId,FInStockEntry_FEntryID,FSRCBILLTYPEID,FSRCBillNo,FSRCRowId,FMaterialId.FNumber,FPOOrderNo,FPOORDERENTRYID,FSRCRowId,FInStockEntry_Link_FSBillId";
+        System.out.println(filterStr);
+        queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,3);
+        for (Map<String, Object> map : queryList) {
+            System.out.println(map);
+        }
 
-
+/*
         //模块类型
         Integer type = ApiModuleTypeEnum.PURCHASE_STOCK_IN.getCode();
         K3CloudApi client = new K3CloudApi();
 
-        JSONObject json = JSONUtil.parseObj("{\"" +
-                "FBillTypeID\":{\"FNumber\":\"RKD01_SYS\"},\"" +
-                "FBillNo\":\"CGRK23070700002\",\"" +
-                "FDate\":\"2023-07-07\",\"" +
-                "FStockOrgId\":{\"FNumber\":\"113\"},\"" +
-                "FPurchaseOrgId\":{\"FNumber\":\"113\"},\"" +
-                "FPurchaseDeptId\":{\"FNumber\":\"BM000004\"},\"" +
-                "FProviderContactID\":{\"FName\":\"\"},\"" +
-                "FPurchaserId\":{\"FName\":\"祝梦彬\",\"FNumber\":\"\"},\"" +
-                "FSupplyAddress\":\"中山市坦洲镇第三工业区滨河西路9号A幢\",\"" +
-                "FSupplierId\":{\"FNumber\":\"GYS23070600003\",\"FName\":\"中山芯思塑料制品有限公司\"},\"" +
-                "F_ulz_Combo\":2,\"" +
-                "FInStockEntry\":[{\"" +
-                "" +
-                "FMaterialId\":{\"FNumber\":\"YZJ2985\"},\"" +
-                "FRealQty\":100,\"" +
-                "FStockId\":{\"FNumber\":\"jp-jgsc\",\"FName\":\"加工商仓库\"},\"" +
-
-                "FNote\":\"\",\"" +
-                "FPriceBaseQty\":100,\"" +
-                "FUnitID\":{\"FNumber\":\"Pcs\"},\"" +
-                "FPriceUnitID\":{\"FNumber\":\"ge\"},\"" +
-                "FRemainInStockUnitId\":{\"FNumber\":\"Pcs\"},\"" +
-                "FPOOrderNo\":\"PO23070700001\",\"" +
-                "FStockLocId\":{\"FSTOCKLOCID__FF100014\":{\"FNumber\":\"VEN00016\"}},\"" +
-                "FRemainInStockQty\":100}]}");
+        JSONObject json = JSONUtil.parseObj("{ \"FBillTypeID\" :{ \"FNumber\" : \"RKD01_SYS\" },\n" +
+                "\"FBillNo\" : \"CGRK23071200003\",\n" +
+                "\"FDate\" : \"2023-07-12\",\n" +
+                "\"FStockOrgId\" :{ \"FNumber\" : \"113\" },\n" +
+                "\"FPurchaseOrgId\" :{ \"FNumber\" : \"113\" },\n" +
+                "\"FPurchaseDeptId\" :{ \"FNumber\" : \"BM000004\" },\n" +
+                "\"FProviderContactID\" :{ \"FName\" : \"\" },\n" +
+                "\"FPurchaserId\" :{ \"FName\" : \"祝梦彬\",\n" +
+                "\"FNumber\" : \"\" },\n" +
+                "\"FSupplyAddress\" : \"测试\",\n" +
+                "\"FSupplierId\" :{ \"FNumber\" : \"GYS23070600001\",\n" +
+                "\"FName\" : \"供应商1（测试专用勿动）\" },\n" +
+                "\"F_ulz_Combo\" : 2,\n" +
+                "\"FInStockEntry\" :[{ \"FInStockEntry_FEntryID\" : \"\",\n" +
+                "\"FMaterialId\" :{ \"FNumber\" : \"test-sku\" },\n" +
+                "\"FRealQty\" : 1,\n" +
+                "\"FStockId\" :{ \"FNumber\" : \"test01\",\n" +
+                "\"FName\" : \"测试仓（勿动）\" },\n" +
+                "\"FStockLocId\" :{ \"FSTOCKLOCID__FF100014\" :{ \"FNumber\" : \"\" }},\n" +
+                "\"F_ULZ_TEXT1\" : \"\",\n" +
+                "\"FNote\" : \"\",\n" +
+                "\"FPriceBaseQty\" : 1,\n" +
+                "\"FUnitID\" :{ \"FNumber\" : \"Pcs\" },\n" +
+                "\"FPriceUnitID\" :{ \"FNumber\" : \"ge\" },\n" +
+                "\"FRemainInStockUnitId\" :{ \"FNumber\" : \"Pcs\" },\n" +
+                "\"FPOOrderNo\" : \"PO23071200001\",\n" +
+                "\"FRemainInStockQty\" : 1,\n" +
+                "\"FSupplierId\" :{ \"FName\" : \"供应商1（测试专用勿动）\",\n" +
+                "\"FNumber\" : \"GYS23070600001\" },\n" +
+                "\"FSRCBillNo\" : \"PO23071200001\",\n" +
+                "\"FSRCBILLTYPEID\" : \"PUR_PurchaseOrder\" },{ \"FInStockEntry_FEntryID\" : \"\",\n" +
+                "\"FMaterialId\" :{ \"FNumber\" : \"test-sku\" },\n" +
+                "\"FRealQty\" : 1,\n" +
+                "\"FStockId\" :{ \"FNumber\" : \"test01\",\n" +
+                "\"FName\" : \"测试仓（勿动）\" },\n" +
+                "\"FStockLocId\" :{ \"FSTOCKLOCID__FF100014\" :{ \"FNumber\" : \"\" }},\n" +
+                "\"F_ULZ_TEXT1\" : \"\",\n" +
+                "\"FNote\" : \"\",\n" +
+                "\"FPriceBaseQty\" : 1,\n" +
+                "\"FUnitID\" :{ \"FNumber\" : \"Pcs\" },\n" +
+                "\"FPriceUnitID\" :{ \"FNumber\" : \"ge\" },\n" +
+                "\"FRemainInStockUnitId\" :{ \"FNumber\" : \"Pcs\" },\n" +
+                "\"FPOOrderNo\" : \"PO23071200001\",\n" +
+                "\"FRemainInStockQty\" : 1,\n" +
+                "\"FSupplierId\" :{ \"FName\" : \"供应商1（测试专用勿动）\",\n" +
+                "\"FNumber\" : \"GYS23070600001\" },\n" +
+                "\"FSRCBillNo\" : \"PO23071200001\",\n" +
+                "\"FSRCBILLTYPEID\" : \"PUR_PurchaseOrder\" },{ \"FInStockEntry_FEntryID\" : \"\",\n" +
+                "\"FMaterialId\" :{ \"FNumber\" : \"test-sku02\" },\n" +
+                "\"FRealQty\" : 1,\n" +
+                "\"FStockId\" :{ \"FNumber\" : \"test01\",\n" +
+                "\"FName\" : \"测试仓（勿动）\" },\n" +
+                "\"FStockLocId\" :{ \"FSTOCKLOCID__FF100014\" :{ \"FNumber\" : \"\" }},\n" +
+                "\"F_ULZ_TEXT1\" : \"\",\n" +
+                "\"FNote\" : \"\",\n" +
+                "\"FPriceBaseQty\" : 1,\n" +
+                "\"FUnitID\" :{ \"FNumber\" : \"Pcs\" },\n" +
+                "\"FPriceUnitID\" :{ \"FNumber\" : \"ge\" },\n" +
+                "\"FRemainInStockUnitId\" :{ \"FNumber\" : \"Pcs\" },\n" +
+                "\"FPOOrderNo\" : \"PO23071200001\",\n" +
+                "\"FRemainInStockQty\" : 1,\n" +
+                "\"FSupplierId\" :{ \"FName\" : \"供应商1（测试专用勿动）\",\n" +
+                "\"FNumber\" : \"GYS23070600001\" },\n" +
+                "\"FSRCBillNo\" : \"PO23071200001\",\n" +
+                "\"FSRCBILLTYPEID\" : \"PUR_PurchaseOrder\" }]}");
 
         //判断金蝶系统是否已存在该数据
         SaveParam param = new SaveParam(json);
@@ -103,7 +158,7 @@ public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Obje
             }
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
-        }
+        }*/
     }
 
     @Override
@@ -181,15 +236,24 @@ public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Obje
         try {
             model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),(String)map.get("syncKingdeeId"),(String)map.get("code"));
         } catch (Exception e) {
-/*            Map<String, Object> pushMap = new HashMap<>();
-            pushMap.put("ids", Arrays.asList(map.get("soSyncKingdeeId")));
-            pushMap.put("Numbers", Arrays.asList(map.get("soCode")));
-            pushMap.put("RuleId", "4cd577aa-2c48-a50c-11ee-0387e3cd5475");
-            pushMap.put("TargetFormId", KingdeePushModuleEnum.SAL_OUTSTOCK.getCode());
+            /*Map<String, Object> pushMap = new HashMap<>();
+            pushMap.put("ids", map.get("poSyncKingdeeId"));
+            pushMap.put("EntryIds", map.get("poKingdeeDetailIds"));
+            pushMap.put("RuleId", "PUR_PurchaseOrder-STK_InStock");
+            pushMap.put("TargetFormId", KingdeePushModuleEnum.STK_INSTOCK.getCode());
             pushMap.put("CustomParams", json);
+            //读取配置，初始化SDK
+            KingdeeApiUtils sourceApiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_INSTOCK.getCode());*/
             //更新数据
-            kingdeeCommonService.push(platformEntity,map,apiUtils,JSONUtil.parseObj(pushMap),param,type);*/
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+//            Boolean isAdd = kingdeeCommonService.push(platformEntity, map, sourceApiUtils, apiUtils, JSONUtil.parseObj(pushMap), param, type, json);
+
+            Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            if (isAdd) {
+                //给明细id赋值
+                JSONArray jsonArray = setDetailIdForJSONObject(apiUtils,platformEntity, map, type);
+                //更新明细id
+                updateKingdeeDetailId(jsonArray);
+            }
             return;
         }
         //查找到数据后，判断其审核状态
@@ -213,5 +277,62 @@ public class KingdeeStockInConsumer implements RocketMQListener<Map<String, Obje
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
         }
+    }
+
+    /**
+     * 给明细id赋值
+     * @Author Luo_WG
+     * @Date 2023/7/12 10:18
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     * @return cn.hutool.json.JSONArray
+     **/
+    private JSONArray setDetailIdForJSONObject (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+
+        JSONArray list = JSONUtil.parseArray(map.get("list"));
+        String id = (String)map.get("syncKingdeeId");
+
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FId = '%s'", id));
+        String filterStr = String.join(" and ", queryFilters);
+        //查询子单据id
+        String fieldKeys = "FInStockEntry_FEntryID";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
+        if (CollectionUtils.isEmpty(queryList)) {
+            //错误日志
+            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), filterStr, "未查询到子单据id", type, ApiSendStatusEnum.FAILURE.getCode());
+            return list;
+        }
+        JSONArray removeObj = new JSONArray();
+        JSONArray addObj = new JSONArray();
+        for (int i = 0; i < list.size(); i++) {
+            Object obj = list.get(i);
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
+            JSONObject newJson = new JSONObject(new LinkedHashMap<>());
+            if (list.size() >= queryList.size()) {
+                //金蝶明细id赋值
+                newJson.set("kingdeeDetailId",queryList.get(i).get("FInStockEntry_FEntryID"));
+            }
+            newJson.putAll(jsonObject);
+            removeObj.set(obj);
+            addObj.set(newJson);
+        }
+        list.removeAll(removeObj);
+        list.addAll(addObj);
+        return list;
+    }
+
+
+    /**
+     * 更新明细id
+     */
+    private void updateKingdeeDetailId (JSONArray jsonArray) {
+        //更新业务单据状态
+        Map<String,Object> params = new HashMap<>(MathUtil.THREE);
+        params.put("code",ApiModuleTypeEnum.PURCHASE_STOCK_IN.getCode().toString());
+        params.put("details",jsonArray);
+        wmsTaskFeign.updateBusinessSyncKingdeeStatus(params);
     }
 }

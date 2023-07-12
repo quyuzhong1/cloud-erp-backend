@@ -1,5 +1,8 @@
 package com.erp.server.wms.kingdee.impl;
 
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.server.wms.kingdee.SyncKingdeeService;
 import com.erp.server.wms.service.*;
@@ -37,6 +40,9 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     private PoInstockService poInstockService;
 
     @Resource
+    private PoInstockDetailService poInstockDetailService;
+
+    @Resource
     private SoOutstockService soOutstockService;
 
     @Resource
@@ -52,6 +58,8 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         String status = (String)params.get("status");
         //金蝶id
         String syncKingdeeId = (String)params.get("kingdeeId");
+        //明细数据
+        Object details = params.get("details");
 
         //仓库
         if (ApiModuleTypeEnum.WAREHOUSE_INFO.getCode().toString().equals(code)) {
@@ -75,6 +83,11 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         }
         //采购入库单
         if (ApiModuleTypeEnum.PURCHASE_STOCK_IN.getCode().toString().equals(code)) {
+            if (ObjectUtils.isNotEmpty(details)) {
+                JSONArray list = JSONUtil.parseArray(JSONUtil.toJsonStr(params.get("details")));
+                poInstockDetailService.updateKingdeeDetailId(list);
+                return;
+            }
             poInstockService.updateSyncKingdeeStatus(businessId,status,syncKingdeeId,null);
         }
         //销售出库单
