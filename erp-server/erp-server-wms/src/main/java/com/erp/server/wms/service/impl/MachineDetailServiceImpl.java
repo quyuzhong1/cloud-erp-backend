@@ -117,7 +117,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
     public List<MachineDetailEntity> listByMainId(String mainId) {
         return lambdaQuery()
                 .eq(MachineDetailEntity::getMainId,mainId)
-                .orderByDesc(MachineDetailEntity::getId)
+                .orderByAsc(MachineDetailEntity::getId)
                 .list();
     }
 

@@ -102,7 +102,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
     public List<TransferInfoDetailEntity> listByMainId(String mainId) {
         return lambdaQuery()
                 .eq(TransferInfoDetailEntity::getMainId,mainId)
-                .orderByDesc(TransferInfoDetailEntity::getId)
+                .orderByAsc(TransferInfoDetailEntity::getId)
                 .list();
     }
 

@@ -89,7 +89,7 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
     public List<OtherInstockDetailEntity> listByMainId(String mainId) {
         return lambdaQuery()
                 .eq(OtherInstockDetailEntity::getMainId,mainId)
-                .orderByDesc(OtherInstockDetailEntity::getId)
+                .orderByAsc(OtherInstockDetailEntity::getId)
                 .list();
     }
 

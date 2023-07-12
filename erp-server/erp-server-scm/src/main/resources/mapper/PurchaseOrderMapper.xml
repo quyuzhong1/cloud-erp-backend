@@ -139,7 +139,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        po.create_time desc
+        po.id desc,pod.id asc
     </select>
     
     <select id="listExportExcel" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$ListDTO">
