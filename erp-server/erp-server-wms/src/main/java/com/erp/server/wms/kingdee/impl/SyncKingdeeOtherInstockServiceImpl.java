@@ -130,6 +130,12 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
                 //调出仓库
                 jsonObject.set("warehouseCode", warehouseCode);
             }
+            if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+                //库存组织编码
+                String orgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOrgId()))
+                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+                jsonObject.set("orgCode", orgCode);
+            }
             //仓位
             jsonObject.set("warehouseLocation", detail.getWarehouseLocation());
             //备注
