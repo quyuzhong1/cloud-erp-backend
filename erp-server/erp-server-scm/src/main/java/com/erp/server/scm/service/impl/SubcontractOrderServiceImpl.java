@@ -1262,6 +1262,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
         }
 
+        //最新审核人
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         list.forEach(obj -> {
             dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SUBCONTRACT_ORDER.getCode(), obj.getId()));
