@@ -44,7 +44,7 @@ public class KingdeeFeignController extends BaseController {
      * @param dto
      * @return
      */
-    @PostMapping("/getInfo")
+    @PostMapping("/getDeptInfo")
     public DeptKingdeeEntity getInfo(@RequestBody DeptKingdeeDTO.FindDeptKingdeeDTO dto) {
         return deptKingdeeService.getInfo(dto);
     }
