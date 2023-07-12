@@ -352,6 +352,21 @@ public class OtherOutstockDTO implements Serializable {
         private String inventoryOrgName;
 
         /**
+         * 领料员
+         */
+        private String receiverName;
+
+        /**
+         * 仓管员
+         */
+        private String warehouseKeeperName;
+
+        /**
+         * 部门
+         */
+        private String deptName;
+
+        /**
          * 客户信息
          */
         private OtherOutstockCustomerDTO.UpdateDTO otherOutstockCustomer;

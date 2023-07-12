@@ -312,6 +312,20 @@ public class OtherInstockDTO implements Serializable {
          */
         private String orgName;
 
+        /**
+         * 部门名称
+         */
+        private String deptName;
+
+        /**
+         * 仓管员
+         */
+        private String warehouseKeeperName;
+
+        /**
+         * 验收员
+         */
+        private String receiverName;
 
         /**
          * 明细
