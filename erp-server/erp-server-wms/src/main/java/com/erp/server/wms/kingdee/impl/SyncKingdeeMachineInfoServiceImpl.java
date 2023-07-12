@@ -122,19 +122,22 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
         //事务类型
         resultMap.put("workType", entity.getWorkType());
 
+        String inventoryOrgCode = "";
+        String receiveOrgCode = "";
         //组织机构编码
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getInventoryOrgId(),entity.getReceiveOrgId()));
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
-            //库存组织编码
-            String inventoryOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInventoryOrgId()))
-                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
-            resultMap.put("inventoryOrgCode", inventoryOrgCode);
 
-            //领料组织编码
-            String receiveOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId()))
+            inventoryOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getInventoryOrgId()))
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
-            resultMap.put("receiveOrgCode", receiveOrgCode);
+
+            receiveOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
         }
+        //库存组织编码
+        resultMap.put("receiveOrgCode", receiveOrgCode);
+        //领料组织编码
+        resultMap.put("inventoryOrgCode", inventoryOrgCode);
 
         List<JSONObject> list = new ArrayList<>();
         for (MachineDetailEntity detail : detailList) {
@@ -161,6 +164,10 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
                 //参照版本
                 jsonObject.set("referenceVersion", referenceVersion);
             }
+            //库存组织编码
+            jsonObject.set("inventoryOrgCode", inventoryOrgCode);
+            //领料组织编码
+            jsonObject.set("receiveOrgCode", receiveOrgCode);
             //备注
             jsonObject.set("remark", detail.getRemark());
 
@@ -184,6 +191,10 @@ public class SyncKingdeeMachineInfoServiceImpl implements SyncKingdeeMachineInfo
                     //子件调出仓库
                     subObject.set("warehouseCode", warehouseCode);
                 }
+                //库存组织编码
+                subObject.set("inventoryOrgCode", inventoryOrgCode);
+                //领料组织编码
+                subObject.set("receiveOrgCode", receiveOrgCode);
                 //备注
                 subObject.set("remark", machineSubComponents.getRemark());
                 subComponents.add(subObject);
