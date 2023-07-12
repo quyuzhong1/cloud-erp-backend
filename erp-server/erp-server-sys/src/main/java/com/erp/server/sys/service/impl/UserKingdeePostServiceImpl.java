@@ -92,6 +92,9 @@ public class UserKingdeePostServiceImpl extends SuperServiceImpl<UserKingdeePost
 
     @Override
     public List<KingdeePostDTO.UserKingdeePostInfoDTO> listUserKingdeePostByUserIds(List<String> userIds) {
+        if (CollectionUtils.isEmpty(userIds)) {
+            return Collections.EMPTY_LIST;
+        }
         List<UserKingdeePostEntity> list = lambdaQuery()
                 .in(UserKingdeePostEntity::getUserId, userIds)
                 .list();
