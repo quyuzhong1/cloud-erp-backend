@@ -49,6 +49,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -395,6 +396,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
             customerName = customerInfo.getName();
         }
+        List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(Arrays.asList(soInfo.getId()));
+
+        List<ProcessTaskManagementEntity> collect = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(soInfo.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE)).collect(Collectors.toList());
+        List<String> curApproveName = collect.stream().map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
+        String userName = StringUtils.join(curApproveName, ",");
+        view.setApproveUserName(userName);
+        if (CollectionUtils.isNotEmpty(collect)) {
+            view.setApproveTime(collect.get(MathUtil.ZERO).getApproveTime());
+        }
         view.setCustomerName(customerName);
         String warehouseId = view.getWarehouseId();
         BillApproveStatusEnum approveStatus = view.getApproveStatus();
@@ -463,6 +473,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
+        //销售部门id
+        List<String> salesDeptIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getSalesDeptId).distinct().collect(Collectors.toList());
+        List<SysDepartmentEntity> departmentList = sysUserFeign.listDeptByIds(salesDeptIdList);
         //销售订单id集合
         List<String> soIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getId).collect(Collectors.toList());
         //发货通知单的
@@ -497,11 +510,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(soIdList);
         for (SoInfoDTO.PagingViewDTO item : list) {
-            List<String> curApproveName = processTaskManagementEntities.stream().filter(req ->req.getBusinessId().equals(item.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
+            List<String> curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(item.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
             String userName = StringUtils.join(curApproveName, ",");
             item.setApproveUserName(userName);
             boolean contains = flagList.contains(item.getId());
             String warehouseId = item.getWarehouseId();
+            String salesDeptId = item.getSalesDeptId();
+            String deptName = departmentList.stream().filter(d -> d.getId().equals(salesDeptId)).
+                    map(SysDepartmentEntity::getName).findFirst().orElse("");
+            item.setSalesDeptName(deptName);
             BillApproveStatusEnum billApproveStatus = item.getApproveStatus();
             item.setApproveStatusName(billApproveStatus.getName());
             String type = item.getOrderType();
@@ -580,6 +597,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setProductName(sku.getSkuName());
                 item.setUnit(sku.getUnitName());
             }
+            //税率
+            BigDecimal taxRate = item.getTaxRate();
+            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
 
             if (contains) {
                 item.setCode("");
@@ -597,6 +617,23 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             flagList.add(item.getId());
         }
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public SoInfoDTO.PagingTotalDTO pagingTotal(SoInfoDTO.PagingParamDTO dto) {
+
+        List<String> paramDetailIds = soDetailService.listParamDetailIdsBySearchType(dto.getSearchType());
+
+        if (Objects.isNull(paramDetailIds)) {
+            paramDetailIds = Collections.emptyList();
+        } else {
+            if (paramDetailIds.size() == 0) {
+                SoInfoDTO.PagingTotalDTO pagingTotalDTO = new SoInfoDTO.PagingTotalDTO(MathUtil.ZERO,BigDecimal.ZERO,BigDecimal.ZERO);
+                return pagingTotalDTO;
+            }
+        }
+        SoInfoDTO.PagingTotalDTO pagingTotalDTO = baseMapper.pagingTotal(dto, paramDetailIds);
+        return pagingTotalDTO;
     }
 
     /**

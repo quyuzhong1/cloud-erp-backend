@@ -70,6 +70,23 @@ public class SoInfoController extends BaseController {
         return success(pagingVO);
     }
 
+    /**
+     * 列表查询总数
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/pagingTotal")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:so:paging",
+            tableAlias = "si"
+    )
+    public ApiResult<SoInfoDTO.PagingTotalDTO> pagingTotal(@RequestBody @Validated SoInfoDTO.PagingParamDTO dto) {
+        SoInfoDTO.PagingTotalDTO viewDTO = soInfoService.pagingTotal(dto);
+        return success(viewDTO);
+    }
+
 
     /**
      * 暂存

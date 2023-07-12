@@ -7,6 +7,7 @@ import com.common.core.anno.StateEnumValue;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.TradeTermEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -127,6 +128,17 @@ public class SoInfoDTO implements Serializable {
 
 
         /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+
+        /**
+         * 销售部门名称
+         */
+        private String salesDeptName;
+
+
+        /**
          * 销售员
          */
         private String sellerName;
@@ -211,10 +223,31 @@ public class SoInfoDTO implements Serializable {
          */
         private LocalDate requireDate;
 
+
+        /**
+         * 销售单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 含税销售单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
         /**
          * 销售金额
          */
         private BigDecimal amount;
+
+        /**
+         * 含税销售金额
+         */
+        private BigDecimal taxAmount;
 
         /**
          * 最新审核人
@@ -404,6 +437,13 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal shippingFee;
 
         /**
+         * 报关费
+         */
+        @PositiveOrZero(message = "报关费不能为负数", groups = {AddGroup.class})
+        private BigDecimal customsFee;
+
+
+        /**
          * 客户id
          */
         @NotBlank(message = "客户不能为空", groups = {AddGroup.class})
@@ -558,6 +598,11 @@ public class SoInfoDTO implements Serializable {
         private LocalDate requireDate;
 
         /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+
+        /**
          * 组织id
          */
         private String salesOrgId;
@@ -689,12 +734,6 @@ public class SoInfoDTO implements Serializable {
         private LocalDate receiveDate;
 
         /**
-         * 单据日期
-         */
-        private LocalDate billDate;
-
-
-        /**
          * 收款金额
          */
         private BigDecimal receiveAmount;
@@ -728,6 +767,31 @@ public class SoInfoDTO implements Serializable {
          * 贸易条款
          */
         private String tradeTerm;
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 审核人
+         */
+        private String approveUserName;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
+         * 销售员名称
+         */
+        private String sellerName;
 
         /**
          * 订单产品详情
@@ -910,6 +974,12 @@ public class SoInfoDTO implements Serializable {
         private BigDecimal shippingFee;
 
         /**
+         * 报关费
+         */
+        @PositiveOrZero(message = "报关费不能为负数", groups = {AddGroup.class})
+        private BigDecimal customsFee;
+
+        /**
          * 客户id
          */
         @NotBlank(message = "客户不能为空")
@@ -1011,7 +1081,6 @@ public class SoInfoDTO implements Serializable {
         /**
          * 贸易条款：oms/common/enumDropDown?type=TradeTermEnum
          */
-        @StateEnumValue(clazz = TradeTermEnum.class, message = "贸易条款有误", groups = {AddGroup.class})
         private String tradeTerm;
 
         @Valid
@@ -1541,4 +1610,27 @@ public class SoInfoDTO implements Serializable {
          */
         private String remark;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PagingTotalDTO {
+
+        /**
+         * 合计数量
+         */
+        private Integer totalQty;
+
+        /**
+         * 合计金额
+         */
+        private BigDecimal totalAmount;
+
+        /**
+         * 合计含税金额
+         */
+        private BigDecimal totalTaxAmount;
+
+    }
+
 }

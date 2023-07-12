@@ -277,6 +277,12 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     @TableField("trade_term")
     private String tradeTerm;
 
+    /**
+     * 报关费
+     */
+    @TableField("customs_fee")
+    private BigDecimal customsFee;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
