@@ -1,6 +1,7 @@
 package com.erp.server.sys.service.impl;
 
 import com.alibaba.excel.EasyExcel;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.service.SuperServiceImpl;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
@@ -65,8 +66,10 @@ public class DeptKingdeeServiceImpl extends SuperServiceImpl<DeptKingdeeMapper, 
     @Override
     public DeptKingdeeEntity getInfo(DeptKingdeeDTO.FindDeptKingdeeDTO dto) {
 
-        return this.lambdaQuery().eq(DeptKingdeeEntity::getUseOrgCode, dto.getOrgCode()).
-                eq(DeptKingdeeEntity::getDeptId, dto.getDeptId()).last("LIMIT 1")
+        return this.lambdaQuery()
+                .eq(StringUtils.isNotBlank(dto.getOrgCode()),DeptKingdeeEntity::getUseOrgCode, dto.getOrgCode())
+                .eq(StringUtils.isNotBlank(dto.getOrgId()),DeptKingdeeEntity::getUseOrgId,dto.getOrgId())
+                .eq(DeptKingdeeEntity::getDeptId, dto.getDeptId()).last("LIMIT 1")
                 .one();
     }
 }
