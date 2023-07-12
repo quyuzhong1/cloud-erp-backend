@@ -107,7 +107,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        mi.id desc,md.id desc
+        mi.id desc,md.id asc
     </select>
 
     <select id="listCount" resultType="java.lang.Integer">
