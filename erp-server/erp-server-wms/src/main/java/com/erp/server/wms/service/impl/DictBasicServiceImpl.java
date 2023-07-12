@@ -94,6 +94,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
     public List<DictBasicDTO.DropDownDTO> listByType(String type, String remark) {
         List<DictBasicEntity> list = lambdaQuery().eq(DictBasicEntity::getType, type)
                 .eq("processCondition".equalsIgnoreCase(type), DictBasicEntity::getRemark, remark)
+                .orderByAsc(DictBasicEntity::getSort)
                 .list();
         List<DictBasicDTO.DropDownDTO> result = list.stream().map(DictBasicDTO.DropDownDTO::new).collect(Collectors.toList());
         return result;
