@@ -15,10 +15,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.SkuApproveConfigureEnum;
-import com.common.business.enums.SyncKingdeeOperateEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.*;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -1903,6 +1900,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 List<String> productProperty = productPropertyList.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
                 req.setProductProperty(StringUtils.join(productProperty, ","));
 
+            }
+
+            // 销售平台
+            if (StrUtils.isNotEmpty(req.getSalesPlatform())) {
+                req.setSalesPlatform(SalesPlatformEnum.getByCode(req.getSalesPlatform()).getName());
             }
 
             // 一级供应商名称

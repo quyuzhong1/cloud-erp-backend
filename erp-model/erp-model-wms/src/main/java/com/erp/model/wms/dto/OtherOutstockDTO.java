@@ -367,6 +367,11 @@ public class OtherOutstockDTO implements Serializable {
         private String deptName;
 
         /**
+         * 出货仓库
+         */
+        private String warehouseName;
+
+        /**
          * 创建人
          */
         private String createUserName;

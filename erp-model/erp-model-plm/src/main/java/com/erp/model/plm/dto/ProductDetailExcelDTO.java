@@ -202,7 +202,7 @@ public class ProductDetailExcelDTO {
     /**
      * 试产数量
      */
-    @FieldValid(fieldName = "试产数量",formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
+    @FieldValid(fieldName = "试产数量",formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
     private String trialProductionQty;
 
     /**
@@ -399,31 +399,31 @@ public class ProductDetailExcelDTO {
     /**
      * 产品尺寸(长)
      */
-    @FieldValid(fieldName = "产品尺寸(长)",formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "产品尺寸(长)")
     private String productSizeLength;
 
     /**
      * 产品尺寸(宽)
      */
-    @FieldValid(fieldName = "产品尺寸(宽)",formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "产品尺寸(宽)")
     private String productSizeWide;
 
     /**
      * 产品尺寸(高)
      */
-    @FieldValid(fieldName = "产品尺寸(高)",formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "产品尺寸(高)")
     private String productSizeHigh;
 
     /**
      * 箱规(长)
      */
-    @FieldValid(fieldName = "箱规(长)",formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "箱规(长)")
     private String boxSizeLength;
 
     /**
      * 箱规(宽)
      */
-    @FieldValid(fieldName = "箱规(宽)",formatPattern = FieldFormatPatternTypeEnum.DECIMAL)
+    @FieldValid(fieldName = "箱规(宽)")
     private String boxSizeWide;
 
     /**
