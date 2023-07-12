@@ -712,6 +712,11 @@ public class SoInfoDTO implements Serializable {
          */
         private String addressType;
 
+        /**
+         * 报关费
+         */
+        private BigDecimal customsFee;
+
 
         /**
          * 收款账号
