@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessNoConstant;
@@ -1175,6 +1176,18 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             return id;
         }
         return "";
+    }
+
+    @Override
+    public Boolean pagingUpdate(SoOutstockDTO.PagingUpdateDTO dto) {
+        SoOutstockEntity entity = this.getById(dto.getId());
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_99058);
+        }
+        boolean update = lambdaUpdate().eq(SoOutstockEntity::getId, dto.getId())
+                .set(SoOutstockEntity::getTrackNo, dto.getTrackNo())
+                .update();
+        return update;
     }
 
 }

@@ -158,6 +158,24 @@ public class SoOutstockController extends BaseController {
         return result ? success() : failure();
     }
 
+    /**
+     * 列表修改
+     * @author Will
+     * @date: 2023/7/12 16:54
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/pagingUpdate")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:so:outstock:update",
+            serviceClass = SoOutstockService.class,
+            keyIdName = "id"
+    )
+    public ApiResult pagingUpdate(@RequestBody @Validated SoOutstockDTO.PagingUpdateDTO dto) {
+        Boolean result = soOutstockService.pagingUpdate(dto);
+        return result ? success() : failure();
+    }
 
     /**
      * 审核

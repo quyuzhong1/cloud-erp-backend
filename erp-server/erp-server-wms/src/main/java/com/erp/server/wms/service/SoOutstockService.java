@@ -233,4 +233,12 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return com.erp.model.wms.entity.SoOutstockEntity
      */
     String  getByCode(String code);
+    /**
+     * @description: 列表修改
+     * @author Will
+     * @date: 2023/7/12 16:58
+     * @param dto
+     * @return String
+     */
+    Boolean pagingUpdate(SoOutstockDTO.PagingUpdateDTO dto);
 }
