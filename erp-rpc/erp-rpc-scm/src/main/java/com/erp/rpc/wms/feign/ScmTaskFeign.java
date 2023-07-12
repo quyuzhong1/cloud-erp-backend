@@ -298,4 +298,14 @@ public interface ScmTaskFeign {
      */
     @PostMapping("/feign/purchaseOrder/getLatest")
     List<PurchaseOrderDetailEntity> getLatest(@RequestBody List<String> skuIds);
+
+    /**
+     * 审核
+     * @Author Luo_WG
+     * @Date 2023/7/12 12:55
+     * @param dto
+     * @return void
+     **/
+    @PostMapping("feign/subcontractOrder/subcontractOrderApprove")
+    Boolean subcontractOrderApprove(@RequestBody BaseApproveParamDTO dto);
 }

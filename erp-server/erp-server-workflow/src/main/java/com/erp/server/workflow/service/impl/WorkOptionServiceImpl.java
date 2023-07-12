@@ -628,6 +628,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             case SUPPLIER:
                 supplierFeign.supplierApprove(baseApproveParamDTO);
                 break;
+            case SUBCONTRACT_ORDER:
+                scmTaskFeign.subcontractOrderApprove(baseApproveParamDTO);
+                break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);
         }
