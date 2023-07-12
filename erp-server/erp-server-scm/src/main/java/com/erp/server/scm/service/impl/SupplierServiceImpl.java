@@ -396,6 +396,20 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         //获取到采购订单数据
         List<PurchaseOrderSupplierEntity> orderSupplierList = purchaseOrderSupplierService.getBySupplierIds(supplierIdList);
 
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SUPPLIER.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(ApiError.ERROR_500);
+            }
+        }
+
         for (SupplierDTO.PagingViewDTO item : list) {
             String id = item.getId();
             //等级id
@@ -427,6 +441,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             //采购次数
             long purchasesCount = orderSupplierList.stream().filter(o -> o.getSupplierId().equals(id)).count();
             item.setPurchasesCount((int) purchasesCount);
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                item.setApproveUserName(curApprove);
+            }
         }
 
         return new PagingVO(pageData);

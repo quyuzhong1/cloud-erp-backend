@@ -655,6 +655,11 @@ public class SupplierDTO implements Serializable {
         private BigDecimal defectiveRate;
 
         /**
+         * 审核人名称
+         */
+        private String approveUserName;
+
+        /**
          * 创建时间
          */
         private LocalDateTime createTime;
