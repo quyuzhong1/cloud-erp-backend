@@ -607,6 +607,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 throw new ServiceException(ApiError.ERROR_98039);
             }
             exportPdfDTO.setSupplierEmail(supplierContact.getEmail());
+            exportPdfDTO.setSupplierContract(supplierContact.getPerson());
         }
 
         //仓库信息
