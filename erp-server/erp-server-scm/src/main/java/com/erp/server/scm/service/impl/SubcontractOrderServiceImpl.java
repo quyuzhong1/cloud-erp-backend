@@ -1212,7 +1212,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (PurchaseListTypeEnum.TO_BE_APPROVE.getCode().equals(params.getSearchType())) {
             approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
             //需要审核的业务ids
-            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_ORDER.getCode());
+            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
             if (CollectionUtils.isEmpty(businessIds)) {
                 return Boolean.FALSE;
             }

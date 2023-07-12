@@ -149,6 +149,12 @@
         left join subcontract_order_detail sod on so.id = sod.main_id and sod.is_deleted = false
         <where>
             so.is_deleted = false
+            <if test="params.idList != null and params.idList.size > 0">
+                and so.id in
+                <foreach collection="params.idList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
             <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
                 and so.approve_status in
                 <foreach collection="params.approveStatusList" item="item" open="(" close=")" separator=",">
