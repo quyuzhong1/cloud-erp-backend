@@ -110,11 +110,6 @@ public class QcInfoController extends BaseController {
      * @return
      */
     @PostMapping("/view")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "qc_user_id",
-            menuCode = "wms:qcBill:view",
-            serviceClass = QcInfoService.class,
-            keyIdName = "id")
     public ApiResult<QcInfoDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
         QcInfoDTO.ViewDTO view = qcInfoService.view(dto.getId());
         return success(view);
