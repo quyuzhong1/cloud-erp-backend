@@ -52,10 +52,12 @@ public class KingdeeSoReturnConsumer implements RocketMQListener<Map<String, Obj
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.SAL_RETURNSTOCK.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
 //        queryFilters.add(String.format("FDocumentStatus = '%s'", "C"));
-        queryFilters.add(String.format("FBillNo = '%s'", "XSTHD12485503"));
+        queryFilters.add(String.format("FBillNo = '%s'", "CGTH23070600017"));
         queryFilters.add(StrUtil.format("FDocumentStatus in ({})", "'B','C','D'"));
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FID," +
+                "FStocklocId," +
+                "FStockLocId.FF100014," +
                 "FBillTypeID," +
                 "FBillTypeID.FName," +
                 "FBillTypeID.FNumber," +
@@ -96,7 +98,6 @@ public class KingdeeSoReturnConsumer implements RocketMQListener<Map<String, Obj
                 "FStockId," +
                 "FStockId.FNumber," +
                 "FStockId.FName," +
-                "FStocklocId," +
                 "FStockstatusId," +
                 "FNote," +
                 "FSrcBillNo," +
@@ -110,7 +111,9 @@ public class KingdeeSoReturnConsumer implements RocketMQListener<Map<String, Obj
                 "F_ulz_KHSKU," +
                 "FAllAmount," +
                 "FReturnType," +
-                "FSOEntryId";
+                "FSOEntryId," +
+
+                "F_ULZ_data_sources";
 
         System.out.println(filterStr);
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,11);

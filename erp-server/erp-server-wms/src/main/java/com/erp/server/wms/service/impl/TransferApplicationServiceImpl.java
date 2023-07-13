@@ -24,6 +24,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
@@ -482,6 +483,11 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             throw  new ServiceException(ApiError.ERROR_99046);
         }
 
+        List<MachineInfoEntity> machineInfoEntityList = machineInfoService.listBySourceIds(ids);
+        if (CollectionUtils.isNotEmpty(machineInfoEntityList)) {
+            throw  new ServiceException(ApiError.ERROR_99046);
+        }
+
         log.info("调拨申请单反审核，ids=【{}】", JSONUtil.toJsonStr(ids));
 
         //取回流程 TODO
@@ -724,6 +730,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
     @Override
     public List<TransferApplicationDTO.ViewGenerateMachineInfo> viewGenerateMachineInfo(List<String> ids, Boolean isAutoMachine, Integer qty) {
         List<TransferApplicationDTO.ViewGenerateMachineInfo> list = baseMapper.viewGenerateMachineInfo(ids, isAutoMachine);
+        List<TransferApplicationDTO.ViewGenerateMachineInfo> sonSkuDateList = new ArrayList<>();
+
         //产品信息
         List<String> skuIds = list.stream().map(TransferApplicationDTO.ViewGenerateMachineInfo::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
@@ -744,7 +752,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             String productName = skuList.stream().filter(e -> e.getSkuId().equals(viewGenerateMachineInfo.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
             viewGenerateMachineInfo.setProductName(productName);
             //获取sku的子sku
-            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(viewGenerateMachineInfo.getSkuId())).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(viewGenerateMachineInfo.getSkuId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
                 //设置主sku标识
                 viewGenerateMachineInfo.setIsCombination(Boolean.TRUE);
@@ -761,10 +769,12 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                     info.setWarehouseId(viewGenerateMachineInfo.getWarehouseId());
                     info.setWarehouseName(viewGenerateMachineInfo.getWarehouseName());
                     info.setMachineQty(viewGenerateMachineInfo.getMachineQty() * bomChildrenSkuDTO.getQuantity());
-                    list.add(info);
+                    info.setIsBody(Boolean.FALSE);
+                    sonSkuDateList.add(info);
                 }
             }
         }
+        list.addAll(sonSkuDateList);
         list.sort(Comparator.comparing(TransferApplicationDTO.ViewGenerateMachineInfo::getSourceCode, Comparator.reverseOrder()));
         return list;
     }
@@ -777,6 +787,7 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
      * @return java.lang.Boolean
      **/
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean saveGenerateMachineInfo(List<TransferApplicationDTO.ViewGenerateMachineInfo> list) {
         //获取到保存的主单据个数
         List<String> sourceIdList = list.stream().map(TransferApplicationDTO.ViewGenerateMachineInfo::getSourceId).distinct().collect(Collectors.toList());
@@ -795,7 +806,6 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                 if (viewGenerateMachineInfo.getIsBody()) {
                     addDTO.setWorkType(viewGenerateMachineInfo.getWorkType());
                     addDTO.setWarehouseId(viewGenerateMachineInfo.getWarehouseId());
-                    addDTO.setType(viewGenerateMachineInfo.getWorkType());
                     dto.setSkuId(viewGenerateMachineInfo.getSkuId());
                     dto.setSkuNo(viewGenerateMachineInfo.getSkuNo());
                     dto.setQty(viewGenerateMachineInfo.getMachineQty());
@@ -803,8 +813,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                     dto.setWarehouseLocation(viewGenerateMachineInfo.getWarehouseLocation());
                     //查询是否包含了子sku
                     List<TransferApplicationDTO.ViewGenerateMachineInfo> infoList = list.stream().filter(req -> viewGenerateMachineInfo.getSourceId().equals(sourceId)
-                            && viewGenerateMachineInfo.getIsCombination() != Boolean.TRUE
-                            && viewGenerateMachineInfo.getIsBody() != Boolean.TRUE).collect(Collectors.toList());
+                            && req.getIsCombination() != Boolean.TRUE
+                            && req.getIsBody() != Boolean.TRUE).collect(Collectors.toList());
                     for (TransferApplicationDTO.ViewGenerateMachineInfo info : infoList) {
                         MachineSubComponentsDTO.AddDTO componentsDTO = new MachineSubComponentsDTO.AddDTO();
                         componentsDTO.setIsChild(Boolean.TRUE);
@@ -817,8 +827,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                         componentsDTOList.add(componentsDTO);
                     }
                     dto.setSubComponentsList(componentsDTOList);
+                    MachineDetailDtoList.add(dto);
                 }
-                MachineDetailDtoList.add(dto);
             }
             addDTO.setDetailList(MachineDetailDtoList);
             machineInfoService.add(addDTO);

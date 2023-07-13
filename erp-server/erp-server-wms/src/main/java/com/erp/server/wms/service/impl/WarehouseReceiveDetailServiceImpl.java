@@ -127,13 +127,13 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
      * 新增验证sku是否重复
      */
     private void checkAddDetailsRepeatSku(List<PurchaseOrderDetailEntity> list) {
-        Map<String, List<PurchaseOrderDetailEntity>> map = list.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getSkuId));
+        /*Map<String, List<PurchaseOrderDetailEntity>> map = list.stream().collect(Collectors.groupingBy(PurchaseOrderDetailEntity::getSkuId));
         for (Map.Entry<String, List<PurchaseOrderDetailEntity>> entry : map.entrySet()) {
             List<PurchaseOrderDetailEntity> value = entry.getValue();
             if (value.size() > MathUtil.ONE) {
                 throw new ServiceException(new ApiResult(1, "sku编码【".concat(value.get(0).getSkuNo()).concat("】不能重复")));
             }
-        }
+        }*/
     }
 
     /**

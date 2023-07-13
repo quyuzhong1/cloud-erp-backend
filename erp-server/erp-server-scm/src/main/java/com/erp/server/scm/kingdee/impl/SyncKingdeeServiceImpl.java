@@ -45,6 +45,9 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     @Resource
     private SubcontractOrderDetailService subcontractOrderDetailService;
 
+    @Resource
+    private PurchaseOrderDetailService purchaseOrderDetailService;
+
 
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
@@ -61,6 +64,11 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
 
         //采购订单
         if (ApiModuleTypeEnum.PURCHASE_ORDER.getCode().toString().equals(code)) {
+            if (ObjectUtils.isNotEmpty(details)) {
+                JSONArray list = JSONUtil.parseArray(JSONUtil.toJsonStr(params.get("details")));
+                purchaseOrderDetailService.updateKingdeeDetailId(list);
+                return;
+            }
             purchaseOrderService.updateSyncKingdeeStatus(Arrays.asList(businessId),status,syncKingdeeId,"");
         }
         //采购价目表

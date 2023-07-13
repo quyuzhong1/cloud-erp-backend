@@ -1,6 +1,9 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
@@ -525,5 +528,21 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     @Override
     public List<PurchaseOrderDetailEntity> getLatest(List<String> skuIds) {
         return this.baseMapper.getLatest(skuIds);
+    }
+
+    @Override
+    public void updateKingdeeDetailId(JSONArray list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (Object obj : list) {
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
+            String detailId = (String) jsonObject.get("detailId");
+            String kingdeeDetailId = (String) jsonObject.get("kingdeeDetailId");
+            this.lambdaUpdate()
+                    .set(PurchaseOrderDetailEntity::getKingdeeDetailId, kingdeeDetailId)
+                    .eq(PurchaseOrderDetailEntity::getId, detailId)
+                    .update();
+        }
     }
 }

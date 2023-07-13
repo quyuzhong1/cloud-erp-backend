@@ -1,5 +1,6 @@
 package com.erp.server.scm.service;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.service.SuperService;
 import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
@@ -136,4 +137,13 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @return List<PurchaseOrderDetailEntity>
      */
     List<PurchaseOrderDetailEntity> getLatest(List<String> skuIds);
+
+    /**
+     * 更新明细金蝶id
+     * @Author Luo_WG
+     * @Date 2023/7/12 10:22
+     * @param list
+     * @return void
+     **/
+    void updateKingdeeDetailId(JSONArray list);
 }

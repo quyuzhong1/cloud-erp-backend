@@ -1,5 +1,8 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.SuperServiceImpl;
@@ -268,6 +271,23 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
                     throw new ServiceException(new ApiResult(1,String.format("SKU【%s】入库数量不能大于",detailEntity.getSkuNo()) + receiveQty));
                 }
             }
+        }
+    }
+
+
+    @Override
+    public void updateKingdeeDetailId(JSONArray list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (Object obj : list) {
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
+            String detailId = (String) jsonObject.get("detailId");
+            String kingdeeDetailId = (String) jsonObject.get("kingdeeDetailId");
+            this.lambdaUpdate()
+                    .set(PoInstockDetailEntity::getKingdeeDetailId, kingdeeDetailId)
+                    .eq(PoInstockDetailEntity::getId, detailId)
+                    .update();
         }
     }
 }

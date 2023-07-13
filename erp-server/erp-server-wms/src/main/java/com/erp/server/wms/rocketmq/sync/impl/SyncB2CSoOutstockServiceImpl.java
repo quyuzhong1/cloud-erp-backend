@@ -252,3 +252,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     }
 
 }
+
+
+
+
+

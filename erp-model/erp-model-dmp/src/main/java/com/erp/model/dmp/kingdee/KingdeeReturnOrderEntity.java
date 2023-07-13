@@ -75,6 +75,7 @@ public class KingdeeReturnOrderEntity extends CleanBaseDTO {
     private String fSaledeptName;
     @Alias("F_ULZ_data_sources")
     private String fULZDataSources;
+
     private List<KingdeeReturnOrderItemEntity> itemEntityList;
     @Override
     public String toString() {

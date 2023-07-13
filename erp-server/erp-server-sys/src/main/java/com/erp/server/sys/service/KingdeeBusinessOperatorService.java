@@ -19,7 +19,7 @@ import java.util.List;
  */
 public interface KingdeeBusinessOperatorService extends SuperService<KingdeeBusinessOperatorEntity> {
 
-
+    
     /**
      * 导入数据
      * @author yl
@@ -27,7 +27,7 @@ public interface KingdeeBusinessOperatorService extends SuperService<KingdeeBusi
      * @param excelFile
      * @param response
      * @return java.lang.Boolean
- */
+     */
     Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 
 
@@ -40,7 +40,7 @@ public interface KingdeeBusinessOperatorService extends SuperService<KingdeeBusi
      */
     KingdeeBusinessOperatorEntity find(KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO dto);
 
-
+    
     /**
      * 获取业务员列表
      * @author yl

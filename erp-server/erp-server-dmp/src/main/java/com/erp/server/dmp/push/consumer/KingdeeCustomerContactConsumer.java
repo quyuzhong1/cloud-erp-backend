@@ -51,10 +51,12 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.BD_COMMONCONTACT.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", ""));
+        queryFilters.add(String.format("FCustId = '%s'", "335888"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FCONTACTID";
+        String fieldKeys = "FForbidStatus,FNumber";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 2);
+
+        JSONObject view = kingdeeCommonService.view(apiUtils, "3", "335888", String.valueOf(map.get("code")));
         System.out.println(queryList);
     }
 
@@ -99,13 +101,16 @@ public class KingdeeCustomerContactConsumer implements RocketMQListener<Map<Stri
         String id = String.valueOf(model.get("FCONTACTID")) ;
         //主单据id
         KingdeeUtils.makeFieldJson(json,"FCONTACTID",".", id);
+        String forbidStatus = String.valueOf(model.get("FForbidStatus")) ;
         StringBuffer allKey = FastJsonUtil.getAllKey(json);
         ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
         param.setNeedUpDateFields(apiFieldList);
         //更新数据
         kingdeeCommonService.customerGroupSaveOrUpdate(platformEntity,map,apiUtils,json,param,type);
-        //启用、禁用
-        excuteOperation(apiUtils,platformEntity,map,type);
+        if ((forbidStatus.equals("B") && Boolean.valueOf(map.get("disabled").toString()) == Boolean.FALSE) || (forbidStatus.equals("A") && Boolean.valueOf(map.get("disabled").toString()))) {
+            //启用、禁用
+            excuteOperation(apiUtils,platformEntity,map,type);
+        }
     }
 
     /**

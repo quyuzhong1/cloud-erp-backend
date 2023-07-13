@@ -95,7 +95,7 @@
         INNER JOIN (
             SELECT
                 sd.delivery_status AS type,
-        sd.main_id,
+                sd.main_id,
                 COUNT(sd.main_id) ,
                 t.skuQty AS skuQty
             FROM so_detail sd
@@ -104,7 +104,7 @@
             )t ON sd.main_id = t.main_id
             WHERE sd.is_deleted = false AND sd.is_close = false
             GROUP BY
-        sd.delivery_status,
+            sd.delivery_status,
             sd.main_id,t.skuQty
             order by sd.delivery_status
         )tt on si.id = tt.main_id
@@ -170,11 +170,11 @@
         FROM so_info si
         INNER JOIN (
             SELECT
-        sd.delivery_status AS type,
+                sd.delivery_status AS type,
                 sd.main_id,
                 COUNT(sd.main_id) ,
                 t.skuQty AS skuQty
-        FROM so_detail sd
+            FROM so_detail sd
             LEFT JOIN (
                 SELECT main_id, COUNT(main_id) skuQty FROM so_detail WHERE is_deleted = FALSE AND is_close = FALSE GROUP BY main_id
             )t ON sd.main_id = t.main_id

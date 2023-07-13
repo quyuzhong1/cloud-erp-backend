@@ -96,7 +96,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean disApprove(BaseIdsDTO.IdsDTO dto);
+    Boolean disApprove(BaseIdsDTO.IdsDTO dto, Boolean isPushKingDee);
 
     /**
      * 撤销流程

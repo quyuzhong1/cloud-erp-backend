@@ -1,7 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -27,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -73,6 +76,9 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
     @Autowired
     private PurchaseReturnOrderDetailService purchaseReturnOrderDetailService;
 
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void generateByPurchaseOrder(InstockForcastDTO.AddDTO dto) {
@@ -85,7 +91,8 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
         }
         InstockForcastEntity instockForcastEntity = new InstockForcastEntity();
         // 生成单号
-        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.RKYB, BusinessNoTypeEnum.CODE_RKYB.getCode()));
+        // String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.RKYB, BusinessNoTypeEnum.CODE_RKYB.getCode()));
+        String code =  docNoGenHelper.generateWithoutCustomerCode(BusinessNoTypeEnum.CODE_RKYB);
         // feign调用取不到登录人信息，已解决
         LoginUser loginUser = commonService.getUserInfo();
         instockForcastEntity.setCreateUserId(loginUser.getUid());
@@ -298,6 +305,10 @@ public class InstockForcastServiceImpl extends SuperServiceImpl<InstockForcastMa
                         .map(PurchaseReturnOrderDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             }
 
+            log.info("采购订单【{}】对应的采购订单明细【{}】到货状态【{}】",instockForcastEntity.getPurchaseOrderCode(), member.getPurchaseOrderDetailId(), arriveStatus);
+            log.info("采购订单明细id:{}，对应采购订单:{}, 采购订单明细采购数量:{}", member.getPurchaseOrderDetailId(), instockForcastEntity.getPurchaseOrderCode(), member.getQty());
+            log.info("采购订单明细id:{}，对应采购订单:{}, 采购订单明细采购数量:{}，收货数量：{}，采购入库[收货单下推]数量：{}, 采购入库[无收货单]数量：{}, ,退货补货退货数量：{}，原采购明细数量：{}", member.getPurchaseOrderDetailId(), instockForcastEntity.getPurchaseOrderCode(), member.getQty(),
+                    receiveQty, poRecQty, poUnRecQty, returnQty, member.getOriginQty());
             // 已到货（包括结束交货）
             if(Objects.equals(ArrivalStatusEnum.ARRIVED.getCode(), arriveStatus)) {
                 // 新采购数量- (待检 + 退货在途)

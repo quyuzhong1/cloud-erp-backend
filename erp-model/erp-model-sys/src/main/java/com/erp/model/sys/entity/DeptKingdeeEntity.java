@@ -11,7 +11,7 @@ import java.io.Serializable;
 
 /**
  * <p>
- *
+ * 
  * </p>
  *
  * @author Lambda
@@ -43,7 +43,7 @@ public class DeptKingdeeEntity extends BaseEntity<DeptKingdeeEntity> {
 
     /**
      * 金额部门名称
- */
+     */
     @TableField("kingdee_dept_name")
     private String kingdeeDeptName;
 

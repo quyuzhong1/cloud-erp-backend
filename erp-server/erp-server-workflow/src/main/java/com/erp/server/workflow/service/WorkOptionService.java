@@ -44,6 +44,15 @@ public interface WorkOptionService extends SuperService<WorkOptionEntity> {
     Boolean addWaitDo(WorkOptionDTO.AddDTO dto);
 
     /**
+     * 新增常用模块
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult
+     * @Author Luo_WG
+     * @Date 2023/4/20 19:45
+     **/
+    Boolean addOften(WorkOptionDTO.AddOftenDTO dto);
+
+    /**
      * 编辑修改待办模块
      * @Author Luo_WG
      * @Date 2023/4/20 19:45

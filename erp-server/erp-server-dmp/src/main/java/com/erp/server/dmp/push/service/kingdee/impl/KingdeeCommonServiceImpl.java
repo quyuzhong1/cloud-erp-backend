@@ -20,6 +20,7 @@ import com.common.core.utils.date.DateUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.constant.CfgApiAuthContant;
 import com.erp.model.dmp.dto.ApiPlmSyncLogDTO;
+import com.erp.model.dmp.dto.ApiSyncTaskDTO;
 import com.erp.model.dmp.dto.CfgApiAuthDTO;
 import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.CfgApiAuthEntity;
@@ -94,6 +95,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Resource
     private OmsTaskFeign omsTaskFeign;
 
+    @Resource
+    private ApiSyncTaskService apiSyncTaskService;
 
 
     @Override
@@ -179,13 +182,6 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         return model;
     }
 
-    public static void main(String[] args) {
-        CfgApiAuthDTO.KingDeeCreateOrgDTO kingDeeCreateOrgDTO = new CfgApiAuthDTO.KingDeeCreateOrgDTO();
-        kingDeeCreateOrgDTO.setFirstOrgId(1);
-        kingDeeCreateOrgDTO.setSecondOrgId(2);
-        String s = JSONUtil.toJsonStr(kingDeeCreateOrgDTO);
-        System.out.println(s);
-    }
 
     @Override
     public JSONObject queryGroupInfo(KingdeeApiUtils apiUtils, String id, String code) {
@@ -435,7 +431,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         } catch (Exception e) {
             //反审核失败操作日志及定时任务
             log.error("反审核失败", e);
-            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), "反审核失败", e.getMessage(), type, ApiSendStatusEnum.FAILURE.getCode());
+            insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), id,e.getMessage(), type, ApiSendStatusEnum.FAILURE.getCode());
             return Boolean.FALSE;
         }
         //反审核成功操作日志
@@ -473,6 +469,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Transactional(rollbackFor = Exception.class)
     public void insertLogWriteBackSyncKingdeeStatus(PlatformEntity platformEntity, String businessId,
                                                     String jsonData, String msg, Integer type, Integer status) {
+        //新增任务
+        insertSyncTask(platformEntity,businessId,jsonData,type, status);
         //新增日志
         insertSyncLog(platformEntity, businessId, jsonData, msg, type, status);
         //更新金蝶同步状态
@@ -480,6 +478,30 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             this.updateBusinessSyncKingdeeStatus(type, businessId, SyncKingdeeStatusEnum.FAILED_SYNC.getCode(), "");
         }
     }
+
+    /**
+     * @description: 新增推送任务
+     * @author Will
+     * @date: 2023/7/10 19:14
+     * @param platformEntity
+     * @param businessId
+     * @param jsonData
+     * @param type
+     * @param status
+     */
+    private void insertSyncTask (PlatformEntity platformEntity,String businessId,
+                                 String jsonData, Integer type, Integer status) {
+
+        ApiSyncTaskDTO apiSyncTaskDTO = new ApiSyncTaskDTO();
+        apiSyncTaskDTO.setApiPlatformId(platformEntity.getId());
+        apiSyncTaskDTO.setApiPlatform(platformEntity.getName());
+        apiSyncTaskDTO.setModuleType(type);
+        apiSyncTaskDTO.setRequestParamJson(jsonData);
+        apiSyncTaskDTO.setBusinessId(businessId);
+        apiSyncTaskDTO.setStatus(status);
+        apiSyncTaskService.addOrUpdateApiSyncTask(apiSyncTaskDTO);
+    }
+
 
     @Override
     public void updateBusinessSyncKingdeeStatus(Integer code, String businessId, String status, String kingdeeId) {
@@ -575,6 +597,10 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         //直接复制值
         if (ApiFieldTypeEnum.FIELD_VALUE_COPY.getCode().equals(cfgApiFieldMapDTO.getFieldType())) {
             Object value = map.get(cfgApiFieldMapDTO.getSelfField());
+            //当传入的值是空时取默认
+            if (ObjectUtils.isEmpty(value) || StringUtils.isBlank(String.valueOf(value))) {
+                value = cfgApiFieldMapDTO.getDefaultValue();
+            }
             String format = "";
 
             //当传入的值是空时取默认
@@ -593,7 +619,6 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
                 LocalTime value1 = (LocalTime) value;
                 format = value1.format(DateTimeFormatter.ofPattern(DateUtil.fmt_hms));
             }
-
             KingdeeUtils.makeFieldJson(json, cfgApiFieldMapDTO.getApiField(), ".", StrUtil.isNotBlank(format) ? format : value);
             return;
         }

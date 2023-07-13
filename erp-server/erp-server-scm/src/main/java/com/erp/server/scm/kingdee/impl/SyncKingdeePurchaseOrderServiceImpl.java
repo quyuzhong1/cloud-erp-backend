@@ -147,6 +147,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         List<JSONObject> list = new ArrayList<>();
         for (PurchaseOrderDetailEntity detailEntity : details) {
             JSONObject jsonObject = new JSONObject();
+            jsonObject.set("detailId",detailEntity.getId());
             jsonObject.set("skuNo",detailEntity.getSkuNo());
             jsonObject.set("purchaseQty",detailEntity.getPurchaseQty());
             jsonObject.set("planDeliveryDate",detailEntity.getPlanDeliveryDate());

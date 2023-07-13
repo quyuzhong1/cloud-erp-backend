@@ -94,6 +94,7 @@ public enum ApiError implements Serializable {
      */
     ERROR_9010(9010, "手机号码已存在"),
     USER_NOT_EXIST(9011, "用户不存在"),
+    USER_NOT_EXIST_PARAM(9011, "用户不存在 uid={}"),
     ERROR_9012(9012, "用户不存在或者密码错误"),
     ERROR_9013(9013, "存在父级节点，无法删除"),
     ERROR_9014(9014, "核算公司不存在"),
@@ -168,6 +169,8 @@ public enum ApiError implements Serializable {
     PROCESS_LIST_APPROVER_ERROR(94029,"流程审核人查询失败"),
     // 非流程发起人无法撤销
     PROCESS_NOT_START_USER(94030,"非流程发起人无法撤销"),
+    // 下级节点无审核人，无法提交
+    PROCESS_NOT_APPROVER(94031,"下级节点无审核人，无法提交，请联系管理员"),
 
 
     /**
@@ -662,6 +665,7 @@ public enum ApiError implements Serializable {
     ERROR_99075(99075,"采购订单【{}】SKU【{}】已入库完成"),
     ERROR_99076(99076,"未找到仓库金蝶编号【{}】"),
     ERROR_99077(99077,"ERP已存在直接调拨单【{}】"),
+    ERROR_99078(99078,"调拨申请单已下推加工单，不支持反审核"),
 
 
 

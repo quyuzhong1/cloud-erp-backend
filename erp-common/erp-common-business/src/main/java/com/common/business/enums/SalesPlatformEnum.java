@@ -22,7 +22,9 @@ public enum SalesPlatformEnum implements EnumMessage {
     YOU_ZAN("YouZan", "有赞微商城", "有赞微商城", "015"),
     AMAZON("Amazon", "亚马逊", "亚马逊", "100"),
     OTHER_PLATFORM("Other", "其他", "其他平台", "999"),
-    B2B("B2B", "B2B", "B2B", "300"),
+    B2B_INTERNAL("B2B_INTERNAL", "B2B线下-国内", "B2B线下-国内", "020"),
+    B2B_FOREIGN("B2B_FOREIGN", "B2B线下-国外", "B2B线下-国内", "021"),
+
     LITTLE_RED_BOOK("RedBook", "小红书", "RED", "014"),
     PDD("PDD", "拼多多", "Temu", "009"),
     TMALL("Tmall", "天猫", "Tmall", "006"),

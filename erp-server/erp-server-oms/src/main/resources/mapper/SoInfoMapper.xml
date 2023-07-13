@@ -300,14 +300,14 @@
     <select id="viewGenerateSalesDemand"
             resultType="com.erp.model.oms.dto.SoInfoDTO$ViewGenerateSalesDemandDTO">
         select
-               si.approve_status as approveStatus,
-               si.id as sourceId,
-               si.code as sourceCode,
-               sd.id as sourceDetailId,
-               sd.sku_id as skuId,
-               sd.sku_no as skuNo,
-               sd.qty,
-               si.warehouse_id as warehouseId
+        si.approve_status as approveStatus,
+        si.id as sourceId,
+        si.code as sourceCode,
+        sd.id as sourceDetailId,
+        sd.sku_id as skuId,
+        sd.sku_no as skuNo,
+        sd.qty,
+        si.warehouse_id as warehouseId
         from so_info si
         left join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
         <where>
@@ -320,17 +320,17 @@
 
     <select id="generateDeliveryView" resultType="com.erp.model.oms.dto.SoInfoDTO$GenerateDeliveryView">
         SELECT
-            si.code AS soCode,
-            si.warehouse_org_id AS inventoryOrgId,
-            si.customer_id,
-            si.require_date,
-            si.warehouse_id,
-            sd.id AS detailId,
-            sd.main_id AS soId,
-            sd.sku_id,
-            sd.sku_no,
-            sd.is_close,
-            sd.qty AS salesQty
+        si.code AS soCode,
+        si.warehouse_org_id AS inventoryOrgId,
+        si.customer_id,
+        si.require_date,
+        si.warehouse_id,
+        sd.id AS detailId,
+        sd.main_id AS soId,
+        sd.sku_id,
+        sd.sku_no,
+        sd.is_close,
+        sd.qty AS salesQty
         FROM so_info si
         LEFT JOIN so_detail sd ON si.id = sd.main_id AND si.is_deleted = FALSE
         WHERE sd.is_deleted = FALSE
@@ -345,14 +345,14 @@
 
     <select id="generateSoReturnView" resultType="com.erp.model.oms.dto.SoInfoDTO$GenerateSoReturnView">
         SELECT
-            si.code AS soCode,
-            si.customer_id,
-            si.warehouse_id,
-            sd.id AS detailId,
-            sd.main_id AS soId,
-            sd.sku_id,
-            sd.sku_no,
-            sd.qty AS salesQty
+        si.code AS soCode,
+        si.customer_id,
+        si.warehouse_id,
+        sd.id AS detailId,
+        sd.main_id AS soId,
+        sd.sku_id,
+        sd.sku_no,
+        sd.qty AS salesQty
         FROM so_info si
         LEFT JOIN so_detail sd ON si.id = sd.main_id AND si.is_deleted = FALSE
         WHERE sd.is_deleted = FALSE

@@ -39,7 +39,6 @@ import com.erp.model.oms.enums.CustomerAddressTypeEnum;
 import com.erp.model.oms.enums.DeliveryModeEnum;
 import com.erp.model.oms.enums.DictBasicEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
@@ -437,6 +436,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
 
         List<SoDetailDTO.ViewDTO> detailList = soDetailService.listByMainId(id, warehouseId);
+        List<String> skuIds = detailList.stream().map(SoDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIds);
+        for (SoDetailDTO.ViewDTO viewDTO : detailList) {
+            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtils.isNotEmpty(skuVO)) {
+                viewDTO.setWarehouseLocation(skuVO.getWarehouseLocation());
+            }
+        }
         view.setDetailList(detailList);
         return view;
     }
@@ -863,6 +870,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         //审核流程
         approveProcess(list, dto);
+
+        //添加日志
+        List<Pair<String, String>> pairList = list.stream().
+                map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个销售订单", ApproveTypeEnum.getName(dto.getType())).concat("【%s】").concat(StringUtils.isNotBlank(dto.getComment()) ? String.format(",意见：%s", dto.getComment()) : ""), ModuleTypeEnum.SO.getCode(), pairList, "审核操作");
         return Boolean.TRUE;
     }
 
@@ -921,28 +933,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             return Boolean.TRUE;
         }
         //意见
-        String comment = dto.getComment();
-        String content = "";
         String userName = commonService.getUserInfo().getUserName();
         String approveStatus = "";
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
             approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-            content = String.format("状态由[%s]变更为[%s] , 意见:%s", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.APPROVE.getName(), comment);
             //审核通过发送金蝶
             list.forEach(obj -> syncKingdeeSoService.syncDataToKingdee(obj, SyncKingdeeOperateEnum.OPERATE_APPROVE.getCode()));
         } else {
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT.getStatus();
-            content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.REJECT.getName(), comment);
         }
         Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(approveStatus), userName);
-        if (result) {
-            //添加日志
-            List<Pair<String, String>> pairList = list.stream().
-                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "状态变更");
-        }
         return result;
     }
 
@@ -1193,6 +1195,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         skuInventoryDTO.setWarehouseIdList(warehouseIdList);
         skuInventoryDTO.setSkuIdList(skuIdList);
 
+        //销售部门id
+        List<String> salesDeptIdList = list.stream().map(SoInfoDTO.PagingViewDTO::getSalesDeptId).distinct().collect(Collectors.toList());
+        List<SysDepartmentEntity> departmentList = sysUserFeign.listDeptByIds(salesDeptIdList);
 
         //从wms 获取到sku 的即时库存信息
         List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalList = inventoryFeign.listSkuInventoryByParam(skuInventoryDTO);
@@ -1209,6 +1214,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String deliveryStatus = item.getDeliveryStatus();
             String deliveryStatusName = DeliveryStatusEnum.getName(deliveryStatus);
             item.setDeliveryStatusName(deliveryStatusName);
+
+            //部门名称
+            String deptName = departmentList.stream().filter(d -> d.getId().equals(item.getSalesDeptId())).
+                    map(SysDepartmentEntity::getName).findFirst().orElse("");
+            item.setSalesDeptName(deptName);
+
             //作废状态
             Boolean invalidStatus = item.getInvalidStatus();
             String invalidStatusName = invalidStatus != null && invalidStatus ? "已作废" : "未作废";
@@ -2036,13 +2047,20 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> skuIdList = soDetailEntities.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
         //根据skuId查询sku信息
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+
+        List<String> receiveAddressId = soInfoEntities.stream().map(SoInfoEntity::getReceiveAddressId).collect(Collectors.toList());
+        List<CustomerAddressEntity> customerAddressEntities = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(receiveAddressId)) {
+            customerAddressEntities.addAll(customerAddressService.listByIds(receiveAddressId));
+        }
         for (SoInfoEntity soInfoEntity : soInfoEntities) {
             //根据客户id获取客户信息
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             SoInfoDTO.PrintDTO printDTO = new SoInfoDTO.PrintDTO();
             printDTO.setCustomerName(customerInfoEntity.getName());
             printDTO.setSellerName(soInfoEntity.getSellerName());
-            printDTO.setReceiveAddress(soInfoEntity.getReceiveAddress());
+            CustomerAddressEntity customerAddressEntity = customerAddressEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getReceiveAddressId())).findFirst().orElse(null);
+            printDTO.setReceiveAddress(customerAddressEntity.getAddress());
             printDTO.setTelNumber(soInfoEntity.getTelNumber());
             List<SoDetailEntity> soDetailEntityList = soDetailEntities.stream().filter(req -> req.getMainId().equals(soInfoEntity.getId())).collect(Collectors.toList());
             printDTO.setSumNumber(soDetailEntityList.stream().mapToInt(SoDetailEntity::getQty).sum());
@@ -2054,6 +2072,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 SkuVO skuVO = skuList.stream().filter(req -> req.getSkuId().equals(soDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
                 printDetailDTO.setProductName(skuVO.getSkuName());
                 printDetailDTO.setRemark(soDetailEntity.getRemark());
+                printDetailDTO.setQty(soDetailEntity.getQty());
                 printDetailDTOList.add(printDetailDTO);
             }
             printDTO.setPrintDetailList(printDetailDTOList);

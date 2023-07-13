@@ -80,7 +80,7 @@ public class KingdeeBusinessOperatorEntity extends BaseEntity<KingdeeBusinessOpe
 
     /**
      * 业务员名称
- */
+     */
     @TableField("kingdee_user_name")
     private String kingdeeUserName;
 

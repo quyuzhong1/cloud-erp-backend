@@ -17,6 +17,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mabang.SyncMabangTransferService;
 import com.erp.server.wms.service.TransferInfoDetailService;
 import com.erp.server.wms.service.WarehouseService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
  * @CreateTime: 2023-06-27  16:34
  * @Author: zhangchunlin
  */
+@Slf4j
 @Service
 public class SyncMabangTransferServiceImpl implements SyncMabangTransferService {
 
@@ -53,18 +55,21 @@ public class SyncMabangTransferServiceImpl implements SyncMabangTransferService 
         // 直接调拨单明细信息
         List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
+            log.info("直接调拨单【{}】没有调拨明细信息，无需推送到马帮出入库", entity.getCode());
             return;
         }
         // 根据ids查询sku信息
         List<String> skuIdList = detailList.stream().map(TransferInfoDetailEntity::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.getByIdList(skuIdList);
         if (CollectionUtils.isEmpty(productDetailEntityList)) {
+            log.info("直接调拨单【{}】未找到产品明细信息，无需推送到马帮出入库", entity.getCode());
             return;
         }
 
         //仓库
         List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(entity.getInWarehouseId(), entity.getOutWarehouseId()));
         Map<String,WarehouseEntity> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getId, Function.identity()));
+        log.info("直接调拨单【{}】调入仓库id：{}，调出仓库id：{}", entity.getCode(), entity.getInWarehouseId(), entity.getOutWarehouseId());
         if(!warehouseMap.containsKey(entity.getInWarehouseId())) {
             throw new ServiceException("调入仓库错误");
         } else {

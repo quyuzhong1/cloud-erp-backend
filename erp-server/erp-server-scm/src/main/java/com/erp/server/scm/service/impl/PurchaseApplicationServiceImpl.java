@@ -63,7 +63,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -192,7 +191,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         PurchaseApplicationEntity entity = new PurchaseApplicationEntity();
         BeanMapperUtils.copy(dto,entity);
         //校验明细是否有重复sku
-        checkAddDetailsRepeatSku(dto.getDetails());
+        //checkAddDetailsRepeatSku(dto.getDetails());
         //处理数据id
         doOpHandleDataId(dto.getApplyUserId(),dto.getApplyDeptId(),entity);
         log.info("采购申请单新增");
@@ -218,7 +217,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
         List<PurchaseApplicationDetailDTO.UpdateDTO> details = dto.getDetails();
         //校验明细是否有重复sku
-        checkUpdateDetailsRepeatSku(details,dto.getId());
+        //checkUpdateDetailsRepeatSku(details,dto.getId());
         //处理数据id
         doOpHandleDataId(dto.getApplyUserId(),dto.getApplyDeptId(),entity);
 
@@ -463,48 +462,39 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
             //采购订单明细信息
             List<PurchaseOrderDetailDTO.AddDTO> details = new ArrayList<>();
-            //明细数据按skuId、仓库、收料组织分组
-            Map<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> detailMap = value.stream().collect(Collectors.groupingBy(obj ->obj.getSkuId()));
-            for (Map.Entry<String, List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO>> detailEntry : detailMap.entrySet()) {
-
-                List<PurchaseApplicationDTO.GeneratePurchaseOrderDTO> detailValue = detailEntry.getValue();
+            for (PurchaseApplicationDTO.GeneratePurchaseOrderDTO generatePurchaseOrderDTO : value) {
 
                 PurchaseOrderDetailDTO.AddDTO addDetailDTO = new PurchaseOrderDetailDTO.AddDTO();
                 //采购申请对应明细信息
-                SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailValue.get(0).getSkuId())).findFirst().orElse(null);
+                SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(generatePurchaseOrderDTO.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(skuVO)) {
                     throw new ServiceException(ApiError.ERROR_95084);
                 }
                 if (CollectionUtils.isNotEmpty(sourceDetailList)) {
-                    long count = sourceDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(detailValue.get(0).getPurchaseApplicationDetailId())).count();
+                    long count = sourceDetailList.stream().filter(obj -> obj.getSourceDetailId().equals(generatePurchaseOrderDTO.getPurchaseApplicationDetailId())).count();
                     if (count > 0) {
-                        log.error("采购申请单【{}】明细SKU【{}】已下推委外订单",entity.getCode(),detailValue.get(0).getSkuId());
+                        log.error("采购申请单【{}】明细SKU【{}】已下推委外订单",entity.getCode(), generatePurchaseOrderDTO.getSkuId());
                         throw new ServiceException(new ApiResult(ApiError.ERROR_98089.code,StrUtil.format(ApiError.ERROR_98089.msg,entity.getCode(),skuVO.getSkuNo())));
                     }
                 }
 
-                addDetailDTO.setCurrency(detailValue.get(0).getCurrency());
-                addDetailDTO.setCurrencySymbol(detailValue.get(0).getCurrencySymbol());
+                addDetailDTO.setCurrency(generatePurchaseOrderDTO.getCurrency());
+                addDetailDTO.setCurrencySymbol(generatePurchaseOrderDTO.getCurrencySymbol());
                 addDetailDTO.setSkuId(skuVO.getSkuId());
                 addDetailDTO.setSkuNo(skuVO.getSkuNo());
                 addDetailDTO.setProductName(skuVO.getSkuName());
                 addDetailDTO.setVariantProperty(skuVO.getVariantProperty());
                 addDetailDTO.setDeclareModel(skuVO.getDeclareModel());
                 addDetailDTO.setDeclareName(skuVO.getDeclareName());
-                addDetailDTO.setTaxPrice(detailValue.get(0).getTaxPrice());
+                addDetailDTO.setTaxPrice(generatePurchaseOrderDTO.getTaxPrice());
                 //采购数量
-                Integer purchaseQty = detailValue.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getPurchaseQty).reduce(0, Integer::sum);
-                addDetailDTO.setPurchaseQty(purchaseQty);
+                addDetailDTO.setPurchaseQty(generatePurchaseOrderDTO.getPurchaseQty());
                 //采购金额
-                BigDecimal purchaseAmount = detailValue.stream().map(obj -> MathUtil.multiply(obj.getTaxPrice(), obj.getPurchaseQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
-                addDetailDTO.setPurchaseAmount(purchaseAmount);
-                //是否加急，明细存在加急则设置加急
-                long count = detailValue.stream().filter(obj -> obj.getIsGift()).count();
-                if (count > 0) {
-                    addDetailDTO.setIsGift(Boolean.TRUE);
-                }
-                addDetailDTO.setPurchaseApplicationId(detailValue.get(0).getId());
-                addDetailDTO.setPurchaseApplicationDetailId(detailValue.get(0).getPurchaseApplicationDetailId());
+                addDetailDTO.setPurchaseAmount(MathUtil.multiply(addDetailDTO.getTaxPrice(), addDetailDTO.getPurchaseQty()));
+                //是否加急
+                addDetailDTO.setIsGift(generatePurchaseOrderDTO.getIsGift());
+                addDetailDTO.setPurchaseApplicationId(generatePurchaseOrderDTO.getId());
+                addDetailDTO.setPurchaseApplicationDetailId(generatePurchaseOrderDTO.getPurchaseApplicationDetailId());
                 details.add(addDetailDTO);
             }
             addDTO.setDetails(details);

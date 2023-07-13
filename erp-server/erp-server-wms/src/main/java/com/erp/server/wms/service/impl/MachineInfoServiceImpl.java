@@ -34,10 +34,7 @@ import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.entity.MachineDetailEntity;
-import com.erp.model.wms.entity.MachineInfoEntity;
-import com.erp.model.wms.entity.MachineSubComponentsEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.WorkTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -826,4 +823,11 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         });
     }
 
+    @Override
+    public List<MachineInfoEntity> listBySourceIds(List<String> ids) {
+        return lambdaQuery()
+                .in(MachineInfoEntity::getSourceId,ids)
+                .eq(MachineInfoEntity::getInvalidStatus,Boolean.FALSE)
+                .list();
+    }
 }

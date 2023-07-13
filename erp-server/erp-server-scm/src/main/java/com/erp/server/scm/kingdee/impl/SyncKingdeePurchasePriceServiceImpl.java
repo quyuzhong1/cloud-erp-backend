@@ -92,6 +92,7 @@ public class SyncKingdeePurchasePriceServiceImpl implements SyncKingdeePurchaseP
             }
         }
 
+
         //价目明细
         List<PurchasePriceDetailDTO.ViewDTO> details = purchasePriceDetailService.getByPurchasePriceId(entity.getId());
         if (CollectionUtils.isEmpty(details)) {

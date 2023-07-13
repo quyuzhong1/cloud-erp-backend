@@ -25,59 +25,6 @@ public class InventoryFeignController extends BaseController {
     @Autowired
     private InventoryService inventoryService;
 
-    @Autowired
-    private InventoryTransCoreService inventoryTransCoreService;
-
-    /**
-     * 出入库业务，按业务类型
-     *
-     * @param dto
-     */
-    @PostMapping("/approveInOutStockByType")
-    public void approveInOutStockByType(@RequestBody @Validated InventoryInOutStockDTO dto) {
-        inventoryTransCoreService.approveByType(dto);
-    }
-
-    /**
-     * 调拨业务，按业务类型
-     *
-     * @param dto
-     */
-    @PostMapping("/approveTransferByType")
-    public void approveTransferByType(@RequestBody @Validated InventoryTransferDTO dto) {
-        inventoryTransCoreService.approveByType(dto);
-    }
-
-    /**
-     * 调拨业务，自定义规则
-     *
-     * @param dto
-     */
-    @PostMapping("/approveByRule")
-    public void approveByRule(@RequestBody @Validated InventoryTransferRuleDTO dto) {
-        inventoryTransCoreService.approveByRule(dto);
-    }
-
-    /**
-     * 出入库业务，自定义规则
-     *
-     * @param dto
-     */
-    @PostMapping("/approveInOutStockByRule")
-    public void approveInOutStockByRule(@RequestBody @Validated InventoryInOutStockRuleDTO dto) {
-        inventoryTransCoreService.approveByRule(dto);
-    }
-
-    /**
-     * 反审核
-     *
-     * @param dto
-     */
-    @PostMapping("/unApprove")
-    public void unApprove(@RequestBody @Validated InventoryUnApproveDTO dto) {
-        inventoryTransCoreService.unApprove(dto);
-    }
-
     /**
      * 根据组织、仓库、库位、状态获取库存数量；特别注意：如果库位没传或者为空，则库位字段会赋值为空查询
      *
@@ -93,18 +40,6 @@ public class InventoryFeignController extends BaseController {
                                      @RequestParam(value = "status") String status) {
         return inventoryService.getInventoryTotal(orgId, warehouseId, skuId, warehouseLocationId, status);
     }
-
-
-    /**
-     * 批量反审核
-     *
-     * @param dto
-     */
-    @PostMapping("/batchUnApprove")
-    public void batchUnApprove(@RequestBody @Validated InventoryBatchUnApproveDTO dto) {
-        inventoryTransCoreService.batchUnApprove(dto);
-    }
-
 
     /**
      * 获取sku 的即时库存（调用方传入状态）；特别注意：如果库位没传或者为空，则库位字段会赋值为空查询

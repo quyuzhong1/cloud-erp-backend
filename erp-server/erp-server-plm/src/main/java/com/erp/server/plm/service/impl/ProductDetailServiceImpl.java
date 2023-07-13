@@ -15,10 +15,7 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.SkuApproveConfigureEnum;
-import com.common.business.enums.SyncKingdeeOperateEnum;
-import com.common.business.enums.SyncKingdeeStatusEnum;
+import com.common.business.enums.*;
 import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -873,7 +870,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //产品信息修改操作日志
             addProductInfoLog(productSpuBaseInfoDTO, productInfoEntity, productSpuBaseInfoDTO.getId(), productSpuBaseInfoDTO.getId());
         }
-        productSpuBaseInfoDTO.setNameEn(productSkuBaseInfoDTO.getNameEn());
+//        productSpuBaseInfoDTO.setNameEn(productSkuBaseInfoDTO.getNameEn());
         //1.修改产品表 主表信息
         productSpuBaseInfoDTO.setIsNoSpecAdd(MathUtil.ONE);
 
@@ -2376,6 +2373,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (costEntity.getTargetGpm() == null) {
                 throw new ServiceException(ApiError.ERROR_95224);
             }
+
             ProductSaleEntity saleEntity = productSaleService.getBySkuId(entity.getId());
             if (ObjectUtils.isEmpty(saleEntity)) {
                 throw new ServiceException(ApiError.ERROR_95240);

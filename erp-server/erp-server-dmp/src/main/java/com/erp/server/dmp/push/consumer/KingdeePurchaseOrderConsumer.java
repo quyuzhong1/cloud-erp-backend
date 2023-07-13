@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SyncKingdeeOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.FastJsonUtil;
+import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
@@ -15,6 +16,8 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.ApiSendStatusEnum;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.rpc.wms.feign.ScmTaskFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.utils.KingdeeApiUtils;
 import com.erp.server.dmp.utils.KingdeeUtils;
@@ -23,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -42,6 +44,9 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
 
     @Resource
     private KingdeeCommonService kingdeeCommonService;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
 
     public static void main(String[] args) {
 
@@ -63,9 +68,8 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
 
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void onMessage(Map<String, Object> map) {
+        @Override
+        public void onMessage(Map<String, Object> map) {
         //模块类型
         Integer type = ApiModuleTypeEnum.PURCHASE_ORDER.getCode();
         //业务id
@@ -99,7 +103,13 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
         } catch (Exception e) {
 
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+            Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, type);
+            if (isAdd) {
+                //给明细id赋值
+                JSONArray jsonArray = setDetailIdForJSONObject(apiUtils,platformEntity, map, type);
+                //更新明细id
+                updateKingdeeDetailId(jsonArray);
+            }
             return;
         }
 
@@ -126,14 +136,71 @@ public class KingdeePurchaseOrderConsumer implements RocketMQListener<Map<String
         }
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
-            //给修改json对象赋值ID
-            setQueryJSONObject(id,apiUtils,platformEntity,map,type,json);
+            //主单据id
+            KingdeeUtils.makeFieldJson(json,"FId",".", id);
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
         }
+    }
+
+    /**
+     * 给明细id赋值
+     * @Author Luo_WG
+     * @Date 2023/7/12 10:18
+     * @param apiUtils
+     * @param platformEntity
+     * @param map
+     * @param type
+     * @return cn.hutool.json.JSONArray
+     **/
+    private JSONArray setDetailIdForJSONObject (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type) {
+
+        JSONArray list = JSONUtil.parseArray(map.get("list"));
+        String id = (String)map.get("syncKingdeeId");
+
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FId = '%s'", id));
+        String filterStr = String.join(" and ", queryFilters);
+        //查询子单据id
+        String fieldKeys = "FPOOrderEntry_FEntryID";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
+        if (CollectionUtils.isEmpty(queryList)) {
+            //错误日志
+            kingdeeCommonService.insertLogWriteBackSyncKingdeeStatus(platformEntity, String.valueOf(map.get("id")), filterStr, "未查询到子单据id", type, ApiSendStatusEnum.FAILURE.getCode());
+            return list;
+        }
+        JSONArray removeObj = new JSONArray();
+        JSONArray addObj = new JSONArray();
+        for (int i = 0; i < list.size(); i++) {
+            Object obj = list.get(i);
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
+            JSONObject newJson = new JSONObject(new LinkedHashMap<>());
+            if (list.size() >= queryList.size()) {
+                //金蝶明细id赋值
+                newJson.set("kingdeeDetailId",queryList.get(i).get("FPOOrderEntry_FEntryID"));
+            }
+            newJson.putAll(jsonObject);
+            removeObj.set(obj);
+            addObj.set(newJson);
+        }
+        list.removeAll(removeObj);
+        list.addAll(addObj);
+        return list;
+    }
+
+
+    /**
+     * 更新明细id
+     */
+    private void updateKingdeeDetailId (JSONArray jsonArray) {
+        //更新业务单据状态
+        Map<String,Object> params = new HashMap<>(MathUtil.THREE);
+        params.put("code",ApiModuleTypeEnum.PURCHASE_ORDER.getCode().toString());
+        params.put("details",jsonArray);
+        scmTaskFeign.updateBusinessSyncKingdeeStatus(params);
     }
 
     /**

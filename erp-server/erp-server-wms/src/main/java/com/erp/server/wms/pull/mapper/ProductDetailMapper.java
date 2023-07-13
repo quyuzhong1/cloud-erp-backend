@@ -23,7 +23,6 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      **/
     List<ProductDetailEntity> listProductDetailByIds(@Param("ids") List<String> ids);
 
-
     /**
      * 批量修改
      * @Author Luo_WG

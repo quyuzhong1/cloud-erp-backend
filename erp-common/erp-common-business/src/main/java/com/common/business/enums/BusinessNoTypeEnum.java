@@ -25,7 +25,7 @@ public enum BusinessNoTypeEnum {
     CODE_USER(15, "user_no","用户编号"),
     CODE_QC(16, "qc","质检单"),
     CODE_DEPT(17, "bm","部门编号"),
-    CODE_RKYB(18, "rkyb","入库预报"),
+    CODE_RKYB(18, "rkyb","入库预报", "RKYB"),
     CODE_DBSQ(19, "dbsq","调拨申请"),
     CODE_CUST(20, "cust","客户"),
     CODE_INIT_STOCK(21, "init_stock","期初库存"),
@@ -57,11 +57,27 @@ public enum BusinessNoTypeEnum {
     private String name;
     private String desc;
 
+    // 单号前缀
+    private String prefix;
+
+    // redis单号key
+    public static final String REDIS_GEN_KEY = "gen_doc_no";
+
+    // 补0位数
+    public static final Integer FILL_0_DIGIT = 5;
+
 
     BusinessNoTypeEnum(Integer code, String name, String desc) {
         this.code = code;
         this.name = name;
         this.desc = desc;
+    }
+
+    BusinessNoTypeEnum(Integer code, String name, String desc, String prefix) {
+        this.code = code;
+        this.name = name;
+        this.desc = desc;
+        this.prefix = prefix;
     }
 
     public void setCode(Integer code) {
@@ -81,6 +97,10 @@ public enum BusinessNoTypeEnum {
 
     public String getName() {
         return name;
+    }
+
+    public String getPrefix() {
+        return prefix;
     }
 
     public static String getNameByCode(Integer code) {

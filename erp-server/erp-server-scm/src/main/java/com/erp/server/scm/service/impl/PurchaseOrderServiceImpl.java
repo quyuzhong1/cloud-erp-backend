@@ -585,6 +585,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             throw new ServiceException(ApiError.ERROR_98036);
         }
         exportPdfDTO.setSupplierTel(purchaseOrderSupplier.getContactTelNumber());
+        // 采购订单供应商付款条件
+        if(StrUtils.isNotEmpty(purchaseOrderSupplier.getPaymentCondition())) {
+            List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
+            Map<String, List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO>> paymentConditionMap = paymentConditionList.stream().collect(Collectors.groupingBy(com.erp.model.sys.dto.DictBasicDTO.ViewDTO::getValue));
+            if(paymentConditionMap.containsKey(purchaseOrderSupplier.getPaymentCondition())) {
+                exportPdfDTO.setPaymentConditionName(paymentConditionMap.get(purchaseOrderSupplier.getPaymentCondition()).get(0).getName());
+            }
+        }
 
         //结算方式
         DictBasicEntity payMethod = dictBasicService.getById(purchaseOrderSupplier.getPayMethodId());
@@ -600,14 +608,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         exportPdfDTO.setSupplierName(supplier.getName());
         exportPdfDTO.setSupplierAddress(supplier.getCompanyAddress());
 
-        // 供应商付款条件
-        if(StrUtils.isNotEmpty(supplier.getPaymentCondition())) {
-            List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO> paymentConditionList =  sysDictFeign.getByType(SysDictBasicEnum.PAYMENT_CONDITION.getCode());
-            Map<String, List<com.erp.model.sys.dto.DictBasicDTO.ViewDTO>> paymentConditionMap = paymentConditionList.stream().collect(Collectors.groupingBy(com.erp.model.sys.dto.DictBasicDTO.ViewDTO::getValue));
-            if(paymentConditionMap.containsKey(supplier.getPaymentCondition())) {
-                exportPdfDTO.setPaymentConditionName(paymentConditionMap.get(supplier.getPaymentCondition()).get(0).getName());
-            }
-        }
 
         //供应商联系人信息
         if (StringUtils.isNotBlank(purchaseOrderSupplier.getSupplierContactId())) {
@@ -636,6 +636,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             BeanMapperUtils.copy(purchaseOrderDetailEntity, detailDTO);
             //明细数据处理
             detailDTO.setUnitName("个");
+            //不含税单价（不含税价格=含税价格/（1+增值税税率））
+            detailDTO.setPrice(MathUtil.divide(detailDTO.getTaxPrice(),MathUtil.add(BigDecimal.ONE,detailDTO.getTaxRate())));
             detailDTO.setTaxRate(MathUtil.multiply(detailDTO.getTaxRate(), MathUtil.BigDecimal_100));
             details.add(detailDTO);
         }

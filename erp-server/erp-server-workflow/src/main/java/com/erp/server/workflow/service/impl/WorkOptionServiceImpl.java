@@ -219,6 +219,25 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     }
 
     /**
+     * 新增常用模块
+     * @Author Luo_WG
+     * @Date 2023/7/7 16:28
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    @Override
+    public Boolean addOften(WorkOptionDTO.AddOftenDTO dto) {
+        LoginUser userInfo = commonService.getUserInfo();
+        WorkOptionEntity workOptionEntity = new WorkOptionEntity();
+        workOptionEntity.setOptionUserId(userInfo.getUid());
+        workOptionEntity.setOptionUserMame(userInfo.getUserName());
+        workOptionEntity.setModuleUrl(dto.getModuleUrl());
+        workOptionEntity.setType(dto.getType());
+        workOptionEntity.setModuleName(dto.getModuleName());
+        return this.save(workOptionEntity);
+    }
+
+    /**
      * 编辑修改模块
      *
      * @param dto dto

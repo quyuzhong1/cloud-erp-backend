@@ -983,7 +983,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
     }
 
     @Override
-    public boolean updateSyncKingdeeStatus(List<String> businessIds, String syncKingdeeStatus, String syncKingdeeId,String syncOperate) {
+    public boolean updateSyncKingdeeStatus(List<String> businessIds, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
         return this.lambdaUpdate()
                 .in(SysUserInfoEntity::getUid, businessIds)
                 .set(StringUtils.isNotBlank(syncKingdeeStatus), SysUserInfoEntity::getSyncKingdeeStatus, syncKingdeeStatus)
@@ -1233,7 +1233,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         // 读取数据集
         int rows = sheet.getPhysicalNumberOfRows();
 
-        for(int i = 2;i < rows;i++) {
+        for (int i = 2; i < rows; i++) {
             XSSFRow row = sheet.getRow(i);
 
             // 用户名称
@@ -1245,12 +1245,12 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(SysUserInfoEntity::getUserName, name);
             queryWrapper.last("LIMIT 1");
-            SysUserInfoEntity sysUserInfoEntity =super.getOne(queryWrapper);
-            if(Objects.isNull(sysUserInfoEntity)) {
+            SysUserInfoEntity sysUserInfoEntity = super.getOne(queryWrapper);
+            if (Objects.isNull(sysUserInfoEntity)) {
                 log.info("未找到人员【{}】", name);
                 continue;
             }
-            if(StrUtils.isNotEmpty(sysUserInfoEntity.getSyncKingdeeId())) {
+            if (StrUtils.isNotEmpty(sysUserInfoEntity.getSyncKingdeeId())) {
                 log.info("人员【{}】已经存在金蝶id，不处理", name);
                 continue;
             }

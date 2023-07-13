@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -61,9 +60,8 @@ public class KingdeePurchasePriceChangeConsumer implements RocketMQListener<Map<
 */
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void onMessage(Map<String, Object> map) {
+        @Override
+        public void onMessage(Map<String, Object> map) {
         //模块类型
         Integer type = ApiModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode();
         //业务id
@@ -111,8 +109,8 @@ public class KingdeePurchasePriceChangeConsumer implements RocketMQListener<Map<
         }
         //创建状态则直接修改、删除
         if (KingdeeDocStatusEnum.CREATED.getCode().equals(documentStatus) || KingdeeDocStatusEnum.REAPPROVE.getCode().equals(documentStatus) || flag) {
-            //给修改json对象赋值ID
-            setQueryJSONObject(id,apiUtils,platformEntity,map,type,json);
+            //主单据id
+            KingdeeUtils.makeFieldJson(json,"FId",".", id);
             StringBuffer allKey = FastJsonUtil.getAllKey(json);
             ArrayList<String> apiFieldList = (ArrayList)Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);

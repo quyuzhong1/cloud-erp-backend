@@ -675,10 +675,7 @@ public class CustomerDTO implements Serializable {
          */
         private List<InvoiceDTO.ViewDTO> invoiceList;
 
-        /**
-         * 销售员信息
-         */
-        private List<SellerDTO.ViewDTO> sellerList;
+
     }
 
     @Data

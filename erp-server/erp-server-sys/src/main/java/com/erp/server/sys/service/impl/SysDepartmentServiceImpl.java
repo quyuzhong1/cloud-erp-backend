@@ -53,11 +53,11 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     @Transactional(rollbackFor = Exception.class)
     public void saveOrUpdateSysDept(SysDepartmentEntity sysDepartment) {
         String id = sysDepartment.getId();
-        if(StringUtils.isBlank(id)){
+        if (StringUtils.isBlank(id)) {
             id = IdWorker.getIdStr();
         }
         String parentId = sysDepartment.getParentId();
-        if(StringUtils.isBlank(parentId)){
+        if (StringUtils.isBlank(parentId)) {
             sysDepartment.setParentId("0");
         }
         sysDepartment.setId(id);
@@ -302,18 +302,18 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     public SysDepartmentEntity getParentDepartmentById(String departmentId) {
         SysDepartmentEntity sysDepartmentEntity = this.getById(departmentId);
         if (ObjectUtils.isEmpty(sysDepartmentEntity)) {
-                return sysDepartmentEntity;
+            return sysDepartmentEntity;
         }
         return this.getById(sysDepartmentEntity.getParentId());
     }
 
     @Override
-    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId,String syncOperate) {
-        return  this.lambdaUpdate()
-                .in(SysDepartmentEntity::getId,ids)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),SysDepartmentEntity::getSyncKingdeeStatus,syncKingdeeStatus)
-                .set(StringUtils.isNotBlank(syncKingdeeStatus),SysDepartmentEntity::getSyncKingdeeTime, LocalDateTime.now())
-                .set(StringUtils.isNotBlank(syncKingdeeId),SysDepartmentEntity::getSyncKingdeeId,syncKingdeeId)
+    public Boolean updateSyncKingdeeStatus(List<String> ids, String syncKingdeeStatus, String syncKingdeeId, String syncOperate) {
+        return this.lambdaUpdate()
+                .in(SysDepartmentEntity::getId, ids)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), SysDepartmentEntity::getSyncKingdeeStatus, syncKingdeeStatus)
+                .set(StringUtils.isNotBlank(syncKingdeeStatus), SysDepartmentEntity::getSyncKingdeeTime, LocalDateTime.now())
+                .set(StringUtils.isNotBlank(syncKingdeeId), SysDepartmentEntity::getSyncKingdeeId, syncKingdeeId)
                 .set(org.apache.commons.lang3.StringUtils.isNotBlank(syncOperate), SysDepartmentEntity::getSyncOperate, syncOperate)
                 .update();
     }
@@ -327,7 +327,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
-        return BeanMapperUtils.copyList(SysDepartmentDTO.class,list);
+        return BeanMapperUtils.copyList(SysDepartmentDTO.class, list);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -338,7 +338,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         // 读取数据集
         int rows = sheet.getPhysicalNumberOfRows();
 
-        for(int i = 2;i < rows;i++) {
+        for (int i = 2; i < rows; i++) {
             XSSFRow row = sheet.getRow(i);
 
             // 部门名称
@@ -350,12 +350,12 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             LambdaQueryWrapper<SysDepartmentEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(SysDepartmentEntity::getName, name);
             queryWrapper.last("LIMIT 1");
-            SysDepartmentEntity sysDepartmentEntity =super.getOne(queryWrapper);
-            if(Objects.isNull(sysDepartmentEntity)) {
+            SysDepartmentEntity sysDepartmentEntity = super.getOne(queryWrapper);
+            if (Objects.isNull(sysDepartmentEntity)) {
                 log.info("未找到部门【{}】", name);
                 continue;
             }
-            if(StrUtils.isNotEmpty(sysDepartmentEntity.getSyncKingdeeId())) {
+            if (StrUtils.isNotEmpty(sysDepartmentEntity.getSyncKingdeeId())) {
                 log.info("部门【{}】已经存在金蝶id，不处理", name);
                 continue;
             }
