@@ -1265,6 +1265,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setProductName(sku.getSkuName());
                 String unit = sku.getUnitName();
                 item.setUnit(StringUtils.isNotBlank(unit) ? unit : "");
+                item.setWarehouseLocation(sku.getWarehouseLocation());
             }
         }
         StringBuffer sb = new StringBuffer();

@@ -151,6 +151,12 @@ public class ProductDetailEntity extends BaseEntity implements Serializable {
     @TableField("occupy_status")
     private Boolean occupyStatus;
 
+    /**
+     * 仓位
+     */
+    @TableField("warehouse_location")
+    private String warehouseLocation;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

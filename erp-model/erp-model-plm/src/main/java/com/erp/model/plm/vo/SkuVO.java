@@ -117,4 +117,9 @@ public class SkuVO implements Serializable {
      * 供应商id
      */
     private String supplierId;
+
+    /**
+     * 仓位
+     */
+    private String warehouseLocation;
 }

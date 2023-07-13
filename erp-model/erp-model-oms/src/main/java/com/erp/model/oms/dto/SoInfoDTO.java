@@ -286,6 +286,10 @@ public class SoInfoDTO implements Serializable {
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime createTime;
 
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
 
     }
 
