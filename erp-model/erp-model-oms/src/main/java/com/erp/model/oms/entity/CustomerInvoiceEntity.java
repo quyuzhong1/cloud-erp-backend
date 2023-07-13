@@ -65,6 +65,24 @@ public class CustomerInvoiceEntity extends BaseEntity<CustomerInvoiceEntity> {
     @TableField("remark")
     private String remark;
 
+    /**
+     * 纳税登记号
+     */
+    @TableField("tax_register_code")
+    private String taxRegisterCode;
+
+    /**
+     * 开票联系电话
+     */
+    @TableField("invoice_tel")
+    private String invoiceTel;
+
+    /**
+     * 开票通讯地址
+     */
+    @TableField("invoice_address")
+    private String invoiceAddress;
+
 
     public static final String MAIN_ID = "main_id";
 

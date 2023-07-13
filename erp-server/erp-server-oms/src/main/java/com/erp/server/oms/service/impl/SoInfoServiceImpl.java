@@ -2016,13 +2016,20 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> skuIdList = soDetailEntities.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
         //根据skuId查询sku信息
         List<SkuVO> skuList = plmTaskFeign.getSkuInfoByIds(skuIdList);
+
+        List<String> receiveAddressId = soInfoEntities.stream().map(SoInfoEntity::getReceiveAddressId).collect(Collectors.toList());
+        List<CustomerAddressEntity> customerAddressEntities = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(receiveAddressId)) {
+            customerAddressEntities.addAll(customerAddressService.listByIds(receiveAddressId));
+        }
         for (SoInfoEntity soInfoEntity : soInfoEntities) {
             //根据客户id获取客户信息
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             SoInfoDTO.PrintDTO printDTO = new SoInfoDTO.PrintDTO();
             printDTO.setCustomerName(customerInfoEntity.getName());
             printDTO.setSellerName(soInfoEntity.getSellerName());
-            printDTO.setReceiveAddress(soInfoEntity.getReceiveAddress());
+            CustomerAddressEntity customerAddressEntity = customerAddressEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getReceiveAddressId())).findFirst().orElse(null);
+            printDTO.setReceiveAddress(customerAddressEntity.getAddress());
             printDTO.setTelNumber(soInfoEntity.getTelNumber());
             List<SoDetailEntity> soDetailEntityList = soDetailEntities.stream().filter(req -> req.getMainId().equals(soInfoEntity.getId())).collect(Collectors.toList());
             printDTO.setSumNumber(soDetailEntityList.stream().mapToInt(SoDetailEntity::getQty).sum());

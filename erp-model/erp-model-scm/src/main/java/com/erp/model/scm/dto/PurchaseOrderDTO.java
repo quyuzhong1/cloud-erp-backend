@@ -1097,5 +1097,90 @@ public class PurchaseOrderDTO implements Serializable {
         private String subChildDetailId;
     }
 
+    /**
+     * 导出网采合同
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportPurchaseContractDTO {
+        /**
+         * 录单日期
+         */
+        private LocalDateTime createTime;
 
+        /**
+         * 编号
+         */
+        private String code;
+
+        /**
+         * 供货单位
+         */
+        private String supplierName;
+
+        /**
+         * 摘要
+         */
+        private String settleMethod;
+
+        /**
+         * 制单人
+         */
+        private String createUserName;
+
+        /**
+         * 采购主管
+         */
+        private String approveUserName;
+
+        /**
+         * 合计数量
+         */
+        private Integer sumQty;
+
+        /**
+         * 合计金额
+         */
+        private BigDecimal sumAmount;
+
+        /**
+         * 网采详情
+         */
+        private List<PurchaseContractDetailDTO> list;
+    }
+    /**
+     * 网采合同明细
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseContractDetailDTO {
+        /**
+         * 物料编码
+         */
+        private String skuNo;
+        /**
+         * 商品名称
+         */
+        private String productName;
+        /**
+         * 单位
+         */
+        private String unit;
+        /**
+         * 数量
+         */
+        private Integer qty;
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+        /**
+         * 金额
+         */
+        private BigDecimal amount;
+        /**
+         * 备注
+         */
+        private String remark;
+    }
 }

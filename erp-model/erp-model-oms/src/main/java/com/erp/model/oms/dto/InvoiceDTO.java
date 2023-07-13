@@ -70,6 +70,23 @@ public class InvoiceDTO implements Serializable {
         @Size(max = 200, message = "发票备注最大200字符")
         private String remark;
 
+        /**
+         * 纳税登记号
+         */
+        @Size(max = 100, message = "纳税登记号最大100字符")
+        private String taxRegisterCode;
+
+        /**
+         * 开票联系电话
+         */
+        @Size(max = 100, message = "开票联系电话100字符")
+        private String invoiceTel;
+
+        /**
+         * 开票通讯地址
+         */
+        @Size(max = 500, message = "开票通讯地址最大500字符")
+        private String invoiceAddress;
 
     }
 
@@ -121,5 +138,20 @@ public class InvoiceDTO implements Serializable {
          *备注
          */
         private String remark;
+
+        /**
+         * 纳税登记号
+         */
+        private String taxRegisterCode;
+
+        /**
+         * 开票联系电话
+         */
+        private String invoiceTel;
+
+        /**
+         * 开票通讯地址
+         */
+        private String invoiceAddress;
     }
 }
