@@ -322,6 +322,19 @@ public class CustomerInfoController extends BaseController {
     }
 
     /**
+     * 根据id查询客户地址
+     * @author Will
+     * @date: 2023/7/13 12:08
+     * @param customerAddressId
+     * @return ApiResult<ViewDTO>
+     */
+    @GetMapping("/getCustomerAddressById")
+    public ApiResult<CustomerAddressDTO.ViewDTO> getCustomerAddressById(@RequestParam("customerAddressId") String customerAddressId) {
+        CustomerAddressDTO.ViewDTO viewDTO = customerAddressService.getCustomerAddressById(customerAddressId);
+        return success(viewDTO);
+    }
+
+    /**
      * 处理平台的历史数据
      *
      * @return

@@ -54,4 +54,12 @@ public interface CustomerAddressService extends SuperService<CustomerAddressEnti
      * @return void
      */
     void updateBatchAddress(String mainId, List<CustomerAddressDTO.ViewDTO> addressList);
+    /**
+     * @description: 根据id查询
+     * @author Will
+     * @date: 2023/7/13 12:09
+     * @param customerAddressId
+     * @return ViewDTO
+     */
+    CustomerAddressDTO.ViewDTO getCustomerAddressById(String customerAddressId);
 }

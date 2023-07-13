@@ -1182,11 +1182,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     public Boolean pagingUpdate(SoOutstockDTO.PagingUpdateDTO dto) {
-        SoOutstockEntity entity = this.getById(dto.getId());
-        if (ObjectUtils.isEmpty(entity)) {
+        List<SoOutstockEntity> list = this.listByIds(dto.getIdList());
+        if (ObjectUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_99058);
         }
-        boolean update = lambdaUpdate().eq(SoOutstockEntity::getId, dto.getId())
+        boolean update = lambdaUpdate().in(SoOutstockEntity::getId, dto.getIdList())
                 .set(SoOutstockEntity::getTrackNo, dto.getTrackNo())
                 .update();
         return update;
